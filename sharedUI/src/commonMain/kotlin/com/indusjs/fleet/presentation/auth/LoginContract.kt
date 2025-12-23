@@ -16,6 +16,7 @@ object LoginContract {
         val email: String = "",
         val password: String = "",
         val isLoading: Boolean = false,
+        val isCheckingAuth: Boolean = true, // Initially checking auth status
         val error: String? = null,
         val isPasswordVisible: Boolean = false
     ) : UiState
@@ -29,6 +30,7 @@ object LoginContract {
         data object TogglePasswordVisibility : Intent
         data object Login : Intent
         data object ClearError : Intent
+        data object CheckAuthStatus : Intent // Check if already logged in
     }
 
     /**

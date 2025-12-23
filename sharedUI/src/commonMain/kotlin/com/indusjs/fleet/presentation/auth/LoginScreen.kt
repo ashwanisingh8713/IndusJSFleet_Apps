@@ -21,6 +21,9 @@ import kotlinx.coroutines.flow.collectLatest
 /**
  * Login Screen composable.
  * Uses reusable UI components from core/ui for consistent styling.
+ *
+ * Automatically checks if user is already logged in on startup.
+ * If logged in, navigates to dashboard without showing login form.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,109 +57,178 @@ fun LoginScreen(
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // App Logo/Title
-                Text(
-                    text = "🚚",
-                    style = MaterialTheme.typography.displayLarge
-                )
-
-                Text(
-                    text = "Fleet Management",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = "Sign in to continue",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Email Field - using reusable component
-                FleetEmailField(
-                    value = state.email,
-                    onValueChange = { viewModel.sendIntent(LoginContract.Intent.UpdateEmail(it)) },
-                    enabled = !state.isLoading,
-                    keyboardActions = KeyboardActions(
-                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                    )
-                )
-
-                // Password Field - using reusable component
-                FleetPasswordField(
-                    value = state.password,
-                    onValueChange = { viewModel.sendIntent(LoginContract.Intent.UpdatePassword(it)) },
-                    enabled = !state.isLoading,
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                            viewModel.sendIntent(LoginContract.Intent.Login)
-                        }
-                    )
-                )
-
-                // Error Message
-                state.error?.let { error ->
-                    Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Forgot Password Link - using reusable component
-                FleetTextButton(
-                    text = "Forgot Password?",
-                    onClick = onNavigateToForgotPassword,
-                    modifier = Modifier.align(Alignment.End)
-                )
-
-                // Login Button - using reusable component
-                FleetPrimaryButton(
-                    text = "Sign In",
-                    onClick = { viewModel.sendIntent(LoginContract.Intent.Login) },
-                    isLoading = state.isLoading,
-                    enabled = !state.isLoading
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Sign Up Link
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Don't have an account?",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    FleetTextButton(
-                        text = "Sign Up",
-                        onClick = onNavigateToSignUp
-                    )
-                }
-
-                // Demo hint
-                Text(
-                    text = "Demo: Enter any email and password",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            // Show splash/loading while checking auth status
+            if (state.isCheckingAuth) {
+                SplashContent()
+            } else {
+                // Show login form
+                LoginFormContent(
+                    state = state,
+                    onEmailChange = { viewModel.sendIntent(LoginContract.Intent.UpdateEmail(it)) },
+                    onPasswordChange = { viewModel.sendIntent(LoginContract.Intent.UpdatePassword(it)) },
+                    onLogin = { viewModel.sendIntent(LoginContract.Intent.Login) },
+                    onForgotPassword = onNavigateToForgotPassword,
+                    onSignUp = onNavigateToSignUp,
+                    focusManager = focusManager
                 )
             }
         }
+    }
+}
+
+/**
+ * Splash content shown while checking authentication status.
+ */
+@Composable
+private fun SplashContent() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "🚚",
+            style = MaterialTheme.typography.displayLarge
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Fleet Management",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        CircularProgressIndicator(
+            modifier = Modifier.size(32.dp),
+            strokeWidth = 3.dp
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Loading...",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Login form content.
+ */
+@Composable
+private fun LoginFormContent(
+    state: LoginContract.State,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onLogin: () -> Unit,
+    onForgotPassword: () -> Unit,
+    onSignUp: () -> Unit,
+    focusManager: androidx.compose.ui.focus.FocusManager
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // App Logo/Title
+        Text(
+            text = "🚚",
+            style = MaterialTheme.typography.displayLarge
+        )
+
+        Text(
+            text = "Fleet Management",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "Sign in to continue",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Email Field - using reusable component
+        FleetEmailField(
+            value = state.email,
+            onValueChange = onEmailChange,
+            enabled = !state.isLoading,
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
+        )
+
+        // Password Field - using reusable component
+        FleetPasswordField(
+            value = state.password,
+            onValueChange = onPasswordChange,
+            enabled = !state.isLoading,
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    onLogin()
+                }
+            )
+        )
+
+        // Error Message
+        state.error?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Forgot Password Link - using reusable component
+        FleetTextButton(
+            text = "Forgot Password?",
+            onClick = onForgotPassword,
+            modifier = Modifier.align(Alignment.End)
+        )
+
+        // Login Button - using reusable component
+        FleetPrimaryButton(
+            text = "Sign In",
+            onClick = onLogin,
+            isLoading = state.isLoading,
+            enabled = !state.isLoading
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sign Up Link
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Don't have an account?",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            FleetTextButton(
+                text = "Sign Up",
+                onClick = onSignUp
+            )
+        }
+
+        // Demo hint
+        Text(
+            text = "Demo: Enter any email and password",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        )
     }
 }
 
