@@ -6,17 +6,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
@@ -120,15 +118,14 @@ fun DashboardScreen(
             ) {
                 when {
                     state.isLoading -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center)
-                    )
+                        // Using reusable LoadingContent component
+                        LoadingContent(message = "Loading dashboard...")
                 }
                 state.error != null -> {
+                    // Using reusable ErrorContent component
                     ErrorContent(
                         error = state.error!!,
-                        onRetry = { viewModel.sendIntent(DashboardContract.Intent.LoadDashboard) },
-                        modifier = Modifier.align(Alignment.Center)
+                        onRetry = { viewModel.sendIntent(DashboardContract.Intent.LoadDashboard) }
                     )
                 }
                 else -> {
@@ -539,29 +536,3 @@ private fun SummaryItem(
     }
 }
 
-@Composable
-private fun ErrorContent(
-    error: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "❌",
-            style = MaterialTheme.typography.displayMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
-    }
-}

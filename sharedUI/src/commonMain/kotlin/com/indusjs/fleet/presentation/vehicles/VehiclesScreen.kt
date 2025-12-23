@@ -12,6 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.EmptyContent
+import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.FleetSearchField
+import com.indusjs.fleet.core.ui.FleetStatusBadge
+import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
@@ -73,10 +78,11 @@ fun VehiclesScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search Bar
-            SearchBar(
+            // Search Bar - using reusable component
+            FleetSearchField(
                 query = state.searchQuery,
                 onQueryChange = { viewModel.sendIntent(VehiclesContract.Intent.SearchVehicles(it)) },
+                placeholder = "Search vehicles...",
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -89,27 +95,25 @@ fun VehiclesScreen(
 
             when {
                 state.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    // Using reusable LoadingContent component
+                    LoadingContent(message = "Loading vehicles...")
                 }
                 state.error != null -> {
+                    // Using reusable ErrorContent component
                     ErrorContent(
                         error = state.error!!,
-                        onRetry = { viewModel.sendIntent(VehiclesContract.Intent.LoadVehicles) },
-                        modifier = Modifier.fillMaxSize()
+                        onRetry = { viewModel.sendIntent(VehiclesContract.Intent.LoadVehicles) }
                     )
                 }
                 state.filteredVehicles.isEmpty() -> {
+                    // Using reusable EmptyContent component
                     EmptyContent(
-                        message = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
+                        icon = "🚗",
+                        title = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
                             "No vehicles match your filters"
                         else
                             "No vehicles found",
-                        modifier = Modifier.fillMaxSize()
+                        message = "Try adjusting your search or filters"
                     )
                 }
                 else -> {
@@ -124,28 +128,6 @@ fun VehiclesScreen(
     }
 }
 
-@Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth(),
-        placeholder = { Text("Search vehicles...") },
-        leadingIcon = { Text("🔍") },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Text("✕")
-                }
-            }
-        },
-        singleLine = true
-    )
-}
 
 @Composable
 private fun StatusFilterChips(
@@ -319,17 +301,11 @@ private fun StatusBadge(status: VehicleStatus) {
         VehicleStatus.OUT_OF_SERVICE -> MaterialTheme.colorScheme.error to "Out of Service"
     }
 
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = MaterialTheme.shapes.small
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall,
-            color = color
-        )
-    }
+    // Using reusable FleetStatusBadge component
+    FleetStatusBadge(
+        status = text,
+        color = color
+    )
 }
 
 private fun getVehicleEmoji(type: VehicleType): String {
@@ -343,53 +319,3 @@ private fun getVehicleEmoji(type: VehicleType): String {
     }
 }
 
-@Composable
-private fun ErrorContent(
-    error: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "❌",
-            style = MaterialTheme.typography.displayMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
-    }
-}
-
-@Composable
-private fun EmptyContent(
-    message: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "🚗",
-            style = MaterialTheme.typography.displayLarge
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}

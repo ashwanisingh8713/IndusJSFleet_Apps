@@ -2,7 +2,6 @@ package com.indusjs.fleet.presentation.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -10,17 +9,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.FleetEmailField
+import com.indusjs.fleet.core.ui.FleetPasswordField
+import com.indusjs.fleet.core.ui.FleetPrimaryButton
+import com.indusjs.fleet.core.ui.FleetTextButton
 import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Login Screen composable.
+ * Uses reusable UI components from core/ui for consistent styling.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,57 +81,27 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Email Field
-                OutlinedTextField(
+                // Email Field - using reusable component
+                FleetEmailField(
                     value = state.email,
                     onValueChange = { viewModel.sendIntent(LoginContract.Intent.UpdateEmail(it)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Email") },
-                    placeholder = { Text("Enter your email") },
-                    leadingIcon = { Text("📧") },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next
-                    ),
+                    enabled = !state.isLoading,
                     keyboardActions = KeyboardActions(
                         onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                    ),
-                    singleLine = true,
-                    enabled = !state.isLoading
+                    )
                 )
 
-                // Password Field
-                OutlinedTextField(
+                // Password Field - using reusable component
+                FleetPasswordField(
                     value = state.password,
                     onValueChange = { viewModel.sendIntent(LoginContract.Intent.UpdatePassword(it)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Password") },
-                    placeholder = { Text("Enter your password") },
-                    leadingIcon = { Text("🔒") },
-                    trailingIcon = {
-                        IconButton(
-                            onClick = { viewModel.sendIntent(LoginContract.Intent.TogglePasswordVisibility) }
-                        ) {
-                            Text(if (state.isPasswordVisible) "👁️" else "👁️‍🗨️")
-                        }
-                    },
-                    visualTransformation = if (state.isPasswordVisible) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done
-                    ),
+                    enabled = !state.isLoading,
                     keyboardActions = KeyboardActions(
                         onDone = {
                             focusManager.clearFocus()
                             viewModel.sendIntent(LoginContract.Intent.Login)
                         }
-                    ),
-                    singleLine = true,
-                    enabled = !state.isLoading
+                    )
                 )
 
                 // Error Message
@@ -147,32 +117,20 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Forgot Password Link
-                TextButton(
+                // Forgot Password Link - using reusable component
+                FleetTextButton(
+                    text = "Forgot Password?",
                     onClick = onNavigateToForgotPassword,
                     modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text("Forgot Password?")
-                }
+                )
 
-                // Login Button
-                Button(
+                // Login Button - using reusable component
+                FleetPrimaryButton(
+                    text = "Sign In",
                     onClick = { viewModel.sendIntent(LoginContract.Intent.Login) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    isLoading = state.isLoading,
                     enabled = !state.isLoading
-                ) {
-                    if (state.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text("Sign In")
-                    }
-                }
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -185,9 +143,10 @@ fun LoginScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    TextButton(onClick = onNavigateToSignUp) {
-                        Text("Sign Up")
-                    }
+                    FleetTextButton(
+                        text = "Sign Up",
+                        onClick = onNavigateToSignUp
+                    )
                 }
 
                 // Demo hint

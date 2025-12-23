@@ -44,8 +44,13 @@ sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
 │   │   ├── ApiConfig.kt           # API configuration
 │   │   ├── HttpClientProvider.kt  # HTTP client factory
 │   │   └── NetworkError.kt        # Standardized network errors
-│   └── result/                    # Result wrapper
-│       └── Result.kt              # Success/Error/Loading wrapper
+│   ├── result/                    # Result wrapper
+│   │   └── Result.kt              # Success/Error/Loading wrapper
+│   └── ui/                        # Reusable UI components
+│       ├── CommonComponents.kt    # LoadingContent, ErrorContent, EmptyContent, ScreenContent
+│       ├── InputComponents.kt     # FleetTextField, FleetEmailField, FleetPasswordField, etc.
+│       ├── ButtonComponents.kt    # FleetPrimaryButton, FleetSecondaryButton, etc.
+│       └── CardComponents.kt      # FleetItemCard, FleetStatusBadge, FleetIconAvatar, etc.
 │
 ├── data/                          # Centralized Data layer
 │   ├── datasource/                # Data sources by feature

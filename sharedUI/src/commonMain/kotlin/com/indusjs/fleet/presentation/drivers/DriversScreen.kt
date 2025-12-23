@@ -14,6 +14,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.EmptyContent
+import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.FleetSearchField
+import com.indusjs.fleet.core.ui.FleetStatusBadge
+import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import kotlinx.coroutines.flow.collectLatest
@@ -74,10 +79,11 @@ fun DriversScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search Bar
-            SearchBar(
+            // Search Bar - using reusable component
+            FleetSearchField(
                 query = state.searchQuery,
                 onQueryChange = { viewModel.sendIntent(DriversContract.Intent.SearchDrivers(it)) },
+                placeholder = "Search drivers...",
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -90,27 +96,25 @@ fun DriversScreen(
 
             when {
                 state.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    // Using reusable LoadingContent component
+                    LoadingContent(message = "Loading drivers...")
                 }
                 state.error != null -> {
+                    // Using reusable ErrorContent component
                     ErrorContent(
                         error = state.error!!,
-                        onRetry = { viewModel.sendIntent(DriversContract.Intent.LoadDrivers) },
-                        modifier = Modifier.fillMaxSize()
+                        onRetry = { viewModel.sendIntent(DriversContract.Intent.LoadDrivers) }
                     )
                 }
                 state.filteredDrivers.isEmpty() -> {
+                    // Using reusable EmptyContent component
                     EmptyContent(
-                        message = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
+                        icon = "👥",
+                        title = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
                             "No drivers match your filters"
                         else
                             "No drivers found",
-                        modifier = Modifier.fillMaxSize()
+                        message = "Try adjusting your search or filters"
                     )
                 }
                 else -> {
@@ -125,28 +129,6 @@ fun DriversScreen(
     }
 }
 
-@Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth(),
-        placeholder = { Text("Search drivers...") },
-        leadingIcon = { Text("🔍") },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Text("✕")
-                }
-            }
-        },
-        singleLine = true
-    )
-}
 
 @Composable
 private fun StatusFilterChips(
@@ -344,66 +326,10 @@ private fun StatusBadge(status: DriverStatus) {
         DriverStatus.INACTIVE -> MaterialTheme.colorScheme.error to "Inactive"
     }
 
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = MaterialTheme.shapes.small
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall,
-            color = color
-        )
-    }
+    // Using reusable FleetStatusBadge component
+    FleetStatusBadge(
+        status = text,
+        color = color
+    )
 }
 
-@Composable
-private fun ErrorContent(
-    error: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "❌",
-            style = MaterialTheme.typography.displayMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
-    }
-}
-
-@Composable
-private fun EmptyContent(
-    message: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "👥",
-            style = MaterialTheme.typography.displayLarge
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}

@@ -8,10 +8,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.EmptyContent
+import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.FleetSearchField
+import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.team.TeamMember
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
 import kotlinx.coroutines.flow.collectLatest
@@ -102,93 +105,41 @@ fun TeamListScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            // Search Field
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = { viewModel.sendIntent(TeamListContract.Intent.UpdateSearchQuery(it)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search team members...") },
-                leadingIcon = { Text("🔍") },
-                singleLine = true
+            // Search Field - using reusable component
+            FleetSearchField(
+                query = state.searchQuery,
+                onQueryChange = { viewModel.sendIntent(TeamListContract.Intent.UpdateSearchQuery(it)) },
+                placeholder = "Search team members...",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             // Content
             when {
                 state.isLoading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    // Using reusable LoadingContent component
+                    LoadingContent(message = "Loading team members...")
                 }
 
                 state.error != null -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "😕",
-                                style = MaterialTheme.typography.displayMedium
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = state.error ?: "Something went wrong",
-                                style = MaterialTheme.typography.bodyLarge,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = { viewModel.sendIntent(TeamListContract.Intent.LoadTeamMembers) }
-                            ) {
-                                Text("Retry")
-                            }
-                        }
-                    }
+                    // Using reusable ErrorContent component
+                    ErrorContent(
+                        error = state.error ?: "Something went wrong",
+                        onRetry = { viewModel.sendIntent(TeamListContract.Intent.LoadTeamMembers) }
+                    )
                 }
 
                 state.filteredMembers.isEmpty() -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "👥",
-                                style = MaterialTheme.typography.displayMedium
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = if (state.searchQuery.isNotEmpty()) {
-                                    "No team members found matching \"${state.searchQuery}\""
-                                } else {
-                                    "No team members yet"
-                                },
-                                style = MaterialTheme.typography.bodyLarge,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = { viewModel.sendIntent(TeamListContract.Intent.NavigateToCreateMember) }
-                            ) {
-                                Text("Add Team Member")
-                            }
-                        }
-                    }
+                    // Using reusable EmptyContent component
+                    EmptyContent(
+                        icon = "👥",
+                        title = if (state.searchQuery.isNotEmpty()) {
+                            "No team members found matching \"${state.searchQuery}\""
+                        } else {
+                            "No team members yet"
+                        },
+                        actionLabel = "Add Team Member",
+                        onAction = { viewModel.sendIntent(TeamListContract.Intent.NavigateToCreateMember) }
+                    )
                 }
 
                 else -> {

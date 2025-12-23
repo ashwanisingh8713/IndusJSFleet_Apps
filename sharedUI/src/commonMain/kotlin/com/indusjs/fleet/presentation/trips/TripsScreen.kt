@@ -13,12 +13,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.EmptyContent
+import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.FleetSearchField
+import com.indusjs.fleet.core.ui.FleetStatusBadge
+import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
 import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Trips List Screen composable.
+ * Uses reusable UI components from core/ui for consistent styling.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,10 +79,11 @@ fun TripsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search Bar
-            SearchBar(
+            // Search Bar - using reusable component
+            FleetSearchField(
                 query = state.searchQuery,
                 onQueryChange = { viewModel.sendIntent(TripsContract.Intent.SearchTrips(it)) },
+                placeholder = "Search trips...",
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -89,27 +96,25 @@ fun TripsScreen(
 
             when {
                 state.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    // Using reusable LoadingContent component
+                    LoadingContent(message = "Loading trips...")
                 }
                 state.error != null -> {
+                    // Using reusable ErrorContent component
                     ErrorContent(
                         error = state.error!!,
-                        onRetry = { viewModel.sendIntent(TripsContract.Intent.LoadTrips) },
-                        modifier = Modifier.fillMaxSize()
+                        onRetry = { viewModel.sendIntent(TripsContract.Intent.LoadTrips) }
                     )
                 }
                 state.filteredTrips.isEmpty() -> {
+                    // Using reusable EmptyContent component
                     EmptyContent(
-                        message = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
+                        icon = "🚗",
+                        title = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
                             "No trips match your filters"
                         else
                             "No trips found",
-                        modifier = Modifier.fillMaxSize()
+                        message = "Try adjusting your search or filters"
                     )
                 }
                 else -> {
@@ -122,29 +127,6 @@ fun TripsScreen(
             }
         }
     }
-}
-
-@Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth(),
-        placeholder = { Text("Search trips...") },
-        leadingIcon = { Text("🔍") },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Text("✕")
-                }
-            }
-        },
-        singleLine = true
-    )
 }
 
 @Composable
@@ -239,6 +221,7 @@ private fun TripCard(
                     )
                 }
 
+                // Using reusable FleetStatusBadge component
                 StatusBadge(status = trip.status)
             }
 
@@ -409,72 +392,15 @@ private fun StatusBadge(status: TripStatus) {
         TripStatus.DELAYED -> MaterialTheme.colorScheme.error to "Delayed"
     }
 
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = MaterialTheme.shapes.small
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall,
-            color = color
-        )
-    }
+    // Using reusable FleetStatusBadge component
+    FleetStatusBadge(
+        status = text,
+        color = color
+    )
 }
 
 private fun formatDuration(minutes: Long): String {
     val hours = minutes / 60
     val mins = minutes % 60
     return if (hours > 0) "${hours}h ${mins}m" else "${mins}m"
-}
-
-@Composable
-private fun ErrorContent(
-    error: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "❌",
-            style = MaterialTheme.typography.displayMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
-    }
-}
-
-@Composable
-private fun EmptyContent(
-    message: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "🛣️",
-            style = MaterialTheme.typography.displayLarge
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
 }
