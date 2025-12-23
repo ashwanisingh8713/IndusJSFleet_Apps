@@ -34,65 +34,137 @@ sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
 ├── core/                          # Core utilities and base classes
 │   ├── dispatcher/                # Coroutine dispatcher abstraction
 │   │   └── DispatcherProvider.kt
+│   ├── error/                     # Custom exception types
+│   │   └── FleetExceptions.kt     # NotAuthenticatedException, ApiException, etc.
 │   ├── mvi/                       # MVI pattern base classes
 │   │   ├── MviContract.kt         # UiState, UiIntent, UiEffect interfaces
 │   │   ├── MviViewModel.kt        # Base MVI ViewModel
 │   │   └── MviExtensions.kt       # Compose extensions for MVI
 │   ├── network/                   # Network utilities
+│   │   ├── ApiConfig.kt           # API configuration
+│   │   ├── HttpClientProvider.kt  # HTTP client factory
 │   │   └── NetworkError.kt        # Standardized network errors
 │   └── result/                    # Result wrapper
 │       └── Result.kt              # Success/Error/Loading wrapper
 │
-├── data/                          # Data layer base interfaces
-│   ├── datasource/
-│   │   └── DataSource.kt          # LocalDataSource, RemoteDataSource
-│   ├── mapper/
-│   │   └── Mapper.kt              # Data ↔ Domain mappers
-│   └── model/
-│       └── DataModels.kt          # Dto, DbEntity markers
+├── data/                          # Centralized Data layer
+│   ├── datasource/                # Data sources by feature
+│   │   ├── DataSource.kt          # Base interfaces
+│   │   ├── user/
+│   │   │   ├── UserLocalDataSource.kt
+│   │   │   └── UserRemoteDataSource.kt
+│   │   ├── vehicle/
+│   │   │   └── VehicleRemoteDataSource.kt
+│   │   ├── trip/
+│   │   │   └── TripRemoteDataSource.kt
+│   │   └── team/
+│   │       └── TeamRemoteDataSource.kt
+│   ├── mapper/                    # DTOs ↔ Domain mappers by feature
+│   │   ├── Mapper.kt              # Base mapper interface
+│   │   ├── user/
+│   │   │   └── UserMapper.kt
+│   │   ├── vehicle/
+│   │   │   └── VehicleMapper.kt
+│   │   ├── trip/
+│   │   │   └── TripMapper.kt
+│   │   └── team/
+│   │       └── TeamMapper.kt
+│   ├── model/                     # DTOs by feature
+│   │   ├── DataModels.kt          # Dto, DbEntity markers
+│   │   ├── user/
+│   │   │   └── UserDto.kt
+│   │   ├── vehicle/
+│   │   │   └── VehicleDto.kt
+│   │   ├── trip/
+│   │   │   └── TripDto.kt
+│   │   └── team/
+│   │       └── TeamDto.kt
+│   └── repository/                # Repository implementations by feature
+│       ├── user/
+│       │   └── UserRepositoryImpl.kt
+│       ├── vehicle/
+│       │   └── VehicleRepositoryImpl.kt
+│       ├── trip/
+│       │   └── TripRepositoryImpl.kt
+│       └── team/
+│           └── TeamRepositoryImpl.kt
 │
-├── di/                            # Dependency Injection with Metro
-│   ├── AppGraph.kt                # App-level DI graph
+├── di/                            # Centralized Dependency Injection
+│   ├── AppGraph.kt                # App-level DI graph scopes
 │   ├── AppDependencies.kt         # Dependency container
-│   ├── DataModule.kt              # Data layer bindings
-│   ├── DomainModule.kt            # Domain layer bindings
-│   ├── NetworkModule.kt           # Network dependencies
-│   ├── PresentationModule.kt      # Presentation bindings
-│   └── RootGraph.kt               # Root dependency graph
+│   ├── RootGraph.kt               # Root dependency graph
+│   ├── ViewModelProvider.kt       # ViewModel provider interface
+│   ├── DefaultViewModelProvider.kt # Default ViewModel provider
+│   ├── AuthFeatureGraph.kt        # Auth feature DI graph
+│   ├── UserFeatureGraph.kt        # User feature DI graph
+│   ├── VehiclesFeatureGraph.kt    # Vehicles feature DI graph
+│   ├── TripsFeatureGraph.kt       # Trips feature DI graph
+│   └── TeamFeatureGraph.kt        # Team feature DI graph
 │
-├── domain/                        # Domain layer base interfaces
-│   ├── entity/
-│   │   └── Entity.kt              # Base entity marker
-│   ├── repository/
-│   │   └── Repository.kt          # Base repository marker
-│   └── usecase/
-│       └── UseCase.kt             # Use case interfaces
+├── domain/                        # Centralized Domain layer
+│   ├── entity/                    # Domain entities by feature
+│   │   ├── Entity.kt              # Base entity marker
+│   │   ├── dashboard/
+│   │   │   └── DashboardStats.kt
+│   │   ├── driver/
+│   │   │   └── Driver.kt
+│   │   ├── team/
+│   │   │   └── TeamMember.kt
+│   │   ├── trip/
+│   │   │   └── Trip.kt
+│   │   ├── user/
+│   │   │   └── User.kt
+│   │   └── vehicle/
+│   │       └── Vehicle.kt
+│   ├── repository/                # Repository interfaces by feature
+│   │   ├── Repository.kt          # Base repository marker
+│   │   ├── team/
+│   │   │   └── TeamRepository.kt
+│   │   ├── trip/
+│   │   │   └── TripRepository.kt
+│   │   ├── user/
+│   │   │   └── UserRepository.kt
+│   │   └── vehicle/
+│   │       └── VehicleRepository.kt
+│   └── usecase/                   # Use cases by feature
+│       ├── UseCase.kt             # Base use case interface
+│       ├── trip/
+│       │   └── TripUseCases.kt
+│       └── vehicle/
+│           └── VehicleUseCases.kt
 │
-├── feature/                       # Feature modules
-│   └── sample/                    # Sample feature demonstrating architecture
-│       ├── data/
-│       │   ├── datasource/
-│       │   │   └── UserRemoteDataSource.kt
-│       │   ├── mapper/
-│       │   │   └── UserMapper.kt
-│       │   ├── model/
-│       │   │   └── UserDto.kt
-│       │   └── repository/
-│       │       └── UserRepositoryImpl.kt
-│       ├── di/
-│       │   └── SampleFeatureGraph.kt
-│       ├── domain/
-│       │   ├── entity/
-│       │   │   └── User.kt
-│       │   ├── repository/
-│       │   │   └── UserRepository.kt
-│       │   └── usecase/
-│       │       ├── GetUserByIdUseCase.kt
-│       │       └── GetUsersUseCase.kt
-│       └── presentation/
-│           ├── UserListContract.kt     # MVI contract
-│           ├── UserListScreen.kt       # Compose UI
-│           └── UserListViewModel.kt    # MVI ViewModel
+├── presentation/                  # Presentation Layer (UI + ViewModels)
+│   ├── auth/                      # Authentication
+│   │   ├── LoginContract.kt
+│   │   ├── LoginScreen.kt
+│   │   └── LoginViewModel.kt
+│   │
+│   ├── user/                      # User management
+│   │   ├── signup/
+│   │   ├── profile/
+│   │   ├── changepassword/
+│   │   └── forgotpassword/
+│   │
+│   ├── vehicles/                  # Vehicle management
+│   │   ├── VehiclesContract.kt
+│   │   ├── VehiclesScreen.kt
+│   │   ├── VehiclesViewModel.kt
+│   │   ├── AddVehicleContract.kt
+│   │   ├── AddVehicleScreen.kt
+│   │   └── AddVehicleViewModel.kt
+│   │
+│   ├── trips/                     # Trip management
+│   │   ├── TripsContract.kt
+│   │   ├── TripsScreen.kt
+│   │   └── TripsViewModel.kt
+│   │
+│   ├── team/                      # Team management
+│   │   ├── list/
+│   │   └── create/
+│   │
+│   ├── drivers/                   # Driver management
+│   ├── dashboard/                 # Dashboard
+│   └── maps/                      # Maps
 │
 └── theme/                         # App theming
     ├── Color.kt
@@ -265,10 +337,17 @@ class UserRepository @Inject constructor(
 
 ## Adding a New Feature
 
-1. Create feature folder under `feature/`
-2. Add domain layer (entity, repository interface, use cases)
-3. Add data layer (DTO, data source, repository impl, mapper)
-4. Add presentation layer (contract, viewmodel, screen)
-5. Create feature DI graph
-6. Wire up navigation
+1. Add domain entities under `domain/entity/{feature}/`
+2. Add repository interface under `domain/repository/{feature}/`
+3. Add use cases under `domain/usecase/{feature}/` (if needed)
+4. Add DTOs under `data/model/{feature}/`
+5. Add data source under `data/datasource/{feature}/`
+6. Add mapper under `data/mapper/{feature}/`
+7. Add repository implementation under `data/repository/{feature}/`
+8. Add presentation files under `presentation/{feature}/`
+   - Contract (State, Intent, Effect)
+   - ViewModel
+   - Screen (Compose UI)
+9. Create/update feature DI graph in `di/`
+10. Wire up navigation
 

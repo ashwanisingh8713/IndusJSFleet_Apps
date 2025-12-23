@@ -1,16 +1,16 @@
 package com.indusjs.fleet.navigation
 
 import androidx.compose.runtime.Composable
-import com.indusjs.fleet.feature.dashboard.presentation.DashboardScreen
-import com.indusjs.fleet.feature.dashboard.presentation.DashboardViewModel
-import com.indusjs.fleet.feature.drivers.presentation.DriversScreen
-import com.indusjs.fleet.feature.drivers.presentation.DriversViewModel
-import com.indusjs.fleet.feature.maps.presentation.MapsScreen
-import com.indusjs.fleet.feature.maps.presentation.MapsViewModel
-import com.indusjs.fleet.feature.trips.presentation.TripsScreen
-import com.indusjs.fleet.feature.trips.presentation.TripsViewModel
-import com.indusjs.fleet.feature.vehicles.presentation.VehiclesScreen
-import com.indusjs.fleet.feature.vehicles.presentation.VehiclesViewModel
+import com.indusjs.fleet.presentation.dashboard.DashboardScreen
+import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
+import com.indusjs.fleet.presentation.drivers.DriversScreen
+import com.indusjs.fleet.presentation.drivers.DriversViewModel
+import com.indusjs.fleet.presentation.maps.MapsScreen
+import com.indusjs.fleet.presentation.maps.MapsViewModel
+import com.indusjs.fleet.presentation.trips.TripsScreen
+import com.indusjs.fleet.presentation.trips.TripsViewModel
+import com.indusjs.fleet.presentation.vehicles.VehiclesScreen
+import com.indusjs.fleet.presentation.vehicles.VehiclesViewModel
 
 /**
  * Main navigation host for the Fleet Management app.

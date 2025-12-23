@@ -1,6 +1,7 @@
 package com.indusjs.fleet.di
 
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.russhwolf.settings.Settings
 import io.ktor.client.*
 import kotlinx.serialization.json.Json
 
@@ -61,5 +62,8 @@ object AppDependencies {
 
     val json: Json
         get() = rootGraph.json
+
+    val settings: Settings
+        get() = rootGraph.settings
 }
 
