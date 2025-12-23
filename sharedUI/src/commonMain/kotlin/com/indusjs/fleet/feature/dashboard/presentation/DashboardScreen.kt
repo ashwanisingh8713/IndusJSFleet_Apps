@@ -21,6 +21,7 @@ import com.indusjs.fleet.feature.dashboard.domain.entity.Alert
 import com.indusjs.fleet.feature.dashboard.domain.entity.AlertType
 import com.indusjs.fleet.feature.dashboard.domain.entity.DashboardStats
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 /**
  * Dashboard Screen composable - Main overview screen for Fleet Management.
@@ -32,10 +33,14 @@ fun DashboardScreen(
     onNavigateToVehicles: () -> Unit = {},
     onNavigateToDrivers: () -> Unit = {},
     onNavigateToTrips: () -> Unit = {},
-    onNavigateToMaps: () -> Unit = {}
+    onNavigateToMaps: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToTeam: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
     // Handle side effects
     LaunchedEffect(Unit) {
@@ -52,28 +57,71 @@ fun DashboardScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text("Fleet Dashboard") },
-                actions = {
-                    IconButton(onClick = { viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard) }) {
-                        Text("↻", style = MaterialTheme.typography.titleLarge)
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                modifier = Modifier.width(280.dp)
+            ) {
+                NavigationDrawerContent(
+                    onNavigateToVehicles = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToVehicles()
+                    },
+                    onNavigateToDrivers = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToDrivers()
+                    },
+                    onNavigateToTrips = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToTrips()
+                    },
+                    onNavigateToMaps = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToMaps()
+                    },
+                    onNavigateToTeam = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToTeam()
+                    },
+                    onNavigateToProfile = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToProfile()
                     }
-                }
-            )
+                )
+            }
         }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when {
-                state.isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+    ) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                TopAppBar(
+                    title = { Text("Fleet Dashboard") },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Text("☰", style = MaterialTheme.typography.titleLarge)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard) }) {
+                            Text("↻", style = MaterialTheme.typography.titleLarge)
+                        }
+                        IconButton(onClick = onNavigateToProfile) {
+                            Text("👤", style = MaterialTheme.typography.titleLarge)
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                when {
+                    state.isLoading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center)
                     )
                 }
                 state.error != null -> {
@@ -97,6 +145,116 @@ fun DashboardScreen(
                 }
             }
         }
+        }
+    }
+}
+
+/**
+ * Navigation Drawer Content with Quick Actions menu items.
+ */
+@Composable
+private fun NavigationDrawerContent(
+    onNavigateToVehicles: () -> Unit,
+    onNavigateToDrivers: () -> Unit,
+    onNavigateToTrips: () -> Unit,
+    onNavigateToMaps: () -> Unit,
+    onNavigateToTeam: () -> Unit,
+    onNavigateToProfile: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxHeight()
+    ) {
+        // Header
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(24.dp)
+        ) {
+            Column {
+                Text(
+                    text = "🚚",
+                    style = MaterialTheme.typography.displayMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Fleet Management",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    text = "Quick Actions",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Menu Items
+        NavigationDrawerItem(
+            icon = { Text("🚗", style = MaterialTheme.typography.titleLarge) },
+            label = { Text("Vehicles") },
+            selected = false,
+            onClick = onNavigateToVehicles,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+
+        NavigationDrawerItem(
+            icon = { Text("👤", style = MaterialTheme.typography.titleLarge) },
+            label = { Text("Drivers") },
+            selected = false,
+            onClick = onNavigateToDrivers,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+
+        NavigationDrawerItem(
+            icon = { Text("🛣️", style = MaterialTheme.typography.titleLarge) },
+            label = { Text("Trips") },
+            selected = false,
+            onClick = onNavigateToTrips,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+
+        NavigationDrawerItem(
+            icon = { Text("🗺️", style = MaterialTheme.typography.titleLarge) },
+            label = { Text("Live Map") },
+            selected = false,
+            onClick = onNavigateToMaps,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp))
+
+        NavigationDrawerItem(
+            icon = { Text("👥", style = MaterialTheme.typography.titleLarge) },
+            label = { Text("Team Members") },
+            selected = false,
+            onClick = onNavigateToTeam,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+
+        NavigationDrawerItem(
+            icon = { Text("⚙️", style = MaterialTheme.typography.titleLarge) },
+            label = { Text("Profile & Settings") },
+            selected = false,
+            onClick = onNavigateToProfile,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Footer
+        Text(
+            text = "IndusJS Fleet v1.0",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(16.dp)
+                .align(Alignment.CenterHorizontally)
+        )
     }
 }
 
@@ -166,55 +324,6 @@ private fun DashboardContent(
             }
         }
 
-        // Quick Actions
-        item {
-            Text(
-                text = "Quick Actions",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
-
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                ActionCard(
-                    title = "Vehicles",
-                    emoji = "🚗",
-                    onClick = onVehiclesClick,
-                    modifier = Modifier.weight(1f)
-                )
-                ActionCard(
-                    title = "Drivers",
-                    emoji = "👤",
-                    onClick = onDriversClick,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                ActionCard(
-                    title = "Trips",
-                    emoji = "🛣️",
-                    onClick = onTripsClick,
-                    modifier = Modifier.weight(1f)
-                )
-                ActionCard(
-                    title = "Live Map",
-                    emoji = "🗺️",
-                    onClick = onMapsClick,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
 
         // Alerts Section
         if (stats.alerts.isNotEmpty()) {

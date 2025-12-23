@@ -21,6 +21,18 @@ import com.indusjs.fleet.feature.vehicles.presentation.AddVehicleScreen
 import com.indusjs.fleet.feature.vehicles.presentation.AddVehicleViewModel
 import com.indusjs.fleet.feature.vehicles.presentation.VehiclesScreen
 import com.indusjs.fleet.feature.vehicles.presentation.VehiclesViewModel
+import com.indusjs.fleet.feature.user.presentation.profile.ProfileScreen
+import com.indusjs.fleet.feature.user.presentation.profile.ProfileViewModel
+import com.indusjs.fleet.feature.user.presentation.changepassword.ChangePasswordScreen
+import com.indusjs.fleet.feature.user.presentation.changepassword.ChangePasswordViewModel
+import com.indusjs.fleet.feature.user.presentation.signup.SignUpScreen
+import com.indusjs.fleet.feature.user.presentation.signup.SignUpViewModel
+import com.indusjs.fleet.feature.user.presentation.forgotpassword.ForgotPasswordScreen
+import com.indusjs.fleet.feature.user.presentation.forgotpassword.ForgotPasswordViewModel
+import com.indusjs.fleet.feature.team.presentation.list.TeamListScreen
+import com.indusjs.fleet.feature.team.presentation.list.TeamListViewModel
+import com.indusjs.fleet.feature.team.presentation.create.CreateTeamMemberScreen
+import com.indusjs.fleet.feature.team.presentation.create.CreateTeamMemberViewModel
 import com.indusjs.fleet.theme.AppTheme
 
 /**
@@ -28,7 +40,11 @@ import com.indusjs.fleet.theme.AppTheme
  */
 sealed class AppRoute {
     data object Login : AppRoute()
+    data object SignUp : AppRoute()
+    data object ForgotPassword : AppRoute()
     data object Dashboard : AppRoute()
+    data object Profile : AppRoute()
+    data object ChangePassword : AppRoute()
     data object Vehicles : AppRoute()
     data class VehicleDetail(val vehicleId: String) : AppRoute()
     data object AddVehicle : AppRoute()
@@ -37,6 +53,8 @@ sealed class AppRoute {
     data object Trips : AppRoute()
     data class TripDetail(val tripId: String) : AppRoute()
     data object Maps : AppRoute()
+    data object TeamList : AppRoute()
+    data object CreateTeamMember : AppRoute()
 }
 
 @Preview
@@ -66,7 +84,29 @@ fun App(
                     onLoginSuccess = {
                         isLoggedIn = true
                         currentRoute = AppRoute.Dashboard
-                    }
+                    },
+                    onNavigateToSignUp = { currentRoute = AppRoute.SignUp },
+                    onNavigateToForgotPassword = { currentRoute = AppRoute.ForgotPassword }
+                )
+            }
+
+            is AppRoute.SignUp -> {
+                val signUpViewModel = remember { SignUpViewModel(dispatcherProvider) }
+                SignUpScreen(
+                    viewModel = signUpViewModel,
+                    onSignUpSuccess = {
+                        isLoggedIn = true
+                        currentRoute = AppRoute.Dashboard
+                    },
+                    onNavigateToLogin = { currentRoute = AppRoute.Login }
+                )
+            }
+
+            is AppRoute.ForgotPassword -> {
+                val forgotPasswordViewModel = remember { ForgotPasswordViewModel(dispatcherProvider) }
+                ForgotPasswordScreen(
+                    viewModel = forgotPasswordViewModel,
+                    onNavigateToLogin = { currentRoute = AppRoute.Login }
                 )
             }
 
@@ -77,7 +117,30 @@ fun App(
                     onNavigateToVehicles = { currentRoute = AppRoute.Vehicles },
                     onNavigateToDrivers = { currentRoute = AppRoute.Drivers },
                     onNavigateToTrips = { currentRoute = AppRoute.Trips },
-                    onNavigateToMaps = { currentRoute = AppRoute.Maps }
+                    onNavigateToMaps = { currentRoute = AppRoute.Maps },
+                    onNavigateToProfile = { currentRoute = AppRoute.Profile },
+                    onNavigateToTeam = { currentRoute = AppRoute.TeamList }
+                )
+            }
+
+            is AppRoute.Profile -> {
+                val profileViewModel = remember { ProfileViewModel(dispatcherProvider) }
+                ProfileScreen(
+                    viewModel = profileViewModel,
+                    onNavigateToChangePassword = { currentRoute = AppRoute.ChangePassword },
+                    onNavigateBack = { currentRoute = AppRoute.Dashboard },
+                    onLogout = {
+                        isLoggedIn = false
+                        currentRoute = AppRoute.Login
+                    }
+                )
+            }
+
+            is AppRoute.ChangePassword -> {
+                val changePasswordViewModel = remember { ChangePasswordViewModel(dispatcherProvider) }
+                ChangePasswordScreen(
+                    viewModel = changePasswordViewModel,
+                    onNavigateBack = { currentRoute = AppRoute.Profile }
                 )
             }
 
@@ -173,6 +236,26 @@ fun App(
                         currentRoute = AppRoute.VehicleDetail(vehicleId)
                     },
                     onNavigateBack = { currentRoute = AppRoute.Dashboard }
+                )
+            }
+
+            is AppRoute.TeamList -> {
+                val teamListViewModel = remember { TeamListViewModel(dispatcherProvider) }
+                TeamListScreen(
+                    viewModel = teamListViewModel,
+                    onNavigateBack = { currentRoute = AppRoute.Dashboard },
+                    onNavigateToCreateMember = { currentRoute = AppRoute.CreateTeamMember },
+                    onNavigateToMemberDetail = { memberId ->
+                        // TODO: Implement member detail navigation
+                    }
+                )
+            }
+
+            is AppRoute.CreateTeamMember -> {
+                val createTeamMemberViewModel = remember { CreateTeamMemberViewModel(dispatcherProvider) }
+                CreateTeamMemberScreen(
+                    viewModel = createTeamMemberViewModel,
+                    onNavigateBack = { currentRoute = AppRoute.TeamList }
                 )
             }
         }

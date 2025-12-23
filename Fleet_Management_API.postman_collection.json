@@ -1,0 +1,2161 @@
+{
+	"info": {
+		"_postman_id": "fleet-management-api-collection",
+		"name": "Fleet Management API",
+		"description": "Complete API collection for Fleet Management System. Includes Authentication, User Profile, Dashboards, Team Management, Drivers, Vehicles, Documents, Trips, and Location Tracking modules.\n\n## User Roles\n- **Owner**: Primary account holder with full access\n- **Manager**: Administrative access, can manage drivers and trips\n- **Supervisor**: Operational access, limited to viewing and tracking\n\n## Key Features\n- Multi-tenant architecture with Owner-based data isolation\n- Role-based access control\n- Complete vehicle and driver lifecycle management\n- Trip planning and tracking\n- Real-time location tracking\n- Document management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"description": "User authentication endpoints including signup, login, and password management",
+			"item": [
+				{
+					"name": "Sign Up (Owner)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('token', jsonData.data.token);",
+									"    console.log('Token saved to collection variables');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"owner@example.com\",\n    \"mobile\": \"9876543210\",\n    \"password\": \"password123\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signup",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "signup"]
+						},
+						"description": "Register a new owner account. Only owners can sign up directly. Managers and Supervisors must be created by an Owner."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('token', jsonData.data.token);",
+									"    console.log('Token saved to collection variables');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"owner@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Authenticate a user and get a JWT token. The identifier can be email or mobile number."
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"owner@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/forgot-password",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "forgot-password"]
+						},
+						"description": "Request a password reset for the specified user."
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"owner@example.com\",\n    \"new_password\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/reset-password",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "reset-password"]
+						},
+						"description": "Reset user password with a new password."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Manager (Owner Auth Required)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"manager@example.com\",\n    \"mobile\": \"8765432109\",\n    \"password\": \"password123\",\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"role\": \"manager\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/team/members",
+							"host": ["{{base_url}}"],
+							"path": ["team", "members"]
+						},
+						"description": "Create a new Manager under the Owner. Only owners can create team members. Requires Owner authentication."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Supervisor (Owner Auth Required)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"supervisor@example.com\",\n    \"mobile\": \"7654321098\",\n    \"password\": \"password123\",\n    \"first_name\": \"Bob\",\n    \"last_name\": \"Wilson\",\n    \"role\": \"supervisor\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/team/members",
+							"host": ["{{base_url}}"],
+							"path": ["team", "members"]
+						},
+						"description": "Create a new Supervisor under the Owner. Only owners can create team members. Requires Owner authentication."
+					},
+					"response": []
+				},
+				{
+					"name": "Login as Manager",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('token', jsonData.data.token);",
+									"    console.log('Manager token saved to collection variables');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"manager@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Login as a Manager to get JWT token for manager-specific operations."
+					},
+					"response": []
+				},
+				{
+					"name": "Login as Supervisor",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('token', jsonData.data.token);",
+									"    console.log('Supervisor token saved to collection variables');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"identifier\": \"supervisor@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Login as a Supervisor to get JWT token for supervisor-specific operations."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Profile",
+			"description": "User profile management endpoints with role-based responses",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						},
+						"description": "Get the current user's profile. Response varies based on role:\n- Owner: Gets profile with organization statistics\n- Manager/Supervisor: Gets profile with owner information"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"John Updated\",\n    \"last_name\": \"Doe Updated\",\n    \"email\": \"newemail@example.com\",\n    \"mobile\": \"9999999999\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						},
+						"description": "Update the current user's profile. All fields are optional - only provided fields will be updated."
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"current_password\": \"password123\",\n    \"new_password\": \"newpassword456\",\n    \"confirm_password\": \"newpassword456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profile/change-password",
+							"host": ["{{base_url}}"],
+							"path": ["profile", "change-password"]
+						},
+						"description": "Change the current user's password."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Dashboards",
+			"description": "Role-based dashboard endpoints providing statistics and summaries",
+			"item": [
+				{
+					"name": "Owner Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/dashboard/owner",
+							"host": ["{{base_url}}"],
+							"path": ["dashboard", "owner"]
+						},
+						"description": "Get comprehensive dashboard statistics for the owner's organization including team, vehicles, trips, and documents."
+					},
+					"response": []
+				},
+				{
+					"name": "Manager Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/dashboard/manager",
+							"host": ["{{base_url}}"],
+							"path": ["dashboard", "manager"]
+						},
+						"description": "Get dashboard statistics for managers including vehicles and trips information."
+					},
+					"response": []
+				},
+				{
+					"name": "Supervisor Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/dashboard/supervisor",
+							"host": ["{{base_url}}"],
+							"path": ["dashboard", "supervisor"]
+						},
+						"description": "Get dashboard statistics for supervisors (limited view with active vehicles and trips only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Team Management",
+			"description": "Team management endpoints (Owner Only) - Create and manage managers and supervisors",
+			"item": [
+				{
+					"name": "Create Team Member",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"manager@example.com\",\n    \"mobile\": \"8765432109\",\n    \"password\": \"password123\",\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"role\": \"manager\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/team/members",
+							"host": ["{{base_url}}"],
+							"path": ["team", "members"]
+						},
+						"description": "Create a new manager or supervisor under the owner. Role must be either 'manager' or 'supervisor'. Only owners can access this endpoint."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Supervisor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"supervisor@example.com\",\n    \"mobile\": \"7654321098\",\n    \"password\": \"password123\",\n    \"first_name\": \"Bob\",\n    \"last_name\": \"Wilson\",\n    \"role\": \"supervisor\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/team/members",
+							"host": ["{{base_url}}"],
+							"path": ["team", "members"]
+						},
+						"description": "Create a new supervisor under the owner."
+					},
+					"response": []
+				},
+				{
+					"name": "List Team Members",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/team/members",
+							"host": ["{{base_url}}"],
+							"path": ["team", "members"]
+						},
+						"description": "Get all team members (managers and supervisors) under the owner."
+					},
+					"response": []
+				},
+				{
+					"name": "List Team Members (Filter by Role)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/team/members?role=manager",
+							"host": ["{{base_url}}"],
+							"path": ["team", "members"],
+							"query": [
+								{
+									"key": "role",
+									"value": "manager"
+								}
+							]
+						},
+						"description": "Get team members filtered by role. Valid roles: 'manager', 'supervisor'."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Team Member",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/team/members/2",
+							"host": ["{{base_url}}"],
+							"path": ["team", "members", "2"]
+						},
+						"description": "Get a specific team member by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Team Member",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Jane Updated\",\n    \"last_name\": \"Smith Updated\",\n    \"role\": \"supervisor\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/team/members/2",
+							"host": ["{{base_url}}"],
+							"path": ["team", "members", "2"]
+						},
+						"description": "Update a team member's details. Role can only be changed to 'manager' or 'supervisor'."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Team Member",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/team/members/2",
+							"host": ["{{base_url}}"],
+							"path": ["team", "members", "2"]
+						},
+						"description": "Delete a team member."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Vehicles",
+			"description": "Vehicle management endpoints for registering, updating, and managing fleet vehicles",
+			"item": [
+				{
+					"name": "Register Vehicle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"registration_number\": \"DL-01-AB-1234\",\n    \"make\": \"Toyota\",\n    \"model\": \"Innova\",\n    \"year\": 2023,\n    \"vehicle_type\": \"suv\",\n    \"fuel_type\": \"diesel\",\n    \"capacity\": 7,\n    \"color\": \"white\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/vehicles",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles"]
+						},
+						"description": "Register a new vehicle in the fleet. All users (Owner, Manager, Supervisor) can register vehicles. The vehicle will be linked to the owner and track who registered it via 'registered_by' field."
+					},
+					"response": []
+				},
+				{
+					"name": "List Vehicles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles"]
+						},
+						"description": "Get a list of all vehicles with pagination."
+					},
+					"response": []
+				},
+				{
+					"name": "List Vehicles (with Filters)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles?page=1&per_page=10&state=active",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "10"
+								},
+								{
+									"key": "state",
+									"value": "active"
+								}
+							]
+						},
+						"description": "Get a list of vehicles with pagination and state filter. Valid states: active, inactive, maintenance, retired."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1"]
+						},
+						"description": "Get a single vehicle by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Vehicle",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"make\": \"Toyota\",\n    \"model\": \"Fortuner\",\n    \"year\": 2024,\n    \"vehicle_type\": \"suv\",\n    \"fuel_type\": \"diesel\",\n    \"capacity\": 7,\n    \"color\": \"silver\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/vehicles/1",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1"]
+						},
+						"description": "Update vehicle details."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Vehicle State",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"state\": \"maintenance\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/state",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "state"]
+						},
+						"description": "Update the state of a vehicle. Valid states: active, inactive, maintenance, retired."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Vehicle",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1"]
+						},
+						"description": "Delete a vehicle."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle Current Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/location",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "location"]
+						},
+						"description": "Get the latest location of a specific vehicle."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle Location History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/location/history?start_time=2025-12-01T00:00:00Z&end_time=2025-12-31T23:59:59Z&limit=50",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "location", "history"],
+							"query": [
+								{
+									"key": "start_time",
+									"value": "2025-12-01T00:00:00Z"
+								},
+								{
+									"key": "end_time",
+									"value": "2025-12-31T23:59:59Z"
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						},
+						"description": "Get the location history of a specific vehicle with time range and limit filters."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Documents",
+			"description": "Vehicle document management endpoints for uploading, viewing, and managing documents",
+			"item": [
+				{
+					"name": "Upload Document",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Document file (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "document_type",
+									"value": "registration",
+									"type": "text",
+									"description": "Type: registration, insurance, puc, fitness, permit, other"
+								},
+								{
+									"key": "document_name",
+									"value": "Vehicle Registration Certificate",
+									"type": "text"
+								},
+								{
+									"key": "expiry_date",
+									"value": "2026-12-31T23:59:59Z",
+									"type": "text",
+									"description": "Optional - RFC3339 format"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/documents",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "documents"]
+						},
+						"description": "Upload a document for a vehicle. Valid document types: registration, insurance, puc, fitness, permit, other."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle Documents",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/documents",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "documents"]
+						},
+						"description": "Get all documents for a vehicle."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Document",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/documents/1",
+							"host": ["{{base_url}}"],
+							"path": ["documents", "1"]
+						},
+						"description": "Get a single document by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Download Document",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/documents/1/download",
+							"host": ["{{base_url}}"],
+							"path": ["documents", "1", "download"]
+						},
+						"description": "Download a document file."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Document",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/documents/1",
+							"host": ["{{base_url}}"],
+							"path": ["documents", "1"]
+						},
+						"description": "Delete a document."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Trips",
+			"description": "Trip management endpoints for creating, updating, and tracking trips",
+			"item": [
+				{
+					"name": "Create Trip",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_id\": 1,\n    \"driver_id\": 1,\n    \"scheduled_date\": \"2025-12-24T00:00:00Z\",\n    \"start_time\": \"2025-12-24T06:00:00Z\",\n    \"delivery_date\": \"2025-12-24T00:00:00Z\",\n    \"delivery_time\": \"2025-12-24T14:00:00Z\",\n    \"planned_start\": \"2025-12-24T06:00:00Z\",\n    \"planned_end\": \"2025-12-24T14:00:00Z\",\n    \"start_location\": \"123 Main St, New Delhi\",\n    \"start_lat\": 28.6139,\n    \"start_lng\": 77.2090,\n    \"end_location\": \"456 Taj Mahal Road, Agra\",\n    \"end_lat\": 27.1767,\n    \"end_lng\": 78.0081,\n    \"number_of_stops\": 1,\n    \"estimated_distance\": 233.5,\n    \"cargo_type\": \"general\",\n    \"cargo_description\": \"Office furniture and equipment\",\n    \"cargo_weight\": 500.0,\n    \"cargo_cost\": 25000.00,\n    \"customer_name\": \"ABC Corporation\",\n    \"customer_contact\": \"9876543210\",\n    \"customer_email\": \"contact@abc.com\",\n    \"customer_address\": \"456 Taj Mahal Road, Agra\",\n    \"priority\": \"normal\",\n    \"special_instructions\": \"Handle with care. Fragile items included.\",\n    \"notes\": \"Morning delivery to Agra office\",\n    \"stops\": [\n        {\n            \"stop_order\": 1,\n            \"location\": \"Toll Plaza, NH-2\",\n            \"latitude\": 28.1234,\n            \"longitude\": 77.5678,\n            \"arrival_time\": \"2025-12-24T08:00:00Z\",\n            \"stop_duration\": 15,\n            \"notes\": \"Toll payment\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trips",
+							"host": ["{{base_url}}"],
+							"path": ["trips"]
+						},
+						"description": "Create a new trip with full details including schedule, route, cargo, customer info, and optional stops. All required fields: vehicle_id, driver_id, scheduled_date, start_time, planned_start, planned_end, start_location, start_lat, start_lng, end_location, end_lat, end_lng, cargo_type."
+					},
+					"response": []
+				},
+				{
+					"name": "List Trips",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/trips",
+							"host": ["{{base_url}}"],
+							"path": ["trips"]
+						},
+						"description": "Get a list of all trips with pagination."
+					},
+					"response": []
+				},
+				{
+					"name": "List Trips (with Filters)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/trips?page=1&per_page=10&state=in_progress&vehicle_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["trips"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "10"
+								},
+								{
+									"key": "state",
+									"value": "in_progress"
+								},
+								{
+									"key": "vehicle_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Get trips with filters. Valid states: planned, in_progress, completed, cancelled."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Trip",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/trips/1",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1"]
+						},
+						"description": "Get a single trip by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Trip",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"start_location\": \"New Delhi\",\n    \"end_location\": \"Jaipur\",\n    \"start_lat\": 28.6139,\n    \"start_lng\": 77.2090,\n    \"end_lat\": 26.9124,\n    \"end_lng\": 75.7873,\n    \"distance\": 280.0,\n    \"planned_start\": \"2025-12-23T07:00:00Z\",\n    \"planned_end\": \"2025-12-23T12:00:00Z\",\n    \"notes\": \"Updated trip to Jaipur\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trips/1",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1"]
+						},
+						"description": "Update trip details."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Trip State",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"state\": \"in_progress\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trips/1/state",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1", "state"]
+						},
+						"description": "Update the state of a trip. Valid states: planned, in_progress, completed, cancelled."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Trip Location",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"current_lat\": 28.1234,\n    \"current_lng\": 77.5678\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trips/1/location",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1", "location"]
+						},
+						"description": "Update the current location of an in-progress trip for real-time tracking."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Trip",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/trips/1",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1"]
+						},
+						"description": "Delete a trip. Only planned or cancelled trips can be deleted."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Trip Stops",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/trips/1/stops",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1", "stops"]
+						},
+						"description": "Get all stops for a specific trip."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Trip Stop",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"stop_order\": 2,\n    \"location\": \"Rest Area, NH-2\",\n    \"latitude\": 27.5432,\n    \"longitude\": 77.9876,\n    \"arrival_time\": \"2025-12-24T10:00:00Z\",\n    \"stop_duration\": 30,\n    \"notes\": \"Driver rest break\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trips/1/stops",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1", "stops"]
+						},
+						"description": "Add a new stop to an existing trip. Only for planned trips."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Trip Stop",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"stop_order\": 1,\n    \"location\": \"Updated Stop Location\",\n    \"latitude\": 28.1111,\n    \"longitude\": 77.2222,\n    \"stop_duration\": 20,\n    \"notes\": \"Updated stop notes\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trips/1/stops/1",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1", "stops", "1"]
+						},
+						"description": "Update an existing trip stop."
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Stop Completed",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/trips/1/stops/1/complete",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1", "stops", "1", "complete"]
+						},
+						"description": "Mark a stop as completed. Only for in-progress trips."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Trip Stop",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/trips/1/stops/1",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1", "stops", "1"]
+						},
+						"description": "Delete a trip stop. Only for planned trips."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Drivers",
+			"description": "Driver management endpoints for adding, updating, and managing drivers. Drivers can only be created by Owners and Managers.",
+			"item": [
+				{
+					"name": "Create Driver",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Raj\",\n    \"last_name\": \"Kumar\",\n    \"email\": \"raj.kumar@example.com\",\n    \"mobile\": \"9876543210\",\n    \"license_number\": \"DL-1234567890\",\n    \"license_expiry\": \"2027-12-31T00:00:00Z\",\n    \"license_type\": \"HMV\",\n    \"date_of_birth\": \"1990-05-15T00:00:00Z\",\n    \"address\": \"123 Main St, New Delhi\",\n    \"emergency_contact\": \"9876543211\",\n    \"blood_group\": \"O+\",\n    \"joining_date\": \"2025-01-01T00:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/drivers",
+							"host": ["{{base_url}}"],
+							"path": ["drivers"]
+						},
+						"description": "Create a new driver. Only Owners and Managers can create drivers. Supervisors will receive 403 Forbidden."
+					},
+					"response": [
+						{
+							"name": "Success - Driver Created",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{"key": "Authorization", "value": "Bearer {{token}}"},
+									{"key": "Content-Type", "value": "application/json"}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"first_name\": \"Raj\",\n    \"last_name\": \"Kumar\",\n    \"email\": \"raj.kumar@example.com\",\n    \"mobile\": \"9876543210\",\n    \"license_number\": \"DL-1234567890\",\n    \"license_expiry\": \"2027-12-31T00:00:00Z\",\n    \"license_type\": \"HMV\",\n    \"address\": \"123 Main St, New Delhi\",\n    \"emergency_contact\": \"9876543211\",\n    \"blood_group\": \"O+\"\n}"
+								},
+								"url": {"raw": "{{base_url}}/drivers", "host": ["{{base_url}}"], "path": ["drivers"]}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Driver created successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"first_name\": \"Raj\",\n        \"last_name\": \"Kumar\",\n        \"email\": \"raj.kumar@example.com\",\n        \"mobile\": \"9876543210\",\n        \"license_number\": \"DL-1234567890\",\n        \"license_expiry\": \"2027-12-31T00:00:00Z\",\n        \"license_type\": \"HMV\",\n        \"address\": \"123 Main St, New Delhi\",\n        \"emergency_contact\": \"9876543211\",\n        \"blood_group\": \"O+\",\n        \"status\": \"active\",\n        \"owner_id\": 1,\n        \"owner\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"mobile\": \"9999999999\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\",\n            \"is_active\": true,\n            \"created_at\": \"2025-12-23T00:00:00Z\"\n        },\n        \"created_by_id\": 1,\n        \"created_by\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\"\n        },\n        \"is_active\": true,\n        \"created_at\": \"2025-12-23T10:00:00Z\",\n        \"updated_at\": \"2025-12-23T10:00:00Z\"\n    }\n}"
+						},
+						{
+							"name": "Error - Supervisor Not Allowed",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{"key": "Authorization", "value": "Bearer {{supervisor_token}}"},
+									{"key": "Content-Type", "value": "application/json"}
+								],
+								"body": {"mode": "raw", "raw": "{}"},
+								"url": {"raw": "{{base_url}}/drivers", "host": ["{{base_url}}"], "path": ["drivers"]}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": false,\n    \"message\": \"Access denied\",\n    \"error\": \"only owners and managers can create drivers\"\n}"
+						}
+					]
+				},
+				{
+					"name": "List Drivers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/drivers",
+							"host": ["{{base_url}}"],
+							"path": ["drivers"]
+						},
+						"description": "Get a list of all drivers with pagination."
+					},
+					"response": [
+						{
+							"name": "Success - Drivers List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/drivers", "host": ["{{base_url}}"], "path": ["drivers"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Drivers retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"first_name\": \"Raj\",\n            \"last_name\": \"Kumar\",\n            \"email\": \"raj.kumar@example.com\",\n            \"mobile\": \"9876543210\",\n            \"license_number\": \"DL-1234567890\",\n            \"license_expiry\": \"2027-12-31T00:00:00Z\",\n            \"license_type\": \"HMV\",\n            \"address\": \"123 Main St, New Delhi\",\n            \"emergency_contact\": \"9876543211\",\n            \"blood_group\": \"O+\",\n            \"status\": \"active\",\n            \"owner_id\": 1,\n            \"owner\": {\n                \"id\": 1,\n                \"email\": \"owner@example.com\",\n                \"first_name\": \"Fleet\",\n                \"last_name\": \"Owner\",\n                \"role\": \"owner\"\n            },\n            \"created_by_id\": 1,\n            \"created_by\": {\n                \"id\": 1,\n                \"email\": \"owner@example.com\",\n                \"first_name\": \"Fleet\",\n                \"last_name\": \"Owner\",\n                \"role\": \"owner\"\n            },\n            \"is_active\": true,\n            \"created_at\": \"2025-12-23T10:00:00Z\",\n            \"updated_at\": \"2025-12-23T10:00:00Z\"\n        },\n        {\n            \"id\": 2,\n            \"first_name\": \"Suresh\",\n            \"last_name\": \"Yadav\",\n            \"email\": \"suresh.yadav@example.com\",\n            \"mobile\": \"8765432109\",\n            \"license_number\": \"DL-0987654321\",\n            \"license_expiry\": \"2026-06-30T00:00:00Z\",\n            \"license_type\": \"LMV\",\n            \"address\": \"456 Park Ave, Mumbai\",\n            \"blood_group\": \"A+\",\n            \"status\": \"active\",\n            \"owner_id\": 1,\n            \"is_active\": true,\n            \"created_at\": \"2025-12-23T11:00:00Z\",\n            \"updated_at\": \"2025-12-23T11:00:00Z\"\n        }\n    ],\n    \"pagination\": {\n        \"page\": 1,\n        \"per_page\": 10,\n        \"total\": 2,\n        \"total_pages\": 1\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "List Drivers (with Filters)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/drivers?page=1&per_page=10&status=active&search=raj",
+							"host": ["{{base_url}}"],
+							"path": ["drivers"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "10"
+								},
+								{
+									"key": "status",
+									"value": "active",
+									"description": "Valid statuses: active, inactive, on_trip, on_leave, suspended"
+								},
+								{
+									"key": "search",
+									"value": "raj",
+									"description": "Search by name, mobile, or license number"
+								}
+							]
+						},
+						"description": "Get drivers with pagination, status filter, and search. Valid statuses: active, inactive, on_trip, on_leave, suspended."
+					},
+					"response": [
+						{
+							"name": "Success - Filtered Drivers",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/drivers?status=active&search=raj", "host": ["{{base_url}}"], "path": ["drivers"], "query": [{"key": "status", "value": "active"}, {"key": "search", "value": "raj"}]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Drivers retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"first_name\": \"Raj\",\n            \"last_name\": \"Kumar\",\n            \"email\": \"raj.kumar@example.com\",\n            \"mobile\": \"9876543210\",\n            \"license_number\": \"DL-1234567890\",\n            \"license_type\": \"HMV\",\n            \"status\": \"active\",\n            \"is_active\": true\n        }\n    ],\n    \"pagination\": {\n        \"page\": 1,\n        \"per_page\": 10,\n        \"total\": 1,\n        \"total_pages\": 1\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Available Drivers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/drivers/available",
+							"host": ["{{base_url}}"],
+							"path": ["drivers", "available"]
+						},
+						"description": "Get all available drivers for trip assignment. Returns drivers with status=active and is_active=true."
+					},
+					"response": [
+						{
+							"name": "Success - Available Drivers",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/drivers/available", "host": ["{{base_url}}"], "path": ["drivers", "available"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Available drivers retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"first_name\": \"Raj\",\n            \"last_name\": \"Kumar\",\n            \"email\": \"raj.kumar@example.com\",\n            \"mobile\": \"9876543210\",\n            \"license_number\": \"DL-1234567890\",\n            \"license_expiry\": \"2027-12-31T00:00:00Z\",\n            \"license_type\": \"HMV\",\n            \"status\": \"active\",\n            \"is_active\": true\n        },\n        {\n            \"id\": 2,\n            \"first_name\": \"Suresh\",\n            \"last_name\": \"Yadav\",\n            \"mobile\": \"8765432109\",\n            \"license_number\": \"DL-0987654321\",\n            \"license_type\": \"LMV\",\n            \"status\": \"active\",\n            \"is_active\": true\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Driver",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/drivers/1",
+							"host": ["{{base_url}}"],
+							"path": ["drivers", "1"]
+						},
+						"description": "Get a single driver by ID."
+					},
+					"response": [
+						{
+							"name": "Success - Driver Details",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/drivers/1", "host": ["{{base_url}}"], "path": ["drivers", "1"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Driver retrieved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"first_name\": \"Raj\",\n        \"last_name\": \"Kumar\",\n        \"email\": \"raj.kumar@example.com\",\n        \"mobile\": \"9876543210\",\n        \"license_number\": \"DL-1234567890\",\n        \"license_expiry\": \"2027-12-31T00:00:00Z\",\n        \"license_type\": \"HMV\",\n        \"date_of_birth\": \"1990-05-15T00:00:00Z\",\n        \"address\": \"123 Main St, New Delhi\",\n        \"emergency_contact\": \"9876543211\",\n        \"blood_group\": \"O+\",\n        \"profile_photo\": \"\",\n        \"status\": \"active\",\n        \"owner_id\": 1,\n        \"owner\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"mobile\": \"9999999999\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\",\n            \"is_active\": true\n        },\n        \"created_by_id\": 1,\n        \"created_by\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\"\n        },\n        \"joining_date\": \"2025-01-01T00:00:00Z\",\n        \"is_active\": true,\n        \"created_at\": \"2025-12-23T10:00:00Z\",\n        \"updated_at\": \"2025-12-23T10:00:00Z\"\n    }\n}"
+						},
+						{
+							"name": "Error - Driver Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/drivers/999", "host": ["{{base_url}}"], "path": ["drivers", "999"]}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": false,\n    \"message\": \"Driver not found\",\n    \"error\": \"record not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Driver",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Raj\",\n    \"last_name\": \"Kumar Updated\",\n    \"email\": \"raj.kumar.updated@example.com\",\n    \"mobile\": \"9876543212\",\n    \"license_expiry\": \"2028-12-31T00:00:00Z\",\n    \"address\": \"456 New Address, New Delhi\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/drivers/1",
+							"host": ["{{base_url}}"],
+							"path": ["drivers", "1"]
+						},
+						"description": "Update driver details. Only Owners and Managers can update drivers."
+					},
+					"response": [
+						{
+							"name": "Success - Driver Updated",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{"key": "Authorization", "value": "Bearer {{token}}"},
+									{"key": "Content-Type", "value": "application/json"}
+								],
+								"body": {"mode": "raw", "raw": "{\n    \"first_name\": \"Raj\",\n    \"last_name\": \"Kumar Updated\",\n    \"address\": \"456 New Address, New Delhi\"\n}"},
+								"url": {"raw": "{{base_url}}/drivers/1", "host": ["{{base_url}}"], "path": ["drivers", "1"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Driver updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"first_name\": \"Raj\",\n        \"last_name\": \"Kumar Updated\",\n        \"email\": \"raj.kumar@example.com\",\n        \"mobile\": \"9876543210\",\n        \"license_number\": \"DL-1234567890\",\n        \"license_expiry\": \"2027-12-31T00:00:00Z\",\n        \"license_type\": \"HMV\",\n        \"address\": \"456 New Address, New Delhi\",\n        \"status\": \"active\",\n        \"owner_id\": 1,\n        \"is_active\": true,\n        \"created_at\": \"2025-12-23T10:00:00Z\",\n        \"updated_at\": \"2025-12-23T12:00:00Z\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Driver Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"on_trip\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/drivers/1/status",
+							"host": ["{{base_url}}"],
+							"path": ["drivers", "1", "status"]
+						},
+						"description": "Update the status of a driver. Valid statuses: active, inactive, on_trip, on_leave, suspended. Only Owners and Managers can update status."
+					},
+					"response": [
+						{
+							"name": "Success - Status Updated",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [
+									{"key": "Authorization", "value": "Bearer {{token}}"},
+									{"key": "Content-Type", "value": "application/json"}
+								],
+								"body": {"mode": "raw", "raw": "{\n    \"status\": \"on_trip\"\n}"},
+								"url": {"raw": "{{base_url}}/drivers/1/status", "host": ["{{base_url}}"], "path": ["drivers", "1", "status"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Driver status updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"first_name\": \"Raj\",\n        \"last_name\": \"Kumar\",\n        \"status\": \"on_trip\",\n        \"is_active\": true,\n        \"updated_at\": \"2025-12-23T12:00:00Z\"\n    }\n}"
+						},
+						{
+							"name": "Error - Invalid Status",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [
+									{"key": "Authorization", "value": "Bearer {{token}}"},
+									{"key": "Content-Type", "value": "application/json"}
+								],
+								"body": {"mode": "raw", "raw": "{\n    \"status\": \"invalid_status\"\n}"},
+								"url": {"raw": "{{base_url}}/drivers/1/status", "host": ["{{base_url}}"], "path": ["drivers", "1", "status"]}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": false,\n    \"message\": \"Invalid status\",\n    \"error\": \"valid statuses are: active, inactive, on_trip, on_leave, suspended\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Toggle Driver Active",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/drivers/1/toggle-active",
+							"host": ["{{base_url}}"],
+							"path": ["drivers", "1", "toggle-active"]
+						},
+						"description": "Toggle the active state of a driver (activate/deactivate). Only Owners and Managers can toggle active state."
+					},
+					"response": [
+						{
+							"name": "Success - Driver Deactivated",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/drivers/1/toggle-active", "host": ["{{base_url}}"], "path": ["drivers", "1", "toggle-active"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Driver deactivated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"first_name\": \"Raj\",\n        \"last_name\": \"Kumar\",\n        \"is_active\": false,\n        \"updated_at\": \"2025-12-23T12:00:00Z\"\n    }\n}"
+						},
+						{
+							"name": "Success - Driver Activated",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/drivers/1/toggle-active", "host": ["{{base_url}}"], "path": ["drivers", "1", "toggle-active"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Driver activated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"first_name\": \"Raj\",\n        \"last_name\": \"Kumar\",\n        \"is_active\": true,\n        \"updated_at\": \"2025-12-23T12:30:00Z\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Delete Driver",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/drivers/1",
+							"host": ["{{base_url}}"],
+							"path": ["drivers", "1"]
+						},
+						"description": "Delete a driver. Only Owners can delete drivers."
+					},
+					"response": [
+						{
+							"name": "Success - Driver Deleted",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/drivers/1", "host": ["{{base_url}}"], "path": ["drivers", "1"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Driver deleted successfully\",\n    \"data\": null\n}"
+						},
+						{
+							"name": "Error - Manager Cannot Delete",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [{"key": "Authorization", "value": "Bearer {{manager_token}}"}],
+								"url": {"raw": "{{base_url}}/drivers/1", "host": ["{{base_url}}"], "path": ["drivers", "1"]}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": false,\n    \"message\": \"Access denied\",\n    \"error\": \"only owners can delete drivers\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Location Tracking",
+			"description": "Location tracking endpoints for recording and retrieving vehicle locations",
+			"item": [
+				{
+					"name": "Track Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_id\": 1,\n    \"latitude\": 28.6139,\n    \"longitude\": 77.2090,\n    \"speed\": 55.5,\n    \"heading\": 90.0,\n    \"altitude\": 216.0,\n    \"accuracy\": 5.0\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/locations/track",
+							"host": ["{{base_url}}"],
+							"path": ["locations", "track"]
+						},
+						"description": "Record a vehicle's current location."
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Track Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"vehicle_id\": 1,\n        \"latitude\": 28.6139,\n        \"longitude\": 77.2090,\n        \"speed\": 55.5,\n        \"heading\": 90.0,\n        \"altitude\": 216.0,\n        \"accuracy\": 5.0\n    },\n    {\n        \"vehicle_id\": 2,\n        \"latitude\": 28.7041,\n        \"longitude\": 77.1025,\n        \"speed\": 40.0,\n        \"heading\": 180.0,\n        \"altitude\": 220.0,\n        \"accuracy\": 8.0\n    }\n]"
+						},
+						"url": {
+							"raw": "{{base_url}}/locations/track/bulk",
+							"host": ["{{base_url}}"],
+							"path": ["locations", "track", "bulk"]
+						},
+						"description": "Record multiple vehicle locations at once."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Vehicles Current Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/locations/current",
+							"host": ["{{base_url}}"],
+							"path": ["locations", "current"]
+						},
+						"description": "Get the latest location of all vehicles."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Manager APIs",
+			"description": "Manager-specific endpoints for fleet management (read-only vehicle access, trip management)",
+			"item": [
+				{
+					"name": "List Vehicles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/manager/vehicles?page=1&per_page=10",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "vehicles"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "per_page", "value": "10"},
+								{"key": "state", "value": "active", "disabled": true}
+							]
+						},
+						"description": "List all vehicles belonging to the manager's owner organization."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/manager/vehicles/1",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "vehicles", "1"]
+						},
+						"description": "Get details of a specific vehicle."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/manager/vehicles/1/location",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "vehicles", "1", "location"]
+						},
+						"description": "Get current location of a specific vehicle."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle Documents",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/manager/vehicles/1/documents",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "vehicles", "1", "documents"]
+						},
+						"description": "Get all documents for a specific vehicle."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Vehicle Locations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/manager/vehicles/locations/all",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "vehicles", "locations", "all"]
+						},
+						"description": "Get current locations of all vehicles."
+					},
+					"response": []
+				},
+				{
+					"name": "List Trips",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/manager/trips?page=1&per_page=10",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "trips"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "per_page", "value": "10"},
+								{"key": "state", "value": "in_progress", "disabled": true},
+								{"key": "vehicle_id", "value": "1", "disabled": true}
+							]
+						},
+						"description": "List all trips for the organization's vehicles."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Trip",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/manager/trips/1",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "trips", "1"]
+						},
+						"description": "Get details of a specific trip."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Trip",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_id\": 1,\n    \"driver_id\": 2,\n    \"start_location\": \"Bangalore\",\n    \"end_location\": \"Chennai\",\n    \"start_lat\": 12.9716,\n    \"start_lng\": 77.5946,\n    \"end_lat\": 13.0827,\n    \"end_lng\": 80.2707,\n    \"distance\": 350.5,\n    \"planned_start\": \"2025-12-23T08:00:00Z\",\n    \"planned_end\": \"2025-12-23T16:00:00Z\",\n    \"notes\": \"Cargo delivery\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/manager/trips",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "trips"]
+						},
+						"description": "Create a new trip."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Trip State",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"state\": \"in_progress\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/manager/trips/1/state",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "trips", "1", "state"]
+						},
+						"description": "Update the state of a trip. Valid states: planned, in_progress, completed, cancelled"
+					},
+					"response": []
+				},
+				{
+					"name": "List Supervisors",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/manager/supervisors",
+							"host": ["{{base_url}}"],
+							"path": ["manager", "supervisors"]
+						},
+						"description": "Get all supervisors under the same owner."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Supervisor APIs",
+			"description": "Supervisor-specific endpoints for fleet monitoring (limited read-only access to active vehicles and trips)",
+			"item": [
+				{
+					"name": "List Active Vehicles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/supervisor/vehicles?page=1&per_page=10",
+							"host": ["{{base_url}}"],
+							"path": ["supervisor", "vehicles"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "per_page", "value": "10"}
+							]
+						},
+						"description": "List all active vehicles belonging to the supervisor's owner organization."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/supervisor/vehicles/1",
+							"host": ["{{base_url}}"],
+							"path": ["supervisor", "vehicles", "1"]
+						},
+						"description": "Get details of a specific active vehicle."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/supervisor/vehicles/1/location",
+							"host": ["{{base_url}}"],
+							"path": ["supervisor", "vehicles", "1", "location"]
+						},
+						"description": "Get current location of a specific active vehicle."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Active Vehicle Locations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/supervisor/vehicles/locations/all",
+							"host": ["{{base_url}}"],
+							"path": ["supervisor", "vehicles", "locations", "all"]
+						},
+						"description": "Get current locations of all active vehicles."
+					},
+					"response": []
+				},
+				{
+					"name": "List Active Trips",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/supervisor/trips?page=1&per_page=10",
+							"host": ["{{base_url}}"],
+							"path": ["supervisor", "trips"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "per_page", "value": "10"}
+							]
+						},
+						"description": "List all active (in-progress) trips."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Trip",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/supervisor/trips/1",
+							"host": ["{{base_url}}"],
+							"path": ["supervisor", "trips", "1"]
+						},
+						"description": "Get details of a specific active trip."
+					},
+					"response": []
+				},
+				{
+					"name": "Track Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_id\": 1,\n    \"latitude\": 12.9716,\n    \"longitude\": 77.5946,\n    \"speed\": 45.5,\n    \"heading\": 180.0,\n    \"altitude\": 920.0,\n    \"accuracy\": 5.0\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/supervisor/locations/track",
+							"host": ["{{base_url}}"],
+							"path": ["supervisor", "locations", "track"]
+						},
+						"description": "Submit a location update for a vehicle."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
+

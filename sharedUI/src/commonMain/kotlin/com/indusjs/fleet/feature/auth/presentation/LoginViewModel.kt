@@ -5,8 +5,9 @@ import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.feature.auth.presentation.LoginContract.Effect
 import com.indusjs.fleet.feature.auth.presentation.LoginContract.Intent
 import com.indusjs.fleet.feature.auth.presentation.LoginContract.State
+import com.indusjs.fleet.feature.user.di.UserModule
+import com.indusjs.fleet.feature.user.domain.repository.UserRepository
 import dev.zacsweers.metro.Inject
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /**
@@ -14,7 +15,8 @@ import kotlinx.coroutines.withContext
  */
 @Inject
 class LoginViewModel(
-    private val dispatcherProvider: DispatcherProvider
+    private val dispatcherProvider: DispatcherProvider,
+    private val userRepository: UserRepository = UserModule.provideUserRepository()
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     override suspend fun handleIntent(intent: Intent) {
@@ -33,7 +35,7 @@ class LoginViewModel(
 
         // Validate inputs
         if (email.isEmpty()) {
-            updateState { copy(error = "Please enter your email") }
+            updateState { copy(error = "Please enter your email or mobile") }
             return
         }
         if (password.isEmpty()) {
@@ -45,15 +47,25 @@ class LoginViewModel(
 
         withContext(dispatcherProvider.io) {
             try {
-                // TODO: Replace with actual authentication
-                delay(1000) // Simulate network call
+                val result = userRepository.login(
+                    identifier = email,
+                    password = password
+                )
 
-                // Mock authentication - accept any non-empty credentials
-                if (email.isNotEmpty() && password.isNotEmpty()) {
-                    sendEffect(Effect.NavigateToDashboard)
-                } else {
-                    updateState { copy(isLoading = false, error = "Invalid credentials") }
-                }
+                result.fold(
+                    onSuccess = { authResult ->
+                        updateState { copy(isLoading = false) }
+                        sendEffect(Effect.NavigateToDashboard)
+                    },
+                    onFailure = { error ->
+                        updateState {
+                            copy(
+                                isLoading = false,
+                                error = error.message ?: "Login failed"
+                            )
+                        }
+                    }
+                )
             } catch (e: Exception) {
                 updateState {
                     copy(
@@ -63,8 +75,6 @@ class LoginViewModel(
                 }
             }
         }
-
-        updateState { copy(isLoading = false) }
     }
 }
 
