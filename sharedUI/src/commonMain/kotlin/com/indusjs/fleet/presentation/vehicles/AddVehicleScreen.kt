@@ -37,6 +37,27 @@ fun AddVehicleScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // State for document upload dialog
+    var documentToUpload by remember { mutableStateOf<DocumentType?>(null) }
+
+    // Show document upload dialog
+    documentToUpload?.let { docType ->
+        DocumentUploadDialog(
+            documentType = docType,
+            onDismiss = { documentToUpload = null },
+            onSelectFile = {
+                documentToUpload = null
+                onRequestFilePicker(docType) { fileName, bytes, mimeType ->
+                    viewModel.sendIntent(
+                        AddVehicleContract.Intent.UploadDocument(
+                            docType, fileName, bytes, mimeType
+                        )
+                    )
+                }
+            }
+        )
+    }
+
     // Handle effects
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -47,13 +68,8 @@ fun AddVehicleScreen(
                 is AddVehicleContract.Effect.NavigateBack -> onNavigateBack()
                 is AddVehicleContract.Effect.VehicleRegistered -> onVehicleRegistered(effect.vehicleId)
                 is AddVehicleContract.Effect.ShowDocumentPicker -> {
-                    onRequestFilePicker(effect.type) { fileName, bytes, mimeType ->
-                        viewModel.sendIntent(
-                            AddVehicleContract.Intent.UploadDocument(
-                                effect.type, fileName, bytes, mimeType
-                            )
-                        )
-                    }
+                    // Show the upload info dialog first
+                    documentToUpload = effect.type
                 }
                 else -> {}
             }
@@ -721,6 +737,105 @@ private fun formatFileSize(bytes: Long): String {
         bytes < 1024 -> "$bytes B"
         bytes < 1024 * 1024 -> "${bytes / 1024} KB"
         else -> "${bytes / (1024 * 1024)} MB"
+    }
+}
+
+/**
+ * Dialog shown before file picker to inform user about supported formats.
+ */
+@Composable
+private fun DocumentUploadDialog(
+    documentType: DocumentType,
+    onDismiss: () -> Unit,
+    onSelectFile: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Text(
+                text = getDocumentEmoji(documentType),
+                style = MaterialTheme.typography.displaySmall
+            )
+        },
+        title = {
+            Text(
+                text = "Upload ${getDocumentTypeName(documentType)}",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Please select a file to upload.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                // Supported formats
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Supported Formats:",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FormatChip("PDF")
+                            FormatChip("JPEG")
+                            FormatChip("PNG")
+                        }
+                        Text(
+                            text = "Maximum file size: 10 MB",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Tag info
+                Text(
+                    text = "Tag: ${getDocumentTag(documentType)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onSelectFile) {
+                Text("Select File")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun FormatChip(format: String) {
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+        Text(
+            text = format,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 }
 

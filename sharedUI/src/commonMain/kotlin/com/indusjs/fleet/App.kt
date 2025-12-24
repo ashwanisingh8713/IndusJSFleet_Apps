@@ -23,6 +23,15 @@ import com.indusjs.fleet.presentation.user.forgotpassword.ForgotPasswordScreen
 import com.indusjs.fleet.presentation.team.list.TeamListScreen
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberScreen
 import com.indusjs.fleet.theme.AppTheme
+import com.indusjs.fleet.domain.entity.vehicle.DocumentType
+
+/**
+ * File picker request data.
+ */
+data class FilePickerRequest(
+    val documentType: DocumentType,
+    val callback: (fileName: String, fileBytes: ByteArray, mimeType: String) -> Unit
+)
 
 /**
  * Navigation routes for the app
@@ -49,11 +58,13 @@ sealed class AppRoute {
 @Preview
 @Composable
 fun App(
-    onThemeChanged: @Composable (isDark: Boolean) -> Unit = {}
+    onThemeChanged: @Composable (isDark: Boolean) -> Unit = {},
+    onPickFile: ((FilePickerRequest) -> Unit)? = null
 ) = AppTheme(onThemeChanged) {
     // Simple state-based navigation
     var currentRoute by remember { mutableStateOf<AppRoute>(AppRoute.Login) }
     var isLoggedIn by remember { mutableStateOf(false) }
+
 
     // Create ViewModelProvider for dependency injection
     // In production with Metro DI, this would use the generated graphs
@@ -157,8 +168,13 @@ fun App(
                             currentRoute = AppRoute.VehicleDetail(vehicleId)
                         },
                         onRequestFilePicker = { documentType, callback ->
-                            // Platform-specific file picker would be implemented here
-                            // For now, this is a placeholder that platforms can override
+                            val request = FilePickerRequest(documentType, callback)
+                            if (onPickFile != null) {
+                                onPickFile(request)
+                            } else {
+                                // Fallback: Show a message that file picking is not available
+                                // This would be replaced by platform-specific implementation
+                            }
                         }
                     )
                 }
