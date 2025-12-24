@@ -42,6 +42,9 @@ data class Vehicle(
     val year: Int,
     val type: VehicleType,
     val status: VehicleStatus,
+    val fuelType: String = "petrol",
+    val color: String = "white",
+    val capacity: Int = 4,
     val fuelLevel: Int = 0,
     val mileage: Double = 0.0,
     val lastLocation: Location? = null,
@@ -91,8 +94,27 @@ data class VehicleDocument(
     val status: DocumentStatus = DocumentStatus.PENDING,
     val notes: String? = null,
     val fileUrl: String? = null,
-    val localFilePath: String? = null
-)
+    val localFilePath: String? = null,
+    val fileBytes: ByteArray? = null // For holding file data during upload
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+        other as VehicleDocument
+        return id == other.id &&
+                vehicleId == other.vehicleId &&
+                type == other.type &&
+                fileName == other.fileName
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + vehicleId.hashCode()
+        result = 31 * result + type.hashCode()
+        result = 31 * result + fileName.hashCode()
+        return result
+    }
+}
 
 /**
  * Represents a file to be uploaded (platform-agnostic).

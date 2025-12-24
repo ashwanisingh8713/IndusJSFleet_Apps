@@ -619,6 +619,150 @@
 					"response": []
 				},
 				{
+					"name": "Register Vehicle with Documents",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "registration_number",
+									"value": "MH-12-CD-5678",
+									"type": "text",
+									"description": "Vehicle registration number (required)"
+								},
+								{
+									"key": "make",
+									"value": "Tata",
+									"type": "text",
+									"description": "Vehicle manufacturer (required)"
+								},
+								{
+									"key": "model",
+									"value": "Ace",
+									"type": "text",
+									"description": "Vehicle model (required)"
+								},
+								{
+									"key": "year",
+									"value": "2023",
+									"type": "text",
+									"description": "Manufacturing year (required)"
+								},
+								{
+									"key": "vehicle_type",
+									"value": "truck",
+									"type": "text",
+									"description": "Type of vehicle (optional)"
+								},
+								{
+									"key": "fuel_type",
+									"value": "diesel",
+									"type": "text",
+									"description": "Fuel type (optional)"
+								},
+								{
+									"key": "capacity",
+									"value": "1000",
+									"type": "text",
+									"description": "Cargo/passenger capacity (optional)"
+								},
+								{
+									"key": "color",
+									"value": "blue",
+									"type": "text",
+									"description": "Vehicle color (optional)"
+								},
+								{
+									"key": "registration_certificate",
+									"type": "file",
+									"src": "",
+									"description": "Registration Certificate file [Tag: RC] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "registration_certificate_expiry",
+									"value": "2028-01-15",
+									"type": "text",
+									"description": "RC expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "insurance",
+									"type": "file",
+									"src": "",
+									"description": "Insurance policy file [Tag: INS] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "insurance_expiry",
+									"value": "2025-06-30",
+									"type": "text",
+									"description": "Insurance expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "puc_certificate",
+									"type": "file",
+									"src": "",
+									"description": "PUC Certificate file [Tag: PUC] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "puc_certificate_expiry",
+									"value": "2025-03-15",
+									"type": "text",
+									"description": "PUC expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "fitness_certificate",
+									"type": "file",
+									"src": "",
+									"description": "Fitness Certificate file [Tag: FC] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "fitness_certificate_expiry",
+									"value": "2026-12-31",
+									"type": "text",
+									"description": "Fitness expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "road_tax",
+									"type": "file",
+									"src": "",
+									"description": "Road Tax receipt file [Tag: RT] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "road_tax_expiry",
+									"value": "2025-03-31",
+									"type": "text",
+									"description": "Road Tax expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "permit",
+									"type": "file",
+									"src": "",
+									"description": "Permit file [Tag: PERMIT] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "permit_expiry",
+									"value": "2025-12-31",
+									"type": "text",
+									"description": "Permit expiry date (YYYY-MM-DD)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/vehicles/with-documents",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "with-documents"]
+						},
+						"description": "Register a new vehicle with optional document uploads in a single request. Each uploaded document will automatically receive a tag.\n\nDocument Tags:\n- registration_certificate → RC\n- insurance → INS\n- puc_certificate → PUC\n- fitness_certificate → FC\n- road_tax → RT\n- permit → PERMIT\n\nAll document fields are optional - you can upload any combination of documents."
+					},
+					"response": []
+				},
+				{
 					"name": "List Vehicles",
 					"request": {
 						"method": "GET",
@@ -818,7 +962,7 @@
 		},
 		{
 			"name": "Documents",
-			"description": "Vehicle document management endpoints for uploading, viewing, and managing documents",
+			"description": "Vehicle document management endpoints for uploading, viewing, and managing documents. Each document type has a short tag: RC (Registration Certificate), INS (Insurance), PUC (PUC Certificate), FC (Fitness Certificate), RT (Road Tax), PERMIT (Permit), OTHER (Other).",
 			"item": [
 				{
 					"name": "Upload Document",
@@ -841,9 +985,9 @@
 								},
 								{
 									"key": "document_type",
-									"value": "registration",
+									"value": "registration_certificate",
 									"type": "text",
-									"description": "Type: registration, insurance, puc, fitness, permit, other"
+									"description": "Type (Tag): registration_certificate (RC), insurance (INS), puc_certificate (PUC), fitness_certificate (FC), road_tax (RT), permit (PERMIT), other (OTHER)"
 								},
 								{
 									"key": "document_name",
@@ -863,7 +1007,122 @@
 							"host": ["{{base_url}}"],
 							"path": ["vehicles", "1", "documents"]
 						},
-						"description": "Upload a document for a vehicle. Valid document types: registration, insurance, puc, fitness, permit, other."
+						"description": "Upload a document for a vehicle. Each document automatically gets a tag based on its type.\n\nDocument Types and Tags:\n- registration_certificate → RC\n- insurance → INS\n- puc_certificate → PUC\n- fitness_certificate → FC\n- road_tax → RT\n- permit → PERMIT\n- other → OTHER"
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Upload Documents",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "registration_certificate",
+									"type": "file",
+									"src": "",
+									"description": "Registration Certificate file [Tag: RC] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "registration_certificate_expiry",
+									"value": "2028-01-15",
+									"type": "text",
+									"description": "RC expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "insurance",
+									"type": "file",
+									"src": "",
+									"description": "Insurance policy file [Tag: INS] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "insurance_expiry",
+									"value": "2025-06-30",
+									"type": "text",
+									"description": "Insurance expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "puc_certificate",
+									"type": "file",
+									"src": "",
+									"description": "PUC Certificate file [Tag: PUC] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "puc_certificate_expiry",
+									"value": "2025-03-15",
+									"type": "text",
+									"description": "PUC expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "fitness_certificate",
+									"type": "file",
+									"src": "",
+									"description": "Fitness Certificate file [Tag: FC] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "fitness_certificate_expiry",
+									"value": "2026-12-31",
+									"type": "text",
+									"description": "Fitness expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "road_tax",
+									"type": "file",
+									"src": "",
+									"description": "Road Tax receipt file [Tag: RT] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "road_tax_expiry",
+									"value": "2025-03-31",
+									"type": "text",
+									"description": "Road Tax expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "permit",
+									"type": "file",
+									"src": "",
+									"description": "Permit file [Tag: PERMIT] (PDF, JPEG, PNG - max 10MB)"
+								},
+								{
+									"key": "permit_expiry",
+									"value": "2025-12-31",
+									"type": "text",
+									"description": "Permit expiry date (YYYY-MM-DD)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/documents/bulk",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "documents", "bulk"]
+						},
+						"description": "Upload multiple documents for an existing vehicle in a single request. Each uploaded document will automatically receive a tag.\n\nDocument Tags:\n- registration_certificate → RC\n- insurance → INS\n- puc_certificate → PUC\n- fitness_certificate → FC\n- road_tax → RT\n- permit → PERMIT\n\nAll document fields are optional - you can upload any combination of documents. Each document type can have an optional expiry date in YYYY-MM-DD format."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Document Types",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/documents/types",
+							"host": ["{{base_url}}"],
+							"path": ["documents", "types"]
+						},
+						"description": "Get a list of all valid document types with their tags and descriptions. Tags: RC (Registration Certificate), INS (Insurance), PUC (PUC Certificate), FC (Fitness Certificate), RT (Road Tax), PERMIT (Permit), OTHER (Other)."
 					},
 					"response": []
 				},

@@ -8,8 +8,7 @@ import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
-import com.indusjs.fleet.domain.entity.vehicle.VehicleType
-import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleUseCase
+import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleWithDocumentsUseCase
 import com.indusjs.fleet.presentation.vehicles.AddVehicleContract.Effect
 import com.indusjs.fleet.presentation.vehicles.AddVehicleContract.Intent
 import com.indusjs.fleet.presentation.vehicles.AddVehicleContract.State
@@ -25,8 +24,12 @@ import kotlinx.coroutines.withContext
 @Inject
 class AddVehicleViewModel(
     private val dispatcherProvider: DispatcherProvider,
-    private val createVehicleUseCase: CreateVehicleUseCase
+    private val createVehicleWithDocumentsUseCase: CreateVehicleWithDocumentsUseCase
 ) : MviViewModel<State, Intent, Effect>(State()) {
+
+    companion object {
+        private var documentIdCounter = 0L
+    }
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
@@ -166,13 +169,14 @@ class AddVehicleViewModel(
 
         withContext(dispatcherProvider.io) {
             try {
-                // Simulate upload progress
+                // Simulate upload progress (actual upload happens on submit)
                 for (progress in 1..10) {
-                    delay(100)
+                    delay(50)
                     updateState { copy(uploadProgress = progress / 10f) }
                 }
 
-                val currentTime = 1734700000000L // Mock timestamp
+                // Generate unique ID for the document
+                val currentTime = documentIdCounter++
                 val documentId = "doc_${currentTime}_${type.ordinal}"
                 val document = VehicleDocument(
                     id = documentId,
@@ -182,8 +186,9 @@ class AddVehicleViewModel(
                     fileName = fileName,
                     fileSize = fileBytes.size.toLong(),
                     mimeType = mimeType,
-                    uploadDate = currentTime,
-                    status = DocumentStatus.PENDING
+                    uploadDate = 0L, // Will be set by server
+                    status = DocumentStatus.PENDING,
+                    fileBytes = fileBytes // Store bytes for upload
                 )
 
                 updateState {
@@ -194,10 +199,10 @@ class AddVehicleViewModel(
                     )
                 }
 
-                sendEffect(Effect.ShowSnackbar("${getDocumentTypeName(type)} uploaded successfully"))
+                sendEffect(Effect.ShowSnackbar("${getDocumentTypeName(type)} ready for upload"))
             } catch (e: Exception) {
                 updateState { copy(uploadingDocument = null, uploadProgress = 0f) }
-                sendEffect(Effect.ShowSnackbar("Failed to upload document: ${e.message}"))
+                sendEffect(Effect.ShowSnackbar("Failed to add document: ${e.message}"))
             }
         }
     }
@@ -225,10 +230,7 @@ class AddVehicleViewModel(
             return
         }
 
-        if (!currentState.hasRequiredDocuments) {
-            sendEffect(Effect.ShowSnackbar("Please upload Registration Certificate and Insurance documents"))
-            return
-        }
+        // Documents are optional - no validation required
 
         updateState { copy(isSaving = true, error = null) }
 
@@ -243,11 +245,15 @@ class AddVehicleViewModel(
                     year = currentState.year.toIntOrNull() ?: 0,
                     type = currentState.vehicleType,
                     status = VehicleStatus.ACTIVE,
+                    fuelType = currentState.fuelType,
+                    color = currentState.color.ifBlank { "white" },
+                    capacity = currentState.seatingCapacity.toIntOrNull() ?: 4,
                     fuelLevel = 0,
                     mileage = 0.0
                 )
 
-                val result = createVehicleUseCase(vehicle)
+                // Use the with-documents API endpoint
+                val result = createVehicleWithDocumentsUseCase(vehicle, currentState.documents)
 
                 when (result) {
                     is Result.Success -> {
@@ -281,12 +287,12 @@ class AddVehicleViewModel(
 
     private fun getDocumentTypeName(type: DocumentType): String {
         return when (type) {
-            DocumentType.REGISTRATION_CERTIFICATE -> "Registration Certificate (RC)"
-            DocumentType.INSURANCE -> "Insurance"
-            DocumentType.PUC_CERTIFICATE -> "PUC Certificate"
-            DocumentType.FITNESS_CERTIFICATE -> "Fitness Certificate"
-            DocumentType.ROAD_TAX -> "Road Tax"
-            DocumentType.PERMIT -> "Permit"
+            DocumentType.REGISTRATION_CERTIFICATE -> "Registration Certificate [RC]"
+            DocumentType.INSURANCE -> "Insurance [INS]"
+            DocumentType.PUC_CERTIFICATE -> "PUC Certificate [PUC]"
+            DocumentType.FITNESS_CERTIFICATE -> "Fitness Certificate [FC]"
+            DocumentType.ROAD_TAX -> "Road Tax [RT]"
+            DocumentType.PERMIT -> "Permit [PERMIT]"
             DocumentType.DRIVER_LICENSE -> "Driver License"
             DocumentType.OTHER -> "Other Document"
         }

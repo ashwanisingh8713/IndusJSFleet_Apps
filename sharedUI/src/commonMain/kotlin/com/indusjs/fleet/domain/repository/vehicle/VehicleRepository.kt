@@ -2,6 +2,7 @@ package com.indusjs.fleet.domain.repository.vehicle
 
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
+import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.repository.Repository
 import kotlinx.coroutines.flow.Flow
 
@@ -25,6 +26,15 @@ interface VehicleRepository : Repository {
      * Create a new vehicle.
      */
     suspend fun createVehicle(vehicle: Vehicle): Result<Vehicle>
+
+    /**
+     * Create a new vehicle with optional documents.
+     * Uses multipart form upload to /vehicles/with-documents endpoint.
+     */
+    suspend fun createVehicleWithDocuments(
+        vehicle: Vehicle,
+        documents: List<VehicleDocument>
+    ): Result<Vehicle>
 
     /**
      * Update an existing vehicle.

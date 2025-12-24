@@ -2,6 +2,7 @@ package com.indusjs.fleet.domain.usecase.vehicle
 
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
+import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.domain.usecase.UseCase
 import dev.zacsweers.metro.Inject
@@ -41,6 +42,19 @@ class CreateVehicleUseCase(
 ) {
     suspend operator fun invoke(vehicle: Vehicle): Result<Vehicle> {
         return vehicleRepository.createVehicle(vehicle)
+    }
+}
+
+/**
+ * Use case for creating a new vehicle with optional documents.
+ * Uses multipart form upload to /vehicles/with-documents endpoint.
+ */
+@Inject
+class CreateVehicleWithDocumentsUseCase(
+    private val vehicleRepository: VehicleRepository
+) {
+    suspend operator fun invoke(vehicle: Vehicle, documents: List<VehicleDocument>): Result<Vehicle> {
+        return vehicleRepository.createVehicleWithDocuments(vehicle, documents)
     }
 }
 

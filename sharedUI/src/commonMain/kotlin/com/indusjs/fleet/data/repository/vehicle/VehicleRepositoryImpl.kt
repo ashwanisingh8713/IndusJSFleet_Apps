@@ -6,7 +6,11 @@ import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSource
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
+import com.indusjs.fleet.data.model.vehicle.CreateVehicleWithDocumentsRequest
+import com.indusjs.fleet.data.model.vehicle.DocumentFileData
+import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
+import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
@@ -68,6 +72,70 @@ class VehicleRepositoryImpl(
         } catch (e: Exception) {
             Result.Error(e, e.message)
         }
+    }
+
+    override suspend fun createVehicleWithDocuments(
+        vehicle: Vehicle,
+        documents: List<VehicleDocument>
+    ): Result<Vehicle> {
+        return try {
+            val token = requireAuthToken()
+
+            // Build the request with vehicle details and documents
+            val request = CreateVehicleWithDocumentsRequest(
+                registrationNumber = vehicle.registrationNumber,
+                make = vehicle.make,
+                model = vehicle.model,
+                year = vehicle.year,
+                vehicleType = mapper.vehicleTypeToApiString(vehicle.type),
+                fuelType = vehicle.fuelType.lowercase(),
+                capacity = vehicle.capacity,
+                color = vehicle.color.lowercase(),
+                registrationCertificate = documents.find { it.type == DocumentType.REGISTRATION_CERTIFICATE }
+                    ?.let { mapToDocumentFileData(it) },
+                insurance = documents.find { it.type == DocumentType.INSURANCE }
+                    ?.let { mapToDocumentFileData(it) },
+                pucCertificate = documents.find { it.type == DocumentType.PUC_CERTIFICATE }
+                    ?.let { mapToDocumentFileData(it) },
+                fitnessCertificate = documents.find { it.type == DocumentType.FITNESS_CERTIFICATE }
+                    ?.let { mapToDocumentFileData(it) },
+                roadTax = documents.find { it.type == DocumentType.ROAD_TAX }
+                    ?.let { mapToDocumentFileData(it) },
+                permit = documents.find { it.type == DocumentType.PERMIT }
+                    ?.let { mapToDocumentFileData(it) }
+            )
+
+            val response = remoteDataSource.createVehicleWithDocuments(token, request)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to create vehicle"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    private fun mapToDocumentFileData(doc: VehicleDocument): DocumentFileData? {
+        // Note: VehicleDocument should contain fileBytes for upload
+        // If fileBytes is not available, return null
+        return doc.fileBytes?.let { bytes ->
+            DocumentFileData(
+                fileName = doc.fileName,
+                fileBytes = bytes,
+                mimeType = doc.mimeType,
+                expiryDate = doc.expiryDate?.let { formatExpiryDate(it) }
+            )
+        }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun formatExpiryDate(timestamp: Long): String? {
+        // For now, return null as expiry dates aren't being set from the form
+        // In production, implement proper date formatting using kotlinx-datetime
+        // Format should be: YYYY-MM-DD
+        return null
     }
 
     override suspend fun updateVehicle(vehicle: Vehicle): Result<Vehicle> {

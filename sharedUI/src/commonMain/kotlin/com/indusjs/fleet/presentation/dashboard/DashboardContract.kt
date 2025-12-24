@@ -18,7 +18,9 @@ object DashboardContract {
         val isLoading: Boolean = false,
         val stats: DashboardStats = DashboardStats(),
         val error: String? = null,
-        val isRefreshing: Boolean = false
+        val isRefreshing: Boolean = false,
+        val userName: String = "", // User's full name for display
+        val userRole: String = ""  // User's role for display
     ) : UiState
 
     /**

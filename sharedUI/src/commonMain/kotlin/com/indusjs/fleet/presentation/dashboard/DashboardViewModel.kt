@@ -5,6 +5,7 @@ import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
+import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.Effect
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.Intent
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.State
@@ -17,7 +18,8 @@ import kotlinx.coroutines.withContext
  */
 @Inject
 class DashboardViewModel(
-    private val dispatcherProvider: DispatcherProvider
+    private val dispatcherProvider: DispatcherProvider,
+    private val userRepository: UserRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     init {
@@ -42,6 +44,9 @@ class DashboardViewModel(
 
         withContext(dispatcherProvider.io) {
             try {
+                // Load user profile to get user name
+                loadUserProfile()
+
                 // TODO: Replace with actual repository call
                 delay(500) // Simulate network delay
 
@@ -109,6 +114,33 @@ class DashboardViewModel(
             )
         }
         sendEffect(Effect.ShowSnackbar("Alert dismissed"))
+    }
+
+    /**
+     * Load user profile to get user name and role for display.
+     */
+    private suspend fun loadUserProfile() {
+        try {
+            val result = userRepository.getProfile()
+            result.fold(
+                onSuccess = { profile ->
+                    updateState {
+                        copy(
+                            userName = profile.user.fullName,
+                            userRole = profile.user.role.name.lowercase()
+                                .replaceFirstChar { it.uppercase() }
+                        )
+                    }
+                },
+                onFailure = {
+                    // If profile fetch fails, use default values
+                    updateState { copy(userName = "User", userRole = "") }
+                }
+            )
+        } catch (e: Exception) {
+            // If profile fetch fails, use default values
+            updateState { copy(userName = "User", userRole = "") }
+        }
     }
 }
 

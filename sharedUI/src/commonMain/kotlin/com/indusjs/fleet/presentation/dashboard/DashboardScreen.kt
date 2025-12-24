@@ -62,6 +62,8 @@ fun DashboardScreen(
                 modifier = Modifier.width(280.dp)
             ) {
                 NavigationDrawerContent(
+                    userName = state.userName.ifEmpty { "User" },
+                    userRole = state.userRole,
                     onNavigateToVehicles = {
                         scope.launch { drawerState.close() }
                         onNavigateToVehicles()
@@ -94,7 +96,22 @@ fun DashboardScreen(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
-                    title = { Text("Fleet Dashboard") },
+                    title = {
+                        Column {
+                            Text(
+                                text = if (state.userName.isNotEmpty()) "Hi, ${state.userName}" else "Dashboard",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            if (state.userRole.isNotEmpty()) {
+                                Text(
+                                    text = state.userRole,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Text("☰", style = MaterialTheme.typography.titleLarge)
@@ -103,9 +120,6 @@ fun DashboardScreen(
                     actions = {
                         IconButton(onClick = { viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard) }) {
                             Text("↻", style = MaterialTheme.typography.titleLarge)
-                        }
-                        IconButton(onClick = onNavigateToProfile) {
-                            Text("👤", style = MaterialTheme.typography.titleLarge)
                         }
                     }
                 )
@@ -151,6 +165,8 @@ fun DashboardScreen(
  */
 @Composable
 private fun NavigationDrawerContent(
+    userName: String,
+    userRole: String,
     onNavigateToVehicles: () -> Unit,
     onNavigateToDrivers: () -> Unit,
     onNavigateToTrips: () -> Unit,
@@ -161,29 +177,56 @@ private fun NavigationDrawerContent(
     Column(
         modifier = Modifier.fillMaxHeight()
     ) {
-        // Header
+        // Header with user info - clickable to go to profile
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.primaryContainer)
+                .clickable(onClick = onNavigateToProfile)
                 .padding(24.dp)
         ) {
-            Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // User Avatar
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary,
+                            shape = androidx.compose.foundation.shape.CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = userName.take(1).uppercase(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = userName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    if (userRole.isNotEmpty()) {
+                        Text(
+                            text = userRole,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+                // Arrow indicator to show it's clickable
                 Text(
-                    text = "🚚",
-                    style = MaterialTheme.typography.displayMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Fleet Management",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-                Text(
-                    text = "Quick Actions",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    text = "›",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
                 )
             }
         }

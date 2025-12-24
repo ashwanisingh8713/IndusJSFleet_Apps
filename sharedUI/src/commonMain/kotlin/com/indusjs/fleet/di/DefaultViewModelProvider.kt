@@ -20,7 +20,7 @@ import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.domain.usecase.trip.CancelTripUseCase
 import com.indusjs.fleet.domain.usecase.trip.GetTripsUseCase
-import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleUseCase
+import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleWithDocumentsUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.DeleteVehicleUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
 import com.indusjs.fleet.presentation.auth.LoginViewModel
@@ -69,7 +69,7 @@ class DefaultViewModelProvider : ViewModelProvider {
     }
     private val getVehiclesUseCase by lazy { GetVehiclesUseCase(vehicleRepository) }
     private val deleteVehicleUseCase by lazy { DeleteVehicleUseCase(vehicleRepository) }
-    private val createVehicleUseCase by lazy { CreateVehicleUseCase(vehicleRepository) }
+    private val createVehicleWithDocumentsUseCase by lazy { CreateVehicleWithDocumentsUseCase(vehicleRepository) }
 
     // Lazy-initialized Trip feature dependencies
     private val tripMapper by lazy { TripMapper() }
@@ -96,7 +96,7 @@ class DefaultViewModelProvider : ViewModelProvider {
     override fun changePasswordViewModel() = ChangePasswordViewModel(dispatcherProvider, userRepository)
 
     // Feature ViewModels
-    override fun dashboardViewModel() = DashboardViewModel(dispatcherProvider)
+    override fun dashboardViewModel() = DashboardViewModel(dispatcherProvider, userRepository)
 
     override fun vehiclesViewModel() = VehiclesViewModel(
         dispatcherProvider,
@@ -106,7 +106,7 @@ class DefaultViewModelProvider : ViewModelProvider {
 
     override fun addVehicleViewModel() = AddVehicleViewModel(
         dispatcherProvider,
-        createVehicleUseCase
+        createVehicleWithDocumentsUseCase
     )
 
     override fun driversViewModel() = DriversViewModel(dispatcherProvider)

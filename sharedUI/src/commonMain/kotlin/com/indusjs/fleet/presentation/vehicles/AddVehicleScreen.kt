@@ -331,43 +331,6 @@ private fun BasicInfoStep(
             )
         }
 
-        item {
-            SectionHeader(title = "⚙️ Technical Details")
-        }
-
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedTextField(
-                    value = state.chassisNumber,
-                    onValueChange = { onIntent(AddVehicleContract.Intent.UpdateChassisNumber(it)) },
-                    label = { Text("Chassis Number") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-
-                OutlinedTextField(
-                    value = state.engineNumber,
-                    onValueChange = { onIntent(AddVehicleContract.Intent.UpdateEngineNumber(it)) },
-                    label = { Text("Engine Number") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-
-        item {
-            OutlinedTextField(
-                value = state.seatingCapacity,
-                onValueChange = { onIntent(AddVehicleContract.Intent.UpdateSeatingCapacity(it)) },
-                label = { Text("Seating Capacity") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
 
         item {
             SectionHeader(title = "👤 Owner Information")
@@ -409,44 +372,22 @@ private fun DocumentsStep(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            SectionHeader(title = "📄 Required Documents")
+            SectionHeader(title = "📄 Documents (Optional)")
         }
 
         item {
             Text(
-                text = "Please upload the following mandatory documents:",
+                text = "You can upload vehicle documents now or add them later:",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        // Required documents
+        // All documents are now optional
         items(
             listOf(
                 DocumentType.REGISTRATION_CERTIFICATE,
-                DocumentType.INSURANCE
-            )
-        ) { docType ->
-            val uploadedDoc = state.documents.find { it.type == docType }
-            DocumentUploadCard(
-                documentType = docType,
-                uploadedDocument = uploadedDoc,
-                isRequired = true,
-                isUploading = state.uploadingDocument == docType,
-                uploadProgress = if (state.uploadingDocument == docType) state.uploadProgress else 0f,
-                onUploadClick = { onIntent(AddVehicleContract.Intent.SelectDocument(docType)) },
-                onRemoveClick = { uploadedDoc?.let { onIntent(AddVehicleContract.Intent.RemoveDocument(it.id)) } }
-            )
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            SectionHeader(title = "📁 Optional Documents")
-        }
-
-        // Optional documents
-        items(
-            listOf(
+                DocumentType.INSURANCE,
                 DocumentType.PUC_CERTIFICATE,
                 DocumentType.FITNESS_CERTIFICATE,
                 DocumentType.ROAD_TAX,
@@ -472,10 +413,7 @@ private fun DocumentsStep(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (state.hasRequiredDocuments)
-                        MaterialTheme.colorScheme.primaryContainer
-                    else
-                        MaterialTheme.colorScheme.errorContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             ) {
                 Row(
@@ -485,16 +423,16 @@ private fun DocumentsStep(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (state.hasRequiredDocuments) "✅" else "⚠️",
+                        text = "📁",
                         style = MaterialTheme.typography.headlineSmall
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = if (state.hasRequiredDocuments)
-                                "All required documents uploaded"
+                            text = if (state.documents.isNotEmpty())
+                                "Documents ready"
                             else
-                                "Missing required documents",
+                                "No documents uploaded",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -721,7 +659,7 @@ private fun BottomActionBar(
                 onClick = onPrevious,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(if (currentStep == 0) "← Cancel" else "← Previous")
+                Text(if (currentStep == 0) "Cancel" else "Previous")
             }
 
             Button(
@@ -729,7 +667,7 @@ private fun BottomActionBar(
                 enabled = canProceed && !isSaving,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(if (currentStep == 1) "Register Vehicle ✓" else "Next →")
+                Text(if (currentStep == 1) "Register Vehicle" else "Next")
             }
         }
     }
@@ -737,14 +675,31 @@ private fun BottomActionBar(
 
 private fun getDocumentTypeName(type: DocumentType): String {
     return when (type) {
-        DocumentType.REGISTRATION_CERTIFICATE -> "Registration Certificate (RC)"
-        DocumentType.INSURANCE -> "Insurance"
-        DocumentType.PUC_CERTIFICATE -> "PUC Certificate"
-        DocumentType.FITNESS_CERTIFICATE -> "Fitness Certificate"
-        DocumentType.ROAD_TAX -> "Road Tax"
-        DocumentType.PERMIT -> "Permit"
+        DocumentType.REGISTRATION_CERTIFICATE -> "Registration Certificate [RC]"
+        DocumentType.INSURANCE -> "Insurance [INS]"
+        DocumentType.PUC_CERTIFICATE -> "PUC Certificate [PUC]"
+        DocumentType.FITNESS_CERTIFICATE -> "Fitness Certificate [FC]"
+        DocumentType.ROAD_TAX -> "Road Tax [RT]"
+        DocumentType.PERMIT -> "Permit [PERMIT]"
         DocumentType.DRIVER_LICENSE -> "Driver License"
         DocumentType.OTHER -> "Other Document"
+    }
+}
+
+/**
+ * Get the API tag for a document type.
+ * These tags are automatically assigned by the server.
+ */
+private fun getDocumentTag(type: DocumentType): String {
+    return when (type) {
+        DocumentType.REGISTRATION_CERTIFICATE -> "RC"
+        DocumentType.INSURANCE -> "INS"
+        DocumentType.PUC_CERTIFICATE -> "PUC"
+        DocumentType.FITNESS_CERTIFICATE -> "FC"
+        DocumentType.ROAD_TAX -> "RT"
+        DocumentType.PERMIT -> "PERMIT"
+        DocumentType.DRIVER_LICENSE -> "DL"
+        DocumentType.OTHER -> "OTHER"
     }
 }
 

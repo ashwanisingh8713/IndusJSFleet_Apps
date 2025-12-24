@@ -63,12 +63,12 @@ object AddVehicleContract {
                     modelError == null &&
                     yearError == null
 
+        // Documents are now optional
         val hasRequiredDocuments: Boolean
-            get() = documents.any { it.type == DocumentType.REGISTRATION_CERTIFICATE } &&
-                    documents.any { it.type == DocumentType.INSURANCE }
+            get() = true
 
         val canSubmit: Boolean
-            get() = isBasicInfoValid && hasRequiredDocuments && !isSaving
+            get() = isBasicInfoValid && !isSaving
     }
 
     /**
