@@ -1,0 +1,165 @@
+package com.indusjs.fleet.data.repository.driver
+
+import com.indusjs.fleet.core.error.ApiException
+import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.fleet.core.result.Result
+import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSource
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
+import com.indusjs.fleet.data.mapper.driver.DriverMapper
+import com.indusjs.fleet.domain.entity.driver.Driver
+import com.indusjs.fleet.domain.entity.driver.DriverStatus
+import com.indusjs.fleet.domain.repository.driver.DriverRepository
+import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+
+/**
+ * Implementation of DriverRepository.
+ * Handles driver CRUD operations via remote data source.
+ */
+@Inject
+class DriverRepositoryImpl(
+    private val remoteDataSource: DriverRemoteDataSource,
+    private val userLocalDataSource: UserLocalDataSource,
+    private val mapper: DriverMapper
+) : DriverRepository {
+
+    override fun getDrivers(status: DriverStatus?, search: String?): Flow<Result<List<Driver>>> = flow {
+        emit(Result.Loading)
+        try {
+            val token = requireAuthToken()
+            val statusParam = status?.let { DriverStatus.toApiString(it) }
+            val response = remoteDataSource.getDrivers(
+                token = token,
+                status = statusParam,
+                search = search
+            )
+
+            if (response.success && response.data != null) {
+                emit(Result.Success(mapper.mapToDomainList(response.data)))
+            } else {
+                emit(Result.Error(ApiException(response.message ?: "Failed to get drivers"), response.message))
+            }
+        } catch (e: Exception) {
+            emit(Result.Error(e, e.message))
+        }
+    }
+
+    override fun getAvailableDrivers(): Flow<Result<List<Driver>>> = flow {
+        emit(Result.Loading)
+        try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getAvailableDrivers(token)
+
+            if (response.success && response.data != null) {
+                emit(Result.Success(mapper.mapToDomainList(response.data)))
+            } else {
+                emit(Result.Error(ApiException(response.message ?: "Failed to get available drivers"), response.message))
+            }
+        } catch (e: Exception) {
+            emit(Result.Error(e, e.message))
+        }
+    }
+
+    override suspend fun getDriverById(id: String): Result<Driver> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getDriverById(token, id)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Driver not found"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    override suspend fun createDriver(driver: Driver): Result<Driver> {
+        return try {
+            val token = requireAuthToken()
+            val request = mapper.mapToCreateRequest(driver)
+            val response = remoteDataSource.createDriver(token, request)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to create driver"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    override suspend fun updateDriver(driver: Driver): Result<Driver> {
+        return try {
+            val token = requireAuthToken()
+            val request = mapper.mapToUpdateRequest(driver)
+            val response = remoteDataSource.updateDriver(token, driver.id, request)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to update driver"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    override suspend fun updateDriverStatus(id: String, status: DriverStatus): Result<Driver> {
+        return try {
+            val token = requireAuthToken()
+            val statusString = DriverStatus.toApiString(status)
+            val response = remoteDataSource.updateDriverStatus(token, id, statusString)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to update driver status"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    override suspend fun toggleDriverActive(id: String): Result<Driver> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.toggleDriverActive(token, id)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to toggle driver active state"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    override suspend fun deleteDriver(id: String): Result<Unit> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.deleteDriver(token, id)
+
+            if (response.success) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to delete driver"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    /**
+     * Retrieves auth token or throws NotAuthenticatedException.
+     */
+    private suspend fun requireAuthToken(): String {
+        return userLocalDataSource.getAuthToken()
+            ?: throw NotAuthenticatedException()
+    }
+}
+

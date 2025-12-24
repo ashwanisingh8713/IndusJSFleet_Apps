@@ -45,6 +45,9 @@ fun DriversScreen(
                 is DriversContract.Effect.ShowSnackbar -> {
                     snackbarHostState.showSnackbar(effect.message)
                 }
+                is DriversContract.Effect.ShowError -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
             }
         }
     }
@@ -160,11 +163,11 @@ private fun StatusFilterChips(
 
 private fun getStatusDisplayName(status: DriverStatus): String {
     return when (status) {
-        DriverStatus.AVAILABLE -> "Available"
-        DriverStatus.ON_TRIP -> "On Trip"
-        DriverStatus.OFF_DUTY -> "Off Duty"
-        DriverStatus.ON_BREAK -> "On Break"
+        DriverStatus.ACTIVE -> "Active"
         DriverStatus.INACTIVE -> "Inactive"
+        DriverStatus.ON_TRIP -> "On Trip"
+        DriverStatus.ON_LEAVE -> "On Leave"
+        DriverStatus.SUSPENDED -> "Suspended"
     }
 }
 
@@ -319,11 +322,11 @@ private fun DriverInfoItem(
 @Composable
 private fun StatusBadge(status: DriverStatus) {
     val (color, text) = when (status) {
-        DriverStatus.AVAILABLE -> MaterialTheme.colorScheme.primary to "Available"
-        DriverStatus.ON_TRIP -> MaterialTheme.colorScheme.tertiary to "On Trip"
-        DriverStatus.OFF_DUTY -> MaterialTheme.colorScheme.secondary to "Off Duty"
-        DriverStatus.ON_BREAK -> MaterialTheme.colorScheme.secondary to "On Break"
+        DriverStatus.ACTIVE -> MaterialTheme.colorScheme.primary to "Active"
         DriverStatus.INACTIVE -> MaterialTheme.colorScheme.error to "Inactive"
+        DriverStatus.ON_TRIP -> MaterialTheme.colorScheme.tertiary to "On Trip"
+        DriverStatus.ON_LEAVE -> MaterialTheme.colorScheme.secondary to "On Leave"
+        DriverStatus.SUSPENDED -> MaterialTheme.colorScheme.error to "Suspended"
     }
 
     // Using reusable FleetStatusBadge component

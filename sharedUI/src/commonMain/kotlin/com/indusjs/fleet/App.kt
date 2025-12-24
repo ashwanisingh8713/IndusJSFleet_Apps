@@ -12,10 +12,13 @@ import com.indusjs.fleet.di.rememberViewModel
 import com.indusjs.fleet.presentation.auth.LoginScreen
 import com.indusjs.fleet.presentation.dashboard.DashboardScreen
 import com.indusjs.fleet.presentation.drivers.DriversScreen
+import com.indusjs.fleet.presentation.drivers.create.CreateDriverScreen
+import com.indusjs.fleet.presentation.drivers.detail.DriverDetailScreen
 import com.indusjs.fleet.presentation.maps.MapsScreen
 import com.indusjs.fleet.presentation.trips.TripsScreen
 import com.indusjs.fleet.presentation.vehicles.AddVehicleScreen
 import com.indusjs.fleet.presentation.vehicles.VehiclesScreen
+import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailScreen
 import com.indusjs.fleet.presentation.user.profile.ProfileScreen
 import com.indusjs.fleet.presentation.user.changepassword.ChangePasswordScreen
 import com.indusjs.fleet.presentation.user.signup.SignUpScreen
@@ -48,6 +51,7 @@ sealed class AppRoute {
     data object AddVehicle : AppRoute()
     data object Drivers : AppRoute()
     data class DriverDetail(val driverId: String) : AppRoute()
+    data object CreateDriver : AppRoute()
     data object Trips : AppRoute()
     data class TripDetail(val tripId: String) : AppRoute()
     data object Maps : AppRoute()
@@ -180,11 +184,11 @@ fun App(
                 }
 
                 is AppRoute.VehicleDetail -> {
-                    // TODO: Implement Vehicle Detail screen
-                    PlaceholderScreen(
-                        title = "Vehicle Details",
-                        subtitle = "Vehicle ID: ${route.vehicleId}",
-                        onBack = { currentRoute = AppRoute.Vehicles }
+                    val vehicleDetailViewModel = rememberViewModel { vehicleDetailViewModel() }
+                    VehicleDetailScreen(
+                        viewModel = vehicleDetailViewModel,
+                        vehicleId = route.vehicleId,
+                        onNavigateBack = { currentRoute = AppRoute.Vehicles }
                     )
                 }
 
@@ -196,18 +200,29 @@ fun App(
                             currentRoute = AppRoute.DriverDetail(driverId)
                         },
                         onNavigateToAdd = {
-                            // TODO: Navigate to Add Driver screen
+                            currentRoute = AppRoute.CreateDriver
                         },
                         onNavigateBack = { currentRoute = AppRoute.Dashboard }
                     )
                 }
 
+                is AppRoute.CreateDriver -> {
+                    val createDriverViewModel = rememberViewModel { createDriverViewModel() }
+                    CreateDriverScreen(
+                        viewModel = createDriverViewModel,
+                        onNavigateBack = { currentRoute = AppRoute.Drivers },
+                        onDriverCreated = { driverId ->
+                            currentRoute = AppRoute.DriverDetail(driverId)
+                        }
+                    )
+                }
+
                 is AppRoute.DriverDetail -> {
-                    // TODO: Implement Driver Detail screen
-                    PlaceholderScreen(
-                        title = "Driver Details",
-                        subtitle = "Driver ID: ${route.driverId}",
-                        onBack = { currentRoute = AppRoute.Drivers }
+                    val driverDetailViewModel = rememberViewModel { driverDetailViewModel() }
+                    DriverDetailScreen(
+                        viewModel = driverDetailViewModel,
+                        driverId = route.driverId,
+                        onNavigateBack = { currentRoute = AppRoute.Drivers }
                     )
                 }
 

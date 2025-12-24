@@ -9,6 +9,8 @@ import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.presentation.auth.LoginViewModel
 import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
 import com.indusjs.fleet.presentation.drivers.DriversViewModel
+import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
+import com.indusjs.fleet.presentation.drivers.detail.DriverDetailViewModel
 import com.indusjs.fleet.presentation.maps.MapsViewModel
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
 import com.indusjs.fleet.presentation.team.list.TeamListViewModel
@@ -19,6 +21,7 @@ import com.indusjs.fleet.presentation.user.profile.ProfileViewModel
 import com.indusjs.fleet.presentation.user.signup.SignUpViewModel
 import com.indusjs.fleet.presentation.vehicles.AddVehicleViewModel
 import com.indusjs.fleet.presentation.vehicles.VehiclesViewModel
+import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailViewModel
 
 /**
  * Provider for all application ViewModels.
@@ -43,7 +46,10 @@ interface ViewModelProvider {
     fun dashboardViewModel(): DashboardViewModel
     fun vehiclesViewModel(): VehiclesViewModel
     fun addVehicleViewModel(): AddVehicleViewModel
+    fun vehicleDetailViewModel(): VehicleDetailViewModel
     fun driversViewModel(): DriversViewModel
+    fun createDriverViewModel(): CreateDriverViewModel
+    fun driverDetailViewModel(): DriverDetailViewModel
     fun tripsViewModel(): TripsViewModel
     fun mapsViewModel(): MapsViewModel
     fun teamListViewModel(): TeamListViewModel

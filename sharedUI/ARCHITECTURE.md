@@ -60,6 +60,8 @@ sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
 │   │   │   └── UserRemoteDataSource.kt
 │   │   ├── vehicle/
 │   │   │   └── VehicleRemoteDataSource.kt
+│   │   ├── driver/
+│   │   │   └── DriverRemoteDataSource.kt
 │   │   ├── trip/
 │   │   │   └── TripRemoteDataSource.kt
 │   │   └── team/
@@ -70,6 +72,8 @@ sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
 │   │   │   └── UserMapper.kt
 │   │   ├── vehicle/
 │   │   │   └── VehicleMapper.kt
+│   │   ├── driver/
+│   │   │   └── DriverMapper.kt
 │   │   ├── trip/
 │   │   │   └── TripMapper.kt
 │   │   └── team/
@@ -80,6 +84,8 @@ sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
 │   │   │   └── UserDto.kt
 │   │   ├── vehicle/
 │   │   │   └── VehicleDto.kt
+│   │   ├── driver/
+│   │   │   └── DriverDto.kt
 │   │   ├── trip/
 │   │   │   └── TripDto.kt
 │   │   └── team/
@@ -89,6 +95,8 @@ sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
 │       │   └── UserRepositoryImpl.kt
 │       ├── vehicle/
 │       │   └── VehicleRepositoryImpl.kt
+│       ├── driver/
+│       │   └── DriverRepositoryImpl.kt
 │       ├── trip/
 │       │   └── TripRepositoryImpl.kt
 │       └── team/
@@ -103,6 +111,7 @@ sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
 │   ├── AuthFeatureGraph.kt        # Auth feature DI graph
 │   ├── UserFeatureGraph.kt        # User feature DI graph
 │   ├── VehiclesFeatureGraph.kt    # Vehicles feature DI graph
+│   ├── DriversFeatureGraph.kt     # Drivers feature DI graph
 │   ├── TripsFeatureGraph.kt       # Trips feature DI graph
 │   └── TeamFeatureGraph.kt        # Team feature DI graph
 │
@@ -123,6 +132,8 @@ sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
 │   │       └── Vehicle.kt
 │   ├── repository/                # Repository interfaces by feature
 │   │   ├── Repository.kt          # Base repository marker
+│   │   ├── driver/
+│   │   │   └── DriverRepository.kt
 │   │   ├── team/
 │   │   │   └── TeamRepository.kt
 │   │   ├── trip/
@@ -133,6 +144,8 @@ sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
 │   │       └── VehicleRepository.kt
 │   └── usecase/                   # Use cases by feature
 │       ├── UseCase.kt             # Base use case interface
+│       ├── driver/
+│       │   └── DriverUseCases.kt
 │       ├── trip/
 │       │   └── TripUseCases.kt
 │       └── vehicle/

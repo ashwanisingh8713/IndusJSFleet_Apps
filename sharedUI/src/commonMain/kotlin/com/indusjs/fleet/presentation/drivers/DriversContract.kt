@@ -21,7 +21,8 @@ object DriversContract {
         val error: String? = null,
         val searchQuery: String = "",
         val selectedStatusFilter: DriverStatus? = null,
-        val isRefreshing: Boolean = false
+        val isRefreshing: Boolean = false,
+        val isDeleting: Boolean = false
     ) : UiState
 
     /**
@@ -34,6 +35,8 @@ object DriversContract {
         data class FilterByStatus(val status: DriverStatus?) : Intent
         data class SelectDriver(val driverId: String) : Intent
         data class DeleteDriver(val driverId: String) : Intent
+        data class UpdateDriverStatus(val driverId: String, val status: DriverStatus) : Intent
+        data class ToggleDriverActive(val driverId: String) : Intent
         data object AddDriver : Intent
         data object ClearFilters : Intent
     }
@@ -45,6 +48,7 @@ object DriversContract {
         data class NavigateToDriverDetail(val driverId: String) : Effect
         data object NavigateToAddDriver : Effect
         data class ShowSnackbar(val message: String) : Effect
+        data class ShowError(val message: String) : Effect
     }
 }
 

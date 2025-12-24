@@ -1,0 +1,6 @@
+Act as a professional Kotlin Multiplatform Developer. I am developing Fleet Managment mobile app.
+ Fleet_Management_API.postman_collection.json is PostMan collection.
+
+ In `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI`, already app is being developed and apis are getting integrated using CLEAN Architecture, Dependency Injection, MVI design pattern.
+
+ Kindly review it.

@@ -3,29 +3,44 @@ package com.indusjs.fleet.di
 import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
+import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.trip.TripRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSourceImpl
+import com.indusjs.fleet.data.mapper.driver.DriverMapper
 import com.indusjs.fleet.data.mapper.trip.TripMapper
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
+import com.indusjs.fleet.data.repository.driver.DriverRepositoryImpl
 import com.indusjs.fleet.data.repository.team.TeamRepositoryImpl
 import com.indusjs.fleet.data.repository.trip.TripRepositoryImpl
 import com.indusjs.fleet.data.repository.user.UserRepositoryImpl
 import com.indusjs.fleet.data.repository.vehicle.VehicleRepositoryImpl
+import com.indusjs.fleet.domain.repository.driver.DriverRepository
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
+import com.indusjs.fleet.domain.usecase.driver.CreateDriverUseCase
+import com.indusjs.fleet.domain.usecase.driver.DeleteDriverUseCase
+import com.indusjs.fleet.domain.usecase.driver.GetDriverByIdUseCase
+import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
+import com.indusjs.fleet.domain.usecase.driver.ToggleDriverActiveUseCase
+import com.indusjs.fleet.domain.usecase.driver.UpdateDriverStatusUseCase
+import com.indusjs.fleet.domain.usecase.driver.UpdateDriverUseCase
 import com.indusjs.fleet.domain.usecase.trip.CancelTripUseCase
 import com.indusjs.fleet.domain.usecase.trip.GetTripsUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleWithDocumentsUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.DeleteVehicleUseCase
+import com.indusjs.fleet.domain.usecase.vehicle.GetVehicleByIdUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
+import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
 import com.indusjs.fleet.presentation.auth.LoginViewModel
 import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
 import com.indusjs.fleet.presentation.drivers.DriversViewModel
+import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
+import com.indusjs.fleet.presentation.drivers.detail.DriverDetailViewModel
 import com.indusjs.fleet.presentation.maps.MapsViewModel
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
 import com.indusjs.fleet.presentation.team.list.TeamListViewModel
@@ -36,6 +51,7 @@ import com.indusjs.fleet.presentation.user.profile.ProfileViewModel
 import com.indusjs.fleet.presentation.user.signup.SignUpViewModel
 import com.indusjs.fleet.presentation.vehicles.AddVehicleViewModel
 import com.indusjs.fleet.presentation.vehicles.VehiclesViewModel
+import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailViewModel
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 
@@ -68,8 +84,24 @@ class DefaultViewModelProvider : ViewModelProvider {
         VehicleRepositoryImpl(vehicleRemoteDataSource, userLocalDataSource, vehicleMapper)
     }
     private val getVehiclesUseCase by lazy { GetVehiclesUseCase(vehicleRepository) }
+    private val getVehicleByIdUseCase by lazy { GetVehicleByIdUseCase(vehicleRepository) }
+    private val updateVehicleUseCase by lazy { UpdateVehicleUseCase(vehicleRepository) }
     private val deleteVehicleUseCase by lazy { DeleteVehicleUseCase(vehicleRepository) }
     private val createVehicleWithDocumentsUseCase by lazy { CreateVehicleWithDocumentsUseCase(vehicleRepository) }
+
+    // Lazy-initialized Driver feature dependencies
+    private val driverMapper by lazy { DriverMapper() }
+    private val driverRemoteDataSource by lazy { DriverRemoteDataSourceImpl(httpClient) }
+    private val driverRepository: DriverRepository by lazy {
+        DriverRepositoryImpl(driverRemoteDataSource, userLocalDataSource, driverMapper)
+    }
+    private val getDriversUseCase by lazy { GetDriversUseCase(driverRepository) }
+    private val getDriverByIdUseCase by lazy { GetDriverByIdUseCase(driverRepository) }
+    private val createDriverUseCase by lazy { CreateDriverUseCase(driverRepository) }
+    private val updateDriverUseCase by lazy { UpdateDriverUseCase(driverRepository) }
+    private val deleteDriverUseCase by lazy { DeleteDriverUseCase(driverRepository) }
+    private val updateDriverStatusUseCase by lazy { UpdateDriverStatusUseCase(driverRepository) }
+    private val toggleDriverActiveUseCase by lazy { ToggleDriverActiveUseCase(driverRepository) }
 
     // Lazy-initialized Trip feature dependencies
     private val tripMapper by lazy { TripMapper() }
@@ -109,7 +141,34 @@ class DefaultViewModelProvider : ViewModelProvider {
         createVehicleWithDocumentsUseCase
     )
 
-    override fun driversViewModel() = DriversViewModel(dispatcherProvider)
+    override fun vehicleDetailViewModel() = VehicleDetailViewModel(
+        dispatcherProvider,
+        getVehicleByIdUseCase,
+        updateVehicleUseCase,
+        deleteVehicleUseCase
+    )
+
+    override fun driversViewModel() = DriversViewModel(
+        dispatcherProvider,
+        getDriversUseCase,
+        deleteDriverUseCase,
+        updateDriverStatusUseCase,
+        toggleDriverActiveUseCase
+    )
+
+    override fun createDriverViewModel() = CreateDriverViewModel(
+        dispatcherProvider,
+        createDriverUseCase
+    )
+
+    override fun driverDetailViewModel() = DriverDetailViewModel(
+        dispatcherProvider,
+        getDriverByIdUseCase,
+        updateDriverUseCase,
+        updateDriverStatusUseCase,
+        toggleDriverActiveUseCase,
+        deleteDriverUseCase
+    )
 
     override fun tripsViewModel() = TripsViewModel(
         dispatcherProvider,
