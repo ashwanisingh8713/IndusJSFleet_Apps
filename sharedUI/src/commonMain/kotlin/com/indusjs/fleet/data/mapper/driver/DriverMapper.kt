@@ -3,10 +3,12 @@ package com.indusjs.fleet.data.mapper.driver
 import com.indusjs.fleet.data.model.driver.CreateDriverRequest
 import com.indusjs.fleet.data.model.driver.DriverDto
 import com.indusjs.fleet.data.model.driver.DriverOwnerDto
+import com.indusjs.fleet.data.model.driver.TripAssignmentDto
 import com.indusjs.fleet.data.model.driver.UpdateDriverRequest
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverOwner
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
+import com.indusjs.fleet.domain.entity.driver.DriverTripAssignment
 import com.indusjs.fleet.domain.entity.driver.LicenseType
 import dev.zacsweers.metro.Inject
 
@@ -35,6 +37,8 @@ class DriverMapper {
         profilePhoto = dto.profilePhoto,
         status = DriverStatus.fromApiString(dto.status),
         isActive = dto.isActive,
+        isOccupied = dto.isOccupied,
+        tripAssignment = dto.tripAssignment?.let { mapTripAssignmentToDomain(it) },
         ownerId = dto.ownerId?.toString(),
         owner = dto.owner?.let { mapOwnerToDomain(it) },
         createdById = dto.createdById?.toString(),
@@ -58,6 +62,21 @@ class DriverMapper {
         firstName = dto.firstName,
         lastName = dto.lastName,
         role = dto.role
+    )
+
+    /**
+     * Maps TripAssignmentDto to DriverTripAssignment domain entity.
+     */
+    private fun mapTripAssignmentToDomain(dto: TripAssignmentDto): DriverTripAssignment = DriverTripAssignment(
+        tripId = dto.tripId.toString(),
+        tripState = dto.tripState,
+        scheduledDate = dto.scheduledDate,
+        startTime = dto.startTime,
+        plannedStart = dto.plannedStart,
+        plannedEnd = dto.plannedEnd,
+        startLocation = dto.startLocation,
+        endLocation = dto.endLocation,
+        customerName = dto.customerName
     )
 
     /**

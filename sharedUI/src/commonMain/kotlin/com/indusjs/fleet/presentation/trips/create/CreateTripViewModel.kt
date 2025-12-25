@@ -3,6 +3,8 @@ package com.indusjs.fleet.presentation.trips.create
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.result.Result
+import com.indusjs.fleet.data.datasource.location.GooglePlacesService
+import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
 import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
 import com.indusjs.fleet.domain.usecase.trip.CreateTripWithDataUseCase
@@ -11,7 +13,11 @@ import com.indusjs.fleet.presentation.trips.create.CreateTripContract.Effect
 import com.indusjs.fleet.presentation.trips.create.CreateTripContract.Intent
 import com.indusjs.fleet.presentation.trips.create.CreateTripContract.State
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -22,8 +28,12 @@ class CreateTripViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val getVehiclesUseCase: GetVehiclesUseCase,
     private val getDriversUseCase: GetDriversUseCase,
-    private val createTripWithDataUseCase: CreateTripWithDataUseCase
+    private val createTripWithDataUseCase: CreateTripWithDataUseCase,
+    private val googlePlacesService: GooglePlacesService? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
+
+    private var startLocationSearchJob: Job? = null
+    private var endLocationSearchJob: Job? = null
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
@@ -51,6 +61,18 @@ class CreateTripViewModel(
             is Intent.UpdateEndLat -> updateState { copy(endLat = intent.value) }
             is Intent.UpdateEndLng -> updateState { copy(endLng = intent.value) }
             is Intent.UpdateEstimatedDistance -> updateState { copy(estimatedDistance = intent.value) }
+
+            // Location search
+            is Intent.SearchStartLocation -> searchStartLocation(intent.query)
+            is Intent.SearchEndLocation -> searchEndLocation(intent.query)
+            is Intent.SelectStartLocationPrediction -> selectStartLocationPrediction(intent.prediction)
+            is Intent.SelectEndLocationPrediction -> selectEndLocationPrediction(intent.prediction)
+            is Intent.DismissStartLocationDropdown -> updateState {
+                copy(showStartLocationDropdown = false, startLocationPredictions = emptyList())
+            }
+            is Intent.DismissEndLocationDropdown -> updateState {
+                copy(showEndLocationDropdown = false, endLocationPredictions = emptyList())
+            }
 
             // Schedule updates - Departure (required)
             is Intent.UpdateDepartureDate -> updateDepartureDate(intent.value)
@@ -122,6 +144,254 @@ class CreateTripViewModel(
         updateState { copy(endLocation = value, endLocationError = error) }
     }
 
+    private fun searchStartLocation(query: String) {
+        updateState { copy(startLocation = query) }
+
+        if (googlePlacesService == null) return
+
+        startLocationSearchJob?.cancel()
+
+        if (query.length < 3) {
+            updateState {
+                copy(
+                    startLocationPredictions = emptyList(),
+                    showStartLocationDropdown = false,
+                    isSearchingStartLocation = false
+                )
+            }
+            return
+        }
+
+        updateState { copy(isSearchingStartLocation = true, showStartLocationDropdown = true) }
+
+        startLocationSearchJob = CoroutineScope(dispatcherProvider.main).launch {
+            delay(300) // Debounce
+            withContext(dispatcherProvider.io) {
+                googlePlacesService.searchPlaces(query).fold(
+                    onSuccess = { predictions ->
+                        updateState {
+                            copy(
+                                startLocationPredictions = predictions,
+                                isSearchingStartLocation = false,
+                                showStartLocationDropdown = predictions.isNotEmpty()
+                            )
+                        }
+                    },
+                    onFailure = {
+                        updateState {
+                            copy(
+                                startLocationPredictions = emptyList(),
+                                isSearchingStartLocation = false,
+                                showStartLocationDropdown = false
+                            )
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    private fun searchEndLocation(query: String) {
+        updateState { copy(endLocation = query) }
+
+        if (googlePlacesService == null) return
+
+        endLocationSearchJob?.cancel()
+
+        if (query.length < 3) {
+            updateState {
+                copy(
+                    endLocationPredictions = emptyList(),
+                    showEndLocationDropdown = false,
+                    isSearchingEndLocation = false
+                )
+            }
+            return
+        }
+
+        updateState { copy(isSearchingEndLocation = true, showEndLocationDropdown = true) }
+
+        endLocationSearchJob = CoroutineScope(dispatcherProvider.main).launch {
+            delay(300) // Debounce
+            withContext(dispatcherProvider.io) {
+                googlePlacesService.searchPlaces(query).fold(
+                    onSuccess = { predictions ->
+                        updateState {
+                            copy(
+                                endLocationPredictions = predictions,
+                                isSearchingEndLocation = false,
+                                showEndLocationDropdown = predictions.isNotEmpty()
+                            )
+                        }
+                    },
+                    onFailure = {
+                        updateState {
+                            copy(
+                                endLocationPredictions = emptyList(),
+                                isSearchingEndLocation = false,
+                                showEndLocationDropdown = false
+                            )
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    private suspend fun selectStartLocationPrediction(prediction: PlacePrediction) {
+        updateState {
+            copy(
+                startLocation = prediction.description,
+                showStartLocationDropdown = false,
+                startLocationPredictions = emptyList(),
+                startLocationError = null
+            )
+        }
+
+        // Fetch place details to get coordinates
+        googlePlacesService?.let { service ->
+            withContext(dispatcherProvider.io) {
+                service.getPlaceDetails(prediction.placeId).fold(
+                    onSuccess = { details ->
+                        details.geometry?.location?.let { latLng ->
+                            updateState {
+                                copy(
+                                    startLat = latLng.lat.toString(),
+                                    startLng = latLng.lng.toString()
+                                )
+                            }
+                            // Calculate distance if end coordinates are available
+                            calculateAndSetDistance()
+                        }
+                    },
+                    onFailure = {
+                        // Coordinates fetch failed, user can enter manually
+                    }
+                )
+            }
+        }
+    }
+
+    private suspend fun selectEndLocationPrediction(prediction: PlacePrediction) {
+        updateState {
+            copy(
+                endLocation = prediction.description,
+                showEndLocationDropdown = false,
+                endLocationPredictions = emptyList(),
+                endLocationError = null
+            )
+        }
+
+        // Fetch place details to get coordinates
+        googlePlacesService?.let { service ->
+            withContext(dispatcherProvider.io) {
+                service.getPlaceDetails(prediction.placeId).fold(
+                    onSuccess = { details ->
+                        details.geometry?.location?.let { latLng ->
+                            updateState {
+                                copy(
+                                    endLat = latLng.lat.toString(),
+                                    endLng = latLng.lng.toString()
+                                )
+                            }
+                            // Calculate distance if start coordinates are available
+                            calculateAndSetDistance()
+                        }
+                    },
+                    onFailure = {
+                        // Coordinates fetch failed, user can enter manually
+                    }
+                )
+            }
+        }
+    }
+
+    /**
+     * Calculates the road distance between start and end coordinates using Google Distance Matrix API.
+     * Falls back to Haversine formula if API is unavailable.
+     */
+    private fun calculateAndSetDistance() {
+        val state = currentState
+
+        val startLat = state.startLat.toDoubleOrNull()
+        val startLng = state.startLng.toDoubleOrNull()
+        val endLat = state.endLat.toDoubleOrNull()
+        val endLng = state.endLng.toDoubleOrNull()
+
+        if (startLat != null && startLng != null && endLat != null && endLng != null) {
+            // Use Google Distance Matrix API for road distance
+            if (googlePlacesService != null) {
+                CoroutineScope(dispatcherProvider.main).launch {
+                    updateState { copy(isCalculatingDistance = true) }
+                    withContext(dispatcherProvider.io) {
+                        googlePlacesService.getRoadDistance(startLat, startLng, endLat, endLng).fold(
+                            onSuccess = { result ->
+                                // Round to 1 decimal place
+                                val distanceKm = kotlin.math.round(result.distanceKm * 10) / 10
+                                updateState {
+                                    copy(
+                                        estimatedDistance = distanceKm.toString(),
+                                        estimatedDuration = result.durationText,
+                                        isCalculatingDistance = false
+                                    )
+                                }
+                            },
+                            onFailure = {
+                                // Fallback to Haversine formula
+                                val distance = calculateHaversineDistance(startLat, startLng, endLat, endLng)
+                                val distanceKm = kotlin.math.round(distance * 10) / 10
+                                updateState {
+                                    copy(
+                                        estimatedDistance = distanceKm.toString(),
+                                        isCalculatingDistance = false
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
+            } else {
+                // Fallback to Haversine formula if API not available
+                val distance = calculateHaversineDistance(startLat, startLng, endLat, endLng)
+                val distanceKm = kotlin.math.round(distance * 10) / 10
+                updateState { copy(estimatedDistance = distanceKm.toString()) }
+            }
+        }
+    }
+
+    /**
+     * Calculates the straight-line distance between two points using Haversine formula.
+     * Used as fallback when Distance Matrix API is unavailable.
+     * @return Distance in kilometers
+     */
+    private fun calculateHaversineDistance(
+        lat1: Double, lon1: Double,
+        lat2: Double, lon2: Double
+    ): Double {
+        val earthRadiusKm = 6371.0
+
+        val dLat = toRadians(lat2 - lat1)
+        val dLon = toRadians(lon2 - lon1)
+
+        val lat1Rad = toRadians(lat1)
+        val lat2Rad = toRadians(lat2)
+
+        val a = kotlin.math.sin(dLat / 2) * kotlin.math.sin(dLat / 2) +
+                kotlin.math.sin(dLon / 2) * kotlin.math.sin(dLon / 2) *
+                kotlin.math.cos(lat1Rad) * kotlin.math.cos(lat2Rad)
+
+        val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+
+        return earthRadiusKm * c
+    }
+
+    /**
+     * Converts degrees to radians.
+     */
+    private fun toRadians(degrees: Double): Double {
+        return degrees * kotlin.math.PI / 180.0
+    }
+
     private fun updateDepartureDate(value: String) {
         val error = if (value.isBlank()) "Departure date is required" else null
         updateState { copy(departureDate = value, departureDateError = error) }
@@ -143,19 +413,23 @@ class CreateTripViewModel(
         withContext(dispatcherProvider.io) {
             val state = currentState
 
-            // Convert Indian date format (DD-MM-YYYY) to ISO format (YYYY-MM-DD)
+            // Convert raw date digits (DDMMYYYY) to ISO format (YYYY-MM-DD)
             val departureDateISO = convertToISODate(state.departureDate)
             val arrivalDateISO = convertToISODate(state.arrivalDate)
 
+            // Format raw time digits (HHMM) to HH:MM
+            val departureTimeFormatted = formatTimeForApi(state.departureTime)
+            val arrivalTimeFormatted = formatTimeForApi(state.arrivalTime)
+
             // Build planned start from departure date and time
-            val plannedStart = "${departureDateISO}T${state.departureTime}:00Z"
+            val plannedStart = "${departureDateISO}T${departureTimeFormatted}:00Z"
 
             // Build planned end from arrival date and time (if provided), otherwise use departure
             val plannedEnd = if (state.arrivalDate.isNotBlank() && state.arrivalTime.isNotBlank()) {
-                "${arrivalDateISO}T${state.arrivalTime}:00Z"
+                "${arrivalDateISO}T${arrivalTimeFormatted}:00Z"
             } else if (state.arrivalTime.isNotBlank()) {
                 // If only arrival time is provided, use departure date
-                "${departureDateISO}T${state.arrivalTime}:00Z"
+                "${departureDateISO}T${arrivalTimeFormatted}:00Z"
             } else {
                 plannedStart
             }
@@ -226,17 +500,41 @@ class CreateTripViewModel(
     }
 
     /**
-     * Converts Indian date format (DD-MM-YYYY) to ISO format (YYYY-MM-DD).
+     * Converts raw date digits (DDMMYYYY) to ISO format (YYYY-MM-DD).
      * If the input is empty or invalid, returns empty string.
      */
-    private fun convertToISODate(indianDate: String): String {
-        if (indianDate.isBlank()) return ""
+    private fun convertToISODate(rawDate: String): String {
+        if (rawDate.isBlank()) return ""
 
-        val parts = indianDate.split("-")
-        return if (parts.size == 3 && parts[0].length == 2 && parts[1].length == 2 && parts[2].length == 4) {
-            "${parts[2]}-${parts[1]}-${parts[0]}" // YYYY-MM-DD
+        // Raw format is DDMMYYYY (8 digits)
+        val digitsOnly = rawDate.filter { it.isDigit() }
+        return if (digitsOnly.length == 8) {
+            val day = digitsOnly.substring(0, 2)
+            val month = digitsOnly.substring(2, 4)
+            val year = digitsOnly.substring(4, 8)
+            "$year-$month-$day" // YYYY-MM-DD
         } else {
-            indianDate // Return as-is if not in expected format
+            rawDate // Return as-is if not in expected format
+        }
+    }
+
+    /**
+     * Formats raw time digits (HHMM) to HH:MM format.
+     * If the input is empty or invalid, returns empty string.
+     */
+    private fun formatTimeForApi(rawTime: String): String {
+        if (rawTime.isBlank()) return ""
+
+        // Raw format is HHMM (4 digits)
+        val digitsOnly = rawTime.filter { it.isDigit() }
+        return if (digitsOnly.length == 4) {
+            val hours = digitsOnly.substring(0, 2)
+            val minutes = digitsOnly.substring(2, 4)
+            "$hours:$minutes" // HH:MM
+        } else if (digitsOnly.length == 2) {
+            "${digitsOnly}:00" // Just hours provided
+        } else {
+            rawTime // Return as-is if not in expected format
         }
     }
 }

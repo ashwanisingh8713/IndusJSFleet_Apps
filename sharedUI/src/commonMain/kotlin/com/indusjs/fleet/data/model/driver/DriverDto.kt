@@ -39,6 +39,10 @@ data class DriverDto(
     val status: String = "active",
     @SerialName("is_active")
     val isActive: Boolean = true,
+    @SerialName("is_occupied")
+    val isOccupied: Boolean = false,
+    @SerialName("trip_assignment")
+    val tripAssignment: TripAssignmentDto? = null,
     @SerialName("owner_id")
     val ownerId: Int? = null,
     @SerialName("owner")
@@ -53,6 +57,31 @@ data class DriverDto(
     val createdAt: String? = null,
     @SerialName("updated_at")
     val updatedAt: String? = null
+)
+
+/**
+ * Trip assignment details when driver/vehicle is occupied.
+ */
+@Serializable
+data class TripAssignmentDto(
+    @SerialName("trip_id")
+    val tripId: Int = 0,
+    @SerialName("trip_state")
+    val tripState: String = "",
+    @SerialName("scheduled_date")
+    val scheduledDate: String? = null,
+    @SerialName("start_time")
+    val startTime: String? = null,
+    @SerialName("planned_start")
+    val plannedStart: String? = null,
+    @SerialName("planned_end")
+    val plannedEnd: String? = null,
+    @SerialName("start_location")
+    val startLocation: String? = null,
+    @SerialName("end_location")
+    val endLocation: String? = null,
+    @SerialName("customer_name")
+    val customerName: String? = null
 )
 
 /**

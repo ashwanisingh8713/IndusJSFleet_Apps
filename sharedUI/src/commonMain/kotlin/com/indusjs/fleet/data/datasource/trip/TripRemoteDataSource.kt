@@ -84,13 +84,34 @@ class TripRemoteDataSourceImpl(
 
     override suspend fun createTrip(token: String, request: CreateTripRequest): TripApiResponse<TripDto> {
         return try {
-            log.d { "Creating trip" }
+            log.d { "Creating trip at URL: $baseUrl" }
+            log.d { "Request body: $request" }
             val response: HttpResponse = httpClient.post(baseUrl) {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            parseSingleResponse(response)
+            log.d { "Response status: ${response.status}" }
+            val bodyText = response.bodyAsText()
+            log.d { "Response body: $bodyText" }
+
+            if (response.status.isSuccess()) {
+                try {
+                    json.decodeFromString<TripApiResponse<TripDto>>(bodyText)
+                } catch (e: Exception) {
+                    log.e(e) { "Failed to parse response: $bodyText" }
+                    TripApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+                }
+            } else {
+                // Try to parse error message from response body
+                val errorMessage = try {
+                    val errorResponse = json.decodeFromString<TripApiResponse<TripDto>>(bodyText)
+                    errorResponse.message ?: "Request failed with status: ${response.status}"
+                } catch (e: Exception) {
+                    "Request failed with status: ${response.status}. Body: $bodyText"
+                }
+                TripApiResponse(success = false, message = errorMessage)
+            }
         } catch (e: Exception) {
             log.e(e) { "Failed to create trip: ${e.message}" }
             TripApiResponse(success = false, message = e.message ?: "Network error occurred")

@@ -4,3 +4,15 @@ Act as a professional Kotlin Multiplatform Developer. I am developing Fleet Mana
  In `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI`, already app is being developed and apis are getting integrated using CLEAN Architecture, Dependency Injection, MVI design pattern.
 
  Kindly review it.
+
+ ----------------------------------------
+In `CreateTripScreen`, I want "Start location" & "End location" should be fetched from Google Place API, and based on selected location input latitude & longitude should be selected.
+
+Do the all required implementation.
+
+---------------------
+Once "Start location" & "End location" is fetched from Google Place API, and based on selected location inputs latitude & longitude are selected, then "Estimated Distance" should be calculated and set itself in "Estimated Distance" Input Text.
+Use Google Distance Matrix API for road distance.
+
+-------------------------
+To "Create Trip",If any Driver or Vehicle are occupied then update in dropdown with respective information's.

@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
 import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSourceImpl
+import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.trip.TripRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSourceImpl
@@ -75,6 +76,31 @@ class DefaultViewModelProvider : ViewModelProvider {
     // Lazy-initialized core dependencies
     private val httpClient: HttpClient by lazy { HttpClientProvider.create() }
     private val settings: Settings by lazy { Settings() }
+
+    // Google Places API Service (for location search)
+    // Note: Replace with your actual Google Places API key
+    private val googlePlacesService: GooglePlacesService? by lazy {
+        val apiKey = getGooglePlacesApiKey()
+        if (apiKey.isNotBlank()) {
+            GooglePlacesService(httpClient, apiKey)
+        } else {
+            null
+        }
+    }
+
+    /**
+     * Gets the Google Places API key from ApiConfig.
+     * Configure your API key in ApiConfig.GOOGLE_PLACES_API_KEY
+     */
+    private fun getGooglePlacesApiKey(): String {
+        val apiKey = com.indusjs.fleet.core.network.ApiConfig.GOOGLE_PLACES_API_KEY
+        // Return empty if placeholder key is still set
+        return if (apiKey == "YOUR_GOOGLE_PLACES_API_KEY_HERE" || apiKey.isBlank()) {
+            ""
+        } else {
+            apiKey
+        }
+    }
 
     // Lazy-initialized User feature dependencies
     private val userLocalDataSource by lazy { UserLocalDataSourceImpl(settings) }
@@ -190,7 +216,8 @@ class DefaultViewModelProvider : ViewModelProvider {
         dispatcherProvider,
         getVehiclesUseCase,
         getDriversUseCase,
-        createTripWithDataUseCase
+        createTripWithDataUseCase,
+        googlePlacesService
     )
 
     override fun tripDetailViewModel() = TripDetailViewModel(

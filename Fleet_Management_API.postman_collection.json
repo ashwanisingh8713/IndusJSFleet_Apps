@@ -777,9 +777,23 @@
 							"host": ["{{base_url}}"],
 							"path": ["vehicles"]
 						},
-						"description": "Get a list of all vehicles with pagination."
+						"description": "Get a list of all vehicles with pagination. Each vehicle includes `is_occupied` flag and `trip_assignment` details if the vehicle is assigned to an active trip (planned or in_progress)."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Success - Vehicles List with Trip Assignment",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/vehicles", "host": ["{{base_url}}"], "path": ["vehicles"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vehicles retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"registration_number\": \"DL-01-AA-1234\",\n            \"make\": \"Toyota\",\n            \"model\": \"Innova\",\n            \"year\": 2023,\n            \"vehicle_type\": \"mpv\",\n            \"fuel_type\": \"diesel\",\n            \"capacity\": 7,\n            \"color\": \"white\",\n            \"state\": \"active\",\n            \"owner_id\": 1,\n            \"is_occupied\": true,\n            \"trip_assignment\": {\n                \"trip_id\": 5,\n                \"trip_state\": \"in_progress\",\n                \"scheduled_date\": \"2025-12-25\",\n                \"start_time\": \"09:00:00\",\n                \"planned_start\": \"2025-12-25 09:00:00\",\n                \"planned_end\": \"2025-12-25 18:00:00\",\n                \"start_location\": \"Delhi\",\n                \"end_location\": \"Jaipur\",\n                \"customer_name\": \"ABC Logistics\"\n            },\n            \"created_at\": \"2025-12-20T10:00:00Z\"\n        },\n        {\n            \"id\": 2,\n            \"registration_number\": \"DL-01-BB-5678\",\n            \"make\": \"Tata\",\n            \"model\": \"Ace\",\n            \"year\": 2022,\n            \"vehicle_type\": \"truck\",\n            \"fuel_type\": \"diesel\",\n            \"capacity\": 1000,\n            \"color\": \"blue\",\n            \"state\": \"active\",\n            \"owner_id\": 1,\n            \"is_occupied\": false,\n            \"trip_assignment\": null,\n            \"created_at\": \"2025-12-21T10:00:00Z\"\n        }\n    ],\n    \"page\": 1,\n    \"per_page\": 10,\n    \"total\": 2,\n    \"total_pages\": 1\n}"
+						}
+					]
 				},
 				{
 					"name": "List Vehicles (with Filters)",
@@ -829,9 +843,36 @@
 							"host": ["{{base_url}}"],
 							"path": ["vehicles", "1"]
 						},
-						"description": "Get a single vehicle by ID."
+						"description": "Get a single vehicle by ID. Response includes `is_occupied` flag and `trip_assignment` details if the vehicle is assigned to an active trip (planned or in_progress)."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Success - Vehicle with Active Trip",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/vehicles/1", "host": ["{{base_url}}"], "path": ["vehicles", "1"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vehicle retrieved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"registration_number\": \"DL-01-AA-1234\",\n        \"make\": \"Toyota\",\n        \"model\": \"Innova\",\n        \"year\": 2023,\n        \"vehicle_type\": \"mpv\",\n        \"fuel_type\": \"diesel\",\n        \"capacity\": 7,\n        \"color\": \"white\",\n        \"state\": \"active\",\n        \"owner_id\": 1,\n        \"owner\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\"\n        },\n        \"documents\": [\n            {\n                \"id\": 1,\n                \"document_type\": \"registration_certificate\",\n                \"tag\": \"RC\",\n                \"file_path\": \"uploads/rc_doc.pdf\",\n                \"expiry_date\": \"2028-12-31T00:00:00Z\"\n            }\n        ],\n        \"is_occupied\": true,\n        \"trip_assignment\": {\n            \"trip_id\": 5,\n            \"trip_state\": \"in_progress\",\n            \"scheduled_date\": \"2025-12-25\",\n            \"start_time\": \"09:00:00\",\n            \"planned_start\": \"2025-12-25 09:00:00\",\n            \"planned_end\": \"2025-12-25 18:00:00\",\n            \"start_location\": \"Delhi\",\n            \"end_location\": \"Jaipur\",\n            \"customer_name\": \"ABC Logistics\"\n        },\n        \"created_at\": \"2025-12-20T10:00:00Z\",\n        \"updated_at\": \"2025-12-20T10:00:00Z\"\n    }\n}"
+						},
+						{
+							"name": "Success - Vehicle without Active Trip",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/vehicles/2", "host": ["{{base_url}}"], "path": ["vehicles", "2"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vehicle retrieved successfully\",\n    \"data\": {\n        \"id\": 2,\n        \"registration_number\": \"DL-01-BB-5678\",\n        \"make\": \"Tata\",\n        \"model\": \"Ace\",\n        \"year\": 2022,\n        \"vehicle_type\": \"truck\",\n        \"fuel_type\": \"diesel\",\n        \"capacity\": 1000,\n        \"color\": \"blue\",\n        \"state\": \"active\",\n        \"owner_id\": 1,\n        \"owner\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\"\n        },\n        \"documents\": [],\n        \"is_occupied\": false,\n        \"trip_assignment\": null,\n        \"created_at\": \"2025-12-21T10:00:00Z\",\n        \"updated_at\": \"2025-12-21T10:00:00Z\"\n    }\n}"
+						}
+					]
 				},
 				{
 					"name": "Update Vehicle",
@@ -1607,11 +1648,11 @@
 							"host": ["{{base_url}}"],
 							"path": ["drivers"]
 						},
-						"description": "Get a list of all drivers with pagination."
+						"description": "Get a list of all drivers with pagination. Each driver includes `is_occupied` flag and `trip_assignment` details if the driver is assigned to an active trip (planned or in_progress)."
 					},
 					"response": [
 						{
-							"name": "Success - Drivers List",
+							"name": "Success - Drivers List with Trip Assignment",
 							"originalRequest": {
 								"method": "GET",
 								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
@@ -1621,7 +1662,7 @@
 							"code": 200,
 							"_postman_previewlanguage": "json",
 							"header": [{"key": "Content-Type", "value": "application/json"}],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Drivers retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"first_name\": \"Raj\",\n            \"last_name\": \"Kumar\",\n            \"email\": \"raj.kumar@example.com\",\n            \"mobile\": \"9876543210\",\n            \"license_number\": \"DL-1234567890\",\n            \"license_expiry\": \"2027-12-31T00:00:00Z\",\n            \"license_type\": \"HMV\",\n            \"address\": \"123 Main St, New Delhi\",\n            \"emergency_contact\": \"9876543211\",\n            \"blood_group\": \"O+\",\n            \"status\": \"active\",\n            \"owner_id\": 1,\n            \"owner\": {\n                \"id\": 1,\n                \"email\": \"owner@example.com\",\n                \"first_name\": \"Fleet\",\n                \"last_name\": \"Owner\",\n                \"role\": \"owner\"\n            },\n            \"created_by_id\": 1,\n            \"created_by\": {\n                \"id\": 1,\n                \"email\": \"owner@example.com\",\n                \"first_name\": \"Fleet\",\n                \"last_name\": \"Owner\",\n                \"role\": \"owner\"\n            },\n            \"is_active\": true,\n            \"created_at\": \"2025-12-23T10:00:00Z\",\n            \"updated_at\": \"2025-12-23T10:00:00Z\"\n        },\n        {\n            \"id\": 2,\n            \"first_name\": \"Suresh\",\n            \"last_name\": \"Yadav\",\n            \"email\": \"suresh.yadav@example.com\",\n            \"mobile\": \"8765432109\",\n            \"license_number\": \"DL-0987654321\",\n            \"license_expiry\": \"2026-06-30T00:00:00Z\",\n            \"license_type\": \"LMV\",\n            \"address\": \"456 Park Ave, Mumbai\",\n            \"blood_group\": \"A+\",\n            \"status\": \"active\",\n            \"owner_id\": 1,\n            \"is_active\": true,\n            \"created_at\": \"2025-12-23T11:00:00Z\",\n            \"updated_at\": \"2025-12-23T11:00:00Z\"\n        }\n    ],\n    \"pagination\": {\n        \"page\": 1,\n        \"per_page\": 10,\n        \"total\": 2,\n        \"total_pages\": 1\n    }\n}"
+							"body": "{\n    \"success\": true,\n    \"message\": \"Drivers retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"first_name\": \"Raj\",\n            \"last_name\": \"Kumar\",\n            \"email\": \"raj.kumar@example.com\",\n            \"mobile\": \"9876543210\",\n            \"license_number\": \"DL-1234567890\",\n            \"license_expiry\": \"2027-12-31T00:00:00Z\",\n            \"license_type\": \"HMV\",\n            \"address\": \"123 Main St, New Delhi\",\n            \"status\": \"active\",\n            \"owner_id\": 1,\n            \"is_active\": true,\n            \"is_occupied\": true,\n            \"trip_assignment\": {\n                \"trip_id\": 5,\n                \"trip_state\": \"in_progress\",\n                \"scheduled_date\": \"2025-12-25\",\n                \"start_time\": \"09:00:00\",\n                \"planned_start\": \"2025-12-25 09:00:00\",\n                \"planned_end\": \"2025-12-25 18:00:00\",\n                \"start_location\": \"Delhi\",\n                \"end_location\": \"Jaipur\",\n                \"customer_name\": \"ABC Logistics\"\n            },\n            \"created_at\": \"2025-12-23T10:00:00Z\"\n        },\n        {\n            \"id\": 2,\n            \"first_name\": \"Suresh\",\n            \"last_name\": \"Yadav\",\n            \"email\": \"suresh.yadav@example.com\",\n            \"mobile\": \"8765432109\",\n            \"license_number\": \"DL-0987654321\",\n            \"license_type\": \"LMV\",\n            \"status\": \"active\",\n            \"owner_id\": 1,\n            \"is_active\": true,\n            \"is_occupied\": false,\n            \"trip_assignment\": null,\n            \"created_at\": \"2025-12-23T11:00:00Z\"\n        }\n    ],\n    \"page\": 1,\n    \"per_page\": 10,\n    \"total\": 2,\n    \"total_pages\": 1\n}"
 						}
 					]
 				},
@@ -1660,11 +1701,11 @@
 								}
 							]
 						},
-						"description": "Get drivers with pagination, status filter, and search. Valid statuses: active, inactive, on_trip, on_leave, suspended."
+						"description": "Get drivers with pagination, status filter, and search. Response includes `is_occupied` and `trip_assignment` for each driver. Valid statuses: active, inactive, on_trip, on_leave, suspended."
 					},
 					"response": [
 						{
-							"name": "Success - Filtered Drivers",
+							"name": "Success - Filtered Drivers with Trip Assignment",
 							"originalRequest": {
 								"method": "GET",
 								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
@@ -1674,7 +1715,7 @@
 							"code": 200,
 							"_postman_previewlanguage": "json",
 							"header": [{"key": "Content-Type", "value": "application/json"}],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Drivers retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"first_name\": \"Raj\",\n            \"last_name\": \"Kumar\",\n            \"email\": \"raj.kumar@example.com\",\n            \"mobile\": \"9876543210\",\n            \"license_number\": \"DL-1234567890\",\n            \"license_type\": \"HMV\",\n            \"status\": \"active\",\n            \"is_active\": true\n        }\n    ],\n    \"pagination\": {\n        \"page\": 1,\n        \"per_page\": 10,\n        \"total\": 1,\n        \"total_pages\": 1\n    }\n}"
+							"body": "{\n    \"success\": true,\n    \"message\": \"Drivers retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"first_name\": \"Raj\",\n            \"last_name\": \"Kumar\",\n            \"email\": \"raj.kumar@example.com\",\n            \"mobile\": \"9876543210\",\n            \"license_number\": \"DL-1234567890\",\n            \"license_type\": \"HMV\",\n            \"status\": \"active\",\n            \"is_active\": true,\n            \"is_occupied\": true,\n            \"trip_assignment\": {\n                \"trip_id\": 5,\n                \"trip_state\": \"planned\",\n                \"scheduled_date\": \"2025-12-26\",\n                \"start_time\": \"08:00:00\",\n                \"planned_start\": \"2025-12-26 08:00:00\",\n                \"planned_end\": \"2025-12-26 17:00:00\",\n                \"start_location\": \"Mumbai\",\n                \"end_location\": \"Pune\",\n                \"customer_name\": \"XYZ Corp\"\n            }\n        }\n    ],\n    \"page\": 1,\n    \"per_page\": 10,\n    \"total\": 1,\n    \"total_pages\": 1\n}"
 						}
 					]
 				},
@@ -1726,11 +1767,11 @@
 							"host": ["{{base_url}}"],
 							"path": ["drivers", "1"]
 						},
-						"description": "Get a single driver by ID."
+						"description": "Get a single driver by ID. Response includes `is_occupied` flag and `trip_assignment` details if the driver is assigned to an active trip (planned or in_progress)."
 					},
 					"response": [
 						{
-							"name": "Success - Driver Details",
+							"name": "Success - Driver with Active Trip",
 							"originalRequest": {
 								"method": "GET",
 								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
@@ -1740,7 +1781,20 @@
 							"code": 200,
 							"_postman_previewlanguage": "json",
 							"header": [{"key": "Content-Type", "value": "application/json"}],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Driver retrieved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"first_name\": \"Raj\",\n        \"last_name\": \"Kumar\",\n        \"email\": \"raj.kumar@example.com\",\n        \"mobile\": \"9876543210\",\n        \"license_number\": \"DL-1234567890\",\n        \"license_expiry\": \"2027-12-31T00:00:00Z\",\n        \"license_type\": \"HMV\",\n        \"date_of_birth\": \"1990-05-15T00:00:00Z\",\n        \"address\": \"123 Main St, New Delhi\",\n        \"emergency_contact\": \"9876543211\",\n        \"blood_group\": \"O+\",\n        \"profile_photo\": \"\",\n        \"status\": \"active\",\n        \"owner_id\": 1,\n        \"owner\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"mobile\": \"9999999999\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\",\n            \"is_active\": true\n        },\n        \"created_by_id\": 1,\n        \"created_by\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\"\n        },\n        \"joining_date\": \"2025-01-01T00:00:00Z\",\n        \"is_active\": true,\n        \"created_at\": \"2025-12-23T10:00:00Z\",\n        \"updated_at\": \"2025-12-23T10:00:00Z\"\n    }\n}"
+							"body": "{\n    \"success\": true,\n    \"message\": \"Driver retrieved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"first_name\": \"Raj\",\n        \"last_name\": \"Kumar\",\n        \"email\": \"raj.kumar@example.com\",\n        \"mobile\": \"9876543210\",\n        \"license_number\": \"DL-1234567890\",\n        \"license_expiry\": \"2027-12-31T00:00:00Z\",\n        \"license_type\": \"HMV\",\n        \"date_of_birth\": \"1990-05-15T00:00:00Z\",\n        \"address\": \"123 Main St, New Delhi\",\n        \"emergency_contact\": \"9876543211\",\n        \"blood_group\": \"O+\",\n        \"profile_photo\": \"\",\n        \"status\": \"active\",\n        \"owner_id\": 1,\n        \"owner\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"mobile\": \"9999999999\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\",\n            \"is_active\": true\n        },\n        \"created_by_id\": 1,\n        \"created_by\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\"\n        },\n        \"joining_date\": \"2025-01-01T00:00:00Z\",\n        \"is_active\": true,\n        \"is_occupied\": true,\n        \"trip_assignment\": {\n            \"trip_id\": 5,\n            \"trip_state\": \"in_progress\",\n            \"scheduled_date\": \"2025-12-25\",\n            \"start_time\": \"09:00:00\",\n            \"planned_start\": \"2025-12-25 09:00:00\",\n            \"planned_end\": \"2025-12-25 18:00:00\",\n            \"start_location\": \"Delhi\",\n            \"end_location\": \"Jaipur\",\n            \"customer_name\": \"ABC Logistics\"\n        },\n        \"created_at\": \"2025-12-23T10:00:00Z\",\n        \"updated_at\": \"2025-12-23T10:00:00Z\"\n    }\n}"
+						},
+						{
+							"name": "Success - Driver without Active Trip",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/drivers/2", "host": ["{{base_url}}"], "path": ["drivers", "2"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Driver retrieved successfully\",\n    \"data\": {\n        \"id\": 2,\n        \"first_name\": \"Suresh\",\n        \"last_name\": \"Yadav\",\n        \"email\": \"suresh.yadav@example.com\",\n        \"mobile\": \"8765432109\",\n        \"license_number\": \"DL-0987654321\",\n        \"license_type\": \"LMV\",\n        \"status\": \"active\",\n        \"owner_id\": 1,\n        \"owner\": {\n            \"id\": 1,\n            \"email\": \"owner@example.com\",\n            \"first_name\": \"Fleet\",\n            \"last_name\": \"Owner\",\n            \"role\": \"owner\"\n        },\n        \"is_active\": true,\n        \"is_occupied\": false,\n        \"trip_assignment\": null,\n        \"created_at\": \"2025-12-23T11:00:00Z\",\n        \"updated_at\": \"2025-12-23T11:00:00Z\"\n    }\n}"
 						},
 						{
 							"name": "Error - Driver Not Found",

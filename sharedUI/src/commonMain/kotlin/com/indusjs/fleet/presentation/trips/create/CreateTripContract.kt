@@ -3,6 +3,7 @@ package com.indusjs.fleet.presentation.trips.create
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 
@@ -74,6 +75,18 @@ object CreateTripContract {
         val showVehicleDropdown: Boolean = false,
         val showDriverDropdown: Boolean = false,
 
+        // Location search states
+        val startLocationPredictions: List<PlacePrediction> = emptyList(),
+        val endLocationPredictions: List<PlacePrediction> = emptyList(),
+        val isSearchingStartLocation: Boolean = false,
+        val isSearchingEndLocation: Boolean = false,
+        val showStartLocationDropdown: Boolean = false,
+        val showEndLocationDropdown: Boolean = false,
+
+        // Distance calculation state
+        val isCalculatingDistance: Boolean = false,
+        val estimatedDuration: String = "", // e.g., "2 hours 30 mins"
+
         // Available options
         val priorityOptions: List<String> = priorities,
         val cargoTypeOptions: List<String> = cargoTypes
@@ -118,6 +131,14 @@ object CreateTripContract {
         data class UpdateEndLat(val value: String) : Intent
         data class UpdateEndLng(val value: String) : Intent
         data class UpdateEstimatedDistance(val value: String) : Intent
+
+        // Location search
+        data class SearchStartLocation(val query: String) : Intent
+        data class SearchEndLocation(val query: String) : Intent
+        data class SelectStartLocationPrediction(val prediction: PlacePrediction) : Intent
+        data class SelectEndLocationPrediction(val prediction: PlacePrediction) : Intent
+        data object DismissStartLocationDropdown : Intent
+        data object DismissEndLocationDropdown : Intent
 
         // Schedule updates - Departure (required)
         data class UpdateDepartureDate(val value: String) : Intent

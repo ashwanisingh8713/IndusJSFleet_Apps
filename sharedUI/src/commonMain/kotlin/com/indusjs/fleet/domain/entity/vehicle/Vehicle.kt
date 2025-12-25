@@ -32,6 +32,21 @@ data class Location(
 )
 
 /**
+ * Trip assignment info when vehicle is occupied.
+ */
+data class VehicleTripAssignment(
+    val tripId: String,
+    val tripState: String,
+    val scheduledDate: String?,
+    val startTime: String?,
+    val plannedStart: String?,
+    val plannedEnd: String?,
+    val startLocation: String?,
+    val endLocation: String?,
+    val customerName: String?
+)
+
+/**
  * Vehicle entity representing a fleet vehicle.
  */
 data class Vehicle(
@@ -51,7 +66,9 @@ data class Vehicle(
     val assignedDriverId: String? = null,
     val assignedDriverName: String? = null,
     val lastServiceDate: Long? = null,
-    val nextServiceDate: Long? = null
+    val nextServiceDate: Long? = null,
+    val isOccupied: Boolean = false,
+    val tripAssignment: VehicleTripAssignment? = null
 )
 
 /**

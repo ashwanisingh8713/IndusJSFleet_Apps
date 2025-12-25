@@ -74,6 +74,21 @@ data class DriverOwner(
 )
 
 /**
+ * Trip assignment info when driver is occupied.
+ */
+data class DriverTripAssignment(
+    val tripId: String,
+    val tripState: String,
+    val scheduledDate: String?,
+    val startTime: String?,
+    val plannedStart: String?,
+    val plannedEnd: String?,
+    val startLocation: String?,
+    val endLocation: String?,
+    val customerName: String?
+)
+
+/**
  * Driver entity representing a fleet driver.
  * Aligned with Fleet Management API.
  */
@@ -93,6 +108,8 @@ data class Driver(
     val profilePhoto: String? = null,
     val status: DriverStatus = DriverStatus.ACTIVE,
     val isActive: Boolean = true,
+    val isOccupied: Boolean = false,
+    val tripAssignment: DriverTripAssignment? = null,
     val ownerId: String? = null,
     val owner: DriverOwner? = null,
     val createdById: String? = null,

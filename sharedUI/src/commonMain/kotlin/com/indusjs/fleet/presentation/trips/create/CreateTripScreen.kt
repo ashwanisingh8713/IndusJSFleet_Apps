@@ -1,6 +1,7 @@
 package com.indusjs.fleet.presentation.trips.create
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,8 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -259,21 +262,53 @@ private fun VehicleDriverSelectionSection(
                 onDismissRequest = { viewModel.sendIntent(CreateTripContract.Intent.ToggleVehicleDropdown) }
             ) {
                 state.vehicles.forEach { vehicle ->
+                    val isOccupied = vehicle.isOccupied
                     DropdownMenuItem(
                         text = {
-                            Column {
-                                Text(
-                                    text = vehicle.registrationNumber,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = "${vehicle.make} ${vehicle.model} (${vehicle.year})",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = vehicle.registrationNumber,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isOccupied) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (isOccupied) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = MaterialTheme.colorScheme.errorContainer
+                                            ) {
+                                                Text(
+                                                    text = "OCCUPIED",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.error,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Text(
+                                        text = "${vehicle.make} ${vehicle.model} (${vehicle.year})",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    if (isOccupied && vehicle.tripAssignment != null) {
+                                        Text(
+                                            text = "🕐 ${vehicle.tripAssignment.plannedStart ?: "N/A"} - ${vehicle.tripAssignment.plannedEnd ?: "N/A"}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
                             }
                         },
-                        onClick = { viewModel.sendIntent(CreateTripContract.Intent.SelectVehicle(vehicle)) }
+                        onClick = { viewModel.sendIntent(CreateTripContract.Intent.SelectVehicle(vehicle)) },
+                        enabled = !isOccupied
                     )
                 }
             }
@@ -303,21 +338,53 @@ private fun VehicleDriverSelectionSection(
                 onDismissRequest = { viewModel.sendIntent(CreateTripContract.Intent.ToggleDriverDropdown) }
             ) {
                 state.drivers.forEach { driver ->
+                    val isOccupied = driver.isOccupied
                     DropdownMenuItem(
                         text = {
-                            Column {
-                                Text(
-                                    text = "${driver.firstName} ${driver.lastName}",
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = driver.mobile,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "${driver.firstName} ${driver.lastName}",
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isOccupied) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (isOccupied) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = MaterialTheme.colorScheme.errorContainer
+                                            ) {
+                                                Text(
+                                                    text = "OCCUPIED",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.error,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Text(
+                                        text = driver.mobile,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    if (isOccupied && driver.tripAssignment != null) {
+                                        Text(
+                                            text = "🕐 ${driver.tripAssignment.plannedStart ?: "N/A"} - ${driver.tripAssignment.plannedEnd ?: "N/A"}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
                             }
                         },
-                        onClick = { viewModel.sendIntent(CreateTripContract.Intent.SelectDriver(driver)) }
+                        onClick = { viewModel.sendIntent(CreateTripContract.Intent.SelectDriver(driver)) },
+                        enabled = !isOccupied
                     )
                 }
             }
@@ -325,26 +392,34 @@ private fun VehicleDriverSelectionSection(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RouteSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Start Location
-        OutlinedTextField(
+        // Start Location with Autocomplete
+        LocationSearchField(
             value = state.startLocation,
-            onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateStartLocation(it)) },
-            label = { Text("Start Location *") },
-            placeholder = { Text("e.g., 123 Main St, New Delhi") },
-            leadingIcon = { Text("🟢", modifier = Modifier.padding(start = 12.dp)) },
+            onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.SearchStartLocation(it)) },
+            label = "Start Location *",
+            placeholder = "Search for a location...",
+            leadingEmoji = "🟢",
             isError = state.startLocationError != null,
-            supportingText = state.startLocationError?.let { { Text(it) } },
-            singleLine = false,
-            maxLines = 2,
-            modifier = Modifier.fillMaxWidth()
+            errorText = state.startLocationError,
+            isLoading = state.isSearchingStartLocation,
+            predictions = state.startLocationPredictions,
+            showDropdown = state.showStartLocationDropdown,
+            onPredictionSelected = { prediction ->
+                viewModel.sendIntent(CreateTripContract.Intent.SelectStartLocationPrediction(prediction))
+            },
+            onDismissDropdown = {
+                viewModel.sendIntent(CreateTripContract.Intent.DismissStartLocationDropdown)
+            }
         )
 
+        // Start Location Coordinates (auto-filled or manual)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -353,37 +428,52 @@ private fun RouteSection(
                 value = state.startLat,
                 onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateStartLat(it)) },
                 label = { Text("Latitude") },
-                placeholder = { Text("e.g., 28.6139") },
+                placeholder = { Text("Auto-filled") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface
+                )
             )
 
             OutlinedTextField(
                 value = state.startLng,
                 onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateStartLng(it)) },
                 label = { Text("Longitude") },
-                placeholder = { Text("e.g., 77.2090") },
+                placeholder = { Text("Auto-filled") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
 
-        // End Location
-        OutlinedTextField(
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // End Location with Autocomplete
+        LocationSearchField(
             value = state.endLocation,
-            onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateEndLocation(it)) },
-            label = { Text("End Location *") },
-            placeholder = { Text("e.g., 456 Taj Mahal Road, Agra") },
-            leadingIcon = { Text("🔴", modifier = Modifier.padding(start = 12.dp)) },
+            onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.SearchEndLocation(it)) },
+            label = "End Location *",
+            placeholder = "Search for a location...",
+            leadingEmoji = "🔴",
             isError = state.endLocationError != null,
-            supportingText = state.endLocationError?.let { { Text(it) } },
-            singleLine = false,
-            maxLines = 2,
-            modifier = Modifier.fillMaxWidth()
+            errorText = state.endLocationError,
+            isLoading = state.isSearchingEndLocation,
+            predictions = state.endLocationPredictions,
+            showDropdown = state.showEndLocationDropdown,
+            onPredictionSelected = { prediction ->
+                viewModel.sendIntent(CreateTripContract.Intent.SelectEndLocationPrediction(prediction))
+            },
+            onDismissDropdown = {
+                viewModel.sendIntent(CreateTripContract.Intent.DismissEndLocationDropdown)
+            }
         )
 
+        // End Location Coordinates (auto-filled or manual)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -392,74 +482,253 @@ private fun RouteSection(
                 value = state.endLat,
                 onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateEndLat(it)) },
                 label = { Text("Latitude") },
-                placeholder = { Text("e.g., 27.1767") },
+                placeholder = { Text("Auto-filled") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface
+                )
             )
 
             OutlinedTextField(
                 value = state.endLng,
                 onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateEndLng(it)) },
                 label = { Text("Longitude") },
-                placeholder = { Text("e.g., 78.0081") },
+                placeholder = { Text("Auto-filled") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
 
+        // Estimated Distance (auto-calculated when both locations are selected)
+        Column {
+            OutlinedTextField(
+                value = state.estimatedDistance,
+                onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateEstimatedDistance(it)) },
+                label = { Text("Estimated Distance (km)") },
+                placeholder = { Text("Auto-calculated") },
+                leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 12.dp)) },
+                trailingIcon = {
+                    if (state.isCalculatingDistance) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                supportingText = {
+                    when {
+                        state.isCalculatingDistance -> {
+                            Text(
+                                text = "🔄 Calculating road distance...",
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        state.estimatedDistance.isNotBlank() && state.estimatedDuration.isNotBlank() -> {
+                            Text(
+                                text = "✓ Road distance | Est. travel time: ${state.estimatedDuration}",
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        state.estimatedDistance.isNotBlank() -> {
+                            Text(
+                                text = "✓ Distance calculated",
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        else -> {
+                            Text(
+                                text = "Select both locations to auto-calculate",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
+/**
+ * Location Search Field with Autocomplete Dropdown
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LocationSearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    leadingEmoji: String,
+    isError: Boolean,
+    errorText: String?,
+    isLoading: Boolean,
+    predictions: List<PlacePrediction>,
+    showDropdown: Boolean,
+    onPredictionSelected: (PlacePrediction) -> Unit,
+    onDismissDropdown: () -> Unit
+) {
+    ExposedDropdownMenuBox(
+        expanded = showDropdown && predictions.isNotEmpty(),
+        onExpandedChange = { }
+    ) {
         OutlinedTextField(
-            value = state.estimatedDistance,
-            onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateEstimatedDistance(it)) },
-            label = { Text("Estimated Distance (km)") },
-            placeholder = { Text("e.g., 233.5") },
-            leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 12.dp)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            leadingIcon = { Text(leadingEmoji, modifier = Modifier.padding(start = 12.dp)) },
+            trailingIcon = {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+            },
+            isError = isError,
+            supportingText = errorText?.let { { Text(it) } },
+            singleLine = false,
+            maxLines = 2,
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+
+        ExposedDropdownMenu(
+            expanded = showDropdown && predictions.isNotEmpty(),
+            onDismissRequest = onDismissDropdown,
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
+                .heightIn(max = 250.dp)
+        ) {
+            predictions.forEach { prediction ->
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(
+                                text = prediction.structuredFormatting?.mainText ?: prediction.description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            prediction.structuredFormatting?.secondaryText?.let { secondary ->
+                                Text(
+                                    text = secondary,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    leadingIcon = {
+                        Text("📍", style = MaterialTheme.typography.bodyMedium)
+                    },
+                    onClick = { onPredictionSelected(prediction) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Visual transformation for date input (DD-MM-YYYY format).
+ * Displays delimiters visually while keeping raw digits as actual value.
+ */
+private class DateVisualTransformation : androidx.compose.ui.text.input.VisualTransformation {
+    override fun filter(text: androidx.compose.ui.text.AnnotatedString): androidx.compose.ui.text.input.TransformedText {
+        val trimmed = text.text.take(8) // Max 8 digits: DDMMYYYY
+        val out = StringBuilder()
+
+        for (i in trimmed.indices) {
+            out.append(trimmed[i])
+            if (i == 1 || i == 3) {
+                out.append("-")
+            }
+        }
+
+        val offsetMapping = object : androidx.compose.ui.text.input.OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                return when {
+                    offset <= 2 -> offset
+                    offset <= 4 -> offset + 1
+                    offset <= 8 -> offset + 2
+                    else -> 10
+                }
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                return when {
+                    offset <= 2 -> offset
+                    offset <= 5 -> offset - 1
+                    offset <= 10 -> offset - 2
+                    else -> 8
+                }
+            }
+        }
+
+        return androidx.compose.ui.text.input.TransformedText(
+            androidx.compose.ui.text.AnnotatedString(out.toString()),
+            offsetMapping
         )
     }
 }
 
 /**
- * Formats date input with auto-delimiter for Indian format (DD-MM-YYYY).
- * Adds "-" automatically after day and month.
+ * Visual transformation for time input (HH:MM format).
+ * Displays colon visually while keeping raw digits as actual value.
  */
-private fun formatDateInput(input: String): String {
-    // Remove all non-digit characters
-    val digitsOnly = input.filter { it.isDigit() }
+private class TimeVisualTransformation : androidx.compose.ui.text.input.VisualTransformation {
+    override fun filter(text: androidx.compose.ui.text.AnnotatedString): androidx.compose.ui.text.input.TransformedText {
+        val trimmed = text.text.take(4) // Max 4 digits: HHMM
+        val out = StringBuilder()
 
-    return buildString {
-        digitsOnly.forEachIndexed { index, char ->
-            if (index == 2 || index == 4) {
-                append("-")
-            }
-            if (index < 8) { // Max 8 digits: DDMMYYYY
-                append(char)
+        for (i in trimmed.indices) {
+            out.append(trimmed[i])
+            if (i == 1) {
+                out.append(":")
             }
         }
+
+        val offsetMapping = object : androidx.compose.ui.text.input.OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                return when {
+                    offset <= 2 -> offset
+                    offset <= 4 -> offset + 1
+                    else -> 5
+                }
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                return when {
+                    offset <= 2 -> offset
+                    offset <= 5 -> offset - 1
+                    else -> 4
+                }
+            }
+        }
+
+        return androidx.compose.ui.text.input.TransformedText(
+            androidx.compose.ui.text.AnnotatedString(out.toString()),
+            offsetMapping
+        )
     }
 }
 
 /**
- * Formats time input with auto-delimiter (HH:MM).
- * Adds ":" automatically after hours.
+ * Filters input to only allow digits for date/time fields.
  */
-private fun formatTimeInput(input: String): String {
-    // Remove all non-digit characters
-    val digitsOnly = input.filter { it.isDigit() }
-
-    return buildString {
-        digitsOnly.forEachIndexed { index, char ->
-            if (index == 2) {
-                append(":")
-            }
-            if (index < 4) { // Max 4 digits: HHMM
-                append(char)
-            }
-        }
-    }
+private fun filterDigitsOnly(input: String, maxLength: Int): String {
+    return input.filter { it.isDigit() }.take(maxLength)
 }
 
 @Composable
@@ -467,6 +736,10 @@ private fun ScheduleSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
+    // Remember visual transformations
+    val dateVisualTransformation = remember { DateVisualTransformation() }
+    val timeVisualTransformation = remember { TimeVisualTransformation() }
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
         // Departure Section
@@ -483,9 +756,9 @@ private fun ScheduleSection(
         ) {
             OutlinedTextField(
                 value = state.departureDate,
-                onValueChange = {
-                    val formatted = formatDateInput(it)
-                    viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureDate(formatted))
+                onValueChange = { input ->
+                    val filtered = filterDigitsOnly(input, 8)
+                    viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureDate(filtered))
                 },
                 label = { Text("Date") },
                 placeholder = { Text("DD-MM-YYYY") },
@@ -493,14 +766,15 @@ private fun ScheduleSection(
                 supportingText = state.departureDateError?.let { { Text(it) } },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = dateVisualTransformation,
                 modifier = Modifier.weight(1f)
             )
 
             OutlinedTextField(
                 value = state.departureTime,
-                onValueChange = {
-                    val formatted = formatTimeInput(it)
-                    viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureTime(formatted))
+                onValueChange = { input ->
+                    val filtered = filterDigitsOnly(input, 4)
+                    viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureTime(filtered))
                 },
                 label = { Text("Time (24hr)") },
                 placeholder = { Text("HH:MM") },
@@ -508,6 +782,7 @@ private fun ScheduleSection(
                 supportingText = state.departureTimeError?.let { { Text(it) } },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = timeVisualTransformation,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -528,27 +803,29 @@ private fun ScheduleSection(
         ) {
             OutlinedTextField(
                 value = state.arrivalDate,
-                onValueChange = {
-                    val formatted = formatDateInput(it)
-                    viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalDate(formatted))
+                onValueChange = { input ->
+                    val filtered = filterDigitsOnly(input, 8)
+                    viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalDate(filtered))
                 },
                 label = { Text("Date") },
                 placeholder = { Text("DD-MM-YYYY") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = dateVisualTransformation,
                 modifier = Modifier.weight(1f)
             )
 
             OutlinedTextField(
                 value = state.arrivalTime,
-                onValueChange = {
-                    val formatted = formatTimeInput(it)
-                    viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalTime(formatted))
+                onValueChange = { input ->
+                    val filtered = filterDigitsOnly(input, 4)
+                    viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalTime(filtered))
                 },
                 label = { Text("Time (24hr)") },
                 placeholder = { Text("HH:MM") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = timeVisualTransformation,
                 modifier = Modifier.weight(1f)
             )
         }
