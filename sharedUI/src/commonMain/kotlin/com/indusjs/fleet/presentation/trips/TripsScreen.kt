@@ -120,8 +120,7 @@ fun TripsScreen(
                 else -> {
                     TripList(
                         trips = state.filteredTrips,
-                        onTripClick = { viewModel.sendIntent(TripsContract.Intent.SelectTrip(it)) },
-                        onCancelClick = { viewModel.sendIntent(TripsContract.Intent.CancelTrip(it)) }
+                        onTripClick = { viewModel.sendIntent(TripsContract.Intent.SelectTrip(it)) }
                     )
                 }
             }
@@ -159,19 +158,17 @@ private fun StatusFilterChips(
 
 private fun getStatusDisplayName(status: TripStatus): String {
     return when (status) {
-        TripStatus.SCHEDULED -> "Scheduled"
+        TripStatus.PLANNED -> "Planned"
         TripStatus.IN_PROGRESS -> "In Progress"
         TripStatus.COMPLETED -> "Completed"
         TripStatus.CANCELLED -> "Cancelled"
-        TripStatus.DELAYED -> "Delayed"
     }
 }
 
 @Composable
 private fun TripList(
     trips: List<Trip>,
-    onTripClick: (String) -> Unit,
-    onCancelClick: (String) -> Unit
+    onTripClick: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -181,8 +178,7 @@ private fun TripList(
         items(trips, key = { it.id }) { trip ->
             TripCard(
                 trip = trip,
-                onClick = { onTripClick(trip.id) },
-                onCancelClick = { onCancelClick(trip.id) }
+                onClick = { onTripClick(trip.id) }
             )
         }
     }
@@ -191,8 +187,7 @@ private fun TripList(
 @Composable
 private fun TripCard(
     trip: Trip,
-    onClick: () -> Unit,
-    onCancelClick: () -> Unit
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -210,12 +205,12 @@ private fun TripCard(
             ) {
                 Column {
                     Text(
-                        text = trip.tripNumber,
+                        text = trip.tripNumber ?: "Trip #${trip.id}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "${trip.vehicleNumber} • ${trip.driverName}",
+                        text = "${trip.vehicleNumber ?: "Vehicle"} • ${trip.driverName ?: "Driver"}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -248,10 +243,10 @@ private fun TripCard(
                 )
                 TripInfoItem(
                     emoji = "⏱️",
-                    label = "Duration",
+                    label = "Est. Duration",
                     value = formatDuration(trip.estimatedDuration)
                 )
-                trip.cargo?.let { cargo ->
+                trip.cargoType?.let { cargo ->
                     TripInfoItem(
                         emoji = "📦",
                         label = "Cargo",
@@ -262,20 +257,6 @@ private fun TripCard(
                     label = "Status",
                     value = getStatusDisplayName(trip.status)
                 )
-            }
-
-            // Cancel button for scheduled trips
-            if (trip.status == TripStatus.SCHEDULED || trip.status == TripStatus.DELAYED) {
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = onCancelClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("❌ Cancel Trip")
-                }
             }
         }
     }
@@ -298,7 +279,7 @@ private fun RouteSection(trip: Trip) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = trip.startLocation.address,
+                    text = trip.startLocation?.address ?: "N/A",
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -348,7 +329,7 @@ private fun RouteSection(trip: Trip) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = trip.endLocation.address,
+                    text = trip.endLocation?.address ?: "N/A",
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -385,11 +366,10 @@ private fun TripInfoItem(
 @Composable
 private fun StatusBadge(status: TripStatus) {
     val (color, text) = when (status) {
-        TripStatus.SCHEDULED -> MaterialTheme.colorScheme.primary to "Scheduled"
+        TripStatus.PLANNED -> MaterialTheme.colorScheme.primary to "Planned"
         TripStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary to "In Progress"
         TripStatus.COMPLETED -> MaterialTheme.colorScheme.secondary to "Completed"
         TripStatus.CANCELLED -> MaterialTheme.colorScheme.error to "Cancelled"
-        TripStatus.DELAYED -> MaterialTheme.colorScheme.error to "Delayed"
     }
 
     // Using reusable FleetStatusBadge component

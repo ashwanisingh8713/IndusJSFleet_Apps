@@ -15,6 +15,8 @@ import com.indusjs.fleet.presentation.maps.MapsViewModel
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
 import com.indusjs.fleet.presentation.team.list.TeamListViewModel
 import com.indusjs.fleet.presentation.trips.TripsViewModel
+import com.indusjs.fleet.presentation.trips.create.CreateTripViewModel
+import com.indusjs.fleet.presentation.trips.detail.TripDetailViewModel
 import com.indusjs.fleet.presentation.user.changepassword.ChangePasswordViewModel
 import com.indusjs.fleet.presentation.user.forgotpassword.ForgotPasswordViewModel
 import com.indusjs.fleet.presentation.user.profile.ProfileViewModel
@@ -51,6 +53,8 @@ interface ViewModelProvider {
     fun createDriverViewModel(): CreateDriverViewModel
     fun driverDetailViewModel(): DriverDetailViewModel
     fun tripsViewModel(): TripsViewModel
+    fun createTripViewModel(): CreateTripViewModel
+    fun tripDetailViewModel(): TripDetailViewModel
     fun mapsViewModel(): MapsViewModel
     fun teamListViewModel(): TeamListViewModel
     fun createTeamMemberViewModel(): CreateTeamMemberViewModel

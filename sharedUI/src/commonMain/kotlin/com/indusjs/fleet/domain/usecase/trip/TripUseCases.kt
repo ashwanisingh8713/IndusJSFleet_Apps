@@ -46,6 +46,30 @@ class CreateTripUseCase(
 }
 
 /**
+ * Use case for creating a new trip with CreateTripData.
+ */
+@Inject
+class CreateTripWithDataUseCase(
+    private val tripRepository: TripRepository
+) {
+    suspend operator fun invoke(data: com.indusjs.fleet.domain.entity.trip.CreateTripData): Result<Trip> {
+        return tripRepository.createTripWithData(data)
+    }
+}
+
+/**
+ * Use case for updating an existing trip.
+ */
+@Inject
+class UpdateTripUseCase(
+    private val tripRepository: TripRepository
+) {
+    suspend operator fun invoke(trip: Trip): Result<Trip> {
+        return tripRepository.updateTrip(trip)
+    }
+}
+
+/**
  * Use case for updating trip status.
  */
 @Inject

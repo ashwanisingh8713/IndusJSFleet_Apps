@@ -1,6 +1,7 @@
 package com.indusjs.fleet.domain.repository.trip
 
 import com.indusjs.fleet.core.result.Result
+import com.indusjs.fleet.domain.entity.trip.CreateTripData
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
 import com.indusjs.fleet.domain.repository.Repository
@@ -26,6 +27,16 @@ interface TripRepository : Repository {
      * Create a new trip.
      */
     suspend fun createTrip(trip: Trip): Result<Trip>
+
+    /**
+     * Create a new trip with CreateTripData.
+     */
+    suspend fun createTripWithData(data: CreateTripData): Result<Trip>
+
+    /**
+     * Update an existing trip.
+     */
+    suspend fun updateTrip(trip: Trip): Result<Trip>
 
     /**
      * Update trip status.

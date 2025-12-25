@@ -5,58 +5,108 @@ import kotlinx.serialization.Serializable
 
 /**
  * Trip DTO for API communication.
+ * Uses snake_case to match API response format.
  */
 @Serializable
 data class TripDto(
     @SerialName("id")
-    val id: String,
-    @SerialName("tripNumber")
-    val tripNumber: String,
-    @SerialName("vehicleId")
-    val vehicleId: String,
-    @SerialName("vehicleNumber")
-    val vehicleNumber: String,
-    @SerialName("driverId")
-    val driverId: String,
-    @SerialName("driverName")
-    val driverName: String,
-    @SerialName("status")
-    val status: String,
-    @SerialName("startLocation")
-    val startLocation: TripLocationDto,
-    @SerialName("endLocation")
-    val endLocation: TripLocationDto,
-    @SerialName("currentLocation")
-    val currentLocation: TripLocationDto? = null,
-    @SerialName("distance")
-    val distance: Double = 0.0,
-    @SerialName("estimatedDuration")
-    val estimatedDuration: Long = 0L,
-    @SerialName("actualDuration")
-    val actualDuration: Long? = null,
-    @SerialName("scheduledStartTime")
-    val scheduledStartTime: Long = 0L,
-    @SerialName("actualStartTime")
-    val actualStartTime: Long? = null,
-    @SerialName("actualEndTime")
-    val actualEndTime: Long? = null,
-    @SerialName("cargo")
-    val cargo: String? = null,
+    val id: Int,
+    @SerialName("trip_number")
+    val tripNumber: String? = null,
+    @SerialName("vehicle_id")
+    val vehicleId: Int,
+    @SerialName("vehicle")
+    val vehicle: TripVehicleDto? = null,
+    @SerialName("driver_id")
+    val driverId: Int,
+    @SerialName("driver")
+    val driver: TripDriverDto? = null,
+    @SerialName("state")
+    val state: String = "planned",
+    @SerialName("start_location")
+    val startLocation: String? = null,
+    @SerialName("start_lat")
+    val startLat: Double? = null,
+    @SerialName("start_lng")
+    val startLng: Double? = null,
+    @SerialName("end_location")
+    val endLocation: String? = null,
+    @SerialName("end_lat")
+    val endLat: Double? = null,
+    @SerialName("end_lng")
+    val endLng: Double? = null,
+    @SerialName("current_lat")
+    val currentLat: Double? = null,
+    @SerialName("current_lng")
+    val currentLng: Double? = null,
+    @SerialName("estimated_distance")
+    val estimatedDistance: Double? = null,
+    @SerialName("actual_distance")
+    val actualDistance: Double? = null,
+    @SerialName("scheduled_date")
+    val scheduledDate: String? = null,
+    @SerialName("start_time")
+    val startTime: String? = null,
+    @SerialName("planned_start")
+    val plannedStart: String? = null,
+    @SerialName("planned_end")
+    val plannedEnd: String? = null,
+    @SerialName("actual_start")
+    val actualStart: String? = null,
+    @SerialName("actual_end")
+    val actualEnd: String? = null,
+    @SerialName("cargo_type")
+    val cargoType: String? = null,
+    @SerialName("cargo_description")
+    val cargoDescription: String? = null,
+    @SerialName("cargo_weight")
+    val cargoWeight: Double? = null,
+    @SerialName("customer_name")
+    val customerName: String? = null,
+    @SerialName("customer_contact")
+    val customerContact: String? = null,
+    @SerialName("priority")
+    val priority: String? = null,
     @SerialName("notes")
-    val notes: String? = null
+    val notes: String? = null,
+    @SerialName("owner_id")
+    val ownerId: Int? = null,
+    @SerialName("created_by_id")
+    val createdById: Int? = null,
+    @SerialName("created_at")
+    val createdAt: String? = null,
+    @SerialName("updated_at")
+    val updatedAt: String? = null
 )
 
 /**
- * Trip location DTO for API communication.
+ * Embedded vehicle info in trip response.
  */
 @Serializable
-data class TripLocationDto(
-    @SerialName("latitude")
-    val latitude: Double,
-    @SerialName("longitude")
-    val longitude: Double,
-    @SerialName("address")
-    val address: String
+data class TripVehicleDto(
+    @SerialName("id")
+    val id: Int,
+    @SerialName("registration_number")
+    val registrationNumber: String? = null,
+    @SerialName("make")
+    val make: String? = null,
+    @SerialName("model")
+    val model: String? = null
+)
+
+/**
+ * Embedded driver info in trip response.
+ */
+@Serializable
+data class TripDriverDto(
+    @SerialName("id")
+    val id: Int,
+    @SerialName("first_name")
+    val firstName: String? = null,
+    @SerialName("last_name")
+    val lastName: String? = null,
+    @SerialName("mobile")
+    val mobile: String? = null
 )
 
 /**
@@ -77,19 +127,87 @@ data class TripApiResponse<T>(
  */
 @Serializable
 data class CreateTripRequest(
-    @SerialName("vehicleId")
-    val vehicleId: String,
-    @SerialName("driverId")
-    val driverId: String,
-    @SerialName("startLocation")
-    val startLocation: TripLocationDto,
-    @SerialName("endLocation")
-    val endLocation: TripLocationDto,
-    @SerialName("scheduledStartTime")
-    val scheduledStartTime: Long,
-    @SerialName("cargo")
-    val cargo: String? = null,
+    @SerialName("vehicle_id")
+    val vehicleId: Int,
+    @SerialName("driver_id")
+    val driverId: Int,
+    @SerialName("scheduled_date")
+    val scheduledDate: String,
+    @SerialName("start_time")
+    val startTime: String,
+    @SerialName("planned_start")
+    val plannedStart: String,
+    @SerialName("planned_end")
+    val plannedEnd: String,
+    @SerialName("start_location")
+    val startLocation: String,
+    @SerialName("start_lat")
+    val startLat: Double? = null,
+    @SerialName("start_lng")
+    val startLng: Double? = null,
+    @SerialName("end_location")
+    val endLocation: String,
+    @SerialName("end_lat")
+    val endLat: Double? = null,
+    @SerialName("end_lng")
+    val endLng: Double? = null,
+    @SerialName("cargo_type")
+    val cargoType: String,
+    @SerialName("cargo_description")
+    val cargoDescription: String? = null,
+    @SerialName("cargo_weight")
+    val cargoWeight: Double? = null,
+    @SerialName("customer_name")
+    val customerName: String? = null,
+    @SerialName("customer_contact")
+    val customerContact: String? = null,
+    @SerialName("priority")
+    val priority: String? = null,
     @SerialName("notes")
     val notes: String? = null
+)
+
+/**
+ * Request body for updating a trip.
+ */
+@Serializable
+data class UpdateTripRequest(
+    @SerialName("start_location")
+    val startLocation: String? = null,
+    @SerialName("start_lat")
+    val startLat: Double? = null,
+    @SerialName("start_lng")
+    val startLng: Double? = null,
+    @SerialName("end_location")
+    val endLocation: String? = null,
+    @SerialName("end_lat")
+    val endLat: Double? = null,
+    @SerialName("end_lng")
+    val endLng: Double? = null,
+    @SerialName("estimated_distance")
+    val estimatedDistance: Double? = null,
+    @SerialName("planned_start")
+    val plannedStart: String? = null,
+    @SerialName("planned_end")
+    val plannedEnd: String? = null,
+    @SerialName("cargo_type")
+    val cargoType: String? = null,
+    @SerialName("cargo_description")
+    val cargoDescription: String? = null,
+    @SerialName("customer_name")
+    val customerName: String? = null,
+    @SerialName("priority")
+    val priority: String? = null,
+    @SerialName("notes")
+    val notes: String? = null
+)
+
+/**
+ * Request body for updating trip state.
+ */
+@Serializable
+data class UpdateTripStateRequest(
+    @SerialName("state")
+    val state: String
 )
 

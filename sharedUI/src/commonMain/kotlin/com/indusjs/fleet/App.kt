@@ -16,6 +16,8 @@ import com.indusjs.fleet.presentation.drivers.create.CreateDriverScreen
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailScreen
 import com.indusjs.fleet.presentation.maps.MapsScreen
 import com.indusjs.fleet.presentation.trips.TripsScreen
+import com.indusjs.fleet.presentation.trips.create.CreateTripScreen
+import com.indusjs.fleet.presentation.trips.detail.TripDetailScreen
 import com.indusjs.fleet.presentation.vehicles.AddVehicleScreen
 import com.indusjs.fleet.presentation.vehicles.VehiclesScreen
 import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailScreen
@@ -54,6 +56,7 @@ sealed class AppRoute {
     data object CreateDriver : AppRoute()
     data object Trips : AppRoute()
     data class TripDetail(val tripId: String) : AppRoute()
+    data object CreateTrip : AppRoute()
     data object Maps : AppRoute()
     data object TeamList : AppRoute()
     data object CreateTeamMember : AppRoute()
@@ -234,18 +237,29 @@ fun App(
                             currentRoute = AppRoute.TripDetail(tripId)
                         },
                         onNavigateToCreate = {
-                            // TODO: Navigate to Create Trip screen
+                            currentRoute = AppRoute.CreateTrip
                         },
                         onNavigateBack = { currentRoute = AppRoute.Dashboard }
                     )
                 }
 
+                is AppRoute.CreateTrip -> {
+                    val createTripViewModel = rememberViewModel { createTripViewModel() }
+                    CreateTripScreen(
+                        viewModel = createTripViewModel,
+                        onNavigateBack = { currentRoute = AppRoute.Trips },
+                        onTripCreated = { tripId ->
+                            currentRoute = AppRoute.TripDetail(tripId)
+                        }
+                    )
+                }
+
                 is AppRoute.TripDetail -> {
-                    // TODO: Implement Trip Detail screen
-                    PlaceholderScreen(
-                        title = "Trip Details",
-                        subtitle = "Trip ID: ${route.tripId}",
-                        onBack = { currentRoute = AppRoute.Trips }
+                    val tripDetailViewModel = rememberViewModel { tripDetailViewModel() }
+                    TripDetailScreen(
+                        viewModel = tripDetailViewModel,
+                        tripId = route.tripId,
+                        onNavigateBack = { currentRoute = AppRoute.Trips }
                     )
                 }
 

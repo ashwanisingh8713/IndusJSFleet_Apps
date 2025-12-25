@@ -30,7 +30,11 @@ import com.indusjs.fleet.domain.usecase.driver.ToggleDriverActiveUseCase
 import com.indusjs.fleet.domain.usecase.driver.UpdateDriverStatusUseCase
 import com.indusjs.fleet.domain.usecase.driver.UpdateDriverUseCase
 import com.indusjs.fleet.domain.usecase.trip.CancelTripUseCase
+import com.indusjs.fleet.domain.usecase.trip.CreateTripWithDataUseCase
+import com.indusjs.fleet.domain.usecase.trip.GetTripByIdUseCase
 import com.indusjs.fleet.domain.usecase.trip.GetTripsUseCase
+import com.indusjs.fleet.domain.usecase.trip.UpdateTripStatusUseCase
+import com.indusjs.fleet.domain.usecase.trip.UpdateTripUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleWithDocumentsUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.DeleteVehicleUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehicleByIdUseCase
@@ -45,6 +49,8 @@ import com.indusjs.fleet.presentation.maps.MapsViewModel
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
 import com.indusjs.fleet.presentation.team.list.TeamListViewModel
 import com.indusjs.fleet.presentation.trips.TripsViewModel
+import com.indusjs.fleet.presentation.trips.create.CreateTripViewModel
+import com.indusjs.fleet.presentation.trips.detail.TripDetailViewModel
 import com.indusjs.fleet.presentation.user.changepassword.ChangePasswordViewModel
 import com.indusjs.fleet.presentation.user.forgotpassword.ForgotPasswordViewModel
 import com.indusjs.fleet.presentation.user.profile.ProfileViewModel
@@ -110,6 +116,10 @@ class DefaultViewModelProvider : ViewModelProvider {
         TripRepositoryImpl(tripRemoteDataSource, userLocalDataSource, tripMapper)
     }
     private val getTripsUseCase by lazy { GetTripsUseCase(tripRepository) }
+    private val getTripByIdUseCase by lazy { GetTripByIdUseCase(tripRepository) }
+    private val createTripWithDataUseCase by lazy { CreateTripWithDataUseCase(tripRepository) }
+    private val updateTripUseCase by lazy { UpdateTripUseCase(tripRepository) }
+    private val updateTripStatusUseCase by lazy { UpdateTripStatusUseCase(tripRepository) }
     private val cancelTripUseCase by lazy { CancelTripUseCase(tripRepository) }
 
     // Lazy-initialized Team feature dependencies
@@ -173,6 +183,21 @@ class DefaultViewModelProvider : ViewModelProvider {
     override fun tripsViewModel() = TripsViewModel(
         dispatcherProvider,
         getTripsUseCase,
+        cancelTripUseCase
+    )
+
+    override fun createTripViewModel() = CreateTripViewModel(
+        dispatcherProvider,
+        getVehiclesUseCase,
+        getDriversUseCase,
+        createTripWithDataUseCase
+    )
+
+    override fun tripDetailViewModel() = TripDetailViewModel(
+        dispatcherProvider,
+        getTripByIdUseCase,
+        updateTripUseCase,
+        updateTripStatusUseCase,
         cancelTripUseCase
     )
 

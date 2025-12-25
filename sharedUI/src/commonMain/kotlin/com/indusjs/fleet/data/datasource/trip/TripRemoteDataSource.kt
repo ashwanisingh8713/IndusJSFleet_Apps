@@ -5,12 +5,15 @@ import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.trip.CreateTripRequest
 import com.indusjs.fleet.data.model.trip.TripApiResponse
 import com.indusjs.fleet.data.model.trip.TripDto
+import com.indusjs.fleet.data.model.trip.UpdateTripRequest
+import com.indusjs.fleet.data.model.trip.UpdateTripStateRequest
 import co.touchlab.kermit.Logger
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -29,6 +32,7 @@ interface TripRemoteDataSource : RemoteDataSource {
     suspend fun getTrips(token: String): TripApiResponse<List<TripDto>>
     suspend fun getTripById(token: String, id: String): TripApiResponse<TripDto>
     suspend fun createTrip(token: String, request: CreateTripRequest): TripApiResponse<TripDto>
+    suspend fun updateTrip(token: String, id: String, request: UpdateTripRequest): TripApiResponse<TripDto>
     suspend fun updateTripStatus(token: String, id: String, status: String): TripApiResponse<TripDto>
     suspend fun cancelTrip(token: String, id: String): TripApiResponse<Unit>
 }
@@ -93,17 +97,32 @@ class TripRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun updateTripStatus(token: String, id: String, status: String): TripApiResponse<TripDto> {
+    override suspend fun updateTrip(token: String, id: String, request: UpdateTripRequest): TripApiResponse<TripDto> {
         return try {
-            log.d { "Updating trip status: $id -> $status" }
-            val response: HttpResponse = httpClient.put("$baseUrl/$id/status") {
+            log.d { "Updating trip: $id" }
+            val response: HttpResponse = httpClient.put("$baseUrl/$id") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
-                setBody(mapOf("status" to status))
+                setBody(request)
             }
             parseSingleResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to update trip status: ${e.message}" }
+            log.e(e) { "Failed to update trip: ${e.message}" }
+            TripApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun updateTripStatus(token: String, id: String, status: String): TripApiResponse<TripDto> {
+        return try {
+            log.d { "Updating trip state: $id -> $status" }
+            val response: HttpResponse = httpClient.patch("$baseUrl/$id/state") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(UpdateTripStateRequest(state = status))
+            }
+            parseSingleResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to update trip state: ${e.message}" }
             TripApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }

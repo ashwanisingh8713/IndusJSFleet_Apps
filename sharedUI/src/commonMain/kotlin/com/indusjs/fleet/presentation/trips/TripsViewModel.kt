@@ -93,11 +93,11 @@ class TripsViewModel(
     private fun applyFilters() {
         val filtered = currentState.trips.filter { trip ->
             val matchesSearch = currentState.searchQuery.isEmpty() ||
-                    trip.tripNumber.contains(currentState.searchQuery, ignoreCase = true) ||
-                    trip.vehicleNumber.contains(currentState.searchQuery, ignoreCase = true) ||
-                    trip.driverName.contains(currentState.searchQuery, ignoreCase = true) ||
-                    trip.startLocation.address.contains(currentState.searchQuery, ignoreCase = true) ||
-                    trip.endLocation.address.contains(currentState.searchQuery, ignoreCase = true)
+                    (trip.tripNumber?.contains(currentState.searchQuery, ignoreCase = true) == true) ||
+                    (trip.vehicleNumber?.contains(currentState.searchQuery, ignoreCase = true) == true) ||
+                    (trip.driverName?.contains(currentState.searchQuery, ignoreCase = true) == true) ||
+                    (trip.startLocation?.address?.contains(currentState.searchQuery, ignoreCase = true) == true) ||
+                    (trip.endLocation?.address?.contains(currentState.searchQuery, ignoreCase = true) == true)
 
             val matchesStatus = currentState.selectedStatusFilter == null ||
                     trip.status == currentState.selectedStatusFilter
