@@ -89,8 +89,11 @@ private fun ThemeChanged(isDark: Boolean) {
     LaunchedEffect(isDark) {
         val window = (view.context as Activity).window
         WindowInsetsControllerCompat(window, window.decorView).apply {
-            isAppearanceLightStatusBars = isDark
-            isAppearanceLightNavigationBars = isDark
+            // Light appearance = dark icons, so we want dark icons in light mode
+            // isDark=true (dark mode) -> light icons -> isAppearanceLightStatusBars = false
+            // isDark=false (light mode) -> dark icons -> isAppearanceLightStatusBars = true
+            isAppearanceLightStatusBars = !isDark
+            isAppearanceLightNavigationBars = !isDark
         }
     }
 }

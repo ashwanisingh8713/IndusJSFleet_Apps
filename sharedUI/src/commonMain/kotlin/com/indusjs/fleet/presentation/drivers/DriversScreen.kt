@@ -1,11 +1,13 @@
 package com.indusjs.fleet.presentation.drivers
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -64,7 +66,7 @@ fun DriversScreen(
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -74,14 +76,14 @@ fun DriversScreen(
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
                             contentDescription = "Refresh",
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
@@ -100,6 +102,7 @@ fun DriversScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
             // Search Bar - using reusable component
@@ -221,10 +224,15 @@ private fun DriverCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -235,14 +243,15 @@ private fun DriverCard(
                     // Avatar
                     Surface(
                         modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape),
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(10.dp)),
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = "${driver.firstName.first()}${driver.lastName.first()}",
                                 style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
@@ -254,7 +263,8 @@ private fun DriverCard(
                         Text(
                             text = driver.fullName,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = driver.phone,
@@ -269,28 +279,31 @@ private fun DriverCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 DriverInfoItem(
                     emoji = "⭐",
                     label = "Rating",
-                    value = "${driver.rating}"
+                    value = "${driver.rating}",
+                    modifier = Modifier.weight(1f)
                 )
                 DriverInfoItem(
                     emoji = "🛣️",
                     label = "Trips",
-                    value = "${driver.totalTrips}"
+                    value = "${driver.totalTrips}",
+                    modifier = Modifier.weight(1f)
                 )
                 DriverInfoItem(
                     emoji = "🚗",
                     label = "Vehicle",
-                    value = driver.assignedVehicleNumber ?: "None"
+                    value = driver.assignedVehicleNumber ?: "N/A",
+                    modifier = Modifier.weight(1f)
                 )
             }
 
@@ -319,17 +332,28 @@ private fun DriverCard(
 private fun DriverInfoItem(
     emoji: String,
     label: String,
-    value: String
+    value: String,
+    modifier: Modifier = Modifier
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 8.dp)
+    ) {
         Text(
             text = emoji,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleSmall
         )
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = label,

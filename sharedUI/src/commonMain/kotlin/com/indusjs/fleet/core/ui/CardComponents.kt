@@ -1,6 +1,9 @@
 package com.indusjs.fleet.core.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,6 +37,7 @@ import androidx.compose.ui.unit.sp
 
 /**
  * Standard item card with title, subtitle, and optional actions.
+ * Clean, professional styling with subtle elevation.
  */
 @Composable
 fun FleetItemCard(
@@ -42,42 +48,54 @@ fun FleetItemCard(
     trailingContent: @Composable (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
-    ElevatedCard(
+    Card(
         modifier = modifier
             .fillMaxWidth()
+            .shadow(
+                elevation = 2.dp,
+                shape = RoundedCornerShape(8.dp),
+                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+            )
             .then(
                 if (onClick != null) Modifier.clickable(onClick = onClick)
                 else Modifier
             ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (leadingContent != null) {
                 leadingContent()
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(14.dp))
             }
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 if (subtitle != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 20.sp
                     )
                 }
             }
@@ -92,6 +110,7 @@ fun FleetItemCard(
 
 /**
  * Status badge component for displaying entity status.
+ * Clean, professional styling.
  */
 @Composable
 fun FleetStatusBadge(
@@ -102,14 +121,15 @@ fun FleetStatusBadge(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(4.dp),
-        color = color.copy(alpha = 0.1f)
+        color = color.copy(alpha = 0.12f)
     ) {
         Text(
             text = status,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             color = color,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.3.sp
         )
     }
 }
@@ -121,24 +141,27 @@ fun FleetStatusBadge(
 fun FleetIconAvatar(
     icon: String,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer
+    backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
-    Surface(
-        modifier = modifier.size(48.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = backgroundColor
+    Box(
+        modifier = modifier
+            .size(44.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(backgroundColor),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = icon,
-            modifier = Modifier.padding(12.dp),
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleLarge,
+            color = contentColor
         )
     }
 }
 
 /**
  * Section header for grouped lists.
+ * Enhanced with better typography.
  */
 @Composable
 fun FleetSectionHeader(
@@ -149,16 +172,16 @@ fun FleetSectionHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = title.uppercase(),
             modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp
+            letterSpacing = 1.2.sp
         )
         action?.invoke()
     }

@@ -17,7 +17,9 @@ import com.indusjs.fleet.core.ui.FleetSearchField
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.team.TeamMember
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Team Members List Screen composable.
@@ -57,17 +59,29 @@ fun TeamListScreen(
                 title = { Text("Team Members") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { viewModel.sendIntent(TeamListContract.Intent.NavigateToCreateMember) },
-                containerColor = MaterialTheme.colorScheme.primary
+                onClick = { viewModel.sendIntent(TeamListContract.Intent.NavigateToCreateMember) }
             ) {
-                Text("+", style = MaterialTheme.typography.headlineMedium)
+                Icon(
+                    painter = painterResource(Res.drawable.ic_add),
+                    contentDescription = "Add Member",
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     ) { paddingValues ->

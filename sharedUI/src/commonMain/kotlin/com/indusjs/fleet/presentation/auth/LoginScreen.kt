@@ -1,5 +1,6 @@
 package com.indusjs.fleet.presentation.auth
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.*
@@ -7,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -16,7 +18,11 @@ import com.indusjs.fleet.core.ui.FleetEmailField
 import com.indusjs.fleet.core.ui.FleetPasswordField
 import com.indusjs.fleet.core.ui.FleetPrimaryButton
 import com.indusjs.fleet.core.ui.FleetTextButton
+import com.indusjs.fleet.theme.isAppInDarkTheme
+import com.indusjs.fleet.theme.rememberThemeToggle
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Login Screen composable.
@@ -54,23 +60,47 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
+                .padding(paddingValues)
         ) {
-            // Show splash/loading while checking auth status
-            if (state.isCheckingAuth) {
-                SplashContent()
-            } else {
-                // Show login form
-                LoginFormContent(
-                    state = state,
-                    onEmailChange = { viewModel.sendIntent(LoginContract.Intent.UpdateEmail(it)) },
-                    onPasswordChange = { viewModel.sendIntent(LoginContract.Intent.UpdatePassword(it)) },
-                    onLogin = { viewModel.sendIntent(LoginContract.Intent.Login) },
-                    onForgotPassword = onNavigateToForgotPassword,
-                    onSignUp = onNavigateToSignUp,
-                    focusManager = focusManager
+            // Theme toggle button in top-right corner
+            val isDarkTheme = isAppInDarkTheme()
+            val toggleTheme = rememberThemeToggle()
+            IconButton(
+                onClick = toggleTheme,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    painter = painterResource(
+                        if (isDarkTheme) Res.drawable.ic_sun else Res.drawable.ic_moon
+                    ),
+                    contentDescription = if (isDarkTheme) "Switch to Light Mode" else "Switch to Dark Mode",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp)
                 )
+            }
+
+            // Main content centered
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Show splash/loading while checking auth status
+                if (state.isCheckingAuth) {
+                    SplashContent()
+                } else {
+                    // Show login form
+                    LoginFormContent(
+                        state = state,
+                        onEmailChange = { viewModel.sendIntent(LoginContract.Intent.UpdateEmail(it)) },
+                        onPasswordChange = { viewModel.sendIntent(LoginContract.Intent.UpdatePassword(it)) },
+                        onLogin = { viewModel.sendIntent(LoginContract.Intent.Login) },
+                        onForgotPassword = onNavigateToForgotPassword,
+                        onSignUp = onNavigateToSignUp,
+                        focusManager = focusManager
+                    )
+                }
             }
         }
     }

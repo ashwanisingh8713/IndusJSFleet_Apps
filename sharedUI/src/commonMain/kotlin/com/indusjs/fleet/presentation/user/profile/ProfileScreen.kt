@@ -18,7 +18,11 @@ import com.indusjs.fleet.domain.entity.user.OrganizationStats
 import com.indusjs.fleet.domain.entity.user.OwnerInfo
 import com.indusjs.fleet.domain.entity.user.User
 import com.indusjs.fleet.domain.entity.user.UserRole
+import com.indusjs.fleet.theme.isAppInDarkTheme
+import com.indusjs.fleet.theme.rememberThemeToggle
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * User Profile Screen composable.
@@ -61,20 +65,48 @@ fun ProfileScreen(
                 title = { Text("My Profile") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 actions = {
+                    // Theme toggle
+                    val isDarkTheme = isAppInDarkTheme()
+                    val toggleTheme = rememberThemeToggle()
+                    IconButton(onClick = toggleTheme) {
+                        Icon(
+                            painter = painterResource(
+                                if (isDarkTheme) Res.drawable.ic_sun else Res.drawable.ic_moon
+                            ),
+                            contentDescription = if (isDarkTheme) "Light Mode" else "Dark Mode",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
                     if (state.isEditing) {
                         TextButton(onClick = { viewModel.sendIntent(ProfileContract.Intent.CancelEditing) }) {
-                            Text("Cancel")
+                            Text("Cancel", color = MaterialTheme.colorScheme.primary)
                         }
                     } else {
                         IconButton(onClick = { viewModel.sendIntent(ProfileContract.Intent.RefreshProfile) }) {
-                            Text("↻", style = MaterialTheme.typography.titleLarge)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_refresh),
+                                contentDescription = "Refresh",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { paddingValues ->

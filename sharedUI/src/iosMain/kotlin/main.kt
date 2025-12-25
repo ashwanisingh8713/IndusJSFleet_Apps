@@ -15,8 +15,9 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
 @Composable
 private fun ThemeChanged(isDark: Boolean) {
     LaunchedEffect(isDark) {
+        // Light content (white icons) for dark backgrounds, dark content for light backgrounds
         UIApplication.sharedApplication.setStatusBarStyle(
-            if (isDark) UIStatusBarStyleDarkContent else UIStatusBarStyleLightContent
+            if (isDark) UIStatusBarStyleLightContent else UIStatusBarStyleDarkContent
         )
     }
 }
