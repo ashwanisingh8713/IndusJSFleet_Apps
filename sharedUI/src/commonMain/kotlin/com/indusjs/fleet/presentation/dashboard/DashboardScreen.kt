@@ -18,8 +18,10 @@ import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Dashboard Screen composable - Main overview screen for Fleet Management.
@@ -107,21 +109,35 @@ fun DashboardScreen(
                                 Text(
                                     text = state.userRole,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                                 )
                             }
                         }
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Text("☰", style = MaterialTheme.typography.titleLarge)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_menu),
+                                contentDescription = "Menu",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                     },
                     actions = {
                         IconButton(onClick = { viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard) }) {
-                            Text("↻", style = MaterialTheme.typography.titleLarge)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_refresh),
+                                contentDescription = "Refresh",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 )
             }
         ) { paddingValues ->
@@ -223,10 +239,11 @@ private fun NavigationDrawerContent(
                     }
                 }
                 // Arrow indicator to show it's clickable
-                Text(
-                    text = "›",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
+                Icon(
+                    painter = painterResource(Res.drawable.ic_chevron_right),
+                    contentDescription = "Navigate",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -235,7 +252,14 @@ private fun NavigationDrawerContent(
 
         // Menu Items
         NavigationDrawerItem(
-            icon = { Text("🚗", style = MaterialTheme.typography.titleLarge) },
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_vehicle),
+                    contentDescription = "Vehicles",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
             label = { Text("Vehicles") },
             selected = false,
             onClick = onNavigateToVehicles,
@@ -243,7 +267,14 @@ private fun NavigationDrawerContent(
         )
 
         NavigationDrawerItem(
-            icon = { Text("👤", style = MaterialTheme.typography.titleLarge) },
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_driver),
+                    contentDescription = "Drivers",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
             label = { Text("Drivers") },
             selected = false,
             onClick = onNavigateToDrivers,
@@ -251,7 +282,14 @@ private fun NavigationDrawerContent(
         )
 
         NavigationDrawerItem(
-            icon = { Text("🛣️", style = MaterialTheme.typography.titleLarge) },
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_trip),
+                    contentDescription = "Trips",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
             label = { Text("Trips") },
             selected = false,
             onClick = onNavigateToTrips,
@@ -259,7 +297,14 @@ private fun NavigationDrawerContent(
         )
 
         NavigationDrawerItem(
-            icon = { Text("🗺️", style = MaterialTheme.typography.titleLarge) },
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_map),
+                    contentDescription = "Live Map",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
             label = { Text("Live Map") },
             selected = false,
             onClick = onNavigateToMaps,
@@ -269,7 +314,14 @@ private fun NavigationDrawerContent(
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp))
 
         NavigationDrawerItem(
-            icon = { Text("👥", style = MaterialTheme.typography.titleLarge) },
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_team),
+                    contentDescription = "Team Members",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
             label = { Text("Team Members") },
             selected = false,
             onClick = onNavigateToTeam,
@@ -277,7 +329,14 @@ private fun NavigationDrawerContent(
         )
 
         NavigationDrawerItem(
-            icon = { Text("⚙️", style = MaterialTheme.typography.titleLarge) },
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_settings),
+                    contentDescription = "Profile & Settings",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            },
             label = { Text("Profile & Settings") },
             selected = false,
             onClick = onNavigateToProfile,

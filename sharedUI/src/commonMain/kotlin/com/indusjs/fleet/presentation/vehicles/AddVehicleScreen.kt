@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
+import indusjsfleet.sharedui.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Add/Register Vehicle Screen with document upload functionality.
@@ -81,8 +83,13 @@ fun AddVehicleScreen(
             TopAppBar(
                 title = { Text("Register Vehicle") },
                 navigationIcon = {
-                    TextButton(onClick = { viewModel.sendIntent(AddVehicleContract.Intent.Cancel) }) {
-                        Text("← Back", color = MaterialTheme.colorScheme.onPrimary)
+                    IconButton(onClick = { viewModel.sendIntent(AddVehicleContract.Intent.Cancel) }) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

@@ -22,7 +22,9 @@ import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Vehicle Detail Screen composable with Edit functionality.
@@ -99,7 +101,7 @@ fun VehicleDetailScreen(
             TopAppBar(
                 title = { Text(if (state.isEditMode) "Edit Vehicle" else "Vehicle Details") },
                 navigationIcon = {
-                    TextButton(
+                    IconButton(
                         onClick = {
                             if (state.isEditMode) {
                                 viewModel.sendIntent(VehicleDetailContract.Intent.ExitEditMode)
@@ -108,16 +110,23 @@ fun VehicleDetailScreen(
                             }
                         }
                     ) {
-                        Text(
-                            if (state.isEditMode) "Cancel" else "← Back",
-                            color = MaterialTheme.colorScheme.onPrimary
+                        Icon(
+                            painter = painterResource(if (state.isEditMode) Res.drawable.ic_close else Res.drawable.ic_arrow_back),
+                            contentDescription = if (state.isEditMode) "Cancel" else "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 },
                 actions = {
                     if (!state.isEditMode && state.vehicle != null) {
                         IconButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.EnterEditMode) }) {
-                            Text("✏️", style = MaterialTheme.typography.titleLarge)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_edit),
+                                contentDescription = "Edit",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                     }
                 },

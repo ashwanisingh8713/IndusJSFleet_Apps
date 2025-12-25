@@ -21,7 +21,9 @@ import com.indusjs.fleet.core.ui.FleetStatusBadge
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Trip Detail Screen composable with Edit functionality.
@@ -111,7 +113,7 @@ fun TripDetailScreen(
             TopAppBar(
                 title = { Text(if (state.isEditMode) "Edit Trip" else "Trip Details") },
                 navigationIcon = {
-                    TextButton(
+                    IconButton(
                         onClick = {
                             if (state.isEditMode) {
                                 viewModel.sendIntent(TripDetailContract.Intent.ExitEditMode)
@@ -120,16 +122,23 @@ fun TripDetailScreen(
                             }
                         }
                     ) {
-                        Text(
-                            if (state.isEditMode) "Cancel" else "← Back",
-                            color = MaterialTheme.colorScheme.onPrimary
+                        Icon(
+                            painter = painterResource(if (state.isEditMode) Res.drawable.ic_close else Res.drawable.ic_arrow_back),
+                            contentDescription = if (state.isEditMode) "Cancel" else "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 },
                 actions = {
                     if (!state.isEditMode && state.trip != null && state.trip?.status == TripStatus.PLANNED) {
                         IconButton(onClick = { viewModel.sendIntent(TripDetailContract.Intent.EnterEditMode) }) {
-                            Text("✏️", style = MaterialTheme.typography.titleLarge)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_edit),
+                                contentDescription = "Edit",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                     }
                 },

@@ -1,7 +1,6 @@
 package com.indusjs.fleet.presentation.trips.create
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,14 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.ui.LoadingContent
-import com.indusjs.fleet.domain.entity.driver.Driver
-import com.indusjs.fleet.domain.entity.vehicle.Vehicle
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Create Trip Screen composable.
@@ -59,10 +57,15 @@ fun CreateTripScreen(
             TopAppBar(
                 title = { Text("Create Trip") },
                 navigationIcon = {
-                    TextButton(
+                    IconButton(
                         onClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateBack) }
                     ) {
-                        Text("← Back", color = MaterialTheme.colorScheme.onPrimary)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

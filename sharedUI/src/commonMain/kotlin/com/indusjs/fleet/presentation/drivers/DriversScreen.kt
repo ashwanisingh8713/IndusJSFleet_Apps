@@ -21,7 +21,9 @@ import com.indusjs.fleet.core.ui.FleetStatusBadge
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Drivers List Screen composable.
@@ -59,21 +61,39 @@ fun DriversScreen(
                 title = { Text("Drivers") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.sendIntent(DriversContract.Intent.RefreshDrivers) }) {
-                        Text("↻", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_refresh),
+                            contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.sendIntent(DriversContract.Intent.AddDriver) }
             ) {
-                Text("+", style = MaterialTheme.typography.headlineMedium)
+                Icon(
+                    painter = painterResource(Res.drawable.ic_add),
+                    contentDescription = "Add Driver",
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     ) { paddingValues ->

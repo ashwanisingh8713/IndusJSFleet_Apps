@@ -20,7 +20,9 @@ import com.indusjs.fleet.core.ui.FleetStatusBadge
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Trips List Screen composable.
@@ -56,21 +58,39 @@ fun TripsScreen(
                 title = { Text("Trips") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.sendIntent(TripsContract.Intent.RefreshTrips) }) {
-                        Text("↻", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_refresh),
+                            contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.sendIntent(TripsContract.Intent.CreateTrip) }
             ) {
-                Text("+", style = MaterialTheme.typography.headlineMedium)
+                Icon(
+                    painter = painterResource(Res.drawable.ic_add),
+                    contentDescription = "Create Trip",
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     ) { paddingValues ->

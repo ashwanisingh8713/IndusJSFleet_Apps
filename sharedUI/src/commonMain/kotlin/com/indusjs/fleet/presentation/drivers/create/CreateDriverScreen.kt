@@ -16,7 +16,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.domain.entity.driver.LicenseType
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Create Driver Screen composable.
@@ -52,8 +54,13 @@ fun CreateDriverScreen(
             TopAppBar(
                 title = { Text("Add Driver") },
                 navigationIcon = {
-                    TextButton(onClick = { viewModel.sendIntent(CreateDriverContract.Intent.Cancel) }) {
-                        Text("← Back", color = MaterialTheme.colorScheme.onPrimary)
+                    IconButton(onClick = { viewModel.sendIntent(CreateDriverContract.Intent.Cancel) }) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
