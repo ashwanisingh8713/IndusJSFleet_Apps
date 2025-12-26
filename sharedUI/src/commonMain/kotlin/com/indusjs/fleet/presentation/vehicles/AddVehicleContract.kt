@@ -34,6 +34,7 @@ object AddVehicleContract {
         val documents: List<VehicleDocument> = emptyList(),
         val uploadingDocument: DocumentType? = null,
         val uploadProgress: Float = 0f,
+        val documentExpiryDates: Map<DocumentType, String> = emptyMap(), // Raw digits for each doc type
 
         // Validation
         val registrationNumberError: String? = null,
@@ -63,9 +64,6 @@ object AddVehicleContract {
                     modelError == null &&
                     yearError == null
 
-        // Documents are now optional
-        val hasRequiredDocuments: Boolean
-            get() = true
 
         val canSubmit: Boolean
             get() = isBasicInfoValid && !isSaving
@@ -104,6 +102,7 @@ object AddVehicleContract {
         ) : Intent
         data class RemoveDocument(val documentId: String) : Intent
         data class UpdateDocumentExpiry(val documentId: String, val expiryDate: Long) : Intent
+        data class UpdateDocumentExpiryDate(val type: DocumentType, val rawDigits: String) : Intent
 
         // Form actions
         data object ValidateBasicInfo : Intent
@@ -118,8 +117,6 @@ object AddVehicleContract {
     sealed interface Effect : UiEffect {
         data class ShowSnackbar(val message: String) : Effect
         data object NavigateBack : Effect
-        data class NavigateToVehicleDetail(val vehicleId: String) : Effect
-        data object RequestFilePicker : Effect
         data class ShowDocumentPicker(val type: DocumentType) : Effect
         data class VehicleRegistered(val vehicleId: String) : Effect
     }

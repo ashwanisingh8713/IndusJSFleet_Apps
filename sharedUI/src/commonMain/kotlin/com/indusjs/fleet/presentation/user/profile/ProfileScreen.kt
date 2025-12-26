@@ -507,8 +507,8 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            EnhancedStatItem(
-                icon = "🚚",
+            EnhancedStatItemWithIcon(
+                iconRes = Res.drawable.ic_truck,
                 value = stats.totalVehicles.toString(),
                 label = "Vehicles",
                 color = MaterialTheme.colorScheme.primary
@@ -543,6 +543,46 @@ private fun EnhancedStatItem(
                 Text(
                     text = icon,
                     style = MaterialTheme.typography.titleLarge
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun EnhancedStatItemWithIcon(
+    iconRes: org.jetbrains.compose.resources.DrawableResource,
+    value: String,
+    label: String,
+    color: androidx.compose.ui.graphics.Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Surface(
+            modifier = Modifier.size(48.dp),
+            shape = RoundedCornerShape(12.dp),
+            color = color.copy(alpha = 0.15f)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = label,
+                    modifier = Modifier.size(28.dp),
+                    tint = color
                 )
             }
         }

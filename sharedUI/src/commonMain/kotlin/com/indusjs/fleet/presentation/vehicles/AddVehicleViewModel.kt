@@ -57,6 +57,7 @@ class AddVehicleViewModel(
             is Intent.UploadDocument -> uploadDocument(intent.type, intent.fileName, intent.fileBytes, intent.mimeType)
             is Intent.RemoveDocument -> removeDocument(intent.documentId)
             is Intent.UpdateDocumentExpiry -> updateDocumentExpiry(intent.documentId, intent.expiryDate)
+            is Intent.UpdateDocumentExpiryDate -> updateDocumentExpiryDate(intent.type, intent.rawDigits)
 
             // Form actions
             is Intent.ValidateBasicInfo -> validateBasicInfo()
@@ -178,6 +179,11 @@ class AddVehicleViewModel(
                 // Generate unique ID for the document
                 val currentTime = documentIdCounter++
                 val documentId = "doc_${currentTime}_${type.ordinal}"
+
+                // Get expiry date from documentExpiryDates if available
+                val expiryDateRaw = currentState.documentExpiryDates[type]
+                val expiryTimestamp = expiryDateRaw?.let { parseDateToTimestamp(it) }
+
                 val document = VehicleDocument(
                     id = documentId,
                     vehicleId = "", // Will be set on save
@@ -187,6 +193,7 @@ class AddVehicleViewModel(
                     fileSize = fileBytes.size.toLong(),
                     mimeType = mimeType,
                     uploadDate = 0L, // Will be set by server
+                    expiryDate = expiryTimestamp,
                     status = DocumentStatus.PENDING,
                     fileBytes = fileBytes // Store bytes for upload
                 )
@@ -221,6 +228,35 @@ class AddVehicleViewModel(
                     if (doc.id == documentId) doc.copy(expiryDate = expiryDate) else doc
                 }
             )
+        }
+    }
+
+    private fun updateDocumentExpiryDate(type: DocumentType, rawDigits: String) {
+        updateState {
+            copy(
+                documentExpiryDates = documentExpiryDates + (type to rawDigits)
+            )
+        }
+    }
+
+    /**
+     * Parse date string (DDMMYYYY raw digits) to timestamp.
+     * Returns null if date is invalid.
+     */
+    private fun parseDateToTimestamp(rawDigits: String): Long? {
+        if (rawDigits.length != 8) return null
+        return try {
+            val day = rawDigits.substring(0, 2).toIntOrNull() ?: return null
+            val month = rawDigits.substring(2, 4).toIntOrNull() ?: return null
+            val year = rawDigits.substring(4, 8).toIntOrNull() ?: return null
+
+            if (day < 1 || day > 31 || month < 1 || month > 12 || year < 2000) return null
+
+            // Create LocalDate and convert to epoch millis
+            val localDate = kotlinx.datetime.LocalDate(year, month, day)
+            localDate.toEpochDays() * 24L * 60L * 60L * 1000L
+        } catch (e: Exception) {
+            null
         }
     }
 

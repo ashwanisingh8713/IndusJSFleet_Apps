@@ -238,9 +238,9 @@ private fun VehicleCard(
                             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = getVehicleEmoji(vehicle.type),
-                            style = MaterialTheme.typography.titleLarge
+                        VehicleTypeIcon(
+                            type = vehicle.type,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
@@ -387,14 +387,29 @@ private fun StatusBadge(status: VehicleStatus) {
     )
 }
 
-private fun getVehicleEmoji(type: VehicleType): String {
-    return when (type) {
-        VehicleType.TRUCK -> "🚚"
-        VehicleType.VAN -> "🚐"
-        VehicleType.CAR -> "🚗"
-        VehicleType.BUS -> "🚌"
-        VehicleType.MOTORCYCLE -> "🏍️"
-        VehicleType.TRAILER -> "🚛"
+
+/**
+ * Composable to display vehicle type icon.
+ */
+@Composable
+private fun VehicleTypeIcon(
+    type: VehicleType,
+    modifier: Modifier = Modifier,
+    tint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary
+) {
+    val iconRes = when (type) {
+        VehicleType.TRUCK -> Res.drawable.ic_truck
+        VehicleType.VAN -> Res.drawable.ic_van
+        VehicleType.CAR -> Res.drawable.ic_car
+        VehicleType.BUS -> Res.drawable.ic_bus
+        VehicleType.MOTORCYCLE -> Res.drawable.ic_motorcycle
+        VehicleType.TRAILER -> Res.drawable.ic_trailer
     }
+    Icon(
+        painter = painterResource(iconRes),
+        contentDescription = type.name,
+        modifier = modifier,
+        tint = tint
+    )
 }
 

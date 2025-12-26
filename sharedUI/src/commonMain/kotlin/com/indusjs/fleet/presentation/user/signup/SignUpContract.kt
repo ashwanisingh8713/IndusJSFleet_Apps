@@ -17,6 +17,7 @@ object SignUpContract {
         val lastName: String = "",
         val email: String = "",
         val mobile: String = "",
+        val mobileError: String? = null,
         val password: String = "",
         val confirmPassword: String = "",
         val isPasswordVisible: Boolean = false,

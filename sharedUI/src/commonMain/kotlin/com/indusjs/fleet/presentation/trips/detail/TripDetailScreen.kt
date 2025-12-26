@@ -349,9 +349,11 @@ private fun TripHeader(
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "🚚",
-                        style = MaterialTheme.typography.headlineLarge
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_truck),
+                        contentDescription = "Trip",
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }

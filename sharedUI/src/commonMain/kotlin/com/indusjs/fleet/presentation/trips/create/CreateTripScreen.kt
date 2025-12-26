@@ -1,7 +1,6 @@
 package com.indusjs.fleet.presentation.trips.create
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,9 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.DateVisualTransformation
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.ui.TimeVisualTransformation
+import com.indusjs.fleet.core.ui.filterDigitsOnly
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -642,96 +643,6 @@ private fun LocationSearchField(
     }
 }
 
-/**
- * Visual transformation for date input (DD-MM-YYYY format).
- * Displays delimiters visually while keeping raw digits as actual value.
- */
-private class DateVisualTransformation : androidx.compose.ui.text.input.VisualTransformation {
-    override fun filter(text: androidx.compose.ui.text.AnnotatedString): androidx.compose.ui.text.input.TransformedText {
-        val trimmed = text.text.take(8) // Max 8 digits: DDMMYYYY
-        val out = StringBuilder()
-
-        for (i in trimmed.indices) {
-            out.append(trimmed[i])
-            if (i == 1 || i == 3) {
-                out.append("-")
-            }
-        }
-
-        val offsetMapping = object : androidx.compose.ui.text.input.OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                return when {
-                    offset <= 2 -> offset
-                    offset <= 4 -> offset + 1
-                    offset <= 8 -> offset + 2
-                    else -> 10
-                }
-            }
-
-            override fun transformedToOriginal(offset: Int): Int {
-                return when {
-                    offset <= 2 -> offset
-                    offset <= 5 -> offset - 1
-                    offset <= 10 -> offset - 2
-                    else -> 8
-                }
-            }
-        }
-
-        return androidx.compose.ui.text.input.TransformedText(
-            androidx.compose.ui.text.AnnotatedString(out.toString()),
-            offsetMapping
-        )
-    }
-}
-
-/**
- * Visual transformation for time input (HH:MM format).
- * Displays colon visually while keeping raw digits as actual value.
- */
-private class TimeVisualTransformation : androidx.compose.ui.text.input.VisualTransformation {
-    override fun filter(text: androidx.compose.ui.text.AnnotatedString): androidx.compose.ui.text.input.TransformedText {
-        val trimmed = text.text.take(4) // Max 4 digits: HHMM
-        val out = StringBuilder()
-
-        for (i in trimmed.indices) {
-            out.append(trimmed[i])
-            if (i == 1) {
-                out.append(":")
-            }
-        }
-
-        val offsetMapping = object : androidx.compose.ui.text.input.OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                return when {
-                    offset <= 2 -> offset
-                    offset <= 4 -> offset + 1
-                    else -> 5
-                }
-            }
-
-            override fun transformedToOriginal(offset: Int): Int {
-                return when {
-                    offset <= 2 -> offset
-                    offset <= 5 -> offset - 1
-                    else -> 4
-                }
-            }
-        }
-
-        return androidx.compose.ui.text.input.TransformedText(
-            androidx.compose.ui.text.AnnotatedString(out.toString()),
-            offsetMapping
-        )
-    }
-}
-
-/**
- * Filters input to only allow digits for date/time fields.
- */
-private fun filterDigitsOnly(input: String, maxLength: Int): String {
-    return input.filter { it.isDigit() }.take(maxLength)
-}
 
 @Composable
 private fun ScheduleSection(

@@ -22,7 +22,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Sign Up Screen composable.
@@ -78,9 +80,11 @@ fun SignUpScreen(
                 shadowElevation = 4.dp
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "🚚",
-                        style = MaterialTheme.typography.displaySmall
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_fleet_logo),
+                        contentDescription = "Fleet Management",
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -115,7 +119,7 @@ fun SignUpScreen(
                     onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateFirstName(it)) },
                     modifier = Modifier.weight(1f),
                     label = { Text("First Name") },
-                    placeholder = { Text("John") },
+                    placeholder = { Text("Enter first name") },
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Next
                     ),
@@ -132,7 +136,7 @@ fun SignUpScreen(
                     onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateLastName(it)) },
                     modifier = Modifier.weight(1f),
                     label = { Text("Last Name") },
-                    placeholder = { Text("Doe") },
+                    placeholder = { Text("Enter last name") },
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Next
                     ),
@@ -153,7 +157,7 @@ fun SignUpScreen(
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateEmail(it)) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Email Address") },
-                placeholder = { Text("john.doe@example.com") },
+                placeholder = { Text("Enter your email") },
                 leadingIcon = {
                     Text("📧", modifier = Modifier.padding(start = 4.dp))
                 },
@@ -177,7 +181,7 @@ fun SignUpScreen(
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateMobile(it)) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Mobile Number") },
-                placeholder = { Text("9876543210") },
+                placeholder = { Text("Enter 10-digit mobile number") },
                 leadingIcon = {
                     Text("📱", modifier = Modifier.padding(start = 4.dp))
                 },
@@ -190,6 +194,23 @@ fun SignUpScreen(
                 ),
                 singleLine = true,
                 enabled = !state.isLoading,
+                isError = state.mobileError != null,
+                supportingText = {
+                    val mobileError = state.mobileError
+                    when {
+                        mobileError != null -> Text(
+                            text = mobileError,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                        state.mobile.length == 10 -> Text(
+                            text = "✓ Valid mobile number",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                        else -> null
+                    }
+                },
                 shape = RoundedCornerShape(12.dp)
             )
 
@@ -201,7 +222,7 @@ fun SignUpScreen(
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdatePassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Password") },
-                placeholder = { Text("Create a strong password") },
+                placeholder = { Text("Enter password (min 6 characters)") },
                 leadingIcon = {
                     Text("🔒", modifier = Modifier.padding(start = 4.dp))
                 },
@@ -244,7 +265,7 @@ fun SignUpScreen(
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateConfirmPassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Confirm Password") },
-                placeholder = { Text("Re-enter your password") },
+                placeholder = { Text("Re-enter password") },
                 leadingIcon = {
                     Text("🔒", modifier = Modifier.padding(start = 4.dp))
                 },

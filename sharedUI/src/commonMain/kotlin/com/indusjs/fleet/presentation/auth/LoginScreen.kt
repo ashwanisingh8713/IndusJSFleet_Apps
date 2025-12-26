@@ -1,6 +1,5 @@
 package com.indusjs.fleet.presentation.auth
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.*
@@ -8,7 +7,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -115,9 +113,11 @@ private fun SplashContent() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "🚚",
-            style = MaterialTheme.typography.displayLarge
+        Icon(
+            painter = painterResource(Res.drawable.ic_fleet_logo),
+            contentDescription = "Fleet Management",
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -166,9 +166,11 @@ private fun LoginFormContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // App Logo/Title
-        Text(
-            text = "🚚",
-            style = MaterialTheme.typography.displayLarge
+        Icon(
+            painter = painterResource(Res.drawable.ic_fleet_logo),
+            contentDescription = "Fleet Management",
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.primary
         )
 
         Text(

@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.indusjs.fleet.core.ui.FleetDateField
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
@@ -418,14 +418,17 @@ private fun DocumentsStep(
             )
         ) { docType ->
             val uploadedDoc = state.documents.find { it.type == docType }
+            val expiryDateRaw = state.documentExpiryDates[docType] ?: ""
             DocumentUploadCard(
                 documentType = docType,
                 uploadedDocument = uploadedDoc,
                 isRequired = false,
                 isUploading = state.uploadingDocument == docType,
                 uploadProgress = if (state.uploadingDocument == docType) state.uploadProgress else 0f,
+                expiryDateRaw = expiryDateRaw,
                 onUploadClick = { onIntent(AddVehicleContract.Intent.SelectDocument(docType)) },
-                onRemoveClick = { uploadedDoc?.let { onIntent(AddVehicleContract.Intent.RemoveDocument(it.id)) } }
+                onRemoveClick = { uploadedDoc?.let { onIntent(AddVehicleContract.Intent.RemoveDocument(it.id)) } },
+                onExpiryDateChange = { onIntent(AddVehicleContract.Intent.UpdateDocumentExpiryDate(docType, it)) }
             )
         }
 
@@ -479,8 +482,10 @@ private fun DocumentUploadCard(
     isRequired: Boolean,
     isUploading: Boolean,
     uploadProgress: Float,
+    expiryDateRaw: String,
     onUploadClick: () -> Unit,
-    onRemoveClick: () -> Unit
+    onRemoveClick: () -> Unit,
+    onExpiryDateChange: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -499,90 +504,104 @@ private fun DocumentUploadCard(
             }
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp)
         ) {
-            // Document icon (emoji)
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        color = if (uploadedDocument != null)
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(8.dp)
-                    ),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = getDocumentEmoji(documentType),
-                    style = MaterialTheme.typography.headlineSmall
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Document info
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // Document icon (emoji)
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            color = if (uploadedDocument != null)
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            else
+                                MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = getDocumentTypeName(documentType),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Medium
+                        text = getDocumentEmoji(documentType),
+                        style = MaterialTheme.typography.headlineSmall
                     )
-                    if (isRequired) {
-                        Spacer(modifier = Modifier.width(4.dp))
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Document info
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "*",
-                            color = MaterialTheme.colorScheme.error,
-                            fontWeight = FontWeight.Bold
+                            text = getDocumentTypeName(documentType),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                        if (isRequired) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "*",
+                                color = MaterialTheme.colorScheme.error,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    if (uploadedDocument != null) {
+                        Text(
+                            text = uploadedDocument.fileName,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = formatFileSize(uploadedDocument.fileSize),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else if (isUploading) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { uploadProgress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Text(
+                            text = "Uploading... ${(uploadProgress * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else {
+                        Text(
+                            text = "Tap to upload",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
+                // Action button
                 if (uploadedDocument != null) {
-                    Text(
-                        text = uploadedDocument.fileName,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = formatFileSize(uploadedDocument.fileSize),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else if (isUploading) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    LinearProgressIndicator(
-                        progress = { uploadProgress },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(
-                        text = "Uploading... ${(uploadProgress * 100).toInt()}%",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                } else {
-                    Text(
-                        text = "Tap to upload",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    TextButton(onClick = onRemoveClick) {
+                        Text("✕ Remove", color = MaterialTheme.colorScheme.error)
+                    }
+                } else if (!isUploading) {
+                    FilledTonalButton(onClick = onUploadClick) {
+                        Text("+ Upload")
+                    }
                 }
             }
 
-            // Action button
-            if (uploadedDocument != null) {
-                TextButton(onClick = onRemoveClick) {
-                    Text("✕ Remove", color = MaterialTheme.colorScheme.error)
-                }
-            } else if (!isUploading) {
-                FilledTonalButton(onClick = onUploadClick) {
-                    Text("+ Upload")
-                }
+            // Expiry Date Field (for documents that require expiry)
+            if (documentType != DocumentType.REGISTRATION_CERTIFICATE && documentType != DocumentType.OTHER) {
+                Spacer(modifier = Modifier.height(12.dp))
+                FleetDateField(
+                    rawValue = expiryDateRaw,
+                    onRawValueChange = onExpiryDateChange,
+                    label = "Expiry Date"
+                )
             }
         }
     }
@@ -845,4 +864,5 @@ private fun FormatChip(format: String) {
         )
     }
 }
+
 

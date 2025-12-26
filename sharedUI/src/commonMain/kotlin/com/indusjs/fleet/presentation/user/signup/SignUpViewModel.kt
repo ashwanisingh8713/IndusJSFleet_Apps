@@ -22,7 +22,7 @@ class SignUpViewModel(
             is SignUpContract.Intent.UpdateFirstName -> updateState { copy(firstName = intent.firstName) }
             is SignUpContract.Intent.UpdateLastName -> updateState { copy(lastName = intent.lastName) }
             is SignUpContract.Intent.UpdateEmail -> updateState { copy(email = intent.email) }
-            is SignUpContract.Intent.UpdateMobile -> updateState { copy(mobile = intent.mobile) }
+            is SignUpContract.Intent.UpdateMobile -> updateMobile(intent.mobile)
             is SignUpContract.Intent.UpdatePassword -> updateState { copy(password = intent.password) }
             is SignUpContract.Intent.UpdateConfirmPassword -> updateState { copy(confirmPassword = intent.confirmPassword) }
             is SignUpContract.Intent.TogglePasswordVisibility -> updateState { copy(isPasswordVisible = !isPasswordVisible) }
@@ -31,6 +31,20 @@ class SignUpViewModel(
             is SignUpContract.Intent.ClearError -> updateState { copy(error = null) }
             is SignUpContract.Intent.NavigateToLogin -> sendEffect(SignUpContract.Effect.NavigateToLogin)
         }
+    }
+
+    private fun updateMobile(mobile: String) {
+        // Only allow digits and limit to 10 characters
+        val filteredMobile = mobile.filter { it.isDigit() }.take(10)
+
+        val mobileError = when {
+            filteredMobile.isEmpty() -> null
+            filteredMobile.length < 10 -> "Enter 10-digit mobile number"
+            !isValidIndianMobile(filteredMobile) -> "Mobile must start with 6, 7, 8, or 9"
+            else -> null
+        }
+
+        updateState { copy(mobile = filteredMobile, mobileError = mobileError) }
     }
 
     private suspend fun signUp() {
@@ -67,8 +81,8 @@ class SignUpViewModel(
             return
         }
 
-        if (mobile.length < 10) {
-            updateState { copy(error = "Please enter a valid mobile number") }
+        if (!isValidIndianMobile(mobile)) {
+            updateState { copy(error = "Please enter a valid 10-digit Indian mobile number") }
             return
         }
 
@@ -132,6 +146,19 @@ class SignUpViewModel(
 
     private fun isValidEmail(email: String): Boolean {
         return email.contains("@") && email.contains(".")
+    }
+
+    /**
+     * Validates Indian mobile number.
+     * Indian mobile numbers:
+     * - Must be exactly 10 digits
+     * - Must start with 6, 7, 8, or 9
+     */
+    private fun isValidIndianMobile(mobile: String): Boolean {
+        if (mobile.length != 10) return false
+        if (!mobile.all { it.isDigit() }) return false
+        val firstDigit = mobile.firstOrNull() ?: return false
+        return firstDigit in listOf('6', '7', '8', '9')
     }
 }
 

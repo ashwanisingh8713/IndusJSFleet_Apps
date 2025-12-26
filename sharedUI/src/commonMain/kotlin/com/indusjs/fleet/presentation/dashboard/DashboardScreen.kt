@@ -671,9 +671,11 @@ private fun WelcomeBannerCard(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "🚚",
-                    style = MaterialTheme.typography.headlineMedium
+                Icon(
+                    painter = painterResource(Res.drawable.ic_fleet_logo),
+                    contentDescription = "Fleet",
+                    modifier = Modifier.size(36.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }

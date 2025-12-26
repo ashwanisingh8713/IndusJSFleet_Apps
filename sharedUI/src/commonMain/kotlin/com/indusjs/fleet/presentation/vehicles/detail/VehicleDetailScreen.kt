@@ -279,9 +279,10 @@ private fun VehicleHeader(vehicle: Vehicle) {
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = getVehicleTypeEmoji(vehicle.type),
-                        style = MaterialTheme.typography.headlineLarge
+                    VehicleTypeIcon(
+                        type = vehicle.type,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -488,31 +489,6 @@ private fun TripAssignmentCard(tripAssignment: com.indusjs.fleet.domain.entity.v
     }
 }
 
-@Composable
-private fun SectionCard(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            content()
-        }
-    }
-}
 
 @Composable
 private fun EnhancedSectionCard(
@@ -603,33 +579,6 @@ private fun EnhancedInfoRow(
             thickness = 0.5.dp
         )
     }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-    HorizontalDivider(
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
-        thickness = 0.5.dp
-    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -802,14 +751,30 @@ private fun EditModeContent(
     }
 }
 
-// Helper functions
-private fun getVehicleTypeEmoji(type: VehicleType): String = when (type) {
-    VehicleType.TRUCK -> "🚛"
-    VehicleType.VAN -> "🚐"
-    VehicleType.CAR -> "🚗"
-    VehicleType.BUS -> "🚌"
-    VehicleType.MOTORCYCLE -> "🏍️"
-    VehicleType.TRAILER -> "🚚"
+
+/**
+ * Composable to display vehicle type icon.
+ */
+@Composable
+private fun VehicleTypeIcon(
+    type: VehicleType,
+    modifier: Modifier = Modifier,
+    tint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary
+) {
+    val iconRes = when (type) {
+        VehicleType.TRUCK -> Res.drawable.ic_truck
+        VehicleType.VAN -> Res.drawable.ic_van
+        VehicleType.CAR -> Res.drawable.ic_car
+        VehicleType.BUS -> Res.drawable.ic_bus
+        VehicleType.MOTORCYCLE -> Res.drawable.ic_motorcycle
+        VehicleType.TRAILER -> Res.drawable.ic_trailer
+    }
+    Icon(
+        painter = painterResource(iconRes),
+        contentDescription = type.name,
+        modifier = modifier,
+        tint = tint
+    )
 }
 
 private fun getVehicleTypeLabel(type: VehicleType): String = when (type) {

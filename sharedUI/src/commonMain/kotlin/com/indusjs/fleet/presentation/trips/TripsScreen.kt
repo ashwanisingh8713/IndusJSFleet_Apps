@@ -132,7 +132,7 @@ fun TripsScreen(
                 state.filteredTrips.isEmpty() -> {
                     // Using reusable EmptyContent component
                     EmptyContent(
-                        icon = "🚗",
+                        icon = "📦",
                         title = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
                             "No trips match your filters"
                         else
@@ -259,9 +259,11 @@ private fun TripCard(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "🚗",
-                                style = MaterialTheme.typography.labelSmall
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_car),
+                                contentDescription = "Vehicle",
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
