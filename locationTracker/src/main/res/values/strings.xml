@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Fleet Location Tracker</string>
+    <string name="notification_channel_name">Location Tracking</string>
+    <string name="notification_channel_description">Location tracking service notifications</string>
+    <string name="notification_title">Location Tracking Active</string>
+    <string name="notification_content">Tracking your vehicle location</string>
+</resources>
+

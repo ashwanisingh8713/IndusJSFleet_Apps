@@ -2014,7 +2014,7 @@
 		},
 		{
 			"name": "Location Tracking",
-			"description": "Location tracking endpoints for recording and retrieving vehicle locations",
+			"description": "Location tracking endpoints for recording and retrieving vehicle locations. Uses `registration_number` to identify vehicles.",
 			"item": [
 				{
 					"name": "Track Location",
@@ -2032,14 +2032,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"vehicle_id\": 1,\n    \"latitude\": 28.6139,\n    \"longitude\": 77.2090,\n    \"speed\": 55.5,\n    \"heading\": 90.0,\n    \"altitude\": 216.0,\n    \"accuracy\": 5.0\n}"
+							"raw": "{\n    \"registration_number\": \"MH12AB1234\",\n    \"lat\": 28.6139,\n    \"lng\": 77.2090,\n    \"speed\": 55.5,\n    \"ts\": 1703500800000\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/locations/track",
 							"host": ["{{base_url}}"],
 							"path": ["locations", "track"]
 						},
-						"description": "Record a vehicle's current location."
+						"description": "Record a vehicle's current location.\n\n**Required Fields:**\n- `registration_number` - Vehicle registration (e.g., 'MH12AB1234')\n- `lat` - Latitude\n- `lng` - Longitude\n- `speed` - Speed in km/h\n- `ts` - Unix timestamp (milliseconds)\n\n**Note:** `vehicle_id` and `owner_id` are auto-resolved from `registration_number`."
 					},
 					"response": []
 				},
@@ -2059,14 +2059,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "[\n    {\n        \"vehicle_id\": 1,\n        \"latitude\": 28.6139,\n        \"longitude\": 77.2090,\n        \"speed\": 55.5,\n        \"heading\": 90.0,\n        \"altitude\": 216.0,\n        \"accuracy\": 5.0\n    },\n    {\n        \"vehicle_id\": 2,\n        \"latitude\": 28.7041,\n        \"longitude\": 77.1025,\n        \"speed\": 40.0,\n        \"heading\": 180.0,\n        \"altitude\": 220.0,\n        \"accuracy\": 8.0\n    }\n]"
+							"raw": "[\n    {\n        \"registration_number\": \"MH12AB1234\",\n        \"lat\": 28.6139,\n        \"lng\": 77.2090,\n        \"speed\": 55.5,\n        \"ts\": 1703500800000\n    },\n    {\n        \"registration_number\": \"MH14CD5678\",\n        \"lat\": 28.7041,\n        \"lng\": 77.1025,\n        \"speed\": 40.0,\n        \"ts\": 1703500801000\n    }\n]"
 						},
 						"url": {
 							"raw": "{{base_url}}/locations/track/bulk",
 							"host": ["{{base_url}}"],
 							"path": ["locations", "track", "bulk"]
 						},
-						"description": "Record multiple vehicle locations at once."
+						"description": "Record multiple vehicle locations at once.\n\n**Required Fields per location:**\n- `registration_number` - Vehicle registration\n- `lat` - Latitude\n- `lng` - Longitude\n- `speed` - Speed in km/h\n- `ts` - Unix timestamp (milliseconds)"
 					},
 					"response": []
 				},
@@ -2456,14 +2456,230 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"vehicle_id\": 1,\n    \"latitude\": 12.9716,\n    \"longitude\": 77.5946,\n    \"speed\": 45.5,\n    \"heading\": 180.0,\n    \"altitude\": 920.0,\n    \"accuracy\": 5.0\n}"
+							"raw": "{\n    \"registration_number\": \"MH12AB1234\",\n    \"lat\": 12.9716,\n    \"lng\": 77.5946,\n    \"speed\": 45.5,\n    \"ts\": 1703500800000\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/supervisor/locations/track",
 							"host": ["{{base_url}}"],
 							"path": ["supervisor", "locations", "track"]
 						},
-						"description": "Submit a location update for a vehicle."
+						"description": "Submit a location update for a vehicle.\n\n**Required Fields:**\n- `registration_number` - Vehicle registration\n- `lat` - Latitude\n- `lng` - Longitude\n- `speed` - Speed in km/h\n- `ts` - Unix timestamp (milliseconds)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Real-Time Location Tracking",
+			"description": "Real-time location tracking using MQTT (Vehicle → Server) and WebSocket (Server → Mobile Apps).\n\n## Architecture\n- **MQTT**: Vehicles publish GPS location every 1-2 seconds\n- **WebSocket**: Server broadcasts location updates to connected mobile apps\n- **Database**: Location data stored in Supabase PostgreSQL\n\n## Vehicle Identification\n- Uses `registration_number` (e.g., 'MH12AB1234') instead of vehicle_id\n- Automatically resolves vehicle_id and owner_id\n\n## MQTT Topics\n- `fleet/vehicle/{registration_number}/location` - Vehicle location updates\n- `fleet/trip/{trip_id}/location` - Trip-specific tracking\n\n## WebSocket\n- Connect to: `ws://localhost:8080/ws` (requires JWT token)",
+			"item": [
+				{
+					"name": "Health Check (with MQTT Status)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/../health",
+							"host": ["{{base_url}}"],
+							"path": ["..", "health"]
+						},
+						"description": "Check server health including MQTT connection status and WebSocket connections count.\n\n**Response:**\n```json\n{\n  \"status\": \"healthy\",\n  \"mqtt_connected\": true,\n  \"ws_connections\": 5\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Metrics (MQTT & WebSocket)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/../metrics",
+							"host": ["{{base_url}}"],
+							"path": ["..", "metrics"]
+						},
+						"description": "Get detailed metrics for MQTT and WebSocket services.\n\n**Response:**\n```json\n{\n  \"mqtt\": {\n    \"messages_received\": 15000,\n    \"messages_invalid\": 5,\n    \"records_written\": 14900,\n    \"is_connected\": true\n  },\n  \"websocket\": {\n    \"total_connections\": 50,\n    \"current_connections\": 12,\n    \"messages_sent\": 45000\n  }\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Track Location (REST API)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"registration_number\": \"MH12AB1234\",\n    \"lat\": 19.0760,\n    \"lng\": 72.8777,\n    \"speed\": 45.5,\n    \"ts\": 1703500800000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/locations/track",
+							"host": ["{{base_url}}"],
+							"path": ["locations", "track"]
+						},
+						"description": "Submit a single location update via REST API.\n\n**Note:** For high-frequency tracking (1-2 seconds), use MQTT instead of REST API.\n\n**Request Body:**\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| registration_number | string | ✅ | Vehicle registration number (e.g., 'MH12AB1234') |\n| lat | float64 | ✅ | Latitude (-90 to 90) |\n| lng | float64 | ✅ | Longitude (-180 to 180) |\n| speed | float64 | ✅ | Speed in km/h |\n| ts | int64 | ✅ | Unix timestamp (milliseconds) |\n| heading | float64 | ❌ | Direction (0-360°) |\n| altitude | float64 | ❌ | Altitude in meters |\n| accuracy | float64 | ❌ | GPS accuracy in meters |\n| trip_id | int64 | ❌ | Active trip ID |\n| driver_id | int64 | ❌ | Driver ID |\n| owner_id | int64 | ❌ | Organization ID (auto-resolved from vehicle) |\n| bat | int | ❌ | Battery level (0-100) |\n| provider | string | ❌ | Location provider (gps/network) |\n\n**Note:** `vehicle_id` and `owner_id` are automatically resolved from `registration_number`."
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Track Locations (REST API)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"locations\": [\n        {\n            \"registration_number\": \"MH12AB1234\",\n            \"lat\": 19.0760,\n            \"lng\": 72.8777,\n            \"speed\": 45.5,\n            \"ts\": 1703500800000\n        },\n        {\n            \"registration_number\": \"MH14CD5678\",\n            \"lat\": 18.5204,\n            \"lng\": 73.8567,\n            \"speed\": 60.0,\n            \"ts\": 1703500801000\n        },\n        {\n            \"registration_number\": \"MH01EF9012\",\n            \"lat\": 19.2183,\n            \"lng\": 72.9781,\n            \"speed\": 0,\n            \"ts\": 1703500802000\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/locations/track/bulk",
+							"host": ["{{base_url}}"],
+							"path": ["locations", "track", "bulk"]
+						},
+						"description": "Submit multiple location updates in a single request. Useful for syncing offline data.\n\nOnly `registration_number`, `lat`, `lng`, `speed`, and `ts` are required. `vehicle_id` and `owner_id` are resolved automatically."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Current Locations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/locations/current",
+							"host": ["{{base_url}}"],
+							"path": ["locations", "current"]
+						},
+						"description": "Get the current (latest) location of all vehicles in your organization.\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"data\": [\n    {\n      \"registration_number\": \"MH12AB1234\",\n      \"vehicle_id\": 1,\n      \"latitude\": 19.0760,\n      \"longitude\": 72.8777,\n      \"speed\": 45.5,\n      \"heading\": 180.0,\n      \"timestamp\": \"2024-01-15T14:30:00Z\"\n    }\n  ]\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle Current Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/MH12AB1234/location",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "MH12AB1234", "location"]
+						},
+						"description": "Get the current (latest) location of a specific vehicle by registration number.\n\n**URL Parameter:**\n- `registration_number` - Vehicle registration number (e.g., 'MH12AB1234')"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle Location History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/MH12AB1234/location/history?start_time=2024-01-15T00:00:00Z&end_time=2024-01-15T23:59:59Z&limit=100",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "MH12AB1234", "location", "history"],
+							"query": [
+								{"key": "start_time", "value": "2024-01-15T00:00:00Z"},
+								{"key": "end_time", "value": "2024-01-15T23:59:59Z"},
+								{"key": "limit", "value": "100"}
+							]
+						},
+						"description": "Get historical location data for a vehicle within a time range.\n\n**URL Parameter:**\n- `registration_number` - Vehicle registration number (e.g., 'MH12AB1234')\n\n**Query Parameters:**\n- `start_time` - Start of time range (ISO 8601)\n- `end_time` - End of time range (ISO 8601)\n- `limit` - Maximum records to return (default: 100)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Trip Location",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"current_lat\": 19.1234,\n    \"current_lng\": 73.0567\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trips/1/location",
+							"host": ["{{base_url}}"],
+							"path": ["trips", "1", "location"]
+						},
+						"description": "Update the current location of an in-progress trip."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "MQTT Configuration (Reference)",
+			"description": "Reference information for MQTT integration. These are not REST endpoints - use an MQTT client to connect.\n\n## MQTT Broker\n- **Local**: `tcp://localhost:1883`\n- **Dashboard**: http://localhost:18083 (admin/public)\n\n## Start MQTT Broker\n```bash\ndocker run -d --name emqx -p 1883:1883 -p 18083:18083 emqx/emqx:5.3.0\n```",
+			"item": [
+				{
+					"name": "MQTT Message Format (Reference)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/../health",
+							"host": ["{{base_url}}"],
+							"path": ["..", "health"]
+						},
+						"description": "## MQTT Topic Format\n\n**Vehicle Location (using registration number):**\n```\nfleet/vehicle/{registration_number}/location\n```\nExample: `fleet/vehicle/MH12AB1234/location`\n\n**Trip Location:**\n```\nfleet/trip/{trip_id}/location\n```\n\n## Message Payload (JSON)\n\n```json\n{\n  \"registration_number\": \"MH12AB1234\",\n  \"lat\": 19.0760,\n  \"lng\": 72.8777,\n  \"speed\": 45.5,\n  \"ts\": 1703500800000\n}\n```\n\n## Field Descriptions\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| registration_number | string | ✅ | Vehicle registration (e.g., 'MH12AB1234') |\n| lat | float64 | ✅ | Latitude (-90 to 90) |\n| lng | float64 | ✅ | Longitude (-180 to 180) |\n| speed | float64 | ✅ | Speed in km/h |\n| ts | int64 | ✅ | Unix timestamp (milliseconds) |\n| heading | float64 | ❌ | Direction (0-360°) |\n| accuracy | float64 | ❌ | GPS accuracy in meters |\n| trip_id | int64 | ❌ | Active trip ID |\n| driver_id | int64 | ❌ | Driver ID |\n| owner_id | int64 | ❌ | Organization ID (auto-resolved) |\n| bat | int | ❌ | Battery level (0-100) |\n| provider | string | ❌ | Location provider (gps/network) |\n\n**Note:** `vehicle_id` and `owner_id` are automatically resolved from `registration_number`."
+					},
+					"response": []
+				},
+				{
+					"name": "WebSocket Connection (Reference)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/../health",
+							"host": ["{{base_url}}"],
+							"path": ["..", "health"]
+						},
+						"description": "## WebSocket Connection\n\n**URL:** `ws://localhost:8080/ws`\n\n**Authentication:** JWT token in Authorization header\n\n```javascript\nconst ws = new WebSocket('ws://localhost:8080/ws', [], {\n  headers: {\n    'Authorization': 'Bearer YOUR_JWT_TOKEN'\n  }\n});\n```\n\n## Received Message Format\n\n```json\n{\n  \"type\": \"location_update\",\n  \"registration_number\": \"MH12AB1234\",\n  \"vehicle_id\": 123,\n  \"trip_id\": 456,\n  \"driver_id\": 789,\n  \"lat\": 19.0760,\n  \"lng\": 72.8777,\n  \"speed\": 45.5,\n  \"heading\": 180.0,\n  \"ts\": 1703500800000\n}\n```\n\n## Notes\n- Messages are only sent for vehicles in your organization\n- Connection auto-pings every 30 seconds\n- Reconnect automatically on disconnect"
 					},
 					"response": []
 				}

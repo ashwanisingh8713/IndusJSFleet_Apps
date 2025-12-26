@@ -31,4 +31,5 @@ dependencyResolutionManagement {
 include(":sharedUI")
 include(":androidApp")
 include(":webApp")
+include(":locationTracker")
 

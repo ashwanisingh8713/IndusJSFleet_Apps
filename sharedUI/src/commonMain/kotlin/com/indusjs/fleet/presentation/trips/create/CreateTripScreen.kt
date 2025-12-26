@@ -261,7 +261,8 @@ private fun VehicleDriverSelectionSection(
                 expanded = state.showVehicleDropdown,
                 onDismissRequest = { viewModel.sendIntent(CreateTripContract.Intent.ToggleVehicleDropdown) }
             ) {
-                state.vehicles.forEach { vehicle ->
+                // Sort vehicles: available first, occupied at bottom
+                state.vehicles.sortedBy { it.isOccupied }.forEach { vehicle ->
                     val isOccupied = vehicle.isOccupied
                     DropdownMenuItem(
                         text = {
@@ -337,7 +338,8 @@ private fun VehicleDriverSelectionSection(
                 expanded = state.showDriverDropdown,
                 onDismissRequest = { viewModel.sendIntent(CreateTripContract.Intent.ToggleDriverDropdown) }
             ) {
-                state.drivers.forEach { driver ->
+                // Sort drivers: available first, occupied at bottom
+                state.drivers.sortedBy { it.isOccupied }.forEach { driver ->
                     val isOccupied = driver.isOccupied
                     DropdownMenuItem(
                         text = {

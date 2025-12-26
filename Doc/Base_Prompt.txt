@@ -1,5 +1,5 @@
 Act as a professional Kotlin Multiplatform Developer. I am developing Fleet Managment mobile app.
- Fleet_Management_API.postman_collection.json is PostMan collection.
+Fleet_Management_API.postman_collection.json is PostMan collection.
 
  In `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI`, already app is being developed and apis are getting integrated using CLEAN Architecture, Dependency Injection, MVI design pattern.
 
@@ -16,3 +16,18 @@ Use Google Distance Matrix API for road distance.
 
 -------------------------
 To "Create Trip",If any Driver or Vehicle are occupied then update in dropdown with respective information's.
+
+
+---------------------
+As I have already informed you, I want to use Supabase postgres to keep location tracked data.
+- To send location tracked data from Vehicle to Server i want to use MQTT
+- To show live location of tracked data on Mobile devices (Owner, Manager, Supervisor) from from Server, I want to use Websocket.
+
+Currently in /Users/ashwani/GolandProjects/IndusJSFleet_GoLang_Backend/.env, Supabase Postgres infor is available into this.
+Can we use same configuration instead of /Users/ashwani/GolandProjects/IndusJSFleet_GoLang_Backend/mqtt-bridge/.env.example?
+
+-----------------------
+In `/Users/ashwani/KotlinMultiplateform/IndusJSFleet`
+Create `Android App module` to send location tracked data from Vehicle to Server using MQTT protocol.
+
+Refer `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/Fleet_Management_API.postman_collection.json` for Location Tracker .

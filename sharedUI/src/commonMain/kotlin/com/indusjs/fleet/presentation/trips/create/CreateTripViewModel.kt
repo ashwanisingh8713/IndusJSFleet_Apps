@@ -1,5 +1,6 @@
 package com.indusjs.fleet.presentation.trips.create
 
+import co.touchlab.kermit.Logger
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.result.Result
@@ -32,6 +33,7 @@ class CreateTripViewModel(
     private val googlePlacesService: GooglePlacesService? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
+    private val log = Logger.withTag("CreateTripViewModel")
     private var startLocationSearchJob: Job? = null
     private var endLocationSearchJob: Job? = null
 
@@ -41,10 +43,18 @@ class CreateTripViewModel(
 
             // Vehicle & Driver selection
             is Intent.SelectVehicle -> {
-                updateState { copy(selectedVehicle = intent.vehicle, vehicleError = null, showVehicleDropdown = false) }
+                if (intent.vehicle.isOccupied) {
+                    sendEffect(Effect.ShowSnackbar("This vehicle is currently occupied"))
+                } else {
+                    updateState { copy(selectedVehicle = intent.vehicle, vehicleError = null, showVehicleDropdown = false) }
+                }
             }
             is Intent.SelectDriver -> {
-                updateState { copy(selectedDriver = intent.driver, driverError = null, showDriverDropdown = false) }
+                if (intent.driver.isOccupied) {
+                    sendEffect(Effect.ShowSnackbar("This driver is currently occupied"))
+                } else {
+                    updateState { copy(selectedDriver = intent.driver, driverError = null, showDriverDropdown = false) }
+                }
             }
             is Intent.ToggleVehicleDropdown -> {
                 updateState { copy(showVehicleDropdown = !showVehicleDropdown, showDriverDropdown = false) }
@@ -434,9 +444,17 @@ class CreateTripViewModel(
                 plannedStart
             }
 
+            val vehicleId = state.selectedVehicle!!.id.toIntOrNull() ?: 0
+            val driverId = state.selectedDriver!!.id.toIntOrNull() ?: 0
+
+            log.d { "Creating trip with vehicleId: $vehicleId, driverId: $driverId" }
+            log.d { "Vehicle: ${state.selectedVehicle.registrationNumber}, isOccupied: ${state.selectedVehicle.isOccupied}" }
+            log.d { "Driver: ${state.selectedDriver.firstName} ${state.selectedDriver.lastName}, isOccupied: ${state.selectedDriver.isOccupied}" }
+            log.d { "Schedule: plannedStart=$plannedStart, plannedEnd=$plannedEnd" }
+
             val createTripData = CreateTripData(
-                vehicleId = state.selectedVehicle!!.id.toIntOrNull() ?: 0,
-                driverId = state.selectedDriver!!.id.toIntOrNull() ?: 0,
+                vehicleId = vehicleId,
+                driverId = driverId,
                 scheduledDate = "${departureDateISO}T00:00:00Z",
                 startTime = plannedStart,
                 plannedStart = plannedStart,
@@ -458,12 +476,14 @@ class CreateTripViewModel(
 
             when (val result = createTripWithDataUseCase(createTripData)) {
                 is Result.Success -> {
+                    log.d { "Trip created successfully: ${result.data.id}" }
                     updateState { copy(isSaving = false) }
                     sendEffect(Effect.ShowSnackbar("Trip created successfully"))
                     sendEffect(Effect.TripCreated(result.data.id))
                     sendEffect(Effect.NavigateBack)
                 }
                 is Result.Error -> {
+                    log.e { "Failed to create trip: ${result.message}" }
                     updateState { copy(isSaving = false) }
                     sendEffect(Effect.ShowError(result.message ?: "Failed to create trip"))
                 }
@@ -473,8 +493,23 @@ class CreateTripViewModel(
     }
 
     private fun validateForm(): Boolean {
-        val vehicleError = if (currentState.selectedVehicle == null) "Please select a vehicle" else null
-        val driverError = if (currentState.selectedDriver == null) "Please select a driver" else null
+        val selectedVehicle = currentState.selectedVehicle
+        val selectedDriver = currentState.selectedDriver
+
+        val vehicleError = when {
+            selectedVehicle == null -> "Please select a vehicle"
+            selectedVehicle.id.toIntOrNull() == null || selectedVehicle.id.toIntOrNull() == 0 -> "Invalid vehicle selected"
+            selectedVehicle.isOccupied -> "Selected vehicle is currently occupied"
+            else -> null
+        }
+
+        val driverError = when {
+            selectedDriver == null -> "Please select a driver"
+            selectedDriver.id.toIntOrNull() == null || selectedDriver.id.toIntOrNull() == 0 -> "Invalid driver selected"
+            selectedDriver.isOccupied -> "Selected driver is currently occupied"
+            else -> null
+        }
+
         val startLocationError = if (currentState.startLocation.isBlank()) "Start location is required" else null
         val endLocationError = if (currentState.endLocation.isBlank()) "End location is required" else null
         val departureDateError = if (currentState.departureDate.isBlank()) "Departure date is required" else null
