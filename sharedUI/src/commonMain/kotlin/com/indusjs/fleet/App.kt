@@ -6,6 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.indusjs.fleet.core.auth.AuthenticationEvent
+import com.indusjs.fleet.core.auth.AuthenticationManager
 import com.indusjs.fleet.di.DefaultViewModelProvider
 import com.indusjs.fleet.di.ProvideViewModels
 import com.indusjs.fleet.di.rememberViewModel
@@ -72,6 +74,36 @@ fun App(
     var currentRoute by remember { mutableStateOf<AppRoute>(AppRoute.Login) }
     var isLoggedIn by remember { mutableStateOf(false) }
 
+    // Snackbar for showing session expired message
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Listen for authentication events (401 Unauthorized)
+    // This will redirect to login screen when session expires
+    // Note: Session is automatically cleared by AuthenticationManager before emitting the event
+    LaunchedEffect(Unit) {
+        AuthenticationManager.authEvents.collect { event ->
+            when (event) {
+                is AuthenticationEvent.Unauthorized,
+                is AuthenticationEvent.SessionExpired -> {
+                    // Session is already cleared by AuthenticationManager
+                    isLoggedIn = false
+                    currentRoute = AppRoute.Login
+
+                    // Show message to user
+                    val message = when (event) {
+                        is AuthenticationEvent.SessionExpired -> event.message
+                        else -> "Your session has expired. Please log in again."
+                    }
+                    snackbarHostState.showSnackbar(message)
+                }
+                is AuthenticationEvent.LoggedOut -> {
+                    isLoggedIn = false
+                    currentRoute = AppRoute.Login
+                }
+            }
+        }
+    }
+
 
     // Create ViewModelProvider for dependency injection
     // In production with Metro DI, this would use the generated graphs
@@ -83,20 +115,24 @@ fun App(
             .windowInsetsPadding(WindowInsets.safeDrawing),
         color = MaterialTheme.colorScheme.background
     ) {
-        ProvideViewModels(viewModelProvider) {
-            when (val route = currentRoute) {
-                is AppRoute.Login -> {
-                    val loginViewModel = rememberViewModel { loginViewModel() }
-                    LoginScreen(
-                        viewModel = loginViewModel,
-                        onLoginSuccess = {
-                            isLoggedIn = true
-                            currentRoute = AppRoute.Dashboard
-                        },
-                        onNavigateToSignUp = { currentRoute = AppRoute.SignUp },
-                        onNavigateToForgotPassword = { currentRoute = AppRoute.ForgotPassword }
-                    )
-                }
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { paddingValues ->
+            Box(modifier = Modifier.padding(paddingValues)) {
+                ProvideViewModels(viewModelProvider) {
+                    when (val route = currentRoute) {
+                        is AppRoute.Login -> {
+                            val loginViewModel = rememberViewModel { loginViewModel() }
+                            LoginScreen(
+                                viewModel = loginViewModel,
+                                onLoginSuccess = {
+                                    isLoggedIn = true
+                                    currentRoute = AppRoute.Dashboard
+                                },
+                                onNavigateToSignUp = { currentRoute = AppRoute.SignUp },
+                                onNavigateToForgotPassword = { currentRoute = AppRoute.ForgotPassword }
+                            )
+                        }
 
                 is AppRoute.SignUp -> {
                     val signUpViewModel = rememberViewModel { signUpViewModel() }
@@ -293,6 +329,8 @@ fun App(
                         onNavigateBack = { currentRoute = AppRoute.TeamList }
                     )
                 }
+            }
+        }
             }
         }
     }

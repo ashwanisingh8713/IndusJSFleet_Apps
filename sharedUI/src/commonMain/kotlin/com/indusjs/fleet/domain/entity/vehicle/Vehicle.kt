@@ -47,6 +47,26 @@ data class VehicleTripAssignment(
 )
 
 /**
+ * Assigned driver info for vehicle.
+ */
+data class AssignedDriver(
+    val id: String,
+    val firstName: String?,
+    val lastName: String?,
+    val mobile: String?,
+    val licenseNumber: String?
+) {
+    /**
+     * Returns the full name of the driver.
+     */
+    fun fullName(): String {
+        val first = firstName ?: ""
+        val last = lastName ?: ""
+        return "$first $last".trim().ifEmpty { "N/A" }
+    }
+}
+
+/**
  * Vehicle entity representing a fleet vehicle.
  */
 data class Vehicle(
@@ -65,6 +85,7 @@ data class Vehicle(
     val lastLocation: Location? = null,
     val assignedDriverId: String? = null,
     val assignedDriverName: String? = null,
+    val assignedDriver: AssignedDriver? = null,
     val lastServiceDate: Long? = null,
     val nextServiceDate: Long? = null,
     val isOccupied: Boolean = false,

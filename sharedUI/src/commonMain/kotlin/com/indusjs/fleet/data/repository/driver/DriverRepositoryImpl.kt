@@ -80,14 +80,19 @@ class DriverRepositoryImpl(
         return try {
             val token = requireAuthToken()
             val request = mapper.mapToCreateRequest(driver)
+            co.touchlab.kermit.Logger.d("DriverRepository") { "Creating driver with request: $request" }
             val response = remoteDataSource.createDriver(token, request)
+            co.touchlab.kermit.Logger.d("DriverRepository") { "Create driver response - success: ${response.success}, message: ${response.message}" }
 
             if (response.success && response.data != null) {
                 Result.Success(mapper.mapToDomain(response.data))
             } else {
-                Result.Error(ApiException(response.message ?: "Failed to create driver"), response.message)
+                val errorMessage = response.message ?: "Failed to create driver"
+                co.touchlab.kermit.Logger.e("DriverRepository") { "Create driver failed: $errorMessage" }
+                Result.Error(ApiException(errorMessage), errorMessage)
             }
         } catch (e: Exception) {
+            co.touchlab.kermit.Logger.e("DriverRepository", e) { "Exception creating driver: ${e.message}" }
             Result.Error(e, e.message)
         }
     }

@@ -216,14 +216,14 @@ private fun TripCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(14.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
             // Header Row
             Row(
@@ -231,13 +231,16 @@ private fun TripCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(44.dp)
                             .background(
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                                shape = RoundedCornerShape(8.dp)
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                                shape = RoundedCornerShape(10.dp)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
@@ -251,65 +254,91 @@ private fun TripCard(
                         Text(
                             text = trip.tripNumber ?: "Trip #${trip.id}",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Text(
-                            text = "${trip.vehicleNumber ?: "Vehicle"} • ${trip.driverName ?: "Driver"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "🚗",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = trip.vehicleNumber ?: "Vehicle",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = " • ",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "👤",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = trip.driverName ?: "Driver",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
 
-                // Using reusable FleetStatusBadge component
                 StatusBadge(status = trip.status)
             }
 
             Spacer(modifier = Modifier.height(14.dp))
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                thickness = 0.5.dp
+            )
             Spacer(modifier = Modifier.height(14.dp))
 
             // Route Section
             RouteSection(trip = trip)
 
             Spacer(modifier = Modifier.height(12.dp))
-
-            HorizontalDivider()
-
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                thickness = 0.5.dp
+            )
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Info Row
+            // Info Row - Using dividers instead of card backgrounds
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 TripInfoItem(
-                    emoji = "🛣️",
-                    label = "Distance",
+                    icon = "🛣️",
                     value = "${trip.distance.toInt()} km",
-                    modifier = Modifier.weight(1f)
+                    label = "Distance"
                 )
+
+                VerticalDivider(
+                    modifier = Modifier.height(32.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
                 TripInfoItem(
-                    emoji = "⏱️",
-                    label = "Duration",
+                    icon = "⏱️",
                     value = formatDuration(trip.estimatedDuration),
-                    modifier = Modifier.weight(1f)
+                    label = "Duration"
                 )
-                trip.cargoType?.let { cargo ->
-                    TripInfoItem(
-                        emoji = "📦",
-                        label = "Cargo",
-                        value = cargo,
-                        modifier = Modifier.weight(1f)
-                    )
-                } ?: TripInfoItem(
-                    emoji = "📋",
-                    label = "Status",
-                    value = getStatusDisplayName(trip.status),
-                    modifier = Modifier.weight(1f)
+
+                VerticalDivider(
+                    modifier = Modifier.height(32.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                TripInfoItem(
+                    icon = "📦",
+                    value = trip.cargoType?.take(8) ?: getStatusDisplayName(trip.status),
+                    label = if (trip.cargoType != null) "Cargo" else "Status"
                 )
             }
         }
@@ -319,26 +348,31 @@ private fun TripCard(
 @Composable
 private fun RouteSection(trip: Trip) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(12.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
         // Start Location
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "🟢",
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Column {
+        Row(verticalAlignment = Alignment.Top) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "🟢",
+                    style = MaterialTheme.typography.labelMedium
+                )
+                // Vertical dotted line
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .height(24.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            shape = RoundedCornerShape(1.dp)
+                        )
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "From",
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
@@ -354,19 +388,28 @@ private fun RouteSection(trip: Trip) {
 
         // Current Location (if in progress)
         if (trip.status == TripStatus.IN_PROGRESS && trip.currentLocation != null) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "📍",
-                    style = MaterialTheme.typography.labelMedium
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
+            Row(verticalAlignment = Alignment.Top) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "📍",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(2.dp)
+                            .height(24.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                shape = RoundedCornerShape(1.dp)
+                            )
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Current",
                         style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.tertiary
                     )
                     Text(
                         text = trip.currentLocation.address,
@@ -380,20 +423,17 @@ private fun RouteSection(trip: Trip) {
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-
         // End Location
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "🔴",
                 style = MaterialTheme.typography.labelMedium
             )
-            Spacer(modifier = Modifier.width(10.dp))
-            Column {
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "To",
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
@@ -411,31 +451,32 @@ private fun RouteSection(trip: Trip) {
 
 @Composable
 private fun TripInfoItem(
-    emoji: String,
-    label: String,
+    icon: String,
     value: String,
+    label: String,
     modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(horizontal = 8.dp, vertical = 8.dp)
+        modifier = modifier.padding(horizontal = 8.dp)
     ) {
-        Text(
-            text = emoji,
-            style = MaterialTheme.typography.titleSmall
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.labelMedium
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
+            )
+        }
         Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,

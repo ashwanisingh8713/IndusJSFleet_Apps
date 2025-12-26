@@ -153,7 +153,8 @@ fun TripDetailScreen(
             if (state.isEditMode) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shadowElevation = 8.dp
+                    shadowElevation = 8.dp,
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Row(
                         modifier = Modifier
@@ -163,15 +164,24 @@ fun TripDetailScreen(
                     ) {
                         OutlinedButton(
                             onClick = { viewModel.sendIntent(TripDetailContract.Intent.ExitEditMode) },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Cancel")
+                            Text(
+                                text = "Cancel",
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
 
                         Button(
                             onClick = { viewModel.sendIntent(TripDetailContract.Intent.SaveChanges) },
-                            modifier = Modifier.weight(1f),
-                            enabled = state.canSave
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            enabled = state.canSave,
+                            shape = RoundedCornerShape(12.dp)
                         ) {
                             if (state.isSaving) {
                                 CircularProgressIndicator(
@@ -181,7 +191,10 @@ fun TripDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
-                            Text(if (state.isSaving) "Saving..." else "Save Changes")
+                            Text(
+                                text = if (state.isSaving) "Saving..." else "💾 Save Changes",
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }
@@ -230,15 +243,32 @@ fun TripDetailScreen(
                         // Cancel button for planned trips
                         if (state.trip?.status == TripStatus.PLANNED) {
                             item {
-                                Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
                                 OutlinedButton(
                                     onClick = { viewModel.sendIntent(TripDetailContract.Intent.CancelTrip) },
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(
                                         contentColor = MaterialTheme.colorScheme.error
-                                    )
+                                    ),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                                    ),
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Text("❌ Cancel Trip")
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text("❌", style = MaterialTheme.typography.bodyLarge)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Cancel Trip",
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -260,15 +290,32 @@ fun TripDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Card(
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(32.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            strokeWidth = 4.dp
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Saving...")
+                        Text(
+                            text = "Saving Changes...",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Please wait",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
@@ -283,66 +330,307 @@ private fun TripHeader(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Trip icon
+            // Large Trip Icon
             Surface(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(10.dp)),
+                modifier = Modifier.size(80.dp),
+                shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = "🚚",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.headlineLarge
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = trip.tripNumber ?: "Trip #${trip.id}",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+            // Trip Number
+            Text(
+                text = trip.tripNumber ?: "Trip #${trip.id}",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Vehicle & Driver
+            Text(
+                text = "${trip.vehicleNumber ?: "Vehicle"} • ${trip.driverName ?: "Driver"}",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Status Badge - Clickable for planned trips
+            EnhancedStatusBadge(
+                status = trip.status,
+                onClick = onStatusClick
+            )
+
+            // Quick Stats Row
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                TripQuickStat(
+                    icon = "📍",
+                    value = if (trip.distance > 0) "${trip.distance.toInt()} km" else "N/A",
+                    label = "Distance"
                 )
-                Text(
-                    text = "${trip.vehicleNumber ?: "Vehicle"} • ${trip.driverName ?: "Driver"}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                TripQuickStat(
+                    icon = "⏱️",
+                    value = if (trip.estimatedDuration > 0) formatDuration(trip.estimatedDuration) else "N/A",
+                    label = "Duration"
+                )
+                TripQuickStat(
+                    icon = getPriorityIcon(trip.priority),
+                    value = trip.priority?.replaceFirstChar { it.uppercaseChar() } ?: "Normal",
+                    label = "Priority"
                 )
             }
+        }
+    }
+}
 
-            // Status badge (clickable for planned trips)
-            Surface(
-                onClick = onStatusClick,
-                shape = RoundedCornerShape(6.dp),
-                color = getStatusColor(trip.status).copy(alpha = 0.12f)
+@Composable
+private fun EnhancedStatusBadge(
+    status: TripStatus,
+    onClick: () -> Unit
+) {
+    val (containerColor, contentColor, icon, text) = when (status) {
+        TripStatus.PLANNED -> listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+            MaterialTheme.colorScheme.primary,
+            "📋",
+            "Planned"
+        )
+        TripStatus.IN_PROGRESS -> listOf(
+            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
+            MaterialTheme.colorScheme.tertiary,
+            "🚀",
+            "In Progress"
+        )
+        TripStatus.COMPLETED -> listOf(
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+            MaterialTheme.colorScheme.secondary,
+            "✅",
+            "Completed"
+        )
+        TripStatus.CANCELLED -> listOf(
+            MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
+            MaterialTheme.colorScheme.error,
+            "❌",
+            "Cancelled"
+        )
+    }
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = containerColor as androidx.compose.ui.graphics.Color
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = icon as String, style = MaterialTheme.typography.labelLarge)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = text as String,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor as androidx.compose.ui.graphics.Color
+            )
+            if (status == TripStatus.PLANNED) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "▼",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = contentColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TripQuickStat(
+    icon: String,
+    value: String,
+    label: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = icon,
+            style = MaterialTheme.typography.titleMedium
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+private fun getPriorityIcon(priority: String?): String {
+    return when (priority?.lowercase()) {
+        "high" -> "🔴"
+        "medium" -> "🟡"
+        "low" -> "🟢"
+        else -> "⚪"
+    }
+}
+
+@Composable
+private fun RouteSection(trip: Trip) {
+    EnhancedSectionCard(
+        title = "Route",
+        icon = "📍"
+    ) {
+        // Route Timeline
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Timeline indicator
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(end = 12.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // Start point
+                Surface(
+                    modifier = Modifier.size(24.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                 ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("🟢", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                // Connecting line
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .height(48.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            shape = RoundedCornerShape(1.dp)
+                        )
+                )
+                // End point
+                Surface(
+                    modifier = Modifier.size(24.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("🔴", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+
+            // Location details
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                // Start Location
+                Column {
                     Text(
-                        text = getStatusDisplayName(trip.status),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = getStatusColor(trip.status)
+                        text = "FROM",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
                     )
-                    if (trip.status == TripStatus.PLANNED) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("▼", style = MaterialTheme.typography.labelSmall)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = trip.startLocation?.address ?: "Not specified",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // End Location
+                Column {
+                    Text(
+                        text = "TO",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = trip.endLocation?.address ?: "Not specified",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+
+        // Distance info if available
+        if (trip.distance > 0) {
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                thickness = 0.5.dp
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("🛣️", style = MaterialTheme.typography.bodyMedium)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${trip.distance.toInt()} km",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Text(
+                            text = " total distance",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        )
                     }
                 }
             }
@@ -351,59 +639,27 @@ private fun TripHeader(
 }
 
 @Composable
-private fun RouteSection(trip: Trip) {
-    SectionCard(title = "📍 Route") {
-        // Start Location
-        Row(verticalAlignment = Alignment.Top) {
-            Text("🟢", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text(
-                    text = "From",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = trip.startLocation?.address ?: "N/A",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // End Location
-        Row(verticalAlignment = Alignment.Top) {
-            Text("🔴", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text(
-                    text = "To",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = trip.endLocation?.address ?: "N/A",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-
-        if (trip.distance > 0) {
-            Spacer(modifier = Modifier.height(12.dp))
-            InfoRow(label = "Distance", value = "${trip.distance.toInt()} km")
-        }
-    }
-}
-
-@Composable
 private fun ScheduleSection(trip: Trip) {
-    SectionCard(title = "📅 Schedule") {
-        trip.scheduledStartTime?.let { InfoRow(label = "Planned Start", value = it) }
-        trip.actualStartTime?.let { InfoRow(label = "Actual Start", value = it) }
-        trip.actualEndTime?.let { InfoRow(label = "End Time", value = it) }
+    EnhancedSectionCard(
+        title = "Schedule",
+        icon = "📅"
+    ) {
+        trip.scheduledStartTime?.let {
+            EnhancedInfoRow(icon = "🗓️", label = "Planned Start", value = it)
+        }
+        trip.actualStartTime?.let {
+            EnhancedInfoRow(icon = "▶️", label = "Actual Start", value = it)
+        }
+        trip.actualEndTime?.let {
+            EnhancedInfoRow(icon = "⏹️", label = "End Time", value = it)
+        }
         if (trip.estimatedDuration > 0) {
-            InfoRow(label = "Est. Duration", value = formatDuration(trip.estimatedDuration))
+            EnhancedInfoRow(
+                icon = "⏱️",
+                label = "Est. Duration",
+                value = formatDuration(trip.estimatedDuration),
+                isLast = true
+            )
         }
     }
 }
@@ -413,21 +669,49 @@ private fun CargoSection(trip: Trip) {
     val hasCargo = trip.cargoType != null || trip.cargoDescription != null || trip.customerName != null
 
     if (hasCargo) {
-        SectionCard(title = "📦 Cargo & Customer") {
-            trip.cargoType?.let { InfoRow(label = "Cargo Type", value = it.replaceFirstChar { c -> c.uppercaseChar() }) }
-            trip.cargoDescription?.let { InfoRow(label = "Description", value = it) }
-            trip.customerName?.let { InfoRow(label = "Customer", value = it) }
-            trip.priority?.let { InfoRow(label = "Priority", value = it.replaceFirstChar { c -> c.uppercaseChar() }) }
+        EnhancedSectionCard(
+            title = "Cargo & Customer",
+            icon = "📦"
+        ) {
+            trip.cargoType?.let {
+                EnhancedInfoRow(
+                    icon = "📋",
+                    label = "Cargo Type",
+                    value = it.replaceFirstChar { c -> c.uppercaseChar() }
+                )
+            }
+            trip.cargoDescription?.let {
+                EnhancedInfoRow(icon = "📝", label = "Description", value = it)
+            }
+            trip.customerName?.let {
+                EnhancedInfoRow(icon = "👤", label = "Customer", value = it)
+            }
+            trip.priority?.let {
+                val priorityIcon = getPriorityIcon(it)
+                EnhancedInfoRow(
+                    icon = priorityIcon,
+                    label = "Priority",
+                    value = it.replaceFirstChar { c -> c.uppercaseChar() },
+                    isLast = true
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun AdditionalInfoSection(trip: Trip) {
-    SectionCard(title = "ℹ️ Additional Info") {
-        InfoRow(label = "Trip ID", value = "#${trip.id}")
-        trip.notes?.let { InfoRow(label = "Notes", value = it) }
-        trip.createdAt?.let { InfoRow(label = "Created on", value = it) }
+    EnhancedSectionCard(
+        title = "Additional Info",
+        icon = "ℹ️"
+    ) {
+        EnhancedInfoRow(icon = "🆔", label = "Trip ID", value = "#${trip.id}")
+        trip.notes?.let {
+            EnhancedInfoRow(icon = "📝", label = "Notes", value = it)
+        }
+        trip.createdAt?.let {
+            EnhancedInfoRow(icon = "📅", label = "Created on", value = it, isLast = true)
+        }
     }
 }
 
@@ -438,22 +722,114 @@ private fun SectionCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             content()
         }
+    }
+}
+
+@Composable
+private fun EnhancedSectionCard(
+    title: String,
+    icon: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Section Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Surface(
+                    modifier = Modifier.size(36.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = icon,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            content()
+        }
+    }
+}
+
+@Composable
+private fun EnhancedInfoRow(
+    icon: String,
+    label: String,
+    value: String,
+    isLast: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(0.4f)
+        ) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(0.6f)
+        )
+    }
+    if (!isLast) {
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            thickness = 0.5.dp
+        )
     }
 }
 
@@ -462,29 +838,28 @@ private fun InfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(6.dp)
-            )
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(0.4f)
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(0.6f)
         )
     }
-    Spacer(modifier = Modifier.height(6.dp))
+    HorizontalDivider(
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+        thickness = 0.5.dp
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -494,187 +869,296 @@ private fun EditModeContent(
     viewModel: TripDetailViewModel
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Route Section
-        Text(
-            text = "Route",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        OutlinedTextField(
-            value = state.startLocationAddress,
-            onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateStartLocation(it)) },
-            label = { Text("Start Location *") },
-            leadingIcon = { Text("🟢", modifier = Modifier.padding(start = 12.dp)) },
-            isError = state.startLocationError != null,
-            supportingText = state.startLocationError?.let { { Text(it) } },
-            singleLine = false,
-            maxLines = 2,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Row(
+        // Route Section Card
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            OutlinedTextField(
-                value = state.startLat,
-                onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateStartLat(it)) },
-                label = { Text("Latitude") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
-
-            OutlinedTextField(
-                value = state.startLng,
-                onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateStartLng(it)) },
-                label = { Text("Longitude") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        OutlinedTextField(
-            value = state.endLocationAddress,
-            onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEndLocation(it)) },
-            label = { Text("End Location *") },
-            leadingIcon = { Text("🔴", modifier = Modifier.padding(start = 12.dp)) },
-            isError = state.endLocationError != null,
-            supportingText = state.endLocationError?.let { { Text(it) } },
-            singleLine = false,
-            maxLines = 2,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedTextField(
-                value = state.endLat,
-                onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEndLat(it)) },
-                label = { Text("Latitude") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
-
-            OutlinedTextField(
-                value = state.endLng,
-                onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEndLng(it)) },
-                label = { Text("Longitude") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        OutlinedTextField(
-            value = state.distance,
-            onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateDistance(it)) },
-            label = { Text("Distance (km)") },
-            leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 12.dp)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        HorizontalDivider()
-
-        // Cargo & Customer Section
-        Text(
-            text = "Cargo & Customer",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        // Cargo Type selector
-        Column {
-            Text(
-                text = "Cargo Type",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                state.cargoTypeOptions.forEach { cargo ->
-                    FilterChip(
-                        selected = state.cargoType.equals(cargo, ignoreCase = true),
-                        onClick = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCargoType(cargo)) },
-                        label = { Text(cargo.replaceFirstChar { it.uppercaseChar() }) }
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Section Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("📍", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Route",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = state.startLocationAddress,
+                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateStartLocation(it)) },
+                    label = { Text("Start Location *") },
+                    leadingIcon = { Text("🟢", modifier = Modifier.padding(start = 8.dp)) },
+                    isError = state.startLocationError != null,
+                    supportingText = state.startLocationError?.let { { Text(it) } },
+                    singleLine = false,
+                    maxLines = 2,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = state.startLat,
+                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateStartLat(it)) },
+                        label = { Text("Latitude") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = state.startLng,
+                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateStartLng(it)) },
+                        label = { Text("Longitude") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = state.endLocationAddress,
+                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEndLocation(it)) },
+                    label = { Text("End Location *") },
+                    leadingIcon = { Text("🔴", modifier = Modifier.padding(start = 8.dp)) },
+                    isError = state.endLocationError != null,
+                    supportingText = state.endLocationError?.let { { Text(it) } },
+                    singleLine = false,
+                    maxLines = 2,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = state.endLat,
+                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEndLat(it)) },
+                        label = { Text("Latitude") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = state.endLng,
+                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEndLng(it)) },
+                        label = { Text("Longitude") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = state.distance,
+                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateDistance(it)) },
+                    label = { Text("Distance (km)") },
+                    leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 8.dp)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        // Cargo & Customer Section Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Section Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("📦", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Cargo & Customer",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Cargo Type selector
+                Text(
+                    text = "Cargo Type",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    state.cargoTypeOptions.forEach { cargo ->
+                        FilterChip(
+                            selected = state.cargoType.equals(cargo, ignoreCase = true),
+                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCargoType(cargo)) },
+                            label = { Text(cargo.replaceFirstChar { it.uppercaseChar() }) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = state.cargoDescription,
+                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCargoDescription(it)) },
+                    label = { Text("Cargo Description") },
+                    leadingIcon = { Text("📝", modifier = Modifier.padding(start = 8.dp)) },
+                    singleLine = false,
+                    maxLines = 2,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = state.customerName,
+                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCustomerName(it)) },
+                    label = { Text("Customer Name") },
+                    leadingIcon = { Text("👤", modifier = Modifier.padding(start = 8.dp)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Priority selector
+                Text(
+                    text = "Priority",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    state.priorityOptions.forEach { priority ->
+                        FilterChip(
+                            selected = state.priority.equals(priority, ignoreCase = true),
+                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.UpdatePriority(priority)) },
+                            label = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(getPriorityIcon(priority))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(priority.replaceFirstChar { it.uppercaseChar() })
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
 
-        OutlinedTextField(
-            value = state.cargoDescription,
-            onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCargoDescription(it)) },
-            label = { Text("Cargo Description") },
-            singleLine = false,
-            maxLines = 2,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = state.customerName,
-            onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCustomerName(it)) },
-            label = { Text("Customer Name") },
-            leadingIcon = { Text("👤", modifier = Modifier.padding(start = 12.dp)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Priority selector
-        Column {
-            Text(
-                text = "Priority",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                state.priorityOptions.forEach { priority ->
-                    FilterChip(
-                        selected = state.priority.equals(priority, ignoreCase = true),
-                        onClick = { viewModel.sendIntent(TripDetailContract.Intent.UpdatePriority(priority)) },
-                        label = { Text(priority.replaceFirstChar { it.uppercaseChar() }) }
+        // Notes Section Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Section Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("📝", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Notes",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = state.notes,
+                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateNotes(it)) },
+                    label = { Text("Additional Notes") },
+                    placeholder = { Text("Add any additional notes or instructions...") },
+                    singleLine = false,
+                    maxLines = 4,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
             }
         }
-
-        HorizontalDivider()
-
-        // Notes Section
-        Text(
-            text = "Notes",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        OutlinedTextField(
-            value = state.notes,
-            onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateNotes(it)) },
-            label = { Text("Notes") },
-            leadingIcon = { Text("📝", modifier = Modifier.padding(start = 12.dp)) },
-            singleLine = false,
-            maxLines = 4,
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 }
 
@@ -686,44 +1170,86 @@ private fun StatusChangeDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Change Status") },
+        shape = RoundedCornerShape(20.dp),
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("📊", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Change Status",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
         text = {
-            Column {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 TripStatus.entries.forEach { status ->
+                    val isSelected = status == currentStatus
+                    val (bgColor, icon) = when (status) {
+                        TripStatus.PLANNED -> Pair(MaterialTheme.colorScheme.primary, "📋")
+                        TripStatus.IN_PROGRESS -> Pair(MaterialTheme.colorScheme.tertiary, "🚀")
+                        TripStatus.COMPLETED -> Pair(MaterialTheme.colorScheme.secondary, "✅")
+                        TripStatus.CANCELLED -> Pair(MaterialTheme.colorScheme.error, "❌")
+                    }
+
                     Surface(
                         onClick = { onStatusSelected(status) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (status == currentStatus)
-                            MaterialTheme.colorScheme.primaryContainer
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected)
+                            bgColor.copy(alpha = 0.15f)
                         else
-                            MaterialTheme.colorScheme.surface
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
+                                .padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Text(icon, style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = getStatusDisplayName(status),
                                 style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) bgColor else MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.weight(1f)
                             )
-                            if (status == currentStatus) {
-                                Text("✓", color = MaterialTheme.colorScheme.primary)
+                            if (isSelected) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = bgColor.copy(alpha = 0.2f),
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            "✓",
+                                            color = bgColor,
+                                            fontWeight = FontWeight.Bold,
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    }
+                                }
                             }
                         }
-                    }
-                    if (status != TripStatus.entries.last()) {
-                        Spacer(modifier = Modifier.height(4.dp))
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+            TextButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "Cancel",
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     )

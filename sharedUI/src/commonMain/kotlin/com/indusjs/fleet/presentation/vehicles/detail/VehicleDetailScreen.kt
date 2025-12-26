@@ -259,85 +259,231 @@ fun VehicleDetailScreen(
 private fun VehicleHeader(vehicle: Vehicle) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Vehicle icon
+            // Large Vehicle Icon
             Surface(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(10.dp)),
+                    .size(80.dp)
+                    .clip(CircleShape),
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = getVehicleTypeEmoji(vehicle.type),
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.headlineLarge
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Column {
-                Text(
-                    text = vehicle.registrationNumber,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+            // Registration Number - Large and Bold
+            Text(
+                text = vehicle.registrationNumber,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Make & Model
+            Text(
+                text = "${vehicle.make} ${vehicle.model} • ${vehicle.year}",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Status Badge - Centered and Prominent
+            StatusChip(status = vehicle.status)
+
+            // Quick Stats Row
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                QuickStatItem(
+                    icon = "⛽",
+                    value = "${vehicle.fuelLevel}%",
+                    label = "Fuel"
                 )
-                Text(
-                    text = "${vehicle.make} ${vehicle.model}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                QuickStatItem(
+                    icon = "📏",
+                    value = "${vehicle.mileage.toInt()}",
+                    label = "KM"
+                )
+                QuickStatItem(
+                    icon = "👥",
+                    value = "${vehicle.capacity}",
+                    label = "Seats"
+                )
+                QuickStatItem(
+                    icon = if (vehicle.isOccupied) "🔴" else "🟢",
+                    value = if (vehicle.isOccupied) "Busy" else "Free",
+                    label = "Status"
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun StatusChip(status: VehicleStatus) {
+    val (containerColor, contentColor, text) = when (status) {
+        VehicleStatus.ACTIVE -> Triple(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+            MaterialTheme.colorScheme.primary,
+            "✓ Active"
+        )
+        VehicleStatus.INACTIVE -> Triple(
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+            MaterialTheme.colorScheme.secondary,
+            "○ Inactive"
+        )
+        VehicleStatus.IN_MAINTENANCE -> Triple(
+            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
+            MaterialTheme.colorScheme.tertiary,
+            "🔧 Maintenance"
+        )
+        VehicleStatus.OUT_OF_SERVICE -> Triple(
+            MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
+            MaterialTheme.colorScheme.error,
+            "✗ Out of Service"
+        )
+    }
+
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = containerColor
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = contentColor
+        )
+    }
+}
+
+@Composable
+private fun QuickStatItem(
+    icon: String,
+    value: String,
+    label: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = icon,
+            style = MaterialTheme.typography.titleMedium
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
 @Composable
 private fun VehicleInfoSection(vehicle: Vehicle) {
-    SectionCard(title = "🚗 Vehicle Information") {
-        InfoRow(label = "Registration", value = vehicle.registrationNumber)
-        InfoRow(label = "Make", value = vehicle.make)
-        InfoRow(label = "Model", value = vehicle.model)
-        InfoRow(label = "Year", value = vehicle.year.toString())
-        InfoRow(label = "Type", value = getVehicleTypeLabel(vehicle.type))
+    EnhancedSectionCard(
+        title = "Vehicle Information",
+        icon = "🚗"
+    ) {
+        EnhancedInfoRow(icon = "🔢", label = "Registration", value = vehicle.registrationNumber)
+        EnhancedInfoRow(icon = "🏭", label = "Make", value = vehicle.make)
+        EnhancedInfoRow(icon = "📦", label = "Model", value = vehicle.model)
+        EnhancedInfoRow(icon = "📅", label = "Year", value = vehicle.year.toString())
+        EnhancedInfoRow(icon = "🚙", label = "Type", value = getVehicleTypeLabel(vehicle.type), isLast = true)
     }
 }
 
 @Composable
 private fun SpecificationsSection(vehicle: Vehicle) {
-    SectionCard(title = "⚙️ Specifications") {
-        InfoRow(label = "Fuel Type", value = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() })
-        InfoRow(label = "Color", value = vehicle.color.replaceFirstChar { it.uppercaseChar() })
-        InfoRow(label = "Capacity", value = "${vehicle.capacity} seats")
-        InfoRow(label = "Mileage", value = "${vehicle.mileage} km")
-        InfoRow(label = "Fuel Level", value = "${vehicle.fuelLevel}%")
+    EnhancedSectionCard(
+        title = "Specifications",
+        icon = "⚙️"
+    ) {
+        EnhancedInfoRow(icon = "⛽", label = "Fuel Type", value = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() })
+        EnhancedInfoRow(icon = "🎨", label = "Color", value = vehicle.color.replaceFirstChar { it.uppercaseChar() })
+        EnhancedInfoRow(icon = "👥", label = "Capacity", value = "${vehicle.capacity} seats")
+        EnhancedInfoRow(icon = "📏", label = "Mileage", value = "${vehicle.mileage.toInt()} km")
+        EnhancedInfoRow(icon = "🔋", label = "Fuel Level", value = "${vehicle.fuelLevel}%", isLast = true)
     }
 }
 
 @Composable
 private fun StatusSection(vehicle: Vehicle) {
-    SectionCard(title = "ℹ️ Additional Info") {
-        InfoRow(label = "Vehicle ID", value = "#${vehicle.id}")
-        InfoRow(label = "Status", value = getStatusLabel(vehicle.status))
-        vehicle.assignedDriverName?.let {
-            InfoRow(label = "Assigned Driver", value = it)
+    EnhancedSectionCard(
+        title = "Additional Info",
+        icon = "ℹ️"
+    ) {
+        EnhancedInfoRow(icon = "🆔", label = "Vehicle ID", value = "#${vehicle.id}")
+        EnhancedInfoRow(icon = "📊", label = "Status", value = getStatusLabel(vehicle.status))
+
+        // Show assigned driver info
+        val driverName = vehicle.assignedDriver?.fullName() ?: vehicle.assignedDriverName
+        if (!driverName.isNullOrBlank() && driverName != "N/A") {
+            EnhancedInfoRow(icon = "👤", label = "Assigned Driver", value = driverName)
         }
+
         vehicle.lastServiceDate?.let {
-            InfoRow(label = "Last Service", value = formatDate(it))
+            EnhancedInfoRow(icon = "🔧", label = "Last Service", value = formatDate(it))
         }
         vehicle.nextServiceDate?.let {
-            InfoRow(label = "Next Service", value = formatDate(it))
+            EnhancedInfoRow(icon = "📆", label = "Next Service", value = formatDate(it), isLast = true)
+        } ?: run {
+            // If no next service date, mark the previous one as last
+        }
+    }
+
+    // Trip Assignment Card (if occupied)
+    if (vehicle.isOccupied && vehicle.tripAssignment != null) {
+        Spacer(modifier = Modifier.height(12.dp))
+        TripAssignmentCard(tripAssignment = vehicle.tripAssignment)
+    }
+}
+
+@Composable
+private fun TripAssignmentCard(tripAssignment: com.indusjs.fleet.domain.entity.vehicle.VehicleTripAssignment) {
+    EnhancedSectionCard(
+        title = "Current Trip",
+        icon = "🚀"
+    ) {
+        EnhancedInfoRow(icon = "🎫", label = "Trip ID", value = "#${tripAssignment.tripId}")
+        EnhancedInfoRow(icon = "📍", label = "Status", value = tripAssignment.tripState.replaceFirstChar { it.uppercaseChar() })
+        tripAssignment.startLocation?.let {
+            EnhancedInfoRow(icon = "🏁", label = "From", value = it)
+        }
+        tripAssignment.endLocation?.let {
+            EnhancedInfoRow(icon = "🎯", label = "To", value = it)
+        }
+        tripAssignment.customerName?.let {
+            EnhancedInfoRow(icon = "👤", label = "Customer", value = it, isLast = true)
         }
     }
 }
@@ -349,22 +495,113 @@ private fun SectionCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             content()
         }
+    }
+}
+
+@Composable
+private fun EnhancedSectionCard(
+    title: String,
+    icon: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Section Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Surface(
+                    modifier = Modifier.size(36.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = icon,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            content()
+        }
+    }
+}
+
+@Composable
+private fun EnhancedInfoRow(
+    icon: String,
+    label: String,
+    value: String,
+    isLast: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+    if (!isLast) {
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            thickness = 0.5.dp
+        )
     }
 }
 
@@ -373,27 +610,26 @@ private fun InfoRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(6.dp)
-            )
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface
         )
     }
-    Spacer(modifier = Modifier.height(6.dp))
+    HorizontalDivider(
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+        thickness = 0.5.dp
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)

@@ -1,10 +1,12 @@
 package com.indusjs.fleet.data.mapper.vehicle
 
+import com.indusjs.fleet.domain.entity.vehicle.AssignedDriver
 import com.indusjs.fleet.domain.entity.vehicle.Location
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
 import com.indusjs.fleet.domain.entity.vehicle.VehicleTripAssignment
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
+import com.indusjs.fleet.data.model.vehicle.AssignedDriverDto
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleRequest
 import com.indusjs.fleet.data.model.vehicle.LocationDto
 import com.indusjs.fleet.data.model.vehicle.VehicleDto
@@ -20,26 +22,47 @@ class VehicleMapper {
     /**
      * Maps VehicleDto to Vehicle domain entity.
      */
-    fun mapToDomain(dto: VehicleDto): Vehicle = Vehicle(
+    fun mapToDomain(dto: VehicleDto): Vehicle {
+        // Map assigned driver from the assigned_driver object
+        val assignedDriver = dto.assignedDriver?.let { mapAssignedDriverToDomain(it) }
+
+        // Get driver name: prefer from assigned_driver object, fallback to assignedDriverName field
+        val driverName = assignedDriver?.fullName()
+            ?: dto.assignedDriverName
+
+        return Vehicle(
+            id = dto.id.toString(),
+            registrationNumber = dto.registrationNumber,
+            make = dto.make,
+            model = dto.model,
+            year = dto.year,
+            type = parseVehicleType(dto.type),
+            status = parseVehicleStatus(dto.status),
+            fuelType = dto.fuelType ?: "petrol",
+            color = dto.color ?: "white",
+            capacity = dto.capacity ?: 4,
+            fuelLevel = dto.fuelLevel,
+            mileage = dto.mileage,
+            lastLocation = dto.lastLocation?.let { mapLocationToDomain(it) },
+            assignedDriverId = dto.assignedDriver?.id?.toString() ?: dto.assignedDriverId?.toString(),
+            assignedDriverName = driverName,
+            assignedDriver = assignedDriver,
+            lastServiceDate = dto.lastServiceDate?.let { parseTimestamp(it) },
+            nextServiceDate = dto.nextServiceDate?.let { parseTimestamp(it) },
+            isOccupied = dto.isOccupied,
+            tripAssignment = dto.tripAssignment?.let { mapTripAssignmentToDomain(it) }
+        )
+    }
+
+    /**
+     * Maps AssignedDriverDto to AssignedDriver domain entity.
+     */
+    private fun mapAssignedDriverToDomain(dto: AssignedDriverDto): AssignedDriver = AssignedDriver(
         id = dto.id.toString(),
-        registrationNumber = dto.registrationNumber,
-        make = dto.make,
-        model = dto.model,
-        year = dto.year,
-        type = parseVehicleType(dto.type),
-        status = parseVehicleStatus(dto.status),
-        fuelType = dto.fuelType ?: "petrol",
-        color = dto.color ?: "white",
-        capacity = dto.capacity ?: 4,
-        fuelLevel = dto.fuelLevel,
-        mileage = dto.mileage,
-        lastLocation = dto.lastLocation?.let { mapLocationToDomain(it) },
-        assignedDriverId = dto.assignedDriverId?.toString(),
-        assignedDriverName = dto.assignedDriverName ?: dto.registeredBy?.let { "${it.firstName ?: ""} ${it.lastName ?: ""}".trim() },
-        lastServiceDate = dto.lastServiceDate?.let { parseTimestamp(it) },
-        nextServiceDate = dto.nextServiceDate?.let { parseTimestamp(it) },
-        isOccupied = dto.isOccupied,
-        tripAssignment = dto.tripAssignment?.let { mapTripAssignmentToDomain(it) }
+        firstName = dto.firstName,
+        lastName = dto.lastName,
+        mobile = dto.mobile,
+        licenseNumber = dto.licenseNumber
     )
 
     /**

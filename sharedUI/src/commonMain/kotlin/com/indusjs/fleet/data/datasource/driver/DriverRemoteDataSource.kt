@@ -64,6 +64,7 @@ class DriverRemoteDataSourceImpl(
         ignoreUnknownKeys = true
         coerceInputValues = true
         encodeDefaults = true
+        explicitNulls = false // Don't include null values in JSON output
     }
 
     override suspend fun getDrivers(
@@ -121,12 +122,15 @@ class DriverRemoteDataSourceImpl(
     ): DriverApiResponse<DriverDto> {
         return try {
             log.d { "Creating driver: ${request.firstName} ${request.lastName}" }
+            log.d { "Request body: $request" }
             val response: HttpResponse = httpClient.post(baseUrl) {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            parseSingleResponse(response)
+            val result = parseSingleResponse(response)
+            log.d { "Create driver response - success: ${result.success}, message: ${result.message}" }
+            result
         } catch (e: Exception) {
             log.e(e) { "Failed to create driver: ${e.message}" }
             DriverApiResponse(success = false, message = e.message ?: "Network error occurred")
@@ -224,26 +228,69 @@ class DriverRemoteDataSourceImpl(
 
     private suspend fun parseSingleResponse(response: HttpResponse): DriverApiResponse<DriverDto> {
         val body = response.bodyAsText()
-        log.d { "Response: ${response.status}, body length: ${body.length}" }
+        log.d { "Response: ${response.status}, body: $body" }
 
         return try {
             if (response.status.isSuccess()) {
                 val parsed = json.decodeFromString<DriverApiResponse<DriverDto>>(body)
                 parsed
             } else {
-                val errorResponse = try {
-                    json.decodeFromString<DriverApiResponse<DriverDto>>(body)
-                } catch (e: Exception) {
-                    null
-                }
+                // Extract the best error message from response
+                val errorMessage = tryExtractErrorMessage(body)
+                    ?: "Request failed with status ${response.status}"
+
+                log.e { "API error: $errorMessage" }
                 DriverApiResponse(
                     success = false,
-                    message = errorResponse?.message ?: "Request failed with status ${response.status}"
+                    message = errorMessage
                 )
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to parse single response: ${e.message}" }
             DriverApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+        }
+    }
+
+    /**
+     * Try to extract error message from response body when standard parsing fails.
+     * Checks 'error' field first as it usually contains more specific error details.
+     */
+    private fun tryExtractErrorMessage(body: String): String? {
+        return try {
+            val jsonElement = json.parseToJsonElement(body)
+            val jsonObject = jsonElement as? kotlinx.serialization.json.JsonObject
+            // Check 'error' field first as it contains more specific details
+            // Then fall back to 'message' or 'detail'
+            val errorField = jsonObject?.get("error")?.toString()?.trim('"')
+            val messageField = jsonObject?.get("message")?.toString()?.trim('"')
+            val detailField = jsonObject?.get("detail")?.toString()?.trim('"')
+
+            // Prefer error field if it contains useful info, otherwise use message
+            when {
+                !errorField.isNullOrBlank() && errorField != "null" -> parseDbError(errorField)
+                !messageField.isNullOrBlank() && messageField != "null" -> messageField
+                !detailField.isNullOrBlank() && detailField != "null" -> detailField
+                else -> null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Parse database error messages into user-friendly messages.
+     */
+    private fun parseDbError(error: String): String {
+        return when {
+            error.contains("duplicate key", ignoreCase = true) && error.contains("email", ignoreCase = true) ->
+                "A driver with this email already exists"
+            error.contains("duplicate key", ignoreCase = true) && error.contains("mobile", ignoreCase = true) ->
+                "A driver with this mobile number already exists"
+            error.contains("duplicate key", ignoreCase = true) && error.contains("license", ignoreCase = true) ->
+                "A driver with this license number already exists"
+            error.contains("duplicate key", ignoreCase = true) ->
+                "A driver with these details already exists"
+            else -> error
         }
     }
 

@@ -39,6 +39,8 @@ data class VehicleDto(
     val assignedDriverId: Int? = null,
     @SerialName("assigned_driver_name")
     val assignedDriverName: String? = null,
+    @SerialName("assigned_driver")
+    val assignedDriver: AssignedDriverDto? = null,
     @SerialName("last_service_date")
     val lastServiceDate: String? = null,
     @SerialName("next_service_date")
@@ -111,6 +113,24 @@ data class VehicleOwnerDto(
     val createdAt: String? = null,
     @SerialName("updated_at")
     val updatedAt: String? = null
+)
+
+/**
+ * Assigned Driver DTO for vehicle response.
+ * Contains driver details when a driver is assigned to a vehicle.
+ */
+@Serializable
+data class AssignedDriverDto(
+    @SerialName("id")
+    val id: Int = 0,
+    @SerialName("first_name")
+    val firstName: String? = null,
+    @SerialName("last_name")
+    val lastName: String? = null,
+    @SerialName("mobile")
+    val mobile: String? = null,
+    @SerialName("license_number")
+    val licenseNumber: String? = null
 )
 
 /**

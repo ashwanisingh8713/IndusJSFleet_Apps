@@ -537,7 +537,7 @@ fun ConfigurationDialog(
                     value = mqttBrokerUrl,
                     onValueChange = { mqttBrokerUrl = it },
                     label = { Text("MQTT Broker URL *") },
-                    placeholder = { Text("tcp://192.168.1.3:1883") },
+                    placeholder = { Text("tcp://192.168.1.8:1883") },
                     supportingText = { Text("Use port 1883 for MQTT (not 18083 which is the dashboard)") },
                     modifier = Modifier.fillMaxWidth()
                 )

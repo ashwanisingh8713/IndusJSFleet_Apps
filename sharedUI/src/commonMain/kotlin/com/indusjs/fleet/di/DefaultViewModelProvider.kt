@@ -1,5 +1,6 @@
 package com.indusjs.fleet.di
 
+import com.indusjs.fleet.core.auth.AuthenticationManager
 import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
@@ -76,6 +77,14 @@ class DefaultViewModelProvider : ViewModelProvider {
     // Lazy-initialized core dependencies
     private val httpClient: HttpClient by lazy { HttpClientProvider.create() }
     private val settings: Settings by lazy { Settings() }
+
+    init {
+        // Register session clear callback with AuthenticationManager
+        // This ensures the session is cleared before redirecting to login on 401
+        AuthenticationManager.registerSessionClearCallback {
+            settings.clear()
+        }
+    }
 
     // Google Places API Service (for location search)
     // Note: Replace with your actual Google Places API key

@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -211,28 +212,30 @@ private fun VehicleCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(14.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
+            // Header Row - Vehicle Icon, Registration, Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                                shape = RoundedCornerShape(10.dp)
-                            ),
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -245,9 +248,10 @@ private fun VehicleCard(
                         Text(
                             text = vehicle.registrationNumber,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "${vehicle.make} ${vehicle.model} (${vehicle.year})",
                             style = MaterialTheme.typography.bodySmall,
@@ -260,49 +264,71 @@ private fun VehicleCard(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                thickness = 0.5.dp
+            )
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Info Row - Stats displayed inline without backgrounds
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 VehicleInfoItem(
-                    emoji = "⛽",
-                    label = "Fuel",
+                    icon = "⛽",
                     value = "${vehicle.fuelLevel}%",
-                    modifier = Modifier.weight(1f)
+                    label = "Fuel"
                 )
+
+                VerticalDivider(
+                    modifier = Modifier.height(32.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
                 VehicleInfoItem(
-                    emoji = "📏",
-                    label = "Mileage",
+                    icon = "📏",
                     value = "${vehicle.mileage.toInt()} km",
-                    modifier = Modifier.weight(1f)
+                    label = "Mileage"
                 )
+
+                VerticalDivider(
+                    modifier = Modifier.height(32.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
                 VehicleInfoItem(
-                    emoji = "👤",
-                    label = "Driver",
-                    value = vehicle.assignedDriverName ?: "N/A",
-                    modifier = Modifier.weight(1f)
+                    icon = "👤",
+                    value = vehicle.assignedDriver?.fullName()?.take(12)
+                        ?: vehicle.assignedDriverName?.take(12)
+                        ?: "N/A",
+                    label = "Driver"
                 )
             }
 
+            // Location if available
             vehicle.lastLocation?.let { location ->
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    thickness = 0.5.dp
+                )
+                Spacer(modifier = Modifier.height(10.dp))
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "📍",
                         style = MaterialTheme.typography.bodySmall
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = location.address ?: "Unknown location",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
                     )
                 }
             }
@@ -312,31 +338,31 @@ private fun VehicleCard(
 
 @Composable
 private fun VehicleInfoItem(
-    emoji: String,
-    label: String,
+    icon: String,
     value: String,
+    label: String,
     modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(horizontal = 8.dp, vertical = 8.dp)
+        modifier = modifier.padding(horizontal = 8.dp)
     ) {
-        Text(
-            text = emoji,
-            style = MaterialTheme.typography.titleSmall
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.labelMedium
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
         Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,

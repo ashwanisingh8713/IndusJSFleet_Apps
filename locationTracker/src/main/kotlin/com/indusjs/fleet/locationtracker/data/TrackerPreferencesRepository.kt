@@ -38,7 +38,7 @@ class TrackerPreferencesRepository(private val context: Context) {
             registrationNumber = preferences[Keys.REGISTRATION_NUMBER] ?: "",
             driverId = preferences[Keys.DRIVER_ID],
             tripId = preferences[Keys.TRIP_ID],
-            mqttBrokerUrl = preferences[Keys.MQTT_BROKER_URL] ?: "tcp://10.0.2.2:1883",
+            mqttBrokerUrl = preferences[Keys.MQTT_BROKER_URL] ?: "tcp://192.168.1.4:1883",
             mqttClientId = preferences[Keys.MQTT_CLIENT_ID] ?: "",
             mqttUsername = preferences[Keys.MQTT_USERNAME] ?: "",
             mqttPassword = preferences[Keys.MQTT_PASSWORD] ?: "",

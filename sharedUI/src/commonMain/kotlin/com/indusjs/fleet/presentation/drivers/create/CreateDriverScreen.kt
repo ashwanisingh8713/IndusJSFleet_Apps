@@ -118,7 +118,8 @@ fun CreateDriverScreen(
             item {
                 SectionHeader(
                     title = "Basic Information",
-                    subtitle = "Required fields"
+                    subtitle = "Required fields",
+                    icon = "👤"
                 )
             }
 
@@ -199,7 +200,8 @@ fun CreateDriverScreen(
             item {
                 SectionHeader(
                     title = "License Details",
-                    subtitle = "Driver's license information"
+                    subtitle = "Driver's license information",
+                    icon = "🪪"
                 )
             }
 
@@ -248,7 +250,8 @@ fun CreateDriverScreen(
             item {
                 SectionHeader(
                     title = "Personal Details",
-                    subtitle = "Optional information"
+                    subtitle = "Optional information",
+                    icon = "📋"
                 )
             }
 
@@ -360,24 +363,38 @@ fun CreateDriverScreen(
 @Composable
 private fun SectionHeader(
     title: String,
-    subtitle: String? = null
+    subtitle: String? = null,
+    icon: String? = null
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        subtitle?.let {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        icon?.let {
             Text(
                 text = it,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.titleMedium
             )
+            Spacer(modifier = Modifier.width(8.dp))
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            subtitle?.let {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
+    Spacer(modifier = Modifier.height(12.dp))
 }
 
 @OptIn(ExperimentalLayoutApi::class)
