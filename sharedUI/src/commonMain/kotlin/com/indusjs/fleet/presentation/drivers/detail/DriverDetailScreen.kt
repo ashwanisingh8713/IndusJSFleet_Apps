@@ -805,7 +805,6 @@ private fun getStatusColor(status: DriverStatus) = when (status) {
     DriverStatus.ON_LEAVE -> MaterialTheme.colorScheme.secondary
     DriverStatus.SUSPENDED -> MaterialTheme.colorScheme.error
 }
-
 private fun getStatusDisplayName(status: DriverStatus): String = when (status) {
     DriverStatus.ACTIVE -> "Active"
     DriverStatus.INACTIVE -> "Inactive"

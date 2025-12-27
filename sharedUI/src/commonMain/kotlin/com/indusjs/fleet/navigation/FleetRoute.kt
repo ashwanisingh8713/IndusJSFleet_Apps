@@ -1,64 +1,56 @@
 package com.indusjs.fleet.navigation
 
+import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 /**
  * Type-safe navigation routes for the Fleet Management app.
+ *
+ * Uses Navigation 3 with:
+ * - @Serializable for type-safe navigation
+ * - NavKey for back stack management
+ * - Automatic system back button/gesture handling
  */
-sealed interface FleetRoute {
+@Serializable
+sealed interface FleetRoute : NavKey {
 
-    @Serializable
-    data object Login : FleetRoute
+    // ==================== Auth Routes ====================
 
-    @Serializable
-    data object Dashboard : FleetRoute
+    @Serializable data object Login : FleetRoute
+    @Serializable data object SignUp : FleetRoute
+    @Serializable data object ForgotPassword : FleetRoute
 
-    @Serializable
-    data object Vehicles : FleetRoute
+    // ==================== Main Routes ====================
 
-    @Serializable
-    data class VehicleDetail(val vehicleId: String) : FleetRoute
+    @Serializable data object Dashboard : FleetRoute
 
-    @Serializable
-    data object AddVehicle : FleetRoute
+    // ==================== User Routes ====================
 
-    @Serializable
-    data object Drivers : FleetRoute
+    @Serializable data object Profile : FleetRoute
+    @Serializable data object ChangePassword : FleetRoute
 
-    @Serializable
-    data class DriverDetail(val driverId: String) : FleetRoute
+    // ==================== Vehicle Routes ====================
 
-    @Serializable
-    data object AddDriver : FleetRoute
+    @Serializable data object Vehicles : FleetRoute
+    @Serializable data class VehicleDetail(val vehicleId: String) : FleetRoute
+    @Serializable data object AddVehicle : FleetRoute
 
-    @Serializable
-    data object Trips : FleetRoute
+    // ==================== Driver Routes ====================
 
-    @Serializable
-    data class TripDetail(val tripId: String) : FleetRoute
+    @Serializable data object Drivers : FleetRoute
+    @Serializable data class DriverDetail(val driverId: String) : FleetRoute
+    @Serializable data object CreateDriver : FleetRoute
 
-    @Serializable
-    data object CreateTrip : FleetRoute
+    // ==================== Trip Routes ====================
 
-    @Serializable
-    data object Maps : FleetRoute
-}
+    @Serializable data object Trips : FleetRoute
+    @Serializable data class TripDetail(val tripId: String) : FleetRoute
+    @Serializable data object CreateTrip : FleetRoute
 
-/**
- * Helper function to get the route name for logging/analytics.
- */
-fun FleetRoute.routeName(): String = when (this) {
-    is FleetRoute.Login -> "login"
-    is FleetRoute.Dashboard -> "dashboard"
-    is FleetRoute.Vehicles -> "vehicles"
-    is FleetRoute.VehicleDetail -> "vehicle_detail"
-    is FleetRoute.AddVehicle -> "add_vehicle"
-    is FleetRoute.Drivers -> "drivers"
-    is FleetRoute.DriverDetail -> "driver_detail"
-    is FleetRoute.AddDriver -> "add_driver"
-    is FleetRoute.Trips -> "trips"
-    is FleetRoute.TripDetail -> "trip_detail"
-    is FleetRoute.CreateTrip -> "create_trip"
-    is FleetRoute.Maps -> "maps"
+    // ==================== Other Routes ====================
+
+    @Serializable data object Maps : FleetRoute
+    @Serializable data object TeamList : FleetRoute
+    @Serializable data object CreateTeamMember : FleetRoute
 }
 
