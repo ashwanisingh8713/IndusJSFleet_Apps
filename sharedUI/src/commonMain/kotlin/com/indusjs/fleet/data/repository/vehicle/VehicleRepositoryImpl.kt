@@ -8,9 +8,16 @@ import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSource
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleWithDocumentsRequest
 import com.indusjs.fleet.data.model.vehicle.DocumentFileData
+import com.indusjs.fleet.domain.entity.vehicle.DocumentsSummary
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
+import com.indusjs.fleet.domain.entity.vehicle.RouteInfo
+import com.indusjs.fleet.domain.entity.vehicle.TripsSummary
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
+import com.indusjs.fleet.domain.entity.vehicle.VehicleDetail
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
+import com.indusjs.fleet.domain.entity.vehicle.VehicleDocumentsData
+import com.indusjs.fleet.domain.entity.vehicle.VehicleStats
+import com.indusjs.fleet.domain.entity.vehicle.VehicleTripsData
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
@@ -164,6 +171,196 @@ class VehicleRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to delete vehicle"), response.message)
             }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    // ==================== Vehicle Detail APIs ====================
+
+    override suspend fun getVehicleDetail(id: String): Result<VehicleDetail> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getVehicleDetail(token, id)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToVehicleDetail(response.data))
+            } else {
+                // API not implemented yet - build from existing APIs
+                buildVehicleDetailFromExistingApis(id)
+            }
+        } catch (e: Exception) {
+            // API not implemented yet - build from existing APIs
+            buildVehicleDetailFromExistingApis(id)
+        }
+    }
+
+    private suspend fun buildVehicleDetailFromExistingApis(id: String): Result<VehicleDetail> {
+        return try {
+            val vehicleResult = getVehicleById(id)
+            val vehicle = (vehicleResult as? Result.Success)?.data
+                ?: return Result.Error(Exception("Vehicle not found"), "Vehicle not found")
+
+            // Try to get trips count
+            val tripsResult = getVehicleTrips(id, 1, 100, null)
+            val tripsData = (tripsResult as? Result.Success)?.data
+
+            // Try to get documents
+            val docsResult = getVehicleDocumentsDetail(id)
+            val docsData = (docsResult as? Result.Success)?.data
+
+            Result.Success(VehicleDetail(
+                vehicle = vehicle,
+                assignedDriver = vehicle.assignedDriver,
+                currentLocation = vehicle.lastLocation,
+                stats = VehicleStats(
+                    totalTrips = tripsData?.summary?.total ?: 0,
+                    completedTrips = tripsData?.summary?.completed ?: 0,
+                    totalDistance = 0.0,
+                    tripsThisMonth = 0,
+                    distanceThisMonth = 0.0
+                ),
+                documents = docsData?.summary ?: DocumentsSummary(),
+                trips = tripsData?.summary ?: TripsSummary(),
+                route = null
+            ))
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    override suspend fun getVehicleTrips(
+        id: String,
+        page: Int,
+        perPage: Int,
+        state: String?
+    ): Result<VehicleTripsData> {
+        return try {
+            val token = requireAuthToken()
+
+            // Try new endpoint first
+            val response = remoteDataSource.getVehicleTrips(token, id, page, perPage, state)
+            if (response.success && response.data != null) {
+                return Result.Success(mapper.mapToVehicleTripsData(response.data))
+            }
+
+            // Fallback to existing /trips?vehicle_id= endpoint
+            val fallbackResponse = remoteDataSource.getTripsByVehicleId(token, id, page, perPage, state)
+            if (fallbackResponse.success && fallbackResponse.data != null) {
+                Result.Success(mapper.mapTripsToVehicleTripsData(fallbackResponse.data, page, perPage))
+            } else {
+                // Return empty data if both APIs fail
+                Result.Success(VehicleTripsData(
+                    summary = TripsSummary(),
+                    trips = emptyList(),
+                    page = page,
+                    perPage = perPage,
+                    totalPages = 0,
+                    hasMore = false
+                ))
+            }
+        } catch (e: Exception) {
+            // Return empty data on error
+            Result.Success(VehicleTripsData(
+                summary = TripsSummary(),
+                trips = emptyList(),
+                page = page,
+                perPage = perPage,
+                totalPages = 0,
+                hasMore = false
+            ))
+        }
+    }
+
+    override suspend fun getVehicleRoute(id: String): Result<RouteInfo> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getVehicleRoute(token, id)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToRouteInfo(response.data))
+            } else {
+                // No active route - return empty info
+                Result.Success(RouteInfo(hasActiveTrip = false))
+            }
+        } catch (e: Exception) {
+            // No active route - return empty info
+            Result.Success(RouteInfo(hasActiveTrip = false))
+        }
+    }
+
+    override suspend fun getVehicleDocumentsDetail(id: String): Result<VehicleDocumentsData> {
+        return try {
+            val token = requireAuthToken()
+
+            // Try new endpoint first
+            val response = remoteDataSource.getVehicleDocumentsDetail(token, id)
+            if (response.success && response.data != null) {
+                return Result.Success(mapper.mapToVehicleDocumentsData(response.data))
+            }
+
+            // Fallback to existing /vehicles/:id/documents endpoint
+            val fallbackResponse = remoteDataSource.getVehicleDocuments(token, id)
+            if (fallbackResponse.success && fallbackResponse.data != null) {
+                Result.Success(mapper.mapDocumentsToVehicleDocumentsData(fallbackResponse.data))
+            } else {
+                // Return empty documents data
+                Result.Success(VehicleDocumentsData(
+                    summary = DocumentsSummary(total = 6, notUploaded = 6),
+                    documentTypes = emptyList(),
+                    alertDocs = emptyList(),
+                    otherDocuments = emptyList()
+                ))
+            }
+        } catch (e: Exception) {
+            // Return empty documents data on error
+            Result.Success(VehicleDocumentsData(
+                summary = DocumentsSummary(total = 6, notUploaded = 6),
+                documentTypes = emptyList(),
+                alertDocs = emptyList(),
+                otherDocuments = emptyList()
+            ))
+        }
+    }
+
+    override suspend fun uploadDocument(
+        vehicleId: String,
+        documentType: String,
+        documentName: String,
+        fileBytes: ByteArray,
+        fileName: String,
+        mimeType: String,
+        documentNumber: String?,
+        expiryDate: String?
+    ): Result<Unit> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.uploadDocument(
+                token = token,
+                vehicleId = vehicleId,
+                documentType = documentType,
+                documentName = documentName,
+                fileBytes = fileBytes,
+                fileName = fileName,
+                mimeType = mimeType,
+                documentNumber = documentNumber,
+                expiryDate = expiryDate
+            )
+
+            if (response.success) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to upload document"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    override suspend fun downloadDocument(documentId: String): Result<ByteArray> {
+        return try {
+            val token = requireAuthToken()
+            remoteDataSource.downloadDocument(token, documentId)
         } catch (e: Exception) {
             Result.Error(e, e.message)
         }

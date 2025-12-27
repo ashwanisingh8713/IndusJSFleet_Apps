@@ -68,7 +68,10 @@ sealed class AppRoute {
 @Composable
 fun App(
     onThemeChanged: @Composable (isDark: Boolean) -> Unit = {},
-    onPickFile: ((FilePickerRequest) -> Unit)? = null
+    onPickFile: ((FilePickerRequest) -> Unit)? = null,
+    onOpenDocument: ((documentName: String, fileUrl: String) -> Unit)? = null,
+    onDownloadDocument: ((documentName: String, fileUrl: String) -> Unit)? = null,
+    onSaveDocument: ((documentName: String, fileBytes: ByteArray, mimeType: String) -> Unit)? = null
 ) = AppTheme(onThemeChanged) {
     // Simple state-based navigation
     var currentRoute by remember { mutableStateOf<AppRoute>(AppRoute.Login) }
@@ -227,7 +230,22 @@ fun App(
                     VehicleDetailScreen(
                         viewModel = vehicleDetailViewModel,
                         vehicleId = route.vehicleId,
-                        onNavigateBack = { currentRoute = AppRoute.Vehicles }
+                        onNavigateBack = { currentRoute = AppRoute.Vehicles },
+                        onRequestFilePicker = { documentType, callback ->
+                            if (onPickFile != null) {
+                                // Create a DocumentType from the string
+                                val docType = try {
+                                    DocumentType.valueOf(documentType.uppercase())
+                                } catch (e: Exception) {
+                                    DocumentType.OTHER
+                                }
+                                val request = FilePickerRequest(docType, callback)
+                                onPickFile(request)
+                            }
+                        },
+                        onOpenDocumentPreview = onOpenDocument,
+                        onDownloadDocument = onDownloadDocument,
+                        onSaveDocument = onSaveDocument
                     )
                 }
 

@@ -2,7 +2,11 @@ package com.indusjs.fleet.domain.repository.vehicle
 
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
+import com.indusjs.fleet.domain.entity.vehicle.VehicleDetail
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
+import com.indusjs.fleet.domain.entity.vehicle.VehicleDocumentsData
+import com.indusjs.fleet.domain.entity.vehicle.VehicleTripsData
+import com.indusjs.fleet.domain.entity.vehicle.RouteInfo
 import com.indusjs.fleet.domain.repository.Repository
 import kotlinx.coroutines.flow.Flow
 
@@ -45,5 +49,57 @@ interface VehicleRepository : Repository {
      * Delete a vehicle by ID.
      */
     suspend fun deleteVehicle(id: String): Result<Unit>
+
+    // ==================== Vehicle Detail APIs ====================
+
+    /**
+     * Get complete vehicle detail for all tabs.
+     * GET /vehicles/{id}/detail
+     */
+    suspend fun getVehicleDetail(id: String): Result<VehicleDetail>
+
+    /**
+     * Get vehicle trips with pagination.
+     * GET /vehicles/{id}/trips?page=1&per_page=10&state=completed
+     */
+    suspend fun getVehicleTrips(
+        id: String,
+        page: Int = 1,
+        perPage: Int = 10,
+        state: String? = null
+    ): Result<VehicleTripsData>
+
+    /**
+     * Get vehicle route and stops for active trip.
+     * GET /vehicles/{id}/route
+     */
+    suspend fun getVehicleRoute(id: String): Result<RouteInfo>
+
+    /**
+     * Get vehicle documents detail.
+     * GET /vehicles/{id}/documents/detail
+     */
+    suspend fun getVehicleDocumentsDetail(id: String): Result<VehicleDocumentsData>
+
+    /**
+     * Upload a document for a vehicle.
+     * POST /vehicles/{id}/documents
+     */
+    suspend fun uploadDocument(
+        vehicleId: String,
+        documentType: String,
+        documentName: String,
+        fileBytes: ByteArray,
+        fileName: String,
+        mimeType: String,
+        documentNumber: String? = null,
+        expiryDate: String? = null
+    ): Result<Unit>
+
+    /**
+     * Download a document file.
+     * GET /documents/{id}/download
+     */
+    suspend fun downloadDocument(documentId: String): Result<ByteArray>
 }
 

@@ -986,10 +986,15 @@ private fun ErrorContent(
 }
 
 private fun formatDate(isoDate: String): String {
-    // Simple date formatting - in production use kotlinx-datetime
+    // Convert ISO date (YYYY-MM-DD) to DD-MM-YYYY format
     return try {
         val datePart = isoDate.split("T").firstOrNull() ?: isoDate
-        datePart
+        val parts = datePart.split("-")
+        if (parts.size == 3) {
+            "${parts[2]}-${parts[1]}-${parts[0]}" // DD-MM-YYYY
+        } else {
+            datePart
+        }
     } catch (_: Exception) {
         isoDate
     }

@@ -19,8 +19,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.FleetDateField
 import com.indusjs.fleet.core.ui.FleetStatusBadge
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.ui.convertDdMmYyyyToIso
+import com.indusjs.fleet.core.ui.convertIsoToDdMmYyyyRaw
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
@@ -642,15 +645,14 @@ private fun EditModeContent(
             }
         }
 
-        OutlinedTextField(
-            value = state.licenseExpiry,
-            onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateLicenseExpiry(it)) },
-            label = { Text("License Expiry Date") },
-            placeholder = { Text("YYYY-MM-DD") },
-            leadingIcon = { Text("📅", modifier = Modifier.padding(start = 12.dp)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+        FleetDateField(
+            rawValue = convertIsoToDdMmYyyyRaw(state.licenseExpiry),
+            onRawValueChange = {
+                val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
+                viewModel.sendIntent(DriverDetailContract.Intent.UpdateLicenseExpiry(isoFormatted))
+            },
+            label = "License Expiry Date",
+            leadingEmoji = "📅"
         )
 
         HorizontalDivider()
@@ -658,15 +660,14 @@ private fun EditModeContent(
         // Personal Details Section
         EditSectionHeader(icon = "📋", title = "Personal Details")
 
-        OutlinedTextField(
-            value = state.dateOfBirth,
-            onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateDateOfBirth(it)) },
-            label = { Text("Date of Birth") },
-            placeholder = { Text("YYYY-MM-DD") },
-            leadingIcon = { Text("🎂", modifier = Modifier.padding(start = 12.dp)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+        FleetDateField(
+            rawValue = convertIsoToDdMmYyyyRaw(state.dateOfBirth),
+            onRawValueChange = {
+                val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
+                viewModel.sendIntent(DriverDetailContract.Intent.UpdateDateOfBirth(isoFormatted))
+            },
+            label = "Date of Birth",
+            leadingEmoji = "🎂"
         )
 
         // Blood Group
@@ -830,7 +831,7 @@ private fun formatDate(timestamp: Long): String {
         val dayOfMonth = (remainingDays % 30) + 1
         val monthStr = months.coerceIn(1, 12).toString().padStart(2, '0')
         val dayStr = dayOfMonth.coerceIn(1, 28).toString().padStart(2, '0')
-        "$dayStr/$monthStr/$years"
+        "$dayStr-$monthStr-$years" // DD-MM-YYYY format
     } catch (_: Exception) {
         "N/A"
     }

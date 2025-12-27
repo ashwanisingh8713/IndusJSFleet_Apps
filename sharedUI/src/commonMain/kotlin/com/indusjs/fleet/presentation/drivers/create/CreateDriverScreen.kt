@@ -16,6 +16,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.ui.FleetDateField
+import com.indusjs.fleet.core.ui.convertIsoToDdMmYyyyRaw
+import com.indusjs.fleet.core.ui.convertDdMmYyyyToIso
 import com.indusjs.fleet.domain.entity.driver.LicenseType
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -232,18 +234,14 @@ fun CreateDriverScreen(
             }
 
             item {
-                OutlinedTextField(
-                    value = state.licenseExpiry,
-                    onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseExpiry(it)) },
-                    label = { Text("License Expiry Date") },
-                    placeholder = { Text("YYYY-MM-DD") },
-                    leadingIcon = { Text("📅", modifier = Modifier.padding(start = 12.dp)) },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                FleetDateField(
+                    rawValue = convertIsoToDdMmYyyyRaw(state.licenseExpiry),
+                    onRawValueChange = {
+                        val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
+                        viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseExpiry(isoFormatted))
+                    },
+                    label = "License Expiry Date",
+                    leadingEmoji = "📅"
                 )
             }
 
@@ -257,18 +255,14 @@ fun CreateDriverScreen(
             }
 
             item {
-                OutlinedTextField(
-                    value = state.dateOfBirth,
-                    onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateDateOfBirth(it)) },
-                    label = { Text("Date of Birth") },
-                    placeholder = { Text("YYYY-MM-DD") },
-                    leadingIcon = { Text("🎂", modifier = Modifier.padding(start = 12.dp)) },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                FleetDateField(
+                    rawValue = convertIsoToDdMmYyyyRaw(state.dateOfBirth),
+                    onRawValueChange = {
+                        val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
+                        viewModel.sendIntent(CreateDriverContract.Intent.UpdateDateOfBirth(isoFormatted))
+                    },
+                    label = "Date of Birth",
+                    leadingEmoji = "🎂"
                 )
             }
 
@@ -314,18 +308,14 @@ fun CreateDriverScreen(
             }
 
             item {
-                OutlinedTextField(
-                    value = state.joiningDate,
-                    onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateJoiningDate(it)) },
-                    label = { Text("Joining Date") },
-                    placeholder = { Text("YYYY-MM-DD") },
-                    leadingIcon = { Text("📆", modifier = Modifier.padding(start = 12.dp)) },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Done
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                FleetDateField(
+                    rawValue = convertIsoToDdMmYyyyRaw(state.joiningDate),
+                    onRawValueChange = {
+                        val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
+                        viewModel.sendIntent(CreateDriverContract.Intent.UpdateJoiningDate(isoFormatted))
+                    },
+                    label = "Joining Date",
+                    leadingEmoji = "📆"
                 )
             }
 
@@ -470,4 +460,3 @@ private fun BloodGroupSelector(
         }
     }
 }
-

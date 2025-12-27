@@ -1,6 +1,8 @@
 package com.indusjs.fleet.androidApp
 
 import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -8,7 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,14 +33,39 @@ class AppActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Custom contract for picking documents with multiple MIME types
+ */
+class PickDocumentContract : ActivityResultContract<Array<String>, Uri?>() {
+    override fun createIntent(context: Context, input: Array<String>): Intent {
+        return Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, input)
+        }
+    }
+
+    override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+        return if (resultCode == Activity.RESULT_OK) intent?.data else null
+    }
+}
+
 @Composable
 private fun AndroidApp() {
     val context = LocalContext.current
     var pendingRequest by remember { mutableStateOf<FilePickerRequest?>(null) }
 
-    // File picker launcher
+    // Supported MIME types for document upload
+    val supportedMimeTypes = arrayOf(
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/*"
+    )
+
+    // File picker launcher using custom contract for multiple MIME types
     val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
+        contract = PickDocumentContract()
     ) { uri: Uri? ->
         uri?.let { selectedUri ->
             pendingRequest?.let { request ->
@@ -46,6 +73,16 @@ private fun AndroidApp() {
                     // Read file content
                     val contentResolver = context.contentResolver
                     val mimeType = contentResolver.getType(selectedUri) ?: "application/octet-stream"
+
+                    // Validate MIME type
+                    val isValidType = mimeType.startsWith("image/") ||
+                                      mimeType == "application/pdf"
+
+                    if (!isValidType) {
+                        // Invalid file type - could show error
+                        pendingRequest = null
+                        return@rememberLauncherForActivityResult
+                    }
 
                     // Get file name
                     val fileName = contentResolver.query(selectedUri, null, null, null, null)?.use { cursor ->
@@ -73,12 +110,68 @@ private fun AndroidApp() {
         onThemeChanged = { ThemeChanged(it) },
         onPickFile = { request ->
             pendingRequest = request
-            // Launch file picker for documents
-            filePickerLauncher.launch(arrayOf(
-                "application/pdf",
-                "image/jpeg",
-                "image/png"
-            ))
+            // Launch file picker for documents (PDF, JPEG, PNG)
+            filePickerLauncher.launch(supportedMimeTypes)
+        },
+        onOpenDocument = { documentName, fileUrl ->
+            // Open document in browser or external app
+            try {
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse(fileUrl)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        },
+        onDownloadDocument = { documentName, fileUrl ->
+            // Open download URL in browser to trigger download
+            try {
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse(fileUrl)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        },
+        onSaveDocument = { documentName, fileBytes, mimeType ->
+            // Save document to Downloads folder and open it
+            try {
+                val fileName = if (documentName.contains(".")) documentName else "$documentName.pdf"
+                val downloadsDir = android.os.Environment.getExternalStoragePublicDirectory(
+                    android.os.Environment.DIRECTORY_DOWNLOADS
+                )
+                val file = java.io.File(downloadsDir, fileName)
+                file.writeBytes(fileBytes)
+
+                // Open the downloaded file
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, mimeType)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                }
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Fallback: just save without opening
+                try {
+                    val fileName = if (documentName.contains(".")) documentName else "$documentName.pdf"
+                    val downloadsDir = android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_DOWNLOADS
+                    )
+                    val file = java.io.File(downloadsDir, fileName)
+                    file.writeBytes(fileBytes)
+                } catch (e2: Exception) {
+                    e2.printStackTrace()
+                }
+            }
         }
     )
 }

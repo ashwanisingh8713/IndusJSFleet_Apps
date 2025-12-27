@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
+import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.domain.usecase.vehicle.DeleteVehicleUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehicleByIdUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
@@ -21,7 +22,8 @@ class VehicleDetailViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val getVehicleByIdUseCase: GetVehicleByIdUseCase,
     private val updateVehicleUseCase: UpdateVehicleUseCase,
-    private val deleteVehicleUseCase: DeleteVehicleUseCase
+    private val deleteVehicleUseCase: DeleteVehicleUseCase,
+    private val vehicleRepository: VehicleRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     override suspend fun handleIntent(intent: Intent) {
@@ -50,6 +52,26 @@ class VehicleDetailViewModel(
             // Navigation & errors
             is Intent.NavigateBack -> sendEffect(Effect.NavigateBack)
             is Intent.ClearError -> updateState { copy(error = null) }
+
+            // Tab-specific intents
+            is Intent.SelectTab -> selectTab(intent.tabIndex)
+            is Intent.LoadTrips -> loadTrips()
+            is Intent.LoadMoreTrips -> loadMoreTrips()
+            is Intent.RefreshTrips -> refreshTrips()
+            is Intent.LoadRoute -> loadRoute()
+            is Intent.RefreshRoute -> refreshRoute()
+            is Intent.LoadDocuments -> loadDocuments()
+            is Intent.RefreshDocuments -> refreshDocuments()
+
+            // Document upload intents
+            is Intent.ShowUploadDialog -> showUploadDialog(intent.documentType, intent.documentTypeName)
+            is Intent.HideUploadDialog -> hideUploadDialog()
+            is Intent.UploadDocument -> uploadDocument(intent)
+
+            // Document preview/download intents
+            is Intent.PreviewDocument -> previewDocument(intent)
+            is Intent.DownloadDocument -> downloadDocument(intent)
+            is Intent.ReplaceDocument -> showUploadDialog(intent.documentType, intent.documentTypeName)
         }
     }
 
@@ -227,5 +249,308 @@ class VehicleDetailViewModel(
             }
         }
     }
-}
 
+    // ==================== Tab-specific Functions ====================
+
+    private fun selectTab(tabIndex: Int) {
+        updateState { copy(selectedTab = tabIndex) }
+
+        // Load data for the selected tab if not already loaded
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isNotEmpty()) {
+            when (tabIndex) {
+                1 -> if (currentState.tripsList.isEmpty() && !currentState.isLoadingTrips) {
+                    sendIntent(Intent.LoadTrips)
+                }
+                2 -> if (currentState.routeInfo == null && !currentState.isLoadingRoute) {
+                    sendIntent(Intent.LoadRoute)
+                }
+                3 -> if (currentState.documentsData == null && !currentState.isLoadingDocuments) {
+                    sendIntent(Intent.LoadDocuments)
+                }
+            }
+        }
+    }
+
+    private suspend fun loadTrips() {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isEmpty()) return
+
+        updateState { copy(isLoadingTrips = true, tripsError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleTrips(vehicleId, 1, 10, null)) {
+                is Result.Success -> {
+                    val data = result.data
+                    updateState {
+                        copy(
+                            isLoadingTrips = false,
+                            tripsData = data,
+                            tripsList = data.trips,
+                            tripsSummary = data.summary,
+                            tripsPage = data.page,
+                            hasMoreTrips = data.hasMore
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingTrips = false,
+                            tripsError = result.message ?: "Failed to load trips"
+                        )
+                    }
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    private suspend fun loadMoreTrips() {
+        if (!currentState.hasMoreTrips || currentState.isLoadingTrips) return
+
+        val vehicleId = currentState.vehicleId
+        val nextPage = currentState.tripsPage + 1
+
+        updateState { copy(isLoadingTrips = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleTrips(vehicleId, nextPage, 10, null)) {
+                is Result.Success -> {
+                    val data = result.data
+                    updateState {
+                        copy(
+                            isLoadingTrips = false,
+                            tripsList = tripsList + data.trips,
+                            tripsPage = data.page,
+                            hasMoreTrips = data.hasMore
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState { copy(isLoadingTrips = false) }
+                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load more trips"))
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    private suspend fun refreshTrips() {
+        updateState { copy(tripsList = emptyList(), tripsPage = 1, hasMoreTrips = false) }
+        loadTrips()
+    }
+
+    private suspend fun loadRoute() {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isEmpty()) return
+
+        updateState { copy(isLoadingRoute = true, routeError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleRoute(vehicleId)) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isLoadingRoute = false,
+                            routeInfo = result.data
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingRoute = false,
+                            routeError = result.message ?: "Failed to load route"
+                        )
+                    }
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    private suspend fun refreshRoute() {
+        updateState { copy(routeInfo = null) }
+        loadRoute()
+    }
+
+    private suspend fun loadDocuments() {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isEmpty()) return
+
+        updateState { copy(isLoadingDocuments = true, documentsError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleDocumentsDetail(vehicleId)) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isLoadingDocuments = false,
+                            documentsData = result.data,
+                            documentsSummary = result.data.summary
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingDocuments = false,
+                            documentsError = result.message ?: "Failed to load documents"
+                        )
+                    }
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    private suspend fun refreshDocuments() {
+        updateState { copy(documentsData = null) }
+        loadDocuments()
+    }
+
+    // ==================== Document Upload Functions ====================
+
+    private fun showUploadDialog(documentType: String, documentTypeName: String) {
+        updateState {
+            copy(
+                isUploadDialogVisible = true,
+                selectedDocumentType = documentType,
+                selectedDocumentTypeName = documentTypeName,
+                uploadError = null
+            )
+        }
+        sendEffect(Effect.OpenFilePicker)
+    }
+
+    private fun hideUploadDialog() {
+        updateState {
+            copy(
+                isUploadDialogVisible = false,
+                selectedDocumentType = null,
+                selectedDocumentTypeName = null,
+                uploadError = null
+            )
+        }
+    }
+
+    private suspend fun uploadDocument(intent: Intent.UploadDocument) {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isEmpty()) return
+
+        updateState { copy(isUploading = true, uploadError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.uploadDocument(
+                vehicleId = vehicleId,
+                documentType = intent.documentType,
+                documentName = intent.documentName,
+                fileBytes = intent.fileBytes,
+                fileName = intent.fileName,
+                mimeType = intent.mimeType,
+                documentNumber = intent.documentNumber,
+                expiryDate = intent.expiryDate
+            )) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isUploading = false,
+                            isUploadDialogVisible = false,
+                            selectedDocumentType = null,
+                            selectedDocumentTypeName = null
+                        )
+                    }
+                    sendEffect(Effect.ShowSnackbar("Document uploaded successfully"))
+                    sendEffect(Effect.DocumentUploaded)
+                    // Refresh documents list
+                    loadDocuments()
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isUploading = false,
+                            uploadError = result.message ?: "Failed to upload document"
+                        )
+                    }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to upload document"))
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    // ==================== Document Preview/Download Functions ====================
+
+    private suspend fun previewDocument(intent: Intent.PreviewDocument) {
+        val documentId = intent.documentId
+        if (documentId.isBlank()) {
+            sendEffect(Effect.ShowError("Document ID not available for preview"))
+            return
+        }
+
+        // Get vehicle registration number for filename prefix
+        val vehicleRegNumber = currentState.registrationNumber.ifBlank {
+            currentState.vehicle?.registrationNumber ?: ""
+        }
+        val documentNameWithPrefix = if (vehicleRegNumber.isNotBlank()) {
+            "${vehicleRegNumber}_${intent.documentName}"
+        } else {
+            intent.documentName
+        }
+
+        // Download the document and then open for preview
+        sendEffect(Effect.DocumentDownloading)
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.downloadDocument(documentId)) {
+                is Result.Success -> {
+                    sendEffect(Effect.DocumentDownloaded(
+                        documentName = documentNameWithPrefix,
+                        fileBytes = result.data,
+                        mimeType = "application/pdf" // Default to PDF, backend should provide actual type
+                    ))
+                }
+                is Result.Error -> {
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to download document for preview"))
+                }
+                is Result.Loading -> { /* Ignored */ }
+            }
+        }
+    }
+
+    private suspend fun downloadDocument(intent: Intent.DownloadDocument) {
+        val documentId = intent.documentId
+        if (documentId.isBlank()) {
+            sendEffect(Effect.ShowError("Document ID not available for download"))
+            return
+        }
+
+        // Get vehicle registration number for filename prefix
+        val vehicleRegNumber = currentState.registrationNumber.ifBlank {
+            currentState.vehicle?.registrationNumber ?: ""
+        }
+        val documentNameWithPrefix = if (vehicleRegNumber.isNotBlank()) {
+            "${vehicleRegNumber}_${intent.documentName}"
+        } else {
+            intent.documentName
+        }
+
+        // Download the document with authentication
+        sendEffect(Effect.DocumentDownloading)
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.downloadDocument(documentId)) {
+                is Result.Success -> {
+                    sendEffect(Effect.DocumentDownloaded(
+                        documentName = documentNameWithPrefix,
+                        fileBytes = result.data,
+                        mimeType = "application/pdf" // Default to PDF
+                    ))
+                }
+                is Result.Error -> {
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to download document"))
+                }
+                is Result.Loading -> { /* Ignored */ }
+            }
+        }
+    }
+}

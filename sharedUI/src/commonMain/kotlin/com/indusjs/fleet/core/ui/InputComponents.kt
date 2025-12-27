@@ -427,3 +427,159 @@ fun FleetTimeField(
     )
 }
 
+/**
+ * Visual transformation for date input (YYYY-MM-DD format - ISO format).
+ * Displays delimiters visually while keeping raw digits as actual value.
+ */
+class IsoDateVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val trimmed = text.text.take(8) // Max 8 digits: YYYYMMDD
+        val out = StringBuilder()
+
+        for (i in trimmed.indices) {
+            out.append(trimmed[i])
+            if (i == 3 || i == 5) {
+                out.append("-")
+            }
+        }
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                return when {
+                    offset <= 4 -> offset
+                    offset <= 6 -> offset + 1
+                    offset <= 8 -> offset + 2
+                    else -> 10
+                }
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                return when {
+                    offset <= 4 -> offset
+                    offset <= 7 -> offset - 1
+                    offset <= 10 -> offset - 2
+                    else -> 8
+                }
+            }
+        }
+
+        return TransformedText(AnnotatedString(out.toString()), offsetMapping)
+    }
+}
+
+/**
+ * Date input field with YYYY-MM-DD format (ISO format) and visual transformation.
+ * Accepts raw digits and displays formatted date.
+ *
+ * @param rawValue The raw digit string (e.g., "20251231")
+ * @param onRawValueChange Callback when raw value changes
+ * @param label Label for the field
+ * @param placeholder Placeholder text
+ * @param leadingEmoji Emoji to show as leading icon
+ * @param isError Whether the field is in error state
+ * @param errorMessage Error message to display
+ * @param enabled Whether the field is enabled
+ * @param modifier Modifier for the field
+ * @param supportingText Optional supporting text composable
+ */
+@Composable
+fun FleetIsoDateField(
+    rawValue: String,
+    onRawValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "Date",
+    placeholder: String = "YYYY-MM-DD",
+    leadingEmoji: String = "📅",
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    enabled: Boolean = true,
+    supportingText: @Composable (() -> Unit)? = null
+) {
+    val isoDateVisualTransformation = remember { IsoDateVisualTransformation() }
+
+    OutlinedTextField(
+        value = rawValue,
+        onValueChange = { input ->
+            val filtered = filterDigitsOnly(input, 8)
+            onRawValueChange(filtered)
+        },
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        leadingIcon = { Text(leadingEmoji, modifier = Modifier.padding(start = 12.dp)) },
+        isError = isError,
+        supportingText = when {
+            isError && errorMessage != null -> {{ Text(errorMessage, color = MaterialTheme.colorScheme.error) }}
+            supportingText != null -> supportingText
+            rawValue.length == 8 -> {{ Text("✓ Date entered", color = MaterialTheme.colorScheme.primary) }}
+            rawValue.isNotEmpty() -> {{ Text("Enter 8 digits for date", color = MaterialTheme.colorScheme.onSurfaceVariant) }}
+            else -> null
+        },
+        enabled = enabled,
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        visualTransformation = isoDateVisualTransformation,
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+/**
+ * Formats raw digits to ISO date string (YYYY-MM-DD).
+ */
+fun formatToIsoDate(rawDigits: String): String {
+    if (rawDigits.length != 8) return rawDigits
+    return "${rawDigits.substring(0, 4)}-${rawDigits.substring(4, 6)}-${rawDigits.substring(6, 8)}"
+}
+
+/**
+ * Parses ISO date string to raw digits.
+ */
+fun parseIsoDateToRaw(isoDate: String): String {
+    return isoDate.replace("-", "")
+}
+
+/**
+ * Formats raw digits (DDMMYYYY) to DD-MM-YYYY display format.
+ */
+fun formatToDdMmYyyy(rawDigits: String): String {
+    if (rawDigits.length != 8) return rawDigits
+    return "${rawDigits.substring(0, 2)}-${rawDigits.substring(2, 4)}-${rawDigits.substring(4, 8)}"
+}
+
+/**
+ * Parses DD-MM-YYYY string to raw digits (DDMMYYYY).
+ */
+fun parseDdMmYyyyToRaw(dateStr: String): String {
+    return dateStr.replace("-", "")
+}
+
+/**
+ * Converts raw digits (DDMMYYYY) to ISO format (YYYY-MM-DD) for backend API.
+ */
+fun convertDdMmYyyyToIso(rawDigits: String): String {
+    if (rawDigits.length != 8) return rawDigits
+    val day = rawDigits.substring(0, 2)
+    val month = rawDigits.substring(2, 4)
+    val year = rawDigits.substring(4, 8)
+    return "$year-$month-$day"
+}
+
+/**
+ * Converts ISO format (YYYY-MM-DD) to raw digits (DDMMYYYY) for display.
+ */
+fun convertIsoToDdMmYyyyRaw(isoDate: String): String {
+    if (isoDate.isBlank()) return ""
+    val parts = isoDate.split("-")
+    if (parts.size != 3) return isoDate.replace("-", "")
+    return "${parts[2]}${parts[1]}${parts[0]}" // DDMMYYYY
+}
+
+/**
+ * Converts ISO format (YYYY-MM-DD) to DD-MM-YYYY display format.
+ */
+fun convertIsoToDdMmYyyy(isoDate: String): String {
+    if (isoDate.isBlank()) return ""
+    val parts = isoDate.split("-")
+    if (parts.size != 3) return isoDate
+    return "${parts[2]}-${parts[1]}-${parts[0]}" // DD-MM-YYYY
+}
+

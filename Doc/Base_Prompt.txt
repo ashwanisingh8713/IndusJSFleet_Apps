@@ -6,6 +6,14 @@ Fleet_Management_API.postman_collection.json is PostMan collection.
  Kindly review it.
 
  ----------------------------------------
+
+
+ Review all apis to serve the actual contents from backend server to Mobile app's appropriete screens.
+ `/Users/ashwani/GolandProjects/IndusJSFleet_GoLang_Backend` this is path of backend server code written in GoLang.
+
+ Plan with best practices to implement and verify the all required apis into Mobile App.
+
+ -----------------------------------------
 In `CreateTripScreen`, I want "Start location" & "End location" should be fetched from Google Place API, and based on selected location input latitude & longitude should be selected.
 
 Do the all required implementation.

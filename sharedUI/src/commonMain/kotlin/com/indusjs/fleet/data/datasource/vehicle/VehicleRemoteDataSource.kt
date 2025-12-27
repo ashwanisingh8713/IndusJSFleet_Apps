@@ -1,24 +1,34 @@
 package com.indusjs.fleet.data.datasource.vehicle
 
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleRequest
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleWithDocumentsRequest
 import com.indusjs.fleet.data.model.vehicle.VehicleApiResponse
+import com.indusjs.fleet.data.model.vehicle.VehicleDetailDto
+import com.indusjs.fleet.data.model.vehicle.VehicleDocumentDto
+import com.indusjs.fleet.data.model.vehicle.VehicleDocumentsDetailDto
 import com.indusjs.fleet.data.model.vehicle.VehicleDto
+import com.indusjs.fleet.data.model.vehicle.VehicleRouteDto
+import com.indusjs.fleet.data.model.vehicle.VehicleTripDto
+import com.indusjs.fleet.data.model.vehicle.VehicleTripsDto
 import co.touchlab.kermit.Logger
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.readBytes
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
@@ -36,6 +46,32 @@ interface VehicleRemoteDataSource : RemoteDataSource {
     suspend fun createVehicleWithDocuments(token: String, request: CreateVehicleWithDocumentsRequest): VehicleApiResponse<VehicleDto>
     suspend fun updateVehicle(token: String, id: String, request: CreateVehicleRequest): VehicleApiResponse<VehicleDto>
     suspend fun deleteVehicle(token: String, id: String): VehicleApiResponse<Unit>
+
+    // Vehicle Detail APIs (new endpoints - may not be implemented in backend yet)
+    suspend fun getVehicleDetail(token: String, id: String): VehicleApiResponse<VehicleDetailDto>
+    suspend fun getVehicleTrips(token: String, id: String, page: Int, perPage: Int, state: String?): VehicleApiResponse<VehicleTripsDto>
+    suspend fun getVehicleRoute(token: String, id: String): VehicleApiResponse<VehicleRouteDto>
+    suspend fun getVehicleDocumentsDetail(token: String, id: String): VehicleApiResponse<VehicleDocumentsDetailDto>
+
+    // Existing backend APIs (fallback)
+    suspend fun getVehicleDocuments(token: String, id: String): VehicleApiResponse<List<VehicleDocumentDto>>
+    suspend fun getTripsByVehicleId(token: String, vehicleId: String, page: Int, perPage: Int, state: String?): VehicleApiResponse<List<VehicleTripDto>>
+
+    // Document Upload
+    suspend fun uploadDocument(
+        token: String,
+        vehicleId: String,
+        documentType: String,
+        documentName: String,
+        fileBytes: ByteArray,
+        fileName: String,
+        mimeType: String,
+        documentNumber: String? = null,
+        expiryDate: String? = null
+    ): VehicleApiResponse<VehicleDocumentDto>
+
+    // Document Download
+    suspend fun downloadDocument(token: String, documentId: String): Result<ByteArray>
 }
 
 /**
@@ -212,6 +248,85 @@ class VehicleRemoteDataSourceImpl(
         }
     }
 
+    // ==================== Vehicle Detail APIs ====================
+
+    override suspend fun getVehicleDetail(token: String, id: String): VehicleApiResponse<VehicleDetailDto> {
+        return try {
+            log.d { "Fetching vehicle detail: $id" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/detail") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            parseResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch vehicle detail: ${e.message}" }
+            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun getVehicleTrips(
+        token: String,
+        id: String,
+        page: Int,
+        perPage: Int,
+        state: String?
+    ): VehicleApiResponse<VehicleTripsDto> {
+        return try {
+            log.d { "Fetching vehicle trips: $id, page=$page" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/trips") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("page", page)
+                parameter("per_page", perPage)
+                state?.let { parameter("state", it) }
+            }
+            parseResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch vehicle trips: ${e.message}" }
+            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun getVehicleRoute(token: String, id: String): VehicleApiResponse<VehicleRouteDto> {
+        return try {
+            log.d { "Fetching vehicle route: $id" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/route") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            parseResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch vehicle route: ${e.message}" }
+            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun getVehicleDocumentsDetail(token: String, id: String): VehicleApiResponse<VehicleDocumentsDetailDto> {
+        return try {
+            log.d { "Fetching vehicle documents detail: $id" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/documents/detail") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            parseResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch vehicle documents: ${e.message}" }
+            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    private suspend inline fun <reified T> parseResponse(response: HttpResponse): VehicleApiResponse<T> {
+        val bodyText = response.bodyAsText()
+        log.d { "API Response: $bodyText" }
+        return if (response.status.isSuccess()) {
+            try {
+                json.decodeFromString<VehicleApiResponse<T>>(bodyText)
+            } catch (e: Exception) {
+                log.e(e) { "Failed to parse response: $bodyText" }
+                VehicleApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+            }
+        } else {
+            log.e { "Request failed with status: ${response.status}, body: $bodyText" }
+            VehicleApiResponse(success = false, message = "Request failed with status: ${response.status}")
+        }
+    }
+
     private suspend fun parseSingleResponse(response: HttpResponse): VehicleApiResponse<VehicleDto> {
         val bodyText = response.bodyAsText()
         log.d { "API Response: $bodyText" }
@@ -251,6 +366,151 @@ class VehicleRemoteDataSourceImpl(
         } else {
             log.e { "Request failed with status: ${response.status}, body: $bodyText" }
             VehicleApiResponse(success = false, message = "Request failed with status: ${response.status}")
+        }
+    }
+
+    // ==================== Existing Backend APIs (Fallback) ====================
+
+    override suspend fun getVehicleDocuments(token: String, id: String): VehicleApiResponse<List<VehicleDocumentDto>> {
+        return try {
+            log.d { "Fetching vehicle documents: $id" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/documents") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            parseDocumentsResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch vehicle documents: ${e.message}" }
+            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun getTripsByVehicleId(
+        token: String,
+        vehicleId: String,
+        page: Int,
+        perPage: Int,
+        state: String?
+    ): VehicleApiResponse<List<VehicleTripDto>> {
+        return try {
+            log.d { "Fetching trips for vehicle: $vehicleId, page=$page" }
+            val tripsUrl = "${ApiConfig.BASE_URL}/trips"
+            val response: HttpResponse = httpClient.get(tripsUrl) {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("vehicle_id", vehicleId)
+                parameter("page", page)
+                parameter("per_page", perPage)
+                state?.let { parameter("state", it) }
+            }
+            parseTripsResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch trips for vehicle: ${e.message}" }
+            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    private suspend fun parseDocumentsResponse(response: HttpResponse): VehicleApiResponse<List<VehicleDocumentDto>> {
+        val bodyText = response.bodyAsText()
+        log.d { "Documents API Response: $bodyText" }
+        return if (response.status.isSuccess()) {
+            try {
+                json.decodeFromString<VehicleApiResponse<List<VehicleDocumentDto>>>(bodyText)
+            } catch (e: Exception) {
+                log.e(e) { "Failed to parse documents response: $bodyText" }
+                VehicleApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+            }
+        } else {
+            log.e { "Request failed with status: ${response.status}, body: $bodyText" }
+            VehicleApiResponse(success = false, message = "Request failed with status: ${response.status}")
+        }
+    }
+
+    private suspend fun parseTripsResponse(response: HttpResponse): VehicleApiResponse<List<VehicleTripDto>> {
+        val bodyText = response.bodyAsText()
+        log.d { "Trips API Response: $bodyText" }
+        return if (response.status.isSuccess()) {
+            try {
+                json.decodeFromString<VehicleApiResponse<List<VehicleTripDto>>>(bodyText)
+            } catch (e: Exception) {
+                log.e(e) { "Failed to parse trips response: $bodyText" }
+                VehicleApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+            }
+        } else {
+            log.e { "Request failed with status: ${response.status}, body: $bodyText" }
+            VehicleApiResponse(success = false, message = "Request failed with status: ${response.status}")
+        }
+    }
+
+    // ==================== Document Upload ====================
+
+    override suspend fun uploadDocument(
+        token: String,
+        vehicleId: String,
+        documentType: String,
+        documentName: String,
+        fileBytes: ByteArray,
+        fileName: String,
+        mimeType: String,
+        documentNumber: String?,
+        expiryDate: String?
+    ): VehicleApiResponse<VehicleDocumentDto> {
+        return try {
+            log.d { "Uploading document for vehicle: $vehicleId, type: $documentType" }
+            val response: HttpResponse = httpClient.submitFormWithBinaryData(
+                url = "$baseUrl/$vehicleId/documents",
+                formData = formData {
+                    append("file", fileBytes, Headers.build {
+                        append(HttpHeaders.ContentType, mimeType)
+                        append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                    })
+                    append("document_type", documentType)
+                    append("document_name", documentName)
+                    documentNumber?.let { append("document_number", it) }
+                    expiryDate?.let { append("expiry_date", it) }
+                }
+            ) {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            parseUploadResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to upload document: ${e.message}" }
+            VehicleApiResponse(success = false, message = e.message ?: "Upload failed")
+        }
+    }
+
+    private suspend fun parseUploadResponse(response: HttpResponse): VehicleApiResponse<VehicleDocumentDto> {
+        val bodyText = response.bodyAsText()
+        log.d { "Upload API Response: $bodyText" }
+        return if (response.status.isSuccess()) {
+            try {
+                json.decodeFromString<VehicleApiResponse<VehicleDocumentDto>>(bodyText)
+            } catch (e: Exception) {
+                log.e(e) { "Failed to parse upload response: $bodyText" }
+                VehicleApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+            }
+        } else {
+            log.e { "Upload failed with status: ${response.status}, body: $bodyText" }
+            VehicleApiResponse(success = false, message = "Upload failed with status: ${response.status}")
+        }
+    }
+
+    override suspend fun downloadDocument(token: String, documentId: String): Result<ByteArray> {
+        return try {
+            log.d { "Downloading document: $documentId" }
+            val response: HttpResponse = httpClient.get("${ApiConfig.BASE_URL}/documents/$documentId/download") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            if (response.status.isSuccess()) {
+                val bytes = response.readBytes()
+                log.d { "Downloaded document: ${bytes.size} bytes" }
+                Result.Success(bytes)
+            } else {
+                val errorBody = response.bodyAsText()
+                log.e { "Download failed with status: ${response.status}, body: $errorBody" }
+                Result.Error(Exception("Download failed: ${response.status}"), "Download failed: ${response.status}")
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to download document: ${e.message}" }
+            Result.Error(e, e.message ?: "Download failed")
         }
     }
 }

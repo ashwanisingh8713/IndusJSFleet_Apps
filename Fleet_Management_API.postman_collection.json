@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "fleet-management-api-collection",
 		"name": "Fleet Management API",
-		"description": "Complete API collection for Fleet Management System. Includes Authentication, User Profile, Dashboards, Team Management, Drivers, Vehicles, Documents, Trips, and Location Tracking modules.\n\n## User Roles\n- **Owner**: Primary account holder with full access\n- **Manager**: Administrative access, can manage drivers and trips\n- **Supervisor**: Operational access, limited to viewing and tracking\n\n## Key Features\n- Multi-tenant architecture with Owner-based data isolation\n- Role-based access control\n- Complete vehicle and driver lifecycle management\n- Trip planning and tracking\n- Real-time location tracking\n- Document management",
+		"description": "Complete API collection for Fleet Management System with Role-Based Access Control (RBAC).\n\n## Base URL\n`http://localhost:8080/api/v1`\n\n## User Roles & Permissions\n\n### Owner (Full Access)\n- ✅ Create, Read, Update, Delete all resources\n- ✅ Manage team members (Managers, Supervisors)\n- ✅ Delete drivers, vehicles, trips, documents\n\n### Manager (Operational Access)\n- ✅ Create, Read, Update drivers, vehicles, trips, documents\n- ✅ Register vehicles, upload documents\n- ❌ Delete resources (only Owner)\n- ❌ Manage team members\n\n### Supervisor (View & Track Access)\n- ✅ View all resources (own organization only)\n- ✅ Track vehicle locations\n- ✅ Register vehicles\n- ❌ Create/modify drivers, trips\n- ❌ Upload/delete documents\n\n## Data Isolation\n- All data is automatically filtered by organization (owner_id)\n- Manager/Supervisor can only see their owner's data\n\n## API Routes Summary\n\n**Authentication (Public)**\n- POST /auth/signup - Register new owner\n- POST /auth/login - Login\n- POST /auth/forgot-password - Request password reset\n- POST /auth/reset-password - Reset password\n\n**Profile (All Roles)**\n- GET /profile - Get profile\n- PUT /profile - Update profile\n- POST /profile/change-password - Change password\n\n**Dashboard (Role-based)**\n- GET /dashboard/owner - Owner dashboard\n- GET /dashboard/manager - Manager dashboard\n- GET /dashboard/supervisor - Supervisor dashboard\n\n**Team Management (Owner Only)**\n- POST /team/members - Create team member\n- GET /team/members - List team members\n- GET /team/members/:id - Get team member\n- PUT /team/members/:id - Update team member\n- DELETE /team/members/:id - Delete team member\n\n**Vehicles**\n- POST /vehicles - Register vehicle\n- POST /vehicles/with-documents - Register with documents\n- GET /vehicles - List vehicles\n- GET /vehicles/:id - Get vehicle\n- PUT /vehicles/:id - Update vehicle (Owner/Manager)\n- PATCH /vehicles/:id/state - Update state (Owner/Manager)\n- DELETE /vehicles/:id - Delete vehicle (Owner only)\n- POST /vehicles/:id/documents - Upload document\n- POST /vehicles/:id/documents/bulk - Bulk upload\n- GET /vehicles/:id/documents - Get documents\n- GET /vehicles/:id/location - Get current location\n- GET /vehicles/:id/location/history - Get location history\n\n**Documents**\n- GET /documents/types - Get document types\n- GET /documents/expiring - Get expiring documents\n- GET /documents/expired - Get expired documents\n- GET /documents/status/:status - Get by status\n- GET /documents/:id - Get document\n- GET /documents/:id/download - Download document\n- PUT /documents/:id - Update document (Owner/Manager)\n- POST /documents/:id/verify - Verify document (Owner/Manager)\n- DELETE /documents/:id - Delete document (Owner only)\n\n**Trips**\n- POST /trips - Create trip (Owner/Manager)\n- GET /trips - List trips\n- GET /trips/:id - Get trip\n- PUT /trips/:id - Update trip (Owner/Manager)\n- PATCH /trips/:id/state - Update state (Owner/Manager)\n- PATCH /trips/:id/location - Update location (All roles)\n- DELETE /trips/:id - Delete trip (Owner only)\n- GET /trips/:id/stops - Get stops\n- POST /trips/:id/stops - Add stop (Owner/Manager)\n- PUT /trips/:id/stops/:stop_id - Update stop (Owner/Manager)\n- PATCH /trips/:id/stops/:stop_id/complete - Mark complete (All roles)\n- DELETE /trips/:id/stops/:stop_id - Delete stop (Owner/Manager)\n\n**Drivers**\n- POST /drivers - Create driver (Owner/Manager)\n- GET /drivers - List drivers\n- GET /drivers/available - Get available drivers\n- GET /drivers/:id - Get driver\n- PUT /drivers/:id - Update driver (Owner/Manager)\n- PATCH /drivers/:id/status - Update status (Owner/Manager)\n- PATCH /drivers/:id/toggle-active - Toggle active (Owner/Manager)\n- DELETE /drivers/:id - Delete driver (Owner only)\n\n**Locations**\n- POST /locations/track - Track location\n- POST /locations/track/bulk - Bulk track\n- GET /locations/current - Get all current locations",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -614,7 +614,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["vehicles"]
 						},
-						"description": "Register a new vehicle in the fleet. All users (Owner, Manager, Supervisor) can register vehicles. The vehicle will be linked to the owner and track who registered it via 'registered_by' field."
+						"description": "Register a new vehicle in the fleet.\n\n**Access:** Owner, Manager, Supervisor (All Roles)\n\nThe vehicle will be linked to the owner's organization and track who registered it via 'registered_by' field."
 					},
 					"response": []
 				},
@@ -897,7 +897,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["vehicles", "1"]
 						},
-						"description": "Update vehicle details."
+						"description": "Update vehicle details.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden"
 					},
 					"response": []
 				},
@@ -924,7 +924,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["vehicles", "1", "state"]
 						},
-						"description": "Update the state of a vehicle. Valid states: active, inactive, maintenance, retired."
+						"description": "Update the state of a vehicle. Valid states: active, inactive, maintenance, retired.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden"
 					},
 					"response": []
 				},
@@ -943,7 +943,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["vehicles", "1"]
 						},
-						"description": "Delete a vehicle."
+						"description": "Delete a vehicle.\n\n**Access:** Owner only\n\n❌ Managers and Supervisors will receive 403 Forbidden"
 					},
 					"response": []
 				},
@@ -998,12 +998,191 @@
 						"description": "Get the location history of a specific vehicle with time range and limit filters."
 					},
 					"response": []
+				},
+				{
+					"name": "Vehicle Detail - Overview Tab",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/overview",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "overview"]
+						},
+						"description": "Get comprehensive vehicle overview for the Overview tab in mobile app.\n\n**Access:** All roles\n\n**Returns:**\n- Vehicle info with display name and state labels\n- Current location with last seen time\n- Assigned driver details\n- Active trip summary with progress\n- Vehicle statistics (trips, distance, this month)\n- Documents summary with alerts (expiring/expired/not uploaded)"
+					},
+					"response": [
+						{
+							"name": "Success - Vehicle Overview",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/vehicles/1/overview", "host": ["{{base_url}}"], "path": ["vehicles", "1", "overview"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vehicle overview retrieved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"registration_number\": \"MH12AB1234\",\n        \"display_name\": \"Tata Prima\",\n        \"make\": \"Tata\",\n        \"model\": \"Prima\",\n        \"year\": 2022,\n        \"vehicle_type\": \"Truck\",\n        \"fuel_type\": \"Diesel\",\n        \"capacity\": 16,\n        \"color\": \"White\",\n        \"state\": \"active\",\n        \"state_label\": \"Active\",\n        \"is_occupied\": true,\n        \"assigned_driver\": {\n            \"id\": 1,\n            \"first_name\": \"Raj\",\n            \"last_name\": \"Kumar\",\n            \"mobile\": \"9876543210\",\n            \"license_number\": \"DL-1234567890\"\n        },\n        \"active_trip\": {\n            \"id\": 5,\n            \"state\": \"in_progress\",\n            \"state_label\": \"In Progress\",\n            \"start_location\": \"Delhi\",\n            \"end_location\": \"Mumbai\",\n            \"customer_name\": \"ABC Logistics\",\n            \"scheduled_date\": \"2025-12-27\",\n            \"start_time\": \"09:00\",\n            \"progress\": {\n                \"percentage\": 33.33,\n                \"stops_completed\": 1,\n                \"total_stops\": 3,\n                \"time_elapsed\": \"2h 30m\",\n                \"eta_remaining\": \"5h 30m\"\n            }\n        },\n        \"current_location\": {\n            \"latitude\": 19.076,\n            \"longitude\": 72.8777,\n            \"speed\": 65.5,\n            \"heading\": 180,\n            \"timestamp\": \"2025-12-27T11:30:00Z\"\n        },\n        \"last_seen\": \"5 minutes ago\",\n        \"stats\": {\n            \"total_trips\": 45,\n            \"completed_trips\": 40,\n            \"cancelled_trips\": 2,\n            \"active_trips\": 1,\n            \"total_distance_km\": 12500.5,\n            \"this_month_trips\": 8\n        },\n        \"documents\": {\n            \"total\": 6,\n            \"uploaded\": 5,\n            \"not_uploaded\": 1,\n            \"active\": 4,\n            \"expiring_soon\": 1,\n            \"expired\": 0,\n            \"pending\": 0,\n            \"alert_docs\": [\n                {\n                    \"id\": 3,\n                    \"type\": \"insurance\",\n                    \"tag\": \"INS\",\n                    \"name\": \"Insurance\",\n                    \"expiry_date\": \"2026-01-15\",\n                    \"days_remaining\": 19,\n                    \"is_expired\": false\n                }\n            ]\n        },\n        \"created_at\": \"2025-01-15T10:00:00Z\",\n        \"updated_at\": \"2025-12-27T11:30:00Z\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Vehicle Detail - Trips Tab",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/trips?page=1&per_page=10",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "trips"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "10"
+								},
+								{
+									"key": "state",
+									"value": "completed",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get paginated trips list for the Trips tab.\n\n**Access:** All roles\n\n**Query Parameters:**\n- page: Page number (default: 1)\n- per_page: Items per page (default: 10)\n- state: Filter by state (planned, in_progress, completed, cancelled)\n\n**Returns:**\n- Summary with counts by state (total, planned, in_progress, completed, cancelled)\n- Paginated trips list with driver info and duration"
+					},
+					"response": [
+						{
+							"name": "Success - Vehicle Trips",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/vehicles/1/trips", "host": ["{{base_url}}"], "path": ["vehicles", "1", "trips"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vehicle trips retrieved successfully\",\n    \"data\": {\n        \"summary\": {\n            \"total\": 45,\n            \"planned\": 2,\n            \"in_progress\": 1,\n            \"completed\": 40,\n            \"cancelled\": 2\n        },\n        \"trips\": [\n            {\n                \"id\": 5,\n                \"state\": \"in_progress\",\n                \"state_label\": \"In Progress\",\n                \"scheduled_date\": \"2025-12-27\",\n                \"start_time\": \"09:00\",\n                \"start_location\": \"Delhi\",\n                \"end_location\": \"Mumbai\",\n                \"customer_name\": \"ABC Logistics\",\n                \"driver\": {\n                    \"id\": 1,\n                    \"first_name\": \"Raj\",\n                    \"last_name\": \"Kumar\"\n                },\n                \"distance_km\": 1400,\n                \"cargo_type\": \"general\",\n                \"priority\": \"high\"\n            },\n            {\n                \"id\": 4,\n                \"state\": \"completed\",\n                \"state_label\": \"Completed\",\n                \"scheduled_date\": \"2025-12-25\",\n                \"start_time\": \"08:00\",\n                \"start_location\": \"Pune\",\n                \"end_location\": \"Bangalore\",\n                \"customer_name\": \"XYZ Corp\",\n                \"driver\": {\n                    \"id\": 2,\n                    \"first_name\": \"Suresh\",\n                    \"last_name\": \"Sharma\"\n                },\n                \"distance_km\": 850,\n                \"duration\": \"12h 30m\",\n                \"cargo_type\": \"electronics\",\n                \"priority\": \"normal\"\n            }\n        ],\n        \"page\": 1,\n        \"per_page\": 10,\n        \"total\": 45,\n        \"total_pages\": 5\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Vehicle Detail - Route & Stops Tab",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/route",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "route"]
+						},
+						"description": "Get active route and stops for the Route & Stops tab.\n\n**Access:** All roles\n\n**Returns:**\n- has_active_trip: boolean indicating if vehicle has active trip\n- Trip details with driver info\n- Route with origin, destination, and current position\n- Stops list with status (pending/current/completed)\n- Progress with percentage, ETA, and time elapsed"
+					},
+					"response": [
+						{
+							"name": "Success - Active Route with Stops",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/vehicles/1/route", "host": ["{{base_url}}"], "path": ["vehicles", "1", "route"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vehicle route retrieved successfully\",\n    \"data\": {\n        \"has_active_trip\": true,\n        \"trip\": {\n            \"id\": 5,\n            \"state\": \"in_progress\",\n            \"state_label\": \"In Progress\",\n            \"customer_name\": \"ABC Logistics\",\n            \"scheduled_date\": \"2025-12-27\",\n            \"start_time\": \"09:00\",\n            \"planned_start\": \"2025-12-27T09:00:00Z\",\n            \"planned_end\": \"2025-12-27T21:00:00Z\",\n            \"driver\": {\n                \"id\": 1,\n                \"first_name\": \"Raj\",\n                \"last_name\": \"Kumar\",\n                \"mobile\": \"9876543210\"\n            }\n        },\n        \"route\": {\n            \"origin\": {\n                \"location\": \"Delhi Warehouse, NH-48\",\n                \"latitude\": 28.6139,\n                \"longitude\": 77.209\n            },\n            \"destination\": {\n                \"location\": \"Mumbai Port, Dock 5\",\n                \"latitude\": 19.076,\n                \"longitude\": 72.8777\n            },\n            \"current\": {\n                \"latitude\": 23.0225,\n                \"longitude\": 72.5714\n            },\n            \"distance_km\": 1400\n        },\n        \"stops\": [\n            {\n                \"id\": 1,\n                \"stop_order\": 1,\n                \"location\": \"Jaipur Hub\",\n                \"latitude\": 26.9124,\n                \"longitude\": 75.7873,\n                \"stop_duration_minutes\": 30,\n                \"notes\": \"Pickup additional cargo\",\n                \"is_completed\": true,\n                \"status\": \"completed\"\n            },\n            {\n                \"id\": 2,\n                \"stop_order\": 2,\n                \"location\": \"Ahmedabad Depot\",\n                \"latitude\": 23.0225,\n                \"longitude\": 72.5714,\n                \"stop_duration_minutes\": 45,\n                \"notes\": \"Refuel and rest\",\n                \"is_completed\": false,\n                \"status\": \"current\"\n            },\n            {\n                \"id\": 3,\n                \"stop_order\": 3,\n                \"location\": \"Surat Checkpoint\",\n                \"latitude\": 21.1702,\n                \"longitude\": 72.8311,\n                \"stop_duration_minutes\": 15,\n                \"is_completed\": false,\n                \"status\": \"pending\"\n            }\n        ],\n        \"progress\": {\n            \"percentage\": 33.33,\n            \"stops_completed\": 1,\n            \"total_stops\": 3,\n            \"time_elapsed\": \"2h 30m\",\n            \"eta_remaining\": \"5h 30m\"\n        }\n    }\n}"
+						},
+						{
+							"name": "Success - No Active Trip",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/vehicles/2/route", "host": ["{{base_url}}"], "path": ["vehicles", "2", "route"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"No active trip for this vehicle\",\n    \"data\": {\n        \"has_active_trip\": false\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Vehicle Detail - Documents Tab",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/documents/detail",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "documents", "detail"]
+						},
+						"description": "Get detailed documents list for the Documents tab.\n\n**Access:** All roles\n\n**Key Feature:** Shows ALL 6 document types (RC, Insurance, PUC, Fitness, Road Tax, Permit) whether uploaded or not.\n\n**Returns:**\n- Summary: total, uploaded, not_uploaded, active, expiring_soon, expired, pending\n- document_types: Array of all document types with:\n  - type, tag, type_name, description\n  - is_required: boolean\n  - is_uploaded: boolean\n  - document: details if uploaded (id, name, expiry, status, days_remaining, etc.)\n- alert_docs: Documents needing attention (expired, expiring soon, required but not uploaded)\n- other_documents: Any additional documents"
+					},
+					"response": [
+						{
+							"name": "Success - All Document Types",
+							"originalRequest": {
+								"method": "GET",
+								"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+								"url": {"raw": "{{base_url}}/vehicles/1/documents/detail", "host": ["{{base_url}}"], "path": ["vehicles", "1", "documents", "detail"]}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vehicle documents retrieved successfully\",\n    \"data\": {\n        \"summary\": {\n            \"total\": 6,\n            \"uploaded\": 5,\n            \"not_uploaded\": 1,\n            \"active\": 4,\n            \"expiring_soon\": 1,\n            \"expired\": 0,\n            \"pending\": 0,\n            \"alert_docs\": [\n                {\n                    \"id\": 3,\n                    \"type\": \"insurance\",\n                    \"tag\": \"INS\",\n                    \"name\": \"Insurance\",\n                    \"expiry_date\": \"2026-01-15\",\n                    \"days_remaining\": 19,\n                    \"status\": \"active\",\n                    \"is_expired\": false\n                },\n                {\n                    \"type\": \"permit\",\n                    \"tag\": \"PERMIT\",\n                    \"name\": \"Permit - Not Uploaded\",\n                    \"is_expired\": false\n                }\n            ]\n        },\n        \"document_types\": [\n            {\n                \"type\": \"registration_certificate\",\n                \"tag\": \"RC\",\n                \"type_name\": \"Registration Certificate\",\n                \"description\": \"Vehicle RC Book\",\n                \"is_required\": true,\n                \"is_uploaded\": true,\n                \"document\": {\n                    \"id\": 1,\n                    \"name\": \"Vehicle RC\",\n                    \"document_number\": \"MH12AB1234\",\n                    \"issue_date\": \"2022-01-15\",\n                    \"expiry_date\": \"2037-01-14\",\n                    \"days_remaining\": 4400,\n                    \"status\": \"active\",\n                    \"status_label\": \"Active\",\n                    \"is_expired\": false,\n                    \"is_expiring_soon\": false,\n                    \"issuing_authority\": \"RTO Mumbai\",\n                    \"file_size\": 245678,\n                    \"file_size_label\": \"240.0 KB\",\n                    \"mime_type\": \"application/pdf\",\n                    \"uploaded_by\": \"John Doe\",\n                    \"uploaded_at\": \"2025-01-15T10:00:00Z\"\n                }\n            },\n            {\n                \"type\": \"insurance\",\n                \"tag\": \"INS\",\n                \"type_name\": \"Insurance\",\n                \"description\": \"Vehicle Insurance Policy\",\n                \"is_required\": true,\n                \"is_uploaded\": true,\n                \"document\": {\n                    \"id\": 3,\n                    \"name\": \"Comprehensive Insurance\",\n                    \"document_number\": \"POL-2025-123456\",\n                    \"issue_date\": \"2025-01-15\",\n                    \"expiry_date\": \"2026-01-15\",\n                    \"days_remaining\": 19,\n                    \"status\": \"active\",\n                    \"status_label\": \"Active\",\n                    \"is_expired\": false,\n                    \"is_expiring_soon\": true,\n                    \"issuing_authority\": \"ICICI Lombard\",\n                    \"file_size\": 512000,\n                    \"file_size_label\": \"500.0 KB\",\n                    \"mime_type\": \"application/pdf\",\n                    \"uploaded_by\": \"John Doe\",\n                    \"uploaded_at\": \"2025-01-15T10:30:00Z\"\n                }\n            },\n            {\n                \"type\": \"puc_certificate\",\n                \"tag\": \"PUC\",\n                \"type_name\": \"PUC Certificate\",\n                \"description\": \"Pollution Under Control Certificate\",\n                \"is_required\": true,\n                \"is_uploaded\": true,\n                \"document\": {\n                    \"id\": 4,\n                    \"name\": \"PUC Certificate\",\n                    \"expiry_date\": \"2026-06-30\",\n                    \"days_remaining\": 185,\n                    \"status\": \"active\",\n                    \"status_label\": \"Active\",\n                    \"is_expired\": false,\n                    \"is_expiring_soon\": false\n                }\n            },\n            {\n                \"type\": \"fitness_certificate\",\n                \"tag\": \"FC\",\n                \"type_name\": \"Fitness Certificate\",\n                \"description\": \"Vehicle Fitness Certificate\",\n                \"is_required\": true,\n                \"is_uploaded\": true,\n                \"document\": {\n                    \"id\": 5,\n                    \"name\": \"Fitness Certificate\",\n                    \"expiry_date\": \"2026-12-31\",\n                    \"days_remaining\": 369,\n                    \"status\": \"active\",\n                    \"status_label\": \"Active\",\n                    \"is_expired\": false,\n                    \"is_expiring_soon\": false\n                }\n            },\n            {\n                \"type\": \"road_tax\",\n                \"tag\": \"RT\",\n                \"type_name\": \"Road Tax\",\n                \"description\": \"Road Tax Receipt\",\n                \"is_required\": true,\n                \"is_uploaded\": true,\n                \"document\": {\n                    \"id\": 6,\n                    \"name\": \"Road Tax Receipt\",\n                    \"expiry_date\": \"2027-03-31\",\n                    \"days_remaining\": 459,\n                    \"status\": \"active\",\n                    \"status_label\": \"Active\",\n                    \"is_expired\": false,\n                    \"is_expiring_soon\": false\n                }\n            },\n            {\n                \"type\": \"permit\",\n                \"tag\": \"PERMIT\",\n                \"type_name\": \"Permit\",\n                \"description\": \"Commercial Vehicle Permit\",\n                \"is_required\": false,\n                \"is_uploaded\": false,\n                \"document\": null\n            }\n        ],\n        \"other_documents\": []\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Vehicle Detail - Full (All Tabs)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1/detail",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1", "detail"]
+						},
+						"description": "Get combined data for all tabs in one API call.\n\n**Access:** All roles\n\n**Use Case:** Initial load of VehicleDetailScreen to fetch all tab data at once, reducing API calls.\n\n**Returns:**\n- vehicle: Basic info with state labels\n- assigned_driver: Driver details if assigned\n- current_location: Latest GPS location\n- stats: Trip statistics\n- documents: Summary with alerts\n- trips: Total count and recent 5 trips\n- route: Active trip status with stops count"
+					},
+					"response": []
 				}
 			]
 		},
 		{
 			"name": "Documents",
-			"description": "Vehicle document management endpoints for uploading, viewing, and managing documents. Each document type has a short tag: RC (Registration Certificate), INS (Insurance), PUC (PUC Certificate), FC (Fitness Certificate), RT (Road Tax), PERMIT (Permit), OTHER (Other).",
+			"description": "Vehicle document management endpoints.\n\n**RBAC Permissions:**\n- Upload/Update/Verify: Owner, Manager\n- View/Download: All roles\n- Delete: Owner only\n\n**Document Tags:**\n- RC (Registration Certificate)\n- INS (Insurance)\n- PUC (PUC Certificate)\n- FC (Fitness Certificate)\n- RT (Road Tax)\n- PERMIT (Permit)\n- OTHER (Other)",
 			"item": [
 				{
 					"name": "Upload Document",
@@ -1036,10 +1215,34 @@
 									"type": "text"
 								},
 								{
+									"key": "document_number",
+									"value": "RC-2024-123456",
+									"type": "text",
+									"description": "Optional - Unique document number (policy number, certificate number, etc.)"
+								},
+								{
+									"key": "issue_date",
+									"value": "2024-01-15T00:00:00Z",
+									"type": "text",
+									"description": "Optional - Date when document was issued (RFC3339 format)"
+								},
+								{
 									"key": "expiry_date",
 									"value": "2026-12-31T23:59:59Z",
 									"type": "text",
-									"description": "Optional - RFC3339 format"
+									"description": "Optional - Date when document expires (RFC3339 format)"
+								},
+								{
+									"key": "issuing_authority",
+									"value": "Regional Transport Office, Delhi",
+									"type": "text",
+									"description": "Optional - Authority that issued the document (e.g., RTO, Insurance Company)"
+								},
+								{
+									"key": "remarks",
+									"value": "Original document",
+									"type": "text",
+									"description": "Optional - Additional notes or remarks"
 								}
 							]
 						},
@@ -1048,7 +1251,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["vehicles", "1", "documents"]
 						},
-						"description": "Upload a document for a vehicle. Each document automatically gets a tag based on its type.\n\nDocument Types and Tags:\n- registration_certificate → RC\n- insurance → INS\n- puc_certificate → PUC\n- fitness_certificate → FC\n- road_tax → RT\n- permit → PERMIT\n- other → OTHER"
+						"description": "Upload a document for a vehicle.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden\n\n**Document Types and Tags:**\n- registration_certificate → RC\n- insurance → INS\n- puc_certificate → PUC\n- fitness_certificate → FC\n- road_tax → RT\n- permit → PERMIT\n- other → OTHER\n\n**New Fields:**\n- document_number: Unique identifier (e.g., policy number)\n- issue_date: When the document was issued\n- expiry_date: When the document expires\n- issuing_authority: Who issued the document\n- remarks: Additional notes"
 					},
 					"response": []
 				},
@@ -1072,10 +1275,28 @@
 									"description": "Registration Certificate file [Tag: RC] (PDF, JPEG, PNG - max 10MB)"
 								},
 								{
+									"key": "registration_certificate_issue_date",
+									"value": "2024-01-15",
+									"type": "text",
+									"description": "RC issue date (YYYY-MM-DD)"
+								},
+								{
 									"key": "registration_certificate_expiry",
 									"value": "2028-01-15",
 									"type": "text",
 									"description": "RC expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "registration_certificate_number",
+									"value": "DL-01-AA-1234",
+									"type": "text",
+									"description": "RC document number"
+								},
+								{
+									"key": "registration_certificate_issuing_authority",
+									"value": "RTO Delhi",
+									"type": "text",
+									"description": "RC issuing authority"
 								},
 								{
 									"key": "insurance",
@@ -1084,10 +1305,28 @@
 									"description": "Insurance policy file [Tag: INS] (PDF, JPEG, PNG - max 10MB)"
 								},
 								{
+									"key": "insurance_issue_date",
+									"value": "2024-06-01",
+									"type": "text",
+									"description": "Insurance issue date (YYYY-MM-DD)"
+								},
+								{
 									"key": "insurance_expiry",
 									"value": "2025-06-30",
 									"type": "text",
 									"description": "Insurance expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "insurance_number",
+									"value": "POL-2024-789012",
+									"type": "text",
+									"description": "Insurance policy number"
+								},
+								{
+									"key": "insurance_issuing_authority",
+									"value": "ICICI Lombard",
+									"type": "text",
+									"description": "Insurance company name"
 								},
 								{
 									"key": "puc_certificate",
@@ -1096,10 +1335,22 @@
 									"description": "PUC Certificate file [Tag: PUC] (PDF, JPEG, PNG - max 10MB)"
 								},
 								{
+									"key": "puc_certificate_issue_date",
+									"value": "2024-12-01",
+									"type": "text",
+									"description": "PUC issue date (YYYY-MM-DD)"
+								},
+								{
 									"key": "puc_certificate_expiry",
 									"value": "2025-03-15",
 									"type": "text",
 									"description": "PUC expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "puc_certificate_number",
+									"value": "PUC-2024-345678",
+									"type": "text",
+									"description": "PUC certificate number"
 								},
 								{
 									"key": "fitness_certificate",
@@ -1108,10 +1359,22 @@
 									"description": "Fitness Certificate file [Tag: FC] (PDF, JPEG, PNG - max 10MB)"
 								},
 								{
+									"key": "fitness_certificate_issue_date",
+									"value": "2024-01-01",
+									"type": "text",
+									"description": "Fitness issue date (YYYY-MM-DD)"
+								},
+								{
 									"key": "fitness_certificate_expiry",
 									"value": "2026-12-31",
 									"type": "text",
 									"description": "Fitness expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "fitness_certificate_number",
+									"value": "FC-2024-567890",
+									"type": "text",
+									"description": "Fitness certificate number"
 								},
 								{
 									"key": "road_tax",
@@ -1120,10 +1383,22 @@
 									"description": "Road Tax receipt file [Tag: RT] (PDF, JPEG, PNG - max 10MB)"
 								},
 								{
+									"key": "road_tax_issue_date",
+									"value": "2024-04-01",
+									"type": "text",
+									"description": "Road Tax issue date (YYYY-MM-DD)"
+								},
+								{
 									"key": "road_tax_expiry",
 									"value": "2025-03-31",
 									"type": "text",
 									"description": "Road Tax expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "road_tax_number",
+									"value": "RT-2024-123456",
+									"type": "text",
+									"description": "Road Tax receipt number"
 								},
 								{
 									"key": "permit",
@@ -1132,10 +1407,28 @@
 									"description": "Permit file [Tag: PERMIT] (PDF, JPEG, PNG - max 10MB)"
 								},
 								{
+									"key": "permit_issue_date",
+									"value": "2024-01-01",
+									"type": "text",
+									"description": "Permit issue date (YYYY-MM-DD)"
+								},
+								{
 									"key": "permit_expiry",
 									"value": "2025-12-31",
 									"type": "text",
 									"description": "Permit expiry date (YYYY-MM-DD)"
+								},
+								{
+									"key": "permit_number",
+									"value": "PERMIT-2024-789012",
+									"type": "text",
+									"description": "Permit number"
+								},
+								{
+									"key": "permit_issuing_authority",
+									"value": "State Transport Authority",
+									"type": "text",
+									"description": "Permit issuing authority"
 								}
 							]
 						},
@@ -1144,7 +1437,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["vehicles", "1", "documents", "bulk"]
 						},
-						"description": "Upload multiple documents for an existing vehicle in a single request. Each uploaded document will automatically receive a tag.\n\nDocument Tags:\n- registration_certificate → RC\n- insurance → INS\n- puc_certificate → PUC\n- fitness_certificate → FC\n- road_tax → RT\n- permit → PERMIT\n\nAll document fields are optional - you can upload any combination of documents. Each document type can have an optional expiry date in YYYY-MM-DD format."
+						"description": "Upload multiple documents for an existing vehicle in a single request.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden\n\n**Document Tags:**\n- registration_certificate → RC\n- insurance → INS\n- puc_certificate → PUC\n- fitness_certificate → FC\n- road_tax → RT\n- permit → PERMIT\n\n**Optional fields for each document type:**\n- {type}_issue_date: Date of issue (YYYY-MM-DD)\n- {type}_expiry: Expiry date (YYYY-MM-DD)\n- {type}_number: Document number\n- {type}_issuing_authority: Issuing authority\n\nAll document fields are optional - you can upload any combination of documents."
 					},
 					"response": []
 				},
@@ -1239,7 +1532,147 @@
 							"host": ["{{base_url}}"],
 							"path": ["documents", "1"]
 						},
-						"description": "Delete a document."
+						"description": "Delete a document.\n\n**Access:** Owner only\n\n❌ Managers and Supervisors will receive 403 Forbidden"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Document",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"document_name\": \"Updated Document Name\",\n    \"document_number\": \"RC-2024-UPDATED\",\n    \"issue_date\": \"2024-02-01T00:00:00Z\",\n    \"expiry_date\": \"2027-12-31T23:59:59Z\",\n    \"issuing_authority\": \"Regional Transport Office, Mumbai\",\n    \"status\": \"active\",\n    \"remarks\": \"Updated remarks for this document\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/documents/1",
+							"host": ["{{base_url}}"],
+							"path": ["documents", "1"]
+						},
+						"description": "Update document metadata (not the file itself).\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden\n\n**Available Fields:**\n- document_name: Display name\n- document_number: Unique document number\n- issue_date: Date of issue\n- expiry_date: Expiration date\n- issuing_authority: Who issued the document\n- status: active, pending, rejected\n- remarks: Additional notes"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Document",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"approve\",\n    \"remarks\": \"Document verified and approved\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/documents/1/verify",
+							"host": ["{{base_url}}"],
+							"path": ["documents", "1", "verify"]
+						},
+						"description": "Approve or reject a document after verification.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden\n\n**Request Body:**\n- action (required): 'approve' or 'reject'\n- remarks (optional): Verification notes\n\n**Example - Approve:**\n```json\n{\n    \"action\": \"approve\",\n    \"remarks\": \"Document verified and approved\"\n}\n```\n\n**Example - Reject:**\n```json\n{\n    \"action\": \"reject\",\n    \"remarks\": \"Document image is blurry, please re-upload\"\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Expiring Documents",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/documents/expiring?days=30",
+							"host": ["{{base_url}}"],
+							"path": ["documents", "expiring"],
+							"query": [
+								{
+									"key": "days",
+									"value": "30",
+									"description": "Number of days to look ahead (default: 30)"
+								},
+								{
+									"key": "vehicle_id",
+									"value": "1",
+									"description": "Optional - Filter by vehicle ID",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get documents that will expire within the specified number of days. Response includes 'days_until_expiry' for each document.\n\n**Query Parameters:**\n- days (optional): Number of days to look ahead (default: 30)\n- vehicle_id (optional): Filter by specific vehicle"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Expired Documents",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/documents/expired",
+							"host": ["{{base_url}}"],
+							"path": ["documents", "expired"],
+							"query": [
+								{
+									"key": "vehicle_id",
+									"value": "1",
+									"description": "Optional - Filter by vehicle ID",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get documents that have already expired. Response includes 'days_expired' for each document.\n\n**Query Parameters:**\n- vehicle_id (optional): Filter by specific vehicle"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Documents by Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/documents/status/pending",
+							"host": ["{{base_url}}"],
+							"path": ["documents", "status", "pending"],
+							"query": [
+								{
+									"key": "vehicle_id",
+									"value": "1",
+									"description": "Optional - Filter by vehicle ID",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get documents filtered by status.\n\n**Valid Statuses:**\n- active: Active and valid documents\n- pending: Pending verification\n- rejected: Rejected documents\n- expired: Expired documents\n\n**Query Parameters:**\n- vehicle_id (optional): Filter by specific vehicle"
 					},
 					"response": []
 				}
@@ -1247,7 +1680,7 @@
 		},
 		{
 			"name": "Trips",
-			"description": "Trip management endpoints for creating, updating, and tracking trips",
+			"description": "Trip management endpoints.\n\n**RBAC Permissions:**\n- Create/Update/UpdateState: Owner, Manager\n- View/List: All roles\n- Delete: Owner only\n- Update Location: All roles\n- Mark Stop Complete: All roles\n- Add/Update/Delete Stops: Owner, Manager",
 			"item": [
 				{
 					"name": "Create Trip",
@@ -1272,7 +1705,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["trips"]
 						},
-						"description": "Create a new trip with full details including schedule, route, cargo, customer info, and optional stops. All required fields: vehicle_id, driver_id, scheduled_date, start_time, planned_start, planned_end, start_location, start_lat, start_lng, end_location, end_lat, end_lng, cargo_type."
+						"description": "Create a new trip with full details including schedule, route, cargo, customer info, and optional stops.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden\n\n**Required fields:** vehicle_id, driver_id, scheduled_date, start_time, planned_start, planned_end, start_location, start_lat, start_lng, end_location, end_lat, end_lng, cargo_type."
 					},
 					"response": []
 				},
@@ -1374,7 +1807,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["trips", "1"]
 						},
-						"description": "Update trip details."
+						"description": "Update trip details. Only planned trips can be updated.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden"
 					},
 					"response": []
 				},
@@ -1401,7 +1834,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["trips", "1", "state"]
 						},
-						"description": "Update the state of a trip. Valid states: planned, in_progress, completed, cancelled."
+						"description": "Update the state of a trip. Valid states: planned, in_progress, completed, cancelled.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden"
 					},
 					"response": []
 				},
@@ -1428,7 +1861,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["trips", "1", "location"]
 						},
-						"description": "Update the current location of an in-progress trip for real-time tracking."
+						"description": "Update the current location of an in-progress trip for real-time tracking.\n\n**Access:** All roles (Owner, Manager, Supervisor)"
 					},
 					"response": []
 				},
@@ -1447,7 +1880,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["trips", "1"]
 						},
-						"description": "Delete a trip. Only planned or cancelled trips can be deleted."
+						"description": "Delete a trip. Only planned or cancelled trips can be deleted.\n\n**Access:** Owner only\n\n❌ Managers and Supervisors will receive 403 Forbidden"
 					},
 					"response": []
 				},
@@ -1493,7 +1926,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["trips", "1", "stops"]
 						},
-						"description": "Add a new stop to an existing trip. Only for planned trips."
+						"description": "Add a new stop to an existing trip. Only for planned trips.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden"
 					},
 					"response": []
 				},
@@ -1539,7 +1972,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["trips", "1", "stops", "1", "complete"]
 						},
-						"description": "Mark a stop as completed. Only for in-progress trips."
+						"description": "Mark a stop as completed. Only for in-progress trips.\n\n**Access:** All roles (Owner, Manager, Supervisor)"
 					},
 					"response": []
 				},
@@ -1558,7 +1991,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["trips", "1", "stops", "1"]
 						},
-						"description": "Delete a trip stop. Only for planned trips."
+						"description": "Delete a trip stop. Only for planned trips.\n\n**Access:** Owner, Manager only\n\n❌ Supervisors will receive 403 Forbidden"
 					},
 					"response": []
 				}
@@ -1566,7 +1999,7 @@
 		},
 		{
 			"name": "Drivers",
-			"description": "Driver management endpoints for adding, updating, and managing drivers. Drivers can only be created by Owners and Managers.",
+			"description": "Driver management endpoints.\n\n**RBAC Permissions:**\n- Create/Update/Status: Owner, Manager\n- View/List: All roles\n- Delete: Owner only\n\nDrivers can only be created by Owners and Managers.",
 			"item": [
 				{
 					"name": "Create Driver",
@@ -2014,7 +2447,7 @@
 		},
 		{
 			"name": "Location Tracking",
-			"description": "Location tracking endpoints for recording and retrieving vehicle locations. Uses `registration_number` to identify vehicles.",
+			"description": "Location tracking endpoints for recording and retrieving vehicle locations.\n\n**RBAC Permissions:**\n- Track Location: All roles\n- Bulk Track: All roles\n- View Locations: All roles\n\n**Data Isolation:** All location data is filtered by organization (owner_id). Users can only track/view their organization's vehicles.",
 			"item": [
 				{
 					"name": "Track Location",
@@ -2032,14 +2465,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"registration_number\": \"MH12AB1234\",\n    \"lat\": 28.6139,\n    \"lng\": 77.2090,\n    \"speed\": 55.5,\n    \"ts\": 1703500800000\n}"
+							"raw": "{\n    \"vehicle_id\": 1,\n    \"latitude\": 28.6139,\n    \"longitude\": 77.2090,\n    \"speed\": 55.5,\n    \"heading\": 180.0,\n    \"altitude\": 216.0,\n    \"accuracy\": 5.0\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/locations/track",
 							"host": ["{{base_url}}"],
 							"path": ["locations", "track"]
 						},
-						"description": "Record a vehicle's current location.\n\n**Required Fields:**\n- `registration_number` - Vehicle registration (e.g., 'MH12AB1234')\n- `lat` - Latitude\n- `lng` - Longitude\n- `speed` - Speed in km/h\n- `ts` - Unix timestamp (milliseconds)\n\n**Note:** `vehicle_id` and `owner_id` are auto-resolved from `registration_number`."
+						"description": "Record a vehicle's current location.\n\n**Access:** All roles (Owner, Manager, Supervisor)\n\n**Data Isolation:** Can only track vehicles belonging to your organization.\n\n**Required Fields:**\n- `vehicle_id` - Vehicle ID (integer)\n- `latitude` - Latitude (-90 to 90)\n- `longitude` - Longitude (-180 to 180)\n- `speed` - Speed in km/h\n\n**Optional Fields:**\n- `heading` - Direction (0-360°)\n- `altitude` - Altitude in meters\n- `accuracy` - GPS accuracy in meters"
 					},
 					"response": []
 				},
@@ -2059,14 +2492,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "[\n    {\n        \"registration_number\": \"MH12AB1234\",\n        \"lat\": 28.6139,\n        \"lng\": 77.2090,\n        \"speed\": 55.5,\n        \"ts\": 1703500800000\n    },\n    {\n        \"registration_number\": \"MH14CD5678\",\n        \"lat\": 28.7041,\n        \"lng\": 77.1025,\n        \"speed\": 40.0,\n        \"ts\": 1703500801000\n    }\n]"
+							"raw": "[\n    {\n        \"vehicle_id\": 1,\n        \"latitude\": 28.6139,\n        \"longitude\": 77.2090,\n        \"speed\": 55.5,\n        \"heading\": 180.0\n    },\n    {\n        \"vehicle_id\": 2,\n        \"latitude\": 28.7041,\n        \"longitude\": 77.1025,\n        \"speed\": 40.0,\n        \"heading\": 90.0\n    }\n]"
 						},
 						"url": {
 							"raw": "{{base_url}}/locations/track/bulk",
 							"host": ["{{base_url}}"],
 							"path": ["locations", "track", "bulk"]
 						},
-						"description": "Record multiple vehicle locations at once.\n\n**Required Fields per location:**\n- `registration_number` - Vehicle registration\n- `lat` - Latitude\n- `lng` - Longitude\n- `speed` - Speed in km/h\n- `ts` - Unix timestamp (milliseconds)"
+						"description": "Record multiple vehicle locations at once.\n\n**Access:** All roles (Owner, Manager, Supervisor)\n\n**Data Isolation:** Can only track vehicles belonging to your organization.\n\n**Required Fields per location:**\n- `vehicle_id` - Vehicle ID (integer)\n- `latitude` - Latitude\n- `longitude` - Longitude\n- `speed` - Speed in km/h"
 					},
 					"response": []
 				},
@@ -2085,7 +2518,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["locations", "current"]
 						},
-						"description": "Get the latest location of all vehicles."
+						"description": "Get the latest location of all vehicles in your organization.\n\n**Access:** All roles (Owner, Manager, Supervisor)\n\n**Data Isolation:** Returns only locations for your organization's vehicles."
 					},
 					"response": []
 				}
@@ -2093,7 +2526,7 @@
 		},
 		{
 			"name": "Manager APIs",
-			"description": "Manager-specific endpoints for fleet management (read-only vehicle access, trip management)",
+			"description": "Manager-specific endpoints (Alternative routes).\n\n**Note:** The main API routes now support all roles with proper RBAC. These routes are provided for backward compatibility.\n\n**Recommended:** Use the main API routes (`/vehicles`, `/trips`, `/drivers`) - they automatically filter data by organization.",
 			"item": [
 				{
 					"name": "List Vehicles",
@@ -2316,7 +2749,7 @@
 		},
 		{
 			"name": "Supervisor APIs",
-			"description": "Supervisor-specific endpoints for fleet monitoring (limited read-only access to active vehicles and trips)",
+			"description": "Supervisor-specific endpoints (Alternative routes).\n\n**Note:** The main API routes now support all roles with proper RBAC. These routes are provided for backward compatibility.\n\n**Recommended:** Use the main API routes (`/vehicles`, `/trips`, `/locations`) - they automatically filter data by organization.",
 			"item": [
 				{
 					"name": "List Active Vehicles",

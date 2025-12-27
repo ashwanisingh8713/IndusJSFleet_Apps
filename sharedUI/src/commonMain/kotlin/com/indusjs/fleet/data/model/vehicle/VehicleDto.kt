@@ -247,3 +247,370 @@ data class CreateVehicleWithDocumentsRequest(
     val permit: DocumentFileData? = null
 )
 
+// ==================== Vehicle Detail DTOs ====================
+
+/**
+ * Vehicle Detail DTO - Combined data for all tabs.
+ * GET /vehicles/{id}/detail
+ */
+@Serializable
+data class VehicleDetailDto(
+    @SerialName("vehicle")
+    val vehicle: VehicleDto? = null,
+    @SerialName("assigned_driver")
+    val assignedDriver: AssignedDriverDto? = null,
+    @SerialName("current_location")
+    val currentLocation: LocationDto? = null,
+    @SerialName("stats")
+    val stats: VehicleStatsDto? = null,
+    @SerialName("documents")
+    val documents: DocumentsSummaryDto? = null,
+    @SerialName("trips")
+    val trips: TripsSummaryDto? = null,
+    @SerialName("route")
+    val route: VehicleRouteDto? = null
+)
+
+/**
+ * Vehicle statistics DTO.
+ */
+@Serializable
+data class VehicleStatsDto(
+    @SerialName("total_trips")
+    val totalTrips: Int = 0,
+    @SerialName("completed_trips")
+    val completedTrips: Int = 0,
+    @SerialName("total_distance")
+    val totalDistance: Double = 0.0,
+    @SerialName("trips_this_month")
+    val tripsThisMonth: Int = 0,
+    @SerialName("distance_this_month")
+    val distanceThisMonth: Double = 0.0
+)
+
+/**
+ * Documents summary DTO.
+ */
+@Serializable
+data class DocumentsSummaryDto(
+    @SerialName("total")
+    val total: Int = 0,
+    @SerialName("uploaded")
+    val uploaded: Int = 0,
+    @SerialName("not_uploaded")
+    val notUploaded: Int = 0,
+    @SerialName("active")
+    val active: Int = 0,
+    @SerialName("expiring_soon")
+    val expiringSoon: Int = 0,
+    @SerialName("expired")
+    val expired: Int = 0,
+    @SerialName("pending")
+    val pending: Int = 0,
+    @SerialName("alerts")
+    val alerts: List<DocumentAlertDto> = emptyList()
+)
+
+/**
+ * Document alert DTO.
+ */
+@Serializable
+data class DocumentAlertDto(
+    @SerialName("type")
+    val type: String = "",
+    @SerialName("type_name")
+    val typeName: String = "",
+    @SerialName("alert_type")
+    val alertType: String = "",
+    @SerialName("message")
+    val message: String = "",
+    @SerialName("days_remaining")
+    val daysRemaining: Int? = null
+)
+
+/**
+ * Trips summary DTO.
+ */
+@Serializable
+data class TripsSummaryDto(
+    @SerialName("total")
+    val total: Int = 0,
+    @SerialName("planned")
+    val planned: Int = 0,
+    @SerialName("in_progress")
+    val inProgress: Int = 0,
+    @SerialName("completed")
+    val completed: Int = 0,
+    @SerialName("cancelled")
+    val cancelled: Int = 0,
+    @SerialName("recent_trips")
+    val recentTrips: List<VehicleTripItemDto> = emptyList()
+)
+
+/**
+ * Vehicle Trips DTO - Paginated trips for Trips tab.
+ * GET /vehicles/{id}/trips
+ */
+@Serializable
+data class VehicleTripsDto(
+    @SerialName("summary")
+    val summary: TripsSummaryDto? = null,
+    @SerialName("trips")
+    val trips: List<VehicleTripItemDto> = emptyList(),
+    @SerialName("page")
+    val page: Int = 1,
+    @SerialName("per_page")
+    val perPage: Int = 10,
+    @SerialName("total_pages")
+    val totalPages: Int = 1,
+    @SerialName("has_more")
+    val hasMore: Boolean = false
+)
+
+/**
+ * Trip item DTO.
+ */
+@Serializable
+data class VehicleTripItemDto(
+    @SerialName("id")
+    val id: Int = 0,
+    @SerialName("trip_number")
+    val tripNumber: String? = null,
+    @SerialName("origin")
+    val origin: String = "",
+    @SerialName("destination")
+    val destination: String = "",
+    @SerialName("state")
+    val state: String = "",
+    @SerialName("state_label")
+    val stateLabel: String = "",
+    @SerialName("scheduled_date")
+    val scheduledDate: String? = null,
+    @SerialName("start_time")
+    val startTime: String? = null,
+    @SerialName("end_time")
+    val endTime: String? = null,
+    @SerialName("driver_name")
+    val driverName: String? = null,
+    @SerialName("distance")
+    val distance: Double? = null,
+    @SerialName("duration")
+    val duration: String? = null
+)
+
+/**
+ * Vehicle Route DTO - Route & Stops tab.
+ * GET /vehicles/{id}/route
+ */
+@Serializable
+data class VehicleRouteDto(
+    @SerialName("has_active_trip")
+    val hasActiveTrip: Boolean = false,
+    @SerialName("trip_id")
+    val tripId: Int? = null,
+    @SerialName("trip_number")
+    val tripNumber: String? = null,
+    @SerialName("driver_name")
+    val driverName: String? = null,
+    @SerialName("origin")
+    val origin: String? = null,
+    @SerialName("destination")
+    val destination: String? = null,
+    @SerialName("current_position")
+    val currentPosition: LocationDto? = null,
+    @SerialName("progress")
+    val progress: RouteProgressDto? = null,
+    @SerialName("stops")
+    val stops: List<RouteStopDto> = emptyList()
+)
+
+/**
+ * Route progress DTO.
+ */
+@Serializable
+data class RouteProgressDto(
+    @SerialName("percentage")
+    val percentage: Int = 0,
+    @SerialName("distance_covered")
+    val distanceCovered: Double = 0.0,
+    @SerialName("distance_remaining")
+    val distanceRemaining: Double = 0.0,
+    @SerialName("time_elapsed")
+    val timeElapsed: String? = null,
+    @SerialName("eta")
+    val eta: String? = null
+)
+
+/**
+ * Route stop DTO.
+ */
+@Serializable
+data class RouteStopDto(
+    @SerialName("id")
+    val id: Int = 0,
+    @SerialName("sequence")
+    val sequence: Int = 0,
+    @SerialName("type")
+    val type: String = "",
+    @SerialName("location")
+    val location: String = "",
+    @SerialName("address")
+    val address: String? = null,
+    @SerialName("status")
+    val status: String = "",
+    @SerialName("scheduled_time")
+    val scheduledTime: String? = null,
+    @SerialName("actual_time")
+    val actualTime: String? = null,
+    @SerialName("notes")
+    val notes: String? = null
+)
+
+/**
+ * Vehicle Documents Detail DTO - Documents tab.
+ * GET /vehicles/{id}/documents/detail
+ */
+@Serializable
+data class VehicleDocumentsDetailDto(
+    @SerialName("summary")
+    val summary: DocumentsSummaryDto? = null,
+    @SerialName("document_types")
+    val documentTypes: List<DocumentTypeDetailDto> = emptyList(),
+    @SerialName("alert_docs")
+    val alertDocs: List<DocumentAlertDto> = emptyList(),
+    @SerialName("other_documents")
+    val otherDocuments: List<VehicleDocumentInfoDto> = emptyList()
+)
+
+/**
+ * Document type detail DTO.
+ */
+@Serializable
+data class DocumentTypeDetailDto(
+    @SerialName("type")
+    val type: String = "",
+    @SerialName("tag")
+    val tag: String = "",
+    @SerialName("type_name")
+    val typeName: String = "",
+    @SerialName("description")
+    val description: String? = null,
+    @SerialName("is_required")
+    val isRequired: Boolean = false,
+    @SerialName("is_uploaded")
+    val isUploaded: Boolean = false,
+    @SerialName("document")
+    val document: VehicleDocumentInfoDto? = null
+)
+
+/**
+ * Vehicle document info DTO.
+ */
+@Serializable
+data class VehicleDocumentInfoDto(
+    @SerialName("id")
+    val id: Int = 0,
+    @SerialName("name")
+    val name: String = "",
+    @SerialName("document_number")
+    val documentNumber: String? = null,
+    @SerialName("expiry_date")
+    val expiryDate: String? = null,
+    @SerialName("status")
+    val status: String = "",
+    @SerialName("status_label")
+    val statusLabel: String = "",
+    @SerialName("days_remaining")
+    val daysRemaining: Int? = null,
+    @SerialName("file_url")
+    val fileUrl: String? = null,
+    @SerialName("uploaded_at")
+    val uploadedAt: String? = null
+)
+
+// ==================== Existing Backend API DTOs ====================
+
+/**
+ * Vehicle document DTO from GET /vehicles/:id/documents
+ */
+@Serializable
+data class VehicleDocumentDto(
+    @SerialName("id")
+    val id: Int = 0,
+    @SerialName("vehicle_id")
+    val vehicleId: Int = 0,
+    @SerialName("document_type")
+    val documentType: String = "",
+    @SerialName("document_name")
+    val documentName: String = "",
+    @SerialName("document_number")
+    val documentNumber: String? = null,
+    @SerialName("file_name")
+    val fileName: String? = null,
+    @SerialName("file_url")
+    val fileUrl: String? = null,
+    @SerialName("file_size")
+    val fileSize: Long = 0,
+    @SerialName("mime_type")
+    val mimeType: String = "",
+    @SerialName("issue_date")
+    val issueDate: String? = null,
+    @SerialName("expiry_date")
+    val expiryDate: String? = null,
+    @SerialName("issuing_authority")
+    val issuingAuthority: String? = null,
+    @SerialName("status")
+    val status: String = "pending",
+    @SerialName("verified_at")
+    val verifiedAt: String? = null,
+    @SerialName("verified_by")
+    val verifiedBy: Int? = null,
+    @SerialName("notes")
+    val notes: String? = null,
+    @SerialName("created_at")
+    val createdAt: String? = null,
+    @SerialName("updated_at")
+    val updatedAt: String? = null
+)
+
+/**
+ * Trip DTO from GET /trips?vehicle_id= (simplified for vehicle detail)
+ */
+@Serializable
+data class VehicleTripDto(
+    @SerialName("id")
+    val id: Int = 0,
+    @SerialName("state")
+    val state: String = "",
+    @SerialName("scheduled_date")
+    val scheduledDate: String? = null,
+    @SerialName("start_time")
+    val startTime: String? = null,
+    @SerialName("end_time")
+    val endTime: String? = null,
+    @SerialName("start_location")
+    val startLocation: String? = null,
+    @SerialName("end_location")
+    val endLocation: String? = null,
+    @SerialName("customer_name")
+    val customerName: String? = null,
+    @SerialName("driver")
+    val driver: AssignedDriverDto? = null,
+    @SerialName("driver_id")
+    val driverId: Int? = null,
+    @SerialName("vehicle_id")
+    val vehicleId: Int? = null,
+    @SerialName("distance")
+    val distance: Double? = null,
+    @SerialName("cargo_type")
+    val cargoType: String? = null,
+    @SerialName("priority")
+    val priority: String? = null,
+    @SerialName("notes")
+    val notes: String? = null,
+    @SerialName("created_at")
+    val createdAt: String? = null,
+    @SerialName("updated_at")
+    val updatedAt: String? = null
+)
+
