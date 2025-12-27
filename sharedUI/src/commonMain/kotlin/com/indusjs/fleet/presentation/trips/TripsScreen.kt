@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.error.ErrorHandler
 import com.indusjs.fleet.core.ui.EmptyContent
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetSearchField
@@ -126,6 +127,7 @@ fun TripsScreen(
                     // Using reusable ErrorContent component
                     ErrorContent(
                         error = state.error!!,
+                        screenContext = ErrorHandler.ScreenContext.TRIPS,
                         onRetry = { viewModel.sendIntent(TripsContract.Intent.LoadTrips) }
                     )
                 }

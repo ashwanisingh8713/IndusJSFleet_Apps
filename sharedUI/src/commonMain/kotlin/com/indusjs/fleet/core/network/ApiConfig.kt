@@ -30,6 +30,9 @@ object ApiConfig {
         // User Profile
         const val PROFILE = "/profile"
         const val CHANGE_PASSWORD = "/profile/change-password"
+
+        // Dashboard
+        const val DASHBOARD = "/dashboard"
     }
 
     /**

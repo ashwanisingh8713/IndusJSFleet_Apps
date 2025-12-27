@@ -13,6 +13,7 @@ object DashboardContract {
 
     /**
      * UI State for the Dashboard screen.
+     * Supports offline mode by preserving cached data when errors occur.
      */
     data class State(
         val isLoading: Boolean = false,
@@ -20,7 +21,10 @@ object DashboardContract {
         val error: String? = null,
         val isRefreshing: Boolean = false,
         val userName: String = "", // User's full name for display
-        val userRole: String = ""  // User's role for display
+        val userRole: String = "",  // User's role for display
+        val hasCachedData: Boolean = false,
+        val isOffline: Boolean = false,
+        val lastUpdated: String? = null
     ) : UiState
 
     /**
@@ -35,6 +39,8 @@ object DashboardContract {
         data object NavigateToMaps : Intent
         data class MarkAlertAsRead(val alertId: String) : Intent
         data class DismissAlert(val alertId: String) : Intent
+        data object DismissOfflineBanner : Intent
+        data object RetryConnection : Intent
     }
 
     /**
@@ -48,4 +54,3 @@ object DashboardContract {
         data class ShowSnackbar(val message: String) : Effect
     }
 }
-

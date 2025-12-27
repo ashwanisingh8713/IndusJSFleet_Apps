@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -14,8 +15,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.indusjs.fleet.core.error.ErrorHandler
+import com.indusjs.fleet.core.error.toErrorInfo
 
 /**
  * Common UI Components for consistent look and feel across the app.
@@ -54,35 +58,53 @@ fun LoadingContent(
 
 /**
  * Error content with retry button.
+ * Uses ErrorHandler to display user-friendly error messages based on screen context.
+ *
+ * @param error The raw error message from the API/exception
+ * @param screenContext The screen context for context-aware error messages
+ * @param onRetry Callback when retry button is clicked
+ * @param modifier Modifier for the container
  */
 @Composable
 fun ErrorContent(
     error: String,
+    screenContext: ErrorHandler.ScreenContext = ErrorHandler.ScreenContext.GENERIC,
     onRetry: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val errorInfo = error.toErrorInfo(screenContext)
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 32.dp)
         ) {
             Text(
-                text = "⚠️",
+                text = errorInfo.icon,
                 style = MaterialTheme.typography.displayMedium
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = error,
-                style = MaterialTheme.typography.bodyLarge,
+                text = errorInfo.title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = errorInfo.message,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (onRetry != null) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 Button(onClick = onRetry) {
-                    Text("Retry")
+                    Text(errorInfo.actionLabel)
                 }
             }
         }

@@ -2,24 +2,21 @@ package com.indusjs.fleet.presentation.dashboard
 
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
-import com.indusjs.fleet.domain.entity.dashboard.Alert
-import com.indusjs.fleet.domain.entity.dashboard.AlertType
-import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
-import com.indusjs.fleet.domain.repository.user.UserRepository
+import com.indusjs.fleet.domain.repository.dashboard.DashboardRepository
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.Effect
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.Intent
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.State
 import dev.zacsweers.metro.Inject
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for the Dashboard screen implementing MVI pattern.
+ * Supports offline mode by preserving cached data when errors occur.
  */
 @Inject
 class DashboardViewModel(
     private val dispatcherProvider: DispatcherProvider,
-    private val userRepository: UserRepository
+    private val dashboardRepository: DashboardRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     init {
@@ -36,61 +33,97 @@ class DashboardViewModel(
             is Intent.NavigateToMaps -> sendEffect(Effect.NavigateToMaps)
             is Intent.MarkAlertAsRead -> markAlertAsRead(intent.alertId)
             is Intent.DismissAlert -> dismissAlert(intent.alertId)
+            is Intent.DismissOfflineBanner -> dismissOfflineBanner()
+            is Intent.RetryConnection -> retryConnection()
         }
     }
 
     private suspend fun loadDashboard() {
-        updateState { copy(isLoading = true, error = null) }
+        // Check current state BEFORE starting the load
+        val hasExistingData = state.value.hasCachedData
+
+        // Only show full loading spinner on initial load (no cached data)
+        if (!hasExistingData) {
+            updateState { copy(isLoading = true, error = null, isOffline = false) }
+        }
 
         withContext(dispatcherProvider.io) {
             try {
-                // Load user profile to get user name
-                loadUserProfile()
+                val result = dashboardRepository.getDashboard()
 
-                // TODO: Replace with actual repository call
-                delay(500) // Simulate network delay
-
-                // Using a simple timestamp for mock data
-                val currentTime = 1734700000000L // Dec 20, 2024 approximate
-                val mockStats = DashboardStats(
-                    totalVehicles = 45,
-                    activeVehicles = 38,
-                    totalDrivers = 52,
-                    activeDrivers = 41,
-                    ongoingTrips = 12,
-                    completedTripsToday = 28,
-                    totalDistance = 1245.5,
-                    fuelConsumption = 342.8,
-                    alerts = listOf(
-                        Alert(
-                            id = "1",
-                            title = "Maintenance Due",
-                            message = "Vehicle TRK-001 is due for maintenance",
-                            type = AlertType.MAINTENANCE,
-                            timestamp = currentTime
-                        ),
-                        Alert(
-                            id = "2",
-                            title = "Low Fuel",
-                            message = "Vehicle TRK-005 has low fuel level",
-                            type = AlertType.FUEL_LOW,
-                            timestamp = currentTime - 3600000
-                        )
-                    )
+                result.fold(
+                    onSuccess = { dashboardData ->
+                        updateState {
+                            copy(
+                                isLoading = false,
+                                isRefreshing = false,
+                                stats = dashboardData.stats,
+                                userName = dashboardData.userInfo.fullName,
+                                userRole = dashboardData.userInfo.role.replaceFirstChar {
+                                    if (it.isLowerCase()) it.titlecase() else it.toString()
+                                },
+                                hasCachedData = true,
+                                isOffline = false,
+                                error = null,
+                                lastUpdated = dashboardData.stats.lastUpdated ?: getCurrentTimestamp()
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        // Re-check current state as it might have changed
+                        val currentHasCachedData = state.value.hasCachedData
+                        handleLoadError(currentHasCachedData, error.message)
+                    }
                 )
-
-                updateState { copy(isLoading = false, stats = mockStats) }
             } catch (e: Exception) {
-                updateState { copy(isLoading = false, error = e.message ?: "Failed to load dashboard") }
-                sendEffect(Effect.ShowSnackbar("Failed to load dashboard"))
+                // Re-check current state as it might have changed
+                val currentHasCachedData = state.value.hasCachedData
+                handleLoadError(currentHasCachedData, e.message)
+            }
+        }
+    }
+
+    private fun handleLoadError(hasCachedData: Boolean, errorMessage: String?) {
+        if (hasCachedData) {
+            // We have cached data - show it with offline banner
+            // IMPORTANT: Don't clear stats, userName, userRole - keep the cached values
+            updateState {
+                copy(
+                    isLoading = false,
+                    isRefreshing = false,
+                    isOffline = true,
+                    error = errorMessage ?: "Connection failed"
+                    // stats, userName, userRole remain unchanged (cached)
+                )
+            }
+            sendEffect(Effect.ShowSnackbar("Offline mode - showing cached data"))
+        } else {
+            // No cached data - show full error screen
+            updateState {
+                copy(
+                    isLoading = false,
+                    isRefreshing = false,
+                    isOffline = false,
+                    error = errorMessage ?: "Failed to load dashboard"
+                )
             }
         }
     }
 
     private suspend fun refreshDashboard() {
-        updateState { copy(isRefreshing = true) }
+        // Don't show loading spinner, just show refreshing indicator
+        updateState { copy(isRefreshing = true, error = null) }
         loadDashboard()
-        updateState { copy(isRefreshing = false) }
+    }
+
+    private fun dismissOfflineBanner() {
+        updateState { copy(isOffline = false, error = null) }
+    }
+
+    private suspend fun retryConnection() {
+        // Show refreshing state while retrying
+        updateState { copy(isRefreshing = true, isOffline = false, error = null) }
+        loadDashboard()
     }
 
     private fun markAlertAsRead(alertId: String) {
@@ -116,31 +149,7 @@ class DashboardViewModel(
         sendEffect(Effect.ShowSnackbar("Alert dismissed"))
     }
 
-    /**
-     * Load user profile to get user name and role for display.
-     */
-    private suspend fun loadUserProfile() {
-        try {
-            val result = userRepository.getProfile()
-            result.fold(
-                onSuccess = { profile ->
-                    updateState {
-                        copy(
-                            userName = profile.user.fullName,
-                            userRole = profile.user.role.name.lowercase()
-                                .replaceFirstChar { it.uppercase() }
-                        )
-                    }
-                },
-                onFailure = {
-                    // If profile fetch fails, use default values
-                    updateState { copy(userName = "User", userRole = "") }
-                }
-            )
-        } catch (e: Exception) {
-            // If profile fetch fails, use default values
-            updateState { copy(userName = "User", userRole = "") }
-        }
+    private fun getCurrentTimestamp(): String {
+        return "Just now"
     }
 }
-

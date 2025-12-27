@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.error.ErrorHandler
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.vehicle.DocumentTypeDetail
@@ -285,6 +286,7 @@ fun VehicleDetailScreen(
             state.error != null && state.vehicle == null -> {
                 ErrorContent(
                     error = state.error!!,
+                    screenContext = ErrorHandler.ScreenContext.VEHICLE_DETAIL,
                     onRetry = { viewModel.sendIntent(VehicleDetailContract.Intent.Refresh) }
                 )
             }
@@ -654,7 +656,11 @@ private fun TripsTabContent(
             LoadingContent(message = "Loading trips...")
         }
         error != null && tripsList.isEmpty() -> {
-            ErrorContent(error = error, onRetry = onRefresh)
+            ErrorContent(
+                error = error,
+                screenContext = ErrorHandler.ScreenContext.TRIPS,
+                onRetry = onRefresh
+            )
         }
         tripsList.isEmpty() -> {
             // Empty state
@@ -899,7 +905,11 @@ private fun RouteTabContent(
             LoadingContent(message = "Loading route...")
         }
         error != null && routeInfo == null -> {
-            ErrorContent(error = error, onRetry = onRefresh)
+            ErrorContent(
+                error = error,
+                screenContext = ErrorHandler.ScreenContext.VEHICLE_DETAIL,
+                onRetry = onRefresh
+            )
         }
         else -> {
             val hasActiveTrip = routeInfo?.hasActiveTrip ?: false
@@ -1223,7 +1233,11 @@ private fun DocumentsTabContent(
             LoadingContent(message = "Loading documents...")
         }
         error != null && documentsData == null -> {
-            ErrorContent(error = error, onRetry = onRefresh)
+            ErrorContent(
+                error = error,
+                screenContext = ErrorHandler.ScreenContext.DOCUMENTS,
+                onRetry = onRefresh
+            )
         }
         else -> {
             val summary = documentsData?.summary

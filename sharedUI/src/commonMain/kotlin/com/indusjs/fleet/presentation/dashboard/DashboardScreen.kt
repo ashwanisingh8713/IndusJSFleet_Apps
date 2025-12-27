@@ -15,11 +15,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.error.ErrorHandler
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.dashboard.Alert
+import com.indusjs.fleet.domain.entity.dashboard.AlertPriority
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
+import com.indusjs.fleet.domain.entity.dashboard.DocumentStats
+import com.indusjs.fleet.domain.entity.dashboard.LiveStatus
+import com.indusjs.fleet.domain.entity.dashboard.OngoingTrip
+import com.indusjs.fleet.domain.entity.dashboard.TeamStats
 import com.indusjs.fleet.theme.isAppInDarkTheme
 import com.indusjs.fleet.theme.rememberThemeToggle
 import indusjsfleet.sharedui.generated.resources.*
@@ -152,31 +158,53 @@ fun DashboardScreen(
                     .padding(paddingValues)
             ) {
                 when {
-                    state.isLoading -> {
-                        // Using reusable LoadingContent component
+                    // Show loading only on initial load (no cached data yet)
+                    state.isLoading && !state.hasCachedData -> {
                         LoadingContent(message = "Loading dashboard...")
-                }
-                state.error != null -> {
-                    // Using reusable ErrorContent component
-                    ErrorContent(
-                        error = state.error!!,
-                        onRetry = { viewModel.sendIntent(DashboardContract.Intent.LoadDashboard) }
-                    )
-                }
-                else -> {
-                    DashboardContent(
-                        stats = state.stats,
-                        onVehiclesClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToVehicles) },
-                        onDriversClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToDrivers) },
-                        onTripsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToTrips) },
-                        onMapsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToMaps) },
-                        onAlertDismiss = { alertId ->
-                            viewModel.sendIntent(DashboardContract.Intent.DismissAlert(alertId))
+                    }
+                    // Show error screen ONLY if we have no cached data AND have an error AND not offline
+                    state.error != null && !state.hasCachedData && !state.isOffline -> {
+                        ErrorContent(
+                            error = state.error!!,
+                            screenContext = ErrorHandler.ScreenContext.DASHBOARD,
+                            onRetry = { viewModel.sendIntent(DashboardContract.Intent.LoadDashboard) }
+                        )
+                    }
+                    // Show content (fresh or cached) - this includes offline mode with cached data
+                    else -> {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            // Offline banner when showing cached data due to network error
+                            if (state.isOffline && state.hasCachedData) {
+                                OfflineBanner(
+                                    message = state.error ?: "You're offline",
+                                    lastUpdated = state.lastUpdated,
+                                    onRetry = { viewModel.sendIntent(DashboardContract.Intent.RetryConnection) },
+                                    onDismiss = { viewModel.sendIntent(DashboardContract.Intent.DismissOfflineBanner) }
+                                )
+                            }
+
+                            // Show refreshing indicator at top
+                            if (state.isRefreshing) {
+                                LinearProgressIndicator(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+
+                            DashboardContent(
+                                stats = state.stats,
+                                onVehiclesClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToVehicles) },
+                                onDriversClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToDrivers) },
+                                onTripsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToTrips) },
+                                onMapsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToMaps) },
+                                onAlertDismiss = { alertId ->
+                                    viewModel.sendIntent(DashboardContract.Intent.DismissAlert(alertId))
+                                }
+                            )
                         }
-                    )
+                    }
                 }
             }
-        }
         }
     }
 }
@@ -574,10 +602,34 @@ private fun DashboardContent(
                     )
                     SummaryContent(
                         completedTrips = stats.completedTripsToday,
-                        totalDistance = stats.totalDistance,
+                        totalDistance = stats.totalDistanceToday,
                         fuelConsumption = stats.fuelConsumption
                     )
                 }
+            }
+        }
+
+        // Live Status Section - Show ongoing trips if any
+        if (stats.liveStatus.ongoingTrips.isNotEmpty()) {
+            item {
+                LiveStatusSection(
+                    liveStatus = stats.liveStatus,
+                    onMapsClick = onMapsClick
+                )
+            }
+        }
+
+        // Team Stats Section (for Owners)
+        stats.teamStats?.let { teamStats ->
+            item {
+                TeamStatsSection(teamStats = teamStats)
+            }
+        }
+
+        // Document Stats Section (for Owner/Manager)
+        stats.documentStats?.let { documentStats ->
+            item {
+                DocumentStatsSection(documentStats = documentStats)
             }
         }
 
@@ -861,6 +913,14 @@ private fun AlertCard(
         AlertType.GEOFENCE_VIOLATION -> MaterialTheme.colorScheme.secondary
         AlertType.DRIVER_BEHAVIOR -> MaterialTheme.colorScheme.secondary
         AlertType.SYSTEM -> MaterialTheme.colorScheme.primary
+        AlertType.DOCUMENT_EXPIRY -> MaterialTheme.colorScheme.error
+        AlertType.LICENSE_EXPIRY -> MaterialTheme.colorScheme.error
+    }
+
+    val alertIcon = when (alert.type) {
+        AlertType.DOCUMENT_EXPIRY -> "📄"
+        AlertType.LICENSE_EXPIRY -> "📋"
+        else -> "⚠️"
     }
 
     Card(
@@ -888,7 +948,7 @@ private fun AlertCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "⚠️",
+                    text = alertIcon,
                     style = MaterialTheme.typography.titleSmall
                 )
             }
@@ -934,6 +994,21 @@ private fun AlertCardCompact(
         AlertType.GEOFENCE_VIOLATION -> MaterialTheme.colorScheme.secondary
         AlertType.DRIVER_BEHAVIOR -> MaterialTheme.colorScheme.secondary
         AlertType.SYSTEM -> MaterialTheme.colorScheme.primary
+        AlertType.DOCUMENT_EXPIRY -> MaterialTheme.colorScheme.error
+        AlertType.LICENSE_EXPIRY -> MaterialTheme.colorScheme.error
+    }
+
+    val alertIcon = when (alert.type) {
+        AlertType.DOCUMENT_EXPIRY -> "📄"
+        AlertType.LICENSE_EXPIRY -> "📋"
+        else -> "⚠️"
+    }
+
+    // Priority-based border color
+    val priorityColor = when (alert.priority) {
+        AlertPriority.CRITICAL -> MaterialTheme.colorScheme.error
+        AlertPriority.WARNING -> MaterialTheme.colorScheme.tertiary
+        AlertPriority.INFO -> MaterialTheme.colorScheme.primary
     }
 
     Row(
@@ -956,7 +1031,7 @@ private fun AlertCardCompact(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "⚠️",
+                text = alertIcon,
                 style = MaterialTheme.typography.labelMedium
             )
         }
@@ -1116,6 +1191,447 @@ private fun SummaryItem(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
+    }
+}
+
+/**
+ * Live Status Section - Shows ongoing trips and live tracking info
+ */
+@Composable
+private fun LiveStatusSection(
+    liveStatus: LiveStatus,
+    onMapsClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "🔴",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Live Status",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                TextButton(onClick = onMapsClick) {
+                    Text("View Map")
+                }
+            }
+
+            // Summary row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${liveStatus.liveTrackingVehicles}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Live Vehicles",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${liveStatus.ongoingTripsCount}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                    Text(
+                        text = "Ongoing Trips",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${liveStatus.driversOnTrip}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = "Drivers On Trip",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Ongoing trips list (show first 3)
+            if (liveStatus.ongoingTrips.isNotEmpty()) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Text(
+                    text = "Active Trips",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                liveStatus.ongoingTrips.take(3).forEach { trip ->
+                    OngoingTripItem(trip = trip)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Individual ongoing trip item
+ */
+@Composable
+private fun OngoingTripItem(trip: OngoingTrip) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Vehicle icon
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(8.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "🚛",
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = trip.vehicleRegistration,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "${trip.startLocation} → ${trip.endLocation}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = MaterialTheme.colorScheme.tertiaryContainer
+            ) {
+                Text(
+                    text = trip.status.replace("_", " ").uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = trip.driverName,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * Team Stats Section (Owner only)
+ */
+@Composable
+private fun TeamStatsSection(teamStats: TeamStats) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "👥",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Team Overview",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                TeamStatItem(
+                    label = "Managers",
+                    value = teamStats.totalManagers,
+                    emoji = "👔"
+                )
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(40.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+                TeamStatItem(
+                    label = "Supervisors",
+                    value = teamStats.totalSupervisors,
+                    emoji = "👷"
+                )
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(40.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+                TeamStatItem(
+                    label = "Total",
+                    value = teamStats.totalMembers,
+                    emoji = "👥"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TeamStatItem(
+    label: String,
+    value: Int,
+    emoji: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Text(
+            text = emoji,
+            style = MaterialTheme.typography.titleMedium
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+/**
+ * Document Stats Section (Owner/Manager)
+ */
+@Composable
+private fun DocumentStatsSection(documentStats: DocumentStats) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "📁",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Document Status",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                DocumentStatItem(
+                    label = "Total",
+                    value = documentStats.totalDocuments,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(40.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+                DocumentStatItem(
+                    label = "Expiring",
+                    value = documentStats.expiringDocuments,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(40.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+                DocumentStatItem(
+                    label = "Expired",
+                    value = documentStats.expiredDocuments,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DocumentStatItem(
+    label: String,
+    value: Int,
+    color: androidx.compose.ui.graphics.Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    ) {
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+/**
+ * Offline banner shown when displaying cached data due to network error.
+ */
+@Composable
+private fun OfflineBanner(
+    message: String,
+    lastUpdated: String?,
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.errorContainer,
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Offline icon
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(8.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "📡",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Offline Mode",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Text(
+                    text = if (lastUpdated != null) "Last updated: $lastUpdated" else "Showing cached data",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                )
+            }
+            TextButton(
+                onClick = onRetry,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Text(
+                    text = "Retry",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_close),
+                    contentDescription = "Dismiss",
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
     }
 }
 

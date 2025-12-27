@@ -14,6 +14,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.error.ErrorHandler
+import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.domain.entity.maps.MapVehicle
 import com.indusjs.fleet.domain.entity.maps.MapVehicleStatus
 import kotlinx.coroutines.delay
@@ -103,8 +105,8 @@ fun MapsScreen(
                 state.error != null -> {
                     ErrorContent(
                         error = state.error!!,
-                        onRetry = { viewModel.sendIntent(MapsContract.Intent.LoadMapData) },
-                        modifier = Modifier.fillMaxSize()
+                        screenContext = ErrorHandler.ScreenContext.MAPS,
+                        onRetry = { viewModel.sendIntent(MapsContract.Intent.LoadMapData) }
                     )
                 }
                 else -> {
@@ -363,32 +365,4 @@ private fun VehicleStatusIndicator(status: MapVehicleStatus) {
             .clip(CircleShape)
             .background(color)
     )
-}
-
-@Composable
-private fun ErrorContent(
-    error: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "❌",
-            style = MaterialTheme.typography.displayMedium
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
-    }
 }

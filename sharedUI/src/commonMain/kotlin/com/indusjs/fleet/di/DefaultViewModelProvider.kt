@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.auth.AuthenticationManager
 import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
+import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSourceImpl
@@ -14,11 +15,13 @@ import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSourceImpl
 import com.indusjs.fleet.data.mapper.driver.DriverMapper
 import com.indusjs.fleet.data.mapper.trip.TripMapper
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
+import com.indusjs.fleet.data.repository.dashboard.DashboardRepositoryImpl
 import com.indusjs.fleet.data.repository.driver.DriverRepositoryImpl
 import com.indusjs.fleet.data.repository.team.TeamRepositoryImpl
 import com.indusjs.fleet.data.repository.trip.TripRepositoryImpl
 import com.indusjs.fleet.data.repository.user.UserRepositoryImpl
 import com.indusjs.fleet.data.repository.vehicle.VehicleRepositoryImpl
+import com.indusjs.fleet.domain.repository.dashboard.DashboardRepository
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
@@ -163,6 +166,12 @@ class DefaultViewModelProvider : ViewModelProvider {
         TeamRepositoryImpl(teamRemoteDataSource, userLocalDataSource)
     }
 
+    // Lazy-initialized Dashboard feature dependencies
+    private val dashboardRemoteDataSource by lazy { DashboardRemoteDataSourceImpl(httpClient) }
+    private val dashboardRepository: DashboardRepository by lazy {
+        DashboardRepositoryImpl(dashboardRemoteDataSource, userLocalDataSource)
+    }
+
     // Auth ViewModels
     override fun loginViewModel() = LoginViewModel(dispatcherProvider, userRepository)
     override fun signUpViewModel() = SignUpViewModel(dispatcherProvider, userRepository)
@@ -173,7 +182,7 @@ class DefaultViewModelProvider : ViewModelProvider {
     override fun changePasswordViewModel() = ChangePasswordViewModel(dispatcherProvider, userRepository)
 
     // Feature ViewModels
-    override fun dashboardViewModel() = DashboardViewModel(dispatcherProvider, userRepository)
+    override fun dashboardViewModel() = DashboardViewModel(dispatcherProvider, dashboardRepository)
 
     override fun vehiclesViewModel() = VehiclesViewModel(
         dispatcherProvider,
