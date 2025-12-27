@@ -1,0 +1,220 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "61efe22788ff30b51ccb8798da8a10e2",
+    "entities": [
+      {
+        "tableName": "dashboard_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `userId` INTEGER NOT NULL, `firstName` TEXT NOT NULL, `lastName` TEXT NOT NULL, `userRole` TEXT NOT NULL, `email` TEXT NOT NULL, `totalVehicles` INTEGER NOT NULL, `activeVehicles` INTEGER NOT NULL, `maintenanceVehicles` INTEGER NOT NULL, `inactiveVehicles` INTEGER NOT NULL, `totalDrivers` INTEGER NOT NULL, `activeDrivers` INTEGER NOT NULL, `driversOnTrip` INTEGER NOT NULL, `driversOnLeave` INTEGER NOT NULL, `totalTrips` INTEGER NOT NULL, `ongoingTrips` INTEGER NOT NULL, `plannedTrips` INTEGER NOT NULL, `completedTrips` INTEGER NOT NULL, `totalDistance` REAL NOT NULL, `completedTripsToday` INTEGER NOT NULL, `totalDistanceToday` REAL NOT NULL, `fuelConsumption` REAL NOT NULL, `activeVehiclesNow` INTEGER NOT NULL, `newTripsToday` INTEGER NOT NULL, `alertsCount` INTEGER NOT NULL, `alertsJson` TEXT NOT NULL, `totalAlerts` INTEGER NOT NULL, `quickActionsJson` TEXT NOT NULL, `liveStatusJson` TEXT NOT NULL, `teamStatsJson` TEXT, `documentStatsJson` TEXT, `lastUpdated` TEXT, `cachedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstName",
+            "columnName": "firstName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastName",
+            "columnName": "lastName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userRole",
+            "columnName": "userRole",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalVehicles",
+            "columnName": "totalVehicles",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeVehicles",
+            "columnName": "activeVehicles",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maintenanceVehicles",
+            "columnName": "maintenanceVehicles",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inactiveVehicles",
+            "columnName": "inactiveVehicles",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalDrivers",
+            "columnName": "totalDrivers",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeDrivers",
+            "columnName": "activeDrivers",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "driversOnTrip",
+            "columnName": "driversOnTrip",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "driversOnLeave",
+            "columnName": "driversOnLeave",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalTrips",
+            "columnName": "totalTrips",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ongoingTrips",
+            "columnName": "ongoingTrips",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plannedTrips",
+            "columnName": "plannedTrips",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedTrips",
+            "columnName": "completedTrips",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalDistance",
+            "columnName": "totalDistance",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedTripsToday",
+            "columnName": "completedTripsToday",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalDistanceToday",
+            "columnName": "totalDistanceToday",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fuelConsumption",
+            "columnName": "fuelConsumption",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeVehiclesNow",
+            "columnName": "activeVehiclesNow",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "newTripsToday",
+            "columnName": "newTripsToday",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alertsCount",
+            "columnName": "alertsCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alertsJson",
+            "columnName": "alertsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalAlerts",
+            "columnName": "totalAlerts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quickActionsJson",
+            "columnName": "quickActionsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "liveStatusJson",
+            "columnName": "liveStatusJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "teamStatsJson",
+            "columnName": "teamStatsJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "documentStatsJson",
+            "columnName": "documentStatsJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cachedAt",
+            "columnName": "cachedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '61efe22788ff30b51ccb8798da8a10e2')"
+    ]
+  }
+}

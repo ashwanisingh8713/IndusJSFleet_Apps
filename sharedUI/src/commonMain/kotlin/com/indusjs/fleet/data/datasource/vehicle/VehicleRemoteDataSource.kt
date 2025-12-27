@@ -16,7 +16,6 @@ import com.indusjs.fleet.data.model.vehicle.VehicleTripsDto
 import co.touchlab.kermit.Logger
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
@@ -500,6 +499,7 @@ class VehicleRemoteDataSourceImpl(
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
             if (response.status.isSuccess()) {
+                @Suppress("DEPRECATION")
                 val bytes = response.readBytes()
                 log.d { "Downloaded document: ${bytes.size} bytes" }
                 Result.Success(bytes)

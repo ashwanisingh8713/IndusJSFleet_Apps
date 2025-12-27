@@ -32,6 +32,7 @@ data class FilePickerRequest(
  * - Automatic back stack management
  * - System back button/gesture handling (Android & iOS)
  * - Session expiry handling with auto-redirect to login
+ * - Offline caching with Settings-based storage
  */
 @Preview
 @Composable

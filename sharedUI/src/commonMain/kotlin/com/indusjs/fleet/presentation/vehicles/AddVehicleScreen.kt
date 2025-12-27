@@ -73,7 +73,6 @@ fun AddVehicleScreen(
                     // Show the upload info dialog first
                     documentToUpload = effect.type
                 }
-                else -> {}
             }
         }
     }

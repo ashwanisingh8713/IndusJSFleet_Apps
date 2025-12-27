@@ -1,11 +1,17 @@
 package com.indusjs.fleet.di
 
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.fleet.data.database.dao.DashboardDao
+import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSource
+import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSource
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
+import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
 import com.indusjs.fleet.data.repository.dashboard.DashboardRepositoryImpl
 import com.indusjs.fleet.domain.repository.dashboard.DashboardRepository
+import com.indusjs.fleet.domain.usecase.dashboard.GetDashboardUseCase
+import com.indusjs.fleet.domain.usecase.dashboard.RefreshDashboardUseCase
 import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
 import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.DependencyGraph
@@ -19,29 +25,28 @@ import io.ktor.client.HttpClient
 abstract class DashboardFeatureScope private constructor()
 
 /**
- * Dependency graph for the Dashboard feature.
- * Contains all dependencies needed for dashboard operations.
+ * Dependency graph for the Dashboard feature with offline-first support.
  *
- * Usage:
- * ```kotlin
- * val dashboardGraph = DashboardFeatureGraph.Factory::class.create(
- *     httpClient = AppDependencies.httpClient,
- *     dispatcherProvider = AppDependencies.dispatcherProvider,
- *     userLocalDataSource = userGraph.userLocalDataSource
- * )
- * ```
+ * Provides:
+ * - Remote data source for API calls
+ * - Local data source for Settings-based caching
+ * - Repository with offline-first strategy
+ * - Use cases for business logic
+ * - ViewModel for UI state management
  */
 @SingleIn(DashboardFeatureScope::class)
 @DependencyGraph
 abstract class DashboardFeatureGraph {
 
     @Binds
-    abstract fun bindDashboardRemoteDataSource(impl: DashboardRemoteDataSourceImpl): DashboardRemoteDataSource
+    abstract fun bindRemoteDataSource(impl: DashboardRemoteDataSourceImpl): DashboardRemoteDataSource
 
     @Binds
-    abstract fun bindDashboardRepository(impl: DashboardRepositoryImpl): DashboardRepository
+    abstract fun bindLocalDataSource(impl: DashboardLocalDataSourceImpl): DashboardLocalDataSource
 
-    abstract val dashboardRepository: DashboardRepository
+    @Binds
+    abstract fun bindRepository(impl: DashboardRepositoryImpl): DashboardRepository
+
     abstract val dashboardViewModel: DashboardViewModel
     abstract val dispatcherProvider: DispatcherProvider
 
@@ -50,7 +55,9 @@ abstract class DashboardFeatureGraph {
         fun create(
             @Provides httpClient: HttpClient,
             @Provides dispatcherProvider: DispatcherProvider,
-            @Provides userLocalDataSource: UserLocalDataSource
+            @Provides userLocalDataSource: UserLocalDataSource,
+            @Provides dashboardDao: DashboardDao,
+            @Provides cacheMapper: DashboardCacheMapper
         ): DashboardFeatureGraph
     }
 }

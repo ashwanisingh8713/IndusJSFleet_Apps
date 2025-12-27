@@ -4,6 +4,8 @@ import com.indusjs.fleet.core.auth.AuthenticationManager
 import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
+import com.indusjs.fleet.data.database.FleetDatabase
+import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
@@ -12,6 +14,7 @@ import com.indusjs.fleet.data.datasource.trip.TripRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSourceImpl
+import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
 import com.indusjs.fleet.data.mapper.driver.DriverMapper
 import com.indusjs.fleet.data.mapper.trip.TripMapper
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
@@ -27,6 +30,8 @@ import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
+import com.indusjs.fleet.domain.usecase.dashboard.GetDashboardUseCase
+import com.indusjs.fleet.domain.usecase.dashboard.RefreshDashboardUseCase
 import com.indusjs.fleet.domain.usecase.driver.CreateDriverUseCase
 import com.indusjs.fleet.domain.usecase.driver.DeleteDriverUseCase
 import com.indusjs.fleet.domain.usecase.driver.GetDriverByIdUseCase
@@ -65,6 +70,7 @@ import com.indusjs.fleet.presentation.vehicles.VehiclesViewModel
 import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailViewModel
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
+import kotlinx.serialization.json.Json
 
 /**
  * Development/Stub implementation of ViewModelProvider.
@@ -80,6 +86,15 @@ class DefaultViewModelProvider : ViewModelProvider {
     // Lazy-initialized core dependencies
     private val httpClient: HttpClient by lazy { HttpClientProvider.create() }
     private val settings: Settings by lazy { Settings() }
+    private val json: Json by lazy {
+        Json {
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+        }
+    }
+
+    // Lazy-initialized database for offline caching
+    private val database: FleetDatabase by lazy { FleetDatabase(settings, json) }
 
     init {
         // Register session clear callback with AuthenticationManager
@@ -166,11 +181,17 @@ class DefaultViewModelProvider : ViewModelProvider {
         TeamRepositoryImpl(teamRemoteDataSource, userLocalDataSource)
     }
 
-    // Lazy-initialized Dashboard feature dependencies
+    // Lazy-initialized Dashboard feature dependencies with Settings-based caching
     private val dashboardRemoteDataSource by lazy { DashboardRemoteDataSourceImpl(httpClient) }
-    private val dashboardRepository: DashboardRepository by lazy {
-        DashboardRepositoryImpl(dashboardRemoteDataSource, userLocalDataSource)
+    private val dashboardCacheMapper by lazy { DashboardCacheMapper(json) }
+    private val dashboardLocalDataSource by lazy {
+        DashboardLocalDataSourceImpl(database.dashboardDao(), dashboardCacheMapper)
     }
+    private val dashboardRepository: DashboardRepository by lazy {
+        DashboardRepositoryImpl(dashboardRemoteDataSource, dashboardLocalDataSource, userLocalDataSource)
+    }
+    private val getDashboardUseCase by lazy { GetDashboardUseCase(dashboardRepository) }
+    private val refreshDashboardUseCase by lazy { RefreshDashboardUseCase(dashboardRepository) }
 
     // Auth ViewModels
     override fun loginViewModel() = LoginViewModel(dispatcherProvider, userRepository)
@@ -182,7 +203,11 @@ class DefaultViewModelProvider : ViewModelProvider {
     override fun changePasswordViewModel() = ChangePasswordViewModel(dispatcherProvider, userRepository)
 
     // Feature ViewModels
-    override fun dashboardViewModel() = DashboardViewModel(dispatcherProvider, dashboardRepository)
+    override fun dashboardViewModel() = DashboardViewModel(
+        dispatcherProvider,
+        getDashboardUseCase,
+        refreshDashboardUseCase
+    )
 
     override fun vehiclesViewModel() = VehiclesViewModel(
         dispatcherProvider,
