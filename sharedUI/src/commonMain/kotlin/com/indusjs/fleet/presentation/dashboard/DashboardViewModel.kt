@@ -3,13 +3,22 @@ package com.indusjs.fleet.presentation.dashboard
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.result.Result
+import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
+import com.indusjs.fleet.domain.entity.dashboard.CostOverview
+import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
+import com.indusjs.fleet.domain.entity.dashboard.PendingPayment
+import com.indusjs.fleet.domain.entity.dashboard.TripSummary
+import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
+import com.indusjs.fleet.domain.usecase.dashboard.GetCostOverviewUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetDashboardUseCase
+import com.indusjs.fleet.domain.usecase.dashboard.GetPendingPaymentsUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.RefreshDashboardUseCase
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.Effect
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.Intent
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.State
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -19,7 +28,9 @@ import kotlinx.coroutines.withContext
 class DashboardViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val getDashboardUseCase: GetDashboardUseCase,
-    private val refreshDashboardUseCase: RefreshDashboardUseCase
+    private val refreshDashboardUseCase: RefreshDashboardUseCase,
+    private val getCostOverviewUseCase: GetCostOverviewUseCase? = null,
+    private val getPendingPaymentsUseCase: GetPendingPaymentsUseCase? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     // Track if we've received fresh data from network
@@ -41,17 +52,21 @@ class DashboardViewModel(
             is Intent.DismissAlert -> dismissAlert(intent.alertId)
             is Intent.DismissOfflineBanner -> dismissOfflineBanner()
             is Intent.RetryConnection -> retryConnection()
+
+            // New intents
+            is Intent.ChangeCostFilter -> changeCostFilter(intent.filter)
+            is Intent.LoadCostOverview -> loadCostOverview()
+            is Intent.LoadPendingPayments -> loadPendingPayments()
+            is Intent.NavigateToAddTripCost -> sendEffect(Effect.NavigateToAddTripCost)
+            is Intent.NavigateToAddVehicleCost -> sendEffect(Effect.NavigateToAddVehicleCost)
+            is Intent.NavigateToNotifications -> sendEffect(Effect.NavigateToNotifications)
         }
     }
 
     /**
      * Load dashboard with offline-first strategy.
-     *
-     * Important: Don't show offline banner just because initial data came from cache.
-     * Only show offline banner when network fetch fails after we already have cache.
      */
     private suspend fun loadDashboard() {
-        // Reset state tracking for new load
         hasReceivedFreshData = false
         var hasCachedEmission = false
 
@@ -67,9 +82,33 @@ class DashboardViewModel(
                     is Result.Success -> {
                         val data = result.data
 
+                        // Extract vehicle and driver status from fleet overview
+                        val vehicleStatus = VehicleStatusSummary(
+                            onTripPlanned = data.stats.plannedTrips,
+                            onTripInProgress = data.stats.ongoingTrips,
+                            underMaintenance = data.stats.maintenanceVehicles,
+                            available = data.stats.activeVehicles - data.stats.ongoingTrips,
+                            inactive = data.stats.inactiveVehicles,
+                            total = data.stats.totalVehicles
+                        )
+
+                        val driverStatus = DriverStatusSummary(
+                            onTripPlanned = 0, // Will be calculated from ongoing trips
+                            onTripInProgress = data.stats.driversOnTrip,
+                            available = data.stats.activeDrivers - data.stats.driversOnTrip,
+                            onLeave = data.stats.driversOnLeave,
+                            total = data.stats.totalDrivers
+                        )
+
+                        val tripSummary = TripSummary(
+                            inProgress = data.stats.ongoingTrips,
+                            planned = data.stats.plannedTrips,
+                            delayed = 0, // Need API support
+                            completed = data.stats.completedTrips,
+                            total = data.stats.totalTrips
+                        )
+
                         if (data.isFromCache) {
-                            // This is cached data - show it but don't set offline yet
-                            // We'll only show offline if network fetch fails after this
                             hasCachedEmission = true
                             updateState {
                                 copy(
@@ -81,13 +120,15 @@ class DashboardViewModel(
                                         if (it.isLowerCase()) it.titlecase() else it.toString()
                                     },
                                     hasCachedData = true,
-                                    // Don't change isOffline here - wait for network result
                                     error = null,
-                                    lastUpdated = data.stats.lastUpdated ?: formatCacheTime(data.cachedAt)
+                                    lastUpdated = data.stats.lastUpdated ?: formatCacheTime(data.cachedAt),
+                                    vehicleStatus = vehicleStatus,
+                                    driverStatus = driverStatus,
+                                    tripSummary = tripSummary,
+                                    notificationCount = data.stats.totalAlerts
                                 )
                             }
                         } else {
-                            // This is fresh data from network - we're definitely online
                             hasReceivedFreshData = true
                             updateState {
                                 copy(
@@ -99,11 +140,19 @@ class DashboardViewModel(
                                         if (it.isLowerCase()) it.titlecase() else it.toString()
                                     },
                                     hasCachedData = true,
-                                    isOffline = false, // Definitely online - got fresh data
+                                    isOffline = false,
                                     error = null,
-                                    lastUpdated = data.stats.lastUpdated ?: "Just now"
+                                    lastUpdated = data.stats.lastUpdated ?: "Just now",
+                                    vehicleStatus = vehicleStatus,
+                                    driverStatus = driverStatus,
+                                    tripSummary = tripSummary,
+                                    notificationCount = data.stats.totalAlerts
                                 )
                             }
+
+                            // Load additional data after main dashboard loads
+                            loadCostOverview()
+                            loadPendingPayments()
                         }
                     }
                     is Result.Error -> {
@@ -114,6 +163,80 @@ class DashboardViewModel(
     }
 
     /**
+     * Load cost overview with current filter.
+     */
+    private suspend fun loadCostOverview() {
+        val useCase = getCostOverviewUseCase ?: return
+
+        updateState { copy(isLoadingCostOverview = true, costOverviewError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = useCase(state.value.selectedCostFilter)) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isLoadingCostOverview = false,
+                            costOverview = result.data,
+                            costOverviewError = null
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingCostOverview = false,
+                            costOverviewError = result.message ?: "Failed to load cost overview"
+                        )
+                    }
+                }
+                is Result.Loading -> { /* ignore */ }
+            }
+        }
+    }
+
+    /**
+     * Load pending payments.
+     */
+    private suspend fun loadPendingPayments() {
+        val useCase = getPendingPaymentsUseCase ?: return
+
+        updateState { copy(isLoadingPendingPayments = true, pendingPaymentsError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = useCase()) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isLoadingPendingPayments = false,
+                            pendingPayments = result.data.payments,
+                            totalPendingAmount = result.data.totalPending,
+                            pendingPaymentsCount = result.data.totalCount,
+                            pendingPaymentsError = null
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingPendingPayments = false,
+                            pendingPaymentsError = result.message ?: "Failed to load pending payments"
+                        )
+                    }
+                }
+                is Result.Loading -> { /* ignore */ }
+            }
+        }
+    }
+
+    /**
+     * Change cost overview filter and reload data.
+     */
+    private suspend fun changeCostFilter(filter: CostOverviewFilter) {
+        updateState { copy(selectedCostFilter = filter) }
+        loadCostOverview()
+    }
+
+    /**
      * Handle errors - only show offline banner if we have cached data and network failed.
      */
     private fun handleError(result: Result.Error, hadCachedData: Boolean) {
@@ -121,7 +244,6 @@ class DashboardViewModel(
         val errorMessage = result.message ?: result.exception.message ?: "Failed to load dashboard"
 
         if (hasCachedData) {
-            // We have cache and network failed - NOW show offline banner
             updateState {
                 copy(
                     isLoading = false,
@@ -132,7 +254,6 @@ class DashboardViewModel(
             }
             sendEffect(Effect.ShowSnackbar("Offline mode - showing cached data"))
         } else {
-            // No cache - show error screen
             updateState {
                 copy(
                     isLoading = false,
@@ -145,7 +266,7 @@ class DashboardViewModel(
     }
 
     /**
-     * Force refresh from network using RefreshDashboardUseCase.
+     * Force refresh from network.
      */
     private suspend fun refreshDashboard() {
         updateState { copy(isRefreshing = true, error = null) }
@@ -154,6 +275,32 @@ class DashboardViewModel(
             when (val result = refreshDashboardUseCase()) {
                 is Result.Success -> {
                     val data = result.data
+
+                    val vehicleStatus = VehicleStatusSummary(
+                        onTripPlanned = data.stats.plannedTrips,
+                        onTripInProgress = data.stats.ongoingTrips,
+                        underMaintenance = data.stats.maintenanceVehicles,
+                        available = data.stats.activeVehicles - data.stats.ongoingTrips,
+                        inactive = data.stats.inactiveVehicles,
+                        total = data.stats.totalVehicles
+                    )
+
+                    val driverStatus = DriverStatusSummary(
+                        onTripPlanned = 0,
+                        onTripInProgress = data.stats.driversOnTrip,
+                        available = data.stats.activeDrivers - data.stats.driversOnTrip,
+                        onLeave = data.stats.driversOnLeave,
+                        total = data.stats.totalDrivers
+                    )
+
+                    val tripSummary = TripSummary(
+                        inProgress = data.stats.ongoingTrips,
+                        planned = data.stats.plannedTrips,
+                        delayed = 0,
+                        completed = data.stats.completedTrips,
+                        total = data.stats.totalTrips
+                    )
+
                     updateState {
                         copy(
                             isRefreshing = false,
@@ -165,9 +312,17 @@ class DashboardViewModel(
                             hasCachedData = true,
                             isOffline = false,
                             error = null,
-                            lastUpdated = data.stats.lastUpdated ?: "Just now"
+                            lastUpdated = data.stats.lastUpdated ?: "Just now",
+                            vehicleStatus = vehicleStatus,
+                            driverStatus = driverStatus,
+                            tripSummary = tripSummary,
+                            notificationCount = data.stats.totalAlerts
                         )
                     }
+
+                    // Reload additional data
+                    loadCostOverview()
+                    loadPendingPayments()
                 }
                 is Result.Error -> {
                     updateState {
@@ -216,9 +371,6 @@ class DashboardViewModel(
         sendEffect(Effect.ShowSnackbar("Alert dismissed"))
     }
 
-    /**
-     * Format cache timestamp for display.
-     */
     private fun formatCacheTime(timestamp: Long?): String {
         return com.indusjs.fleet.core.util.formatRelativeTime(timestamp)
     }

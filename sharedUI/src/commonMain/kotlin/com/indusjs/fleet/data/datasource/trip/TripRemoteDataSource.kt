@@ -35,6 +35,7 @@ interface TripRemoteDataSource : RemoteDataSource {
     suspend fun updateTrip(token: String, id: String, request: UpdateTripRequest): TripApiResponse<TripDto>
     suspend fun updateTripStatus(token: String, id: String, status: String): TripApiResponse<TripDto>
     suspend fun cancelTrip(token: String, id: String): TripApiResponse<Unit>
+    suspend fun getTripsByVehicleId(token: String, vehicleId: String): TripApiResponse<List<TripDto>>
 }
 
 /**
@@ -190,6 +191,19 @@ class TripRemoteDataSourceImpl(
             }
         } else {
             TripApiResponse(success = false, message = "Request failed with status: ${response.status}")
+        }
+    }
+
+    override suspend fun getTripsByVehicleId(token: String, vehicleId: String): TripApiResponse<List<TripDto>> {
+        return try {
+            log.d { "Fetching trips for vehicle: $vehicleId" }
+            val response: HttpResponse = httpClient.get("${ApiConfig.BASE_URL}/vehicles/$vehicleId/trips") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            parseListResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch trips for vehicle: ${e.message}" }
+            TripApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }
 }

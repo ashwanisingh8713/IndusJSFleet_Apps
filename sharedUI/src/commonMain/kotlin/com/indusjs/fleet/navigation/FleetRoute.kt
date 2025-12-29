@@ -47,6 +47,11 @@ sealed interface FleetRoute : NavKey {
     @Serializable data class TripDetail(val tripId: String) : FleetRoute
     @Serializable data object CreateTrip : FleetRoute
 
+    // ==================== Cost Entry Routes ====================
+
+    @Serializable data object TripCostEntry : FleetRoute
+    @Serializable data object MaintenanceCostEntry : FleetRoute
+
     // ==================== Other Routes ====================
 
     @Serializable data object Maps : FleetRoute

@@ -1,0 +1,39 @@
+From Postman collection `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/Fleet_Management_API_v2.postman_collection.json` it should use API `/trips/{{trip_id}}/costs/bulk`.
+
+I have to create TripCostEntryScreen with sections following:
+
+Select Trip
+    - Trip (with dropdown)
+- Trip Details
+    Based on selected trip, it should show Start & End place name and Vehicle Number
+
+Multi selection lazy column - TripCost Types (Refer CostType.txt for types)
+    - Row [CostType, Date & Time, Amount, Notes]
+        - Date (Date-DD-MM-YYYY)
+        - Time (HH:MM)
+        - Amount (INR)
+        - Notes (Optional)
+
+If Cost Type is "Other", show an additional input field for specifying the custom cost type name.
+Notes Input (optional)
+
+If Cost Type is "Fuel", show additional fields for:
+    Fuel Details
+        - Fuel Type (with dropdown)
+            - Diesel
+            - Petrol
+            - CNG
+        - Fuel Quantity (Liters)
+        - Fuel Rate (INR per Liter)
+        - Km per Liter
+
+Submit Button to add the cost entry to the selected trip.
+
+Create One History Button with History Screen which has all the history of the trip,and
+Should store all the History of the Cost which are added in the particular trip.
+
+
+
+
+
+

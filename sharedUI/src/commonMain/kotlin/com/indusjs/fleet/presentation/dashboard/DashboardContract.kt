@@ -3,8 +3,15 @@ package com.indusjs.fleet.presentation.dashboard
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.domain.entity.dashboard.Alert
+import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
+import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
+import com.indusjs.fleet.domain.entity.dashboard.ExpiryAlert
+import com.indusjs.fleet.domain.entity.dashboard.PendingPayment
+import com.indusjs.fleet.domain.entity.dashboard.TripSummary
+import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 
 /**
  * MVI Contract for the Dashboard screen.
@@ -20,11 +27,39 @@ object DashboardContract {
         val stats: DashboardStats = DashboardStats(),
         val error: String? = null,
         val isRefreshing: Boolean = false,
-        val userName: String = "", // User's full name for display
-        val userRole: String = "",  // User's role for display
+        val userName: String = "",
+        val userRole: String = "",
         val hasCachedData: Boolean = false,
         val isOffline: Boolean = false,
-        val lastUpdated: String? = null
+        val lastUpdated: String? = null,
+
+        // Cost Overview
+        val costOverview: CostOverview = CostOverview(),
+        val selectedCostFilter: CostOverviewFilter = CostOverviewFilter.TODAY,
+        val isLoadingCostOverview: Boolean = false,
+        val costOverviewError: String? = null,
+
+        // Pending Payments
+        val pendingPayments: List<PendingPayment> = emptyList(),
+        val totalPendingAmount: Double = 0.0,
+        val pendingPaymentsCount: Int = 0,
+        val isLoadingPendingPayments: Boolean = false,
+        val pendingPaymentsError: String? = null,
+
+        // Vehicle Status Summary
+        val vehicleStatus: VehicleStatusSummary = VehicleStatusSummary(),
+
+        // Driver Status Summary
+        val driverStatus: DriverStatusSummary = DriverStatusSummary(),
+
+        // Trip Summary
+        val tripSummary: TripSummary = TripSummary(),
+
+        // Expiry Alerts (for documents)
+        val expiryAlerts: List<ExpiryAlert> = emptyList(),
+
+        // Notification count (for badge)
+        val notificationCount: Int = 0
     ) : UiState
 
     /**
@@ -41,6 +76,20 @@ object DashboardContract {
         data class DismissAlert(val alertId: String) : Intent
         data object DismissOfflineBanner : Intent
         data object RetryConnection : Intent
+
+        // Cost Overview
+        data class ChangeCostFilter(val filter: CostOverviewFilter) : Intent
+        data object LoadCostOverview : Intent
+
+        // Pending Payments
+        data object LoadPendingPayments : Intent
+
+        // Navigation to Add Cost screens
+        data object NavigateToAddTripCost : Intent
+        data object NavigateToAddVehicleCost : Intent
+
+        // Notifications
+        data object NavigateToNotifications : Intent
     }
 
     /**
@@ -52,5 +101,10 @@ object DashboardContract {
         data object NavigateToTrips : Effect
         data object NavigateToMaps : Effect
         data class ShowSnackbar(val message: String) : Effect
+
+        // New navigation effects
+        data object NavigateToAddTripCost : Effect
+        data object NavigateToAddVehicleCost : Effect
+        data object NavigateToNotifications : Effect
     }
 }

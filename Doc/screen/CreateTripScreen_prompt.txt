@@ -1,0 +1,64 @@
+CreateTripScreen file is `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/trips/create/CreateTripScreen.kt`
+
+CreateTripScreen should have sections followings:
+- Vehicle & Driver
+    - Select Vehicle* (with dropdown)
+    - Select Driver* (with dropdown)
+- Route
+    - Start Location (with autocomplete dropdown), Latitude & Longitude
+    - End Location  (with autocomplete dropdown), Latitude & Longitude
+    - Estimated Distance (km)
+- Schedule
+    - Departure (Date-DD-MM-YYYY, Time-HH:MM)
+    - Arrival (Date-DD-MM-YYYY, Time-HH:MM)
+- Cargo Details
+   - Cargo Type (with dropdown)
+        - Gitti
+        - Balu
+        - Bhakhsi
+        - Enta
+        - Stone
+        - Hazardous
+        - Valuable
+        - Others
+        - Debris
+    - Cargo Loading Weight (Unit - Tons/Ft3: with dropdown)
+    - Cargo Unloading Weight (Unit - Tons/Ft3: with dropdown)
+    - Vehicle Weight (Unit - Tons)
+    - Cargo Description
+
+- Fuel Details
+    - Fuel Type (with dropdown)
+        - Diesel
+        - Petrol
+        - CNG
+    - Fuel Quantity (Liters)
+    - Fuel Rate (INR per Liter)
+    - Km per Liter
+
+- Price
+    - Purchase Price (INR)
+    - Selling Value (INR)
+- Estimated Expense (INR)
+- Payment Details
+    - Is Payment Received? (Yes/No checkbox)
+        - Is Part Payment Received? (Yes/No checkbox)
+            - Partial Payment Amount (INR) [Visible only if "Is Payment Received?" is Yes]
+            - Pending Amount (INR)
+        - Is Full Payment Received? (Yes/No checkbox)
+            - Full Payment Amount (INR) [Visible only if "Is Full Payment Received?" is Yes]
+    - Payment Received Date (Date-DD-MM-YYYY, Time-HH:MM)
+    - Payment Mode (with dropdown)
+        - Cash
+        - UPI
+        - Bank Transfer
+        - Cheque
+        - Other
+- Priority (with dropdown)
+    - High
+    - Medium
+    - Low
+- Customer Name (mandatory)
+- Customer Contact
+- Notes Input
+

@@ -5,6 +5,7 @@ import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
 import com.indusjs.fleet.data.database.FleetDatabase
+import com.indusjs.fleet.data.datasource.costs.CostsRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSourceImpl
@@ -18,12 +19,14 @@ import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
 import com.indusjs.fleet.data.mapper.driver.DriverMapper
 import com.indusjs.fleet.data.mapper.trip.TripMapper
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
+import com.indusjs.fleet.data.repository.costs.CostsRepositoryImpl
 import com.indusjs.fleet.data.repository.dashboard.DashboardRepositoryImpl
 import com.indusjs.fleet.data.repository.driver.DriverRepositoryImpl
 import com.indusjs.fleet.data.repository.team.TeamRepositoryImpl
 import com.indusjs.fleet.data.repository.trip.TripRepositoryImpl
 import com.indusjs.fleet.data.repository.user.UserRepositoryImpl
 import com.indusjs.fleet.data.repository.vehicle.VehicleRepositoryImpl
+import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.dashboard.DashboardRepository
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
 import com.indusjs.fleet.domain.repository.team.TeamRepository
@@ -51,6 +54,8 @@ import com.indusjs.fleet.domain.usecase.vehicle.GetVehicleByIdUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
 import com.indusjs.fleet.presentation.auth.LoginViewModel
+import com.indusjs.fleet.presentation.costs.MaintenanceCostEntryViewModel
+import com.indusjs.fleet.presentation.costs.TripCostEntryViewModel
 import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
 import com.indusjs.fleet.presentation.drivers.DriversViewModel
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
@@ -193,6 +198,12 @@ class DefaultViewModelProvider : ViewModelProvider {
     private val getDashboardUseCase by lazy { GetDashboardUseCase(dashboardRepository) }
     private val refreshDashboardUseCase by lazy { RefreshDashboardUseCase(dashboardRepository) }
 
+    // Lazy-initialized Costs feature dependencies
+    private val costsRemoteDataSource by lazy { CostsRemoteDataSourceImpl(httpClient) }
+    private val costsRepository: CostsRepository by lazy {
+        CostsRepositoryImpl(costsRemoteDataSource, userLocalDataSource)
+    }
+
     // Auth ViewModels
     override fun loginViewModel() = LoginViewModel(dispatcherProvider, userRepository)
     override fun signUpViewModel() = SignUpViewModel(dispatcherProvider, userRepository)
@@ -277,5 +288,17 @@ class DefaultViewModelProvider : ViewModelProvider {
     override fun teamListViewModel() = TeamListViewModel(dispatcherProvider, teamRepository)
 
     override fun createTeamMemberViewModel() = CreateTeamMemberViewModel(dispatcherProvider, teamRepository)
+
+    override fun tripCostEntryViewModel() = TripCostEntryViewModel(
+        dispatcherProvider,
+        tripRepository,
+        costsRepository
+    )
+
+    override fun maintenanceCostEntryViewModel() = MaintenanceCostEntryViewModel(
+        dispatcherProvider,
+        vehicleRepository,
+        costsRepository
+    )
 }
 

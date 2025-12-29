@@ -7,6 +7,8 @@ import com.indusjs.fleet.FilePickerRequest
 import com.indusjs.fleet.di.rememberViewModel
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.presentation.auth.LoginScreen
+import com.indusjs.fleet.presentation.costs.MaintenanceCostEntryScreen
+import com.indusjs.fleet.presentation.costs.TripCostEntryScreen
 import com.indusjs.fleet.presentation.dashboard.DashboardScreen
 import com.indusjs.fleet.presentation.drivers.DriversScreen
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverScreen
@@ -88,7 +90,9 @@ fun fleetEntryProvider(
                 onNavigateToTrips = { backStack.add(FleetRoute.Trips) },
                 onNavigateToMaps = { backStack.add(FleetRoute.Maps) },
                 onNavigateToProfile = { backStack.add(FleetRoute.Profile) },
-                onNavigateToTeam = { backStack.add(FleetRoute.TeamList) }
+                onNavigateToTeam = { backStack.add(FleetRoute.TeamList) },
+                onNavigateToAddTripCost = { backStack.add(FleetRoute.TripCostEntry) },
+                onNavigateToAddVehicleCost = { backStack.add(FleetRoute.MaintenanceCostEntry) }
             )
         }
 
@@ -225,6 +229,24 @@ fun fleetEntryProvider(
                 onTripCreated = { tripId ->
                     backStack.popAndNavigate(FleetRoute.TripDetail(tripId))
                 }
+            )
+        }
+
+        // ==================== Cost Entry ====================
+
+        is FleetRoute.TripCostEntry -> NavEntry(route) {
+            val viewModel = rememberViewModel { tripCostEntryViewModel() }
+            TripCostEntryScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.MaintenanceCostEntry -> NavEntry(route) {
+            val viewModel = rememberViewModel { maintenanceCostEntryViewModel() }
+            MaintenanceCostEntryScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
             )
         }
 

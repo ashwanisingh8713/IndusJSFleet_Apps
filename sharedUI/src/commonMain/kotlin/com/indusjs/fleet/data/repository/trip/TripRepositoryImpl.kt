@@ -164,6 +164,21 @@ class TripRepositoryImpl(
         }
     }
 
+    override suspend fun getTripsByVehicle(vehicleId: String): Result<List<Trip>> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getTripsByVehicleId(token, vehicleId)
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data.map { mapper.mapToDomain(it) })
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to fetch trips"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
     /**
      * Retrieves auth token or throws NotAuthenticatedException.
      */

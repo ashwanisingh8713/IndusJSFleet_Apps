@@ -47,5 +47,10 @@ interface TripRepository : Repository {
      * Cancel a trip by ID.
      */
     suspend fun cancelTrip(id: String): Result<Unit>
+
+    /**
+     * Get trips by vehicle ID.
+     */
+    suspend fun getTripsByVehicle(vehicleId: String): Result<List<Trip>>
 }
 

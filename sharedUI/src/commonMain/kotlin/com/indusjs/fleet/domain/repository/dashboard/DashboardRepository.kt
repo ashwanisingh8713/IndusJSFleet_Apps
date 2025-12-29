@@ -1,8 +1,11 @@
 package com.indusjs.fleet.domain.repository.dashboard
 
 import com.indusjs.fleet.core.result.Result
+import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
+import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
 import com.indusjs.fleet.domain.entity.dashboard.DashboardUserInfo
+import com.indusjs.fleet.domain.entity.dashboard.PendingPaymentsData
 import com.indusjs.fleet.domain.repository.Repository
 import kotlinx.coroutines.flow.Flow
 
@@ -47,6 +50,16 @@ interface DashboardRepository : Repository {
      * Clear all cached dashboard data.
      */
     suspend fun clearCache()
+
+    /**
+     * Get cost overview with filter (today/weekly/monthly).
+     */
+    suspend fun getCostOverview(filter: CostOverviewFilter): Result<CostOverview>
+
+    /**
+     * Get pending payments list with pagination.
+     */
+    suspend fun getPendingPayments(page: Int = 1, perPage: Int = 20): Result<PendingPaymentsData>
 }
 
 /**

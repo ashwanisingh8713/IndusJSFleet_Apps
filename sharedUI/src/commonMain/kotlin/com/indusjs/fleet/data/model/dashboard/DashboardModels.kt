@@ -224,3 +224,217 @@ data class DocumentStatsDto(
     val expiredDocuments: Int = 0
 ) : Dto
 
+// ============ DASHBOARD V2 APIs ============
+
+/**
+ * Cost Overview filter types.
+ */
+enum class CostOverviewFilter(val value: String, val label: String) {
+    TODAY("today", "Today"),
+    WEEKLY("weekly", "Weekly"),
+    MONTHLY("monthly", "Monthly")
+}
+
+/**
+ * Cost Overview API response.
+ */
+@Serializable
+data class CostOverviewApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: CostOverviewDto? = null
+)
+
+/**
+ * Cost Overview data from API.
+ */
+@Serializable
+data class CostOverviewDto(
+    val filter: String = "today",
+    @SerialName("period_label")
+    val periodLabel: String = "",
+    @SerialName("total_expenses")
+    val totalExpenses: Double = 0.0,
+    @SerialName("total_revenue")
+    val totalRevenue: Double = 0.0,
+    @SerialName("profit_loss")
+    val profitLoss: Double = 0.0,
+    @SerialName("is_profit")
+    val isProfit: Boolean = true,
+    @SerialName("completed_trips")
+    val completedTrips: Int = 0,
+    @SerialName("trip_costs")
+    val tripCosts: Double = 0.0,
+    @SerialName("maintenance_costs")
+    val maintenanceCosts: Double = 0.0,
+    @SerialName("fuel_costs")
+    val fuelCosts: Double = 0.0,
+    @SerialName("toll_costs")
+    val tollCosts: Double = 0.0,
+    @SerialName("other_costs")
+    val otherCosts: Double = 0.0
+) : Dto
+
+/**
+ * Pending Payments API response.
+ */
+@Serializable
+data class PendingPaymentsApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: PendingPaymentsDataDto? = null
+)
+
+/**
+ * Pending Payments data wrapper.
+ */
+@Serializable
+data class PendingPaymentsDataDto(
+    val payments: List<PendingPaymentDto> = emptyList(),
+    @SerialName("total_pending")
+    val totalPending: Double = 0.0,
+    @SerialName("total_count")
+    val totalCount: Int = 0,
+    val page: Int = 1,
+    @SerialName("per_page")
+    val perPage: Int = 20,
+    @SerialName("total_pages")
+    val totalPages: Int = 1
+) : Dto
+
+/**
+ * Individual pending payment item.
+ */
+@Serializable
+data class PendingPaymentDto(
+    @SerialName("trip_id")
+    val tripId: Int,
+    @SerialName("vehicle_registration")
+    val vehicleRegistration: String = "",
+    @SerialName("customer_name")
+    val customerName: String = "",
+    @SerialName("customer_contact")
+    val customerContact: String? = null,
+    @SerialName("selling_value")
+    val sellingValue: Double = 0.0,
+    @SerialName("pending_amount")
+    val pendingAmount: Double = 0.0,
+    @SerialName("payment_status")
+    val paymentStatus: String = "pending",
+    @SerialName("trip_date")
+    val tripDate: String? = null,
+    @SerialName("start_location")
+    val startLocation: String = "",
+    @SerialName("end_location")
+    val endLocation: String = "",
+    @SerialName("days_overdue")
+    val daysOverdue: Int = 0
+) : Dto
+
+/**
+ * Vehicle Status summary for dashboard.
+ */
+@Serializable
+data class VehicleStatusSummaryDto(
+    @SerialName("on_trip_planned")
+    val onTripPlanned: Int = 0,
+    @SerialName("on_trip_in_progress")
+    val onTripInProgress: Int = 0,
+    @SerialName("under_maintenance")
+    val underMaintenance: Int = 0,
+    val available: Int = 0,
+    val inactive: Int = 0,
+    val total: Int = 0
+) : Dto
+
+/**
+ * Driver Status summary for dashboard.
+ */
+@Serializable
+data class DriverStatusSummaryDto(
+    @SerialName("on_trip_planned")
+    val onTripPlanned: Int = 0,
+    @SerialName("on_trip_in_progress")
+    val onTripInProgress: Int = 0,
+    val available: Int = 0,
+    @SerialName("on_leave")
+    val onLeave: Int = 0,
+    val total: Int = 0
+) : Dto
+
+/**
+ * Trip summary for dashboard sections.
+ */
+@Serializable
+data class TripSummaryDto(
+    @SerialName("in_progress")
+    val inProgress: Int = 0,
+    val planned: Int = 0,
+    val delayed: Int = 0,
+    val completed: Int = 0,
+    val total: Int = 0
+) : Dto
+
+/**
+ * Trip with fuel details for dashboard.
+ */
+@Serializable
+data class TripWithFuelDto(
+    @SerialName("trip_id")
+    val tripId: Int,
+    @SerialName("vehicle_registration")
+    val vehicleRegistration: String = "",
+    @SerialName("driver_name")
+    val driverName: String = "",
+    @SerialName("start_location")
+    val startLocation: String = "",
+    @SerialName("end_location")
+    val endLocation: String = "",
+    val status: String = "",
+    val state: String = "",
+    @SerialName("scheduled_date")
+    val scheduledDate: String? = null,
+    @SerialName("fuel_type")
+    val fuelType: String = "",
+    @SerialName("filled_fuel_quantity")
+    val filledFuelQuantity: Double = 0.0,
+    @SerialName("used_fuel_quantity")
+    val usedFuelQuantity: Double = 0.0,
+    @SerialName("fuel_rate")
+    val fuelRate: Double = 0.0,
+    @SerialName("fuel_cost")
+    val fuelCost: Double = 0.0,
+    @SerialName("km_per_liter")
+    val kmPerLiter: Double = 0.0,
+    @SerialName("estimated_distance")
+    val estimatedDistance: Double = 0.0,
+    @SerialName("actual_distance")
+    val actualDistance: Double = 0.0,
+    @SerialName("is_delayed")
+    val isDelayed: Boolean = false,
+    @SerialName("delay_reason")
+    val delayReason: String? = null
+) : Dto
+
+/**
+ * Expiry alert for documents (Insurance, PUC, Fitness).
+ */
+@Serializable
+data class ExpiryAlertDto(
+    val id: String,
+    @SerialName("alert_type")
+    val alertType: String = "", // insurance, puc, fitness
+    @SerialName("vehicle_id")
+    val vehicleId: Int = 0,
+    @SerialName("vehicle_registration")
+    val vehicleRegistration: String = "",
+    @SerialName("document_type")
+    val documentType: String = "",
+    @SerialName("expiry_date")
+    val expiryDate: String = "",
+    @SerialName("days_remaining")
+    val daysRemaining: Int = 0,
+    @SerialName("is_expired")
+    val isExpired: Boolean = false,
+    val priority: String = "warning" // critical, warning, info
+) : Dto

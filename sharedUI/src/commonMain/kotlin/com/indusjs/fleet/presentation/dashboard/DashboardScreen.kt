@@ -12,20 +12,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.ErrorHandler
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertPriority
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
+import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
 import com.indusjs.fleet.domain.entity.dashboard.DocumentStats
+import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
 import com.indusjs.fleet.domain.entity.dashboard.LiveStatus
 import com.indusjs.fleet.domain.entity.dashboard.OngoingTrip
+import com.indusjs.fleet.domain.entity.dashboard.PendingPayment
 import com.indusjs.fleet.domain.entity.dashboard.TeamStats
+import com.indusjs.fleet.domain.entity.dashboard.TripSummary
+import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 import com.indusjs.fleet.theme.isAppInDarkTheme
 import com.indusjs.fleet.theme.rememberThemeToggle
 import indusjsfleet.sharedui.generated.resources.*
@@ -45,7 +53,10 @@ fun DashboardScreen(
     onNavigateToTrips: () -> Unit = {},
     onNavigateToMaps: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
-    onNavigateToTeam: () -> Unit = {}
+    onNavigateToTeam: () -> Unit = {},
+    onNavigateToAddTripCost: () -> Unit = {},
+    onNavigateToAddVehicleCost: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -60,6 +71,9 @@ fun DashboardScreen(
                 is DashboardContract.Effect.NavigateToDrivers -> onNavigateToDrivers()
                 is DashboardContract.Effect.NavigateToTrips -> onNavigateToTrips()
                 is DashboardContract.Effect.NavigateToMaps -> onNavigateToMaps()
+                is DashboardContract.Effect.NavigateToAddTripCost -> onNavigateToAddTripCost()
+                is DashboardContract.Effect.NavigateToAddVehicleCost -> onNavigateToAddVehicleCost()
+                is DashboardContract.Effect.NavigateToNotifications -> onNavigateToNotifications()
                 is DashboardContract.Effect.ShowSnackbar -> {
                     snackbarHostState.showSnackbar(effect.message)
                 }
@@ -115,12 +129,24 @@ fun DashboardScreen(
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
-                            if (state.userRole.isNotEmpty()) {
-                                Text(
-                                    text = state.userRole,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (state.userRole.isNotEmpty()) {
+                                    Text(
+                                        text = state.userRole,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (state.lastUpdated != null) {
+                                    Text(
+                                        text = "• Updated: ${state.lastUpdated}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                    )
+                                }
                             }
                         }
                     },
@@ -135,6 +161,31 @@ fun DashboardScreen(
                         }
                     },
                     actions = {
+                        // Notification bell with badge
+                        BadgedBox(
+                            badge = {
+                                if (state.notificationCount > 0) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.error
+                                    ) {
+                                        Text(
+                                            text = if (state.notificationCount > 99) "99+" else state.notificationCount.toString(),
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            IconButton(onClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToNotifications) }) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_notifications),
+                                    contentDescription = "Notifications",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
                         // Refresh button
                         IconButton(onClick = { viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard) }) {
                             Icon(
@@ -193,13 +244,27 @@ fun DashboardScreen(
 
                             DashboardContent(
                                 stats = state.stats,
+                                costOverview = state.costOverview,
+                                selectedCostFilter = state.selectedCostFilter,
+                                isLoadingCostOverview = state.isLoadingCostOverview,
+                                pendingPayments = state.pendingPayments,
+                                totalPendingAmount = state.totalPendingAmount,
+                                isLoadingPendingPayments = state.isLoadingPendingPayments,
+                                vehicleStatus = state.vehicleStatus,
+                                driverStatus = state.driverStatus,
+                                tripSummary = state.tripSummary,
                                 onVehiclesClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToVehicles) },
                                 onDriversClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToDrivers) },
                                 onTripsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToTrips) },
                                 onMapsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToMaps) },
                                 onAlertDismiss = { alertId ->
                                     viewModel.sendIntent(DashboardContract.Intent.DismissAlert(alertId))
-                                }
+                                },
+                                onCostFilterChange = { filter ->
+                                    viewModel.sendIntent(DashboardContract.Intent.ChangeCostFilter(filter))
+                                },
+                                onAddTripCostClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddTripCost) },
+                                onAddVehicleCostClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddVehicleCost) }
                             )
                         }
                     }
@@ -419,223 +484,96 @@ private fun NavigationDrawerContent(
 @Composable
 private fun DashboardContent(
     stats: DashboardStats,
+    costOverview: CostOverview,
+    selectedCostFilter: CostOverviewFilter,
+    isLoadingCostOverview: Boolean,
+    pendingPayments: List<PendingPayment>,
+    totalPendingAmount: Double,
+    isLoadingPendingPayments: Boolean,
+    vehicleStatus: VehicleStatusSummary,
+    driverStatus: DriverStatusSummary,
+    tripSummary: TripSummary,
     onVehiclesClick: () -> Unit,
     onDriversClick: () -> Unit,
     onTripsClick: () -> Unit,
     onMapsClick: () -> Unit,
-    onAlertDismiss: (String) -> Unit
+    onAlertDismiss: (String) -> Unit,
+    onCostFilterChange: (CostOverviewFilter) -> Unit,
+    onAddTripCostClick: () -> Unit,
+    onAddVehicleCostClick: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Welcome Banner Card
+        // 1. Cost Overview Section with Filter
         item {
-            WelcomeBannerCard(
-                activeVehicles = stats.activeVehicles,
-                ongoingTrips = stats.ongoingTrips
+            CostOverviewSection(
+                costOverview = costOverview,
+                selectedFilter = selectedCostFilter,
+                isLoading = isLoadingCostOverview,
+                onFilterChange = onCostFilterChange,
+                onAddTripCostClick = onAddTripCostClick,
+                onAddVehicleCostClick = onAddVehicleCostClick
             )
         }
 
-        // Quick Actions Section in Card
+        // 2. Pending Payments Section
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                QuickActionsSectionContent(
-                    onVehiclesClick = onVehiclesClick,
-                    onDriversClick = onDriversClick,
-                    onTripsClick = onTripsClick,
-                    onMapsClick = onMapsClick
+            PendingPaymentsSection(
+                payments = pendingPayments,
+                totalPending = totalPendingAmount,
+                isLoading = isLoadingPendingPayments
+            )
+        }
+
+        // 3. Vehicle Status Section
+        item {
+            VehicleStatusSection(
+                vehicleStatus = vehicleStatus,
+                onClick = onVehiclesClick
+            )
+        }
+
+        // 4. Trips Section
+        item {
+            TripsStatusSection(
+                tripSummary = tripSummary,
+                ongoingTrips = stats.liveStatus.ongoingTrips,
+                onClick = onTripsClick
+            )
+        }
+
+        // 5. Alerts Section
+        if (stats.alerts.isNotEmpty() || (stats.documentStats?.expiringDocuments ?: 0) > 0) {
+            item {
+                AlertsSection(
+                    alerts = stats.alerts,
+                    documentStats = stats.documentStats,
+                    onAlertDismiss = onAlertDismiss
                 )
             }
         }
 
-        // Fleet Overview Section in Card
+        // 6. Drivers Section
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Fleet Overview",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        StatCard(
-                            title = "Vehicles",
-                            value = "${stats.activeVehicles}/${stats.totalVehicles}",
-                            subtitle = "Active",
-                            emoji = "🚛",
-                            onClick = onVehiclesClick,
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            title = "Drivers",
-                            value = "${stats.activeDrivers}/${stats.totalDrivers}",
-                            subtitle = "On Duty",
-                            emoji = "👨‍✈️",
-                            onClick = onDriversClick,
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            title = "Trips",
-                            value = "${stats.ongoingTrips}",
-                            subtitle = "Active",
-                            emoji = "🗺️",
-                            onClick = onTripsClick,
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            title = "Distance",
-                            value = "${stats.totalDistance.toInt()}km",
-                            subtitle = "Today",
-                            emoji = "📍",
-                            onClick = {},
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
+            DriversStatusSection(
+                driverStatus = driverStatus,
+                onClick = onDriversClick
+            )
         }
 
-        // Alerts Section in Card
-        if (stats.alerts.isNotEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // Header
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "⚠️",
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Alerts",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = MaterialTheme.colorScheme.errorContainer
-                            ) {
-                                Text(
-                                    text = "${stats.alerts.size}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-
-                        // Alert items
-                        stats.alerts.forEach { alert ->
-                            AlertCardCompact(
-                                alert = alert,
-                                onDismiss = { onAlertDismiss(alert.id) }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Today's Summary Section in Card
+        // Quick Actions Section
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Today's Summary",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    SummaryContent(
-                        completedTrips = stats.completedTripsToday,
-                        totalDistance = stats.totalDistanceToday,
-                        fuelConsumption = stats.fuelConsumption
-                    )
-                }
-            }
-        }
-
-        // Live Status Section - Show ongoing trips if any
-        if (stats.liveStatus.ongoingTrips.isNotEmpty()) {
-            item {
-                LiveStatusSection(
-                    liveStatus = stats.liveStatus,
-                    onMapsClick = onMapsClick
-                )
-            }
-        }
-
-        // Team Stats Section (for Owners)
-        stats.teamStats?.let { teamStats ->
-            item {
-                TeamStatsSection(teamStats = teamStats)
-            }
-        }
-
-        // Document Stats Section (for Owner/Manager)
-        stats.documentStats?.let { documentStats ->
-            item {
-                DocumentStatsSection(documentStats = documentStats)
-            }
-        }
-
-        // Bottom spacing
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
+            QuickActionsSection(
+                onVehiclesClick = onVehiclesClick,
+                onDriversClick = onDriversClick,
+                onTripsClick = onTripsClick,
+                onMapsClick = onMapsClick
+            )
         }
     }
 }
@@ -1632,6 +1570,712 @@ private fun OfflineBanner(
                 )
             }
         }
+    }
+}
+
+// ============ NEW DASHBOARD SECTIONS ============
+
+/**
+ * Cost Overview Section with filter tabs and add cost buttons.
+ */
+@Composable
+private fun CostOverviewSection(
+    costOverview: CostOverview,
+    selectedFilter: CostOverviewFilter,
+    isLoading: Boolean,
+    onFilterChange: (CostOverviewFilter) -> Unit,
+    onAddTripCostClick: () -> Unit,
+    onAddVehicleCostClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Header with filter tabs
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "💰 Cost Overview",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                // Filter chips
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    CostOverviewFilter.entries.forEach { filter ->
+                        FilterChip(
+                            selected = selectedFilter == filter,
+                            onClick = { onFilterChange(filter) },
+                            label = {
+                                Text(
+                                    text = filter.label,
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            },
+                            modifier = Modifier.height(28.dp)
+                        )
+                    }
+                }
+            }
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(80.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                }
+            } else {
+                // Stats row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Total Expenses
+                    CostStatCard(
+                        title = "Total Expenses",
+                        value = "₹${formatAmount(costOverview.totalExpenses)}",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Profit/Loss
+                    CostStatCard(
+                        title = if (costOverview.isProfit) "Profit" else "Loss",
+                        value = "₹${formatAmount(kotlin.math.abs(costOverview.profitLoss))}",
+                        color = if (costOverview.isProfit) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Completed Trips
+                    CostStatCard(
+                        title = "Completed Trips",
+                        value = costOverview.completedTrips.toString(),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // Add Cost Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onAddTripCostClick,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text("➕ Add Trip Cost", style = MaterialTheme.typography.labelMedium)
+                    }
+
+                    OutlinedButton(
+                        onClick = onAddVehicleCostClick,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text("🔧 Add Vehicle Cost", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CostStatCard(
+    title: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = color.copy(alpha = 0.1f)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * Pending Payments Section.
+ */
+@Composable
+private fun PendingPaymentsSection(
+    payments: List<PendingPayment>,
+    totalPending: Double,
+    isLoading: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "💳 Pending Payments",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (totalPending > 0) {
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.errorContainer
+                    ) {
+                        Text(
+                            text = "₹${formatAmount(totalPending)}",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(60.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                }
+            } else if (payments.isEmpty()) {
+                Text(
+                    text = "✅ No pending payments",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF4CAF50)
+                )
+            } else {
+                // Show first 3 payments
+                payments.take(3).forEach { payment ->
+                    PendingPaymentItem(payment = payment)
+                }
+
+                if (payments.size > 3) {
+                    TextButton(onClick = { /* Navigate to all payments */ }) {
+                        Text("View all ${payments.size} pending payments →")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PendingPaymentItem(payment: PendingPayment) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = payment.customerName.ifEmpty { "Customer" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "${payment.vehicleRegistration} • ${payment.startLocation} → ${payment.endLocation}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "₹${formatAmount(payment.pendingAmount)}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error
+                )
+                if (payment.daysOverdue > 0) {
+                    Text(
+                        text = "${payment.daysOverdue} days overdue",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Vehicle Status Section.
+ */
+@Composable
+private fun VehicleStatusSection(
+    vehicleStatus: VehicleStatusSummary,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🚛 Vehicle Status",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Total: ${vehicleStatus.total}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                StatusChip(
+                    label = "Planned",
+                    count = vehicleStatus.onTripPlanned,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f)
+                )
+                StatusChip(
+                    label = "On Route",
+                    count = vehicleStatus.onTripInProgress,
+                    color = Color(0xFF4CAF50),
+                    modifier = Modifier.weight(1f)
+                )
+                StatusChip(
+                    label = "Maintenance",
+                    count = vehicleStatus.underMaintenance,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Trips Status Section.
+ */
+@Composable
+private fun TripsStatusSection(
+    tripSummary: TripSummary,
+    ongoingTrips: List<OngoingTrip>,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🗺️ Trips",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Total: ${tripSummary.total}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                StatusChip(
+                    label = "In Progress",
+                    count = tripSummary.inProgress,
+                    color = Color(0xFF4CAF50),
+                    modifier = Modifier.weight(1f)
+                )
+                StatusChip(
+                    label = "Planned",
+                    count = tripSummary.planned,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f)
+                )
+                StatusChip(
+                    label = "Delayed",
+                    count = tripSummary.delayed,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Show ongoing trips with fuel info
+            if (ongoingTrips.isNotEmpty()) {
+                HorizontalDivider()
+                Text(
+                    text = "Active Trips",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                ongoingTrips.take(2).forEach { trip ->
+                    OngoingTripItem(trip = trip)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Alerts Section.
+ */
+@Composable
+private fun AlertsSection(
+    alerts: List<Alert>,
+    documentStats: DocumentStats?,
+    onAlertDismiss: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "⚠️ Alerts",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = MaterialTheme.colorScheme.error
+                ) {
+                    Text(
+                        text = "${alerts.size}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onError,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            // Document expiry stats
+            if (documentStats != null && (documentStats.expiringDocuments > 0 || documentStats.expiredDocuments > 0)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (documentStats.expiredDocuments > 0) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                        ) {
+                            Text(
+                                text = "📄 ${documentStats.expiredDocuments} Expired",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    if (documentStats.expiringDocuments > 0) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                        ) {
+                            Text(
+                                text = "⏰ ${documentStats.expiringDocuments} Expiring Soon",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Alert items
+            alerts.take(3).forEach { alert ->
+                AlertCardCompact(
+                    alert = alert,
+                    onDismiss = { onAlertDismiss(alert.id) }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Drivers Status Section.
+ */
+@Composable
+private fun DriversStatusSection(
+    driverStatus: DriverStatusSummary,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "👨‍✈️ Drivers",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Total: ${driverStatus.total}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                StatusChip(
+                    label = "On Route",
+                    count = driverStatus.onTripInProgress,
+                    color = Color(0xFF4CAF50),
+                    modifier = Modifier.weight(1f)
+                )
+                StatusChip(
+                    label = "Planned",
+                    count = driverStatus.onTripPlanned,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f)
+                )
+                StatusChip(
+                    label = "Available",
+                    count = driverStatus.available,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f)
+                )
+                StatusChip(
+                    label = "Leave",
+                    count = driverStatus.onLeave,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusChip(
+    label: String,
+    count: Int,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = color.copy(alpha = 0.15f)
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = count.toString(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+/**
+ * Quick Actions Section.
+ */
+@Composable
+private fun QuickActionsSection(
+    onVehiclesClick: () -> Unit,
+    onDriversClick: () -> Unit,
+    onTripsClick: () -> Unit,
+    onMapsClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "⚡ Quick Actions",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                QuickActionButton(
+                    icon = "🚛",
+                    label = "Vehicles",
+                    onClick = onVehiclesClick,
+                    modifier = Modifier.weight(1f)
+                )
+                QuickActionButton(
+                    icon = "👨‍✈️",
+                    label = "Drivers",
+                    onClick = onDriversClick,
+                    modifier = Modifier.weight(1f)
+                )
+                QuickActionButton(
+                    icon = "🗺️",
+                    label = "Trips",
+                    onClick = onTripsClick,
+                    modifier = Modifier.weight(1f)
+                )
+                QuickActionButton(
+                    icon = "📍",
+                    label = "Live Map",
+                    onClick = onMapsClick,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickActionButton(
+    icon: String,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+/**
+ * Format amount with commas for Indian numbering system.
+ */
+private fun formatAmount(amount: Double): String {
+    return when {
+        amount >= 10000000 -> {
+            val value = amount / 10000000
+            "${((value * 100).toLong() / 100.0)} Cr"
+        }
+        amount >= 100000 -> {
+            val value = amount / 100000
+            "${((value * 100).toLong() / 100.0)} L"
+        }
+        amount >= 1000 -> {
+            val value = amount / 1000
+            "${((value * 10).toLong() / 10.0)} K"
+        }
+        else -> amount.toLong().toString()
     }
 }
 

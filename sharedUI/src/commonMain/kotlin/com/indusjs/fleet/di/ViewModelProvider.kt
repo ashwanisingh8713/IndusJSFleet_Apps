@@ -7,6 +7,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.presentation.auth.LoginViewModel
+import com.indusjs.fleet.presentation.costs.MaintenanceCostEntryViewModel
+import com.indusjs.fleet.presentation.costs.TripCostEntryViewModel
 import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
 import com.indusjs.fleet.presentation.drivers.DriversViewModel
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
@@ -58,6 +60,10 @@ interface ViewModelProvider {
     fun mapsViewModel(): MapsViewModel
     fun teamListViewModel(): TeamListViewModel
     fun createTeamMemberViewModel(): CreateTeamMemberViewModel
+
+    // Cost Entry ViewModels
+    fun tripCostEntryViewModel(): TripCostEntryViewModel
+    fun maintenanceCostEntryViewModel(): MaintenanceCostEntryViewModel
 }
 
 /**

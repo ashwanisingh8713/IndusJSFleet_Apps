@@ -1,0 +1,18 @@
+I have to create VehicleMaintenaceConstEntryScreen with sections following:
+
+Select Vehicle
+    - Vehicle (with dropdown)
+
+Cost Types (multi selection lazycolumn) (Row- CostType, Date & Time, Amount, Notes)
+    - Refer CostType.txt for types
+    - Date (Date-DD-MM-YYYY)
+    - Time (HH:MM)
+    - Amount (INR)
+
+
+Create One History Button with History Screen which has all the history of the vehicle maintenance,and
+should store all the History of the Cost which are added in the particular vehicle.
+
+
+
+

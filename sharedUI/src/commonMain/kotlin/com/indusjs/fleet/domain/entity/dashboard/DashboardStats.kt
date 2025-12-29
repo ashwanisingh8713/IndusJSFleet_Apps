@@ -193,3 +193,122 @@ data class DashboardUserInfo(
     val fullName: String get() = "$firstName $lastName"
 }
 
+// ============ DASHBOARD V2 Domain Entities ============
+
+/**
+ * Cost Overview domain entity.
+ */
+data class CostOverview(
+    val filter: String = "today",
+    val periodLabel: String = "",
+    val totalExpenses: Double = 0.0,
+    val totalRevenue: Double = 0.0,
+    val profitLoss: Double = 0.0,
+    val isProfit: Boolean = true,
+    val completedTrips: Int = 0,
+    val tripCosts: Double = 0.0,
+    val maintenanceCosts: Double = 0.0,
+    val fuelCosts: Double = 0.0,
+    val tollCosts: Double = 0.0,
+    val otherCosts: Double = 0.0
+)
+
+/**
+ * Pending Payment domain entity.
+ */
+data class PendingPayment(
+    val tripId: Int,
+    val vehicleRegistration: String = "",
+    val customerName: String = "",
+    val customerContact: String? = null,
+    val sellingValue: Double = 0.0,
+    val pendingAmount: Double = 0.0,
+    val paymentStatus: String = "pending",
+    val tripDate: String? = null,
+    val startLocation: String = "",
+    val endLocation: String = "",
+    val daysOverdue: Int = 0
+)
+
+/**
+ * Pending Payments data wrapper.
+ */
+data class PendingPaymentsData(
+    val payments: List<PendingPayment> = emptyList(),
+    val totalPending: Double = 0.0,
+    val totalCount: Int = 0
+)
+
+/**
+ * Vehicle Status summary.
+ */
+data class VehicleStatusSummary(
+    val onTripPlanned: Int = 0,
+    val onTripInProgress: Int = 0,
+    val underMaintenance: Int = 0,
+    val available: Int = 0,
+    val inactive: Int = 0,
+    val total: Int = 0
+)
+
+/**
+ * Driver Status summary.
+ */
+data class DriverStatusSummary(
+    val onTripPlanned: Int = 0,
+    val onTripInProgress: Int = 0,
+    val available: Int = 0,
+    val onLeave: Int = 0,
+    val total: Int = 0
+)
+
+/**
+ * Trip summary for dashboard.
+ */
+data class TripSummary(
+    val inProgress: Int = 0,
+    val planned: Int = 0,
+    val delayed: Int = 0,
+    val completed: Int = 0,
+    val total: Int = 0
+)
+
+/**
+ * Trip with fuel details.
+ */
+data class TripWithFuel(
+    val tripId: Int,
+    val vehicleRegistration: String = "",
+    val driverName: String = "",
+    val startLocation: String = "",
+    val endLocation: String = "",
+    val status: String = "",
+    val state: String = "",
+    val scheduledDate: String? = null,
+    val fuelType: String = "",
+    val filledFuelQuantity: Double = 0.0,
+    val usedFuelQuantity: Double = 0.0,
+    val fuelRate: Double = 0.0,
+    val fuelCost: Double = 0.0,
+    val kmPerLiter: Double = 0.0,
+    val estimatedDistance: Double = 0.0,
+    val actualDistance: Double = 0.0,
+    val isDelayed: Boolean = false,
+    val delayReason: String? = null
+)
+
+/**
+ * Expiry alert for documents.
+ */
+data class ExpiryAlert(
+    val id: String,
+    val alertType: String = "",
+    val vehicleId: Int = 0,
+    val vehicleRegistration: String = "",
+    val documentType: String = "",
+    val expiryDate: String = "",
+    val daysRemaining: Int = 0,
+    val isExpired: Boolean = false,
+    val priority: String = "warning"
+)
+

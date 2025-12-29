@@ -1,0 +1,43 @@
+DashboardScreen file is `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/dashboard/DashboardScreen.kt`
+
+DashboardScreen should have sections followings:
+In Topbar
+    - it should have “notification” icon with badges.
+    - last updated date & time
+
+Cost Overview	(It should have filter with Today, Weekly, Monthly)
+    - Today’s Total Expenses
+    - Today’s Total Profit/Loss
+    - Today’s completed trip
+    - Add cost two Buttons [Add Trip Cost, Add Vehicle Cost]
+
+
+Pending Payments
+    - For Trips
+
+Vehicle Status
+    - On Trip (Planned)
+    - On Trip (In Progress - on route)
+    - Under maintenance vehicles
+
+Trips
+    - Progress (On Route)
+    - Planned
+    - Delayed
+    - Each `fuel` details.
+    -
+
+Alerts
+    - Upcoming expiry date of Insurance, PUC, Fitness Certificate)
+    - Pending Payments
+
+Drivers
+    - On Trip (Planned)
+    - On Trip (In Progress - on route)
+    - Available
+    - Leave
+
+
+`Cost Overview`, `Pending Payments`, `Vehicle Status`, `Trips`, `Alerts`, `Drivers` sections should have individual apis to fetch the data. If not available, backend APIs needed.
+
+

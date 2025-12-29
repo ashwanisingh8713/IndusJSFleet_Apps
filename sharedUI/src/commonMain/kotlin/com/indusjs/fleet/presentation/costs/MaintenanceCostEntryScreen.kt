@@ -1,0 +1,462 @@
+package com.indusjs.fleet.presentation.costs
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.DateInputField
+import com.indusjs.fleet.core.ui.TimeInputField
+import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
+import indusjsfleet.sharedui.generated.resources.*
+import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
+
+/**
+ * Vehicle Maintenance Cost Entry Screen.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MaintenanceCostEntryScreen(
+    viewModel: MaintenanceCostEntryViewModel,
+    onNavigateBack: () -> Unit = {}
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Handle side effects
+    LaunchedEffect(Unit) {
+        viewModel.effect.collectLatest { effect ->
+            when (effect) {
+                is MaintenanceCostEntryContract.Effect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is MaintenanceCostEntryContract.Effect.ShowError -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is MaintenanceCostEntryContract.Effect.NavigateBack -> onNavigateBack()
+                is MaintenanceCostEntryContract.Effect.CostSaved -> {
+                    snackbarHostState.showSnackbar("Maintenance cost saved successfully")
+                }
+            }
+        }
+    }
+
+    // History dialog
+    if (state.showHistoryDialog) {
+        MaintenanceHistoryDialog(
+            costs = state.costHistory,
+            isLoading = state.isLoadingHistory,
+            vehicleInfo = state.selectedVehicle?.registrationNumber ?: "",
+            onDismiss = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.HideHistory) }
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Add Vehicle Maintenance Cost") },
+                navigationIcon = {
+                    IconButton(onClick = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.NavigateBack) }) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                actions = {
+                    // History button
+                    IconButton(
+                        onClick = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ShowHistory) },
+                        enabled = state.selectedVehicle != null
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_history),
+                            contentDescription = "History",
+                            tint = if (state.selectedVehicle != null)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        if (state.isLoadingData) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Section 1: Vehicle Selection
+                item {
+                    MaintenanceSectionCard(title = "🚛 Select Vehicle") {
+                        MaintenanceDropdownField(
+                            label = "Vehicle *",
+                            value = state.selectedVehicle?.let { "${it.registrationNumber} - ${it.make} ${it.model}" } ?: "",
+                            placeholder = "Select a vehicle",
+                            isExpanded = state.showVehicleDropdown,
+                            error = state.vehicleError,
+                            onToggle = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ToggleVehicleDropdown) },
+                            onDismiss = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ToggleVehicleDropdown) }
+                        ) {
+                            state.vehicles.forEach { vehicle ->
+                                DropdownMenuItem(
+                                    text = { Text("${vehicle.registrationNumber} - ${vehicle.make} ${vehicle.model}") },
+                                    onClick = {
+                                        viewModel.sendIntent(MaintenanceCostEntryContract.Intent.SelectVehicle(vehicle))
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Section 2: Cost Details
+                item {
+                    MaintenanceSectionCard(title = "🔧 Maintenance Cost Details") {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            // Cost Type dropdown
+                            MaintenanceDropdownField(
+                                label = "Cost Type *",
+                                value = state.costTypeLabel,
+                                placeholder = "Select maintenance type",
+                                isExpanded = state.showCostTypeDropdown,
+                                error = state.costTypeError,
+                                onToggle = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ToggleCostTypeDropdown) },
+                                onDismiss = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ToggleCostTypeDropdown) }
+                            ) {
+                                state.costTypeOptions.forEach { (type, label) ->
+                                    DropdownMenuItem(
+                                        text = { Text(label) },
+                                        onClick = {
+                                            viewModel.sendIntent(MaintenanceCostEntryContract.Intent.SelectCostType(type, label))
+                                        }
+                                    )
+                                }
+                            }
+
+                            // Date & Time row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                DateInputField(
+                                    value = state.date,
+                                    onValueChange = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateDate(it)) },
+                                    label = "Date *",
+                                    error = state.dateError,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                TimeInputField(
+                                    value = state.time,
+                                    onValueChange = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateTime(it)) },
+                                    label = "Time",
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+
+                            // Amount
+                            OutlinedTextField(
+                                value = state.amount,
+                                onValueChange = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateAmount(it)) },
+                                label = { Text("Amount (₹) *") },
+                                placeholder = { Text("Enter amount") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                isError = state.amountError != null,
+                                supportingText = state.amountError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                                leadingIcon = { Text("₹", style = MaterialTheme.typography.bodyLarge) }
+                            )
+
+                            // Description
+                            OutlinedTextField(
+                                value = state.description,
+                                onValueChange = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateDescription(it)) },
+                                label = { Text("Description") },
+                                placeholder = { Text("Describe the maintenance work") },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 2,
+                                maxLines = 4
+                            )
+                        }
+                    }
+                }
+
+                // Section 3: Vendor Details (Optional)
+                item {
+                    MaintenanceSectionCard(title = "🏪 Vendor Details (Optional)") {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedTextField(
+                                value = state.vendorName,
+                                onValueChange = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateVendorName(it)) },
+                                label = { Text("Vendor Name") },
+                                placeholder = { Text("Enter vendor/garage name") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+
+                            OutlinedTextField(
+                                value = state.invoiceNo,
+                                onValueChange = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateInvoiceNo(it)) },
+                                label = { Text("Invoice Number") },
+                                placeholder = { Text("Enter invoice number") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+
+                            OutlinedTextField(
+                                value = state.notes,
+                                onValueChange = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateNotes(it)) },
+                                label = { Text("Additional Notes") },
+                                placeholder = { Text("Any additional notes") },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 2,
+                                maxLines = 3
+                            )
+                        }
+                    }
+                }
+
+                // Submit Button
+                item {
+                    Button(
+                        onClick = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.SaveCost) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        enabled = state.canSave,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        if (state.isSaving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("💾 Save Maintenance Cost", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                // Bottom spacing
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MaintenanceSectionCard(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            content()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MaintenanceDropdownField(
+    label: String,
+    value: String,
+    placeholder: String,
+    isExpanded: Boolean,
+    error: String? = null,
+    enabled: Boolean = true,
+    onToggle: () -> Unit,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ExposedDropdownMenuBox(
+        expanded = isExpanded && enabled,
+        onExpandedChange = { if (enabled) onToggle() }
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            readOnly = true,
+            enabled = enabled,
+            isError = error != null,
+            supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded && enabled)
+            },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+        )
+        ExposedDropdownMenu(
+            expanded = isExpanded && enabled,
+            onDismissRequest = onDismiss,
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun MaintenanceHistoryDialog(
+    costs: List<MaintenanceCostDto>,
+    isLoading: Boolean,
+    vehicleInfo: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text("🔧 Maintenance History")
+                if (vehicleInfo.isNotEmpty()) {
+                    Text(
+                        text = vehicleInfo,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        text = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 100.dp, max = 400.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else if (costs.isEmpty()) {
+                    Text(
+                        "No maintenance records for this vehicle yet.",
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(costs) { cost ->
+                            MaintenanceHistoryItem(cost)
+                        }
+                        item {
+                            HorizontalDivider()
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Total:", fontWeight = FontWeight.Bold)
+                                Text(
+                                    "₹${costs.sumOf { it.amount }.toLong()}",
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+private fun MaintenanceHistoryItem(cost: MaintenanceCostDto) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = cost.costType.replace("_", " ").replaceFirstChar { it.uppercase() },
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "${cost.date} ${cost.time ?: ""}".trim(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (!cost.description.isNullOrBlank()) {
+                    Text(
+                        text = cost.description,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (!cost.vendorName.isNullOrBlank()) {
+                    Text(
+                        text = "Vendor: ${cost.vendorName}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Text(
+                text = "₹${cost.amount.toLong()}",
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+

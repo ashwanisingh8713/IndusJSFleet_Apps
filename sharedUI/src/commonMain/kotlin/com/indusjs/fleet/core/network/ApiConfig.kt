@@ -33,6 +33,16 @@ object ApiConfig {
 
         // Dashboard
         const val DASHBOARD = "/dashboard"
+        const val DASHBOARD_COST_OVERVIEW = "/dashboard/cost-overview"
+        const val DASHBOARD_PENDING_PAYMENTS = "/dashboard/pending-payments"
+
+        // Trip Costs
+        const val TRIP_COST_TYPES = "/trip-costs/types"
+        const val TRIP_COSTS = "/trip-costs"
+
+        // Maintenance Costs
+        const val MAINTENANCE_COST_TYPES = "/maintenance-costs/types"
+        const val MAINTENANCE_COSTS = "/maintenance-costs"
     }
 
     /**
