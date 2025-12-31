@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "fleet-management-api-v2",
 		"name": "Fleet Management API v2",
-		"description": "Complete API collection for Fleet Management System with 50K+ vehicle support.\n\n## Base URL\n`http://localhost:8080/api/v1`\n\n## API Versioning (Hybrid)\n- **URL Path**: `/api/v1/...` (primary)\n- **Header**: `X-API-Version: v1`\n- **Query**: `?api_version=v1`\n\n## Supported Versions\n- **v1**: Stable (current)\n- **v2**: Beta\n\n## Date & Time Formats (IMPORTANT)\n- **Date**: `DD-MM-YYYY` format ONLY (e.g., 31-12-2025, 01-01-2024)\n- **Time**: `HH:MM` 24-hour format (e.g., 14:30, 09:00)\n- **Note**: All date fields must use DD-MM-YYYY format. ISO 8601 format is NOT accepted for date fields.\n\n## Tech Stack\n- Go 1.21+ with Gin Framework\n- PostgreSQL 14+ with GORM\n- JWT Authentication\n- MQTT (EMQX) for GPS\n- WebSocket for real-time\n\n## User Roles\n- **Owner**: Full access\n- **Manager**: Operational access\n- **Supervisor**: View & track only\n\n## Rate Limits\n- Standard: 100 req/min\n- Location: 1000 req/min\n- Auth: 10 req/min",
+		"description": "Complete API collection for Fleet Management System with 50K+ vehicle support.\n\n## Base URL\n`http://localhost:8080/api/v1`\n\n## API Versioning (Hybrid)\n- **URL Path**: `/api/v1/...` (primary)\n- **Header**: `X-API-Version: v1`\n- **Query**: `?api_version=v1`\n\n## Supported Versions\n- **v1**: Stable (current)\n- **v2**: Beta\n\n## Date & Time Formats (IMPORTANT)\n- **Date**: `DD-MM-YYYY` format ONLY (e.g., 31-12-2025, 01-01-2024)\n- **Time**: `HH:MM` 24-hour format (e.g., 14:30, 09:00)\n- **Note**: All date fields must use DD-MM-YYYY format. ISO 8601 format is NOT accepted for date fields.\n\n## Trip Response - State-Based Display Info\nTrip APIs return `display_info` object with state-appropriate fields:\n\n**Planned State**: estimated_distance, cargo_type, cost_summary. Distance/Duration = 'NA'\n**In Progress State**: covered_distance, duration, total_distance, cargo_type, cost_summary, progress_info\n**Completed State**: total_distance, duration, cargo_type, cost_summary\n\nKey fields: `display_value` (primary UI value), `display_label` (context label), values show 'NA' when unavailable.\n\n## Tech Stack\n- Go 1.21+ with Gin Framework\n- PostgreSQL 14+ with GORM\n- JWT Authentication\n- MQTT (EMQX) for GPS\n- WebSocket for real-time\n\n## User Roles\n- **Owner**: Full access\n- **Manager**: Operational access\n- **Supervisor**: View & track only\n\n## Rate Limits\n- Standard: 100 req/min\n- Location: 1000 req/min\n- Auth: 10 req/min",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -557,7 +557,8 @@
 					"request": {
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-						"url": {"raw": "{{base_url}}/trips?page=1&per_page=10&state=planned", "host": ["{{base_url}}"], "path": ["trips"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "10"}, {"key": "state", "value": "planned"}]}
+						"url": {"raw": "{{base_url}}/trips?page=1&per_page=10&state=planned", "host": ["{{base_url}}"], "path": ["trips"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "10"}, {"key": "state", "value": "planned"}]},
+						"description": "List all trips with pagination and filters.\n\n**Response includes state-based display fields:**\n- **Planned**: estimated_distance, cargo_type, cost_summary. Distance/Duration = 'NA'\n- **In Progress**: covered_distance, duration, total_distance, cargo_type, cost_summary\n- **Completed**: total_distance, duration, cargo_type, cost_summary\n\n**Response Fields:**\n- `state_label`: Human-readable state (Planned, In Progress, Completed, Cancelled)\n- `distance_display`: State-appropriate distance value or 'NA'\n- `duration_display`: State-appropriate duration (e.g., '2h 30m') or 'NA'\n- `cargo_type_label`: Formatted cargo type (e.g., 'Construction Material')\n- `total_cost`: Total trip cost amount\n- `total_cost_label`: Formatted cost (e.g., '₹15.00K') or 'NA'\n- `has_costs`: Boolean indicating if trip has any costs"
 					}
 				},
 				{
@@ -565,7 +566,8 @@
 					"request": {
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-						"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]}
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]},
+						"description": "Get a single trip by ID with full details.\n\n**Response includes display_info object with state-based fields:**\n\n**display_info.distance_info:**\n- `estimated_distance`, `estimated_distance_label`\n- `covered_distance`, `covered_distance_label` (In Progress)\n- `total_distance`, `total_distance_label` (Completed)\n- `display_value`, `display_label` (Primary value based on state)\n\n**display_info.duration_info:**\n- `planned_duration_minutes`, `planned_duration_label`\n- `actual_duration_minutes`, `actual_duration_label`\n- `display_value`, `display_label` (Primary value based on state)\n\n**display_info.cargo_info:**\n- `cargo_type`, `cargo_type_label`, `cargo_description`\n- `loading_weight`, `loading_weight_label`, `weight_unit`\n\n**display_info.cost_info:**\n- `has_costs`, `total_cost`, `total_cost_label`, `cost_count`\n- `fuel_cost`, `toll_cost`, `other_costs`\n\n**display_info.progress_info (In Progress only):**\n- `progress_percent`, `progress_percent_label`\n- `remaining_distance`, `remaining_distance_label`\n- `estimated_arrival`, `estimated_arrival_label`\n\n**State-based display rules:**\n- **Planned**: Distance/Duration = 'NA', shows estimated_distance\n- **In Progress**: Shows covered_distance, active duration, progress_info\n- **Completed**: Shows total_distance, final duration"
 					}
 				},
 				{
@@ -602,6 +604,19 @@
 							"raw": "{\n    \"current_lat\": 18.9500,\n    \"current_lng\": 73.1200\n}"
 						},
 						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/location", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "location"]}
+					}
+				},
+				{
+					"name": "Update Trip Progress",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"covered_distance\": 75.5,\n    \"covered_duration_minutes\": 120,\n    \"current_lat\": 18.9500,\n    \"current_lng\": 73.1200\n}"
+						},
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/progress", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "progress"]},
+						"description": "Update trip progress during an in-progress trip.\n\n**Only for in_progress trips.**\n\n**Request Body:**\n- `covered_distance`: Distance covered so far in km (optional)\n- `covered_duration_minutes`: Duration covered in minutes (optional)\n- `current_lat`: Current latitude (optional)\n- `current_lng`: Current longitude (optional)\n\n**Response includes display_info** with updated distance and duration display values."
 					}
 				},
 				{
@@ -707,7 +722,17 @@
 					"request": {
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/costs/summary", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "costs", "summary"]}
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/costs/summary", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "costs", "summary"]},
+						"description": "Get aggregated cost summary for a trip. Returns summary with total_cost, fuel_cost, toll_cost, other_costs, cost_count, last_updated, and breakdown by cost type."
+					}
+				},
+				{
+					"name": "Get Trip Cost Details",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/costs/details", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "costs", "details"]},
+						"description": "Get detailed trip costs grouped by category. Returns trip info, grand_total, total_entries, and categories array with each category containing: category name (operating/cargo/compliance/penalty/misc), total_amount, count, and all cost entries in that category."
 					}
 				},
 				{
@@ -720,19 +745,20 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"costs\": [\n    {\n      \"trip_id\": 1,\n      \"vehicle_id\": 1,\n      \"cost_type\": \"fuel\",\n      \"amount\": 5000.00,\n      \"date\": \"20-12-2025\",\n      \"time\": \"10:30\",\n      \"notes\": \"Diesel refill at HP Pump\"\n    },\n    {\n      \"trip_id\": 1,\n      \"vehicle_id\": 1,\n      \"cost_type\": \"toll\",\n      \"amount\": 300.00,\n      \"date\": \"20-12-2025\",\n      \"time\": \"11:00\",\n      \"notes\": \"Toll plaza fee\"\n    }\n  ]\n}"
+							"raw": "{\n  \"costs\": [\n    {\n      \"cost_type\": \"fuel\",\n      \"amount\": 5000.00,\n      \"date\": \"20-12-2025\",\n      \"time\": \"10:30\",\n      \"notes\": \"Diesel refill at HP Pump\"\n    },\n    {\n      \"cost_type\": \"toll\",\n      \"amount\": 300.00,\n      \"date\": \"20-12-2025\",\n      \"time\": \"11:00\",\n      \"notes\": \"Toll plaza fee\"\n    }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/trips/{{trip_id}}/costs/bulk",
 							"host": ["{{base_url}}"],
 							"path": ["trips", "{{trip_id}}", "costs", "bulk"]
-						}
+						},
+						"description": "Bulk create trip costs. Note: trip_id is taken from URL path and vehicle_id is taken from the trip record. Do NOT include trip_id or vehicle_id in the request body."
 					},
 					"response": [
 						{
 							"name": "Success",
 							"status": "201",
-							"body": "{\n  \"success\": true,\n  \"message\": \"Created 2 trip cost(s) successfully\",\n  \"data\": {\n    \"created_count\": 2,\n    \"error_count\": 0,\n    \"costs\": [\n      {\n        \"id\": 101,\n        \"trip_id\": 1,\n        \"vehicle_id\": 1,\n        \"cost_type\": \"fuel\",\n        \"amount\": 5000.00,\n        \"date\": \"20-12-2025\",\n        \"time\": \"10:30\",\n        \"notes\": \"Diesel refill at HP Pump\"\n      }\n    ]\n  }\n}"
+							"body": "{\n  \"success\": true,\n  \"message\": \"Trip costs processed\",\n  \"created_count\": 2,\n  \"error_count\": 0,\n  \"costs\": [\n    {\n      \"id\": 101,\n      \"trip_id\": 1,\n      \"vehicle_id\": 1,\n      \"cost_type\": \"fuel\",\n      \"amount\": 5000.00,\n      \"date\": \"2025-12-20T00:00:00Z\",\n      \"time\": \"10:30\",\n      \"notes\": \"Diesel refill at HP Pump\"\n    }\n  ]\n}"
 						},
 						{
 							"name": "Validation Error",
@@ -742,7 +768,7 @@
 						{
 							"name": "Partial Success",
 							"status": "206",
-							"body": "{\n  \"success\": true,\n  \"message\": \"Partially created: 1 succeeded, 1 failed\",\n  \"data\": {\n    \"created_count\": 1,\n    \"error_count\": 1,\n    \"costs\": [{\"id\": 102, \"cost_type\": \"toll\", \"amount\": 300.00}],\n    \"errors\": [\"Entry 2: date: invalid format. Expected DD-MM-YYYY\"]\n  }\n}"
+							"body": "{\n  \"success\": true,\n  \"message\": \"Some trip costs failed validation\",\n  \"created_count\": 1,\n  \"error_count\": 1,\n  \"costs\": [{\"id\": 102, \"cost_type\": \"toll\", \"amount\": 300.00}],\n  \"errors\": [\"Entry 2: date: invalid format. Expected DD-MM-YYYY\"]\n}"
 						}
 					]
 				},
@@ -847,10 +873,28 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"costs\": [\n        {\n            \"cost_type\": \"oil_change\",\n            \"amount\": 5000.00,\n            \"date\": \"20-12-2025\",\n            \"time\": \"10:00\"\n        },\n        {\n            \"cost_type\": \"cleaning\",\n            \"amount\": 500.00,\n            \"date\": \"20-12-2025\",\n            \"time\": \"11:00\"\n        }\n    ]\n}"
+							"raw": "{\n    \"costs\": [\n        {\n            \"cost_type\": \"oil_change\",\n            \"amount\": 5000.00,\n            \"date\": \"20-12-2025\",\n            \"time\": \"10:00\",\n            \"description\": \"Regular oil change\",\n            \"notes\": \"Castrol 5W30\",\n            \"vendor_name\": \"ABC Service Center\",\n            \"invoice_no\": \"INV-001\"\n        },\n        {\n            \"cost_type\": \"cleaning\",\n            \"amount\": 500.00,\n            \"date\": \"20-12-2025\",\n            \"time\": \"11:00\",\n            \"description\": \"Full wash\",\n            \"notes\": \"Interior + Exterior\"\n        }\n    ]\n}"
 						},
-						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs/bulk", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs", "bulk"]}
-					}
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs/bulk", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs", "bulk"]},
+						"description": "Bulk create maintenance costs. Note: vehicle_id is taken from URL path. Do NOT include vehicle_id in the request body."
+					},
+					"response": [
+						{
+							"name": "Success",
+							"status": "201",
+							"body": "{\n  \"success\": true,\n  \"message\": \"Maintenance costs processed\",\n  \"created_count\": 2,\n  \"error_count\": 0,\n  \"costs\": [\n    {\n      \"id\": 1,\n      \"vehicle_id\": 1,\n      \"cost_type\": \"oil_change\",\n      \"amount\": 5000.00,\n      \"date\": \"2025-12-20T00:00:00Z\",\n      \"time\": \"10:00\"\n    }\n  ]\n}"
+						},
+						{
+							"name": "Validation Error",
+							"status": "400",
+							"body": "{\n  \"success\": false,\n  \"message\": \"All entries failed validation\",\n  \"data\": {\n    \"error_count\": 1,\n    \"errors\": [\"Entry 1: date: invalid format '12-20-2025'. Expected DD-MM-YYYY (e.g., 31-12-2025)\"]\n  }\n}"
+						},
+						{
+							"name": "Partial Success",
+							"status": "206",
+							"body": "{\n  \"success\": true,\n  \"message\": \"Some maintenance costs failed validation\",\n  \"created_count\": 1,\n  \"error_count\": 1,\n  \"costs\": [{\"id\": 1, \"cost_type\": \"oil_change\", \"amount\": 5000.00}],\n  \"errors\": [\"Entry 2: date: invalid format. Expected DD-MM-YYYY\"]\n}"
+						}
+					]
 				}
 			]
 		},

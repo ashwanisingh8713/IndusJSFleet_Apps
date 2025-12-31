@@ -7,6 +7,7 @@ import com.indusjs.fleet.data.model.costs.CreateMaintenanceCostRequest
 import com.indusjs.fleet.data.model.costs.CreateTripCostRequest
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import com.indusjs.fleet.data.model.costs.TripCostDto
+import com.indusjs.fleet.data.model.costs.TripCostSummaryDto
 import com.indusjs.fleet.domain.repository.Repository
 
 /**
@@ -28,6 +29,11 @@ interface CostsRepository : Repository {
      * Get costs for a specific trip.
      */
     suspend fun getTripCosts(tripId: String): Result<List<TripCostDto>>
+
+    /**
+     * Get cost summary for a specific trip.
+     */
+    suspend fun getTripCostSummary(tripId: String): Result<TripCostSummaryDto>
 
     /**
      * Create a new maintenance cost entry.

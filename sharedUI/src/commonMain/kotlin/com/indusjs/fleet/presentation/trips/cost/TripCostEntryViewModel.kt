@@ -233,15 +233,9 @@ class TripCostEntryViewModel(
 
         updateState { copy(isSaving = true) }
 
-        // Parse trip and vehicle IDs as integers for API
-        val tripIdInt = currentState.selectedTrip.id.toIntOrNull() ?: 0
-        val vehicleIdInt = currentState.selectedTrip.vehicleId?.toIntOrNull() ?: 0
-
-        // Build bulk request with trip_id and vehicle_id in each item
+        // Build bulk request - trip_id is in URL, vehicle_id from trip record
         val bulkItems = validEntries.map { entry ->
             BulkCostItem(
-                tripId = tripIdInt,
-                vehicleId = vehicleIdInt,
                 costType = if (entry.isOtherCostType && entry.customCostTypeName.isNotBlank()) {
                     entry.customCostTypeName
                 } else {

@@ -47,6 +47,10 @@ data class TripDto(
     val scheduledDate: String? = null,
     @SerialName("start_time")
     val startTime: String? = null,
+    @SerialName("delivery_date")
+    val deliveryDate: String? = null,
+    @SerialName("delivery_time")
+    val deliveryTime: String? = null,
     @SerialName("planned_start")
     val plannedStart: String? = null,
     @SerialName("planned_end")
@@ -61,6 +65,40 @@ data class TripDto(
     val cargoDescription: String? = null,
     @SerialName("cargo_weight")
     val cargoWeight: Double? = null,
+    @SerialName("cargo_loading_weight")
+    val cargoLoadingWeight: Double? = null,
+    @SerialName("cargo_unloading_weight")
+    val cargoUnloadingWeight: Double? = null,
+    @SerialName("vehicle_weight")
+    val vehicleWeight: Double? = null,
+    @SerialName("weight_unit")
+    val weightUnit: String? = null,
+    // Fuel info
+    @SerialName("fuel_type")
+    val fuelType: String? = null,
+    @SerialName("filled_fuel_quantity")
+    val filledFuelQuantity: Double? = null,
+    @SerialName("used_fuel_quantity")
+    val usedFuelQuantity: Double? = null,
+    @SerialName("fuel_rate")
+    val fuelRate: Double? = null,
+    @SerialName("km_per_liter")
+    val kmPerLiter: Double? = null,
+    // Pricing
+    @SerialName("purchase_price")
+    val purchasePrice: Double? = null,
+    @SerialName("selling_value")
+    val sellingValue: Double? = null,
+    @SerialName("estimated_expense")
+    val estimatedExpense: Double? = null,
+    // Payment
+    @SerialName("payment_status")
+    val paymentStatus: String? = null,
+    @SerialName("pending_amount")
+    val pendingAmount: Double? = null,
+    @SerialName("payment_mode")
+    val paymentMode: String? = null,
+    // Customer
     @SerialName("customer_name")
     val customerName: String? = null,
     @SerialName("customer_contact")
@@ -76,7 +114,159 @@ data class TripDto(
     @SerialName("created_at")
     val createdAt: String? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: String? = null,
+    // Cost summary - included in List/Get Trip responses
+    @SerialName("cost_summary")
+    val costSummary: TripCostSummaryEmbeddedDto? = null,
+    // Display info - included in Get Trip response (detail view)
+    @SerialName("display_info")
+    val displayInfo: TripDisplayInfoDto? = null,
+    // List-level display fields (for List Trips response)
+    @SerialName("state_label")
+    val stateLabel: String? = null,
+    @SerialName("distance_display")
+    val distanceDisplay: String? = null,
+    @SerialName("duration_display")
+    val durationDisplay: String? = null,
+    @SerialName("cargo_type_label")
+    val cargoTypeLabel: String? = null,
+    @SerialName("total_cost_label")
+    val totalCostLabel: String? = null,
+    @SerialName("has_costs")
+    val hasCosts: Boolean? = null
+)
+
+/**
+ * Cost summary embedded in Trip response.
+ */
+@Serializable
+data class TripCostSummaryEmbeddedDto(
+    @SerialName("total_cost")
+    val totalCost: Double = 0.0,
+    @SerialName("fuel_cost")
+    val fuelCost: Double = 0.0,
+    @SerialName("toll_cost")
+    val tollCost: Double = 0.0,
+    @SerialName("driver_allowance")
+    val driverAllowance: Double = 0.0,
+    @SerialName("parking_cost")
+    val parkingCost: Double = 0.0,
+    @SerialName("loading_charges")
+    val loadingCharges: Double = 0.0,
+    @SerialName("unloading_charges")
+    val unloadingCharges: Double = 0.0,
+    @SerialName("other_costs")
+    val otherCosts: Double = 0.0,
+    @SerialName("cost_count")
+    val costCount: Int = 0,
+    @SerialName("cost_by_type")
+    val costByType: Map<String, Double> = emptyMap(),
+    @SerialName("last_updated")
+    val lastUpdated: String? = null
+)
+
+/**
+ * Display info object with state-based fields from API.
+ * Returned in Get Trip detail response.
+ */
+@Serializable
+data class TripDisplayInfoDto(
+    @SerialName("distance_info")
+    val distanceInfo: DistanceInfoDto? = null,
+    @SerialName("duration_info")
+    val durationInfo: DurationInfoDto? = null,
+    @SerialName("cargo_info")
+    val cargoInfo: CargoInfoDto? = null,
+    @SerialName("cost_info")
+    val costInfo: CostInfoDto? = null,
+    @SerialName("progress_info")
+    val progressInfo: ProgressInfoDto? = null
+)
+
+@Serializable
+data class DistanceInfoDto(
+    @SerialName("estimated_distance")
+    val estimatedDistance: Double? = null,
+    @SerialName("estimated_distance_label")
+    val estimatedDistanceLabel: String? = null,
+    @SerialName("covered_distance")
+    val coveredDistance: Double? = null,
+    @SerialName("covered_distance_label")
+    val coveredDistanceLabel: String? = null,
+    @SerialName("total_distance")
+    val totalDistance: Double? = null,
+    @SerialName("total_distance_label")
+    val totalDistanceLabel: String? = null,
+    @SerialName("display_value")
+    val displayValue: String? = null,
+    @SerialName("display_label")
+    val displayLabel: String? = null
+)
+
+@Serializable
+data class DurationInfoDto(
+    @SerialName("planned_duration_minutes")
+    val plannedDurationMinutes: Long? = null,
+    @SerialName("planned_duration_label")
+    val plannedDurationLabel: String? = null,
+    @SerialName("actual_duration_minutes")
+    val actualDurationMinutes: Long? = null,
+    @SerialName("actual_duration_label")
+    val actualDurationLabel: String? = null,
+    @SerialName("display_value")
+    val displayValue: String? = null,
+    @SerialName("display_label")
+    val displayLabel: String? = null
+)
+
+@Serializable
+data class CargoInfoDto(
+    @SerialName("cargo_type")
+    val cargoType: String? = null,
+    @SerialName("cargo_type_label")
+    val cargoTypeLabel: String? = null,
+    @SerialName("cargo_description")
+    val cargoDescription: String? = null,
+    @SerialName("loading_weight")
+    val loadingWeight: Double? = null,
+    @SerialName("loading_weight_label")
+    val loadingWeightLabel: String? = null,
+    @SerialName("weight_unit")
+    val weightUnit: String? = null
+)
+
+@Serializable
+data class CostInfoDto(
+    @SerialName("has_costs")
+    val hasCosts: Boolean = false,
+    @SerialName("total_cost")
+    val totalCost: Double = 0.0,
+    @SerialName("total_cost_label")
+    val totalCostLabel: String? = null,
+    @SerialName("cost_count")
+    val costCount: Int = 0,
+    @SerialName("fuel_cost")
+    val fuelCost: Double = 0.0,
+    @SerialName("toll_cost")
+    val tollCost: Double = 0.0,
+    @SerialName("other_costs")
+    val otherCosts: Double = 0.0
+)
+
+@Serializable
+data class ProgressInfoDto(
+    @SerialName("progress_percent")
+    val progressPercent: Int? = null,
+    @SerialName("progress_percent_label")
+    val progressPercentLabel: String? = null,
+    @SerialName("remaining_distance")
+    val remainingDistance: Double? = null,
+    @SerialName("remaining_distance_label")
+    val remainingDistanceLabel: String? = null,
+    @SerialName("estimated_arrival")
+    val estimatedArrival: String? = null,
+    @SerialName("estimated_arrival_label")
+    val estimatedArrivalLabel: String? = null
 )
 
 /**
@@ -124,6 +314,7 @@ data class TripApiResponse<T>(
 
 /**
  * Request body for creating a trip.
+ * Updated to match API v2 fields.
  */
 @Serializable
 data class CreateTripRequest(
@@ -135,10 +326,10 @@ data class CreateTripRequest(
     val scheduledDate: String,
     @SerialName("start_time")
     val startTime: String,
-    @SerialName("planned_start")
-    val plannedStart: String,
-    @SerialName("planned_end")
-    val plannedEnd: String,
+    @SerialName("delivery_date")
+    val deliveryDate: String? = null,
+    @SerialName("delivery_time")
+    val deliveryTime: String? = null,
     @SerialName("start_location")
     val startLocation: String,
     @SerialName("start_lat")
@@ -151,12 +342,46 @@ data class CreateTripRequest(
     val endLat: Double? = null,
     @SerialName("end_lng")
     val endLng: Double? = null,
+    @SerialName("estimated_distance")
+    val estimatedDistance: Double? = null,
     @SerialName("cargo_type")
     val cargoType: String,
     @SerialName("cargo_description")
     val cargoDescription: String? = null,
-    @SerialName("cargo_weight")
-    val cargoWeight: Double? = null,
+    @SerialName("cargo_loading_weight")
+    val cargoLoadingWeight: Double? = null,
+    @SerialName("cargo_unloading_weight")
+    val cargoUnloadingWeight: Double? = null,
+    @SerialName("vehicle_weight")
+    val vehicleWeight: Double? = null,
+    @SerialName("weight_unit")
+    val weightUnit: String? = null,
+    // Fuel info
+    @SerialName("fuel_type")
+    val fuelType: String? = null,
+    @SerialName("filled_fuel_quantity")
+    val filledFuelQuantity: Double? = null,
+    @SerialName("used_fuel_quantity")
+    val usedFuelQuantity: Double? = null,
+    @SerialName("fuel_rate")
+    val fuelRate: Double? = null,
+    @SerialName("km_per_liter")
+    val kmPerLiter: Double? = null,
+    // Pricing
+    @SerialName("purchase_price")
+    val purchasePrice: Double? = null,
+    @SerialName("selling_value")
+    val sellingValue: Double? = null,
+    @SerialName("estimated_expense")
+    val estimatedExpense: Double? = null,
+    // Payment
+    @SerialName("payment_status")
+    val paymentStatus: String? = null,
+    @SerialName("pending_amount")
+    val pendingAmount: Double? = null,
+    @SerialName("payment_mode")
+    val paymentMode: String? = null,
+    // Customer
     @SerialName("customer_name")
     val customerName: String? = null,
     @SerialName("customer_contact")
@@ -186,16 +411,26 @@ data class UpdateTripRequest(
     val endLng: Double? = null,
     @SerialName("estimated_distance")
     val estimatedDistance: Double? = null,
-    @SerialName("planned_start")
-    val plannedStart: String? = null,
-    @SerialName("planned_end")
-    val plannedEnd: String? = null,
+    @SerialName("delivery_date")
+    val deliveryDate: String? = null,
+    @SerialName("delivery_time")
+    val deliveryTime: String? = null,
     @SerialName("cargo_type")
     val cargoType: String? = null,
     @SerialName("cargo_description")
     val cargoDescription: String? = null,
+    @SerialName("cargo_loading_weight")
+    val cargoLoadingWeight: Double? = null,
+    @SerialName("cargo_unloading_weight")
+    val cargoUnloadingWeight: Double? = null,
+    @SerialName("vehicle_weight")
+    val vehicleWeight: Double? = null,
+    @SerialName("weight_unit")
+    val weightUnit: String? = null,
     @SerialName("customer_name")
     val customerName: String? = null,
+    @SerialName("customer_contact")
+    val customerContact: String? = null,
     @SerialName("priority")
     val priority: String? = null,
     @SerialName("notes")
@@ -209,5 +444,31 @@ data class UpdateTripRequest(
 data class UpdateTripStateRequest(
     @SerialName("state")
     val state: String
+)
+
+/**
+ * Request body for updating trip progress (in_progress trips only).
+ */
+@Serializable
+data class UpdateTripProgressRequest(
+    @SerialName("covered_distance")
+    val coveredDistance: Double? = null,
+    @SerialName("covered_duration_minutes")
+    val coveredDurationMinutes: Long? = null,
+    @SerialName("current_lat")
+    val currentLat: Double? = null,
+    @SerialName("current_lng")
+    val currentLng: Double? = null
+)
+
+/**
+ * Request body for updating trip location.
+ */
+@Serializable
+data class UpdateTripLocationRequest(
+    @SerialName("current_lat")
+    val currentLat: Double,
+    @SerialName("current_lng")
+    val currentLng: Double
 )
 

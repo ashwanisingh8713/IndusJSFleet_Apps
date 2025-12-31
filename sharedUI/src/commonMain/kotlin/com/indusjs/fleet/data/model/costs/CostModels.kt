@@ -176,14 +176,11 @@ data class BulkCreateTripCostsRequest(
 
 /**
  * Individual cost item for bulk creation.
- * Note: API expects trip_id and vehicle_id in each item as integers.
+ * Note: trip_id is taken from URL path and vehicle_id from the trip record.
+ * Do NOT include trip_id or vehicle_id in the request body.
  */
 @Serializable
 data class BulkCostItem(
-    @SerialName("trip_id")
-    val tripId: Int,
-    @SerialName("vehicle_id")
-    val vehicleId: Int,
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -334,3 +331,27 @@ data class BulkMaintenanceCostsResultDto(
     val created: Int = 0,
     val costs: List<MaintenanceCostDto> = emptyList()
 ) : Dto
+
+/**
+ * Trip Cost Summary API response - for /trips/{trip_id}/costs/summary API.
+ */
+@Serializable
+data class TripCostSummaryApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: TripCostSummaryDto? = null
+)
+
+/**
+ * Trip Cost Summary DTO.
+ * Contains total cost and breakdown by cost type.
+ */
+@Serializable
+data class TripCostSummaryDto(
+    val total: Double = 0.0,
+    @SerialName("by_type")
+    val byType: Map<String, Double> = emptyMap(),
+    @SerialName("cost_count")
+    val costCount: Int = 0
+) : Dto
+

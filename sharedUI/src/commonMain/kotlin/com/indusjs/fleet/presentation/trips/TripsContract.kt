@@ -13,6 +13,8 @@ object TripsContract {
 
     /**
      * UI State for the Trips screen.
+     * Note: Cost summary is now embedded in Trip entity (trip.totalCost)
+     * so we don't need separate tripCostSummaries map.
      */
     data class State(
         val isLoading: Boolean = false,
@@ -47,4 +49,3 @@ object TripsContract {
         data class ShowSnackbar(val message: String) : Effect
     }
 }
-

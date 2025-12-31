@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -311,16 +312,17 @@ private fun TripCard(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Info Row - Using dividers instead of card backgrounds
+            // Info Row - State-based display using displayInfo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Distance - state-appropriate value (Est. Distance for Planned, Covered for In Progress, Total for Completed)
                 TripInfoItem(
-                    icon = "🛣️",
-                    value = "${trip.distance.toInt()} km",
-                    label = "Distance"
+                    value = trip.displayInfo.distanceValue,
+                    label = trip.displayInfo.distanceLabel,
+                    isNA = trip.displayInfo.distanceValue == "NA"
                 )
 
                 VerticalDivider(
@@ -328,10 +330,11 @@ private fun TripCard(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
 
+                // Duration - state-appropriate value (NA for Planned, Active for In Progress)
                 TripInfoItem(
-                    icon = "⏱️",
-                    value = formatDuration(trip.estimatedDuration),
-                    label = "Duration"
+                    value = trip.displayInfo.durationValue,
+                    label = trip.displayInfo.durationLabel,
+                    isNA = trip.displayInfo.durationValue == "NA"
                 )
 
                 VerticalDivider(
@@ -339,13 +342,79 @@ private fun TripCard(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
 
-                TripInfoItem(
-                    icon = "📦",
-                    value = trip.cargoType?.take(8) ?: getStatusDisplayName(trip.status),
-                    label = if (trip.cargoType != null) "Cargo" else "Status"
+                // Third item: Cost if available, otherwise Cargo Type
+                if (trip.displayInfo.hasCosts) {
+                    TripInfoItem(
+                        value = trip.displayInfo.totalCostLabel,
+                        label = "Trip Cost"
+                    )
+                } else if (!trip.displayInfo.cargoTypeLabel.isNullOrBlank()) {
+                    TripInfoItem(
+                        value = trip.displayInfo.cargoTypeLabel.take(10),
+                        label = "Cargo"
+                    )
+                } else {
+                    // Fallback: Show estimated distance for Planned state
+                    if (trip.status == TripStatus.PLANNED) {
+                        TripInfoItem(
+                            value = trip.displayInfo.estimatedDistance?.let { "${it.toInt()} km" } ?: "NA",
+                            label = "Est. Total",
+                            isNA = trip.displayInfo.estimatedDistance == null
+                        )
+                    } else {
+                        TripInfoItem(
+                            value = getStatusDisplayName(trip.status).take(10),
+                            label = "Status"
+                        )
+                    }
+                }
+            }
+
+            // Progress indicator for In Progress trips
+            if (trip.status == TripStatus.IN_PROGRESS && trip.displayInfo.progressPercent != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                TripProgressIndicator(
+                    progressPercent = trip.displayInfo.progressPercent,
+                    remainingDistance = trip.displayInfo.remainingDistance
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun TripProgressIndicator(
+    progressPercent: Int,
+    remainingDistance: Double?
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Progress: $progressPercent%",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            if (remainingDistance != null) {
+                Text(
+                    text = "${remainingDistance.toInt()} km remaining",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { progressPercent / 100f },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     }
 }
 
@@ -455,28 +524,43 @@ private fun RouteSection(trip: Trip) {
 
 @Composable
 private fun TripInfoItem(
-    icon: String,
     value: String,
     label: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: String? = null,
+    isNA: Boolean = false
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.padding(horizontal = 8.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(modifier = Modifier.width(4.dp))
+        if (icon != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = icon,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isNA) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                           else MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (isNA) FontWeight.Normal else FontWeight.Bold,
+                    color = if (isNA) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                           else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+            }
+        } else {
             Text(
                 text = value,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (isNA) FontWeight.Normal else FontWeight.SemiBold,
+                color = if (isNA) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                       else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1
             )
         }
@@ -509,4 +593,22 @@ private fun formatDuration(minutes: Long): String {
     val hours = minutes / 60
     val mins = minutes % 60
     return if (hours > 0) "${hours}h ${mins}m" else "${mins}m"
+}
+
+private fun formatAmount(amount: Double): String {
+    return if (amount >= 1000) {
+        val k = amount / 1000
+        if (k >= 100) {
+            "${k.toInt()}K"
+        } else {
+            val formatted = ((k * 10).toInt() / 10.0)
+            if (formatted == formatted.toInt().toDouble()) {
+                "${formatted.toInt()}K"
+            } else {
+                "${formatted}K"
+            }
+        }
+    } else {
+        amount.toInt().toString()
+    }
 }

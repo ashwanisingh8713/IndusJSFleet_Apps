@@ -34,3 +34,10 @@ We have following screens in app.
 
  Plan with best practices to implement and verify the all required apis into Mobile App.
 
+--------------------------------------------
+In this added`Trip cost`, there is no ui to see the each trip cost.
+In `TripsScreen.kt` it should show all added cost of each trip.
+In `TripDetailScreen.kt` there should be separate UI to see the detailed cost in details for each type of TripCost.
+
+Plan it in best approach and best practice.
+

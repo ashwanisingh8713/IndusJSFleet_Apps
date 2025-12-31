@@ -3,6 +3,7 @@ package com.indusjs.fleet.presentation.trips.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
 
@@ -48,6 +49,12 @@ object TripDetailContract {
         val priority: String = "",
         val notes: String = "",
 
+        // Trip costs
+        val costs: List<TripCostDto> = emptyList(),
+        val totalCost: Double = 0.0,
+        val costsByType: Map<String, List<TripCostDto>> = emptyMap(),
+        val isLoadingCosts: Boolean = false,
+
         // Validation errors
         val startLocationError: String? = null,
         val endLocationError: String? = null,
@@ -71,6 +78,9 @@ object TripDetailContract {
 
         val canSave: Boolean
             get() = isFormValid && !isSaving && isEditMode
+
+        val hasCosts: Boolean
+            get() = costs.isNotEmpty()
     }
 
     /**

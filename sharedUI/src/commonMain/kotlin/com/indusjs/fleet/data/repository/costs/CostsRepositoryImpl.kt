@@ -12,6 +12,7 @@ import com.indusjs.fleet.data.model.costs.CreateMaintenanceCostRequest
 import com.indusjs.fleet.data.model.costs.CreateTripCostRequest
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import com.indusjs.fleet.data.model.costs.TripCostDto
+import com.indusjs.fleet.data.model.costs.TripCostSummaryDto
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import dev.zacsweers.metro.Inject
 
@@ -67,6 +68,24 @@ class CostsRepositoryImpl(
                 Result.Success(response.data.costs)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch trip costs"))
+            }
+        } catch (e: NotAuthenticatedException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(e.message ?: "Network error"))
+        }
+    }
+
+    override suspend fun getTripCostSummary(tripId: String): Result<TripCostSummaryDto> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getTripCostSummary(token, tripId)
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                // If no costs, return empty summary instead of error
+                Result.Success(TripCostSummaryDto())
             }
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)

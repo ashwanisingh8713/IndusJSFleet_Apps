@@ -27,6 +27,7 @@ interface CostsRemoteDataSource : RemoteDataSource {
     suspend fun createTripCost(token: String, request: CreateTripCostRequest): TripCostApiResponse
     suspend fun bulkCreateTripCosts(token: String, tripId: String, request: BulkCreateTripCostsRequest): BulkTripCostsApiResponse
     suspend fun getTripCosts(token: String, tripId: String): TripCostsListApiResponse
+    suspend fun getTripCostSummary(token: String, tripId: String): TripCostSummaryApiResponse
     suspend fun createMaintenanceCost(token: String, request: CreateMaintenanceCostRequest): MaintenanceCostApiResponse
     suspend fun bulkCreateMaintenanceCosts(token: String, vehicleId: String, request: BulkCreateMaintenanceCostsRequest): BulkMaintenanceCostsApiResponse
     suspend fun getMaintenanceCosts(token: String, vehicleId: String): MaintenanceCostsListApiResponse
@@ -101,6 +102,22 @@ class CostsRemoteDataSourceImpl(
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch trip costs: ${e.message}" }
             TripCostsListApiResponse(
+                success = false,
+                message = e.message ?: "Network error occurred"
+            )
+        }
+    }
+
+    override suspend fun getTripCostSummary(token: String, tripId: String): TripCostSummaryApiResponse {
+        return try {
+            log.d { "Fetching cost summary for trip: $tripId" }
+            val response: HttpResponse = httpClient.get("$baseUrl/trips/$tripId/costs/summary") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            handleTripCostSummaryResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch trip cost summary: ${e.message}" }
+            TripCostSummaryApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
             )
@@ -195,6 +212,25 @@ class CostsRemoteDataSourceImpl(
             }
         } catch (e: Exception) {
             TripCostsListApiResponse(
+                success = false,
+                message = "Failed to parse response: ${e.message}"
+            )
+        }
+    }
+
+    private suspend fun handleTripCostSummaryResponse(response: HttpResponse): TripCostSummaryApiResponse {
+        val responseBody = response.bodyAsText()
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<TripCostSummaryApiResponse>(responseBody)
+            } else {
+                TripCostSummaryApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            TripCostSummaryApiResponse(
                 success = false,
                 message = "Failed to parse response: ${e.message}"
             )

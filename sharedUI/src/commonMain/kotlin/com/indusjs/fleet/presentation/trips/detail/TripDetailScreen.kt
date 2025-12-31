@@ -20,6 +20,8 @@ import com.indusjs.fleet.core.error.ErrorHandler
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetStatusBadge
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.data.model.costs.TripCostDto
+import com.indusjs.fleet.data.model.costs.TripCostTypes
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
 import indusjsfleet.sharedui.generated.resources.*
@@ -242,6 +244,18 @@ fun TripDetailScreen(
 
                         item { AdditionalInfoSection(trip = state.trip!!) }
 
+                        // Trip Costs Section - only show if there are costs
+                        if (state.hasCosts) {
+                            item {
+                                TripCostsSection(
+                                    costs = state.costs,
+                                    totalCost = state.totalCost,
+                                    costsByType = state.costsByType,
+                                    isLoading = state.isLoadingCosts
+                                )
+                            }
+                        }
+
                         // Cancel button for planned trips
                         if (state.trip?.status == TripStatus.PLANNED) {
                             item {
@@ -394,14 +408,12 @@ private fun TripHeader(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 TripQuickStat(
-                    icon = "📍",
-                    value = if (trip.distance > 0) "${trip.distance.toInt()} km" else "N/A",
-                    label = "Distance"
+                    value = trip.displayInfo.distanceValue,
+                    label = trip.displayInfo.distanceLabel
                 )
                 TripQuickStat(
-                    icon = "⏱️",
-                    value = if (trip.estimatedDuration > 0) formatDuration(trip.estimatedDuration) else "N/A",
-                    label = "Duration"
+                    value = trip.displayInfo.durationValue,
+                    label = trip.displayInfo.durationLabel
                 )
                 TripQuickStat(
                     icon = getPriorityIcon(trip.priority),
@@ -476,23 +488,27 @@ private fun EnhancedStatusBadge(
 
 @Composable
 private fun TripQuickStat(
-    icon: String,
+    icon: String? = null,
     value: String,
     label: String
 ) {
+    val isNA = value == "NA" || value == "N/A"
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = icon,
-            style = MaterialTheme.typography.titleMedium
-        )
-        Spacer(modifier = Modifier.height(4.dp))
+        if (icon != null) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+        }
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            fontWeight = if (isNA) FontWeight.Normal else FontWeight.Bold,
+            color = if (isNA) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                   else MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = label,
@@ -601,7 +617,7 @@ private fun RouteSection(trip: Trip) {
         }
 
         // Distance info if available
-        if (trip.distance > 0) {
+        if (trip.displayInfo.distanceValue != "NA") {
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
@@ -622,16 +638,14 @@ private fun RouteSection(trip: Trip) {
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("🛣️", style = MaterialTheme.typography.bodyMedium)
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "${trip.distance.toInt()} km",
+                            text = trip.displayInfo.distanceValue,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            text = " total distance",
+                            text = " ${trip.displayInfo.distanceLabel.lowercase()}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                         )
@@ -657,11 +671,11 @@ private fun ScheduleSection(trip: Trip) {
         trip.actualEndTime?.let {
             EnhancedInfoRow(icon = "⏹️", label = "End Time", value = it)
         }
-        if (trip.estimatedDuration > 0) {
+        if (trip.displayInfo.durationValue != "NA") {
             EnhancedInfoRow(
                 icon = "⏱️",
-                label = "Est. Duration",
-                value = formatDuration(trip.estimatedDuration),
+                label = trip.displayInfo.durationLabel,
+                value = trip.displayInfo.durationValue,
                 isLast = true
             )
         }
@@ -1281,3 +1295,268 @@ private fun formatDuration(minutes: Long): String {
     return if (hours > 0) "${hours}h ${mins}m" else "${mins}m"
 }
 
+/**
+ * Trip Costs Section - displays costs grouped by type.
+ * Only shown when there are costs (hasCosts == true).
+ */
+@Composable
+private fun TripCostsSection(
+    costs: List<TripCostDto>,
+    totalCost: Double,
+    costsByType: Map<String, List<TripCostDto>>,
+    isLoading: Boolean
+) {
+    var expandedTypes by remember { mutableStateOf(setOf<String>()) }
+
+    EnhancedSectionCard(
+        title = "Trip Costs",
+        icon = "💰"
+    ) {
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            }
+        } else {
+            // Total Cost Summary
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Total Cost",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "${costs.size} entries",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    Text(
+                        text = "₹${formatCostAmount(totalCost)}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Cost breakdown by type
+            costsByType.forEach { (costType, typeCosts) ->
+                val isExpanded = expandedTypes.contains(costType)
+                val typeTotal = typeCosts.sumOf { it.amount }
+                val displayName = getCostTypeDisplayName(costType)
+                val typeIcon = getCostTypeIcon(costType)
+
+                // Type header - clickable to expand/collapse
+                Surface(
+                    onClick = {
+                        expandedTypes = if (isExpanded) {
+                            expandedTypes - costType
+                        } else {
+                            expandedTypes + costType
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = typeIcon,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = displayName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "${typeCosts.size} ${if (typeCosts.size == 1) "entry" else "entries"}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "₹${formatCostAmount(typeTotal)}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isExpanded) "▲" else "▼",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                // Expanded cost details
+                if (isExpanded) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+                    ) {
+                        typeCosts.forEachIndexed { index, cost ->
+                            CostDetailItem(cost = cost)
+                            if (index < typeCosts.size - 1) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CostDetailItem(cost: TripCostDto) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            // Date and time
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "📅",
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = cost.date,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                cost.time?.let { time ->
+                    Text(
+                        text = " • $time",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Notes if available
+            cost.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = notes,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    maxLines = 2
+                )
+            }
+
+            // Fuel details if applicable
+            if (cost.costType == "fuel" && cost.fuelQuantity != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row {
+                    Text(
+                        text = "⛽ ${cost.fuelQuantity} L",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                    cost.fuelRate?.let { rate ->
+                        Text(
+                            text = " @ ₹$rate/L",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        // Amount
+        Text(
+            text = "₹${formatCostAmount(cost.amount)}",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+private fun formatCostAmount(amount: Double): String {
+    val intPart = amount.toLong()
+    val decPart = ((amount - intPart) * 100).toInt()
+    val decStr = if (decPart < 10) "0$decPart" else "$decPart"
+
+    return if (intPart >= 1000) {
+        val formattedInt = intPart.toString().reversed().chunked(3).joinToString(",").reversed()
+        "$formattedInt.$decStr"
+    } else {
+        "$intPart.$decStr"
+    }
+}
+
+private fun getCostTypeDisplayName(costType: String): String {
+    return TripCostTypes.types.find { it.first == costType }?.second
+        ?: costType.replace("_", " ").replaceFirstChar { it.uppercaseChar() }
+}
+
+private fun getCostTypeIcon(costType: String): String {
+    return when (costType) {
+        "fuel" -> "⛽"
+        "toll" -> "🛣️"
+        "driver_allowance" -> "👤"
+        "loading" -> "📦"
+        "unloading" -> "📤"
+        "parking" -> "🅿️"
+        "rto" -> "📋"
+        "police" -> "👮"
+        "repair" -> "🔧"
+        "food" -> "🍽️"
+        "halt" -> "⏸️"
+        "commission" -> "💵"
+        "weighing" -> "⚖️"
+        "detention" -> "⏰"
+        "miscellaneous" -> "📝"
+        "other" -> "📌"
+        else -> "💰"
+    }
+}

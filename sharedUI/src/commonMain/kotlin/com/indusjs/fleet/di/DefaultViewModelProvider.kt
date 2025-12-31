@@ -280,7 +280,8 @@ class DefaultViewModelProvider : ViewModelProvider {
         getTripByIdUseCase,
         updateTripUseCase,
         updateTripStatusUseCase,
-        cancelTripUseCase
+        cancelTripUseCase,
+        costsRepository
     )
 
     override fun mapsViewModel() = MapsViewModel(dispatcherProvider)
@@ -301,4 +302,3 @@ class DefaultViewModelProvider : ViewModelProvider {
         costsRepository
     )
 }
-

@@ -16,7 +16,8 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel for the Trips screen implementing MVI pattern.
  *
- * Dependencies are injected via Metro DI through the TripsFeatureGraph.
+ * Note: Cost summary is now embedded in Trip response from API,
+ * so we don't need separate CostsRepository calls.
  */
 @Inject
 class TripsViewModel(
@@ -50,6 +51,8 @@ class TripsViewModel(
                         updateState { copy(isLoading = true, error = null) }
                     }
                     is Result.Success -> {
+                        // Cost summary is now embedded in Trip entity (trip.totalCost)
+                        // No need for separate API calls
                         updateState {
                             copy(
                                 isLoading = false,

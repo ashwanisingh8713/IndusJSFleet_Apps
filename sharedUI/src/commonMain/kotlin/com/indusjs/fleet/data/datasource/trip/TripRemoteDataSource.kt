@@ -35,6 +35,15 @@ interface TripRemoteDataSource : RemoteDataSource {
     suspend fun createTrip(token: String, request: CreateTripRequest): TripApiResponse<TripDto>
     suspend fun updateTrip(token: String, id: String, request: UpdateTripRequest): TripApiResponse<TripDto>
     suspend fun updateTripStatus(token: String, id: String, status: String): TripApiResponse<TripDto>
+    suspend fun updateTripProgress(
+        token: String,
+        tripId: String,
+        coveredDistance: Double?,
+        coveredDurationMinutes: Long?,
+        currentLat: Double?,
+        currentLng: Double?
+    ): TripApiResponse<TripDto>
+    suspend fun updateTripLocation(token: String, tripId: String, lat: Double, lng: Double): TripApiResponse<TripDto>
     suspend fun cancelTrip(token: String, id: String): TripApiResponse<Unit>
     suspend fun getTripsByVehicleId(token: String, vehicleId: String): TripApiResponse<List<TripDto>>
 }
@@ -139,6 +148,53 @@ class TripRemoteDataSourceImpl(
             parseSingleResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to update trip state: ${e.message}" }
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    override suspend fun updateTripProgress(
+        token: String,
+        tripId: String,
+        coveredDistance: Double?,
+        coveredDurationMinutes: Long?,
+        currentLat: Double?,
+        currentLng: Double?
+    ): TripApiResponse<TripDto> {
+        return try {
+            log.d { "Updating trip progress: $tripId" }
+            val requestBody = buildMap {
+                coveredDistance?.let { put("covered_distance", it) }
+                coveredDurationMinutes?.let { put("covered_duration_minutes", it) }
+                currentLat?.let { put("current_lat", it) }
+                currentLng?.let { put("current_lng", it) }
+            }
+            val response: HttpResponse = httpClient.patch("$baseUrl/$tripId/progress") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(requestBody)
+            }
+            parseSingleResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to update trip progress: ${e.message}" }
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    override suspend fun updateTripLocation(token: String, tripId: String, lat: Double, lng: Double): TripApiResponse<TripDto> {
+        return try {
+            log.d { "Updating trip location: $tripId" }
+            val requestBody = mapOf(
+                "current_lat" to lat,
+                "current_lng" to lng
+            )
+            val response: HttpResponse = httpClient.patch("$baseUrl/$tripId/location") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(requestBody)
+            }
+            parseSingleResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to update trip location: ${e.message}" }
             TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }

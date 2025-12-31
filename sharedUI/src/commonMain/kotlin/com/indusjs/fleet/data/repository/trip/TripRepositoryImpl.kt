@@ -74,17 +74,32 @@ class TripRepositoryImpl(
                 driverId = data.driverId,
                 scheduledDate = data.scheduledDate,
                 startTime = data.startTime,
-                plannedStart = data.plannedStart,
-                plannedEnd = data.plannedEnd,
+                deliveryDate = data.deliveryDate,
+                deliveryTime = data.deliveryTime,
                 startLocation = data.startLocation,
                 startLat = data.startLat,
                 startLng = data.startLng,
                 endLocation = data.endLocation,
                 endLat = data.endLat,
                 endLng = data.endLng,
+                estimatedDistance = data.estimatedDistance,
                 cargoType = data.cargoType,
                 cargoDescription = data.cargoDescription,
-                cargoWeight = data.cargoWeight,
+                cargoLoadingWeight = data.cargoLoadingWeight,
+                cargoUnloadingWeight = data.cargoUnloadingWeight,
+                vehicleWeight = data.vehicleWeight,
+                weightUnit = data.weightUnit,
+                fuelType = data.fuelType,
+                filledFuelQuantity = data.filledFuelQuantity,
+                usedFuelQuantity = data.usedFuelQuantity,
+                fuelRate = data.fuelRate,
+                kmPerLiter = data.kmPerLiter,
+                purchasePrice = data.purchasePrice,
+                sellingValue = data.sellingValue,
+                estimatedExpense = data.estimatedExpense,
+                paymentStatus = data.paymentStatus,
+                pendingAmount = data.pendingAmount,
+                paymentMode = data.paymentMode,
                 customerName = data.customerName,
                 customerContact = data.customerContact,
                 priority = data.priority,
@@ -113,8 +128,6 @@ class TripRepositoryImpl(
                 endLat = trip.endLocation?.latitude,
                 endLng = trip.endLocation?.longitude,
                 estimatedDistance = trip.distance.takeIf { it > 0 },
-                plannedStart = trip.scheduledStartTime,
-                plannedEnd = trip.actualEndTime,
                 cargoType = trip.cargoType,
                 cargoDescription = trip.cargoDescription,
                 customerName = trip.customerName,
@@ -143,6 +156,49 @@ class TripRepositoryImpl(
                 Result.Success(mapper.mapToDomain(response.data))
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to update trip status"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    override suspend fun updateTripProgress(
+        id: String,
+        coveredDistance: Double?,
+        coveredDurationMinutes: Long?,
+        currentLat: Double?,
+        currentLng: Double?
+    ): Result<Trip> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.updateTripProgress(
+                token = token,
+                tripId = id,
+                coveredDistance = coveredDistance,
+                coveredDurationMinutes = coveredDurationMinutes,
+                currentLat = currentLat,
+                currentLng = currentLng
+            )
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to update trip progress"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message)
+        }
+    }
+
+    override suspend fun updateTripLocation(id: String, lat: Double, lng: Double): Result<Trip> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.updateTripLocation(token, id, lat, lng)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to update trip location"), response.message)
             }
         } catch (e: Exception) {
             Result.Error(e, e.message)

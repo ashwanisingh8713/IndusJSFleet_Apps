@@ -6,6 +6,7 @@ import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripLocation
 import com.indusjs.fleet.domain.entity.trip.TripStatus
+import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.usecase.trip.CancelTripUseCase
 import com.indusjs.fleet.domain.usecase.trip.GetTripByIdUseCase
 import com.indusjs.fleet.domain.usecase.trip.UpdateTripStatusUseCase
@@ -25,7 +26,8 @@ class TripDetailViewModel(
     private val getTripByIdUseCase: GetTripByIdUseCase,
     private val updateTripUseCase: UpdateTripUseCase,
     private val updateTripStatusUseCase: UpdateTripStatusUseCase,
-    private val cancelTripUseCase: CancelTripUseCase
+    private val cancelTripUseCase: CancelTripUseCase,
+    private val costsRepository: CostsRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     override suspend fun handleIntent(intent: Intent) {
@@ -93,6 +95,8 @@ class TripDetailViewModel(
                             notes = trip.notes ?: ""
                         )
                     }
+                    // Load trip costs
+                    loadTripCosts(tripId)
                 }
                 is Result.Error -> {
                     updateState {
@@ -105,6 +109,32 @@ class TripDetailViewModel(
                 }
                 is Result.Loading -> { /* Already handled */ }
             }
+        }
+    }
+
+    private suspend fun loadTripCosts(tripId: String) {
+        updateState { copy(isLoadingCosts = true) }
+
+        when (val result = costsRepository.getTripCosts(tripId)) {
+            is Result.Success -> {
+                val costs = result.data
+                val total = costs.sumOf { it.amount }
+                val byType = costs.groupBy { it.costType }
+
+                updateState {
+                    copy(
+                        costs = costs,
+                        totalCost = total,
+                        costsByType = byType,
+                        isLoadingCosts = false
+                    )
+                }
+            }
+            is Result.Error -> {
+                updateState { copy(isLoadingCosts = false) }
+                // Don't show error for costs - it's not critical
+            }
+            is Result.Loading -> { /* Not applicable */ }
         }
     }
 

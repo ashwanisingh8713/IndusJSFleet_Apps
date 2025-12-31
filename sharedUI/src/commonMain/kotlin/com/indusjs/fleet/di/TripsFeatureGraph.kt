@@ -27,14 +27,8 @@ abstract class TripsFeatureScope private constructor()
  * Dependency graph for the Trips feature.
  * Contains all dependencies needed for trip-related operations.
  *
- * Usage:
- * ```kotlin
- * val tripsGraph = TripsFeatureGraph.Factory::class.create(
- *     httpClient = AppDependencies.httpClient,
- *     dispatcherProvider = AppDependencies.dispatcherProvider,
- *     userLocalDataSource = userGraph.userLocalDataSource
- * )
- * ```
+ * Note: Cost summary is now embedded in Trip API response,
+ * so CostsRepository is no longer needed here.
  */
 @SingleIn(TripsFeatureScope::class)
 @DependencyGraph
@@ -63,4 +57,3 @@ abstract class TripsFeatureGraph {
         ): TripsFeatureGraph
     }
 }
-
