@@ -1,6 +1,7 @@
 package com.indusjs.fleet.data.datasource.team
 
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.model.team.CreateTeamMemberRequest
 import com.indusjs.fleet.data.model.team.TeamMemberApiResponse
 import com.indusjs.fleet.data.model.team.TeamMemberListApiResponse
@@ -196,22 +197,7 @@ class TeamRemoteDataSourceImpl(
     }
 
     private fun parseErrorMessage(status: HttpStatusCode, raw: String): String {
-        return when (status) {
-            HttpStatusCode.Unauthorized -> "Unauthorized. Please log in again."
-            HttpStatusCode.Forbidden -> "You don't have permission to perform this action. Only owners can manage team members."
-            HttpStatusCode.NotFound -> "Team member not found"
-            HttpStatusCode.BadRequest -> {
-                try {
-                    val errorBody = json.decodeFromString<TeamSimpleApiResponse>(raw)
-                    errorBody.message ?: "Bad request"
-                } catch (_: Exception) {
-                    "Bad request"
-                }
-            }
-            HttpStatusCode.Conflict -> "A user with this email or mobile already exists"
-            HttpStatusCode.InternalServerError -> "Server error occurred"
-            else -> "Request failed with status: ${status.value}"
-        }
+        return ApiErrorHandler.extractErrorMessage(status, raw)
     }
 }
 

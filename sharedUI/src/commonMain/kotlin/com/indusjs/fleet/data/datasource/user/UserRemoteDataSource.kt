@@ -1,6 +1,7 @@
 package com.indusjs.fleet.data.datasource.user
 
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.user.ApiResponse
 import com.indusjs.fleet.data.model.user.AuthApiResponse
@@ -302,26 +303,7 @@ class UserRemoteDataSourceImpl(
     }
 
     private fun parseErrorMessage(status: HttpStatusCode, raw: String): String {
-        return when (status) {
-            HttpStatusCode.Unauthorized -> "Invalid credentials or session expired"
-            HttpStatusCode.Forbidden -> "You don't have permission to perform this action"
-            HttpStatusCode.NotFound -> "Resource not found"
-            HttpStatusCode.BadRequest -> {
-                try {
-                    val errorBody = json.decodeFromString<SimpleApiResponse>(raw)
-                    errorBody.message ?: "Bad request"
-                } catch (_: Exception) {
-                    try {
-                        val jsonEl = json.parseToJsonElement(raw)
-                        findInJson(jsonEl, "message") ?: "Bad request"
-                    } catch (_: Exception) {
-                        "Bad request"
-                    }
-                }
-            }
-            HttpStatusCode.InternalServerError -> "Server error occurred"
-            else -> "Request failed with status: ${status.value}"
-        }
+        return ApiErrorHandler.extractErrorMessage(status, raw)
     }
 
     private fun findInJson(el: JsonElement, key: String): String? {

@@ -1,9 +1,8 @@
-package com.indusjs.fleet.presentation.costs
+package com.indusjs.fleet.presentation.trips.cost
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.ui.DateInputField
 import com.indusjs.fleet.core.ui.TimeInputField
 import com.indusjs.fleet.data.model.costs.TripCostDto
+import com.indusjs.fleet.domain.entity.trip.Trip
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -244,7 +244,7 @@ fun TripCostEntryScreen(
 private fun TripSelectionCard(
     state: TripCostEntryContract.State,
     onToggleDropdown: () -> Unit,
-    onSelectTrip: (com.indusjs.fleet.domain.entity.trip.Trip) -> Unit
+    onSelectTrip: (Trip) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -315,7 +315,7 @@ private fun TripSelectionCard(
 
 @Composable
 private fun TripDetailsCard(
-    trip: com.indusjs.fleet.domain.entity.trip.Trip
+    trip: Trip
 ) {
     val statusColor = when (trip.status.name.lowercase()) {
         "completed" -> Color(0xFF4CAF50)

@@ -1,6 +1,7 @@
 package com.indusjs.fleet.data.datasource.vehicle
 
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleRequest
@@ -101,7 +102,7 @@ class VehicleRemoteDataSourceImpl(
             parseListResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch vehicles: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -114,7 +115,7 @@ class VehicleRemoteDataSourceImpl(
             parseSingleResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch vehicle: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -129,7 +130,7 @@ class VehicleRemoteDataSourceImpl(
             parseSingleResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to create vehicle: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -211,7 +212,7 @@ class VehicleRemoteDataSourceImpl(
             parseSingleResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to create vehicle with documents: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -226,7 +227,7 @@ class VehicleRemoteDataSourceImpl(
             parseSingleResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to update vehicle: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -243,7 +244,7 @@ class VehicleRemoteDataSourceImpl(
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to delete vehicle: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -258,7 +259,7 @@ class VehicleRemoteDataSourceImpl(
             parseResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch vehicle detail: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -280,7 +281,7 @@ class VehicleRemoteDataSourceImpl(
             parseResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch vehicle trips: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -293,7 +294,7 @@ class VehicleRemoteDataSourceImpl(
             parseResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch vehicle route: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -306,7 +307,7 @@ class VehicleRemoteDataSourceImpl(
             parseResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch vehicle documents: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -379,7 +380,7 @@ class VehicleRemoteDataSourceImpl(
             parseDocumentsResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch vehicle documents: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -403,7 +404,7 @@ class VehicleRemoteDataSourceImpl(
             parseTripsResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch trips for vehicle: ${e.message}" }
-            VehicleApiResponse(success = false, message = e.message ?: "Network error occurred")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -419,7 +420,7 @@ class VehicleRemoteDataSourceImpl(
             }
         } else {
             log.e { "Request failed with status: ${response.status}, body: $bodyText" }
-            VehicleApiResponse(success = false, message = "Request failed with status: ${response.status}")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
         }
     }
 
@@ -435,7 +436,7 @@ class VehicleRemoteDataSourceImpl(
             }
         } else {
             log.e { "Request failed with status: ${response.status}, body: $bodyText" }
-            VehicleApiResponse(success = false, message = "Request failed with status: ${response.status}")
+            VehicleApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
         }
     }
 

@@ -2,6 +2,7 @@ package com.indusjs.fleet.data.datasource.dashboard
 
 import co.touchlab.kermit.Logger
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.dashboard.CostOverviewApiResponse
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
@@ -70,7 +71,7 @@ class DashboardRemoteDataSourceImpl(
             log.e(e) { "Failed to fetch dashboard: ${e.message}" }
             DashboardApiResponse(
                 success = false,
-                message = e.message ?: "Network error occurred"
+                message = ApiErrorHandler.getNetworkErrorMessage(e)
             )
         }
     }
@@ -87,7 +88,7 @@ class DashboardRemoteDataSourceImpl(
             log.e(e) { "Failed to fetch cost overview: ${e.message}" }
             CostOverviewApiResponse(
                 success = false,
-                message = e.message ?: "Network error occurred"
+                message = ApiErrorHandler.getNetworkErrorMessage(e)
             )
         }
     }
@@ -105,7 +106,7 @@ class DashboardRemoteDataSourceImpl(
             log.e(e) { "Failed to fetch pending payments: ${e.message}" }
             PendingPaymentsApiResponse(
                 success = false,
-                message = e.message ?: "Network error occurred"
+                message = ApiErrorHandler.getNetworkErrorMessage(e)
             )
         }
     }
@@ -119,18 +120,10 @@ class DashboardRemoteDataSourceImpl(
             if (response.status.isSuccess()) {
                 json.decodeFromString<DashboardApiResponse>(responseBody)
             } else {
-                try {
-                    val errorResponse = json.decodeFromString<DashboardApiResponse>(responseBody)
-                    DashboardApiResponse(
-                        success = false,
-                        message = errorResponse.message ?: "Request failed with status: ${response.status}"
-                    )
-                } catch (e: Exception) {
-                    DashboardApiResponse(
-                        success = false,
-                        message = "Request failed with status: ${response.status}"
-                    )
-                }
+                DashboardApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to parse dashboard response: ${e.message}" }
@@ -151,7 +144,7 @@ class DashboardRemoteDataSourceImpl(
             } else {
                 CostOverviewApiResponse(
                     success = false,
-                    message = "Request failed with status: ${response.status}"
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
                 )
             }
         } catch (e: Exception) {
@@ -173,7 +166,7 @@ class DashboardRemoteDataSourceImpl(
             } else {
                 PendingPaymentsApiResponse(
                     success = false,
-                    message = "Request failed with status: ${response.status}"
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
                 )
             }
         } catch (e: Exception) {

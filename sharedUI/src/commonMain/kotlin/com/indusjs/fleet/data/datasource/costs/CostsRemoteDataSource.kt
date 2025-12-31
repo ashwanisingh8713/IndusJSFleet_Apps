@@ -2,6 +2,7 @@ package com.indusjs.fleet.data.datasource.costs
 
 import co.touchlab.kermit.Logger
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.costs.*
 import dev.zacsweers.metro.Inject
@@ -27,6 +28,7 @@ interface CostsRemoteDataSource : RemoteDataSource {
     suspend fun bulkCreateTripCosts(token: String, tripId: String, request: BulkCreateTripCostsRequest): BulkTripCostsApiResponse
     suspend fun getTripCosts(token: String, tripId: String): TripCostsListApiResponse
     suspend fun createMaintenanceCost(token: String, request: CreateMaintenanceCostRequest): MaintenanceCostApiResponse
+    suspend fun bulkCreateMaintenanceCosts(token: String, vehicleId: String, request: BulkCreateMaintenanceCostsRequest): BulkMaintenanceCostsApiResponse
     suspend fun getMaintenanceCosts(token: String, vehicleId: String): MaintenanceCostsListApiResponse
 }
 
@@ -123,6 +125,28 @@ class CostsRemoteDataSourceImpl(
         }
     }
 
+    override suspend fun bulkCreateMaintenanceCosts(
+        token: String,
+        vehicleId: String,
+        request: BulkCreateMaintenanceCostsRequest
+    ): BulkMaintenanceCostsApiResponse {
+        return try {
+            log.d { "Bulk creating ${request.costs.size} maintenance costs for vehicle: $vehicleId" }
+            val response: HttpResponse = httpClient.post("$baseUrl/vehicles/$vehicleId/maintenance-costs/bulk") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(json.encodeToString(request))
+            }
+            handleBulkMaintenanceCostsResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to bulk create maintenance costs: ${e.message}" }
+            BulkMaintenanceCostsApiResponse(
+                success = false,
+                message = e.message ?: "Network error occurred"
+            )
+        }
+    }
+
     override suspend fun getMaintenanceCosts(token: String, vehicleId: String): MaintenanceCostsListApiResponse {
         return try {
             log.d { "Fetching maintenance costs for vehicle: $vehicleId" }
@@ -147,7 +171,7 @@ class CostsRemoteDataSourceImpl(
             } else {
                 TripCostApiResponse(
                     success = false,
-                    message = "Request failed with status: ${response.status}"
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
                 )
             }
         } catch (e: Exception) {
@@ -166,7 +190,7 @@ class CostsRemoteDataSourceImpl(
             } else {
                 TripCostsListApiResponse(
                     success = false,
-                    message = "Request failed with status: ${response.status}"
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
                 )
             }
         } catch (e: Exception) {
@@ -185,7 +209,7 @@ class CostsRemoteDataSourceImpl(
             } else {
                 MaintenanceCostApiResponse(
                     success = false,
-                    message = "Request failed with status: ${response.status}"
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
                 )
             }
         } catch (e: Exception) {
@@ -204,7 +228,7 @@ class CostsRemoteDataSourceImpl(
             } else {
                 MaintenanceCostsListApiResponse(
                     success = false,
-                    message = "Request failed with status: ${response.status}"
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
                 )
             }
         } catch (e: Exception) {
@@ -223,11 +247,30 @@ class CostsRemoteDataSourceImpl(
             } else {
                 BulkTripCostsApiResponse(
                     success = false,
-                    message = "Request failed with status: ${response.status}"
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
                 )
             }
         } catch (e: Exception) {
             BulkTripCostsApiResponse(
+                success = false,
+                message = "Failed to parse response: ${e.message}"
+            )
+        }
+    }
+
+    private suspend fun handleBulkMaintenanceCostsResponse(response: HttpResponse): BulkMaintenanceCostsApiResponse {
+        val responseBody = response.bodyAsText()
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<BulkMaintenanceCostsApiResponse>(responseBody)
+            } else {
+                BulkMaintenanceCostsApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            BulkMaintenanceCostsApiResponse(
                 success = false,
                 message = "Failed to parse response: ${e.message}"
             )

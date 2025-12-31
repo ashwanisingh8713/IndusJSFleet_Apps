@@ -1,17 +1,23 @@
 package com.indusjs.fleet.presentation.dashboard
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -1573,10 +1579,10 @@ private fun OfflineBanner(
     }
 }
 
-// ============ NEW DASHBOARD SECTIONS ============
+// ============ CLEAN DASHBOARD SECTIONS ============
 
 /**
- * Cost Overview Section with filter tabs and add cost buttons.
+ * Cost Overview Section - Clean design with clear visual hierarchy.
  */
 @Composable
 private fun CostOverviewSection(
@@ -1589,13 +1595,13 @@ private fun CostOverviewSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header with filter tabs
             Row(
@@ -1603,87 +1609,161 @@ private fun CostOverviewSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "💰 Cost Overview",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "💰",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Cost Overview",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
-                // Filter chips
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Filter chips - clean pill style
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(0.dp)
+                ) {
                     CostOverviewFilter.entries.forEach { filter ->
-                        FilterChip(
-                            selected = selectedFilter == filter,
-                            onClick = { onFilterChange(filter) },
-                            label = {
-                                Text(
-                                    text = filter.label,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            },
-                            modifier = Modifier.height(28.dp)
-                        )
+                        val isSelected = selectedFilter == filter
+                        Surface(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(18.dp))
+                                .clickable { onFilterChange(filter) },
+                            shape = RoundedCornerShape(18.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                        ) {
+                            Text(
+                                text = filter.label.take(1),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
                     }
                 }
             }
 
             if (isLoading) {
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(80.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
                 }
             } else {
-                // Stats row
+                // Stats row - clean number display
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     // Total Expenses
-                    CostStatCard(
-                        title = "Total Expenses",
+                    CleanStatItem(
+                        label = "Expenses",
                         value = "₹${formatAmount(costOverview.totalExpenses)}",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.weight(1f)
+                        valueColor = MaterialTheme.colorScheme.error
+                    )
+
+                    // Vertical Divider
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(48.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant)
                     )
 
                     // Profit/Loss
-                    CostStatCard(
-                        title = if (costOverview.isProfit) "Profit" else "Loss",
+                    CleanStatItem(
+                        label = if (costOverview.isProfit) "Profit" else "Loss",
                         value = "₹${formatAmount(kotlin.math.abs(costOverview.profitLoss))}",
-                        color = if (costOverview.isProfit) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
-                        modifier = Modifier.weight(1f)
+                        valueColor = if (costOverview.isProfit) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
+                    )
+
+                    // Vertical Divider
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(48.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant)
                     )
 
                     // Completed Trips
-                    CostStatCard(
-                        title = "Completed Trips",
+                    CleanStatItem(
+                        label = "Trips",
                         value = costOverview.completedTrips.toString(),
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f)
+                        valueColor = MaterialTheme.colorScheme.primary
                     )
                 }
 
-                // Add Cost Buttons
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                // Add Cost Buttons - consistent eye-catching design
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedButton(
+                    // Trip Cost Button
+                    FilledTonalButton(
                         onClick = onAddTripCostClick,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     ) {
-                        Text("➕ Add Trip Cost", style = MaterialTheme.typography.labelMedium)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Trip Cost",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
 
-                    OutlinedButton(
+                    // Vehicle Cost Button
+                    FilledTonalButton(
                         onClick = onAddVehicleCostClick,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
                     ) {
-                        Text("🔧 Add Vehicle Cost", style = MaterialTheme.typography.labelMedium)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_vehicle),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Vehicle Cost",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }
@@ -1691,39 +1771,70 @@ private fun CostOverviewSection(
     }
 }
 
+/**
+ * Clean stat item - just number and label, no background
+ */
 @Composable
-private fun CostStatCard(
-    title: String,
+private fun CleanStatItem(
+    label: String,
     value: String,
-    color: Color,
-    modifier: Modifier = Modifier
+    valueColor: Color
 ) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        color = color.copy(alpha = 0.1f)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 8.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = valueColor
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
 /**
- * Pending Payments Section.
+ * Enhanced Cost Stat Card with gradient background
+ */
+@Composable
+private fun EnhancedCostStatCard(
+    title: String,
+    value: String,
+    icon: String,
+    accentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.padding(8.dp)
+    ) {
+        Text(
+            text = icon,
+            style = MaterialTheme.typography.titleSmall
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = accentColor
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Pending Payments Section - Clean design.
  */
 @Composable
 private fun PendingPaymentsSection(
@@ -1980,7 +2091,7 @@ private fun TripsStatusSection(
 }
 
 /**
- * Alerts Section.
+ * Alerts Section - Clean design without colored background.
  */
 @Composable
 private fun AlertsSection(
@@ -1990,81 +2101,159 @@ private fun AlertsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "⚠️",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Alerts",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                // Alert count badge
                 Text(
-                    text = "⚠️ Alerts",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "${alerts.size}",
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.error
                 )
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = MaterialTheme.colorScheme.error
-                ) {
-                    Text(
-                        text = "${alerts.size}",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onError,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
             }
 
-            // Document expiry stats
+            // Document expiry stats - clean text style
             if (documentStats != null && (documentStats.expiringDocuments > 0 || documentStats.expiredDocuments > 0)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     if (documentStats.expiredDocuments > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "📄 ${documentStats.expiredDocuments} Expired",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                text = "📄",
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${documentStats.expiredDocuments} Expired",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.error
                             )
                         }
                     }
                     if (documentStats.expiringDocuments > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "⏰ ${documentStats.expiringDocuments} Expiring Soon",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.tertiary,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                text = "⏰",
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${documentStats.expiringDocuments} Expiring Soon",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.tertiary
                             )
                         }
                     }
                 }
             }
 
-            // Alert items
+            if (alerts.isNotEmpty()) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+            }
+
+            // Alert items - clean list style
             alerts.take(3).forEach { alert ->
-                AlertCardCompact(
+                CleanAlertItem(
                     alert = alert,
                     onDismiss = { onAlertDismiss(alert.id) }
                 )
             }
+        }
+    }
+}
+
+/**
+ * Clean Alert Item - minimal design without colored backgrounds
+ */
+@Composable
+private fun CleanAlertItem(
+    alert: Alert,
+    onDismiss: () -> Unit
+) {
+    val alertColor = when (alert.type) {
+        AlertType.MAINTENANCE -> MaterialTheme.colorScheme.tertiary
+        AlertType.FUEL_LOW -> MaterialTheme.colorScheme.error
+        AlertType.SPEED_VIOLATION -> MaterialTheme.colorScheme.error
+        AlertType.GEOFENCE_VIOLATION -> MaterialTheme.colorScheme.secondary
+        AlertType.DRIVER_BEHAVIOR -> MaterialTheme.colorScheme.secondary
+        AlertType.SYSTEM -> MaterialTheme.colorScheme.primary
+        AlertType.DOCUMENT_EXPIRY -> MaterialTheme.colorScheme.error
+        AlertType.LICENSE_EXPIRY -> MaterialTheme.colorScheme.error
+    }
+
+    val alertIcon = when (alert.type) {
+        AlertType.DOCUMENT_EXPIRY -> "📄"
+        AlertType.LICENSE_EXPIRY -> "📋"
+        AlertType.MAINTENANCE -> "🔧"
+        AlertType.FUEL_LOW -> "⛽"
+        else -> "⚠️"
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = alertIcon,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = alert.title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = alertColor
+            )
+            Text(
+                text = alert.message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        IconButton(
+            onClick = onDismiss,
+            modifier = Modifier.size(24.dp)
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_close),
+                contentDescription = "Dismiss",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }
@@ -2144,33 +2333,28 @@ private fun StatusChip(
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        color = color.copy(alpha = 0.15f)
+    Column(
+        modifier = modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = count.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
-        }
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
     }
 }
 
 /**
- * Quick Actions Section.
+ * Quick Actions Section - Clean design.
  */
 @Composable
 private fun QuickActionsSection(
@@ -2181,82 +2365,86 @@ private fun QuickActionsSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "⚡ Quick Actions",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "⚡",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Quick Actions",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                QuickActionButton(
+                CleanQuickActionButton(
                     icon = "🚛",
                     label = "Vehicles",
-                    onClick = onVehiclesClick,
-                    modifier = Modifier.weight(1f)
+                    onClick = onVehiclesClick
                 )
-                QuickActionButton(
+                CleanQuickActionButton(
                     icon = "👨‍✈️",
                     label = "Drivers",
-                    onClick = onDriversClick,
-                    modifier = Modifier.weight(1f)
+                    onClick = onDriversClick
                 )
-                QuickActionButton(
+                CleanQuickActionButton(
                     icon = "🗺️",
                     label = "Trips",
-                    onClick = onTripsClick,
-                    modifier = Modifier.weight(1f)
+                    onClick = onTripsClick
                 )
-                QuickActionButton(
+                CleanQuickActionButton(
                     icon = "📍",
                     label = "Live Map",
-                    onClick = onMapsClick,
-                    modifier = Modifier.weight(1f)
+                    onClick = onMapsClick
                 )
             }
         }
     }
 }
 
+/**
+ * Clean Quick Action Button - no colored background
+ */
 @Composable
-private fun QuickActionButton(
+private fun CleanQuickActionButton(
     icon: String,
     label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
-    Surface(
-        modifier = modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Medium
-            )
-        }
+        Text(
+            text = icon,
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
+
 
 /**
  * Format amount with commas for Indian numbering system.

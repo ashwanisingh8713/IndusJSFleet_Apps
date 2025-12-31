@@ -7,15 +7,14 @@ object ApiConfig {
     /**
      * Base URL for the Fleet Management API.
      */
-    const val BASE_URL = "http://192.168.1.8:8080/api/v1"
+    const val BASE_URL = "http://192.168.1.5:8080/api/v1"
 
     /**
      * Google Places API Key for location autocomplete.
      * Get your API key from: https://console.cloud.google.com/apis/credentials
      * Enable "Places API" and "Geocoding API" in your Google Cloud project.
      */
-    //const val GOOGLE_PLACES_API_KEY = "YOUR_GOOGLE_PLACES_API_KEY_HERE"
-    const val GOOGLE_PLACES_API_KEY = "AIzaSyC53gFf6-HnNkvq2biU2WJLS5bpNkoN0XQ"
+    const val GOOGLE_PLACES_API_KEY = "AIzaSyC53gFf6-HnNkvq2biU2WJLS5bpNkoN0XQ" // It belongs from ashwanisingh8713@gmail.com
 
     /**
      * API endpoints

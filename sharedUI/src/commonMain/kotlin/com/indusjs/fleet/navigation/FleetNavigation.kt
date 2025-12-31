@@ -7,8 +7,8 @@ import com.indusjs.fleet.FilePickerRequest
 import com.indusjs.fleet.di.rememberViewModel
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.presentation.auth.LoginScreen
-import com.indusjs.fleet.presentation.costs.MaintenanceCostEntryScreen
-import com.indusjs.fleet.presentation.costs.TripCostEntryScreen
+import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryScreen
+import com.indusjs.fleet.presentation.trips.cost.TripCostEntryScreen
 import com.indusjs.fleet.presentation.dashboard.DashboardScreen
 import com.indusjs.fleet.presentation.drivers.DriversScreen
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverScreen

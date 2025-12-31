@@ -54,8 +54,8 @@ import com.indusjs.fleet.domain.usecase.vehicle.GetVehicleByIdUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
 import com.indusjs.fleet.presentation.auth.LoginViewModel
-import com.indusjs.fleet.presentation.costs.MaintenanceCostEntryViewModel
-import com.indusjs.fleet.presentation.costs.TripCostEntryViewModel
+import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryViewModel
+import com.indusjs.fleet.presentation.trips.cost.TripCostEntryViewModel
 import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
 import com.indusjs.fleet.presentation.drivers.DriversViewModel
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel

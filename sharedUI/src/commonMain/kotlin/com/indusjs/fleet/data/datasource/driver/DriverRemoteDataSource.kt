@@ -1,6 +1,7 @@
 package com.indusjs.fleet.data.datasource.driver
 
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.driver.CreateDriverRequest
 import com.indusjs.fleet.data.model.driver.DriverApiResponse
@@ -253,46 +254,38 @@ class DriverRemoteDataSourceImpl(
 
     /**
      * Try to extract error message from response body when standard parsing fails.
-     * Checks 'error' field first as it usually contains more specific error details.
+     * Uses centralized ApiErrorHandler for consistent error messages.
      */
     private fun tryExtractErrorMessage(body: String): String? {
+        if (body.isBlank()) return null
         return try {
             val jsonElement = json.parseToJsonElement(body)
-            val jsonObject = jsonElement as? kotlinx.serialization.json.JsonObject
-            // Check 'error' field first as it contains more specific details
-            // Then fall back to 'message' or 'detail'
-            val errorField = jsonObject?.get("error")?.toString()?.trim('"')
-            val messageField = jsonObject?.get("message")?.toString()?.trim('"')
-            val detailField = jsonObject?.get("detail")?.toString()?.trim('"')
+            val jsonObject = jsonElement as? kotlinx.serialization.json.JsonObject ?: return null
 
-            // Prefer error field if it contains useful info, otherwise use message
-            when {
-                !errorField.isNullOrBlank() && errorField != "null" -> parseDbError(errorField)
-                !messageField.isNullOrBlank() && messageField != "null" -> messageField
-                !detailField.isNullOrBlank() && detailField != "null" -> detailField
-                else -> null
+            // Try message field first
+            val messageField = jsonObject["message"]?.toString()?.trim('"')
+            if (!messageField.isNullOrBlank() && messageField != "null") {
+                return messageField
             }
+
+            // Try error field with DB constraint parsing
+            val errorField = jsonObject["error"]?.toString()?.trim('"')
+            if (!errorField.isNullOrBlank() && errorField != "null") {
+                return ApiErrorHandler.parseDbConstraintError(errorField)
+            }
+
+            // Try detail field
+            val detailField = jsonObject["detail"]?.toString()?.trim('"')
+            if (!detailField.isNullOrBlank() && detailField != "null") {
+                return detailField
+            }
+
+            null
         } catch (e: Exception) {
             null
         }
     }
 
-    /**
-     * Parse database error messages into user-friendly messages.
-     */
-    private fun parseDbError(error: String): String {
-        return when {
-            error.contains("duplicate key", ignoreCase = true) && error.contains("email", ignoreCase = true) ->
-                "A driver with this email already exists"
-            error.contains("duplicate key", ignoreCase = true) && error.contains("mobile", ignoreCase = true) ->
-                "A driver with this mobile number already exists"
-            error.contains("duplicate key", ignoreCase = true) && error.contains("license", ignoreCase = true) ->
-                "A driver with this license number already exists"
-            error.contains("duplicate key", ignoreCase = true) ->
-                "A driver with these details already exists"
-            else -> error
-        }
-    }
 
     private suspend fun parseDeleteResponse(response: HttpResponse): DriverApiResponse<Unit> {
         val body = response.bodyAsText()

@@ -141,13 +141,14 @@ data class TripCostsListDto(
 
 /**
  * Create Trip Cost request.
+ * Note: API expects trip_id and vehicle_id as integers.
  */
 @Serializable
 data class CreateTripCostRequest(
     @SerialName("trip_id")
-    val tripId: String,
+    val tripId: Int,
     @SerialName("vehicle_id")
-    val vehicleId: String,
+    val vehicleId: Int,
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -175,9 +176,14 @@ data class BulkCreateTripCostsRequest(
 
 /**
  * Individual cost item for bulk creation.
+ * Note: API expects trip_id and vehicle_id in each item as integers.
  */
 @Serializable
 data class BulkCostItem(
+    @SerialName("trip_id")
+    val tripId: Int,
+    @SerialName("vehicle_id")
+    val vehicleId: Int,
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -267,11 +273,12 @@ data class MaintenanceCostsListDto(
 
 /**
  * Create Maintenance Cost request.
+ * Note: API expects vehicle_id as integer.
  */
 @Serializable
 data class CreateMaintenanceCostRequest(
     @SerialName("vehicle_id")
-    val vehicleId: String,
+    val vehicleId: Int,
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -285,3 +292,45 @@ data class CreateMaintenanceCostRequest(
     val invoiceNo: String? = null
 )
 
+/**
+ * Bulk Create Maintenance Costs request - for /vehicles/{vehicle_id}/maintenance-costs/bulk API.
+ */
+@Serializable
+data class BulkCreateMaintenanceCostsRequest(
+    val costs: List<BulkMaintenanceCostItem>
+)
+
+/**
+ * Individual maintenance cost item for bulk creation.
+ * Note: vehicle_id is passed in the URL path, not in the body.
+ */
+@Serializable
+data class BulkMaintenanceCostItem(
+    @SerialName("cost_type")
+    val costType: String,
+    val amount: Double,
+    val date: String,
+    val time: String? = null,
+    val description: String? = null,
+    val notes: String? = null,
+    @SerialName("vendor_name")
+    val vendorName: String? = null,
+    @SerialName("invoice_no")
+    val invoiceNo: String? = null
+)
+
+/**
+ * Bulk Create Maintenance Costs API response.
+ */
+@Serializable
+data class BulkMaintenanceCostsApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: BulkMaintenanceCostsResultDto? = null
+)
+
+@Serializable
+data class BulkMaintenanceCostsResultDto(
+    val created: Int = 0,
+    val costs: List<MaintenanceCostDto> = emptyList()
+) : Dto

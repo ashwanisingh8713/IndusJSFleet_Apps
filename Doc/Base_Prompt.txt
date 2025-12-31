@@ -1,41 +1,36 @@
-Act as a professional Kotlin Multiplatform Developer. I am developing Fleet Managment mobile app.
-Fleet_Management_API.postman_collection.json is PostMan collection.
+Act as a professional Kotlin Multiplatform Developer.
+I am developing Fleet Management mobile app.
+Fleet_Management_API_v2.postman_collection.json is PostMan collection.
 
- In `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI`, already app is being developed and apis are getting integrated using CLEAN Architecture, Dependency Injection, MVI design pattern.
+In `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI`, Already app is being developed and apis are getting integrated using CLEAN Architecture, Dependency Injection, MVI design pattern.
+Kindly review it.
 
- Kindly review it.
+We have following screens in app.
+    Login -> LoginScreen.kt
+    Create Account -> SignUpScreen.kt
+    Change Password -> ChangePasswordScreen.kt
+    Forgot Password -> ForgotPasswordScreen.kt
+    Profile -> ProfileScreen.kt
+
+    Dashboard -> DashboardScreen.kt
+
+    Vehicles -> VehiclesScreen.kt
+    Vehicle Details -> VehicleDetailsScreen.kt
+    Create Vehicle -> CreateVehicleScreen.kt
+
+    Create Trip -> CreateTripScreen.kt
+    Trip Details -> TripDetailsScreen.kt
+    Add Trip Cost -> TripCostEntryScreen.kt
+    Add Vehicle Cost -> MaintenanceCostEntryScreen.kt
+
+
+
 
  ----------------------------------------
 
 
- Review all apis to serve the actual contents from backend server to Mobile app's appropriete screens.
+ Review all apis to serve the actual contents from backend server to Mobile app's appropriate screens.
  `/Users/ashwani/GolandProjects/IndusJSFleet_GoLang_Backend` this is path of backend server code written in GoLang.
 
  Plan with best practices to implement and verify the all required apis into Mobile App.
 
- -----------------------------------------
-In `CreateTripScreen`, I want "Start location" & "End location" should be fetched from Google Place API, and based on selected location input latitude & longitude should be selected.
-
-Do the all required implementation.
-
----------------------
-Once "Start location" & "End location" is fetched from Google Place API, and based on selected location inputs latitude & longitude are selected, then "Estimated Distance" should be calculated and set itself in "Estimated Distance" Input Text.
-Use Google Distance Matrix API for road distance.
-
--------------------------
-To "Create Trip",If any Driver or Vehicle are occupied then update in dropdown with respective information's.
-
-
----------------------
-As I have already informed you, I want to use Supabase postgres to keep location tracked data.
-- To send location tracked data from Vehicle to Server i want to use MQTT
-- To show live location of tracked data on Mobile devices (Owner, Manager, Supervisor) from from Server, I want to use Websocket.
-
-Currently in /Users/ashwani/GolandProjects/IndusJSFleet_GoLang_Backend/.env, Supabase Postgres infor is available into this.
-Can we use same configuration instead of /Users/ashwani/GolandProjects/IndusJSFleet_GoLang_Backend/mqtt-bridge/.env.example?
-
------------------------
-In `/Users/ashwani/KotlinMultiplateform/IndusJSFleet`
-Create `Android App module` to send location tracked data from Vehicle to Server using MQTT protocol.
-
-Refer `/Users/ashwani/KotlinMultiplateform/IndusJSFleet/Fleet_Management_API.postman_collection.json` for Location Tracker .

@@ -1,4 +1,4 @@
-package com.indusjs.fleet.presentation.costs
+package com.indusjs.fleet.presentation.trips.cost
 
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
@@ -7,12 +7,13 @@ import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.data.model.costs.TripCostTypes
 import com.indusjs.fleet.data.model.costs.FuelTypes
 import com.indusjs.fleet.domain.entity.trip.Trip
+import kotlin.random.Random
 
 /**
  * Represents a single cost entry row.
  */
 data class CostEntryRow(
-    val id: String = kotlin.random.Random.nextLong().toString(),
+    val id: String = Random.nextLong().toString(),
     val costType: String = "",
     val costTypeLabel: String = "",
     val date: String = "",

@@ -6,6 +6,7 @@ import com.indusjs.fleet.core.error.NotAuthenticatedException
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.costs.CostsRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
+import com.indusjs.fleet.data.model.costs.BulkCreateMaintenanceCostsRequest
 import com.indusjs.fleet.data.model.costs.BulkCreateTripCostsRequest
 import com.indusjs.fleet.data.model.costs.CreateMaintenanceCostRequest
 import com.indusjs.fleet.data.model.costs.CreateTripCostRequest
@@ -83,6 +84,23 @@ class CostsRepositoryImpl(
                 Result.Success(response.data)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to create maintenance cost"))
+            }
+        } catch (e: NotAuthenticatedException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(e.message ?: "Network error"))
+        }
+    }
+
+    override suspend fun bulkCreateMaintenanceCosts(vehicleId: String, request: BulkCreateMaintenanceCostsRequest): Result<Int> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.bulkCreateMaintenanceCosts(token, vehicleId, request)
+
+            if (response.success) {
+                Result.Success(response.data?.created ?: request.costs.size)
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to create maintenance costs"))
             }
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)

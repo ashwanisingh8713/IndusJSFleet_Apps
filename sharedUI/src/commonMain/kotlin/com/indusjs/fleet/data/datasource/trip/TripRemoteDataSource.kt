@@ -1,6 +1,7 @@
 package com.indusjs.fleet.data.datasource.trip
 
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.trip.CreateTripRequest
 import com.indusjs.fleet.data.model.trip.TripApiResponse
@@ -66,7 +67,7 @@ class TripRemoteDataSourceImpl(
             parseListResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch trips: ${e.message}" }
-            TripApiResponse(success = false, message = e.message ?: "Network error occurred")
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -79,7 +80,7 @@ class TripRemoteDataSourceImpl(
             parseSingleResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch trip: ${e.message}" }
-            TripApiResponse(success = false, message = e.message ?: "Network error occurred")
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -104,18 +105,11 @@ class TripRemoteDataSourceImpl(
                     TripApiResponse(success = false, message = "Failed to parse response: ${e.message}")
                 }
             } else {
-                // Try to parse error message from response body
-                val errorMessage = try {
-                    val errorResponse = json.decodeFromString<TripApiResponse<TripDto>>(bodyText)
-                    errorResponse.message ?: "Request failed with status: ${response.status}"
-                } catch (e: Exception) {
-                    "Request failed with status: ${response.status}. Body: $bodyText"
-                }
-                TripApiResponse(success = false, message = errorMessage)
+                TripApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to create trip: ${e.message}" }
-            TripApiResponse(success = false, message = e.message ?: "Network error occurred")
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -130,7 +124,7 @@ class TripRemoteDataSourceImpl(
             parseSingleResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to update trip: ${e.message}" }
-            TripApiResponse(success = false, message = e.message ?: "Network error occurred")
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -145,7 +139,7 @@ class TripRemoteDataSourceImpl(
             parseSingleResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to update trip state: ${e.message}" }
-            TripApiResponse(success = false, message = e.message ?: "Network error occurred")
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -158,11 +152,12 @@ class TripRemoteDataSourceImpl(
             if (response.status.isSuccess()) {
                 TripApiResponse(success = true, message = "Trip cancelled successfully")
             } else {
-                TripApiResponse(success = false, message = "Failed to cancel trip")
+                val bodyText = response.bodyAsText()
+                TripApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to cancel trip: ${e.message}" }
-            TripApiResponse(success = false, message = e.message ?: "Network error occurred")
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 
@@ -176,7 +171,7 @@ class TripRemoteDataSourceImpl(
                 TripApiResponse(success = false, message = "Failed to parse response")
             }
         } else {
-            TripApiResponse(success = false, message = "Request failed with status: ${response.status}")
+            TripApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
         }
     }
 
@@ -190,7 +185,7 @@ class TripRemoteDataSourceImpl(
                 TripApiResponse(success = false, message = "Failed to parse response")
             }
         } else {
-            TripApiResponse(success = false, message = "Request failed with status: ${response.status}")
+            TripApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
         }
     }
 
@@ -203,7 +198,7 @@ class TripRemoteDataSourceImpl(
             parseListResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch trips for vehicle: ${e.message}" }
-            TripApiResponse(success = false, message = e.message ?: "Network error occurred")
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }
 }
