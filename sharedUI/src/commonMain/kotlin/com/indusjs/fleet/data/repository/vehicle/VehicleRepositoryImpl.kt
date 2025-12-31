@@ -2,6 +2,7 @@ package com.indusjs.fleet.data.repository.vehicle
 
 import com.indusjs.fleet.core.error.ApiException
 import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSource
@@ -46,7 +47,7 @@ class VehicleRepositoryImpl(
                 emit(Result.Error(ApiException(response.message ?: "Failed to get vehicles"), response.message))
             }
         } catch (e: Exception) {
-            emit(Result.Error(e, e.message))
+            emit(Result.Error(e, ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -61,7 +62,7 @@ class VehicleRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Vehicle not found"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -77,7 +78,7 @@ class VehicleRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to create vehicle"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -120,7 +121,7 @@ class VehicleRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to create vehicle"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -157,7 +158,7 @@ class VehicleRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to update vehicle"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -172,7 +173,7 @@ class VehicleRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to delete vehicle"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -225,7 +226,7 @@ class VehicleRepositoryImpl(
                 route = null
             ))
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -353,7 +354,7 @@ class VehicleRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to upload document"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -362,7 +363,7 @@ class VehicleRepositoryImpl(
             val token = requireAuthToken()
             remoteDataSource.downloadDocument(token, documentId)
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 

@@ -2,6 +2,7 @@ package com.indusjs.fleet.data.repository.trip
 
 import com.indusjs.fleet.core.error.ApiException
 import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.trip.TripRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
@@ -39,7 +40,7 @@ class TripRepositoryImpl(
                 emit(Result.Error(ApiException(response.message ?: "Failed to get trips"), response.message))
             }
         } catch (e: Exception) {
-            emit(Result.Error(e, e.message))
+            emit(Result.Error(e, ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -54,7 +55,7 @@ class TripRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Trip not found"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -113,7 +114,7 @@ class TripRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to create trip"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -142,7 +143,7 @@ class TripRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to update trip"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -158,7 +159,7 @@ class TripRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to update trip status"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -186,7 +187,7 @@ class TripRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to update trip progress"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -201,7 +202,7 @@ class TripRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to update trip location"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -216,7 +217,7 @@ class TripRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to cancel trip"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -231,7 +232,7 @@ class TripRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to fetch trips"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 

@@ -178,23 +178,37 @@ object ApiErrorHandler {
      */
     private fun parseExceptionMessage(message: String): String {
         return when {
+            // Network connectivity issues
             message.contains("Unable to resolve host", ignoreCase = true) ||
-            message.contains("No address associated", ignoreCase = true) ->
+            message.contains("No address associated", ignoreCase = true) ||
+            message.contains("UnknownHostException", ignoreCase = true) ->
                 "No internet connection. Please check your network."
 
+            // Connection failures (including raw IP/port in message)
+            message.contains("Failed to connect", ignoreCase = true) ||
+            message.contains("Connection refused", ignoreCase = true) ||
+            message.contains("ECONNREFUSED", ignoreCase = true) ||
+            containsIpAddressPattern(message) ->
+                "Unable to connect to server. Please check your connection and try again."
+
+            // Timeout issues
             message.contains("timeout", ignoreCase = true) ||
-            message.contains("timed out", ignoreCase = true) ->
+            message.contains("timed out", ignoreCase = true) ||
+            message.contains("SocketTimeoutException", ignoreCase = true) ->
                 "Connection timed out. Please try again."
 
-            message.contains("Connection refused", ignoreCase = true) ->
-                "Unable to connect to server. Please try again later."
-
+            // SSL/Security issues
             message.contains("SSL", ignoreCase = true) ||
-            message.contains("certificate", ignoreCase = true) ->
+            message.contains("certificate", ignoreCase = true) ||
+            message.contains("handshake", ignoreCase = true) ->
                 "Secure connection failed. Please try again."
 
+            // General socket/connection exceptions
             message.contains("SocketException", ignoreCase = true) ||
-            message.contains("ConnectException", ignoreCase = true) ->
+            message.contains("ConnectException", ignoreCase = true) ||
+            message.contains("IOException", ignoreCase = true) ||
+            message.contains("Network is unreachable", ignoreCase = true) ||
+            message.contains("Connection reset", ignoreCase = true) ->
                 "Network error occurred. Please check your connection."
 
             // HTTP status codes in message
@@ -206,9 +220,20 @@ object ApiErrorHandler {
             message.contains("500") -> "Server error occurred. Please try again later."
             message.contains("502") -> "Service temporarily unavailable. Please try again later."
             message.contains("503") -> "Service is currently unavailable. Please try again later."
+            message.contains("504") -> "Request timed out. Please try again."
 
             else -> "Something went wrong. Please try again."
         }
+    }
+
+    /**
+     * Checks if the message contains an IP address pattern (e.g., /192.168.1.7:8080).
+     * These are technical details that shouldn't be shown to users.
+     */
+    private fun containsIpAddressPattern(message: String): Boolean {
+        // Match patterns like /192.168.1.7:8080 or 192.168.1.7:8080
+        val ipPattern = Regex("""/?(\d{1,3}\.){3}\d{1,3}(:\d+)?""")
+        return ipPattern.containsMatchIn(message)
     }
 
     /**

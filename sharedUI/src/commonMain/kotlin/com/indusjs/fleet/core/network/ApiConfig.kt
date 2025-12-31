@@ -7,7 +7,7 @@ object ApiConfig {
     /**
      * Base URL for the Fleet Management API.
      */
-    const val BASE_URL = "http://10.79.199.187:8080/api/v1"
+    const val BASE_URL = "http://192.168.1.7:8080/api/v1"
 
     /**
      * Google Places API Key for location autocomplete.

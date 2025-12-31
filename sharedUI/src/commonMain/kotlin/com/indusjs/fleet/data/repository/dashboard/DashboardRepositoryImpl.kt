@@ -3,6 +3,7 @@ package com.indusjs.fleet.data.repository.dashboard
 import com.indusjs.fleet.core.error.ApiException
 import com.indusjs.fleet.core.error.NetworkException
 import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSource
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSource
@@ -66,7 +67,7 @@ class DashboardRepositoryImpl(
             emit(Result.Error(e))
         } catch (e: Exception) {
             if (cached == null) {
-                emit(Result.Error(NetworkException(e.message ?: "Network error")))
+                emit(Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e))))
             }
         }
     }
@@ -94,7 +95,7 @@ class DashboardRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -137,7 +138,7 @@ class DashboardRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -175,7 +176,7 @@ class DashboardRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 

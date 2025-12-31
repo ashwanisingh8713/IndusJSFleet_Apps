@@ -2,6 +2,7 @@ package com.indusjs.fleet.data.repository.driver
 
 import com.indusjs.fleet.core.error.ApiException
 import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
@@ -41,7 +42,7 @@ class DriverRepositoryImpl(
                 emit(Result.Error(ApiException(response.message ?: "Failed to get drivers"), response.message))
             }
         } catch (e: Exception) {
-            emit(Result.Error(e, e.message))
+            emit(Result.Error(e, ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -57,7 +58,7 @@ class DriverRepositoryImpl(
                 emit(Result.Error(ApiException(response.message ?: "Failed to get available drivers"), response.message))
             }
         } catch (e: Exception) {
-            emit(Result.Error(e, e.message))
+            emit(Result.Error(e, ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -72,7 +73,7 @@ class DriverRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Driver not found"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -93,7 +94,7 @@ class DriverRepositoryImpl(
             }
         } catch (e: Exception) {
             co.touchlab.kermit.Logger.e("DriverRepository", e) { "Exception creating driver: ${e.message}" }
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -109,7 +110,7 @@ class DriverRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to update driver"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -125,7 +126,7 @@ class DriverRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to update driver status"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -140,7 +141,7 @@ class DriverRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to toggle driver active state"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 
@@ -155,7 +156,7 @@ class DriverRepositoryImpl(
                 Result.Error(ApiException(response.message ?: "Failed to delete driver"), response.message)
             }
         } catch (e: Exception) {
-            Result.Error(e, e.message)
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }
     }
 

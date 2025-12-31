@@ -3,6 +3,7 @@ package com.indusjs.fleet.data.repository.costs
 import com.indusjs.fleet.core.error.ApiException
 import com.indusjs.fleet.core.error.NetworkException
 import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.costs.CostsRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
@@ -38,7 +39,7 @@ class CostsRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -55,7 +56,7 @@ class CostsRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -72,7 +73,7 @@ class CostsRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -90,7 +91,7 @@ class CostsRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -107,7 +108,7 @@ class CostsRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -124,7 +125,7 @@ class CostsRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
@@ -141,7 +142,7 @@ class CostsRepositoryImpl(
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)
         } catch (e: Exception) {
-            Result.Error(NetworkException(e.message ?: "Network error"))
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
         }
     }
 
