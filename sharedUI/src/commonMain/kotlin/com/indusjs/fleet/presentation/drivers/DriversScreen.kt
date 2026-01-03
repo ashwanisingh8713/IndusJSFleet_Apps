@@ -135,15 +135,23 @@ fun DriversScreen(
                     )
                 }
                 state.filteredDrivers.isEmpty() -> {
-                    // Using reusable EmptyContent component
-                    EmptyContent(
-                        icon = "👥",
-                        title = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
-                            "No drivers match your filters"
-                        else
-                            "No drivers found",
-                        message = "Try adjusting your search or filters"
-                    )
+                    // Using reusable EmptyContent component with SVG icon
+                    val isFiltering = state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null
+                    if (isFiltering) {
+                        EmptyContent(
+                            iconRes = Res.drawable.ic_search,
+                            title = "No drivers match your filters",
+                            message = "Try adjusting your search or filters"
+                        )
+                    } else {
+                        EmptyContent(
+                            iconRes = Res.drawable.ic_driver,
+                            title = "No drivers found",
+                            message = "Add your first driver to get started",
+                            actionLabel = "Add Driver",
+                            onAction = { viewModel.sendIntent(DriversContract.Intent.AddDriver) }
+                        )
+                    }
                 }
                 else -> {
                     DriverList(

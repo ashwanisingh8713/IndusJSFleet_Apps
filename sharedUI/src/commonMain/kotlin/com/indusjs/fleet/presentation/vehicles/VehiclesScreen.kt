@@ -132,15 +132,23 @@ fun VehiclesScreen(
                     )
                 }
                 state.filteredVehicles.isEmpty() -> {
-                    // Using reusable EmptyContent component
-                    EmptyContent(
-                        icon = "🚗",
-                        title = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
-                            "No vehicles match your filters"
-                        else
-                            "No vehicles found",
-                        message = "Try adjusting your search or filters"
-                    )
+                    // Using reusable EmptyContent component with SVG icon
+                    val isFiltering = state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null
+                    if (isFiltering) {
+                        EmptyContent(
+                            iconRes = Res.drawable.ic_search,
+                            title = "No vehicles match your filters",
+                            message = "Try adjusting your search or filters"
+                        )
+                    } else {
+                        EmptyContent(
+                            iconRes = Res.drawable.ic_vehicle,
+                            title = "No vehicles found",
+                            message = "Add your first vehicle to get started",
+                            actionLabel = "Add Vehicle",
+                            onAction = { viewModel.sendIntent(VehiclesContract.Intent.AddVehicle) }
+                        )
+                    }
                 }
                 else -> {
                     VehicleList(

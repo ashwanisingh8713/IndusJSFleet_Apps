@@ -133,15 +133,23 @@ fun TripsScreen(
                     )
                 }
                 state.filteredTrips.isEmpty() -> {
-                    // Using reusable EmptyContent component
-                    EmptyContent(
-                        icon = "📦",
-                        title = if (state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null)
-                            "No trips match your filters"
-                        else
-                            "No trips found",
-                        message = "Try adjusting your search or filters"
-                    )
+                    // Using reusable EmptyContent component with SVG icon
+                    val isFiltering = state.searchQuery.isNotEmpty() || state.selectedStatusFilter != null
+                    if (isFiltering) {
+                        EmptyContent(
+                            iconRes = Res.drawable.ic_search,
+                            title = "No trips match your filters",
+                            message = "Try adjusting your search or filters"
+                        )
+                    } else {
+                        EmptyContent(
+                            iconRes = Res.drawable.ic_trip,
+                            title = "No trips found",
+                            message = "Create your first trip to get started",
+                            actionLabel = "Create Trip",
+                            onAction = { viewModel.sendIntent(TripsContract.Intent.CreateTrip) }
+                        )
+                    }
                 }
                 else -> {
                     TripList(
