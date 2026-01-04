@@ -60,6 +60,11 @@ class DashboardViewModel(
             is Intent.NavigateToAddTripCost -> sendEffect(Effect.NavigateToAddTripCost)
             is Intent.NavigateToAddVehicleCost -> sendEffect(Effect.NavigateToAddVehicleCost)
             is Intent.NavigateToNotifications -> sendEffect(Effect.NavigateToNotifications)
+
+            // Navigation to Add entities (from empty states)
+            is Intent.NavigateToAddVehicle -> sendEffect(Effect.NavigateToAddVehicle)
+            is Intent.NavigateToAddDriver -> sendEffect(Effect.NavigateToAddDriver)
+            is Intent.NavigateToCreateTrip -> sendEffect(Effect.NavigateToCreateTrip)
         }
     }
 

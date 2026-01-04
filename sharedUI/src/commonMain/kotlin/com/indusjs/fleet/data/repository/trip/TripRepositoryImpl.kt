@@ -7,11 +7,15 @@ import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.trip.TripRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.trip.TripMapper
+import com.indusjs.fleet.data.mapper.trip.TripStopMapper
 import com.indusjs.fleet.data.model.trip.CreateTripRequest
 import com.indusjs.fleet.data.model.trip.UpdateTripRequest
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
+import com.indusjs.fleet.domain.entity.trip.CreateTripStopData
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
+import com.indusjs.fleet.domain.entity.trip.TripStop
+import com.indusjs.fleet.domain.entity.trip.UpdateTripStopData
 import com.indusjs.fleet.domain.repository.trip.TripRepository
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +29,8 @@ import kotlinx.coroutines.flow.flow
 class TripRepositoryImpl(
     private val remoteDataSource: TripRemoteDataSource,
     private val userLocalDataSource: UserLocalDataSource,
-    private val mapper: TripMapper
+    private val mapper: TripMapper,
+    private val stopMapper: TripStopMapper
 ) : TripRepository {
 
     override fun getTrips(): Flow<Result<List<Trip>>> = flow {
@@ -230,6 +235,85 @@ class TripRepositoryImpl(
                 Result.Success(response.data.map { mapper.mapToDomain(it) })
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch trips"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    // ============ TRIP STOPS ============
+
+    override suspend fun getTripStops(tripId: String): Result<List<TripStop>> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getTripStops(token, tripId)
+
+            if (response.success && response.data != null) {
+                Result.Success(stopMapper.mapToDomainList(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to get trip stops"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun createTripStop(tripId: String, data: CreateTripStopData): Result<TripStop> {
+        return try {
+            val token = requireAuthToken()
+            val request = stopMapper.mapToRequest(data)
+            val response = remoteDataSource.createTripStop(token, tripId, request)
+
+            if (response.success && response.data != null) {
+                Result.Success(stopMapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to create trip stop"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun updateTripStop(tripId: String, stopId: String, data: UpdateTripStopData): Result<TripStop> {
+        return try {
+            val token = requireAuthToken()
+            val request = stopMapper.mapToUpdateRequest(data)
+            val response = remoteDataSource.updateTripStop(token, tripId, stopId, request)
+
+            if (response.success && response.data != null) {
+                Result.Success(stopMapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to update trip stop"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun markStopCompleted(tripId: String, stopId: String): Result<TripStop> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.markStopCompleted(token, tripId, stopId)
+
+            if (response.success && response.data != null) {
+                Result.Success(stopMapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to mark stop completed"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun deleteTripStop(tripId: String, stopId: String): Result<Unit> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.deleteTripStop(token, tripId, stopId)
+
+            if (response.success) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to delete trip stop"), response.message)
             }
         } catch (e: Exception) {
             Result.Error(e, ApiErrorHandler.extractErrorMessage(e))

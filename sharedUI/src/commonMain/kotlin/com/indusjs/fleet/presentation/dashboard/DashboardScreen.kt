@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.ErrorHandler
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.util.formatLastUpdated
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertPriority
@@ -62,7 +63,10 @@ fun DashboardScreen(
     onNavigateToTeam: () -> Unit = {},
     onNavigateToAddTripCost: () -> Unit = {},
     onNavigateToAddVehicleCost: () -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToAddVehicle: () -> Unit = {},
+    onNavigateToAddDriver: () -> Unit = {},
+    onNavigateToCreateTrip: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -80,6 +84,9 @@ fun DashboardScreen(
                 is DashboardContract.Effect.NavigateToAddTripCost -> onNavigateToAddTripCost()
                 is DashboardContract.Effect.NavigateToAddVehicleCost -> onNavigateToAddVehicleCost()
                 is DashboardContract.Effect.NavigateToNotifications -> onNavigateToNotifications()
+                is DashboardContract.Effect.NavigateToAddVehicle -> onNavigateToAddVehicle()
+                is DashboardContract.Effect.NavigateToAddDriver -> onNavigateToAddDriver()
+                is DashboardContract.Effect.NavigateToCreateTrip -> onNavigateToCreateTrip()
                 is DashboardContract.Effect.ShowSnackbar -> {
                     snackbarHostState.showSnackbar(effect.message)
                 }
@@ -148,7 +155,7 @@ fun DashboardScreen(
                                 }
                                 if (state.lastUpdated != null) {
                                     Text(
-                                        text = "• Updated: ${state.lastUpdated}",
+                                        text = "• Updated: ${formatLastUpdated(state.lastUpdated)}",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                     )
@@ -270,7 +277,10 @@ fun DashboardScreen(
                                     viewModel.sendIntent(DashboardContract.Intent.ChangeCostFilter(filter))
                                 },
                                 onAddTripCostClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddTripCost) },
-                                onAddVehicleCostClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddVehicleCost) }
+                                onAddVehicleCostClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddVehicleCost) },
+                                onAddVehicleClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddVehicle) },
+                                onAddDriverClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddDriver) },
+                                onCreateTripClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToCreateTrip) }
                             )
                         }
                     }
@@ -506,41 +516,60 @@ private fun DashboardContent(
     onAlertDismiss: (String) -> Unit,
     onCostFilterChange: (CostOverviewFilter) -> Unit,
     onAddTripCostClick: () -> Unit,
-    onAddVehicleCostClick: () -> Unit
-) {
-    LazyColumn(
+    onAddVehicleCostClick: () -> Unit,
+    onAddVehicleClick: () -> Unit,
+    onAddDriverClick: () -> Unit,
+    onCreateTripClick: () -> Unit
+    ) {
+        // Determine if Cost Overview should be shown
+        val hasNoFleet = vehicleStatus.total == 0 && tripSummary.total == 0
+        val hasNoCostData = costOverview.totalExpenses == 0.0 &&
+                            costOverview.profitLoss == 0.0 &&
+                            costOverview.completedTrips == 0
+        val shouldShowCostOverview = hasNoFleet || !hasNoCostData
+
+        LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Cost Overview Section with Filter
-        item {
-            CostOverviewSection(
-                costOverview = costOverview,
-                selectedFilter = selectedCostFilter,
-                isLoading = isLoadingCostOverview,
-                onFilterChange = onCostFilterChange,
-                onAddTripCostClick = onAddTripCostClick,
-                onAddVehicleCostClick = onAddVehicleCostClick
-            )
+        // 1. Cost Overview Section with Filter - only show for onboarding or when has cost data
+        if (shouldShowCostOverview) {
+            item {
+                CostOverviewSection(
+                    costOverview = costOverview,
+                    selectedFilter = selectedCostFilter,
+                    isLoading = isLoadingCostOverview,
+                    onFilterChange = onCostFilterChange,
+                    onAddTripCostClick = onAddTripCostClick,
+                    onAddVehicleCostClick = onAddVehicleCostClick,
+                    vehicleStatus = vehicleStatus,
+                    tripSummary = tripSummary,
+                    onAddVehicleClick = onAddVehicleClick,
+                    onCreateTripClick = onCreateTripClick
+                )
+            }
         }
 
-        // 2. Pending Payments Section
-        item {
-            PendingPaymentsSection(
-                payments = pendingPayments,
-                totalPending = totalPendingAmount,
-                isLoading = isLoadingPendingPayments
-            )
+        // 2. Pending Payments Section - Only show if there are trips
+        if (tripSummary.total > 0) {
+            item {
+                PendingPaymentsSection(
+                    payments = pendingPayments,
+                    totalPending = totalPendingAmount,
+                    isLoading = isLoadingPendingPayments
+                )
+            }
         }
 
         // 3. Vehicle Status Section
         item {
             VehicleStatusSection(
                 vehicleStatus = vehicleStatus,
-                onClick = onVehiclesClick
+                onClick = onVehiclesClick,
+                onAddVehicleClick = onAddVehicleClick
             )
         }
 
@@ -549,7 +578,8 @@ private fun DashboardContent(
             TripsStatusSection(
                 tripSummary = tripSummary,
                 ongoingTrips = stats.liveStatus.ongoingTrips,
-                onClick = onTripsClick
+                onClick = onTripsClick,
+                onCreateTripClick = onCreateTripClick
             )
         }
 
@@ -568,7 +598,8 @@ private fun DashboardContent(
         item {
             DriversStatusSection(
                 driverStatus = driverStatus,
-                onClick = onDriversClick
+                onClick = onDriversClick,
+                onAddDriverClick = onAddDriverClick
             )
         }
 
@@ -578,7 +609,11 @@ private fun DashboardContent(
                 onVehiclesClick = onVehiclesClick,
                 onDriversClick = onDriversClick,
                 onTripsClick = onTripsClick,
-                onMapsClick = onMapsClick
+                onMapsClick = onMapsClick,
+                onAddTripCostClick = onAddTripCostClick,
+                onAddVehicleCostClick = onAddVehicleCostClick,
+                hasVehicles = vehicleStatus.total > 0,
+                hasTrips = tripSummary.total > 0
             )
         }
     }
@@ -1582,7 +1617,7 @@ private fun OfflineBanner(
 // ============ CLEAN DASHBOARD SECTIONS ============
 
 /**
- * Cost Overview Section - Clean design with clear visual hierarchy.
+ * Cost Overview Section - Clean design with context-aware empty states.
  */
 @Composable
 private fun CostOverviewSection(
@@ -1591,8 +1626,15 @@ private fun CostOverviewSection(
     isLoading: Boolean,
     onFilterChange: (CostOverviewFilter) -> Unit,
     onAddTripCostClick: () -> Unit,
-    onAddVehicleCostClick: () -> Unit
+    onAddVehicleCostClick: () -> Unit,
+    vehicleStatus: VehicleStatusSummary,
+    tripSummary: TripSummary,
+    onAddVehicleClick: () -> Unit,
+    onCreateTripClick: () -> Unit
 ) {
+
+    val hasNoFleet = vehicleStatus.total == 0 && tripSummary.total == 0
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -1610,9 +1652,11 @@ private fun CostOverviewSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "💰",
-                        style = MaterialTheme.typography.titleMedium
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_info),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -1622,30 +1666,32 @@ private fun CostOverviewSection(
                     )
                 }
 
-                // Filter chips - clean pill style
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                        .padding(2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
-                    CostOverviewFilter.entries.forEach { filter ->
-                        val isSelected = selectedFilter == filter
-                        Surface(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(18.dp))
-                                .clickable { onFilterChange(filter) },
-                            shape = RoundedCornerShape(18.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
-                        ) {
-                            Text(
-                                text = filter.label.take(1),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
+                // Filter chips - clean pill style (hide if no fleet)
+                if (!hasNoFleet) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .padding(2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(0.dp)
+                    ) {
+                        CostOverviewFilter.entries.forEach { filter ->
+                            val isSelected = selectedFilter == filter
+                            Surface(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .clickable { onFilterChange(filter) },
+                                shape = RoundedCornerShape(18.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                            ) {
+                                Text(
+                                    text = filter.label.take(1),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -1662,6 +1708,71 @@ private fun CostOverviewSection(
                         modifier = Modifier.size(24.dp),
                         strokeWidth = 2.dp
                     )
+                }
+            } else if (hasNoFleet) {
+                // No vehicles AND no trips - getting started state
+                SectionEmptyState(
+                    iconRes = Res.drawable.ic_fleet_logo,
+                    title = "Get started with your fleet",
+                    message = "Add vehicles and create trips to track costs"
+                )
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                // Show getting started buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    FilledTonalButton(
+                        onClick = onAddVehicleClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Add Vehicle",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    FilledTonalButton(
+                        onClick = onCreateTripClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Create Trip",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             } else {
                 // Stats row - clean number display
@@ -1835,6 +1946,7 @@ private fun EnhancedCostStatCard(
 
 /**
  * Pending Payments Section - Clean design.
+ * Only shown when trips exist.
  */
 @Composable
 private fun PendingPaymentsSection(
@@ -1857,11 +1969,20 @@ private fun PendingPaymentsSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "💳 Pending Payments",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_info),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Pending Payments",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
                 if (totalPending > 0) {
                     Surface(
@@ -1887,10 +2008,12 @@ private fun PendingPaymentsSection(
                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                 }
             } else if (payments.isEmpty()) {
-                Text(
-                    text = "✅ No pending payments",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF4CAF50)
+                // Trips exist but no pending payments - success!
+                SectionEmptyState(
+                    iconRes = Res.drawable.ic_check,
+                    title = "All payments collected!",
+                    message = "Great job! No outstanding payments",
+                    successStyle = true
                 )
             } else {
                 // Show first 3 payments
@@ -1953,12 +2076,94 @@ private fun PendingPaymentItem(payment: PendingPayment) {
 }
 
 /**
+ * Compact empty state for dashboard sections.
+ * Shows an icon, message, and optional action button in a horizontal layout.
+ */
+@Composable
+private fun SectionEmptyState(
+    iconRes: org.jetbrains.compose.resources.DrawableResource,
+    title: String,
+    message: String? = null,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+    successStyle: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Icon with circular background
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(
+                    if (successStyle) Color(0xFF4CAF50).copy(alpha = 0.1f)
+                    else MaterialTheme.colorScheme.surfaceVariant
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = if (successStyle) Color(0xFF4CAF50)
+                       else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // Text content
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = if (successStyle) Color(0xFF4CAF50)
+                        else MaterialTheme.colorScheme.onSurface
+            )
+            if (message != null) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // Optional action button
+        if (actionLabel != null && onAction != null) {
+            FilledTonalButton(
+                onClick = onAction,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_add),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = actionLabel,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
+    }
+}
+
+/**
  * Vehicle Status Section.
  */
 @Composable
 private fun VehicleStatusSection(
     vehicleStatus: VehicleStatusSummary,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onAddVehicleClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -1975,11 +2180,20 @@ private fun VehicleStatusSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "🚛 Vehicle Status",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_vehicle),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Vehicle Status",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 Text(
                     text = "Total: ${vehicleStatus.total}",
                     style = MaterialTheme.typography.labelMedium,
@@ -1987,28 +2201,40 @@ private fun VehicleStatusSection(
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                StatusChip(
-                    label = "Planned",
-                    count = vehicleStatus.onTripPlanned,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.weight(1f)
+            if (vehicleStatus.total == 0) {
+                // Empty state
+                SectionEmptyState(
+                    iconRes = Res.drawable.ic_vehicle,
+                    title = "No vehicles yet",
+                    message = "Add your first vehicle to start tracking",
+                    actionLabel = "Add",
+                    onAction = onAddVehicleClick
                 )
-                StatusChip(
-                    label = "On Route",
-                    count = vehicleStatus.onTripInProgress,
-                    color = Color(0xFF4CAF50),
-                    modifier = Modifier.weight(1f)
-                )
-                StatusChip(
-                    label = "Maintenance",
-                    count = vehicleStatus.underMaintenance,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.weight(1f)
-                )
+            } else {
+                // Stats row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatusChip(
+                        label = "Planned",
+                        count = vehicleStatus.onTripPlanned,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatusChip(
+                        label = "On Route",
+                        count = vehicleStatus.onTripInProgress,
+                        color = Color(0xFF4CAF50),
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatusChip(
+                        label = "Maintenance",
+                        count = vehicleStatus.underMaintenance,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }
@@ -2021,7 +2247,8 @@ private fun VehicleStatusSection(
 private fun TripsStatusSection(
     tripSummary: TripSummary,
     ongoingTrips: List<OngoingTrip>,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onCreateTripClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -2038,11 +2265,20 @@ private fun TripsStatusSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "🗺️ Trips",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_trip),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Trips",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 Text(
                     text = "Total: ${tripSummary.total}",
                     style = MaterialTheme.typography.labelMedium,
@@ -2050,40 +2286,52 @@ private fun TripsStatusSection(
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                StatusChip(
-                    label = "In Progress",
-                    count = tripSummary.inProgress,
-                    color = Color(0xFF4CAF50),
-                    modifier = Modifier.weight(1f)
+            if (tripSummary.total == 0) {
+                // Empty state
+                SectionEmptyState(
+                    iconRes = Res.drawable.ic_trip,
+                    title = "No trips yet",
+                    message = "Create your first trip to start",
+                    actionLabel = "Create",
+                    onAction = onCreateTripClick
                 )
-                StatusChip(
-                    label = "Planned",
-                    count = tripSummary.planned,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.weight(1f)
-                )
-                StatusChip(
-                    label = "Delayed",
-                    count = tripSummary.delayed,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            } else {
+                // Stats row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    StatusChip(
+                        label = "In Progress",
+                        count = tripSummary.inProgress,
+                        color = Color(0xFF4CAF50),
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatusChip(
+                        label = "Planned",
+                        count = tripSummary.planned,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatusChip(
+                        label = "Delayed",
+                        count = tripSummary.delayed,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
 
-            // Show ongoing trips with fuel info
-            if (ongoingTrips.isNotEmpty()) {
-                HorizontalDivider()
-                Text(
-                    text = "Active Trips",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                ongoingTrips.take(2).forEach { trip ->
-                    OngoingTripItem(trip = trip)
+                // Show ongoing trips with fuel info
+                if (ongoingTrips.isNotEmpty()) {
+                    HorizontalDivider()
+                    Text(
+                        text = "Active Trips",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    ongoingTrips.take(2).forEach { trip ->
+                        OngoingTripItem(trip = trip)
+                    }
                 }
             }
         }
@@ -2264,7 +2512,8 @@ private fun CleanAlertItem(
 @Composable
 private fun DriversStatusSection(
     driverStatus: DriverStatusSummary,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onAddDriverClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -2281,11 +2530,20 @@ private fun DriversStatusSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "👨‍✈️ Drivers",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_driver),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Drivers",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 Text(
                     text = "Total: ${driverStatus.total}",
                     style = MaterialTheme.typography.labelMedium,
@@ -2293,34 +2551,46 @@ private fun DriversStatusSection(
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                StatusChip(
-                    label = "On Route",
-                    count = driverStatus.onTripInProgress,
-                    color = Color(0xFF4CAF50),
-                    modifier = Modifier.weight(1f)
+            if (driverStatus.total == 0) {
+                // Empty state
+                SectionEmptyState(
+                    iconRes = Res.drawable.ic_driver,
+                    title = "No drivers yet",
+                    message = "Add your first driver to get started",
+                    actionLabel = "Add",
+                    onAction = onAddDriverClick
                 )
-                StatusChip(
-                    label = "Planned",
-                    count = driverStatus.onTripPlanned,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.weight(1f)
-                )
-                StatusChip(
-                    label = "Available",
-                    count = driverStatus.available,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f)
-                )
-                StatusChip(
-                    label = "Leave",
-                    count = driverStatus.onLeave,
-                    color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.weight(1f)
-                )
+            } else {
+                // Stats row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    StatusChip(
+                        label = "On Route",
+                        count = driverStatus.onTripInProgress,
+                        color = Color(0xFF4CAF50),
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatusChip(
+                        label = "Planned",
+                        count = driverStatus.onTripPlanned,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatusChip(
+                        label = "Available",
+                        count = driverStatus.available,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatusChip(
+                        label = "Leave",
+                        count = driverStatus.onLeave,
+                        color = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }
@@ -2354,69 +2624,186 @@ private fun StatusChip(
 }
 
 /**
- * Quick Actions Section - Clean design.
+ * Quick Actions Section - Modern design with gradient accents and polished UI.
  */
 @Composable
 private fun QuickActionsSection(
     onVehiclesClick: () -> Unit,
     onDriversClick: () -> Unit,
     onTripsClick: () -> Unit,
-    onMapsClick: () -> Unit
+    onMapsClick: () -> Unit,
+    onAddTripCostClick: () -> Unit,
+    onAddVehicleCostClick: () -> Unit,
+    hasVehicles: Boolean,
+    hasTrips: Boolean
 ) {
+    val showCostActions = hasVehicles || hasTrips
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "⚡",
-                    style = MaterialTheme.typography.titleMedium
+            // Header with accent line
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(24.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.primary)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = "Quick Actions",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+            // Cost actions row (shown only when vehicles or trips exist)
+            if (showCostActions) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Trip Cost - shown only when trips exist
+                    if (hasTrips) {
+                        EnhancedQuickActionButton(
+                            icon = "💰",
+                            label = "Trip Cost",
+                            backgroundColor = Color(0xFF4CAF50).copy(alpha = 0.12f),
+                            iconBackgroundColor = Color(0xFF4CAF50),
+                            onClick = onAddTripCostClick,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    // Vehicle Cost - shown only when vehicles exist
+                    if (hasVehicles) {
+                        EnhancedQuickActionButton(
+                            icon = "🔧",
+                            label = "Vehicle Cost",
+                            backgroundColor = Color(0xFFFF9800).copy(alpha = 0.12f),
+                            iconBackgroundColor = Color(0xFFFF9800),
+                            onClick = onAddVehicleCostClick,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
+            // Navigation actions - 2x2 grid layout
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                CleanQuickActionButton(
-                    icon = "🚛",
-                    label = "Vehicles",
-                    onClick = onVehiclesClick
-                )
-                CleanQuickActionButton(
-                    icon = "👨‍✈️",
-                    label = "Drivers",
-                    onClick = onDriversClick
-                )
-                CleanQuickActionButton(
-                    icon = "🗺️",
-                    label = "Trips",
-                    onClick = onTripsClick
-                )
-                CleanQuickActionButton(
-                    icon = "📍",
-                    label = "Live Map",
-                    onClick = onMapsClick
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    EnhancedQuickActionButton(
+                        icon = "🚛",
+                        label = "Vehicles",
+                        backgroundColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        iconBackgroundColor = MaterialTheme.colorScheme.primary,
+                        onClick = onVehiclesClick,
+                        modifier = Modifier.weight(1f)
+                    )
+                    EnhancedQuickActionButton(
+                        icon = "👨‍✈️",
+                        label = "Drivers",
+                        backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        iconBackgroundColor = MaterialTheme.colorScheme.secondary,
+                        onClick = onDriversClick,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    EnhancedQuickActionButton(
+                        icon = "🗺️",
+                        label = "Trips",
+                        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                        iconBackgroundColor = MaterialTheme.colorScheme.tertiary,
+                        onClick = onTripsClick,
+                        modifier = Modifier.weight(1f)
+                    )
+                    EnhancedQuickActionButton(
+                        icon = "📍",
+                        label = "Live Map",
+                        backgroundColor = Color(0xFF2196F3).copy(alpha = 0.12f),
+                        iconBackgroundColor = Color(0xFF2196F3),
+                        onClick = onMapsClick,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }
 }
 
 /**
- * Clean Quick Action Button - no colored background
+ * Enhanced Quick Action Button with colored background and icon container.
+ */
+@Composable
+private fun EnhancedQuickActionButton(
+    icon: String,
+    label: String,
+    backgroundColor: Color,
+    iconBackgroundColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = backgroundColor
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            // Icon with colored circle background
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(iconBackgroundColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = icon,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+/**
+ * Clean Quick Action Button - no colored background (kept for backward compatibility)
  */
 @Composable
 private fun CleanQuickActionButton(

@@ -1,8 +1,11 @@
 package com.indusjs.fleet.domain.usecase.trip
 
 import com.indusjs.fleet.core.result.Result
+import com.indusjs.fleet.domain.entity.trip.CreateTripStopData
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
+import com.indusjs.fleet.domain.entity.trip.TripStop
+import com.indusjs.fleet.domain.entity.trip.UpdateTripStopData
 import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.usecase.UseCase
 import dev.zacsweers.metro.Inject
@@ -90,6 +93,68 @@ class CancelTripUseCase(
 ) {
     suspend operator fun invoke(id: String): Result<Unit> {
         return tripRepository.cancelTrip(id)
+    }
+}
+
+// ============ TRIP STOPS USE CASES ============
+
+/**
+ * Use case for getting stops for a trip.
+ */
+@Inject
+class GetTripStopsUseCase(
+    private val tripRepository: TripRepository
+) {
+    suspend operator fun invoke(tripId: String): Result<List<TripStop>> {
+        return tripRepository.getTripStops(tripId)
+    }
+}
+
+/**
+ * Use case for creating a new trip stop.
+ */
+@Inject
+class CreateTripStopUseCase(
+    private val tripRepository: TripRepository
+) {
+    suspend operator fun invoke(tripId: String, data: CreateTripStopData): Result<TripStop> {
+        return tripRepository.createTripStop(tripId, data)
+    }
+}
+
+/**
+ * Use case for updating a trip stop.
+ */
+@Inject
+class UpdateTripStopUseCase(
+    private val tripRepository: TripRepository
+) {
+    suspend operator fun invoke(tripId: String, stopId: String, data: UpdateTripStopData): Result<TripStop> {
+        return tripRepository.updateTripStop(tripId, stopId, data)
+    }
+}
+
+/**
+ * Use case for marking a stop as completed.
+ */
+@Inject
+class MarkStopCompletedUseCase(
+    private val tripRepository: TripRepository
+) {
+    suspend operator fun invoke(tripId: String, stopId: String): Result<TripStop> {
+        return tripRepository.markStopCompleted(tripId, stopId)
+    }
+}
+
+/**
+ * Use case for deleting a trip stop.
+ */
+@Inject
+class DeleteTripStopUseCase(
+    private val tripRepository: TripRepository
+) {
+    suspend operator fun invoke(tripId: String, stopId: String): Result<Unit> {
+        return tripRepository.deleteTripStop(tripId, stopId)
     }
 }
 

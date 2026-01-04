@@ -147,3 +147,48 @@ data class CreateTripData(
     val notes: String? = null
 )
 
+/**
+ * Trip Stop entity representing a waypoint/stop in a trip.
+ */
+data class TripStop(
+    val id: String,
+    val tripId: String,
+    val stopOrder: Int,
+    val location: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val arrivalTime: String? = null,
+    val departureTime: String? = null,
+    val stopDuration: Int? = null,
+    val notes: String? = null,
+    val isCompleted: Boolean = false,
+    val completedAt: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
+)
+
+/**
+ * Data class for creating a new trip stop.
+ */
+data class CreateTripStopData(
+    val stopOrder: Int,
+    val location: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val arrivalTime: String? = null,
+    val stopDuration: Int? = null,
+    val notes: String? = null
+)
+
+/**
+ * Data class for updating a trip stop.
+ */
+data class UpdateTripStopData(
+    val stopOrder: Int? = null,
+    val location: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val arrivalTime: String? = null,
+    val stopDuration: Int? = null,
+    val notes: String? = null
+)

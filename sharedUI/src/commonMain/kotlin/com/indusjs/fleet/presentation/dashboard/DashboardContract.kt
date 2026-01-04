@@ -88,6 +88,11 @@ object DashboardContract {
         data object NavigateToAddTripCost : Intent
         data object NavigateToAddVehicleCost : Intent
 
+        // Navigation to Add entities (from empty states)
+        data object NavigateToAddVehicle : Intent
+        data object NavigateToAddDriver : Intent
+        data object NavigateToCreateTrip : Intent
+
         // Notifications
         data object NavigateToNotifications : Intent
     }
@@ -106,5 +111,10 @@ object DashboardContract {
         data object NavigateToAddTripCost : Effect
         data object NavigateToAddVehicleCost : Effect
         data object NavigateToNotifications : Effect
+
+        // Navigation to Add entities (from empty states)
+        data object NavigateToAddVehicle : Effect
+        data object NavigateToAddDriver : Effect
+        data object NavigateToCreateTrip : Effect
     }
 }

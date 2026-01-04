@@ -7,7 +7,8 @@ object ApiConfig {
     /**
      * Base URL for the Fleet Management API.
      */
-    const val BASE_URL = "http://192.168.1.8:8080/api/v1"
+    //const val BASE_URL = "http://192.168.1.8:8080/api/v1"
+    const val BASE_URL = "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2"
 
     /**
      * Google Places API Key for location autocomplete.

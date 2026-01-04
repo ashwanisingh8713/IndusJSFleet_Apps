@@ -317,6 +317,8 @@ data class PendingPaymentDto(
     val customerContact: String? = null,
     @SerialName("selling_value")
     val sellingValue: Double = 0.0,
+    @SerialName("partial_payment")
+    val partialPayment: Double = 0.0,
     @SerialName("pending_amount")
     val pendingAmount: Double = 0.0,
     @SerialName("payment_status")

@@ -472,3 +472,88 @@ data class UpdateTripLocationRequest(
     val currentLng: Double
 )
 
+// ============ TRIP STOPS ============
+
+/**
+ * Trip Stops API response wrapper.
+ */
+@Serializable
+data class TripStopsApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: List<TripStopDto>? = null
+)
+
+/**
+ * Single Trip Stop API response wrapper.
+ */
+@Serializable
+data class TripStopApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: TripStopDto? = null
+)
+
+/**
+ * Trip Stop DTO for API communication.
+ */
+@Serializable
+data class TripStopDto(
+    val id: Int,
+    @SerialName("trip_id")
+    val tripId: Int,
+    @SerialName("stop_order")
+    val stopOrder: Int,
+    val location: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    @SerialName("arrival_time")
+    val arrivalTime: String? = null,
+    @SerialName("departure_time")
+    val departureTime: String? = null,
+    @SerialName("stop_duration")
+    val stopDuration: Int? = null,
+    val notes: String? = null,
+    @SerialName("is_completed")
+    val isCompleted: Boolean = false,
+    @SerialName("completed_at")
+    val completedAt: String? = null,
+    @SerialName("created_at")
+    val createdAt: String? = null,
+    @SerialName("updated_at")
+    val updatedAt: String? = null
+)
+
+/**
+ * Request body for creating a trip stop.
+ */
+@Serializable
+data class CreateTripStopRequest(
+    @SerialName("stop_order")
+    val stopOrder: Int,
+    val location: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    @SerialName("arrival_time")
+    val arrivalTime: String? = null,
+    @SerialName("stop_duration")
+    val stopDuration: Int? = null,
+    val notes: String? = null
+)
+
+/**
+ * Request body for updating a trip stop.
+ */
+@Serializable
+data class UpdateTripStopRequest(
+    @SerialName("stop_order")
+    val stopOrder: Int? = null,
+    val location: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    @SerialName("arrival_time")
+    val arrivalTime: String? = null,
+    @SerialName("stop_duration")
+    val stopDuration: Int? = null,
+    val notes: String? = null
+)

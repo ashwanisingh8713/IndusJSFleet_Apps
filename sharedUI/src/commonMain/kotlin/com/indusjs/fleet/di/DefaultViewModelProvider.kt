@@ -18,6 +18,7 @@ import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSourceImpl
 import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
 import com.indusjs.fleet.data.mapper.driver.DriverMapper
 import com.indusjs.fleet.data.mapper.trip.TripMapper
+import com.indusjs.fleet.data.mapper.trip.TripStopMapper
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
 import com.indusjs.fleet.data.repository.costs.CostsRepositoryImpl
 import com.indusjs.fleet.data.repository.dashboard.DashboardRepositoryImpl
@@ -169,9 +170,10 @@ class DefaultViewModelProvider : ViewModelProvider {
 
     // Lazy-initialized Trip feature dependencies
     private val tripMapper by lazy { TripMapper() }
+    private val tripStopMapper by lazy { TripStopMapper() }
     private val tripRemoteDataSource by lazy { TripRemoteDataSourceImpl(httpClient) }
     private val tripRepository: TripRepository by lazy {
-        TripRepositoryImpl(tripRemoteDataSource, userLocalDataSource, tripMapper)
+        TripRepositoryImpl(tripRemoteDataSource, userLocalDataSource, tripMapper, tripStopMapper)
     }
     private val getTripsUseCase by lazy { GetTripsUseCase(tripRepository) }
     private val getTripByIdUseCase by lazy { GetTripByIdUseCase(tripRepository) }

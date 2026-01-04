@@ -2,8 +2,11 @@ package com.indusjs.fleet.domain.repository.trip
 
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
+import com.indusjs.fleet.domain.entity.trip.CreateTripStopData
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
+import com.indusjs.fleet.domain.entity.trip.TripStop
+import com.indusjs.fleet.domain.entity.trip.UpdateTripStopData
 import com.indusjs.fleet.domain.repository.Repository
 import kotlinx.coroutines.flow.Flow
 
@@ -73,5 +76,32 @@ interface TripRepository : Repository {
      * Get trips by vehicle ID.
      */
     suspend fun getTripsByVehicle(vehicleId: String): Result<List<Trip>>
+
+    // ============ TRIP STOPS ============
+
+    /**
+     * Get all stops for a trip.
+     */
+    suspend fun getTripStops(tripId: String): Result<List<TripStop>>
+
+    /**
+     * Add a stop to a trip.
+     */
+    suspend fun createTripStop(tripId: String, data: CreateTripStopData): Result<TripStop>
+
+    /**
+     * Update a trip stop.
+     */
+    suspend fun updateTripStop(tripId: String, stopId: String, data: UpdateTripStopData): Result<TripStop>
+
+    /**
+     * Mark a stop as completed.
+     */
+    suspend fun markStopCompleted(tripId: String, stopId: String): Result<TripStop>
+
+    /**
+     * Delete a trip stop.
+     */
+    suspend fun deleteTripStop(tripId: String, stopId: String): Result<Unit>
 }
 

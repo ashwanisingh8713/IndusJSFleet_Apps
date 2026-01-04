@@ -92,7 +92,10 @@ fun fleetEntryProvider(
                 onNavigateToProfile = { backStack.add(FleetRoute.Profile) },
                 onNavigateToTeam = { backStack.add(FleetRoute.TeamList) },
                 onNavigateToAddTripCost = { backStack.add(FleetRoute.TripCostEntry) },
-                onNavigateToAddVehicleCost = { backStack.add(FleetRoute.MaintenanceCostEntry) }
+                onNavigateToAddVehicleCost = { backStack.add(FleetRoute.MaintenanceCostEntry) },
+                onNavigateToAddVehicle = { backStack.add(FleetRoute.AddVehicle) },
+                onNavigateToAddDriver = { backStack.add(FleetRoute.CreateDriver) },
+                onNavigateToCreateTrip = { backStack.add(FleetRoute.CreateTrip) }
             )
         }
 

@@ -4,10 +4,15 @@ import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.trip.CreateTripRequest
+import com.indusjs.fleet.data.model.trip.CreateTripStopRequest
 import com.indusjs.fleet.data.model.trip.TripApiResponse
 import com.indusjs.fleet.data.model.trip.TripDto
+import com.indusjs.fleet.data.model.trip.TripStopApiResponse
+import com.indusjs.fleet.data.model.trip.TripStopDto
+import com.indusjs.fleet.data.model.trip.TripStopsApiResponse
 import com.indusjs.fleet.data.model.trip.UpdateTripRequest
 import com.indusjs.fleet.data.model.trip.UpdateTripStateRequest
+import com.indusjs.fleet.data.model.trip.UpdateTripStopRequest
 import co.touchlab.kermit.Logger
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -46,6 +51,13 @@ interface TripRemoteDataSource : RemoteDataSource {
     suspend fun updateTripLocation(token: String, tripId: String, lat: Double, lng: Double): TripApiResponse<TripDto>
     suspend fun cancelTrip(token: String, id: String): TripApiResponse<Unit>
     suspend fun getTripsByVehicleId(token: String, vehicleId: String): TripApiResponse<List<TripDto>>
+
+    // Trip Stops
+    suspend fun getTripStops(token: String, tripId: String): TripStopsApiResponse
+    suspend fun createTripStop(token: String, tripId: String, request: CreateTripStopRequest): TripStopApiResponse
+    suspend fun updateTripStop(token: String, tripId: String, stopId: String, request: UpdateTripStopRequest): TripStopApiResponse
+    suspend fun markStopCompleted(token: String, tripId: String, stopId: String): TripStopApiResponse
+    suspend fun deleteTripStop(token: String, tripId: String, stopId: String): TripApiResponse<Unit>
 }
 
 /**
@@ -254,6 +266,102 @@ class TripRemoteDataSourceImpl(
             parseListResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch trips for vehicle: ${e.message}" }
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    // ============ TRIP STOPS ============
+
+    override suspend fun getTripStops(token: String, tripId: String): TripStopsApiResponse {
+        return try {
+            log.d { "Fetching stops for trip: $tripId" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$tripId/stops") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            val bodyText = response.bodyAsText()
+            if (response.status.isSuccess()) {
+                json.decodeFromString<TripStopsApiResponse>(bodyText)
+            } else {
+                TripStopsApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch trip stops: ${e.message}" }
+            TripStopsApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    override suspend fun createTripStop(token: String, tripId: String, request: CreateTripStopRequest): TripStopApiResponse {
+        return try {
+            log.d { "Creating stop for trip: $tripId" }
+            val response: HttpResponse = httpClient.post("$baseUrl/$tripId/stops") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            val bodyText = response.bodyAsText()
+            if (response.status.isSuccess()) {
+                json.decodeFromString<TripStopApiResponse>(bodyText)
+            } else {
+                TripStopApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to create trip stop: ${e.message}" }
+            TripStopApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    override suspend fun updateTripStop(token: String, tripId: String, stopId: String, request: UpdateTripStopRequest): TripStopApiResponse {
+        return try {
+            log.d { "Updating stop $stopId for trip: $tripId" }
+            val response: HttpResponse = httpClient.put("$baseUrl/$tripId/stops/$stopId") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            val bodyText = response.bodyAsText()
+            if (response.status.isSuccess()) {
+                json.decodeFromString<TripStopApiResponse>(bodyText)
+            } else {
+                TripStopApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to update trip stop: ${e.message}" }
+            TripStopApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    override suspend fun markStopCompleted(token: String, tripId: String, stopId: String): TripStopApiResponse {
+        return try {
+            log.d { "Marking stop $stopId as completed for trip: $tripId" }
+            val response: HttpResponse = httpClient.patch("$baseUrl/$tripId/stops/$stopId/complete") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            val bodyText = response.bodyAsText()
+            if (response.status.isSuccess()) {
+                json.decodeFromString<TripStopApiResponse>(bodyText)
+            } else {
+                TripStopApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to mark stop as completed: ${e.message}" }
+            TripStopApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    override suspend fun deleteTripStop(token: String, tripId: String, stopId: String): TripApiResponse<Unit> {
+        return try {
+            log.d { "Deleting stop $stopId from trip: $tripId" }
+            val response: HttpResponse = httpClient.delete("$baseUrl/$tripId/stops/$stopId") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            val bodyText = response.bodyAsText()
+            if (response.status.isSuccess()) {
+                TripApiResponse(success = true, message = "Stop deleted successfully")
+            } else {
+                TripApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to delete trip stop: ${e.message}" }
             TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }

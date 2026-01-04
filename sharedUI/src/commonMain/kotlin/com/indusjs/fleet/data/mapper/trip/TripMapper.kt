@@ -250,3 +250,68 @@ private data class DurationResult(
     val actual: Long?
 )
 
+/**
+ * Mapper for converting between TripStop DTOs and domain entities.
+ */
+@Inject
+class TripStopMapper {
+
+    /**
+     * Maps TripStopDto to TripStop domain entity.
+     */
+    fun mapToDomain(dto: com.indusjs.fleet.data.model.trip.TripStopDto): com.indusjs.fleet.domain.entity.trip.TripStop {
+        return com.indusjs.fleet.domain.entity.trip.TripStop(
+            id = dto.id.toString(),
+            tripId = dto.tripId.toString(),
+            stopOrder = dto.stopOrder,
+            location = dto.location,
+            latitude = dto.latitude,
+            longitude = dto.longitude,
+            arrivalTime = dto.arrivalTime,
+            departureTime = dto.departureTime,
+            stopDuration = dto.stopDuration,
+            notes = dto.notes,
+            isCompleted = dto.isCompleted,
+            completedAt = dto.completedAt,
+            createdAt = dto.createdAt,
+            updatedAt = dto.updatedAt
+        )
+    }
+
+    /**
+     * Maps a list of TripStopDto to a list of TripStop domain entities.
+     */
+    fun mapToDomainList(dtos: List<com.indusjs.fleet.data.model.trip.TripStopDto>): List<com.indusjs.fleet.domain.entity.trip.TripStop> {
+        return dtos.map { mapToDomain(it) }
+    }
+
+    /**
+     * Maps CreateTripStopData to CreateTripStopRequest.
+     */
+    fun mapToRequest(data: com.indusjs.fleet.domain.entity.trip.CreateTripStopData): com.indusjs.fleet.data.model.trip.CreateTripStopRequest {
+        return com.indusjs.fleet.data.model.trip.CreateTripStopRequest(
+            stopOrder = data.stopOrder,
+            location = data.location,
+            latitude = data.latitude,
+            longitude = data.longitude,
+            arrivalTime = data.arrivalTime,
+            stopDuration = data.stopDuration,
+            notes = data.notes
+        )
+    }
+
+    /**
+     * Maps UpdateTripStopData to UpdateTripStopRequest.
+     */
+    fun mapToUpdateRequest(data: com.indusjs.fleet.domain.entity.trip.UpdateTripStopData): com.indusjs.fleet.data.model.trip.UpdateTripStopRequest {
+        return com.indusjs.fleet.data.model.trip.UpdateTripStopRequest(
+            stopOrder = data.stopOrder,
+            location = data.location,
+            latitude = data.latitude,
+            longitude = data.longitude,
+            arrivalTime = data.arrivalTime,
+            stopDuration = data.stopDuration,
+            notes = data.notes
+        )
+    }
+}

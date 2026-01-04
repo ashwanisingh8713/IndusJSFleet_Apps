@@ -646,12 +646,63 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]}
 					}
+				},
+				{
+					"name": "Get Trip Stops",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/stops", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "stops"]}
+					},
+					"description": "Get all stops for a trip in order."
+				},
+				{
+					"name": "Add Trip Stop",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"stop_order\": 1,\n    \"location\": \"Checkpoint - Lonavala\",\n    \"latitude\": 18.7481,\n    \"longitude\": 73.4072,\n    \"arrival_time\": \"2025-01-20T13:00:00Z\",\n    \"stop_duration\": 30,\n    \"notes\": \"Rest stop for lunch\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/stops", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "stops"]}
+					},
+					"description": "Add a new stop to a trip. stop_order determines the sequence."
+				},
+				{
+					"name": "Update Trip Stop",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"notes\": \"Updated stop notes\",\n    \"stop_duration\": 45\n}"
+						},
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/stops/1", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "stops", "1"]}
+					}
+				},
+				{
+					"name": "Mark Stop Completed",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/stops/1/complete", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "stops", "1", "complete"]}
+					},
+					"description": "Mark a trip stop as completed."
+				},
+				{
+					"name": "Delete Trip Stop",
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/stops/1", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "stops", "1"]}
+					}
 				}
 			]
 		},
 		{
 			"name": "08. Trip Costs",
-			"description": "Trip expense tracking (16 cost types).\n\n**Date Format**: DD-MM-YYYY (e.g., 31-12-2025)\n**Time Format**: HH:MM 24-hour (e.g., 14:30)\n\n**Cost Types**: fuel, toll, driver_allowance, parking, loading_charges, unloading_charges, insurance, permit, registration_renewal, fitness_check, emission_test, state_permit, national_permit, chalan, rto, other",
+			"description": "Trip expense tracking (16 cost types).\n\n**Date Format**: DD-MM-YYYY (e.g., 31-12-2025)\n**Time Format**: HH:MM 24-hour (e.g., 14:30)\n\n**Cost Types**: fuel, toll, driver_allowance, parking, loading_charges, unloading_charges, insurance, permit, registration_renewal, fitness_check, emission_test, state_permit, national_permit, chalan, other\n\n**Fuel-specific fields (when cost_type='fuel')**: fuel_type, fuel_quantity, fuel_rate, km_per_liter\n**Other cost type (when cost_type='other')**: custom_cost_type_name",
 			"item": [
 				{
 					"name": "Get Cost Types",
@@ -659,19 +710,46 @@
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/trip-costs/types", "host": ["{{base_url}}"], "path": ["trip-costs", "types"]}
-					}
+					},
+					"description": "Returns all 16 cost types with category labels (operating, cargo, compliance, penalty, misc)."
 				},
 				{
-					"name": "Create Trip Cost",
+					"name": "Create Trip Cost - Fuel",
 					"request": {
 						"method": "POST",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_type\": \"fuel\",\n    \"amount\": 5000.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"10:30\",\n    \"notes\": \"Diesel refill at HP Pump\"\n}"
+							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_type\": \"fuel\",\n    \"amount\": 5000.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"10:30\",\n    \"notes\": \"Diesel refill at HP Pump\",\n    \"fuel_type\": \"diesel\",\n    \"fuel_quantity\": 55.5,\n    \"fuel_rate\": 90.09,\n    \"km_per_liter\": 4.5\n}"
+						},
+						"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
+					},
+					"description": "Create fuel cost with fuel-specific fields: fuel_type (diesel/petrol/cng), fuel_quantity (liters), fuel_rate (INR/liter), km_per_liter (efficiency)."
+				},
+				{
+					"name": "Create Trip Cost - Toll",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_type\": \"toll\",\n    \"amount\": 350.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"11:15\",\n    \"notes\": \"Mumbai-Pune Expressway Toll\"\n}"
 						},
 						"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
 					}
+				},
+				{
+					"name": "Create Trip Cost - Other (Custom)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_type\": \"other\",\n    \"amount\": 200.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"14:00\",\n    \"custom_cost_type_name\": \"Driver Meals\",\n    \"notes\": \"Lunch expense for driver\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
+					},
+					"description": "Create custom cost type with custom_cost_type_name field when cost_type='other'."
 				},
 				{
 					"name": "Get Trip Cost",
@@ -900,7 +978,7 @@
 		},
 		{
 			"name": "10. Dashboard",
-			"description": "Dashboard and analytics",
+			"description": "Dashboard and analytics - Provides comprehensive fleet management statistics with role-based data.\n\n**Section APIs for Mobile App:**\n- Unified Dashboard: Complete dashboard data\n- Cost Overview: Expenses with Today/Weekly/Monthly filter\n- Pending Payments: Trips with pending payments\n- Vehicle Status: Vehicle counts by state\n- Trips Status: Trip counts by state with delayed detection\n- Drivers Status: Driver availability counts\n- Alerts Status: Alerts summary with expiry notifications",
 			"item": [
 				{
 					"name": "Unified Dashboard",
@@ -908,7 +986,8 @@
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/dashboard", "host": ["{{base_url}}"], "path": ["dashboard"]}
-					}
+					},
+					"description": "Returns comprehensive dashboard with all sections. Response includes: user_info, fleet_overview, today_summary, alerts, quick_actions, live_status, team_stats (owner only), document_stats (owner/manager)."
 				},
 				{
 					"name": "Owner Dashboard",
@@ -916,7 +995,26 @@
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/dashboard/owner", "host": ["{{base_url}}"], "path": ["dashboard", "owner"]}
-					}
+					},
+					"description": "Owner-specific dashboard with team management stats."
+				},
+				{
+					"name": "Manager Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/manager", "host": ["{{base_url}}"], "path": ["dashboard", "manager"]}
+					},
+					"description": "Manager-specific dashboard with operational focus."
+				},
+				{
+					"name": "Supervisor Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/supervisor", "host": ["{{base_url}}"], "path": ["dashboard", "supervisor"]}
+					},
+					"description": "Supervisor-specific dashboard with tracking focus."
 				},
 				{
 					"name": "Cost Overview - Today",
@@ -924,7 +1022,8 @@
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/dashboard/cost-overview?filter=today", "host": ["{{base_url}}"], "path": ["dashboard", "cost-overview"], "query": [{"key": "filter", "value": "today"}]}
-					}
+					},
+					"description": "Today's cost overview with total_expenses, total_profit_loss, completed_trips, total_revenue, fuel_cost, toll_cost, maintenance_cost, other_costs, profit_margin."
 				},
 				{
 					"name": "Cost Overview - Weekly",
@@ -948,7 +1047,44 @@
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/dashboard/pending-payments?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["dashboard", "pending-payments"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
-					}
+					},
+					"description": "Lists trips with pending payments. Response includes: trip_id, vehicle_registration, customer_name, selling_value, partial_payment, pending_amount, days_overdue, payment_status."
+				},
+				{
+					"name": "Vehicle Status",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/vehicle-status", "host": ["{{base_url}}"], "path": ["dashboard", "vehicle-status"]}
+					},
+					"description": "Vehicle counts by status. Response: on_trip_planned, on_trip_in_progress, under_maintenance, active, inactive, total."
+				},
+				{
+					"name": "Trips Status",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/trips-status", "host": ["{{base_url}}"], "path": ["dashboard", "trips-status"]}
+					},
+					"description": "Trip counts by status with delayed detection. Response: in_progress, planned, delayed, completed_today, completed_total, cancelled, total, recent_trips[]."
+				},
+				{
+					"name": "Drivers Status",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/drivers-status", "host": ["{{base_url}}"], "path": ["dashboard", "drivers-status"]}
+					},
+					"description": "Driver availability counts. Response: on_trip_planned, on_trip_in_progress, available, on_leave, inactive, total."
+				},
+				{
+					"name": "Alerts Status",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/alerts-status", "host": ["{{base_url}}"], "path": ["dashboard", "alerts-status"]}
+					},
+					"description": "Alerts summary with counts by type/priority. Response: total_alerts, critical_alerts, warning_alerts, info_alerts, document_expiring, license_expiring, pending_payments, maintenance_vehicles, alerts[]."
 				}
 			]
 		},
