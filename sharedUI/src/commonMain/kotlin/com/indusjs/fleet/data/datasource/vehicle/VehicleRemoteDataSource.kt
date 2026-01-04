@@ -6,6 +6,7 @@ import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleRequest
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleWithDocumentsRequest
+import com.indusjs.fleet.data.model.vehicle.UpdateVehicleRequest
 import com.indusjs.fleet.data.model.vehicle.VehicleApiResponse
 import com.indusjs.fleet.data.model.vehicle.VehicleDetailDto
 import com.indusjs.fleet.data.model.vehicle.VehicleDocumentDto
@@ -44,7 +45,7 @@ interface VehicleRemoteDataSource : RemoteDataSource {
     suspend fun getVehicleById(token: String, id: String): VehicleApiResponse<VehicleDto>
     suspend fun createVehicle(token: String, request: CreateVehicleRequest): VehicleApiResponse<VehicleDto>
     suspend fun createVehicleWithDocuments(token: String, request: CreateVehicleWithDocumentsRequest): VehicleApiResponse<VehicleDto>
-    suspend fun updateVehicle(token: String, id: String, request: CreateVehicleRequest): VehicleApiResponse<VehicleDto>
+    suspend fun updateVehicle(token: String, id: String, request: UpdateVehicleRequest): VehicleApiResponse<VehicleDto>
     suspend fun deleteVehicle(token: String, id: String): VehicleApiResponse<Unit>
 
     // Vehicle Detail APIs (new endpoints - may not be implemented in backend yet)
@@ -216,9 +217,9 @@ class VehicleRemoteDataSourceImpl(
         }
     }
 
-    override suspend fun updateVehicle(token: String, id: String, request: CreateVehicleRequest): VehicleApiResponse<VehicleDto> {
+    override suspend fun updateVehicle(token: String, id: String, request: UpdateVehicleRequest): VehicleApiResponse<VehicleDto> {
         return try {
-            log.d { "Updating vehicle: $id" }
+            log.d { "Updating vehicle: $id with request: $request" }
             val response: HttpResponse = httpClient.put("$baseUrl/$id") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)

@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.core.util.ValidationUtils
+import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
 import com.indusjs.fleet.data.model.costs.BulkCreateMaintenanceCostsRequest
 import com.indusjs.fleet.data.model.costs.BulkMaintenanceCostItem
 import com.indusjs.fleet.data.model.costs.CreateMaintenanceCostRequest
@@ -224,12 +225,13 @@ class MaintenanceCostEntryViewModel(
         updateState { copy(isSaving = true) }
 
         // Build bulk request
+        // Convert date/time to ISO 8601 format for v2 API
         val bulkItems = validEntries.map { entry ->
             BulkMaintenanceCostItem(
                 costType = entry.costType,
                 amount = entry.amount.toDoubleOrNull() ?: 0.0,
-                date = entry.date,
-                time = entry.time.takeIf { it.isNotBlank() },
+                date = convertFormattedToIsoDateTime(entry.date, entry.time),
+                time = if (entry.time.isNotBlank()) convertFormattedToIsoDateTime(entry.date, entry.time) else null,
                 description = entry.description.takeIf { it.isNotBlank() },
                 notes = entry.notes.takeIf { it.isNotBlank() },
                 vendorName = entry.vendorName.takeIf { it.isNotBlank() },

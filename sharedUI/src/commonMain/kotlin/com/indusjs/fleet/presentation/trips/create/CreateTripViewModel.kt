@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.result.Result
+import com.indusjs.fleet.core.util.convertToIsoDateTime
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
@@ -423,26 +424,17 @@ class CreateTripViewModel(
         withContext(dispatcherProvider.io) {
             val state = currentState
 
-            // Convert raw date digits (DDMMYYYY) to ISO format (YYYY-MM-DD)
-            val departureDateISO = convertToISODate(state.departureDate)
-            val arrivalDateISO = convertToISODate(state.arrivalDate)
-
-            // Format raw time digits (HHMM) to HH:MM
-            val departureTimeFormatted = formatTimeForApi(state.departureTime)
-            val arrivalTimeFormatted = formatTimeForApi(state.arrivalTime)
-
-            // Build planned start from departure date and time
-            val plannedStart = "${departureDateISO}T${departureTimeFormatted}:00Z"
-
-            // Build planned end from arrival date and time (if provided), otherwise use departure
-            val plannedEnd = if (state.arrivalDate.isNotBlank() && state.arrivalTime.isNotBlank()) {
-                "${arrivalDateISO}T${arrivalTimeFormatted}:00Z"
-            } else if (state.arrivalTime.isNotBlank()) {
-                // If only arrival time is provided, use departure date
-                "${departureDateISO}T${arrivalTimeFormatted}:00Z"
+            // Convert to ISO 8601 format for v2 API: YYYY-MM-DDTHH:MM:00Z
+            // Backend expects planned_start and planned_end in ISO 8601 format
+            val plannedStartIso = convertToIsoDateTime(state.departureDate, state.departureTime)
+            val plannedEndIso = if (state.arrivalDate.isNotBlank()) {
+                convertToIsoDateTime(state.arrivalDate, state.arrivalTime)
             } else {
-                plannedStart
+                // If no arrival date, use departure date as planned_end
+                plannedStartIso
             }
+
+            log.d { "Creating trip with ISO: plannedStart=$plannedStartIso, plannedEnd=$plannedEndIso" }
 
             val vehicleId = state.selectedVehicle!!.id.toIntOrNull() ?: 0
             val driverId = state.selectedDriver!!.id.toIntOrNull() ?: 0
@@ -450,21 +442,26 @@ class CreateTripViewModel(
             log.d { "Creating trip with vehicleId: $vehicleId, driverId: $driverId" }
             log.d { "Vehicle: ${state.selectedVehicle.registrationNumber}, isOccupied: ${state.selectedVehicle.isOccupied}" }
             log.d { "Driver: ${state.selectedDriver.firstName} ${state.selectedDriver.lastName}, isOccupied: ${state.selectedDriver.isOccupied}" }
-            log.d { "Schedule: plannedStart=$plannedStart, plannedEnd=$plannedEnd" }
 
             val createTripData = CreateTripData(
                 vehicleId = vehicleId,
                 driverId = driverId,
-                scheduledDate = departureDateISO,
-                startTime = departureTimeFormatted,
-                deliveryDate = if (state.arrivalDate.isNotBlank()) arrivalDateISO else null,
-                deliveryTime = if (state.arrivalTime.isNotBlank()) arrivalTimeFormatted else null,
+                // v2 API required fields
+                plannedStart = plannedStartIso,
+                plannedEnd = plannedEndIso,
+                // Legacy fields (optional)
+                scheduledDate = plannedStartIso,
+                startTime = plannedStartIso,
+                deliveryDate = plannedEndIso,
+                deliveryTime = plannedEndIso,
                 startLocation = state.startLocation.trim(),
                 startLat = state.startLat.toDoubleOrNull(),
                 startLng = state.startLng.toDoubleOrNull(),
                 endLocation = state.endLocation.trim(),
                 endLat = state.endLat.toDoubleOrNull(),
                 endLng = state.endLng.toDoubleOrNull(),
+                // Estimated distance calculated from Google Distance Matrix API
+                estimatedDistance = state.estimatedDistance.toDoubleOrNull(),
                 cargoType = state.cargoType.lowercase(),
                 cargoDescription = state.cargoDescription.takeIf { it.isNotBlank() },
                 cargoLoadingWeight = state.cargoWeight.toDoubleOrNull(),
@@ -535,22 +532,28 @@ class CreateTripViewModel(
     }
 
     /**
-     * Converts raw date digits (DDMMYYYY) to ISO format (YYYY-MM-DD).
-     * If the input is empty or invalid, returns empty string.
+     * Converts raw date digits (DDMMYYYY) and time (HHMM) to ISO 8601 format.
+     * The v2 API expects dates in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
+     * If time is not provided, uses 00:00:00.
      */
-    private fun convertToISODate(rawDate: String): String {
+    private fun convertToIsoDateTime(rawDate: String, rawTime: String = ""): String {
         if (rawDate.isBlank()) return ""
 
-        // Raw format is DDMMYYYY (8 digits)
-        val digitsOnly = rawDate.filter { it.isDigit() }
-        return if (digitsOnly.length == 8) {
-            val day = digitsOnly.substring(0, 2)
-            val month = digitsOnly.substring(2, 4)
-            val year = digitsOnly.substring(4, 8)
-            "$year-$month-$day" // YYYY-MM-DD
-        } else {
-            rawDate // Return as-is if not in expected format
-        }
+        // Raw date format is DDMMYYYY (8 digits)
+        val dateDigits = rawDate.filter { it.isDigit() }
+        if (dateDigits.length != 8) return rawDate
+
+        val day = dateDigits.substring(0, 2)
+        val month = dateDigits.substring(2, 4)
+        val year = dateDigits.substring(4, 8)
+
+        // Raw time format is HHMM (4 digits)
+        val timeDigits = rawTime.filter { it.isDigit() }
+        val hours = if (timeDigits.length >= 2) timeDigits.substring(0, 2) else "00"
+        val minutes = if (timeDigits.length >= 4) timeDigits.substring(2, 4) else "00"
+
+        // Return ISO 8601 format: YYYY-MM-DDTHH:MM:00Z
+        return "$year-$month-${day}T$hours:$minutes:00Z"
     }
 
     /**
@@ -573,4 +576,3 @@ class CreateTripViewModel(
         }
     }
 }
-

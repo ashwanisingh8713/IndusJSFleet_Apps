@@ -200,6 +200,32 @@ data class CreateVehicleRequest(
 )
 
 /**
+ * Request body for updating a vehicle (partial update).
+ * All fields are optional - only provided fields will be updated.
+ */
+@Serializable
+data class UpdateVehicleRequest(
+    @SerialName("make")
+    val make: String? = null,
+    @SerialName("model")
+    val model: String? = null,
+    @SerialName("year")
+    val year: Int? = null,
+    @SerialName("vehicle_type")
+    val type: String? = null,
+    @SerialName("fuel_type")
+    val fuelType: String? = null,
+    @SerialName("capacity")
+    val capacity: Int? = null,
+    @SerialName("color")
+    val color: String? = null,
+    @SerialName("mileage")
+    val mileage: Double? = null,
+    @SerialName("assigned_driver_id")
+    val assignedDriverId: Int? = null
+)
+
+/**
  * Document file data for multipart upload.
  */
 data class DocumentFileData(

@@ -3,6 +3,7 @@ package com.indusjs.fleet.presentation.vehicles.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.vehicle.DocumentsSummary
 import com.indusjs.fleet.domain.entity.vehicle.RouteInfo
 import com.indusjs.fleet.domain.entity.vehicle.TripsSummary
@@ -44,6 +45,13 @@ object VehicleDetailContract {
         val fuelType: String = "Diesel",
         val color: String = "",
         val capacity: String = "",
+        val mileage: String = "",
+
+        // Driver assignment
+        val drivers: List<Driver> = emptyList(),
+        val selectedDriver: Driver? = null,
+        val showDriverDropdown: Boolean = false,
+        val isLoadingDrivers: Boolean = false,
 
         // Validation errors
         val makeError: String? = null,
@@ -128,6 +136,11 @@ object VehicleDetailContract {
         data class UpdateFuelType(val value: String) : Intent
         data class UpdateColor(val value: String) : Intent
         data class UpdateCapacity(val value: String) : Intent
+        data class UpdateMileage(val value: String) : Intent
+
+        // Driver assignment
+        data object ToggleDriverDropdown : Intent
+        data class SelectDriver(val driver: Driver?) : Intent
 
         // Save changes
         data object SaveChanges : Intent

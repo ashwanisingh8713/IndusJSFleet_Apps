@@ -21,6 +21,7 @@ import com.indusjs.fleet.domain.entity.vehicle.VehicleTripsData
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
 import com.indusjs.fleet.data.model.vehicle.AssignedDriverDto
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleRequest
+import com.indusjs.fleet.data.model.vehicle.UpdateVehicleRequest
 import com.indusjs.fleet.data.model.vehicle.DocumentAlertDto
 import com.indusjs.fleet.data.model.vehicle.DocumentsSummaryDto
 import com.indusjs.fleet.data.model.vehicle.DocumentTypeDetailDto
@@ -145,6 +146,21 @@ class VehicleMapper {
         fuelType = vehicle.fuelType.lowercase(),
         capacity = vehicle.capacity,
         color = vehicle.color.lowercase(),
+        assignedDriverId = vehicle.assignedDriverId?.toIntOrNull()
+    )
+
+    /**
+     * Maps Vehicle domain entity to UpdateVehicleRequest for partial updates.
+     */
+    fun mapToUpdateRequest(vehicle: Vehicle): UpdateVehicleRequest = UpdateVehicleRequest(
+        make = vehicle.make.takeIf { it.isNotBlank() },
+        model = vehicle.model.takeIf { it.isNotBlank() },
+        year = vehicle.year.takeIf { it > 0 },
+        type = vehicleTypeToApiString(vehicle.type),
+        fuelType = vehicle.fuelType.lowercase().takeIf { it.isNotBlank() },
+        capacity = vehicle.capacity.takeIf { it > 0 },
+        color = vehicle.color.lowercase().takeIf { it.isNotBlank() },
+        mileage = vehicle.mileage.takeIf { it > 0 },
         assignedDriverId = vehicle.assignedDriverId?.toIntOrNull()
     )
 

@@ -1,6 +1,7 @@
 package com.indusjs.fleet.domain.repository.trip
 
 import com.indusjs.fleet.core.result.Result
+import com.indusjs.fleet.data.model.trip.UpdateTripRequest
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
 import com.indusjs.fleet.domain.entity.trip.CreateTripStopData
 import com.indusjs.fleet.domain.entity.trip.Trip
@@ -40,6 +41,13 @@ interface TripRepository : Repository {
      * Update an existing trip.
      */
     suspend fun updateTrip(trip: Trip): Result<Trip>
+
+    /**
+     * Update an existing trip with UpdateTripRequest.
+     * Supports updating Vehicle, Driver, Schedule, Location, Cargo, Customer, Priority.
+     * Only works for trips in 'planned' state.
+     */
+    suspend fun updateTripWithRequest(id: String, request: UpdateTripRequest): Result<Trip>
 
     /**
      * Update trip status.
@@ -104,4 +112,3 @@ interface TripRepository : Repository {
      */
     suspend fun deleteTripStop(tripId: String, stopId: String): Result<Unit>
 }
-

@@ -78,6 +78,10 @@ class TripRepositoryImpl(
             val request = CreateTripRequest(
                 vehicleId = data.vehicleId,
                 driverId = data.driverId,
+                // v2 API requires planned_start and planned_end
+                plannedStart = data.plannedStart,
+                plannedEnd = data.plannedEnd,
+                // Legacy fields (optional)
                 scheduledDate = data.scheduledDate,
                 startTime = data.startTime,
                 deliveryDate = data.deliveryDate,
@@ -141,6 +145,21 @@ class TripRepositoryImpl(
                 notes = trip.notes
             )
             val response = remoteDataSource.updateTrip(token, trip.id, request)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to update trip"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun updateTripWithRequest(id: String, request: UpdateTripRequest): Result<Trip> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.updateTrip(token, id, request)
 
             if (response.success && response.data != null) {
                 Result.Success(mapper.mapToDomain(response.data))

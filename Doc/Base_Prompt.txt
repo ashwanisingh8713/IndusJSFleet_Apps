@@ -18,9 +18,11 @@ We have following screens in app.
     Vehicle Details -> VehicleDetailsScreen.kt
     Create Vehicle -> CreateVehicleScreen.kt
 
+    TripsScreen -> TripsScreen.kt
     Create Trip -> CreateTripScreen.kt
     Trip Details -> TripDetailsScreen.kt
     Add Trip Cost -> TripCostEntryScreen.kt
+    Edit Trip -> TripDetailScreen.kt
     Add Vehicle Cost -> MaintenanceCostEntryScreen.kt
 
 

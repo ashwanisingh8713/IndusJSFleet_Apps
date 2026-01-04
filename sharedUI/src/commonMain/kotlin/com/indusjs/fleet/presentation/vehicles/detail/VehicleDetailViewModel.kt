@@ -3,8 +3,10 @@ package com.indusjs.fleet.presentation.vehicles.detail
 import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.result.Result
+import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
+import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.DeleteVehicleUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehicleByIdUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
@@ -12,6 +14,7 @@ import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailContract.Effe
 import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailContract.Intent
 import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailContract.State
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -23,7 +26,8 @@ class VehicleDetailViewModel(
     private val getVehicleByIdUseCase: GetVehicleByIdUseCase,
     private val updateVehicleUseCase: UpdateVehicleUseCase,
     private val deleteVehicleUseCase: DeleteVehicleUseCase,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val getDriversUseCase: GetDriversUseCase
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     override suspend fun handleIntent(intent: Intent) {
@@ -43,6 +47,11 @@ class VehicleDetailViewModel(
             is Intent.UpdateFuelType -> updateState { copy(fuelType = intent.value) }
             is Intent.UpdateColor -> updateState { copy(color = intent.value) }
             is Intent.UpdateCapacity -> updateState { copy(capacity = intent.value) }
+            is Intent.UpdateMileage -> updateState { copy(mileage = intent.value) }
+
+            // Driver assignment
+            is Intent.ToggleDriverDropdown -> updateState { copy(showDriverDropdown = !showDriverDropdown) }
+            is Intent.SelectDriver -> selectDriver(intent.driver)
 
             // Actions
             is Intent.SaveChanges -> saveChanges()
@@ -94,7 +103,8 @@ class VehicleDetailViewModel(
                             vehicleType = vehicle.type,
                             fuelType = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() },
                             color = vehicle.color.replaceFirstChar { it.uppercaseChar() },
-                            capacity = vehicle.capacity.toString()
+                            capacity = vehicle.capacity.toString(),
+                            mileage = if (vehicle.mileage > 0) vehicle.mileage.toString() else ""
                         )
                     }
                 }
@@ -113,7 +123,43 @@ class VehicleDetailViewModel(
     }
 
     private fun enterEditMode() {
-        updateState { copy(isEditMode = true) }
+        updateState { copy(isEditMode = true, isLoadingDrivers = true) }
+        // Load available drivers
+        kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
+            loadDriversForEdit()
+        }
+    }
+
+    private suspend fun loadDriversForEdit() {
+        withContext(dispatcherProvider.io) {
+            getDriversUseCase().collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        val vehicle = currentState.vehicle
+                        // Find the currently assigned driver
+                        val currentDriver = if (vehicle?.assignedDriverId != null) {
+                            result.data.find { it.id == vehicle.assignedDriverId }
+                        } else null
+
+                        updateState {
+                            copy(
+                                drivers = result.data,
+                                selectedDriver = currentDriver,
+                                isLoadingDrivers = false
+                            )
+                        }
+                    }
+                    is Result.Error -> {
+                        updateState { copy(isLoadingDrivers = false) }
+                    }
+                    is Result.Loading -> { /* Already handled */ }
+                }
+            }
+        }
+    }
+
+    private fun selectDriver(driver: Driver?) {
+        updateState { copy(selectedDriver = driver, showDriverDropdown = false) }
     }
 
     private fun exitEditMode() {
@@ -130,6 +176,11 @@ class VehicleDetailViewModel(
                     fuelType = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() },
                     color = vehicle.color.replaceFirstChar { it.uppercaseChar() },
                     capacity = vehicle.capacity.toString(),
+                    mileage = if (vehicle.mileage > 0) vehicle.mileage.toString() else "",
+                    // Reset driver selection
+                    selectedDriver = null,
+                    drivers = emptyList(),
+                    showDriverDropdown = false,
                     // Clear errors
                     makeError = null,
                     modelError = null,
@@ -178,7 +229,9 @@ class VehicleDetailViewModel(
                 type = currentState.vehicleType,
                 fuelType = currentState.fuelType.lowercase(),
                 color = currentState.color.lowercase(),
-                capacity = currentState.capacity.toIntOrNull() ?: currentVehicle.capacity
+                capacity = currentState.capacity.toIntOrNull() ?: currentVehicle.capacity,
+                mileage = currentState.mileage.toDoubleOrNull() ?: currentVehicle.mileage,
+                assignedDriverId = currentState.selectedDriver?.id
             )
 
             when (val result = updateVehicleUseCase(updatedVehicle)) {

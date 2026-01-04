@@ -149,7 +149,7 @@ class VehicleRepositoryImpl(
     override suspend fun updateVehicle(vehicle: Vehicle): Result<Vehicle> {
         return try {
             val token = requireAuthToken()
-            val request = mapper.mapToCreateRequest(vehicle)
+            val request = mapper.mapToUpdateRequest(vehicle)
             val response = remoteDataSource.updateVehicle(token, vehicle.id, request)
 
             if (response.success && response.data != null) {

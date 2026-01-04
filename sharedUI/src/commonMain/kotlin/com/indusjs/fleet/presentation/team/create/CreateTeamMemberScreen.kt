@@ -19,8 +19,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.FleetEmailField
+import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
+import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Create Team Member Screen composable.
@@ -60,9 +64,18 @@ fun CreateTeamMemberScreen(
                 title = { Text("Create Team Member") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
     ) { paddingValues ->
@@ -184,40 +197,22 @@ fun CreateTeamMemberScreen(
             }
 
             // Email Field
-            OutlinedTextField(
+            FleetEmailField(
                 value = state.email,
                 onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateEmail(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Email") },
-                placeholder = { Text("Enter email address") },
-                leadingIcon = { Text("📧") },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                ),
-                singleLine = true,
+                label = "Email",
+                placeholder = "Enter email address",
                 enabled = !state.isLoading
             )
 
             // Mobile Field
-            OutlinedTextField(
-                value = state.mobile,
-                onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateMobile(it)) },
+            FleetMobileField(
+                rawValue = state.mobile,
+                onRawValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateMobile(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Mobile Number") },
-                placeholder = { Text("Enter mobile number") },
-                leadingIcon = { Text("📱") },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                ),
-                singleLine = true,
+                label = "Mobile Number",
+                placeholder = "Enter 10-digit mobile",
                 enabled = !state.isLoading
             )
 
@@ -410,4 +405,3 @@ private fun RoleSelectionCard(
         }
     }
 }
-

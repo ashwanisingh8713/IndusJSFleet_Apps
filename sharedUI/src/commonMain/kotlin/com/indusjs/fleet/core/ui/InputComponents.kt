@@ -119,6 +119,115 @@ fun filterDigitsOnly(input: String, maxLength: Int): String {
     return input.filter { it.isDigit() }.take(maxLength)
 }
 
+/**
+ * Visual transformation for mobile number input (10 digits).
+ * Displays as XXX-XXX-XXXX format.
+ */
+class MobileVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val trimmed = text.text.take(10) // Max 10 digits
+        val out = StringBuilder()
+
+        for (i in trimmed.indices) {
+            out.append(trimmed[i])
+            if (i == 2 || i == 5) {
+                out.append("-")
+            }
+        }
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                return when {
+                    offset <= 3 -> offset
+                    offset <= 6 -> offset + 1
+                    offset <= 10 -> offset + 2
+                    else -> 12
+                }
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                return when {
+                    offset <= 3 -> offset
+                    offset <= 7 -> offset - 1
+                    offset <= 12 -> offset - 2
+                    else -> 10
+                }
+            }
+        }
+
+        return TransformedText(AnnotatedString(out.toString()), offsetMapping)
+    }
+}
+
+// ============================================
+// Validation Helpers
+// ============================================
+
+/**
+ * Validates email format.
+ */
+fun isValidEmail(email: String): Boolean {
+    if (email.isBlank()) return false
+    val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
+    return emailRegex.matches(email)
+}
+
+/**
+ * Validates mobile number (10 digits).
+ */
+fun isValidMobile(mobile: String): Boolean {
+    val digits = mobile.filter { it.isDigit() }
+    return digits.length == 10
+}
+
+/**
+ * Validates date in raw format (8 digits: DDMMYYYY).
+ * Checks for valid day (1-31), month (1-12), year (1900-2100).
+ */
+fun isValidDateRaw(rawDigits: String): Boolean {
+    if (rawDigits.length != 8) return false
+    val day = rawDigits.substring(0, 2).toIntOrNull() ?: return false
+    val month = rawDigits.substring(2, 4).toIntOrNull() ?: return false
+    val year = rawDigits.substring(4, 8).toIntOrNull() ?: return false
+
+    if (month < 1 || month > 12) return false
+    if (year < 1900 || year > 2100) return false
+
+    val maxDay = when (month) {
+        2 -> if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) 29 else 28
+        4, 6, 9, 11 -> 30
+        else -> 31
+    }
+
+    return day in 1..maxDay
+}
+
+/**
+ * Validates time in raw format (4 digits: HHMM).
+ * Checks for valid hour (0-23) and minute (0-59).
+ */
+fun isValidTimeRaw(rawDigits: String): Boolean {
+    if (rawDigits.length != 4) return false
+    val hour = rawDigits.substring(0, 2).toIntOrNull() ?: return false
+    val minute = rawDigits.substring(2, 4).toIntOrNull() ?: return false
+    return hour in 0..23 && minute in 0..59
+}
+
+/**
+ * Formats raw time digits (HHMM) to HH:MM display format.
+ */
+fun formatTimeRaw(rawDigits: String): String {
+    if (rawDigits.length != 4) return rawDigits
+    return "${rawDigits.substring(0, 2)}:${rawDigits.substring(2, 4)}"
+}
+
+/**
+ * Parses HH:MM format to raw digits (HHMM).
+ */
+fun parseTimeToRaw(timeStr: String): String {
+    return timeStr.replace(":", "").filter { it.isDigit() }.take(4)
+}
+
 // ============================================
 // Standard Text Input Components
 // ============================================
@@ -424,6 +533,203 @@ fun FleetTimeField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         visualTransformation = timeVisualTransformation,
         modifier = modifier.fillMaxWidth()
+    )
+}
+
+// ============================================
+// Compact Date/Time Fields (for Row layouts)
+// ============================================
+
+/**
+ * Compact date input field for use in Row layouts.
+ * No leading icon, configurable shape, uses DD-MM-YYYY format.
+ *
+ * @param rawValue The raw digit string (e.g., "31122025")
+ * @param onRawValueChange Callback when raw value changes (receives raw digits only)
+ * @param modifier Modifier for the field
+ * @param label Label for the field
+ * @param placeholder Placeholder text
+ * @param isError Whether the field is in error state
+ * @param errorMessage Error message to display
+ * @param enabled Whether the field is enabled
+ */
+@Composable
+fun FleetDateFieldCompact(
+    rawValue: String,
+    onRawValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "Date",
+    placeholder: String = "DD-MM-YYYY",
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    enabled: Boolean = true
+) {
+    val dateVisualTransformation = remember { DateVisualTransformation() }
+
+    OutlinedTextField(
+        value = rawValue,
+        onValueChange = { input ->
+            val filtered = filterDigitsOnly(input, 8)
+            onRawValueChange(filtered)
+        },
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        isError = isError,
+        supportingText = if (isError && errorMessage != null) {
+            { Text(errorMessage, color = MaterialTheme.colorScheme.error) }
+        } else null,
+        enabled = enabled,
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        visualTransformation = dateVisualTransformation,
+        modifier = modifier
+    )
+}
+
+/**
+ * Compact time input field for use in Row layouts.
+ * No leading icon, configurable shape, uses HH:MM (24-hour) format.
+ *
+ * @param rawValue The raw digit string (e.g., "1430")
+ * @param onRawValueChange Callback when raw value changes (receives raw digits only)
+ * @param modifier Modifier for the field
+ * @param label Label for the field
+ * @param placeholder Placeholder text
+ * @param isError Whether the field is in error state
+ * @param errorMessage Error message to display
+ * @param enabled Whether the field is enabled
+ */
+@Composable
+fun FleetTimeFieldCompact(
+    rawValue: String,
+    onRawValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "Time (24hr)",
+    placeholder: String = "HH:MM",
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    enabled: Boolean = true
+) {
+    val timeVisualTransformation = remember { TimeVisualTransformation() }
+
+    OutlinedTextField(
+        value = rawValue,
+        onValueChange = { input ->
+            val filtered = filterDigitsOnly(input, 4)
+            onRawValueChange(filtered)
+        },
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        isError = isError,
+        supportingText = if (isError && errorMessage != null) {
+            { Text(errorMessage, color = MaterialTheme.colorScheme.error) }
+        } else null,
+        enabled = enabled,
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        visualTransformation = timeVisualTransformation,
+        modifier = modifier
+    )
+}
+
+// ============================================
+// Mobile Field with Visual Transformation
+// ============================================
+
+/**
+ * Mobile number input field with 10-digit limit and optional formatting.
+ * Uses visual transformation to display as XXX-XXX-XXXX.
+ *
+ * @param rawValue The raw digit string (e.g., "9876543210")
+ * @param onRawValueChange Callback when raw value changes (receives raw digits only)
+ * @param modifier Modifier for the field
+ * @param label Label for the field
+ * @param placeholder Placeholder text
+ * @param leadingEmoji Emoji to show as leading icon
+ * @param isError Whether the field is in error state
+ * @param errorMessage Error message to display
+ * @param enabled Whether the field is enabled
+ * @param useFormatting Whether to display with XXX-XXX-XXXX formatting
+ */
+@Composable
+fun FleetMobileField(
+    rawValue: String,
+    onRawValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "Mobile",
+    placeholder: String = "Enter mobile number",
+    leadingEmoji: String = "📱",
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    enabled: Boolean = true,
+    useFormatting: Boolean = false
+) {
+    val mobileVisualTransformation = remember { MobileVisualTransformation() }
+
+    OutlinedTextField(
+        value = rawValue,
+        onValueChange = { input ->
+            val filtered = filterDigitsOnly(input, 10)
+            onRawValueChange(filtered)
+        },
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        leadingIcon = { Text(leadingEmoji, modifier = Modifier.padding(start = 12.dp)) },
+        isError = isError,
+        supportingText = when {
+            isError && errorMessage != null -> {{ Text(errorMessage, color = MaterialTheme.colorScheme.error) }}
+            rawValue.length == 10 -> {{ Text("✓ Valid mobile number", color = MaterialTheme.colorScheme.primary) }}
+            rawValue.isNotEmpty() && rawValue.length < 10 -> {{ Text("Enter 10 digits", color = MaterialTheme.colorScheme.onSurfaceVariant) }}
+            else -> null
+        },
+        enabled = enabled,
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+        visualTransformation = if (useFormatting) mobileVisualTransformation else VisualTransformation.None,
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+/**
+ * Compact mobile number input field for use in Row layouts.
+ * No leading icon, 10-digit limit.
+ *
+ * @param rawValue The raw digit string (e.g., "9876543210")
+ * @param onRawValueChange Callback when raw value changes (receives raw digits only)
+ * @param modifier Modifier for the field
+ * @param label Label for the field
+ * @param placeholder Placeholder text
+ * @param isError Whether the field is in error state
+ * @param errorMessage Error message to display
+ * @param enabled Whether the field is enabled
+ */
+@Composable
+fun FleetMobileFieldCompact(
+    rawValue: String,
+    onRawValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "Mobile",
+    placeholder: String = "10-digit number",
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    enabled: Boolean = true
+) {
+    OutlinedTextField(
+        value = rawValue,
+        onValueChange = { input ->
+            val filtered = filterDigitsOnly(input, 10)
+            onRawValueChange(filtered)
+        },
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        isError = isError,
+        supportingText = if (isError && errorMessage != null) {
+            { Text(errorMessage, color = MaterialTheme.colorScheme.error) }
+        } else null,
+        enabled = enabled,
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+        modifier = modifier
     )
 }
 

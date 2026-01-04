@@ -13,10 +13,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.ui.DateVisualTransformation
+import com.indusjs.fleet.core.ui.FleetDateFieldCompact
+import com.indusjs.fleet.core.ui.FleetMobileField
+import com.indusjs.fleet.core.ui.FleetTimeFieldCompact
 import com.indusjs.fleet.core.ui.LoadingContent
-import com.indusjs.fleet.core.ui.TimeVisualTransformation
-import com.indusjs.fleet.core.ui.filterDigitsOnly
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -649,10 +649,6 @@ private fun ScheduleSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
-    // Remember visual transformations
-    val dateVisualTransformation = remember { DateVisualTransformation() }
-    val timeVisualTransformation = remember { TimeVisualTransformation() }
-
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
         // Departure Section
@@ -667,35 +663,21 @@ private fun ScheduleSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedTextField(
-                value = state.departureDate,
-                onValueChange = { input ->
-                    val filtered = filterDigitsOnly(input, 8)
-                    viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureDate(filtered))
-                },
-                label = { Text("Date") },
-                placeholder = { Text("DD-MM-YYYY") },
+            FleetDateFieldCompact(
+                rawValue = state.departureDate,
+                onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureDate(it)) },
+                label = "Date",
                 isError = state.departureDateError != null,
-                supportingText = state.departureDateError?.let { { Text(it) } },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = dateVisualTransformation,
+                errorMessage = state.departureDateError,
                 modifier = Modifier.weight(1f)
             )
 
-            OutlinedTextField(
-                value = state.departureTime,
-                onValueChange = { input ->
-                    val filtered = filterDigitsOnly(input, 4)
-                    viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureTime(filtered))
-                },
-                label = { Text("Time (24hr)") },
-                placeholder = { Text("HH:MM") },
+            FleetTimeFieldCompact(
+                rawValue = state.departureTime,
+                onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureTime(it)) },
+                label = "Time (24hr)",
                 isError = state.departureTimeError != null,
-                supportingText = state.departureTimeError?.let { { Text(it) } },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = timeVisualTransformation,
+                errorMessage = state.departureTimeError,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -714,31 +696,17 @@ private fun ScheduleSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedTextField(
-                value = state.arrivalDate,
-                onValueChange = { input ->
-                    val filtered = filterDigitsOnly(input, 8)
-                    viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalDate(filtered))
-                },
-                label = { Text("Date") },
-                placeholder = { Text("DD-MM-YYYY") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = dateVisualTransformation,
+            FleetDateFieldCompact(
+                rawValue = state.arrivalDate,
+                onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalDate(it)) },
+                label = "Date",
                 modifier = Modifier.weight(1f)
             )
 
-            OutlinedTextField(
-                value = state.arrivalTime,
-                onValueChange = { input ->
-                    val filtered = filterDigitsOnly(input, 4)
-                    viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalTime(filtered))
-                },
-                label = { Text("Time (24hr)") },
-                placeholder = { Text("HH:MM") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = timeVisualTransformation,
+            FleetTimeFieldCompact(
+                rawValue = state.arrivalTime,
+                onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalTime(it)) },
+                label = "Time (24hr)",
                 modifier = Modifier.weight(1f)
             )
         }
@@ -807,15 +775,11 @@ private fun CargoSection(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = state.customerContact,
-            onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCustomerContact(it)) },
-            label = { Text("Customer Contact") },
-            placeholder = { Text("e.g., 9876543210") },
-            leadingIcon = { Text("📱", modifier = Modifier.padding(start = 12.dp)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+        FleetMobileField(
+            rawValue = state.customerContact,
+            onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCustomerContact(it)) },
+            label = "Customer Contact",
+            placeholder = "Enter 10-digit mobile"
         )
 
         // Priority selector

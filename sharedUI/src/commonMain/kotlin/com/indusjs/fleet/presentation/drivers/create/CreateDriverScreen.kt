@@ -16,6 +16,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.ui.FleetDateField
+import com.indusjs.fleet.core.ui.FleetEmailField
+import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.convertIsoToDdMmYyyyRaw
 import com.indusjs.fleet.core.ui.convertDdMmYyyyToIso
 import com.indusjs.fleet.domain.entity.driver.LicenseType
@@ -164,38 +166,24 @@ fun CreateDriverScreen(
             }
 
             item {
-                OutlinedTextField(
-                    value = state.mobile,
-                    onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateMobile(it)) },
-                    label = { Text("Mobile Number *") },
-                    placeholder = { Text("e.g., 9876543210") },
-                    leadingIcon = { Text("📱", modifier = Modifier.padding(start = 12.dp)) },
+                FleetMobileField(
+                    rawValue = state.mobile,
+                    onRawValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateMobile(it)) },
+                    label = "Mobile Number *",
+                    placeholder = "Enter 10-digit mobile",
                     isError = state.mobileError != null,
-                    supportingText = state.mobileError?.let { { Text(it) } },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Phone,
-                        imeAction = ImeAction.Next
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    errorMessage = state.mobileError
                 )
             }
 
             item {
-                OutlinedTextField(
+                FleetEmailField(
                     value = state.email,
                     onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateEmail(it)) },
-                    label = { Text("Email (Optional)") },
-                    placeholder = { Text("e.g., raj.kumar@example.com") },
-                    leadingIcon = { Text("📧", modifier = Modifier.padding(start = 12.dp)) },
+                    label = "Email (Optional)",
+                    placeholder = "e.g., raj.kumar@example.com",
                     isError = state.emailError != null,
-                    supportingText = state.emailError?.let { { Text(it) } },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    errorMessage = state.emailError
                 )
             }
 
@@ -292,18 +280,12 @@ fun CreateDriverScreen(
             }
 
             item {
-                OutlinedTextField(
-                    value = state.emergencyContact,
-                    onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateEmergencyContact(it)) },
-                    label = { Text("Emergency Contact") },
-                    placeholder = { Text("e.g., 9876543211") },
-                    leadingIcon = { Text("🆘", modifier = Modifier.padding(start = 12.dp)) },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Phone,
-                        imeAction = ImeAction.Next
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                FleetMobileField(
+                    rawValue = state.emergencyContact,
+                    onRawValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateEmergencyContact(it)) },
+                    label = "Emergency Contact",
+                    placeholder = "Enter 10-digit mobile",
+                    leadingEmoji = "🆘"
                 )
             }
 

@@ -87,7 +87,16 @@ data class Trip(
     val distance: Double = 0.0,
     val estimatedDuration: Long = 0L,
     val actualDuration: Long? = null,
+    // Schedule - Departure
     val scheduledStartTime: String? = null,
+    val plannedStart: String? = null,  // ISO 8601 format
+    val scheduledDate: String? = null,  // DD-MM-YYYY format
+    val startTime: String? = null,      // HH:MM format
+    // Schedule - Arrival
+    val plannedEnd: String? = null,     // ISO 8601 format
+    val deliveryDate: String? = null,   // DD-MM-YYYY format
+    val deliveryTime: String? = null,   // HH:MM format
+    // Actual times
     val actualStartTime: String? = null,
     val actualEndTime: String? = null,
     val cargoType: String? = null,
@@ -105,12 +114,17 @@ data class Trip(
 /**
  * Data class for creating a new trip.
  * Updated to match API v2 fields.
+ * Note: v2 API requires plannedStart and plannedEnd in ISO 8601 format.
  */
 data class CreateTripData(
     val vehicleId: Int,
     val driverId: Int,
-    val scheduledDate: String,
-    val startTime: String,
+    // v2 API requires planned_start and planned_end (ISO 8601 format)
+    val plannedStart: String,
+    val plannedEnd: String,
+    // Legacy fields (optional, for backward compatibility)
+    val scheduledDate: String? = null,
+    val startTime: String? = null,
     val deliveryDate: String? = null,
     val deliveryTime: String? = null,
     val startLocation: String,

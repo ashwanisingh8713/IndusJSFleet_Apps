@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.ui.FleetDateField
+import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
@@ -369,13 +370,11 @@ private fun BasicInfoStep(
         }
 
         item {
-            OutlinedTextField(
-                value = state.ownerContact,
-                onValueChange = { onIntent(AddVehicleContract.Intent.UpdateOwnerContact(it)) },
-                label = { Text("Owner Contact") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+            FleetMobileField(
+                rawValue = state.ownerContact,
+                onRawValueChange = { onIntent(AddVehicleContract.Intent.UpdateOwnerContact(it)) },
+                label = "Owner Contact",
+                placeholder = "Enter 10-digit mobile"
             )
         }
 

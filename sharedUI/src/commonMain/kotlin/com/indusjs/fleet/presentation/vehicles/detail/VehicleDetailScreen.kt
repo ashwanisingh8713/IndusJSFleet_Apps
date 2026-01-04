@@ -1,20 +1,25 @@
 package com.indusjs.fleet.presentation.vehicles.detail
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -501,8 +506,10 @@ private fun OverviewTabContent(
         // Current Location Section
         item { CurrentLocationSection(vehicle = vehicle) }
 
-        // Assigned Driver Section
-        item { AssignedDriverSection(vehicle = vehicle) }
+        // Assigned Driver Section - only show if driver is assigned
+        if (vehicle.assignedDriverId != null) {
+            item { AssignedDriverSection(vehicle = vehicle) }
+        }
 
         // Status Section
         item { StatusSection(vehicle = vehicle) }
@@ -580,59 +587,44 @@ private fun CurrentLocationSection(vehicle: Vehicle) {
 }
 
 /**
- * Assigned Driver Section
+ * Assigned Driver Section - only shown when a driver is assigned
  */
 @Composable
 private fun AssignedDriverSection(vehicle: Vehicle) {
+    // Get driver name from assignedDriver object or assignedDriverName or use ID as fallback
+    val driverName = vehicle.assignedDriver?.fullName()?.takeIf { it.isNotBlank() && it != "N/A" }
+        ?: vehicle.assignedDriverName?.takeIf { it.isNotBlank() }
+        ?: "Driver #${vehicle.assignedDriverId}"
+
     EnhancedSectionCard(
         title = "Assigned Driver",
         icon = "👤"
     ) {
-        if (vehicle.assignedDriverId != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Surface(
-                    modifier = Modifier.size(48.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("👤", style = MaterialTheme.typography.titleLarge)
-                    }
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Driver #${vehicle.assignedDriverId}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Currently assigned",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                FilledTonalButton(onClick = { /* TODO: View driver */ }) {
-                    Text("View")
+                Box(contentAlignment = Alignment.Center) {
+                    Text("👤", style = MaterialTheme.typography.titleMedium)
                 }
             }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = driverName,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f)
+            )
+            FilledTonalButton(
+                onClick = { /* TODO: View driver */ },
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                Text(
-                    text = "No driver assigned",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                )
-                FilledTonalButton(onClick = { /* TODO: Assign driver */ }) {
-                    Text("+ Assign")
-                }
+                Text("View", style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -2079,165 +2071,335 @@ private fun EditModeContent(
     viewModel: VehicleDetailViewModel
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Registration (read-only)
-        Text(
-            text = "Vehicle Information",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        OutlinedTextField(
-            value = state.registrationNumber,
-            onValueChange = { },
-            label = { Text("Registration Number") },
-            leadingIcon = { Text("🚗", modifier = Modifier.padding(start = 12.dp)) },
-            enabled = false,
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Row(
+        // ==================== Vehicle Information Section ====================
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            OutlinedTextField(
-                value = state.make,
-                onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateMake(it)) },
-                label = { Text("Make *") },
-                placeholder = { Text("e.g., Toyota") },
-                isError = state.makeError != null,
-                supportingText = state.makeError?.let { { Text(it) } },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Next
-                ),
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🚗", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Vehicle Information",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
 
-            OutlinedTextField(
-                value = state.model,
-                onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateModel(it)) },
-                label = { Text("Model *") },
-                placeholder = { Text("e.g., Fortuner") },
-                isError = state.modelError != null,
-                supportingText = state.modelError?.let { { Text(it) } },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Next
-                ),
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
+                // Registration (read-only)
+                OutlinedTextField(
+                    value = state.registrationNumber,
+                    onValueChange = { },
+                    label = { Text("Registration Number") },
+                    enabled = false,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = state.make,
+                        onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateMake(it)) },
+                        label = { Text("Make *") },
+                        placeholder = { Text("e.g., Toyota") },
+                        isError = state.makeError != null,
+                        supportingText = state.makeError?.let { { Text(it) } },
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = state.model,
+                        onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateModel(it)) },
+                        label = { Text("Model *") },
+                        placeholder = { Text("e.g., Fortuner") },
+                        isError = state.modelError != null,
+                        supportingText = state.modelError?.let { { Text(it) } },
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = state.year,
+                        onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateYear(it)) },
+                        label = { Text("Year *") },
+                        placeholder = { Text("e.g., 2024") },
+                        isError = state.yearError != null,
+                        supportingText = state.yearError?.let { { Text(it) } },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = state.mileage,
+                        onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateMileage(it)) },
+                        label = { Text("Mileage (km)") },
+                        placeholder = { Text("e.g., 50000") },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+
+                // Vehicle Type selector
+                Column {
+                    Text(
+                        text = "Vehicle Type",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        VehicleType.entries.forEach { type ->
+                            FilterChip(
+                                selected = state.vehicleType == type,
+                                onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateVehicleType(type)) },
+                                label = { Text(getVehicleTypeLabel(type)) },
+                                leadingIcon = if (state.vehicleType == type) {
+                                    { Text("✓") }
+                                } else null
+                            )
+                        }
+                    }
+                }
+            }
         }
 
-        OutlinedTextField(
-            value = state.year,
-            onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateYear(it)) },
-            label = { Text("Year *") },
-            placeholder = { Text("e.g., 2024") },
-            leadingIcon = { Text("📅", modifier = Modifier.padding(start = 12.dp)) },
-            isError = state.yearError != null,
-            supportingText = state.yearError?.let { { Text(it) } },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            ),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+        // ==================== Specifications Section ====================
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("⚙️", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Specifications",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
 
-        // Vehicle Type selector
-        Column {
-            Text(
-                text = "Vehicle Type",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                VehicleType.entries.forEach { type ->
-                    FilterChip(
-                        selected = state.vehicleType == type,
-                        onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateVehicleType(type)) },
-                        label = { Text(getVehicleTypeLabel(type)) },
-                        leadingIcon = if (state.vehicleType == type) {
-                            { Text("✓") }
-                        } else null
+                // Fuel Type selector
+                Column {
+                    Text(
+                        text = "Fuel Type",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        state.fuelTypeOptions.forEach { fuel ->
+                            FilterChip(
+                                selected = state.fuelType.equals(fuel, ignoreCase = true),
+                                onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateFuelType(fuel)) },
+                                label = { Text(fuel) }
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = state.color,
+                        onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateColor(it)) },
+                        label = { Text("Color") },
+                        placeholder = { Text("e.g., Silver") },
+                        leadingIcon = { Text("🎨", modifier = Modifier.padding(start = 8.dp)) },
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Next
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = state.capacity,
+                        onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateCapacity(it)) },
+                        label = { Text("Capacity") },
+                        placeholder = { Text("e.g., 7") },
+                        leadingIcon = { Text("👥", modifier = Modifier.padding(start = 8.dp)) },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
                     )
                 }
             }
         }
 
-        HorizontalDivider()
-
-        // Specifications
-        Text(
-            text = "Specifications",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        // Fuel Type selector
-        Column {
-            Text(
-                text = "Fuel Type",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                state.fuelTypeOptions.forEach { fuel ->
-                    FilterChip(
-                        selected = state.fuelType.equals(fuel, ignoreCase = true),
-                        onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateFuelType(fuel)) },
-                        label = { Text(fuel) }
+        // ==================== Driver Assignment Section ====================
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("👤", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Assigned Driver",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
+
+                // Driver Dropdown
+                Column {
+                    Surface(
+                        onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ToggleDriverDropdown) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (state.isLoadingDrivers) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text("Loading drivers...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            } else {
+                                Text(
+                                    text = state.selectedDriver?.let { "${it.firstName} ${it.lastName}" }
+                                        ?: "No driver assigned",
+                                    modifier = Modifier.weight(1f),
+                                    color = if (state.selectedDriver != null)
+                                        MaterialTheme.colorScheme.onSurface
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(if (state.showDriverDropdown) "▲" else "▼")
+                            }
+                        }
+                    }
+
+                    // Driver Dropdown List
+                    if (state.showDriverDropdown && state.drivers.isNotEmpty()) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Column(modifier = Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState())) {
+                                // Option to remove driver
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth().clickable {
+                                        viewModel.sendIntent(VehicleDetailContract.Intent.SelectDriver(null))
+                                    },
+                                    color = Color.Transparent
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "No driver (Unassign)",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                        )
+                                    }
+                                }
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                                // Available drivers
+                                state.drivers.forEach { driver ->
+                                    val isSelected = state.selectedDriver?.id == driver.id
+                                    Surface(
+                                        modifier = Modifier.fillMaxWidth().clickable {
+                                            viewModel.sendIntent(VehicleDetailContract.Intent.SelectDriver(driver))
+                                        },
+                                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = "${driver.firstName} ${driver.lastName}",
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                driver.mobile?.let {
+                                                    Text(
+                                                        text = it,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                            if (isSelected) {
+                                                Text("✓", color = MaterialTheme.colorScheme.primary)
+                                            }
+                                        }
+                                    }
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedTextField(
-                value = state.color,
-                onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateColor(it)) },
-                label = { Text("Color") },
-                placeholder = { Text("e.g., Silver") },
-                leadingIcon = { Text("🎨", modifier = Modifier.padding(start = 12.dp)) },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Next
-                ),
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
-
-            OutlinedTextField(
-                value = state.capacity,
-                onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateCapacity(it)) },
-                label = { Text("Capacity") },
-                placeholder = { Text("e.g., 7") },
-                leadingIcon = { Text("👥", modifier = Modifier.padding(start = 12.dp)) },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                ),
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
         }
     }
 }

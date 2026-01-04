@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.result.Result
 import com.indusjs.fleet.core.util.ValidationUtils
+import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
 import com.indusjs.fleet.data.model.costs.BulkCostItem
 import com.indusjs.fleet.data.model.costs.BulkCreateTripCostsRequest
 import com.indusjs.fleet.domain.entity.trip.Trip
@@ -234,6 +235,7 @@ class TripCostEntryViewModel(
         updateState { copy(isSaving = true) }
 
         // Build bulk request - trip_id is in URL, vehicle_id from trip record
+        // Convert date/time to ISO 8601 format for v2 API
         val bulkItems = validEntries.map { entry ->
             BulkCostItem(
                 costType = if (entry.isOtherCostType && entry.customCostTypeName.isNotBlank()) {
@@ -242,8 +244,8 @@ class TripCostEntryViewModel(
                     entry.costType
                 },
                 amount = entry.amount.toDoubleOrNull() ?: 0.0,
-                date = entry.date,
-                time = entry.time.takeIf { it.isNotBlank() },
+                date = convertFormattedToIsoDateTime(entry.date, entry.time),
+                time = if (entry.time.isNotBlank()) convertFormattedToIsoDateTime(entry.date, entry.time) else null,
                 notes = entry.notes.takeIf { it.isNotBlank() },
                 fuelType = if (entry.isFuelCostType) entry.fuelType else null,
                 fuelQuantity = if (entry.isFuelCostType) entry.fuelQuantity.toDoubleOrNull() else null,

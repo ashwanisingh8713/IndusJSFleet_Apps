@@ -1,16 +1,20 @@
 package com.indusjs.fleet.presentation.trips.detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -18,7 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.ErrorHandler
 import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.FleetDateFieldCompact
+import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.FleetStatusBadge
+import com.indusjs.fleet.core.ui.FleetTimeFieldCompact
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.data.model.costs.TripCostTypes
@@ -662,16 +669,80 @@ private fun ScheduleSection(trip: Trip) {
         title = "Schedule",
         icon = "📅"
     ) {
-        trip.scheduledStartTime?.let {
-            EnhancedInfoRow(icon = "🗓️", label = "Planned Start", value = it)
+        // Departure Section
+        val hasDeparture = trip.plannedStart != null || trip.scheduledDate != null || trip.startTime != null
+        if (hasDeparture) {
+            Text(
+                text = "🚀 Departure",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // Show formatted departure date/time
+            val departureDateTime = formatScheduleDateTime(
+                isoDateTime = trip.plannedStart,
+                date = trip.scheduledDate,
+                time = trip.startTime
+            )
+            if (departureDateTime.isNotBlank()) {
+                EnhancedInfoRow(icon = "📅", label = "Date & Time", value = departureDateTime)
+            }
         }
-        trip.actualStartTime?.let {
-            EnhancedInfoRow(icon = "▶️", label = "Actual Start", value = it)
+
+        // Arrival Section
+        val hasArrival = trip.plannedEnd != null || trip.deliveryDate != null || trip.deliveryTime != null
+        if (hasArrival) {
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "🏁 Expected Arrival",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // Show formatted arrival date/time
+            val arrivalDateTime = formatScheduleDateTime(
+                isoDateTime = trip.plannedEnd,
+                date = trip.deliveryDate,
+                time = trip.deliveryTime
+            )
+            if (arrivalDateTime.isNotBlank()) {
+                EnhancedInfoRow(icon = "📅", label = "Date & Time", value = arrivalDateTime)
+            }
         }
-        trip.actualEndTime?.let {
-            EnhancedInfoRow(icon = "⏹️", label = "End Time", value = it)
+
+        // Actual times (for in_progress/completed trips)
+        val hasActualTimes = trip.actualStartTime != null || trip.actualEndTime != null
+        if (hasActualTimes) {
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "⏱️ Actual Times",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            trip.actualStartTime?.let {
+                EnhancedInfoRow(icon = "▶️", label = "Started", value = formatIsoDateTime(it))
+            }
+            trip.actualEndTime?.let {
+                EnhancedInfoRow(icon = "⏹️", label = "Ended", value = formatIsoDateTime(it))
+            }
         }
+
+        // Duration
         if (trip.displayInfo.durationValue != "NA") {
+            Spacer(modifier = Modifier.height(8.dp))
             EnhancedInfoRow(
                 icon = "⏱️",
                 label = trip.displayInfo.durationLabel,
@@ -679,6 +750,66 @@ private fun ScheduleSection(trip: Trip) {
                 isLast = true
             )
         }
+    }
+}
+
+/**
+ * Formats schedule date/time from ISO or separate date/time fields.
+ */
+private fun formatScheduleDateTime(
+    isoDateTime: String?,
+    date: String?,
+    time: String?
+): String {
+    // Try to use ISO format first
+    if (!isoDateTime.isNullOrBlank()) {
+        return formatIsoDateTime(isoDateTime)
+    }
+
+    // Fallback to separate date/time fields
+    val parts = mutableListOf<String>()
+    if (!date.isNullOrBlank()) {
+        parts.add(date)
+    }
+    if (!time.isNullOrBlank()) {
+        // Format time if it's in HHMM format
+        val formattedTime = if (time.length == 4 && time.all { it.isDigit() }) {
+            "${time.substring(0, 2)}:${time.substring(2, 4)}"
+        } else {
+            time
+        }
+        parts.add(formattedTime)
+    }
+
+    return parts.joinToString(" at ")
+}
+
+/**
+ * Formats ISO 8601 datetime string to human-readable format.
+ */
+private fun formatIsoDateTime(isoDateTime: String): String {
+    if (isoDateTime.isBlank()) return ""
+
+    return try {
+        // Parse ISO 8601: 2026-01-04T11:11:00Z
+        val parts = isoDateTime.replace("Z", "").split("T")
+        if (parts.size == 2) {
+            val datePart = parts[0] // 2026-01-04
+            val timePart = parts[1].substring(0, 5) // 11:11
+
+            // Convert date to DD-MM-YYYY
+            val dateComponents = datePart.split("-")
+            if (dateComponents.size == 3) {
+                val formattedDate = "${dateComponents[2]}-${dateComponents[1]}-${dateComponents[0]}"
+                "$formattedDate at $timePart"
+            } else {
+                "$datePart at $timePart"
+            }
+        } else {
+            isoDateTime
+        }
+    } catch (e: Exception) {
+        isoDateTime
     }
 }
 
@@ -887,20 +1018,183 @@ private fun EditModeContent(
     viewModel: TripDetailViewModel
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Route Section Card
+        // Loading indicator for vehicles/drivers
+        if (state.isLoadingVehiclesDrivers) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Loading vehicles and drivers...", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+
+        // Vehicle & Driver Selection Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                // Section Header
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("🚛", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Vehicle & Driver",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Vehicle Dropdown
+                EditDropdownField(
+                    label = "Select Vehicle",
+                    selectedText = state.selectedVehicle?.registrationNumber ?: "Choose a vehicle",
+                    isExpanded = state.showVehicleDropdown,
+                    onToggle = { viewModel.sendIntent(TripDetailContract.Intent.ToggleVehicleDropdown) },
+                    error = state.vehicleError,
+                    icon = "🚚"
+                )
+
+                if (state.showVehicleDropdown && state.vehicles.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState())) {
+                            state.vehicles.forEach { vehicle ->
+                                val isOccupied = vehicle.isOccupied
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth().clickable(enabled = !isOccupied) {
+                                        viewModel.sendIntent(TripDetailContract.Intent.SelectVehicle(vehicle))
+                                    },
+                                    color = if (isOccupied) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f) else Color.Transparent
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = vehicle.registrationNumber,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            if (isOccupied) {
+                                                val occupiedInfo = vehicle.tripAssignment?.let { assignment ->
+                                                    "${assignment.plannedStart ?: ""} - ${assignment.plannedEnd ?: ""}"
+                                                } ?: "Currently assigned"
+                                                Text(
+                                                    text = "Occupied: $occupiedInfo",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                        if (isOccupied) {
+                                            Text("🔒", style = MaterialTheme.typography.bodyLarge)
+                                        }
+                                    }
+                                }
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Driver Dropdown
+                EditDropdownField(
+                    label = "Select Driver",
+                    selectedText = state.selectedDriver?.let { "${it.firstName} ${it.lastName}" } ?: "Choose a driver",
+                    isExpanded = state.showDriverDropdown,
+                    onToggle = { viewModel.sendIntent(TripDetailContract.Intent.ToggleDriverDropdown) },
+                    error = state.driverError,
+                    icon = "👤"
+                )
+
+                if (state.showDriverDropdown && state.drivers.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState())) {
+                            state.drivers.forEach { driver ->
+                                val isOccupied = driver.isOccupied
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth().clickable(enabled = !isOccupied) {
+                                        viewModel.sendIntent(TripDetailContract.Intent.SelectDriver(driver))
+                                    },
+                                    color = if (isOccupied) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f) else Color.Transparent
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "${driver.firstName} ${driver.lastName}",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            if (isOccupied) {
+                                                val occupiedInfo = driver.tripAssignment?.let { assignment ->
+                                                    "${assignment.plannedStart ?: ""} - ${assignment.plannedEnd ?: ""}"
+                                                } ?: "Currently assigned"
+                                                Text(
+                                                    text = "Occupied: $occupiedInfo",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                        if (isOccupied) {
+                                            Text("🔒", style = MaterialTheme.typography.bodyLarge)
+                                        }
+                                    }
+                                }
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Route Section Card with Google Places Search
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
                         modifier = Modifier.size(36.dp),
                         shape = RoundedCornerShape(10.dp),
@@ -914,18 +1208,23 @@ private fun EditModeContent(
                     Text(
                         text = "Route",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Start Location with Search
                 OutlinedTextField(
                     value = state.startLocationAddress,
-                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateStartLocation(it)) },
+                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.SearchStartLocation(it)) },
                     label = { Text("Start Location *") },
                     leadingIcon = { Text("🟢", modifier = Modifier.padding(start = 8.dp)) },
+                    trailingIcon = {
+                        if (state.isSearchingStartLocation) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        }
+                    },
                     isError = state.startLocationError != null,
                     supportingText = state.startLocationError?.let { { Text(it) } },
                     singleLine = false,
@@ -934,40 +1233,46 @@ private fun EditModeContent(
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = state.startLat,
-                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateStartLat(it)) },
-                        label = { Text("Latitude") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = state.startLng,
-                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateStartLng(it)) },
-                        label = { Text("Longitude") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                // Start Location Predictions Dropdown
+                if (state.showStartLocationDropdown && state.startLocationPredictions.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(modifier = Modifier.heightIn(max = 200.dp)) {
+                            state.startLocationPredictions.forEach { prediction ->
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth().clickable {
+                                        viewModel.sendIntent(TripDetailContract.Intent.SelectStartLocationPrediction(prediction))
+                                    },
+                                    color = Color.Transparent
+                                ) {
+                                    Text(
+                                        text = prediction.description,
+                                        modifier = Modifier.padding(12.dp),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                HorizontalDivider()
+                            }
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // End Location with Search
                 OutlinedTextField(
                     value = state.endLocationAddress,
-                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEndLocation(it)) },
+                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.SearchEndLocation(it)) },
                     label = { Text("End Location *") },
                     leadingIcon = { Text("🔴", modifier = Modifier.padding(start = 8.dp)) },
+                    trailingIcon = {
+                        if (state.isSearchingEndLocation) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        }
+                    },
                     isError = state.endLocationError != null,
                     supportingText = state.endLocationError?.let { { Text(it) } },
                     singleLine = false,
@@ -976,45 +1281,137 @@ private fun EditModeContent(
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                // End Location Predictions Dropdown
+                if (state.showEndLocationDropdown && state.endLocationPredictions.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(modifier = Modifier.heightIn(max = 200.dp)) {
+                            state.endLocationPredictions.forEach { prediction ->
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth().clickable {
+                                        viewModel.sendIntent(TripDetailContract.Intent.SelectEndLocationPrediction(prediction))
+                                    },
+                                    color = Color.Transparent
+                                ) {
+                                    Text(
+                                        text = prediction.description,
+                                        modifier = Modifier.padding(12.dp),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                HorizontalDivider()
+                            }
+                        }
+                    }
+                }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Estimated Distance & Duration Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // Estimated Distance
                     OutlinedTextField(
-                        value = state.endLat,
-                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEndLat(it)) },
-                        label = { Text("Latitude") },
+                        value = state.estimatedDistance,
+                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEstimatedDistance(it)) },
+                        label = { Text("Distance (km)") },
+                        leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 8.dp)) },
+                        trailingIcon = {
+                            if (state.isCalculatingDistance) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            }
+                        },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     )
 
+                    // Estimated Duration (read-only, auto-calculated)
                     OutlinedTextField(
-                        value = state.endLng,
-                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEndLng(it)) },
-                        label = { Text("Longitude") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        value = state.estimatedDuration.ifBlank { "—" },
+                        onValueChange = { },
+                        label = { Text("Est. Duration") },
+                        leadingIcon = { Text("⏱️", modifier = Modifier.padding(start = 8.dp)) },
+                        enabled = false,
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     )
                 }
+            }
+        }
+
+        // Schedule Section Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("📅", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Schedule (Optional)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = state.distance,
-                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateDistance(it)) },
-                    label = { Text("Distance (km)") },
-                    leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 8.dp)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                )
+                // Departure Date & Time
+                Text("Departure", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    FleetDateFieldCompact(
+                        rawValue = state.departureDate,
+                        onRawValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateDepartureDate(it)) },
+                        label = "Date",
+                        modifier = Modifier.weight(1f)
+                    )
+                    FleetTimeFieldCompact(
+                        rawValue = state.departureTime,
+                        onRawValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateDepartureTime(it)) },
+                        label = "Time (24hr)",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Arrival Date & Time
+                Text("Arrival", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    FleetDateFieldCompact(
+                        rawValue = state.arrivalDate,
+                        onRawValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateArrivalDate(it)) },
+                        label = "Date",
+                        modifier = Modifier.weight(1f)
+                    )
+                    FleetTimeFieldCompact(
+                        rawValue = state.arrivalTime,
+                        onRawValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateArrivalTime(it)) },
+                        label = "Time (24hr)",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
 
@@ -1022,16 +1419,11 @@ private fun EditModeContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                // Section Header
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
                         modifier = Modifier.size(36.dp),
                         shape = RoundedCornerShape(10.dp),
@@ -1045,20 +1437,14 @@ private fun EditModeContent(
                     Text(
                         text = "Cargo & Customer",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Cargo Type selector
-                Text(
-                    text = "Cargo Type",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("Cargo Type", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
                 Spacer(modifier = Modifier.height(8.dp))
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -1090,6 +1476,19 @@ private fun EditModeContent(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
+                    value = state.cargoWeight,
+                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCargoWeight(it)) },
+                    label = { Text("Cargo Weight (kg)") },
+                    leadingIcon = { Text("⚖️", modifier = Modifier.padding(start = 8.dp)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
                     value = state.customerName,
                     onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCustomerName(it)) },
                     label = { Text("Customer Name") },
@@ -1099,15 +1498,20 @@ private fun EditModeContent(
                     shape = RoundedCornerShape(12.dp)
                 )
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                FleetMobileField(
+                    rawValue = state.customerContact,
+                    onRawValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCustomerContact(it)) },
+                    label = "Customer Contact",
+                    placeholder = "Enter 10-digit mobile",
+                    leadingEmoji = "📞"
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Priority selector
-                Text(
-                    text = "Priority",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("Priority", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
                 Spacer(modifier = Modifier.height(8.dp))
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -1135,16 +1539,11 @@ private fun EditModeContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                // Section Header
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
                         modifier = Modifier.size(36.dp),
                         shape = RoundedCornerShape(10.dp),
@@ -1158,8 +1557,7 @@ private fun EditModeContent(
                     Text(
                         text = "Notes",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
@@ -1181,6 +1579,49 @@ private fun EditModeContent(
 }
 
 @Composable
+private fun EditDropdownField(
+    label: String,
+    selectedText: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    error: String?,
+    icon: String
+) {
+    Column {
+        Text(text = label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+        Spacer(modifier = Modifier.height(8.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth().clickable { onToggle() },
+            shape = RoundedCornerShape(12.dp),
+            color = if (error != null) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                    else MaterialTheme.colorScheme.surfaceVariant
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(icon, style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = selectedText,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(if (isExpanded) "▲" else "▼", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+        if (error != null) {
+            Text(
+                text = error,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
 private fun StatusChangeDialog(
     currentStatus: TripStatus,
     onStatusSelected: (TripStatus) -> Unit,
@@ -1190,109 +1631,49 @@ private fun StatusChangeDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(20.dp),
         title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("📊", style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Change Status",
-                    fontWeight = FontWeight.Bold
-                )
+                Text(text = "Change Status", fontWeight = FontWeight.Bold)
             }
         },
         text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Column {
                 TripStatus.entries.forEach { status ->
                     val isSelected = status == currentStatus
-                    val (bgColor, icon) = when (status) {
-                        TripStatus.PLANNED -> Pair(MaterialTheme.colorScheme.primary, "📋")
-                        TripStatus.IN_PROGRESS -> Pair(MaterialTheme.colorScheme.tertiary, "🚀")
-                        TripStatus.COMPLETED -> Pair(MaterialTheme.colorScheme.secondary, "✅")
-                        TripStatus.CANCELLED -> Pair(MaterialTheme.colorScheme.error, "❌")
+                    val statusIcon = when (status) {
+                        TripStatus.PLANNED -> "📋"
+                        TripStatus.IN_PROGRESS -> "🚀"
+                        TripStatus.COMPLETED -> "✅"
+                        TripStatus.CANCELLED -> "❌"
                     }
-
                     Surface(
-                        onClick = { onStatusSelected(status) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         shape = RoundedCornerShape(12.dp),
-                        color = if (isSelected)
-                            bgColor.copy(alpha = 0.15f)
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f) else Color.Transparent
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
+                            modifier = Modifier.clickable { onStatusSelected(status) }.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(icon, style = MaterialTheme.typography.bodyLarge)
+                            Text(statusIcon, style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = getStatusDisplayName(status),
+                                text = TripStatus.toApiString(status).replaceFirstChar { it.uppercaseChar() },
                                 style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) bgColor else MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.weight(1f)
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
-                            if (isSelected) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = bgColor.copy(alpha = 0.2f),
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Text(
-                                            "✓",
-                                            color = bgColor,
-                                            fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                    }
-                                }
-                            }
                         }
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = onDismiss,
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(
-                    text = "Cancel",
-                    fontWeight = FontWeight.SemiBold
-                )
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
     )
-}
-
-// Helper functions
-@Composable
-private fun getStatusColor(status: TripStatus) = when (status) {
-    TripStatus.PLANNED -> MaterialTheme.colorScheme.primary
-    TripStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary
-    TripStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
-    TripStatus.CANCELLED -> MaterialTheme.colorScheme.error
-}
-
-private fun getStatusDisplayName(status: TripStatus): String = when (status) {
-    TripStatus.PLANNED -> "Planned"
-    TripStatus.IN_PROGRESS -> "In Progress"
-    TripStatus.COMPLETED -> "Completed"
-    TripStatus.CANCELLED -> "Cancelled"
-}
-
-private fun formatDuration(minutes: Long): String {
-    val hours = minutes / 60
-    val mins = minutes % 60
-    return if (hours > 0) "${hours}h ${mins}m" else "${mins}m"
 }
 
 /**
@@ -1314,9 +1695,7 @@ private fun TripCostsSection(
     ) {
         if (isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp))
@@ -1329,9 +1708,7 @@ private fun TripCostsSection(
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1365,7 +1742,6 @@ private fun TripCostsSection(
                 val displayName = getCostTypeDisplayName(costType)
                 val typeIcon = getCostTypeIcon(costType)
 
-                // Type header - clickable to expand/collapse
                 Surface(
                     onClick = {
                         expandedTypes = if (isExpanded) {
@@ -1379,26 +1755,18 @@ private fun TripCostsSection(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = typeIcon,
-                                style = MaterialTheme.typography.titleMedium
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = typeIcon, style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
                                     text = displayName,
                                     style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    fontWeight = FontWeight.Medium
                                 )
                                 Text(
                                     text = "${typeCosts.size} ${if (typeCosts.size == 1) "entry" else "entries"}",
@@ -1407,14 +1775,11 @@ private fun TripCostsSection(
                                 )
                             }
                         }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "₹${formatCostAmount(typeTotal)}",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                fontWeight = FontWeight.SemiBold
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
@@ -1426,12 +1791,9 @@ private fun TripCostsSection(
                     }
                 }
 
-                // Expanded cost details
                 if (isExpanded) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
                     ) {
                         typeCosts.forEachIndexed { index, cost ->
                             CostDetailItem(cost = cost)
@@ -1459,12 +1821,8 @@ private fun CostDetailItem(cost: TripCostDto) {
         verticalAlignment = Alignment.Top
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            // Date and time
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "📅",
-                    style = MaterialTheme.typography.labelSmall
-                )
+                Text(text = "📅", style = MaterialTheme.typography.labelSmall)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = cost.date,
@@ -1479,8 +1837,6 @@ private fun CostDetailItem(cost: TripCostDto) {
                     )
                 }
             }
-
-            // Notes if available
             cost.notes?.takeIf { it.isNotBlank() }?.let { notes ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -1490,8 +1846,6 @@ private fun CostDetailItem(cost: TripCostDto) {
                     maxLines = 2
                 )
             }
-
-            // Fuel details if applicable
             if (cost.costType == "fuel" && cost.fuelQuantity != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Row {
@@ -1510,13 +1864,10 @@ private fun CostDetailItem(cost: TripCostDto) {
                 }
             }
         }
-
-        // Amount
         Text(
             text = "₹${formatCostAmount(cost.amount)}",
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
@@ -1525,7 +1876,6 @@ private fun formatCostAmount(amount: Double): String {
     val intPart = amount.toLong()
     val decPart = ((amount - intPart) * 100).toInt()
     val decStr = if (decPart < 10) "0$decPart" else "$decPart"
-
     return if (intPart >= 1000) {
         val formattedInt = intPart.toString().reversed().chunked(3).joinToString(",").reversed()
         "$formattedInt.$decStr"

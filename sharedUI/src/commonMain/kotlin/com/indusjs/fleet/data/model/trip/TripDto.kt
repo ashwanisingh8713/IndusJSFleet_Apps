@@ -122,14 +122,30 @@ data class TripDto(
     @SerialName("display_info")
     val displayInfo: TripDisplayInfoDto? = null,
     // List-level display fields (for List Trips response)
+    // These flat fields are returned by v2 API for list view
+    @SerialName("vehicle_number")
+    val vehicleNumber: String? = null,
+    @SerialName("driver_name")
+    val driverName: String? = null,
     @SerialName("state_label")
     val stateLabel: String? = null,
+    // Distance display fields (list response)
     @SerialName("distance_display")
     val distanceDisplay: String? = null,
+    @SerialName("estimated_distance_label")
+    val estimatedDistanceLabel: String? = null,
+    // Duration display fields (list response)
     @SerialName("duration_display")
     val durationDisplay: String? = null,
+    @SerialName("estimated_duration_minutes")
+    val estimatedDurationMinutes: Long? = null,
+    @SerialName("estimated_duration_label")
+    val estimatedDurationLabel: String? = null,
+    // Cargo and cost fields
     @SerialName("cargo_type_label")
     val cargoTypeLabel: String? = null,
+    @SerialName("total_cost")
+    val totalCost: Double? = null,
     @SerialName("total_cost_label")
     val totalCostLabel: String? = null,
     @SerialName("has_costs")
@@ -315,6 +331,7 @@ data class TripApiResponse<T>(
 /**
  * Request body for creating a trip.
  * Updated to match API v2 fields.
+ * Note: v2 API requires planned_start and planned_end in ISO 8601 format.
  */
 @Serializable
 data class CreateTripRequest(
@@ -322,10 +339,16 @@ data class CreateTripRequest(
     val vehicleId: Int,
     @SerialName("driver_id")
     val driverId: Int,
+    // v2 API requires planned_start and planned_end (ISO 8601 format)
+    @SerialName("planned_start")
+    val plannedStart: String,
+    @SerialName("planned_end")
+    val plannedEnd: String,
+    // Legacy fields (optional, for backward compatibility)
     @SerialName("scheduled_date")
-    val scheduledDate: String,
+    val scheduledDate: String? = null,
     @SerialName("start_time")
-    val startTime: String,
+    val startTime: String? = null,
     @SerialName("delivery_date")
     val deliveryDate: String? = null,
     @SerialName("delivery_time")
@@ -394,9 +417,32 @@ data class CreateTripRequest(
 
 /**
  * Request body for updating a trip.
+ * Updated to match API v2 - supports Vehicle, Driver, Schedule, Location, Cargo, Customer updates.
+ * Note: Only trips in 'planned' state can be updated.
  */
 @Serializable
 data class UpdateTripRequest(
+    // Vehicle & Driver - can be changed to another available vehicle/driver
+    @SerialName("vehicle_id")
+    val vehicleId: Int? = null,
+    @SerialName("driver_id")
+    val driverId: Int? = null,
+
+    // Schedule - ISO 8601 format
+    @SerialName("scheduled_date")
+    val scheduledDate: String? = null,
+    @SerialName("start_time")
+    val startTime: String? = null,
+    @SerialName("delivery_date")
+    val deliveryDate: String? = null,
+    @SerialName("delivery_time")
+    val deliveryTime: String? = null,
+    @SerialName("planned_start")
+    val plannedStart: String? = null,
+    @SerialName("planned_end")
+    val plannedEnd: String? = null,
+
+    // Location
     @SerialName("start_location")
     val startLocation: String? = null,
     @SerialName("start_lat")
@@ -411,10 +457,8 @@ data class UpdateTripRequest(
     val endLng: Double? = null,
     @SerialName("estimated_distance")
     val estimatedDistance: Double? = null,
-    @SerialName("delivery_date")
-    val deliveryDate: String? = null,
-    @SerialName("delivery_time")
-    val deliveryTime: String? = null,
+
+    // Cargo
     @SerialName("cargo_type")
     val cargoType: String? = null,
     @SerialName("cargo_description")
@@ -427,10 +471,14 @@ data class UpdateTripRequest(
     val vehicleWeight: Double? = null,
     @SerialName("weight_unit")
     val weightUnit: String? = null,
+
+    // Customer
     @SerialName("customer_name")
     val customerName: String? = null,
     @SerialName("customer_contact")
     val customerContact: String? = null,
+
+    // Other
     @SerialName("priority")
     val priority: String? = null,
     @SerialName("notes")

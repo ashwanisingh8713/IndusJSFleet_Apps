@@ -21,6 +21,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.ErrorHandler
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetDateField
+import com.indusjs.fleet.core.ui.FleetEmailField
+import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.FleetStatusBadge
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.ui.convertDdMmYyyyToIso
@@ -578,34 +580,21 @@ private fun EditModeContent(
             )
         }
 
-        OutlinedTextField(
-            value = state.mobile,
-            onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateMobile(it)) },
-            label = { Text("Mobile Number *") },
-            leadingIcon = { Text("📱", modifier = Modifier.padding(start = 12.dp)) },
+        FleetMobileField(
+            rawValue = state.mobile,
+            onRawValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateMobile(it)) },
+            label = "Mobile Number *",
+            placeholder = "Enter 10-digit mobile",
             isError = state.mobileError != null,
-            supportingText = state.mobileError?.let { { Text(it) } },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Phone,
-                imeAction = ImeAction.Next
-            ),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            errorMessage = state.mobileError
         )
 
-        OutlinedTextField(
+        FleetEmailField(
             value = state.email,
             onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateEmail(it)) },
-            label = { Text("Email") },
-            leadingIcon = { Text("📧", modifier = Modifier.padding(start = 12.dp)) },
+            label = "Email",
             isError = state.emailError != null,
-            supportingText = state.emailError?.let { { Text(it) } },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
-            ),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            errorMessage = state.emailError
         )
 
         HorizontalDivider()
@@ -709,17 +698,12 @@ private fun EditModeContent(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = state.emergencyContact,
-            onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateEmergencyContact(it)) },
-            label = { Text("Emergency Contact") },
-            leadingIcon = { Text("🆘", modifier = Modifier.padding(start = 12.dp)) },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Phone,
-                imeAction = ImeAction.Done
-            ),
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+        FleetMobileField(
+            rawValue = state.emergencyContact,
+            onRawValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateEmergencyContact(it)) },
+            label = "Emergency Contact",
+            placeholder = "Enter 10-digit mobile",
+            leadingEmoji = "🆘"
         )
     }
 }

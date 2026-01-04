@@ -17,29 +17,45 @@ class TripMapper {
      * Maps TripDto to Trip domain entity.
      */
     fun mapToDomain(dto: TripDto): Trip {
-        // Build driver name from embedded driver object or fallback
+        // Build driver name from embedded driver object OR flat field from v2 list API
         val driverName = dto.driver?.let {
             "${it.firstName ?: ""} ${it.lastName ?: ""}".trim()
         }?.takeIf { it.isNotBlank() }
+            ?: dto.driverName  // Fallback to flat field from v2 list response
 
-        // Build vehicle number from embedded vehicle object
+        // Build vehicle number from embedded vehicle object OR flat field from v2 list API
         val vehicleNumber = dto.vehicle?.registrationNumber
+            ?: dto.vehicleNumber  // Fallback to flat field from v2 list response
 
-        // Build start location
+        // Build start location - allow address-only for list view (no lat/lng)
         val startLocation = if (dto.startLat != null && dto.startLng != null) {
             TripLocation(
                 latitude = dto.startLat,
                 longitude = dto.startLng,
                 address = dto.startLocation ?: ""
             )
+        } else if (!dto.startLocation.isNullOrBlank()) {
+            // v2 list API returns only address without coordinates
+            TripLocation(
+                latitude = 0.0,
+                longitude = 0.0,
+                address = dto.startLocation
+            )
         } else null
 
-        // Build end location
+        // Build end location - allow address-only for list view (no lat/lng)
         val endLocation = if (dto.endLat != null && dto.endLng != null) {
             TripLocation(
                 latitude = dto.endLat,
                 longitude = dto.endLng,
                 address = dto.endLocation ?: ""
+            )
+        } else if (!dto.endLocation.isNullOrBlank()) {
+            // v2 list API returns only address without coordinates
+            TripLocation(
+                latitude = 0.0,
+                longitude = 0.0,
+                address = dto.endLocation
             )
         } else null
 
@@ -69,7 +85,16 @@ class TripMapper {
             endLocation = endLocation,
             currentLocation = currentLocation,
             distance = dto.estimatedDistance ?: dto.actualDistance ?: 0.0,
-            scheduledStartTime = dto.plannedStart,
+            // Schedule - Departure
+            scheduledStartTime = dto.plannedStart ?: dto.scheduledDate,
+            plannedStart = dto.plannedStart,
+            scheduledDate = dto.scheduledDate,
+            startTime = dto.startTime,
+            // Schedule - Arrival
+            plannedEnd = dto.plannedEnd,
+            deliveryDate = dto.deliveryDate,
+            deliveryTime = dto.deliveryTime,
+            // Actual times
             actualStartTime = dto.actualStart,
             actualEndTime = dto.actualEnd,
             cargoType = dto.cargoType,
@@ -78,8 +103,8 @@ class TripMapper {
             priority = dto.priority,
             notes = dto.notes,
             createdAt = dto.createdAt,
-            // Map cost summary - use totalCost from embedded cost_summary
-            totalCost = dto.costSummary?.totalCost?.takeIf { it > 0 },
+            // Map cost summary - use flat totalCost from v2 API or embedded cost_summary
+            totalCost = dto.totalCost?.takeIf { it > 0 } ?: dto.costSummary?.totalCost?.takeIf { it > 0 },
             displayInfo = displayInfo
         )
     }
@@ -97,15 +122,23 @@ class TripMapper {
         val progressInfo = apiDisplayInfo?.progressInfo
 
         // For list responses, API provides flat display fields - use these first
-        val apiDistanceDisplay = dto.distanceDisplay?.takeIf { it.isNotBlank() }
-        val apiDurationDisplay = dto.durationDisplay?.takeIf { it.isNotBlank() }
+        val apiDistanceDisplay = dto.distanceDisplay?.takeIf { it.isNotBlank() && it != "NA" }
+        val apiDurationDisplay = dto.durationDisplay?.takeIf { it.isNotBlank() && it != "NA" }
+
+        // Use estimated labels from list response (v2 API provides these)
+        val apiEstimatedDistanceLabel = dto.estimatedDistanceLabel?.takeIf { it.isNotBlank() && it != "NA" }
+        val apiEstimatedDurationLabel = dto.estimatedDurationLabel?.takeIf { it.isNotBlank() && it != "NA" }
 
         // Build distance display based on state (fallback when API display not available)
         val (distanceValue, distanceLabel, estimatedDist, coveredDist, totalDist) = when (status) {
             TripStatus.PLANNED -> {
-                // Planned: Show estimated distance
+                // Planned: Show estimated distance (prefer API label, then compute)
                 val estDist = distanceInfo?.estimatedDistance ?: dto.estimatedDistance
-                val value = estDist?.let { if (it > 0) "${it.toInt()} km" else "NA" } ?: "NA"
+                // Use API-provided label first, then compute from raw value
+                val value = apiEstimatedDistanceLabel
+                    ?: distanceInfo?.estimatedDistanceLabel?.takeIf { it.isNotBlank() && it != "NA" }
+                    ?: estDist?.let { if (it > 0) "${it.toInt()} km" else "NA" }
+                    ?: "NA"
                 val label = "Est. Distance"
                 DistanceResult(value, label, estDist, null, null)
             }
@@ -128,9 +161,10 @@ class TripMapper {
             }
         }
 
-        // Use API display value first, then computed value
+        // Use API display value first (if not NA), then estimated label, then computed value
         val finalDistanceValue = apiDistanceDisplay
-            ?: distanceInfo?.displayValue?.takeIf { it.isNotBlank() }
+            ?: distanceInfo?.displayValue?.takeIf { it.isNotBlank() && it != "NA" }
+            ?: apiEstimatedDistanceLabel
             ?: distanceValue
         val finalDistanceLabel = distanceInfo?.displayLabel?.takeIf { it.isNotBlank() }
             ?: distanceLabel
@@ -138,8 +172,14 @@ class TripMapper {
         // Build duration display based on state (fallback when API display not available)
         val (durationValue, durationLabel, plannedMins, actualMins) = when (status) {
             TripStatus.PLANNED -> {
-                // Planned: Show 'NA' for duration (trip hasn't started)
-                DurationResult("NA", "Duration", durationInfo?.plannedDurationMinutes, null)
+                // Planned: Show estimated/planned duration (prefer API label, then compute)
+                val plannedMinutes = durationInfo?.plannedDurationMinutes ?: dto.estimatedDurationMinutes
+                // Use API-provided label first, then compute from raw value
+                val value = apiEstimatedDurationLabel
+                    ?: durationInfo?.plannedDurationLabel?.takeIf { it.isNotBlank() && it != "NA" }
+                    ?: plannedMinutes?.let { if (it > 0) formatDuration(it) else "NA" }
+                    ?: "NA"
+                DurationResult(value, "Est. Duration", plannedMinutes, null)
             }
             TripStatus.IN_PROGRESS -> {
                 // In Progress: Show actual/active duration
@@ -155,21 +195,22 @@ class TripMapper {
             }
         }
 
-        // Use API display value first, then computed value
+        // Use API display value first (if not NA), then estimated label, then computed value
         val finalDurationValue = apiDurationDisplay
-            ?: durationInfo?.displayValue?.takeIf { it.isNotBlank() }
+            ?: durationInfo?.displayValue?.takeIf { it.isNotBlank() && it != "NA" }
+            ?: apiEstimatedDurationLabel
             ?: durationValue
         val finalDurationLabel = durationInfo?.displayLabel?.takeIf { it.isNotBlank() }
             ?: durationLabel
 
-        // Cost info
-        val costSummaryTotal = dto.costSummary?.totalCost ?: 0.0
+        // Cost info - use flat fields from v2 list API first, then nested objects
+        val costSummaryTotal = dto.totalCost ?: dto.costSummary?.totalCost ?: 0.0
         val hasCosts = dto.hasCosts
             ?: costInfo?.hasCosts
             ?: (costSummaryTotal > 0.0)
         val totalCost = costInfo?.totalCost ?: costSummaryTotal
-        val totalCostLabel = costInfo?.totalCostLabel
-            ?: dto.totalCostLabel
+        val totalCostLabel = dto.totalCostLabel?.takeIf { it != "NA" && it.isNotBlank() }
+            ?: costInfo?.totalCostLabel
             ?: if (hasCosts && totalCost > 0.0) formatCost(totalCost) else "NA"
         val costCount = costInfo?.costCount ?: dto.costSummary?.costCount ?: 0
 

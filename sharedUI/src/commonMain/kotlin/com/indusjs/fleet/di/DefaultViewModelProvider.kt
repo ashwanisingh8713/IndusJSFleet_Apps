@@ -238,7 +238,8 @@ class DefaultViewModelProvider : ViewModelProvider {
         getVehicleByIdUseCase,
         updateVehicleUseCase,
         deleteVehicleUseCase,
-        vehicleRepository
+        vehicleRepository,
+        getDriversUseCase
     )
 
     override fun driversViewModel() = DriversViewModel(
@@ -280,10 +281,13 @@ class DefaultViewModelProvider : ViewModelProvider {
     override fun tripDetailViewModel() = TripDetailViewModel(
         dispatcherProvider,
         getTripByIdUseCase,
-        updateTripUseCase,
         updateTripStatusUseCase,
         cancelTripUseCase,
-        costsRepository
+        costsRepository,
+        tripRepository,
+        getVehiclesUseCase,
+        getDriversUseCase,
+        googlePlacesService
     )
 
     override fun mapsViewModel() = MapsViewModel(dispatcherProvider)

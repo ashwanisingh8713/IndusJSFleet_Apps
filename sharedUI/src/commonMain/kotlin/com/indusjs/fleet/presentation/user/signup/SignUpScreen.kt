@@ -22,6 +22,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.FleetEmailField
+import com.indusjs.fleet.core.ui.FleetMobileField
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -152,66 +154,27 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Email Field
-            OutlinedTextField(
+            FleetEmailField(
                 value = state.email,
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateEmail(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Email Address") },
-                placeholder = { Text("Enter your email") },
-                leadingIcon = {
-                    Text("📧", modifier = Modifier.padding(start = 4.dp))
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                ),
-                singleLine = true,
-                enabled = !state.isLoading,
-                shape = RoundedCornerShape(12.dp)
+                label = "Email Address",
+                placeholder = "Enter your email",
+                enabled = !state.isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Mobile Field
-            OutlinedTextField(
-                value = state.mobile,
-                onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateMobile(it)) },
+            FleetMobileField(
+                rawValue = state.mobile,
+                onRawValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateMobile(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Mobile Number") },
-                placeholder = { Text("Enter 10-digit mobile number") },
-                leadingIcon = {
-                    Text("📱", modifier = Modifier.padding(start = 4.dp))
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                ),
-                singleLine = true,
-                enabled = !state.isLoading,
+                label = "Mobile Number",
+                placeholder = "Enter 10-digit mobile",
                 isError = state.mobileError != null,
-                supportingText = {
-                    val mobileError = state.mobileError
-                    when {
-                        mobileError != null -> Text(
-                            text = mobileError,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                        state.mobile.length == 10 -> Text(
-                            text = "✓ Valid mobile number",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                        else -> null
-                    }
-                },
-                shape = RoundedCornerShape(12.dp)
+                errorMessage = state.mobileError,
+                enabled = !state.isLoading
             )
 
             Spacer(modifier = Modifier.height(16.dp))
