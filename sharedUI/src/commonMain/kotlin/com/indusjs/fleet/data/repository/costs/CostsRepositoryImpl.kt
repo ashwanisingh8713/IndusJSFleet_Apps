@@ -14,6 +14,8 @@ import com.indusjs.fleet.data.model.costs.CreateTripCostRequest
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.data.model.costs.TripCostSummaryDto
+import com.indusjs.fleet.data.model.costs.VehicleMaintenanceCostsDataDto
+import com.indusjs.fleet.data.model.costs.VehicleTripCostsDataDto
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import dev.zacsweers.metro.Inject
 
@@ -138,6 +140,116 @@ class CostsRepositoryImpl(
                 Result.Success(response.data.costs)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch maintenance costs"))
+            }
+        } catch (e: NotAuthenticatedException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
+        }
+    }
+
+    // ==================== Vehicle Costs APIs ====================
+
+    override suspend fun getVehicleTripCosts(
+        vehicleId: String,
+        page: Int,
+        perPage: Int,
+        costType: String?,
+        startDate: String?,
+        endDate: String?,
+        sortBy: String,
+        sortOrder: String
+    ): Result<VehicleTripCostsDataDto> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getVehicleTripCosts(
+                token = token,
+                vehicleId = vehicleId,
+                page = page,
+                perPage = perPage,
+                costType = costType,
+                startDate = startDate,
+                endDate = endDate,
+                sortBy = sortBy,
+                sortOrder = sortOrder
+            )
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                // Return empty data instead of error
+                Result.Success(VehicleTripCostsDataDto())
+            }
+        } catch (e: NotAuthenticatedException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
+        }
+    }
+
+    override suspend fun getVehicleMaintenanceCosts(
+        vehicleId: String,
+        page: Int,
+        perPage: Int,
+        costType: String?,
+        startDate: String?,
+        endDate: String?,
+        sortBy: String,
+        sortOrder: String
+    ): Result<VehicleMaintenanceCostsDataDto> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getVehicleMaintenanceCosts(
+                token = token,
+                vehicleId = vehicleId,
+                page = page,
+                perPage = perPage,
+                costType = costType,
+                startDate = startDate,
+                endDate = endDate,
+                sortBy = sortBy,
+                sortOrder = sortOrder
+            )
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                // Return empty data instead of error
+                Result.Success(VehicleMaintenanceCostsDataDto())
+            }
+        } catch (e: NotAuthenticatedException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
+        }
+    }
+
+    override suspend fun deleteTripCost(costId: String): Result<Unit> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.deleteTripCost(token, costId)
+
+            if (response.success) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to delete trip cost"))
+            }
+        } catch (e: NotAuthenticatedException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
+        }
+    }
+
+    override suspend fun deleteMaintenanceCost(costId: String): Result<Unit> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.deleteMaintenanceCost(token, costId)
+
+            if (response.success) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to delete maintenance cost"))
             }
         } catch (e: NotAuthenticatedException) {
             Result.Error(e)

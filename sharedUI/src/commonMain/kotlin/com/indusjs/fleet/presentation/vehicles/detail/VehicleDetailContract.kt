@@ -3,6 +3,8 @@ package com.indusjs.fleet.presentation.vehicles.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
+import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.vehicle.DocumentsSummary
 import com.indusjs.fleet.domain.entity.vehicle.RouteInfo
@@ -100,6 +102,29 @@ object VehicleDetailContract {
         val isUploading: Boolean = false,
         val uploadError: String? = null,
 
+        // Costs Tab
+        val tripCosts: List<TripCostDto> = emptyList(),
+        val maintenanceCosts: List<MaintenanceCostDto> = emptyList(),
+        val costsTotalAmount: Double = 0.0,
+        val tripCostsTotalAmount: Double = 0.0,
+        val maintenanceCostsTotalAmount: Double = 0.0,
+        val costsByType: Map<String, Double> = emptyMap(),
+        val isLoadingCosts: Boolean = false,
+        val costsError: String? = null,
+        val costsPage: Int = 1,
+        val hasMoreCosts: Boolean = false,
+        // Costs Filters
+        val costsStartDate: String = "",
+        val costsEndDate: String = "",
+        val selectedCostTypeFilters: Set<String> = emptySet(),
+        val showCostsFilterSheet: Boolean = false,
+        val costsSortBy: String = "date",
+        val costsSortOrder: String = "desc",
+        // Delete Cost Dialog
+        val showDeleteCostDialog: Boolean = false,
+        val costToDeleteId: String? = null,
+        val costToDeleteType: String? = null,
+
         // Current selected tab
         val selectedTab: Int = 0
     ) : UiState {
@@ -191,6 +216,20 @@ object VehicleDetailContract {
         data class PreviewDocument(val documentId: String, val documentName: String, val fileUrl: String?) : Intent
         data class DownloadDocument(val documentId: String, val documentName: String, val fileUrl: String?) : Intent
         data class ReplaceDocument(val documentType: String, val documentTypeName: String) : Intent
+
+        // Costs Tab
+        data object LoadCosts : Intent
+        data object LoadMoreCosts : Intent
+        data object RefreshCosts : Intent
+        data class UpdateCostsDateRange(val startDate: String, val endDate: String) : Intent
+        data class ToggleCostTypeFilter(val costType: String) : Intent
+        data object ShowCostsFilterSheet : Intent
+        data object HideCostsFilterSheet : Intent
+        data object ClearAllCostFilters : Intent
+        data class ApplyCostFilters(val startDate: String, val endDate: String, val costTypes: Set<String>) : Intent
+        data class DeleteCost(val costId: String, val costType: String) : Intent
+        data object ConfirmDeleteCost : Intent
+        data object DismissDeleteCostDialog : Intent
     }
 
     /**
@@ -209,5 +248,6 @@ object VehicleDetailContract {
         data class DownloadDocumentFile(val documentId: String, val documentName: String, val fileUrl: String) : Effect
         data class DocumentDownloaded(val documentName: String, val fileBytes: ByteArray, val mimeType: String) : Effect
         data object DocumentDownloading : Effect
+        data class CostDeleted(val costId: String) : Effect
     }
 }

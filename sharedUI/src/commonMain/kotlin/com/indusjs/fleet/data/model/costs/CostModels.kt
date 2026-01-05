@@ -96,9 +96,9 @@ data class CostTypeDto(
 data class TripCostDto(
     val id: Int = 0,
     @SerialName("trip_id")
-    val tripId: String,
+    val tripId: Int = 0,
     @SerialName("vehicle_id")
-    val vehicleId: String,
+    val vehicleId: Int = 0,
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -221,7 +221,7 @@ data class BulkTripCostsResultDto(
 data class MaintenanceCostDto(
     val id: Int = 0,
     @SerialName("vehicle_id")
-    val vehicleId: String,
+    val vehicleId: Int = 0,
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -354,4 +354,110 @@ data class TripCostSummaryDto(
     @SerialName("cost_count")
     val costCount: Int = 0
 ) : Dto
+
+// ==================== Vehicle Costs API DTOs ====================
+
+/**
+ * Cost breakdown by type - used in vehicle costs responses.
+ */
+@Serializable
+data class CostByTypeDto(
+    @SerialName("cost_type")
+    val costType: String,
+    @SerialName("total_cost")
+    val totalCost: Double,
+    val count: Int = 0
+) : Dto
+
+/**
+ * Vehicle Trip Costs API response - for /vehicles/{id}/trip-costs API.
+ */
+@Serializable
+data class VehicleTripCostsApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: VehicleTripCostsDataDto? = null
+)
+
+@Serializable
+data class VehicleTripCostsDataDto(
+    val costs: List<TripCostDto> = emptyList(),
+    @SerialName("total_cost")
+    val totalCost: Double? = null,
+    @SerialName("filtered_total")
+    val filteredTotal: Double? = null,
+    @SerialName("cost_by_type")
+    val costByType: List<CostByTypeDto> = emptyList(),
+    val count: Int = 0,
+    val page: Int = 1,
+    @SerialName("per_page")
+    val perPage: Int = 20,
+    @SerialName("total_pages")
+    val totalPages: Int = 1,
+    @SerialName("has_more")
+    val hasMore: Boolean? = false,
+    @SerialName("next_page")
+    val nextPage: Int? = null,
+    @SerialName("applied_filters")
+    val appliedFilters: AppliedFiltersDto? = null
+) : Dto
+
+/**
+ * Vehicle Maintenance Costs API response - for /vehicles/{id}/maintenance-costs API.
+ */
+@Serializable
+data class VehicleMaintenanceCostsApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: VehicleMaintenanceCostsDataDto? = null
+)
+
+@Serializable
+data class VehicleMaintenanceCostsDataDto(
+    val costs: List<MaintenanceCostDto> = emptyList(),
+    @SerialName("total_cost")
+    val totalCost: Double? = null,
+    @SerialName("filtered_total")
+    val filteredTotal: Double? = null,
+    @SerialName("cost_by_type")
+    val costByType: List<CostByTypeDto> = emptyList(),
+    val count: Int = 0,
+    val page: Int = 1,
+    @SerialName("per_page")
+    val perPage: Int = 20,
+    @SerialName("total_pages")
+    val totalPages: Int = 1,
+    @SerialName("has_more")
+    val hasMore: Boolean? = false,
+    @SerialName("next_page")
+    val nextPage: Int? = null,
+    @SerialName("applied_filters")
+    val appliedFilters: AppliedFiltersDto? = null
+) : Dto
+
+/**
+ * Applied filters in response.
+ */
+@Serializable
+data class AppliedFiltersDto(
+    @SerialName("cost_type")
+    val costType: String? = null,
+    @SerialName("start_date")
+    val startDate: String? = null,
+    @SerialName("end_date")
+    val endDate: String? = null,
+    @SerialName("sort_by")
+    val sortBy: String? = null,
+    @SerialName("sort_order")
+    val sortOrder: String? = null
+) : Dto
+
+/**
+ * Delete Cost API response.
+ */
+@Serializable
+data class DeleteCostApiResponse(
+    val success: Boolean,
+    val message: String? = null
+)
 

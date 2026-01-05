@@ -7,6 +7,7 @@ import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.costs.*
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -31,6 +32,34 @@ interface CostsRemoteDataSource : RemoteDataSource {
     suspend fun createMaintenanceCost(token: String, request: CreateMaintenanceCostRequest): MaintenanceCostApiResponse
     suspend fun bulkCreateMaintenanceCosts(token: String, vehicleId: String, request: BulkCreateMaintenanceCostsRequest): BulkMaintenanceCostsApiResponse
     suspend fun getMaintenanceCosts(token: String, vehicleId: String): MaintenanceCostsListApiResponse
+
+    // Vehicle Costs APIs
+    suspend fun getVehicleTripCosts(
+        token: String,
+        vehicleId: String,
+        page: Int,
+        perPage: Int,
+        costType: String?,
+        startDate: String?,
+        endDate: String?,
+        sortBy: String,
+        sortOrder: String
+    ): VehicleTripCostsApiResponse
+
+    suspend fun getVehicleMaintenanceCosts(
+        token: String,
+        vehicleId: String,
+        page: Int,
+        perPage: Int,
+        costType: String?,
+        startDate: String?,
+        endDate: String?,
+        sortBy: String,
+        sortOrder: String
+    ): VehicleMaintenanceCostsApiResponse
+
+    suspend fun deleteTripCost(token: String, costId: String): DeleteCostApiResponse
+    suspend fun deleteMaintenanceCost(token: String, costId: String): DeleteCostApiResponse
 }
 
 /**
@@ -310,6 +339,146 @@ class CostsRemoteDataSourceImpl(
                 success = false,
                 message = "Failed to parse response: ${e.message}"
             )
+        }
+    }
+
+    // ==================== Vehicle Costs API Implementations ====================
+
+    override suspend fun getVehicleTripCosts(
+        token: String,
+        vehicleId: String,
+        page: Int,
+        perPage: Int,
+        costType: String?,
+        startDate: String?,
+        endDate: String?,
+        sortBy: String,
+        sortOrder: String
+    ): VehicleTripCostsApiResponse {
+        return try {
+            log.d { "Fetching trip costs for vehicle: $vehicleId, page: $page" }
+            val response: HttpResponse = httpClient.get("$baseUrl/vehicles/$vehicleId/trip-costs") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                url {
+                    parameters.append("page", page.toString())
+                    parameters.append("per_page", perPage.toString())
+                    costType?.let { parameters.append("cost_type", it) }
+                    startDate?.let { parameters.append("start_date", it) }
+                    endDate?.let { parameters.append("end_date", it) }
+                    parameters.append("sort_by", sortBy)
+                    parameters.append("sort_order", sortOrder)
+                }
+            }
+            handleVehicleTripCostsResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch vehicle trip costs: ${e.message}" }
+            VehicleTripCostsApiResponse(success = false, message = e.message ?: "Network error")
+        }
+    }
+
+    override suspend fun getVehicleMaintenanceCosts(
+        token: String,
+        vehicleId: String,
+        page: Int,
+        perPage: Int,
+        costType: String?,
+        startDate: String?,
+        endDate: String?,
+        sortBy: String,
+        sortOrder: String
+    ): VehicleMaintenanceCostsApiResponse {
+        return try {
+            log.d { "Fetching maintenance costs for vehicle: $vehicleId, page: $page" }
+            val response: HttpResponse = httpClient.get("$baseUrl/vehicles/$vehicleId/maintenance-costs") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                url {
+                    parameters.append("page", page.toString())
+                    parameters.append("per_page", perPage.toString())
+                    costType?.let { parameters.append("cost_type", it) }
+                    startDate?.let { parameters.append("start_date", it) }
+                    endDate?.let { parameters.append("end_date", it) }
+                    parameters.append("sort_by", sortBy)
+                    parameters.append("sort_order", sortOrder)
+                }
+            }
+            handleVehicleMaintenanceCostsResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch vehicle maintenance costs: ${e.message}" }
+            VehicleMaintenanceCostsApiResponse(success = false, message = e.message ?: "Network error")
+        }
+    }
+
+    override suspend fun deleteTripCost(token: String, costId: String): DeleteCostApiResponse {
+        return try {
+            log.d { "Deleting trip cost: $costId" }
+            val response: HttpResponse = httpClient.delete("$baseUrl/trip-costs/$costId") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            handleDeleteCostResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to delete trip cost: ${e.message}" }
+            DeleteCostApiResponse(success = false, message = e.message ?: "Network error")
+        }
+    }
+
+    override suspend fun deleteMaintenanceCost(token: String, costId: String): DeleteCostApiResponse {
+        return try {
+            log.d { "Deleting maintenance cost: $costId" }
+            val response: HttpResponse = httpClient.delete("$baseUrl/maintenance-costs/$costId") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            handleDeleteCostResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to delete maintenance cost: ${e.message}" }
+            DeleteCostApiResponse(success = false, message = e.message ?: "Network error")
+        }
+    }
+
+    private suspend fun handleVehicleTripCostsResponse(response: HttpResponse): VehicleTripCostsApiResponse {
+        val responseBody = response.bodyAsText()
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<VehicleTripCostsApiResponse>(responseBody)
+            } else {
+                VehicleTripCostsApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            VehicleTripCostsApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+        }
+    }
+
+    private suspend fun handleVehicleMaintenanceCostsResponse(response: HttpResponse): VehicleMaintenanceCostsApiResponse {
+        val responseBody = response.bodyAsText()
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<VehicleMaintenanceCostsApiResponse>(responseBody)
+            } else {
+                VehicleMaintenanceCostsApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            VehicleMaintenanceCostsApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+        }
+    }
+
+    private suspend fun handleDeleteCostResponse(response: HttpResponse): DeleteCostApiResponse {
+        val responseBody = response.bodyAsText()
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<DeleteCostApiResponse>(responseBody)
+            } else {
+                DeleteCostApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            DeleteCostApiResponse(success = false, message = "Failed to parse response: ${e.message}")
         }
     }
 }

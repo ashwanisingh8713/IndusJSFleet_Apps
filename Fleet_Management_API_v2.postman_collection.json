@@ -1025,8 +1025,9 @@
 					"request": {
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/trip-costs?start_date=01-01-2025&end_date=31-12-2025", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "trip-costs"], "query": [{"key": "start_date", "value": "01-01-2025"}, {"key": "end_date", "value": "31-12-2025"}]}
-					}
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/trip-costs?page=1&per_page=20&cost_type=&start_date=&end_date=&sort_by=date&sort_order=desc", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "trip-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "cost_type", "value": "", "description": "Filter by cost type - single (fuel) or comma-separated (fuel,toll,parking). Invalid types are silently ignored."}, {"key": "start_date", "value": "", "description": "Filter by start date (DD-MM-YYYY)"}, {"key": "end_date", "value": "", "description": "Filter by end date (DD-MM-YYYY)"}, {"key": "sort_by", "value": "date", "description": "Sort by: date, amount, cost_type, created_at"}, {"key": "sort_order", "value": "desc", "description": "Sort order: asc, desc"}]}
+					},
+					"description": "Get all trip costs for a vehicle with pagination, filtering, and sorting.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `per_page`: Items per page (default: 10, max: 100)\n- `cost_type`: Filter by cost type - supports single value or comma-separated list (e.g., `fuel,toll,parking`)\n- `start_date`: Filter by start date (DD-MM-YYYY)\n- `end_date`: Filter by end date (DD-MM-YYYY)\n- `sort_by`: Sort field (date, amount, cost_type, created_at)\n- `sort_order`: Sort direction (asc, desc)\n\n**Multi Cost Type Filter Examples:**\n- Single type: `cost_type=fuel`\n- Multiple types: `cost_type=fuel,toll,parking`\n- With date range: `cost_type=fuel,toll&start_date=01-01-2025&end_date=31-12-2025`\n\n**Valid Cost Types:** fuel, toll, driver_allowance, parking, loading_charges, unloading_charges, insurance, permit, registration_renewal, fitness_check, emission_test, state_permit, national_permit, chalan, other\n\n**Response includes:**\n- `costs`: Array of trip cost records\n- `total_cost`: Overall total for this vehicle\n- `filtered_total`: Total for filtered results\n- `cost_by_type`: Breakdown by cost type (filtered if cost_types applied)\n- `count`, `page`, `per_page`, `total_pages`\n- `has_more`: Boolean for infinite scroll\n- `next_page`: Next page number (null if no more)\n- `applied_filters`: Currently applied filters with `cost_types` as array"
 				}
 			]
 		},
@@ -1059,8 +1060,9 @@
 					"request": {
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-						"url": {"raw": "{{base_url}}/maintenance-costs?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["maintenance-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
-					}
+						"url": {"raw": "{{base_url}}/maintenance-costs?page=1&per_page=20&vehicle_id=&cost_type=&start_date=&end_date=", "host": ["{{base_url}}"], "path": ["maintenance-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "vehicle_id", "value": "", "description": "Filter by vehicle ID"}, {"key": "cost_type", "value": "", "description": "Filter by cost type - single (tyre) or comma-separated (tyre,battery,oil_change)"}, {"key": "start_date", "value": "", "description": "Filter by start date (DD-MM-YYYY)"}, {"key": "end_date", "value": "", "description": "Filter by end date (DD-MM-YYYY)"}]}
+					},
+					"description": "Get all maintenance costs for the organization.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `per_page`: Items per page (default: 10, max: 100)\n- `vehicle_id`: Filter by specific vehicle\n- `cost_type`: Filter by cost type - single value or comma-separated (e.g., `tyre,battery,oil_change`)\n- `start_date`: Filter by start date (DD-MM-YYYY)\n- `end_date`: Filter by end date (DD-MM-YYYY)\n\n**Valid Cost Types:** tyre, battery, oil_change, brake_service, engine_repair, ac_service, body_work, cleaning, hydraulic_repair, other"
 				},
 				{
 					"name": "Get Maintenance Cost",
@@ -1095,8 +1097,9 @@
 					"request": {
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs?start_date=01-01-2025&end_date=31-12-2025", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs"], "query": [{"key": "start_date", "value": "01-01-2025"}, {"key": "end_date", "value": "31-12-2025"}]}
-					}
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs?page=1&per_page=20&cost_type=&start_date=&end_date=&sort_by=date&sort_order=desc", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "cost_type", "value": "", "description": "Filter by cost type - single (tyre) or comma-separated (tyre,battery,oil_change). Invalid types are silently ignored."}, {"key": "start_date", "value": "", "description": "Filter by start date (DD-MM-YYYY)"}, {"key": "end_date", "value": "", "description": "Filter by end date (DD-MM-YYYY)"}, {"key": "sort_by", "value": "date", "description": "Sort by: date, amount, cost_type, created_at"}, {"key": "sort_order", "value": "desc", "description": "Sort order: asc, desc"}]}
+					},
+					"description": "Get all maintenance costs for a vehicle with pagination, filtering, and sorting.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `per_page`: Items per page (default: 10, max: 100)\n- `cost_type`: Filter by cost type - supports single value or comma-separated list (e.g., `tyre,battery,oil_change`)\n- `start_date`: Filter by start date (DD-MM-YYYY)\n- `end_date`: Filter by end date (DD-MM-YYYY)\n- `sort_by`: Sort field (date, amount, cost_type, created_at)\n- `sort_order`: Sort direction (asc, desc)\n\n**Multi Cost Type Filter Examples:**\n- Single type: `cost_type=tyre`\n- Multiple types: `cost_type=tyre,battery,oil_change`\n- With date range: `cost_type=tyre,battery&start_date=01-01-2025&end_date=31-12-2025`\n\n**Valid Cost Types:** tyre, battery, oil_change, brake_service, engine_repair, ac_service, body_work, cleaning, hydraulic_repair, other\n\n**Response includes:**\n- `costs`: Array of maintenance cost records\n- `total_cost`: Overall total for this vehicle\n- `filtered_total`: Total for filtered results\n- `cost_by_type`: Breakdown by cost type (filtered if cost_types applied)\n- `count`, `page`, `per_page`, `total_pages`\n- `has_more`: Boolean for infinite scroll\n- `next_page`: Next page number (null if no more)\n- `applied_filters`: Currently applied filters with `cost_types` as array"
 				},
 				{
 					"name": "Get Maintenance History",

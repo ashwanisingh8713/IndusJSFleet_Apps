@@ -239,7 +239,8 @@ class DefaultViewModelProvider : ViewModelProvider {
         updateVehicleUseCase,
         deleteVehicleUseCase,
         vehicleRepository,
-        getDriversUseCase
+        getDriversUseCase,
+        costsRepository
     )
 
     override fun driversViewModel() = DriversViewModel(

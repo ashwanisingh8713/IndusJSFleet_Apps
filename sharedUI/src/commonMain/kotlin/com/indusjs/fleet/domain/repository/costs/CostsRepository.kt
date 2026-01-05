@@ -8,6 +8,8 @@ import com.indusjs.fleet.data.model.costs.CreateTripCostRequest
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.data.model.costs.TripCostSummaryDto
+import com.indusjs.fleet.data.model.costs.VehicleMaintenanceCostsDataDto
+import com.indusjs.fleet.data.model.costs.VehicleTripCostsDataDto
 import com.indusjs.fleet.domain.repository.Repository
 
 /**
@@ -49,4 +51,44 @@ interface CostsRepository : Repository {
      * Get maintenance costs for a specific vehicle.
      */
     suspend fun getMaintenanceCosts(vehicleId: String): Result<List<MaintenanceCostDto>>
+
+    // ==================== Vehicle Costs APIs ====================
+
+    /**
+     * Get trip costs for a specific vehicle with pagination and filtering.
+     */
+    suspend fun getVehicleTripCosts(
+        vehicleId: String,
+        page: Int = 1,
+        perPage: Int = 20,
+        costType: String? = null,
+        startDate: String? = null,
+        endDate: String? = null,
+        sortBy: String = "date",
+        sortOrder: String = "desc"
+    ): Result<VehicleTripCostsDataDto>
+
+    /**
+     * Get maintenance costs for a specific vehicle with pagination and filtering.
+     */
+    suspend fun getVehicleMaintenanceCosts(
+        vehicleId: String,
+        page: Int = 1,
+        perPage: Int = 20,
+        costType: String? = null,
+        startDate: String? = null,
+        endDate: String? = null,
+        sortBy: String = "date",
+        sortOrder: String = "desc"
+    ): Result<VehicleMaintenanceCostsDataDto>
+
+    /**
+     * Delete a trip cost by ID.
+     */
+    suspend fun deleteTripCost(costId: String): Result<Unit>
+
+    /**
+     * Delete a maintenance cost by ID.
+     */
+    suspend fun deleteMaintenanceCost(costId: String): Result<Unit>
 }
