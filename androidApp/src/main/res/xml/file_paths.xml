@@ -5,6 +5,16 @@
         name="downloads"
         path="Download/" />
 
+    <!-- External public Documents directory (sdcard) -->
+    <external-path
+        name="documents"
+        path="Documents/" />
+
+    <!-- IndusJS Fleet exported PDFs in Documents -->
+    <external-path
+        name="indusjs_pdfs"
+        path="Documents/IndusJSFleet/exportedPdf/" />
+
     <!-- App's cache directory -->
     <cache-path
         name="cache"
@@ -14,5 +24,15 @@
     <external-files-path
         name="external_files"
         path="." />
+
+    <!-- IndusJS Fleet exported PDFs directory (app-specific) -->
+    <external-files-path
+        name="exported_pdfs"
+        path="IndusJSFleet/exportedPdf/" />
+
+    <!-- App's internal files directory (fallback) -->
+    <files-path
+        name="internal_files"
+        path="IndusJSFleet/exportedPdf/" />
 </paths>
 

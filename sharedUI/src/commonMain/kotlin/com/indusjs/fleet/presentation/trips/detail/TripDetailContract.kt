@@ -192,6 +192,9 @@ object TripDetailContract {
         data object CancelTrip : Intent
         data object ConfirmCancel : Intent
 
+        // PDF Export
+        data object ExportCostsToPdf : Intent
+
         // Navigation
         data object NavigateBack : Intent
 
@@ -210,5 +213,26 @@ object TripDetailContract {
         data object ShowCancelConfirmation : Effect
         data class TripCancelled(val tripId: String) : Effect
         data object TripUpdated : Effect
+        data class ExportPdf(val pdfData: TripCostsPdfData) : Effect
     }
+
+    /**
+     * Data class for PDF export containing all trip cost information.
+     */
+    data class TripCostsPdfData(
+        val tripId: String,
+        val tripNumber: String?,
+        val vehicleNumber: String?,
+        val driverName: String?,
+        val startLocation: String?,
+        val endLocation: String?,
+        val scheduledDate: String?,
+        val tripStatus: String?,
+        val tripStatusLabel: String?,
+        val costs: List<TripCostDto>,
+        val totalCost: Double,
+        val costsByType: Map<String, Double>,
+        val exportDate: String,
+        val exportTime: String
+    )
 }

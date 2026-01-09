@@ -15,6 +15,7 @@ import com.indusjs.fleet.presentation.drivers.create.CreateDriverScreen
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailScreen
 import com.indusjs.fleet.presentation.maps.MapsScreen
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberScreen
+import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailScreen
 import com.indusjs.fleet.presentation.team.list.TeamListScreen
 import com.indusjs.fleet.presentation.trips.TripsScreen
 import com.indusjs.fleet.presentation.trips.create.CreateTripScreen
@@ -270,7 +271,7 @@ fun fleetEntryProvider(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onNavigateToCreateMember = { backStack.add(FleetRoute.CreateTeamMember) },
-                onNavigateToMemberDetail = { /* TODO: Add TeamMemberDetail route */ }
+                onNavigateToMemberDetail = { memberId -> backStack.add(FleetRoute.TeamMemberDetail(memberId)) }
             )
         }
 
@@ -278,6 +279,15 @@ fun fleetEntryProvider(
             val viewModel = rememberViewModel { createTeamMemberViewModel() }
             CreateTeamMemberScreen(
                 viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.TeamMemberDetail -> NavEntry(route) {
+            val viewModel = rememberViewModel { teamMemberDetailViewModel() }
+            TeamMemberDetailScreen(
+                viewModel = viewModel,
+                memberId = route.memberId,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
         }

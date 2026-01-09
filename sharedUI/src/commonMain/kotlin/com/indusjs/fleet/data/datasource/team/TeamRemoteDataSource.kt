@@ -3,6 +3,7 @@ package com.indusjs.fleet.data.datasource.team
 import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.model.team.CreateTeamMemberRequest
+import com.indusjs.fleet.data.model.team.ResetPasswordRequest
 import com.indusjs.fleet.data.model.team.TeamMemberApiResponse
 import com.indusjs.fleet.data.model.team.TeamMemberListApiResponse
 import com.indusjs.fleet.data.model.team.TeamSimpleApiResponse
@@ -12,6 +13,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -34,6 +36,8 @@ interface TeamRemoteDataSource {
     suspend fun getTeamMembers(token: String, role: String? = null): TeamMemberListApiResponse
     suspend fun getTeamMember(token: String, id: String): TeamMemberApiResponse
     suspend fun updateTeamMember(token: String, id: String, request: UpdateTeamMemberRequest): TeamMemberApiResponse
+    suspend fun toggleTeamMemberActive(token: String, id: String): TeamMemberApiResponse
+    suspend fun resetTeamMemberPassword(token: String, id: String, request: ResetPasswordRequest): TeamSimpleApiResponse
     suspend fun deleteTeamMember(token: String, id: String): TeamSimpleApiResponse
 }
 
@@ -116,6 +120,34 @@ class TeamRemoteDataSourceImpl(
         } catch (e: Exception) {
             log.e(e) { "Update team member failed: ${e.message}" }
             TeamMemberApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun toggleTeamMemberActive(token: String, id: String): TeamMemberApiResponse {
+        return try {
+            log.d { "Toggling team member active status: $id" }
+            val response: HttpResponse = httpClient.patch("$baseUrl$TEAM_MEMBERS_ENDPOINT/$id/toggle-active") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            handleTeamMemberResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Toggle team member active failed: ${e.message}" }
+            TeamMemberApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun resetTeamMemberPassword(token: String, id: String, request: ResetPasswordRequest): TeamSimpleApiResponse {
+        return try {
+            log.d { "Resetting team member password: $id" }
+            val response: HttpResponse = httpClient.post("$baseUrl$TEAM_MEMBERS_ENDPOINT/$id/reset-password") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            handleSimpleResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Reset team member password failed: ${e.message}" }
+            TeamSimpleApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }
 

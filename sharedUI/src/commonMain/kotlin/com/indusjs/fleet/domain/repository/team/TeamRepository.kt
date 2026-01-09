@@ -38,6 +38,9 @@ interface TeamRepository : Repository {
 
     /**
      * Update a team member.
+     *
+     * **Owner can update:** first_name, last_name, email, mobile, role, is_active
+     * **Manager can update:** first_name, last_name, email, mobile, is_active (Supervisors only)
      */
     suspend fun updateTeamMember(
         id: String,
@@ -45,8 +48,21 @@ interface TeamRepository : Repository {
         lastName: String? = null,
         email: String? = null,
         mobile: String? = null,
+        role: TeamMemberRole? = null,  // Owner only
         isActive: Boolean? = null
     ): Result<TeamMember>
+
+    /**
+     * Toggle team member active status (enable/disable).
+     * Owner and Manager can access (Manager for Supervisors only).
+     */
+    suspend fun toggleTeamMemberActive(id: String): Result<TeamMember>
+
+    /**
+     * Reset a team member's password.
+     * Owner and Manager can access (Manager for Supervisors only).
+     */
+    suspend fun resetTeamMemberPassword(id: String, newPassword: String): Result<Unit>
 
     /**
      * Delete a team member.

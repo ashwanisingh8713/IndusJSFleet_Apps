@@ -35,10 +35,29 @@ class DashboardViewModel(
     private val getAlertsStatusUseCase: GetAlertsStatusUseCase? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
+    companion object {
+        // Cache pending payments data to survive ViewModel recreation
+        private var cachedPendingPayments: List<PendingPayment>? = null
+        private var cachedTotalPendingAmount: Double = 0.0
+        private var cachedPendingPaymentsCount: Int = 0
+        private var pendingPaymentsLoaded: Boolean = false
+    }
+
     // Track if we've received fresh data from network
     private var hasReceivedFreshData = false
 
     init {
+        // Restore cached pending payments data if available (survives ViewModel recreation)
+        if (pendingPaymentsLoaded && cachedPendingPayments != null) {
+            updateState {
+                copy(
+                    pendingPayments = cachedPendingPayments ?: emptyList(),
+                    totalPendingAmount = cachedTotalPendingAmount,
+                    pendingPaymentsCount = cachedPendingPaymentsCount,
+                    hasPendingPaymentsLoaded = true
+                )
+            }
+        }
         sendIntent(Intent.LoadDashboard)
     }
 
@@ -204,23 +223,37 @@ class DashboardViewModel(
     }
 
     /**
-     * Load pending payments.
+     * Load pending payments - only once when app launches.
+     * Does not show loading UI to avoid flickering.
+     * Uses companion object cache to survive ViewModel recreation.
      */
     private suspend fun loadPendingPayments() {
         val useCase = getPendingPaymentsUseCase ?: return
 
-        updateState { copy(isLoadingPendingPayments = true, pendingPaymentsError = null) }
+        // Skip if already loaded - check companion object flag
+        if (pendingPaymentsLoaded) {
+            return
+        }
+        pendingPaymentsLoaded = true  // Set immediately to prevent race conditions
+
+        // Don't show loading state to avoid flickering
 
         withContext(dispatcherProvider.io) {
             when (val result = useCase()) {
                 is Result.Success -> {
+                    // Cache in companion object for ViewModel recreation
+                    cachedPendingPayments = result.data.payments
+                    cachedTotalPendingAmount = result.data.totalPending
+                    cachedPendingPaymentsCount = result.data.totalCount
+
                     updateState {
                         copy(
                             isLoadingPendingPayments = false,
                             pendingPayments = result.data.payments,
                             totalPendingAmount = result.data.totalPending,
                             pendingPaymentsCount = result.data.totalCount,
-                            pendingPaymentsError = null
+                            pendingPaymentsError = null,
+                            hasPendingPaymentsLoaded = true
                         )
                     }
                 }
@@ -228,7 +261,8 @@ class DashboardViewModel(
                     updateState {
                         copy(
                             isLoadingPendingPayments = false,
-                            pendingPaymentsError = result.message ?: "Failed to load pending payments"
+                            pendingPaymentsError = result.message ?: "Failed to load pending payments",
+                            hasPendingPaymentsLoaded = true
                         )
                     }
                 }

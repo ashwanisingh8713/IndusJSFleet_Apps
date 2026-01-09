@@ -7,6 +7,7 @@ import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.repository.team.TeamRepositoryImpl
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
+import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailViewModel
 import com.indusjs.fleet.presentation.team.list.TeamListViewModel
 import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.DependencyGraph
@@ -45,6 +46,7 @@ abstract class TeamFeatureGraph {
     abstract val teamRepository: TeamRepository
     abstract val teamListViewModel: TeamListViewModel
     abstract val createTeamMemberViewModel: CreateTeamMemberViewModel
+    abstract val teamMemberDetailViewModel: TeamMemberDetailViewModel
     abstract val dispatcherProvider: DispatcherProvider
 
     @DependencyGraph.Factory

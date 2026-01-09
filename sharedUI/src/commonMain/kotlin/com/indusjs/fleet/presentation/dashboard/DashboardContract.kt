@@ -46,6 +46,7 @@ object DashboardContract {
         val pendingPaymentsCount: Int = 0,
         val isLoadingPendingPayments: Boolean = false,
         val pendingPaymentsError: String? = null,
+        val hasPendingPaymentsLoaded: Boolean = false,  // Track if loaded once
 
         // Vehicle Status Summary
         val vehicleStatus: VehicleStatusSummary = VehicleStatusSummary(),
@@ -120,7 +121,7 @@ object DashboardContract {
         data object NavigateToAddVehicleCost : Effect
         data object NavigateToNotifications : Effect
 
-        // Navigation to Add entities (from empty states)
+        // Navigation to Add enti   ties (from empty states)
         data object NavigateToAddVehicle : Effect
         data object NavigateToAddDriver : Effect
         data object NavigateToCreateTrip : Effect

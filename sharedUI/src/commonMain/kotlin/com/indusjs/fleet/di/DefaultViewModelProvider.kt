@@ -66,6 +66,7 @@ import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailViewModel
 import com.indusjs.fleet.presentation.maps.MapsViewModel
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
+import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailViewModel
 import com.indusjs.fleet.presentation.team.list.TeamListViewModel
 import com.indusjs.fleet.presentation.trips.TripsViewModel
 import com.indusjs.fleet.presentation.trips.create.CreateTripViewModel
@@ -305,6 +306,8 @@ class DefaultViewModelProvider : ViewModelProvider {
     override fun teamListViewModel() = TeamListViewModel(dispatcherProvider, teamRepository)
 
     override fun createTeamMemberViewModel() = CreateTeamMemberViewModel(dispatcherProvider, teamRepository)
+
+    override fun teamMemberDetailViewModel() = TeamMemberDetailViewModel(dispatcherProvider, teamRepository)
 
     override fun tripCostEntryViewModel() = TripCostEntryViewModel(
         dispatcherProvider,

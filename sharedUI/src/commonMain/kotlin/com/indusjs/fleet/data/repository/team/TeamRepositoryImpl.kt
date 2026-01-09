@@ -6,6 +6,7 @@ import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.team.TeamMapper.toDomain
 import com.indusjs.fleet.data.model.team.CreateTeamMemberRequest
+import com.indusjs.fleet.data.model.team.ResetPasswordRequest
 import com.indusjs.fleet.data.model.team.UpdateTeamMemberRequest
 import com.indusjs.fleet.domain.entity.team.TeamMember
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
@@ -87,6 +88,7 @@ class TeamRepositoryImpl(
         lastName: String?,
         email: String?,
         mobile: String?,
+        role: TeamMemberRole?,
         isActive: Boolean?
     ): Result<TeamMember> = runCatching {
         val token = requireAuthToken()
@@ -99,12 +101,34 @@ class TeamRepositoryImpl(
                 lastName = lastName,
                 email = email,
                 mobile = mobile,
+                role = role?.toApiString(),
                 isActive = isActive
             )
         )
 
         response.data?.toDomain()
             ?: throw ApiException(response.message ?: "Failed to update team member")
+    }
+
+    override suspend fun toggleTeamMemberActive(id: String): Result<TeamMember> = runCatching {
+        val token = requireAuthToken()
+        val response = remoteDataSource.toggleTeamMemberActive(token = token, id = id)
+
+        response.data?.toDomain()
+            ?: throw ApiException(response.message ?: "Failed to toggle team member status")
+    }
+
+    override suspend fun resetTeamMemberPassword(id: String, newPassword: String): Result<Unit> = runCatching {
+        val token = requireAuthToken()
+        val response = remoteDataSource.resetTeamMemberPassword(
+            token = token,
+            id = id,
+            request = ResetPasswordRequest(newPassword = newPassword)
+        )
+
+        if (!response.success) {
+            throw ApiException(response.message ?: "Failed to reset password")
+        }
     }
 
     override suspend fun deleteTeamMember(id: String): Result<Unit> = runCatching {

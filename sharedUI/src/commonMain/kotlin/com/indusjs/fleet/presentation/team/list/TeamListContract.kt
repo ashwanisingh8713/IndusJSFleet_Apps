@@ -30,10 +30,43 @@ object TeamListContract {
         val isLoading: Boolean = false,
         val isRefreshing: Boolean = false,
         val error: String? = null,
-        val searchQuery: String = ""
+        val searchQuery: String = "",
+        // Current user info for role-based access control
+        val currentUserRole: String = "owner",
+        val currentUserId: String = "",
+        // Action states
+        val isTogglingActive: String? = null,  // Member ID being toggled
+        val isResettingPassword: String? = null,  // Member ID being reset
+        val showResetPasswordDialogForMemberId: String? = null
     ) : UiState {
         val managersCount: Int get() = teamMembers.count { it.role == TeamMemberRole.MANAGER }
         val supervisorsCount: Int get() = teamMembers.count { it.role == TeamMemberRole.SUPERVISOR }
+
+        // Role-based access helpers
+        val isOwner: Boolean get() = currentUserRole.lowercase() == "owner"
+        val isManager: Boolean get() = currentUserRole.lowercase() == "manager"
+        val isSupervisor: Boolean get() = currentUserRole.lowercase() == "supervisor"
+
+        // Check if current user can edit a member
+        fun canEdit(member: TeamMember): Boolean {
+            return isOwner || (isManager && member.role == TeamMemberRole.SUPERVISOR)
+        }
+
+        // Check if current user can toggle active status
+        fun canToggleActive(member: TeamMember): Boolean {
+            if (member.id == currentUserId) return false  // Cannot toggle self
+            return isOwner || (isManager && member.role == TeamMemberRole.SUPERVISOR)
+        }
+
+        // Check if current user can reset password
+        fun canResetPassword(member: TeamMember): Boolean {
+            return isOwner || (isManager && member.role == TeamMemberRole.SUPERVISOR)
+        }
+
+        // Check if current user can delete a member
+        fun canDelete(member: TeamMember): Boolean {
+            return isOwner  // Only owner can delete
+        }
     }
 
     /**
@@ -45,6 +78,10 @@ object TeamListContract {
         data class SelectFilter(val filter: FilterType) : Intent
         data class UpdateSearchQuery(val query: String) : Intent
         data class DeleteTeamMember(val id: String) : Intent
+        data class ToggleTeamMemberActive(val id: String) : Intent
+        data class ShowResetPasswordDialog(val memberId: String) : Intent
+        data object DismissResetPasswordDialog : Intent
+        data class ResetTeamMemberPassword(val id: String, val newPassword: String) : Intent
         data object NavigateToCreateMember : Intent
         data class NavigateToMemberDetail(val id: String) : Intent
         data object ClearError : Intent
@@ -59,4 +96,3 @@ object TeamListContract {
         data class NavigateToMemberDetail(val id: String) : Effect
     }
 }
-

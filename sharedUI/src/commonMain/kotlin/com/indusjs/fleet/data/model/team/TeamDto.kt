@@ -24,6 +24,10 @@ data class CreateTeamMemberRequest(
 
 /**
  * Request to update a team member.
+ *
+ * **Owner can update:** first_name, last_name, email, mobile, role, is_active, password
+ * **Manager can update:** first_name, last_name, email, mobile, is_active, password (Supervisors only)
+ * **Manager cannot:** change roles, edit other Managers
  */
 @Serializable
 data class UpdateTeamMemberRequest(
@@ -33,8 +37,20 @@ data class UpdateTeamMemberRequest(
     val lastName: String? = null,
     val email: String? = null,
     val mobile: String? = null,
+    val role: String? = null,  // Owner only - "manager" or "supervisor"
     @SerialName("is_active")
-    val isActive: Boolean? = null
+    val isActive: Boolean? = null,
+    val password: String? = null  // Owner and Manager (for Supervisors only)
+)
+
+/**
+ * Request to reset a team member's password.
+ * Owner and Manager can access (Manager for Supervisors only).
+ */
+@Serializable
+data class ResetPasswordRequest(
+    @SerialName("new_password")
+    val newPassword: String
 )
 
 /**

@@ -384,6 +384,7 @@ fun DashboardScreen(
                                 pendingPayments = state.pendingPayments,
                                 totalPendingAmount = state.totalPendingAmount,
                                 isLoadingPendingPayments = state.isLoadingPendingPayments,
+                                hasPendingPaymentsLoaded = state.hasPendingPaymentsLoaded,
                                 vehicleStatus = state.vehicleStatus,
                                 driverStatus = state.driverStatus,
                                 tripSummary = state.tripSummary,
@@ -628,6 +629,7 @@ private fun DashboardContent(
     pendingPayments: List<PendingPayment>,
     totalPendingAmount: Double,
     isLoadingPendingPayments: Boolean,
+    hasPendingPaymentsLoaded: Boolean,
     vehicleStatus: VehicleStatusSummary,
     driverStatus: DriverStatusSummary,
     tripSummary: TripSummary,
@@ -702,13 +704,14 @@ private fun DashboardContent(
             }
         }
 
-        // 3. Pending Payments Section - Only show if there are pending payments
-        if (tripSummary.total > 0 && (pendingPayments.isNotEmpty() || totalPendingAmount > 0 || isLoadingPendingPayments)) {
+        // 3. Pending Payments Section - Only show if loaded and has pending payments
+        // Don't show during loading to avoid flickering when navigating back
+        if (hasPendingPaymentsLoaded && tripSummary.total > 0 && (pendingPayments.isNotEmpty() || totalPendingAmount > 0)) {
             item {
                 PendingPaymentsSection(
                     payments = pendingPayments,
                     totalPending = totalPendingAmount,
-                    isLoading = isLoadingPendingPayments
+                    isLoading = false  // Never show loading state
                 )
             }
         }

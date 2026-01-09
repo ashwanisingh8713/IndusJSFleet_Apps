@@ -32,6 +32,10 @@ class TeamListViewModel(
             is TeamListContract.Intent.SelectFilter -> selectFilter(intent.filter)
             is TeamListContract.Intent.UpdateSearchQuery -> updateSearchQuery(intent.query)
             is TeamListContract.Intent.DeleteTeamMember -> deleteTeamMember(intent.id)
+            is TeamListContract.Intent.ToggleTeamMemberActive -> toggleTeamMemberActive(intent.id)
+            is TeamListContract.Intent.ShowResetPasswordDialog -> showResetPasswordDialog(intent.memberId)
+            is TeamListContract.Intent.DismissResetPasswordDialog -> dismissResetPasswordDialog()
+            is TeamListContract.Intent.ResetTeamMemberPassword -> resetTeamMemberPassword(intent.id, intent.newPassword)
             is TeamListContract.Intent.NavigateToCreateMember -> sendEffect(TeamListContract.Effect.NavigateToCreateMember)
             is TeamListContract.Intent.NavigateToMemberDetail -> sendEffect(TeamListContract.Effect.NavigateToMemberDetail(intent.id))
             is TeamListContract.Intent.ClearError -> updateState { copy(error = null) }
@@ -165,6 +169,72 @@ class TeamListViewModel(
                         error = e.message ?: "Failed to delete team member"
                     )
                 }
+            }
+        }
+    }
+
+    private suspend fun toggleTeamMemberActive(id: String) {
+        updateState { copy(isTogglingActive = id) }
+
+        withContext(dispatcherProvider.io) {
+            try {
+                val result = teamRepository.toggleTeamMemberActive(id)
+
+                result.fold(
+                    onSuccess = { updatedMember ->
+                        val updatedMembers = currentState.teamMembers.map {
+                            if (it.id == id) updatedMember else it
+                        }
+                        updateState {
+                            copy(
+                                isTogglingActive = null,
+                                teamMembers = updatedMembers,
+                                filteredMembers = applyFilters(updatedMembers, selectedFilter, searchQuery)
+                            )
+                        }
+                        val statusText = if (updatedMember.isActive) "enabled" else "disabled"
+                        sendEffect(TeamListContract.Effect.ShowSnackbar("${updatedMember.fullName} has been $statusText"))
+                    },
+                    onFailure = { error ->
+                        updateState { copy(isTogglingActive = null) }
+                        sendEffect(TeamListContract.Effect.ShowSnackbar(error.message ?: "Failed to toggle status"))
+                    }
+                )
+            } catch (e: Exception) {
+                updateState { copy(isTogglingActive = null) }
+                sendEffect(TeamListContract.Effect.ShowSnackbar(e.message ?: "Failed to toggle status"))
+            }
+        }
+    }
+
+    private fun showResetPasswordDialog(memberId: String) {
+        updateState { copy(showResetPasswordDialogForMemberId = memberId) }
+    }
+
+    private fun dismissResetPasswordDialog() {
+        updateState { copy(showResetPasswordDialogForMemberId = null) }
+    }
+
+    private suspend fun resetTeamMemberPassword(id: String, newPassword: String) {
+        updateState { copy(isResettingPassword = id, showResetPasswordDialogForMemberId = null) }
+
+        withContext(dispatcherProvider.io) {
+            try {
+                val result = teamRepository.resetTeamMemberPassword(id, newPassword)
+
+                result.fold(
+                    onSuccess = {
+                        updateState { copy(isResettingPassword = null) }
+                        sendEffect(TeamListContract.Effect.ShowSnackbar("Password reset successfully"))
+                    },
+                    onFailure = { error ->
+                        updateState { copy(isResettingPassword = null) }
+                        sendEffect(TeamListContract.Effect.ShowSnackbar(error.message ?: "Failed to reset password"))
+                    }
+                )
+            } catch (e: Exception) {
+                updateState { copy(isResettingPassword = null) }
+                sendEffect(TeamListContract.Effect.ShowSnackbar(e.message ?: "Failed to reset password"))
             }
         }
     }

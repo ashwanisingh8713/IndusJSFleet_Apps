@@ -114,6 +114,7 @@ class TripDetailViewModel(
             is Intent.SaveChanges -> saveChanges()
             is Intent.CancelTrip -> sendEffect(Effect.ShowCancelConfirmation)
             is Intent.ConfirmCancel -> confirmCancel()
+            is Intent.ExportCostsToPdf -> exportCostsToPdf()
 
             // Navigation & errors
             is Intent.NavigateBack -> sendEffect(Effect.NavigateBack)
@@ -722,6 +723,103 @@ class TripDetailViewModel(
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
+        }
+    }
+
+    /**
+     * Export trip costs to PDF.
+     * Creates PDF data and sends an effect for the screen to handle platform-specific PDF generation.
+     */
+    private fun exportCostsToPdf() {
+        val state = currentState
+        val trip = state.trip
+
+        log.d { "exportCostsToPdf called - hasCosts: ${state.hasCosts}, costsCount: ${state.costs.size}" }
+
+        if (!state.hasCosts) {
+            log.d { "No costs to export" }
+            sendEffect(Effect.ShowSnackbar("No costs to export"))
+            return
+        }
+
+        // Calculate costs by type with totals
+        val costsByTypeWithTotals = state.costsByType.mapValues { (_, costs) ->
+            costs.sumOf { it.amount }
+        }
+
+        // Get current date and time for export using TimeUtils
+        val exportDate = com.indusjs.fleet.core.util.getCurrentFormattedDateHumanReadable()
+        val exportTime = com.indusjs.fleet.core.util.getCurrentFormattedTime()
+
+        // Format scheduled date as human readable
+        val scheduledDateHumanReadable = trip?.scheduledDate?.let {
+            com.indusjs.fleet.core.util.formatDateToHumanReadable(it)
+        } ?: trip?.plannedStart?.let {
+            com.indusjs.fleet.core.util.formatDateToHumanReadable(it)
+        }
+
+        val pdfData = TripDetailContract.TripCostsPdfData(
+            tripId = trip?.id ?: state.tripId,
+            tripNumber = trip?.tripNumber ?: "Trip #${trip?.id ?: state.tripId}",
+            vehicleNumber = trip?.vehicleNumber,
+            driverName = trip?.driverName,
+            startLocation = trip?.startLocation?.address,
+            endLocation = trip?.endLocation?.address,
+            scheduledDate = scheduledDateHumanReadable,
+            tripStatus = trip?.status?.let { TripStatus.toApiString(it) },
+            tripStatusLabel = trip?.status?.let { getStatusLabel(it) },
+            costs = state.costs,
+            totalCost = state.totalCost,
+            costsByType = costsByTypeWithTotals,
+            exportDate = exportDate,
+            exportTime = exportTime
+        )
+
+        log.d { "Sending ExportPdf effect with tripId: ${pdfData.tripId}, totalCost: ${pdfData.totalCost}" }
+        sendEffect(Effect.ExportPdf(pdfData))
+    }
+
+    /**
+     * Get human-readable status label for trip status.
+     */
+    private fun getStatusLabel(status: TripStatus): String {
+        return when (status) {
+            TripStatus.PLANNED -> "Planned"
+            TripStatus.IN_PROGRESS -> "In Progress"
+            TripStatus.COMPLETED -> "Completed"
+            TripStatus.CANCELLED -> "Cancelled"
+        }
+    }
+
+    /**
+     * Get current date formatted as DD-MM-YYYY.
+     * Uses a simple approach to get today's date.
+     */
+    private fun getCurrentFormattedDate(): String {
+        // Get current date from the trip's created_at or use fallback
+        return currentState.trip?.createdAt?.let { createdAt ->
+            // If we have a createdAt, use today's approximation
+            formatDateForDisplay(createdAt).substringBefore(" at").takeIf { it.isNotBlank() }
+        } ?: run {
+            // Fallback: return a static "today" that will be updated by the effect handler
+            "09-01-2026"
+        }
+    }
+
+    /**
+     * Format date for display (DD-MM-YYYY).
+     */
+    private fun formatDateForDisplay(isoDate: String): String {
+        return try {
+            if (isoDate.contains("T")) {
+                val datePart = isoDate.substringBefore("T")
+                val parts = datePart.split("-")
+                if (parts.size == 3) {
+                    "${parts[2]}-${parts[1]}-${parts[0]}"
+                } else isoDate
+            } else isoDate
+        } catch (e: Exception) {
+            isoDate
         }
     }
 

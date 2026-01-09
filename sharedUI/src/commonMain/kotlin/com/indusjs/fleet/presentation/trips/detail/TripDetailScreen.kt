@@ -21,18 +21,24 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.fleet.core.pdf.PdfExportHandler
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetDateFieldCompact
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.FleetStatusBadge
 import com.indusjs.fleet.core.ui.FleetTimeFieldCompact
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.util.formatCostAmount
+import com.indusjs.fleet.core.util.formatCostTime
+import com.indusjs.fleet.core.util.formatDateTimeForDisplay
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.data.model.costs.TripCostTypes
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
 /**
@@ -47,8 +53,13 @@ fun TripDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showCancelDialog by remember { mutableStateOf(false) }
     var showStatusDialog by remember { mutableStateOf(false) }
+
+    // PDF Export state
+    var pdfExportData by remember { mutableStateOf<TripDetailContract.TripCostsPdfData?>(null) }
+    var isExportingPdf by remember { mutableStateOf(false) }
 
     // Load trip on first composition
     LaunchedEffect(tripId) {
@@ -74,6 +85,11 @@ fun TripDetailScreen(
                 }
                 is TripDetailContract.Effect.TripUpdated -> {
                     // Refresh handled in ViewModel
+                }
+                is TripDetailContract.Effect.ExportPdf -> {
+                    // Trigger PDF export by setting the data and showing loader
+                    isExportingPdf = true
+                    pdfExportData = effect.pdfData
                 }
             }
         }
@@ -117,6 +133,25 @@ fun TripDetailScreen(
             onDismiss = { showStatusDialog = false }
         )
     }
+
+    // PDF Export Handler
+    PdfExportHandler(
+        pdfData = pdfExportData,
+        onExportComplete = {
+            isExportingPdf = false
+            pdfExportData = null
+            scope.launch {
+                snackbarHostState.showSnackbar("PDF exported successfully!")
+            }
+        },
+        onExportError = { error: String ->
+            isExportingPdf = false
+            pdfExportData = null
+            scope.launch {
+                snackbarHostState.showSnackbar(error)
+            }
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -258,7 +293,8 @@ fun TripDetailScreen(
                                     costs = state.costs,
                                     totalCost = state.totalCost,
                                     costsByType = state.costsByType,
-                                    isLoading = state.isLoadingCosts
+                                    isLoading = state.isLoadingCosts,
+                                    onExportPdf = { viewModel.sendIntent(TripDetailContract.Intent.ExportCostsToPdf) }
                                 )
                             }
                         }
@@ -336,6 +372,48 @@ fun TripDetailScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Please wait",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        // PDF Export overlay
+        if (isExportingPdf) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            strokeWidth = 4.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "📄 Generating PDF...",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Please wait while we prepare your report",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -859,7 +937,7 @@ private fun AdditionalInfoSection(trip: Trip) {
             EnhancedInfoRow(icon = "📝", label = "Notes", value = it)
         }
         trip.createdAt?.let {
-            EnhancedInfoRow(icon = "📅", label = "Created on", value = it, isLast = true)
+            EnhancedInfoRow(icon = "📅", label = "Created on", value = com.indusjs.fleet.core.util.formatDateToHumanReadable(it, shortMonth = true), isLast = true)
         }
     }
 }
@@ -1677,7 +1755,7 @@ private fun StatusChangeDialog(
 }
 
 /**
- * Trip Costs Section - displays costs grouped by type.
+ * Trip Costs Section - Enhanced UI displaying costs grouped by type with PDF export.
  * Only shown when there are costs (hasCosts == true).
  */
 @Composable
@@ -1685,7 +1763,8 @@ private fun TripCostsSection(
     costs: List<TripCostDto>,
     totalCost: Double,
     costsByType: Map<String, List<TripCostDto>>,
-    isLoading: Boolean
+    isLoading: Boolean,
+    onExportPdf: (() -> Unit)? = null
 ) {
     var expandedTypes by remember { mutableStateOf(setOf<String>()) }
 
@@ -1695,52 +1774,89 @@ private fun TripCostsSection(
     ) {
         if (isLoading) {
             Box(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                CircularProgressIndicator(modifier = Modifier.size(32.dp))
             }
         } else {
-            // Total Cost Summary
+            // Total Cost Header Card - Prominent display
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primary
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column {
-                        Text(
-                            text = "Total Cost",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${costs.size} entries",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
+                    Text(
+                        text = "Total Expenses",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "₹${formatCostAmount(totalCost)}",
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f)
+                    ) {
+                        Text(
+                            text = "${costs.size} ${if (costs.size == 1) "transaction" else "transactions"} • ${costsByType.size} ${if (costsByType.size == 1) "category" else "categories"}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            // Export to PDF Button
+            if (onExportPdf != null && costs.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onExportPdf,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Text("📄", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Export to PDF", fontWeight = FontWeight.SemiBold)
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Cost breakdown by type
+            // Cost Categories Header
+            Text(
+                text = "Cost Breakdown",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+
+            // Cost breakdown by type with progress bars
             costsByType.forEach { (costType, typeCosts) ->
                 val isExpanded = expandedTypes.contains(costType)
                 val typeTotal = typeCosts.sumOf { it.amount }
                 val displayName = getCostTypeDisplayName(costType)
                 val typeIcon = getCostTypeIcon(costType)
+                val percentage = if (totalCost > 0) (typeTotal / totalCost * 100).toInt() else 0
+                val costColor = getCostTypeColor(costType)
 
                 Surface(
                     onClick = {
@@ -1751,162 +1867,411 @@ private fun TripCostsSection(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = typeIcon, style = MaterialTheme.typography.titleMedium)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                // Icon with colored background
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = costColor.copy(alpha = 0.15f),
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        Text(text = typeIcon, style = MaterialTheme.typography.titleLarge)
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = displayName,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "${typeCosts.size} ${if (typeCosts.size == 1) "entry" else "entries"}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = " • $percentage%",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = costColor
+                                        )
+                                    }
+                                }
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = displayName,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
+                                    text = "₹${formatCostAmount(typeTotal)}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
-                                Text(
-                                    text = "${typeCosts.size} ${if (typeCosts.size == 1) "entry" else "entries"}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        Text(
+                                            text = if (isExpanded) "▲" else "▼",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Progress bar showing percentage (when collapsed)
+                        if (!isExpanded) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp)
+                                    .padding(bottom = 12.dp)
+                                    .height(6.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        RoundedCornerShape(3.dp)
+                                    )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(fraction = (percentage / 100f).coerceIn(0f, 1f))
+                                        .fillMaxHeight()
+                                        .background(
+                                            costColor,
+                                            RoundedCornerShape(3.dp)
+                                        )
                                 )
                             }
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                    }
+                }
+
+                // Expanded cost details
+                if (isExpanded) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 12.dp, top = 8.dp, bottom = 8.dp)
+                    ) {
+                        typeCosts.forEachIndexed { index, cost ->
+                            EnhancedCostDetailItem(cost = cost, costColor = costColor)
+                            if (index < typeCosts.size - 1) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+        }
+    }
+}
+
+/**
+ * Get display name for cost type.
+ */
+private fun getCostTypeDisplayName(costType: String): String {
+    return when (costType.lowercase()) {
+        "fuel" -> "Fuel"
+        "toll" -> "Toll"
+        "driver_allowance" -> "Driver Allowance"
+        "parking" -> "Parking"
+        "loading_charges" -> "Loading Charges"
+        "unloading_charges" -> "Unloading Charges"
+        "chalan" -> "Chalan"
+        "permit" -> "Permit"
+        "insurance" -> "Insurance"
+        "other" -> "Other"
+        else -> costType.replace("_", " ").replaceFirstChar { it.uppercaseChar() }
+    }
+}
+
+/**
+ * Get icon for cost type.
+ */
+private fun getCostTypeIcon(costType: String): String {
+    return when (costType.lowercase()) {
+        "fuel" -> "⛽"
+        "toll" -> "🛣️"
+        "driver_allowance" -> "👤"
+        "parking" -> "🅿️"
+        "loading_charges" -> "📦"
+        "unloading_charges" -> "📤"
+        "chalan" -> "📄"
+        "permit" -> "🎫"
+        "insurance" -> "🛡️"
+        else -> "💵"
+    }
+}
+
+/**
+ * Get color for cost type for visual differentiation.
+ */
+@Composable
+private fun getCostTypeColor(costType: String): Color {
+    return when (costType.lowercase()) {
+        "fuel" -> Color(0xFF4CAF50) // Green
+        "toll" -> Color(0xFF2196F3) // Blue
+        "driver_allowance" -> Color(0xFFFF9800) // Orange
+        "parking" -> Color(0xFF9C27B0) // Purple
+        "loading_charges" -> Color(0xFF795548) // Brown
+        "unloading_charges" -> Color(0xFF607D8B) // Blue Grey
+        "chalan" -> Color(0xFFE91E63) // Pink
+        "permit" -> Color(0xFF00BCD4) // Cyan
+        "insurance" -> Color(0xFF3F51B5) // Indigo
+        else -> MaterialTheme.colorScheme.primary
+    }
+}
+
+/**
+ * Enhanced Cost Detail Item with improved UI.
+ * Shows: Title (cost type), Date & Time, Amount - always visible
+ * On expand: Shows description/notes only
+ *
+ * Layout:
+ * ┌─────────────────────────────────────────────────┐
+ * │ 📅 10-01-2026 • 🕐 2:30 PM  ▼     │ ₹500.00 │
+ * └─────────────────────────────────────────────────┘
+ * ↓ (tap to expand if has notes)
+ * ┌─────────────────────────────────────────────────
+ * │ 📝 Description: Toll payment at highway        │
+ * │ ⛽ 50 L @ ₹100.00/L (only for fuel)           │
+ * └─────────────────────────────────────────────────┘
+ */
+@Composable
+private fun EnhancedCostDetailItem(cost: TripCostDto, costColor: Color) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val hasFuelDetails = cost.costType == "fuel" && cost.fuelQuantity != null
+    val hasNotes = !cost.notes.isNullOrBlank()
+    val hasExpandableContent = hasNotes || hasFuelDetails
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (hasExpandableContent) {
+                    Modifier.clickable { isExpanded = !isExpanded }
+                } else {
+                    Modifier
+                }
+            ),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 1.dp
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+            // Main row - Date & Time on left, Amount on right
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left side - colored indicator + Date & Time inline
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    // Small colored indicator bar
+                    Box(
+                        modifier = Modifier
+                            .width(4.dp)
+                            .height(32.dp)
+                            .background(costColor, RoundedCornerShape(2.dp))
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    // Date & Time inline with separator
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Date - Human readable
+                        Text(text = "📅", style = MaterialTheme.typography.labelSmall)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = formatDateToHumanReadable(cost.date, shortMonth = true),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        // Time (if available)
+                        cost.time?.takeIf { it.isNotBlank() }?.let { time ->
                             Text(
-                                text = "₹${formatCostAmount(typeTotal)}",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
+                                text = " • ",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = "🕐", style = MaterialTheme.typography.labelSmall)
+                            Spacer(modifier = Modifier.width(2.dp))
                             Text(
-                                text = if (isExpanded) "▲" else "▼",
-                                style = MaterialTheme.typography.labelSmall,
+                                text = formatCostTime(time),
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
+
+                    // Expand indicator (only if has expandable content)
+                    if (hasExpandableContent) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isExpanded) "▲" else "▼",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
 
-                if (isExpanded) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Amount Badge - always visible
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = costColor.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = "₹${formatCostAmount(cost.amount)}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = costColor,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            // Expanded Details Section - Description only
+            if (isExpanded && hasExpandableContent) {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                    thickness = 0.5.dp
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Notes/Description - compact inline display
+                cost.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top
                     ) {
-                        typeCosts.forEachIndexed { index, cost ->
-                            CostDetailItem(cost = cost)
-                            if (index < typeCosts.size - 1) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        Text(
+                            text = "📝",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = notes,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Fuel details (only for fuel type)
+                if (hasFuelDetails) {
+                    if (hasNotes) Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFF4CAF50).copy(alpha = 0.1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "⛽",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "Fuel Filled",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = "${cost.fuelQuantity} Liters",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF2E7D32)
+                                    )
+                                }
+                            }
+                            cost.fuelRate?.let { rate ->
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = "Rate",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = "₹${formatCostAmount(rate)}/L",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF2E7D32)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Fuel efficiency if available
+                    cost.kmPerLiter?.let { efficiency ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
+                            ) {
+                                val efficiencyFormatted = ((efficiency * 10).toLong() / 10.0).toString()
+                                Text(
+                                    text = "🚗 Efficiency: $efficiencyFormatted km/L",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                 )
                             }
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
 
+// Keep old CostDetailItem for backward compatibility but mark as deprecated
 @Composable
 private fun CostDetailItem(cost: TripCostDto) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "📅", style = MaterialTheme.typography.labelSmall)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = cost.date,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                cost.time?.let { time ->
-                    Text(
-                        text = " • $time",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            cost.notes?.takeIf { it.isNotBlank() }?.let { notes ->
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = notes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    maxLines = 2
-                )
-            }
-            if (cost.costType == "fuel" && cost.fuelQuantity != null) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Row {
-                    Text(
-                        text = "⛽ ${cost.fuelQuantity} L",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                    cost.fuelRate?.let { rate ->
-                        Text(
-                            text = " @ ₹$rate/L",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
-        Text(
-            text = "₹${formatCostAmount(cost.amount)}",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-private fun formatCostAmount(amount: Double): String {
-    val intPart = amount.toLong()
-    val decPart = ((amount - intPart) * 100).toInt()
-    val decStr = if (decPart < 10) "0$decPart" else "$decPart"
-    return if (intPart >= 1000) {
-        val formattedInt = intPart.toString().reversed().chunked(3).joinToString(",").reversed()
-        "$formattedInt.$decStr"
-    } else {
-        "$intPart.$decStr"
-    }
-}
-
-private fun getCostTypeDisplayName(costType: String): String {
-    return TripCostTypes.types.find { it.first == costType }?.second
-        ?: costType.replace("_", " ").replaceFirstChar { it.uppercaseChar() }
-}
-
-private fun getCostTypeIcon(costType: String): String {
-    return when (costType) {
-        "fuel" -> "⛽"
-        "toll" -> "🛣️"
-        "driver_allowance" -> "👤"
-        "loading" -> "📦"
-        "unloading" -> "📤"
-        "parking" -> "🅿️"
-        "rto" -> "📋"
-        "police" -> "👮"
-        "repair" -> "🔧"
-        "food" -> "🍽️"
-        "halt" -> "⏸️"
-        "commission" -> "💵"
-        "weighing" -> "⚖️"
-        "detention" -> "⏰"
-        "miscellaneous" -> "📝"
-        "other" -> "📌"
-        else -> "💰"
-    }
+    EnhancedCostDetailItem(cost = cost, costColor = MaterialTheme.colorScheme.primary)
 }
