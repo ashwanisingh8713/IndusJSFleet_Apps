@@ -1,8 +1,8 @@
 package com.indusjs.fleet.presentation.vehicles.detail
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
 import com.indusjs.fleet.domain.repository.costs.CostsRepository

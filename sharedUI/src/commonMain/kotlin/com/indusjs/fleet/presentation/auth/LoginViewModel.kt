@@ -1,7 +1,7 @@
 package com.indusjs.fleet.presentation.auth
 
 import androidx.lifecycle.viewModelScope
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.presentation.auth.LoginContract.Effect

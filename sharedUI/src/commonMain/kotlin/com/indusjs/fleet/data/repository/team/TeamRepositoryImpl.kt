@@ -1,7 +1,7 @@
 package com.indusjs.fleet.data.repository.team
 
-import com.indusjs.fleet.core.error.ApiException
-import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.error.exception.ApiException
+import com.indusjs.error.exception.AuthException
 import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.team.TeamMapper.toDomain
@@ -117,11 +117,11 @@ class TeamRepositoryImpl(
     }
 
     /**
-     * Retrieves auth token or throws NotAuthenticatedException.
+     * Retrieves auth token or throws AuthException.
      */
     private suspend fun requireAuthToken(): String {
         return userLocalDataSource.getAuthToken()
-            ?: throw NotAuthenticatedException()
+            ?: throw AuthException.unauthenticated()
     }
 }
 

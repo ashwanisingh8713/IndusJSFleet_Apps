@@ -1,6 +1,6 @@
 package com.indusjs.fleet.di
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.presentation.auth.LoginViewModel
 import dev.zacsweers.metro.DependencyGraph

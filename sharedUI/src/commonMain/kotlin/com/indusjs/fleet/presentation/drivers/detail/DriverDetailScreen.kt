@@ -18,7 +18,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.error.ErrorHandler
+import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetDateField
 import com.indusjs.fleet.core.ui.FleetEmailField
@@ -204,7 +204,7 @@ fun DriverDetailScreen(
             state.error != null && state.driver == null -> {
                 ErrorContent(
                     error = state.error!!,
-                    screenContext = ErrorHandler.ScreenContext.DRIVER_DETAIL,
+                    screenContext = FleetErrorContext.DRIVER_DETAIL,
                     onRetry = { viewModel.sendIntent(DriverDetailContract.Intent.Refresh) }
                 )
             }

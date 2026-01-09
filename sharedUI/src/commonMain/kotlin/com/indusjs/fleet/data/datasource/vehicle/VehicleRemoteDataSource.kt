@@ -2,7 +2,7 @@ package com.indusjs.fleet.data.datasource.vehicle
 
 import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.fleet.core.network.ApiErrorHandler
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleRequest
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleWithDocumentsRequest

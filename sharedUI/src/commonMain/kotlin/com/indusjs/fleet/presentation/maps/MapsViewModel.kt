@@ -1,6 +1,6 @@
 package com.indusjs.fleet.presentation.maps
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.entity.maps.Geofence
 import com.indusjs.fleet.domain.entity.maps.GeofenceType

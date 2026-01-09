@@ -1,6 +1,6 @@
 package com.indusjs.fleet.di
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.russhwolf.settings.Settings
 import io.ktor.client.*
 import kotlinx.serialization.json.Json

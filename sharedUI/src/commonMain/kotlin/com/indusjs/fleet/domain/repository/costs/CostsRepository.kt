@@ -1,6 +1,6 @@
 package com.indusjs.fleet.domain.repository.costs
 
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.costs.BulkCreateMaintenanceCostsRequest
 import com.indusjs.fleet.data.model.costs.BulkCreateTripCostsRequest
 import com.indusjs.fleet.data.model.costs.CreateMaintenanceCostRequest

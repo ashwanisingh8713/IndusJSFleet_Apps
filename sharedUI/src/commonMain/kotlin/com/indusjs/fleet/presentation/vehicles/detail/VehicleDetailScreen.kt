@@ -27,7 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.error.ErrorHandler
+import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.DateInputField
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
@@ -296,7 +296,7 @@ fun VehicleDetailScreen(
             state.error != null && state.vehicle == null -> {
                 ErrorContent(
                     error = state.error!!,
-                    screenContext = ErrorHandler.ScreenContext.VEHICLE_DETAIL,
+                    screenContext = FleetErrorContext.VEHICLE_DETAIL,
                     onRetry = { viewModel.sendIntent(VehicleDetailContract.Intent.Refresh) }
                 )
             }
@@ -659,7 +659,7 @@ private fun TripsTabContent(
         error != null && tripsList.isEmpty() -> {
             ErrorContent(
                 error = error,
-                screenContext = ErrorHandler.ScreenContext.TRIPS,
+                screenContext = FleetErrorContext.TRIPS,
                 onRetry = onRefresh
             )
         }
@@ -908,7 +908,7 @@ private fun RouteTabContent(
         error != null && routeInfo == null -> {
             ErrorContent(
                 error = error,
-                screenContext = ErrorHandler.ScreenContext.VEHICLE_DETAIL,
+                screenContext = FleetErrorContext.VEHICLE_DETAIL,
                 onRetry = onRefresh
             )
         }
@@ -1236,7 +1236,7 @@ private fun DocumentsTabContent(
         error != null && documentsData == null -> {
             ErrorContent(
                 error = error,
-                screenContext = ErrorHandler.ScreenContext.DOCUMENTS,
+                screenContext = FleetErrorContext.DOCUMENTS,
                 onRetry = onRefresh
             )
         }

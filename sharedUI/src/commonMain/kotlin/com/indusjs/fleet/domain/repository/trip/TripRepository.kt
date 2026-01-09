@@ -1,6 +1,6 @@
 package com.indusjs.fleet.domain.repository.trip
 
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.trip.UpdateTripRequest
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
 import com.indusjs.fleet.domain.entity.trip.CreateTripStopData

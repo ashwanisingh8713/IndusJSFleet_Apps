@@ -2,6 +2,26 @@
 
 A Kotlin Multiplatform library for coroutine dispatchers and scope management.
 
+## File Structure
+
+```
+ijs-dispatcher-lib/src/
+├── commonMain/kotlin/com/indusjs/dispatcher/
+│   ├── DispatcherProvider.kt        # Interface for coroutine dispatchers (main, io, default, unconfined)
+│   ├── DefaultDispatcherProvider.kt # Default, Test, and Immediate implementations
+│   ├── DispatcherQualifiers.kt      # DI qualifiers (@MainDispatcher, @IoDispatcher, etc.)
+│   ├── CoroutineScopeProvider.kt    # SupervisorJob scope utilities & ManagedCoroutineScope
+│   └── PlatformDispatcherProvider.kt # expect fun createPlatformDispatcherProvider()
+├── androidMain/kotlin/com/indusjs/dispatcher/
+│   └── AndroidDispatcherProvider.kt # Android implementation with Dispatchers.IO
+├── iosMain/kotlin/com/indusjs/dispatcher/
+│   └── IosDispatcherProvider.kt     # iOS implementation
+├── jsMain/kotlin/com/indusjs/dispatcher/
+│   └── JsDispatcherProvider.kt      # JavaScript implementation
+└── wasmJsMain/kotlin/com/indusjs/dispatcher/
+    └── WasmJsDispatcherProvider.kt  # WebAssembly JS implementation
+```
+
 ## Features
 
 - **DispatcherProvider**: Interface for providing coroutine dispatchers

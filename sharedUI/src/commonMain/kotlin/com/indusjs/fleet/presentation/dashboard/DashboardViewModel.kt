@@ -1,8 +1,8 @@
 package com.indusjs.fleet.presentation.dashboard
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary

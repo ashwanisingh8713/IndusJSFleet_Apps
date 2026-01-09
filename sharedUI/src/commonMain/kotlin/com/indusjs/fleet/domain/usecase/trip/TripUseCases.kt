@@ -1,6 +1,6 @@
 package com.indusjs.fleet.domain.usecase.trip
 
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.entity.trip.CreateTripStopData
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus

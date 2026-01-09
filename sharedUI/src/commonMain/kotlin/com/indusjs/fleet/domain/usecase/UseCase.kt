@@ -1,6 +1,6 @@
 package com.indusjs.fleet.domain.usecase
 
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import kotlinx.coroutines.flow.Flow
 
 /**

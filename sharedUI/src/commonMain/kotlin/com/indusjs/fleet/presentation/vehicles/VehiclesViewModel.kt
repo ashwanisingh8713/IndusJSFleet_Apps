@@ -1,8 +1,8 @@
 package com.indusjs.fleet.presentation.vehicles
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
 import com.indusjs.fleet.domain.usecase.vehicle.DeleteVehicleUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase

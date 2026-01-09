@@ -1,8 +1,8 @@
 package com.indusjs.fleet.di
 
 import com.indusjs.fleet.core.auth.AuthenticationManager
-import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DefaultDispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
 import com.indusjs.fleet.data.database.FleetDatabase
 import com.indusjs.fleet.data.datasource.costs.CostsRemoteDataSourceImpl

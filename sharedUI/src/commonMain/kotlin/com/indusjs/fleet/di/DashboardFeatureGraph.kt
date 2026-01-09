@@ -1,6 +1,6 @@
 package com.indusjs.fleet.di
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.data.database.dao.DashboardDao
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSource
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl

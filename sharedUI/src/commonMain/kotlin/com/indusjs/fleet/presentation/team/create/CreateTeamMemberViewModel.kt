@@ -1,6 +1,6 @@
 package com.indusjs.fleet.presentation.team.create
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
 import com.indusjs.fleet.domain.repository.team.TeamRepository

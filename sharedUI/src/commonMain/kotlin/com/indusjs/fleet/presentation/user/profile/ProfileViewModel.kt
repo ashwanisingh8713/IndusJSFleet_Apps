@@ -1,6 +1,6 @@
 package com.indusjs.fleet.presentation.user.profile
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import dev.zacsweers.metro.Inject

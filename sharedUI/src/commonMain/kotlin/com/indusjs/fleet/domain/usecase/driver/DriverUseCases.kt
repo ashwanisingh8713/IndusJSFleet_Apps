@@ -1,6 +1,6 @@
 package com.indusjs.fleet.domain.usecase.driver
 
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.repository.driver.DriverRepository

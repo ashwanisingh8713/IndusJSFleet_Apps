@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.presentation.auth.LoginViewModel
  import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryViewModel
 import com.indusjs.fleet.presentation.trips.cost.TripCostEntryViewModel

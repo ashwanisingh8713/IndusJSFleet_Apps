@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.error.ErrorHandler
+import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetDateFieldCompact
 import com.indusjs.fleet.core.ui.FleetMobileField
@@ -218,7 +218,7 @@ fun TripDetailScreen(
             state.error != null && state.trip == null -> {
                 ErrorContent(
                     error = state.error!!,
-                    screenContext = ErrorHandler.ScreenContext.TRIP_DETAIL,
+                    screenContext = FleetErrorContext.TRIP_DETAIL,
                     onRetry = { viewModel.sendIntent(TripDetailContract.Intent.Refresh) }
                 )
             }

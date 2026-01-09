@@ -1,7 +1,7 @@
 package com.indusjs.fleet.di
 
-import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DefaultDispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.russhwolf.settings.Settings
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides
@@ -71,4 +71,3 @@ abstract class RootGraph : NetworkModule {
 
     companion object
 }
-

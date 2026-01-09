@@ -1,8 +1,8 @@
 package com.indusjs.fleet.presentation.trips.cost
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
 import com.indusjs.fleet.data.model.costs.BulkCostItem

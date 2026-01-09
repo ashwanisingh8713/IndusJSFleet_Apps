@@ -1,6 +1,6 @@
 package com.indusjs.fleet.di
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSource
 import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource

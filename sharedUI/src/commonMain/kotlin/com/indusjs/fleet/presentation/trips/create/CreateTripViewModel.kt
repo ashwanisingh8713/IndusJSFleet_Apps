@@ -1,9 +1,9 @@
 package com.indusjs.fleet.presentation.trips.create
 
 import co.touchlab.kermit.Logger
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.util.convertToIsoDateTime
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.location.PlacePrediction

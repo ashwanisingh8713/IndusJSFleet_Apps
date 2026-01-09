@@ -1,6 +1,6 @@
 package com.indusjs.fleet.domain.repository.vehicle
 
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDetail
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument

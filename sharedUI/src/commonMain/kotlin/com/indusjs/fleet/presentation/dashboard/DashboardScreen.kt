@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.error.ErrorHandler
+import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.util.formatLastUpdated
@@ -230,7 +230,7 @@ fun DashboardScreen(
                     state.error != null && !state.hasCachedData && !state.isOffline -> {
                         ErrorContent(
                             error = state.error!!,
-                            screenContext = ErrorHandler.ScreenContext.DASHBOARD,
+                            screenContext = FleetErrorContext.DASHBOARD,
                             onRetry = { viewModel.sendIntent(DashboardContract.Intent.LoadDashboard) }
                         )
                     }

@@ -1,7 +1,7 @@
 package com.indusjs.fleet.di
 
-import com.indusjs.fleet.core.dispatcher.DefaultDispatcherProvider
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.createPlatformDispatcherProvider
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
@@ -31,8 +31,7 @@ abstract class AppGraph {
      */
     @Provides
     @SingleIn(AppScope::class)
-    fun provideDispatcherProvider(): DispatcherProvider = DefaultDispatcherProvider()
+    fun provideDispatcherProvider(): DispatcherProvider = createPlatformDispatcherProvider()
 
     companion object
 }
-

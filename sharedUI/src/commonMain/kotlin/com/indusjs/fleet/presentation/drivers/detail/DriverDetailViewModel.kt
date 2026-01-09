@@ -1,8 +1,8 @@
 package com.indusjs.fleet.presentation.drivers.detail
 
-import com.indusjs.fleet.core.dispatcher.DispatcherProvider
+import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType

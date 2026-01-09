@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.error.ErrorHandler
+import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.domain.entity.maps.MapVehicle
 import com.indusjs.fleet.domain.entity.maps.MapVehicleStatus
@@ -121,7 +121,7 @@ fun MapsScreen(
                 state.error != null -> {
                     ErrorContent(
                         error = state.error!!,
-                        screenContext = ErrorHandler.ScreenContext.MAPS,
+                        screenContext = FleetErrorContext.MAPS,
                         onRetry = { viewModel.sendIntent(MapsContract.Intent.LoadMapData) }
                     )
                 }

@@ -15,7 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.error.ErrorHandler
+import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.EmptyContent
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetSearchField
@@ -127,7 +127,7 @@ fun VehiclesScreen(
                     // Using reusable ErrorContent component
                     ErrorContent(
                         error = state.error!!,
-                        screenContext = ErrorHandler.ScreenContext.VEHICLES,
+                        screenContext = FleetErrorContext.VEHICLES,
                         onRetry = { viewModel.sendIntent(VehiclesContract.Intent.LoadVehicles) }
                     )
                 }
@@ -422,4 +422,3 @@ private fun VehicleTypeIcon(
         tint = tint
     )
 }
-

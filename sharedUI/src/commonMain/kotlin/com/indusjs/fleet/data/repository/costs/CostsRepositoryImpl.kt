@@ -1,10 +1,10 @@
 package com.indusjs.fleet.data.repository.costs
 
-import com.indusjs.fleet.core.error.ApiException
-import com.indusjs.fleet.core.error.NetworkException
-import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.error.exception.ApiException
+import com.indusjs.error.exception.NetworkException
+import com.indusjs.error.exception.AuthException
 import com.indusjs.fleet.core.network.ApiErrorHandler
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.costs.CostsRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.model.costs.BulkCreateMaintenanceCostsRequest
@@ -38,7 +38,7 @@ class CostsRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to create trip cost"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -55,7 +55,7 @@ class CostsRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to create trip costs"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -72,7 +72,7 @@ class CostsRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch trip costs"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -90,7 +90,7 @@ class CostsRepositoryImpl(
                 // If no costs, return empty summary instead of error
                 Result.Success(TripCostSummaryDto())
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -107,7 +107,7 @@ class CostsRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to create maintenance cost"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -124,7 +124,7 @@ class CostsRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to create maintenance costs"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -141,7 +141,7 @@ class CostsRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch maintenance costs"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -180,7 +180,7 @@ class CostsRepositoryImpl(
                 // Return empty data instead of error
                 Result.Success(VehicleTripCostsDataDto())
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -217,7 +217,7 @@ class CostsRepositoryImpl(
                 // Return empty data instead of error
                 Result.Success(VehicleMaintenanceCostsDataDto())
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -234,7 +234,7 @@ class CostsRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to delete trip cost"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -251,7 +251,7 @@ class CostsRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to delete maintenance cost"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -259,5 +259,5 @@ class CostsRepositoryImpl(
     }
 
     private suspend fun requireAuthToken(): String =
-        userLocalDataSource.getAuthToken() ?: throw NotAuthenticatedException()
+        userLocalDataSource.getAuthToken() ?: throw AuthException.unauthenticated()
 }

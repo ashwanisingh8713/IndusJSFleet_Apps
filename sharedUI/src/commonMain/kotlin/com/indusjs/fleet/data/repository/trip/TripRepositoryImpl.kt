@@ -1,9 +1,9 @@
 package com.indusjs.fleet.data.repository.trip
 
-import com.indusjs.fleet.core.error.ApiException
-import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.error.exception.ApiException
+import com.indusjs.error.exception.AuthException
 import com.indusjs.fleet.core.network.ApiErrorHandler
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.trip.TripRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.trip.TripMapper
@@ -340,10 +340,10 @@ class TripRepositoryImpl(
     }
 
     /**
-     * Retrieves auth token or throws NotAuthenticatedException.
+     * Retrieves auth token or throws AuthException.
      */
     private suspend fun requireAuthToken(): String {
         return userLocalDataSource.getAuthToken()
-            ?: throw NotAuthenticatedException()
+            ?: throw AuthException.unauthenticated()
     }
 }

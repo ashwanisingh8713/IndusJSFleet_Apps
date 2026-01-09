@@ -2,6 +2,29 @@
 
 A Kotlin Multiplatform library for error handling with user-friendly messages.
 
+## File Structure
+
+```
+ijs-error-lib/src/commonMain/kotlin/com/indusjs/error/
+├── exception/
+│   ├── IjsException.kt          # Base sealed exception class
+│   ├── NetworkException.kt      # Connection, timeout, DNS, SSL errors
+│   ├── ApiException.kt          # HTTP status code errors (400-5xx)
+│   ├── AuthException.kt         # Authentication/authorization errors
+│   └── ValidationException.kt   # Input validation errors with field support
+├── code/
+│   ├── HttpErrorCode.kt         # HTTP status code enum (400-504) with messages
+│   └── ErrorMessages.kt         # Centralized human-readable error messages
+├── handler/
+│   ├── ErrorType.kt             # Error classification enum
+│   ├── ErrorInfo.kt             # User-friendly error data (icon, title, message)
+│   ├── ErrorContext.kt          # Interface for app-specific error contexts
+│   ├── ErrorClassifier.kt       # Classify errors from messages/exceptions
+│   └── ErrorHandler.kt          # Main error handler with extensions
+└── result/
+    └── Result.kt                # Result<T> sealed class (Success, Error, Loading)
+```
+
 ## Features
 
 - **Exception Hierarchy**: `IjsException` base class with specialized exceptions:
@@ -87,4 +110,3 @@ enum class MyAppContext : ErrorContext {
 ## Dependencies
 
 - `kotlinx-coroutines-core`
-

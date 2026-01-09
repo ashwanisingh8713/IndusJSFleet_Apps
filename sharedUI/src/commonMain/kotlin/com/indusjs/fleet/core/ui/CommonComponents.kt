@@ -22,8 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.indusjs.fleet.core.error.ErrorHandler
-import com.indusjs.fleet.core.error.toErrorInfo
+import com.indusjs.error.handler.toErrorInfo
+import com.indusjs.fleet.core.error.FleetErrorContext
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
@@ -74,7 +74,7 @@ fun LoadingContent(
 @Composable
 fun ErrorContent(
     error: String,
-    screenContext: ErrorHandler.ScreenContext = ErrorHandler.ScreenContext.GENERIC,
+    screenContext: FleetErrorContext = FleetErrorContext.GENERIC,
     onRetry: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -257,4 +257,3 @@ fun <T> ScreenContent(
         }
     }
 }
-

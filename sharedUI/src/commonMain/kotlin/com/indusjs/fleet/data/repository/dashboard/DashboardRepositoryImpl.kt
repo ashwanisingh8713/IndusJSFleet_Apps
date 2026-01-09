@@ -1,10 +1,10 @@
 package com.indusjs.fleet.data.repository.dashboard
 
-import com.indusjs.fleet.core.error.ApiException
-import com.indusjs.fleet.core.error.NetworkException
-import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.error.exception.ApiException
+import com.indusjs.error.exception.NetworkException
+import com.indusjs.error.exception.AuthException
 import com.indusjs.fleet.core.network.ApiErrorHandler
-import com.indusjs.fleet.core.result.Result
+import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSource
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
@@ -63,7 +63,7 @@ class DashboardRepositoryImpl(
                     emit(Result.Error(ApiException(response.message ?: "Failed to fetch dashboard")))
                 }
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             emit(Result.Error(e))
         } catch (e: Exception) {
             if (cached == null) {
@@ -92,7 +92,7 @@ class DashboardRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to refresh"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -135,7 +135,7 @@ class DashboardRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch cost overview"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -173,7 +173,7 @@ class DashboardRepositoryImpl(
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch pending payments"))
             }
-        } catch (e: NotAuthenticatedException) {
+        } catch (e: AuthException) {
             Result.Error(e)
         } catch (e: Exception) {
             Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
@@ -189,6 +189,6 @@ class DashboardRepositoryImpl(
         )
 
     private suspend fun requireAuthToken(): String =
-        userLocalDataSource.getAuthToken() ?: throw NotAuthenticatedException()
+        userLocalDataSource.getAuthToken() ?: throw AuthException.unauthenticated()
 }
 

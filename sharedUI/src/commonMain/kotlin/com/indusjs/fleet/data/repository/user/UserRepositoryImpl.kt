@@ -1,7 +1,7 @@
 package com.indusjs.fleet.data.repository.user
 
-import com.indusjs.fleet.core.error.ApiException
-import com.indusjs.fleet.core.error.NotAuthenticatedException
+import com.indusjs.error.exception.ApiException
+import com.indusjs.error.exception.AuthException
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.datasource.user.UserRemoteDataSource
 import com.indusjs.fleet.data.mapper.user.UserMapper.toDomain
@@ -149,11 +149,11 @@ class UserRepositoryImpl(
     override suspend fun isLoggedIn(): Boolean = localDataSource.isLoggedIn()
 
     /**
-     * Retrieves auth token or throws NotAuthenticatedException.
+     * Retrieves auth token or throws AuthException.
      */
     private suspend fun requireAuthToken(): String {
         return localDataSource.getAuthToken()
-            ?: throw NotAuthenticatedException()
+            ?: throw AuthException.unauthenticated()
     }
 }
 
