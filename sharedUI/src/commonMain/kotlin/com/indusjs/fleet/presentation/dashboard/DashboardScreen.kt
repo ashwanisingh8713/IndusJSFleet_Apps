@@ -2312,31 +2312,48 @@ private fun VehicleStatusSection(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Enhanced header with icon container
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_vehicle),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Vehicle Status",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_truck),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Vehicles",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${vehicleStatus.total} total",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
-                Text(
-                    text = "Total: ${vehicleStatus.total}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                Icon(
+                    painter = painterResource(Res.drawable.ic_chevron_right),
+                    contentDescription = "View all",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -2350,27 +2367,27 @@ private fun VehicleStatusSection(
                     onAction = onAddVehicleClick
                 )
             } else {
-                // Stats row
+                // Enhanced stats row with better visual
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    StatusChip(
-                        label = "Planned",
-                        count = vehicleStatus.onTripPlanned,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatusChip(
+                    EnhancedStatusChip(
                         label = "On Route",
                         count = vehicleStatus.onTripInProgress,
                         color = Color(0xFF4CAF50),
                         modifier = Modifier.weight(1f)
                     )
-                    StatusChip(
-                        label = "Maintenance",
-                        count = vehicleStatus.underMaintenance,
-                        color = MaterialTheme.colorScheme.error,
+                    EnhancedStatusChip(
+                        label = "Planned",
+                        count = vehicleStatus.onTripPlanned,
+                        color = Color(0xFF2196F3),
+                        modifier = Modifier.weight(1f)
+                    )
+                    EnhancedStatusChip(
+                        label = "Available",
+                        count = vehicleStatus.available,
+                        color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -2380,7 +2397,42 @@ private fun VehicleStatusSection(
 }
 
 /**
- * Trips Status Section.
+ * Enhanced Status Chip with better visual design
+ */
+@Composable
+private fun EnhancedStatusChip(
+    label: String,
+    count: Int,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(10.dp),
+        color = color.copy(alpha = 0.1f)
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = count.toString(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+/**
+ * Trips Status Section - Enhanced UI.
  */
 @Composable
 private fun TripsStatusSection(
@@ -2397,31 +2449,48 @@ private fun TripsStatusSection(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Enhanced header with icon container
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_trip),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Trips",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.tertiaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_trip),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                            tint = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Trips",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${tripSummary.total} total",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
-                Text(
-                    text = "Total: ${tripSummary.total}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                Icon(
+                    painter = painterResource(Res.drawable.ic_chevron_right),
+                    contentDescription = "View all",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -2435,38 +2504,42 @@ private fun TripsStatusSection(
                     onAction = onCreateTripClick
                 )
             } else {
-                // Stats row
+                // Enhanced stats row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    StatusChip(
-                        label = "In Progress",
+                    EnhancedStatusChip(
+                        label = "Active",
                         count = tripSummary.inProgress,
                         color = Color(0xFF4CAF50),
                         modifier = Modifier.weight(1f)
                     )
-                    StatusChip(
+                    EnhancedStatusChip(
                         label = "Planned",
                         count = tripSummary.planned,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = Color(0xFF2196F3),
                         modifier = Modifier.weight(1f)
                     )
-                    StatusChip(
-                        label = "Delayed",
-                        count = tripSummary.delayed,
-                        color = MaterialTheme.colorScheme.error,
+                    EnhancedStatusChip(
+                        label = "Done",
+                        count = tripSummary.completed,
+                        color = MaterialTheme.colorScheme.outline,
                         modifier = Modifier.weight(1f)
                     )
                 }
 
-                // Show ongoing trips with fuel info
+                // Show ongoing trips preview
                 if (ongoingTrips.isNotEmpty()) {
-                    HorizontalDivider()
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
                     Text(
                         text = "Active Trips",
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     ongoingTrips.take(2).forEach { trip ->
                         OngoingTripItem(trip = trip)
@@ -2646,7 +2719,7 @@ private fun CleanAlertItem(
 }
 
 /**
- * Drivers Status Section.
+ * Drivers Status Section - Enhanced UI.
  */
 @Composable
 private fun DriversStatusSection(
@@ -2662,31 +2735,48 @@ private fun DriversStatusSection(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Enhanced header with icon container
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_driver),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Drivers",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_driver),
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Drivers",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${driverStatus.total} total",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
-                Text(
-                    text = "Total: ${driverStatus.total}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                Icon(
+                    painter = painterResource(Res.drawable.ic_chevron_right),
+                    contentDescription = "View all",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -2700,33 +2790,27 @@ private fun DriversStatusSection(
                     onAction = onAddDriverClick
                 )
             } else {
-                // Stats row
+                // Enhanced stats row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    StatusChip(
+                    EnhancedStatusChip(
                         label = "On Route",
                         count = driverStatus.onTripInProgress,
                         color = Color(0xFF4CAF50),
                         modifier = Modifier.weight(1f)
                     )
-                    StatusChip(
+                    EnhancedStatusChip(
                         label = "Planned",
                         count = driverStatus.onTripPlanned,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = Color(0xFF2196F3),
                         modifier = Modifier.weight(1f)
                     )
-                    StatusChip(
+                    EnhancedStatusChip(
                         label = "Available",
                         count = driverStatus.available,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatusChip(
-                        label = "Leave",
-                        count = driverStatus.onLeave,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -3093,162 +3177,58 @@ private fun FleetOverviewHeroCard(
     onDriversClick: () -> Unit,
     onTripsClick: () -> Unit
 ) {
-    val fleetHealth = calculateFleetHealth(vehicleStatus)
-    val healthColor = getFleetHealthColor(fleetHealth)
-    val healthLabel = getFleetHealthLabel(fleetHealth)
-
-    // Animated health percentage
-    val animatedHealth by animateFloatAsState(
-        targetValue = fleetHealth.toFloat(),
-        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
-    )
-
-    Card(
+    // Simple Fleet Overview without border and health indicator
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .semantics { contentDescription = "Fleet overview showing $fleetHealth percent fleet health" },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .semantics { contentDescription = "Fleet overview summary" },
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        // Section Title
+        Text(
+            text = "Fleet Overview",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        // Metrics Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header with Fleet Health
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Fleet Overview",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Your fleet at a glance",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            // Vehicles Metric
+            FleetMetricCard(
+                icon = "🚛",
+                value = vehicleStatus.total,
+                label = "Vehicles",
+                subLabel = "${vehicleStatus.available} available",
+                onClick = onVehiclesClick,
+                modifier = Modifier.weight(1f),
+                accentColor = MaterialTheme.colorScheme.primary
+            )
 
-                // Fleet Health Indicator
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(
-                        modifier = Modifier.size(56.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Background circle
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawArc(
-                                color = healthColor.copy(alpha = 0.2f),
-                                startAngle = 0f,
-                                sweepAngle = 360f,
-                                useCenter = false,
-                                style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
-                            )
-                        }
-                        // Progress arc
-                        Canvas(modifier = Modifier.fillMaxSize()) {
-                            drawArc(
-                                color = healthColor,
-                                startAngle = -90f,
-                                sweepAngle = (animatedHealth / 100f) * 360f,
-                                useCenter = false,
-                                style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
-                            )
-                        }
-                        Text(
-                            text = "${animatedHealth.toInt()}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = healthColor
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = healthLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = healthColor,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
+            // Drivers Metric
+            FleetMetricCard(
+                icon = "👨‍✈️",
+                value = driverStatus.total,
+                label = "Drivers",
+                subLabel = "${driverStatus.available} available",
+                onClick = onDriversClick,
+                modifier = Modifier.weight(1f),
+                accentColor = MaterialTheme.colorScheme.secondary
+            )
 
-            // Metrics Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Vehicles Metric
-                FleetMetricCard(
-                    icon = "🚛",
-                    value = vehicleStatus.total,
-                    label = "Vehicles",
-                    subLabel = "${vehicleStatus.available} available",
-                    onClick = onVehiclesClick,
-                    modifier = Modifier.weight(1f),
-                    accentColor = MaterialTheme.colorScheme.primary
-                )
-
-                // Drivers Metric
-                FleetMetricCard(
-                    icon = "👨‍✈️",
-                    value = driverStatus.total,
-                    label = "Drivers",
-                    subLabel = "${driverStatus.available} available",
-                    onClick = onDriversClick,
-                    modifier = Modifier.weight(1f),
-                    accentColor = MaterialTheme.colorScheme.secondary
-                )
-
-                // Trips Metric
-                FleetMetricCard(
-                    icon = "🗺️",
-                    value = tripSummary.total,
-                    label = "Trips",
-                    subLabel = "${tripSummary.inProgress} active",
-                    onClick = onTripsClick,
-                    modifier = Modifier.weight(1f),
-                    accentColor = MaterialTheme.colorScheme.tertiary
-                )
-            }
-
-            // Active Status Bar
-            if (vehicleStatus.total > 0) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Vehicle Utilization",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${vehicleStatus.onTripPlanned + vehicleStatus.onTripInProgress}/${vehicleStatus.total} on trips",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    // Stacked progress bar
-                    FleetUtilizationBar(vehicleStatus = vehicleStatus)
-                }
-            }
+            // Trips Metric
+            FleetMetricCard(
+                icon = "🗺️",
+                value = tripSummary.total,
+                label = "Trips",
+                subLabel = "${tripSummary.inProgress} active",
+                onClick = onTripsClick,
+                modifier = Modifier.weight(1f),
+                accentColor = MaterialTheme.colorScheme.tertiary
+            )
         }
     }
 }
