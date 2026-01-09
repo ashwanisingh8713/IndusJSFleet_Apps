@@ -34,6 +34,10 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            // IndusJS Libraries
+            implementation(project(":ijs-error-lib"))
+            implementation(project(":ijs-dispatcher-lib"))
+
             implementation(libs.compose.runtime)
             implementation(libs.compose.ui)
             implementation(libs.compose.foundation)

@@ -32,4 +32,6 @@ include(":sharedUI")
 include(":androidApp")
 include(":webApp")
 include(":locationTracker")
+include(":ijs-error-lib")
+include(":ijs-dispatcher-lib")
 
