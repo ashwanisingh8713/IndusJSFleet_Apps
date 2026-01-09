@@ -29,6 +29,13 @@ The app manages vehicles, drivers, trips, costs, and real-time tracking for flee
 | Preferences | multiplatform-settings | 1.3.0 |
 | Theming | MaterialKolor | 4.0.5 |
 
+### Shared Libraries
+
+| Library | Purpose |
+|---------|---------|
+| `ijs-error-lib` | Error handling, FleetException hierarchy, error context |
+| `ijs-dispatcher-lib` | Coroutine dispatchers, DispatcherProvider |
+
 ---
 
 ## Architecture: Clean Architecture + MVI
@@ -332,6 +339,8 @@ FleetDateField(
 
 ## Error Handling
 
+> **Note:** Error handling is provided by `ijs-error-lib`. Import from `com.indusjs.error`.
+
 ### Result Sealed Class
 
 ```kotlin
@@ -345,6 +354,7 @@ sealed class Result<out T> {
 ### Exception Hierarchy
 
 ```kotlin
+// From ijs-error-lib
 sealed class FleetException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
 class NotAuthenticatedException(message: String = "Not authenticated") : FleetException(message)
@@ -353,14 +363,24 @@ class NetworkException(message: String = "Network unavailable") : FleetException
 class ValidationException(message: String, val field: String? = null) : FleetException(message)
 ```
 
-### ErrorHandler Context
+### Error Context
 
 ```kotlin
+// Use FleetErrorContext for screen-specific error handling
 ErrorContent(
     error = state.error,
-    screenContext = ErrorHandler.ScreenContext.VEHICLES,
+    screenContext = FleetErrorContext.VEHICLES,
     onRetry = { viewModel.sendIntent(Intent.LoadVehicles) }
 )
+```
+
+**Available Contexts:**
+- `FleetErrorContext.DASHBOARD`
+- `FleetErrorContext.VEHICLES`
+- `FleetErrorContext.DRIVERS`
+- `FleetErrorContext.TRIPS`
+- `FleetErrorContext.COSTS`
+- `FleetErrorContext.AUTH`
 ```
 
 ---
@@ -446,6 +466,41 @@ MaterialTheme.colorScheme.primary
 MaterialTheme.colorScheme.onSurface
 MaterialTheme.colorScheme.surfaceContainerLow
 ```
+
+---
+
+## External APIs
+
+### Google Places API
+Used for location autocomplete in CreateTripScreen and EditTripScreen.
+
+```kotlin
+// Location field with autocomplete
+FleetLocationField(
+    value = state.startLocation,
+    onValueChange = { viewModel.sendIntent(Intent.UpdateStartLocation(it)) },
+    onLocationSelected = { place ->
+        viewModel.sendIntent(Intent.SetStartLocation(
+            location = place.description,
+            lat = place.lat,
+            lng = place.lng
+        ))
+    },
+    label = "Start Location"
+)
+```
+
+### Google Distance Matrix API
+Used to calculate road distance between locations.
+
+```kotlin
+// Auto-calculate distance when both locations are set
+if (startLat != null && endLat != null) {
+    calculateDistance(startLat, startLng, endLat, endLng)
+}
+```
+
+**API Key:** Stored in `local.properties` as `GOOGLE_PLACES_API_KEY`
 
 ---
 
@@ -627,11 +682,16 @@ See `.github/prompts/` for detailed implementation prompts:
 - `screen-flows.prompt.md` - Navigation and screen structure
 - `dashboard-sections.prompt.md` - Dashboard section details
 - `use-cases.prompt.md` - Application use cases
+- `ui-components.prompt.md` - Reusable UI components reference
+- `date-time-handling.prompt.md` - Date/Time conversion and validation
 - `new-feature.prompt.md` - Feature implementation guide
 - `compose-screen.prompt.md` - Screen templates
 - `mvi-contract.prompt.md` - MVI pattern templates
 - `api-integration.prompt.md` - API integration guide
 - `dto-mapper.prompt.md` - DTO and mapper templates
+- `di-graph.prompt.md` - Metro DI graph templates
+- `navigation.prompt.md` - Navigation setup guide
+- `usecase.prompt.md` - Use case implementation
 
 ---
 
