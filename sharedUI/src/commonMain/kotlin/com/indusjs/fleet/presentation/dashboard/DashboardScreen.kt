@@ -1,10 +1,25 @@
 package com.indusjs.fleet.presentation.dashboard
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,12 +31,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.ErrorContent
@@ -47,6 +73,64 @@ import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+
+// ============ Helper Functions ============
+
+/**
+ * Get time-based greeting message based on current hour
+ * Uses platform-specific time utilities
+ */
+private fun getTimeBasedGreeting(): String {
+    return try {
+        // Get current hour using platform-specific time
+        val currentTimeMs = com.indusjs.fleet.core.util.currentTimeMillis()
+        // Convert to hours in day (UTC) - approximate calculation
+        val hourOfDay = ((currentTimeMs / 3600000) % 24).toInt()
+        // Adjust for typical timezone offset (IST = +5:30 ~ +5 hours)
+        val localHour = (hourOfDay + 5) % 24
+
+        when {
+            localHour < 12 -> "Good Morning"
+            localHour < 17 -> "Good Afternoon"
+            else -> "Good Evening"
+        }
+    } catch (e: Exception) {
+        "Hello" // Fallback greeting
+    }
+}
+
+/**
+ * Calculate fleet health percentage based on active vehicles
+ */
+private fun calculateFleetHealth(vehicleStatus: VehicleStatusSummary): Int {
+    if (vehicleStatus.total == 0) return 100
+    val activeCount = vehicleStatus.available + vehicleStatus.onTripPlanned + vehicleStatus.onTripInProgress
+    return ((activeCount.toFloat() / vehicleStatus.total.toFloat()) * 100).toInt().coerceIn(0, 100)
+}
+
+/**
+ * Get fleet health color based on percentage
+ */
+@Composable
+private fun getFleetHealthColor(percentage: Int): Color {
+    return when {
+        percentage >= 80 -> Color(0xFF4CAF50) // Green
+        percentage >= 60 -> Color(0xFFFFA726) // Orange
+        else -> Color(0xFFEF5350) // Red
+    }
+}
+
+/**
+ * Get fleet health label
+ */
+private fun getFleetHealthLabel(percentage: Int): String {
+    return when {
+        percentage >= 80 -> "Excellent"
+        percentage >= 60 -> "Good"
+        percentage >= 40 -> "Fair"
+        else -> "Needs Attention"
+    }
+}
 
 /**
  * Dashboard Screen composable - Main overview screen for Fleet Management.
@@ -134,28 +218,43 @@ fun DashboardScreen(
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
+                val greeting = remember { getTimeBasedGreeting() }
+
                 TopAppBar(
                     title = {
-                        Column {
+                        Column(
+                            modifier = Modifier.semantics { heading() }
+                        ) {
                             Text(
-                                text = if (state.userName.isNotEmpty()) "Hi, ${state.userName}" else "Dashboard",
+                                text = if (state.userName.isNotEmpty()) "$greeting, ${state.userName}" else greeting,
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.semantics {
+                                    contentDescription = if (state.userName.isNotEmpty())
+                                        "$greeting ${state.userName}" else greeting
+                                }
                             )
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 if (state.userRole.isNotEmpty()) {
-                                    Text(
-                                        text = state.userRole,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                    ) {
+                                        Text(
+                                            text = state.userRole,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
                                 }
                                 if (state.lastUpdated != null) {
                                     Text(
-                                        text = "• Updated: ${formatLastUpdated(state.lastUpdated)}",
+                                        text = "• ${formatLastUpdated(state.lastUpdated)}",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                     )
@@ -164,10 +263,15 @@ fun DashboardScreen(
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                        IconButton(
+                            onClick = { scope.launch { drawerState.open() } },
+                            modifier = Modifier.semantics {
+                                contentDescription = "Open navigation menu"
+                            }
+                        ) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_menu),
-                                contentDescription = "Menu",
+                                contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -189,23 +293,46 @@ fun DashboardScreen(
                                 }
                             }
                         ) {
-                            IconButton(onClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToNotifications) }) {
+                            IconButton(
+                                onClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToNotifications) },
+                                modifier = Modifier.semantics {
+                                    contentDescription = if (state.notificationCount > 0)
+                                        "${state.notificationCount} notifications" else "Notifications"
+                                }
+                            ) {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_notifications),
-                                    contentDescription = "Notifications",
+                                    contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
 
-                        // Refresh button
-                        IconButton(onClick = { viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard) }) {
+                        // Animated Refresh button
+                        var isRefreshing by remember { mutableStateOf(false) }
+                        val rotationAngle by animateFloatAsState(
+                            targetValue = if (state.isRefreshing) 360f else 0f,
+                            animationSpec = tween(durationMillis = 1000),
+                            finishedListener = { isRefreshing = false }
+                        )
+
+                        IconButton(
+                            onClick = {
+                                isRefreshing = true
+                                viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard)
+                            },
+                            modifier = Modifier.semantics {
+                                contentDescription = "Refresh dashboard"
+                            }
+                        ) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh",
+                                contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .rotate(if (state.isRefreshing) rotationAngle else 0f)
                             )
                         }
                     },
@@ -535,6 +662,18 @@ private fun DashboardContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // 0. Fleet Overview Hero Card - Always show at top
+        item {
+            FleetOverviewHeroCard(
+                vehicleStatus = vehicleStatus,
+                driverStatus = driverStatus,
+                tripSummary = tripSummary,
+                onVehiclesClick = onVehiclesClick,
+                onDriversClick = onDriversClick,
+                onTripsClick = onTripsClick
+            )
+        }
+
         // 1. Cost Overview Section with Filter - only show for onboarding or when has cost data
         if (shouldShowCostOverview) {
             item {
@@ -553,8 +692,8 @@ private fun DashboardContent(
             }
         }
 
-        // 2. Pending Payments Section - Only show if there are trips
-        if (tripSummary.total > 0) {
+        // 2. Pending Payments Section - Only show if there are pending payments
+        if (tripSummary.total > 0 && (pendingPayments.isNotEmpty() || totalPendingAmount > 0 || isLoadingPendingPayments)) {
             item {
                 PendingPaymentsSection(
                     payments = pendingPayments,
@@ -2624,7 +2763,7 @@ private fun StatusChip(
 }
 
 /**
- * Quick Actions Section - Modern design with gradient accents and polished UI.
+ * Quick Actions Section - Modern design with vector icons and improved accessibility.
  */
 @Composable
 private fun QuickActionsSection(
@@ -2640,7 +2779,9 @@ private fun QuickActionsSection(
     val showCostActions = hasVehicles || hasTrips
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = "Quick actions section" },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -2678,24 +2819,26 @@ private fun QuickActionsSection(
                 ) {
                     // Trip Cost - shown only when trips exist
                     if (hasTrips) {
-                        EnhancedQuickActionButton(
-                            icon = "💰",
+                        VectorQuickActionButton(
+                            iconRes = Res.drawable.ic_trip,
                             label = "Trip Cost",
                             backgroundColor = Color(0xFF4CAF50).copy(alpha = 0.12f),
-                            iconBackgroundColor = Color(0xFF4CAF50),
+                            iconTint = Color(0xFF4CAF50),
                             onClick = onAddTripCostClick,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            contentDescription = "Add trip cost"
                         )
                     }
                     // Vehicle Cost - shown only when vehicles exist
                     if (hasVehicles) {
-                        EnhancedQuickActionButton(
-                            icon = "🔧",
+                        VectorQuickActionButton(
+                            iconRes = Res.drawable.ic_settings,
                             label = "Vehicle Cost",
                             backgroundColor = Color(0xFFFF9800).copy(alpha = 0.12f),
-                            iconBackgroundColor = Color(0xFFFF9800),
+                            iconTint = Color(0xFFFF9800),
                             onClick = onAddVehicleCostClick,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            contentDescription = "Add vehicle maintenance cost"
                         )
                     }
                 }
@@ -2709,45 +2852,127 @@ private fun QuickActionsSection(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    EnhancedQuickActionButton(
-                        icon = "🚛",
+                    VectorQuickActionButton(
+                        iconRes = Res.drawable.ic_truck,
                         label = "Vehicles",
                         backgroundColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                        iconBackgroundColor = MaterialTheme.colorScheme.primary,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = onVehiclesClick,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        contentDescription = "View vehicles"
                     )
-                    EnhancedQuickActionButton(
-                        icon = "👨‍✈️",
+                    VectorQuickActionButton(
+                        iconRes = Res.drawable.ic_driver,
                         label = "Drivers",
                         backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                        iconBackgroundColor = MaterialTheme.colorScheme.secondary,
+                        iconTint = MaterialTheme.colorScheme.secondary,
                         onClick = onDriversClick,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        contentDescription = "View drivers"
                     )
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    EnhancedQuickActionButton(
-                        icon = "🗺️",
+                    VectorQuickActionButton(
+                        iconRes = Res.drawable.ic_trip,
                         label = "Trips",
                         backgroundColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
-                        iconBackgroundColor = MaterialTheme.colorScheme.tertiary,
+                        iconTint = MaterialTheme.colorScheme.tertiary,
                         onClick = onTripsClick,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        contentDescription = "View trips"
                     )
-                    EnhancedQuickActionButton(
-                        icon = "📍",
+                    VectorQuickActionButton(
+                        iconRes = Res.drawable.ic_map,
                         label = "Live Map",
                         backgroundColor = Color(0xFF2196F3).copy(alpha = 0.12f),
-                        iconBackgroundColor = Color(0xFF2196F3),
+                        iconTint = Color(0xFF2196F3),
                         onClick = onMapsClick,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        contentDescription = "View live tracking map"
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Vector Quick Action Button with proper icon resources and animations.
+ */
+@Composable
+private fun VectorQuickActionButton(
+    iconRes: org.jetbrains.compose.resources.DrawableResource,
+    label: String,
+    backgroundColor: Color,
+    iconTint: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentDescription: String
+) {
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium)
+    )
+
+    Surface(
+        modifier = modifier
+            .scale(scale)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    isPressed = true
+                    onClick()
+                }
+            )
+            .semantics { this.contentDescription = contentDescription },
+        color = backgroundColor,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Icon container
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(iconTint.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = iconTint
+                )
+            }
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+
+    // Reset pressed state
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            kotlinx.coroutines.delay(100)
+            isPressed = false
         }
     }
 }
@@ -2851,6 +3076,333 @@ private fun formatAmount(amount: Double): String {
             "${((value * 10).toLong() / 10.0)} K"
         }
         else -> amount.toLong().toString()
+    }
+}
+
+// ============ Fleet Overview Hero Card ============
+
+/**
+ * Fleet Overview Hero Card - Key metrics at a glance with fleet health indicator
+ */
+@Composable
+private fun FleetOverviewHeroCard(
+    vehicleStatus: VehicleStatusSummary,
+    driverStatus: DriverStatusSummary,
+    tripSummary: TripSummary,
+    onVehiclesClick: () -> Unit,
+    onDriversClick: () -> Unit,
+    onTripsClick: () -> Unit
+) {
+    val fleetHealth = calculateFleetHealth(vehicleStatus)
+    val healthColor = getFleetHealthColor(fleetHealth)
+    val healthLabel = getFleetHealthLabel(fleetHealth)
+
+    // Animated health percentage
+    val animatedHealth by animateFloatAsState(
+        targetValue = fleetHealth.toFloat(),
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = "Fleet overview showing $fleetHealth percent fleet health" },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header with Fleet Health
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Fleet Overview",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Your fleet at a glance",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Fleet Health Indicator
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier.size(56.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Background circle
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            drawArc(
+                                color = healthColor.copy(alpha = 0.2f),
+                                startAngle = 0f,
+                                sweepAngle = 360f,
+                                useCenter = false,
+                                style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
+                            )
+                        }
+                        // Progress arc
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            drawArc(
+                                color = healthColor,
+                                startAngle = -90f,
+                                sweepAngle = (animatedHealth / 100f) * 360f,
+                                useCenter = false,
+                                style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
+                            )
+                        }
+                        Text(
+                            text = "${animatedHealth.toInt()}%",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = healthColor
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = healthLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = healthColor,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            // Metrics Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Vehicles Metric
+                FleetMetricCard(
+                    icon = "🚛",
+                    value = vehicleStatus.total,
+                    label = "Vehicles",
+                    subLabel = "${vehicleStatus.available} available",
+                    onClick = onVehiclesClick,
+                    modifier = Modifier.weight(1f),
+                    accentColor = MaterialTheme.colorScheme.primary
+                )
+
+                // Drivers Metric
+                FleetMetricCard(
+                    icon = "👨‍✈️",
+                    value = driverStatus.total,
+                    label = "Drivers",
+                    subLabel = "${driverStatus.available} available",
+                    onClick = onDriversClick,
+                    modifier = Modifier.weight(1f),
+                    accentColor = MaterialTheme.colorScheme.secondary
+                )
+
+                // Trips Metric
+                FleetMetricCard(
+                    icon = "🗺️",
+                    value = tripSummary.total,
+                    label = "Trips",
+                    subLabel = "${tripSummary.inProgress} active",
+                    onClick = onTripsClick,
+                    modifier = Modifier.weight(1f),
+                    accentColor = MaterialTheme.colorScheme.tertiary
+                )
+            }
+
+            // Active Status Bar
+            if (vehicleStatus.total > 0) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Vehicle Utilization",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "${vehicleStatus.onTripPlanned + vehicleStatus.onTripInProgress}/${vehicleStatus.total} on trips",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Stacked progress bar
+                    FleetUtilizationBar(vehicleStatus = vehicleStatus)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Fleet Metric Card - Individual metric display
+ */
+@Composable
+private fun FleetMetricCard(
+    icon: String,
+    value: Int,
+    label: String,
+    subLabel: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    accentColor: Color
+) {
+    // Animated counter
+    val animatedValue by animateFloatAsState(
+        targetValue = value.toFloat(),
+        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
+    )
+
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(12.dp),
+        shadowElevation = 1.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = icon,
+                style = MaterialTheme.typography.titleLarge
+            )
+            Text(
+                text = animatedValue.toInt().toString(),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = accentColor
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+/**
+ * Fleet Utilization Bar - Stacked bar showing vehicle status distribution
+ */
+@Composable
+private fun FleetUtilizationBar(vehicleStatus: VehicleStatusSummary) {
+    val total = vehicleStatus.total.toFloat().coerceAtLeast(1f)
+
+    val onTripFraction = (vehicleStatus.onTripPlanned + vehicleStatus.onTripInProgress) / total
+    val maintenanceFraction = vehicleStatus.underMaintenance / total
+    val availableFraction = vehicleStatus.available / total
+    val inactiveFraction = vehicleStatus.inactive / total
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(8.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        // On Trip - Green
+        if (onTripFraction > 0) {
+            Box(
+                modifier = Modifier
+                    .weight(onTripFraction.coerceAtLeast(0.01f))
+                    .fillMaxHeight()
+                    .background(Color(0xFF4CAF50))
+            )
+        }
+        // Available - Blue
+        if (availableFraction > 0) {
+            Box(
+                modifier = Modifier
+                    .weight(availableFraction.coerceAtLeast(0.01f))
+                    .fillMaxHeight()
+                    .background(Color(0xFF2196F3))
+            )
+        }
+        // Maintenance - Orange
+        if (maintenanceFraction > 0) {
+            Box(
+                modifier = Modifier
+                    .weight(maintenanceFraction.coerceAtLeast(0.01f))
+                    .fillMaxHeight()
+                    .background(Color(0xFFFF9800))
+            )
+        }
+        // Inactive - Gray
+        if (inactiveFraction > 0) {
+            Box(
+                modifier = Modifier
+                    .weight(inactiveFraction.coerceAtLeast(0.01f))
+                    .fillMaxHeight()
+                    .background(Color(0xFF9E9E9E))
+            )
+        }
+    }
+
+    // Legend
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        UtilizationLegendItem(color = Color(0xFF4CAF50), label = "On Trip")
+        UtilizationLegendItem(color = Color(0xFF2196F3), label = "Available")
+        UtilizationLegendItem(color = Color(0xFFFF9800), label = "Maintenance")
+        UtilizationLegendItem(color = Color(0xFF9E9E9E), label = "Inactive")
+    }
+}
+
+/**
+ * Utilization Legend Item
+ */
+@Composable
+private fun UtilizationLegendItem(color: Color, label: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 10.sp
+        )
     }
 }
 
