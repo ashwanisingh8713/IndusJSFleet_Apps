@@ -225,40 +225,25 @@ fun DashboardScreen(
                         Column(
                             modifier = Modifier.semantics { heading() }
                         ) {
+                            // Greeting on first line
                             Text(
-                                text = if (state.userName.isNotEmpty()) "$greeting, ${state.userName}" else greeting,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.semantics {
-                                    contentDescription = if (state.userName.isNotEmpty())
-                                        "$greeting ${state.userName}" else greeting
-                                }
+                                text = greeting,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                if (state.userRole.isNotEmpty()) {
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                                    ) {
-                                        Text(
-                                            text = state.userRole,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Medium,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
+                            // Username on second line (larger, bolder)
+                            if (state.userName.isNotEmpty()) {
+                                Text(
+                                    text = state.userName,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.semantics {
+                                        contentDescription = "$greeting ${state.userName}"
                                     }
-                                }
-                                if (state.lastUpdated != null) {
-                                    Text(
-                                        text = "• ${formatLastUpdated(state.lastUpdated)}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                    )
-                                }
+                                )
                             }
                         }
                     },
@@ -3230,6 +3215,145 @@ private fun FleetOverviewHeroCard(
                 accentColor = MaterialTheme.colorScheme.tertiary
             )
         }
+
+        // Bottom color range bar showing vehicle status distribution
+        if (vehicleStatus.total > 0) {
+            FleetStatusRatioBar(vehicleStatus = vehicleStatus)
+        }
+    }
+}
+
+/**
+ * Fleet Status Ratio Bar - Linear color bar showing vehicle status distribution
+ */
+@Composable
+private fun FleetStatusRatioBar(vehicleStatus: VehicleStatusSummary) {
+    val total = vehicleStatus.total.toFloat().coerceAtLeast(1f)
+
+    val onRouteCount = vehicleStatus.onTripInProgress
+    val plannedCount = vehicleStatus.onTripPlanned
+    val availableCount = vehicleStatus.available
+    val maintenanceCount = vehicleStatus.underMaintenance
+    val inactiveCount = vehicleStatus.inactive
+
+    val onRouteFraction = onRouteCount / total
+    val plannedFraction = plannedCount / total
+    val availableFraction = availableCount / total
+    val maintenanceFraction = maintenanceCount / total
+    val inactiveFraction = inactiveCount / total
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Color bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            // On Route - Green
+            if (onRouteFraction > 0) {
+                Box(
+                    modifier = Modifier
+                        .weight(onRouteFraction.coerceAtLeast(0.01f))
+                        .fillMaxHeight()
+                        .background(Color(0xFF4CAF50))
+                )
+            }
+            // Planned - Blue
+            if (plannedFraction > 0) {
+                Box(
+                    modifier = Modifier
+                        .weight(plannedFraction.coerceAtLeast(0.01f))
+                        .fillMaxHeight()
+                        .background(Color(0xFF2196F3))
+                )
+            }
+            // Available - Teal
+            if (availableFraction > 0) {
+                Box(
+                    modifier = Modifier
+                        .weight(availableFraction.coerceAtLeast(0.01f))
+                        .fillMaxHeight()
+                        .background(Color(0xFF009688))
+                )
+            }
+            // Maintenance - Orange
+            if (maintenanceFraction > 0) {
+                Box(
+                    modifier = Modifier
+                        .weight(maintenanceFraction.coerceAtLeast(0.01f))
+                        .fillMaxHeight()
+                        .background(Color(0xFFFF9800))
+                )
+            }
+            // Inactive - Gray
+            if (inactiveFraction > 0) {
+                Box(
+                    modifier = Modifier
+                        .weight(inactiveFraction.coerceAtLeast(0.01f))
+                        .fillMaxHeight()
+                        .background(Color(0xFF9E9E9E))
+                )
+            }
+        }
+
+        // Legend row - compact horizontal layout
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (onRouteCount > 0) {
+                RatioLegendItem(color = Color(0xFF4CAF50), label = "Route", count = onRouteCount)
+            }
+            if (plannedCount > 0) {
+                RatioLegendItem(color = Color(0xFF2196F3), label = "Planned", count = plannedCount)
+            }
+            if (availableCount > 0) {
+                RatioLegendItem(color = Color(0xFF009688), label = "Available", count = availableCount)
+            }
+            if (maintenanceCount > 0) {
+                RatioLegendItem(color = Color(0xFFFF9800), label = "Maint.", count = maintenanceCount)
+            }
+            if (inactiveCount > 0) {
+                RatioLegendItem(color = Color(0xFF9E9E9E), label = "Inactive", count = inactiveCount)
+            }
+        }
+    }
+}
+
+/**
+ * Ratio Legend Item - Compact legend with color dot, count, and label
+ */
+@Composable
+private fun RatioLegendItem(
+    color: Color,
+    label: String,
+    count: Int
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(color)
+        )
+        Text(
+            text = "$count",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -3246,12 +3370,8 @@ private fun FleetMetricCard(
     modifier: Modifier = Modifier,
     accentColor: Color
 ) {
-    // Animated counter
-    val animatedValue by animateFloatAsState(
-        targetValue = value.toFloat(),
-        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
-    )
-
+    // Use key to prevent recomposition animation issues
+    // Show value directly without animation to prevent shuffling
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
@@ -3270,7 +3390,7 @@ private fun FleetMetricCard(
                 style = MaterialTheme.typography.titleLarge
             )
             Text(
-                text = animatedValue.toInt().toString(),
+                text = value.toString(),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = accentColor
