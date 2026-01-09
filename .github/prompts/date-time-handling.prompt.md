@@ -2,7 +2,7 @@
 
 ## Overview
 
-Date and time handling is critical in IndusJS Fleet. The UI uses Indian format (DD-MM-YYYY) while the API uses ISO 8601 format. This document covers all conversion and validation requirements.
+Date and time handling is critical in IndusJS Fleet. The API uses **different formats for different endpoints**. This document covers all conversion and validation requirements.
 
 ---
 
@@ -15,12 +15,16 @@ Date and time handling is critical in IndusJS Fleet. The UI uses Indian format (
 | Time | HH:MM (24hr) | 14:30 |
 | DateTime | DD-MM-YYYY HH:MM | 04-01-2026 14:30 |
 
-### API Request/Response Format
-| Type | Format | Example |
-|------|--------|---------|
-| DateTime | ISO 8601 | 2026-01-04T14:30:00Z |
-| Date only | YYYY-MM-DD | 2026-01-04 |
-| Time only | HH:MM:SS | 14:30:00 |
+### API Request Format (IMPORTANT - Mixed Approach)
+
+| API Endpoint | Date Format | Time Format | Example |
+|--------------|-------------|-------------|---------|
+| **Trip Create/Update** | ISO 8601 | ISO 8601 | `"planned_start": "2026-01-04T14:30:00Z"` |
+| **Trip Costs (individual)** | DD-MM-YYYY | HH:MM | `"date": "20-12-2025", "time": "10:30"` |
+| **Trip Costs (bulk)** | ISO 8601 | ISO 8601 | `"date": "2026-12-20T10:30:00Z"` |
+| **Maintenance Costs** | DD-MM-YYYY | HH:MM | `"date": "20-12-2025", "time": "14:00"` |
+| **Document Expiry** | DD-MM-YYYY | N/A | `"expiry_date": "31-12-2026"` |
+| **Driver License** | DD-MM-YYYY | N/A | `"license_expiry": "31-12-2026"` |
 
 ---
 

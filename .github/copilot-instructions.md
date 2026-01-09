@@ -251,22 +251,27 @@ Local: http://localhost:8080/api/v2
 
 ### Date & Time Formats (CRITICAL)
 
-| Field Type | Display Format | API Request Format |
-|------------|----------------|-------------------|
-| Date | `DD-MM-YYYY` | ISO 8601: `2026-01-04T00:00:00Z` |
-| Time | `HH:MM` (24hr) | Combined with date in ISO 8601 |
+| API Type | Date Format | Time Format | Example |
+|----------|-------------|-------------|---------|
+| Trip Create/Update | ISO 8601 | ISO 8601 | `2026-01-04T14:30:00Z` |
+| Trip Costs (individual) | `DD-MM-YYYY` | `HH:MM` | `"date": "20-12-2025", "time": "10:30"` |
+| Trip Costs (bulk) | ISO 8601 | ISO 8601 | `2026-12-20T10:30:00Z` |
+| Maintenance Costs | `DD-MM-YYYY` | `HH:MM` | `"date": "20-12-2025", "time": "14:00"` |
+| Document Expiry | `DD-MM-YYYY` | N/A | `"expiry_date": "31-12-2026"` |
+| Driver License | `DD-MM-YYYY` | N/A | `"license_expiry": "31-12-2026"` |
+| UI Display | `DD-MM-YYYY` | `HH:MM` (24hr) | `04-01-2026`, `14:30` |
 
 **Conversion Example:**
 ```kotlin
-// UI input: "04-01-2026" + "14:30"
-// API request: "2026-01-04T14:30:00Z"
-
+// UI to API (for Trip scheduling)
 fun toIsoDateTime(date: String, time: String): String {
-    // date = "04-01-2026" (DD-MM-YYYY)
-    // time = "14:30" (HH:MM)
+    // date = "04-01-2026" (DD-MM-YYYY), time = "14:30" (HH:MM)
     val (day, month, year) = date.split("-")
     return "${year}-${month}-${day}T${time}:00Z"
 }
+
+// UI to API (for Cost entries - simple format)
+// Just send as-is: "date": "04-01-2026", "time": "14:30"
 ```
 
 ### DTO Conventions
@@ -515,14 +520,12 @@ if (startLat != null && endLat != null) {
 - `ic_vehicle.xml`, `ic_driver.xml`, `ic_trip.xml` - Entity icons
 
 ### Usage
-
 ```kotlin
+// Import generated resources
 import indusjs_fleet.sharedui.generated.resources.*
 
-Icon(
-    painter = painterResource(Res.drawable.ic_arrow_back),
-    contentDescription = "Back"
-)
+// Use in composable
+Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "Back")
 ```
 
 ---
