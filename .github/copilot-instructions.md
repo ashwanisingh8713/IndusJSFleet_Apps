@@ -494,6 +494,121 @@ Icon(
 
 ---
 
+## Application Use Cases
+
+### Vehicle Management
+| Use Case | API | Description |
+|----------|-----|-------------|
+| Add Vehicle | `POST /vehicles` | Register new vehicle with documents |
+| View Vehicle | `GET /vehicles/{id}` | See details with tabs (Overview, Trips, Documents, Costs) |
+| Edit Vehicle | `PUT /vehicles/{id}` | Update vehicle info and assigned driver |
+| Upload Document | `POST /vehicles/{id}/documents` | Add document with expiry tracking |
+| Add Maintenance Cost | `POST /vehicles/{id}/maintenance-costs` | Record maintenance expense |
+| View Costs | `GET /vehicles/{id}/maintenance-costs` | Filter by date range, cost type |
+
+### Driver Management
+| Use Case | API | Description |
+|----------|-----|-------------|
+| Add Driver | `POST /drivers` | Register new driver with license info |
+| View Driver | `GET /drivers/{id}` | See details with license, assignments |
+| Edit Driver | `PUT /drivers/{id}` | Update driver information |
+| Toggle Status | `PATCH /drivers/{id}/toggle-active` | Activate/deactivate driver |
+
+### Trip Management
+| Use Case | API | Description |
+|----------|-----|-------------|
+| Create Trip | `POST /trips` | Plan trip with vehicle, driver, route, schedule |
+| View Trip | `GET /trips/{id}` | See details with route, cargo, costs |
+| Edit Trip | `PUT /trips/{id}` | Update trip before departure |
+| Cancel Trip | `PATCH /trips/{id}/cancel` | Cancel planned trip |
+| Add Trip Cost | `POST /trips/{id}/costs` | Record trip expense |
+
+### Dashboard Features
+| Use Case | API | Description |
+|----------|-----|-------------|
+| Fleet Overview | `GET /dashboard` | Vehicle, driver, trip stats |
+| Cost Overview | `GET /dashboard/cost-overview` | Financial summary with filter |
+| Pending Payments | `GET /dashboard/pending-payments` | Outstanding payments |
+| Alerts Status | `GET /dashboard/alerts-status` | Document/license expiry alerts |
+
+---
+
+## Data Types Reference
+
+### Cargo Types
+```
+Gitti, Balu, Bhakshi, Enta, Hazardous, Valuable, Others
+```
+
+### Trip Cost Types
+```
+fuel, toll, driver_allowance, parking, loading_charges,
+unloading_charges, chalan, permit, insurance, other
+```
+
+### Maintenance Cost Types
+```
+tyre, battery, servicing, engine_repair, body_repair,
+electrical, ac_repair, other
+```
+
+### Payment Status
+```
+pending, partial, paid
+```
+
+### Trip States
+```
+planned → in_progress → completed
+    ↓
+cancelled
+```
+
+### Vehicle States
+```
+active, maintenance, inactive
+```
+
+### User Roles
+```
+owner, manager, supervisor, driver
+```
+
+---
+
+## Screen Types & Templates
+
+### List Screen
+- TopAppBar with back, refresh, add actions
+- Optional search bar
+- Optional filter chips
+- LazyColumn with item cards
+- Empty state with add action
+- FAB for quick add
+
+### Detail Screen
+- TopAppBar with back, edit, more actions
+- Hero/header section
+- Tabs for complex entities
+- Section cards with labels/values
+- Action buttons
+
+### Form Screen
+- TopAppBar with back, save actions
+- Section cards with inputs
+- FleetTextField, FleetDateField, FleetTimeField
+- Dropdowns for selections
+- Submit button at bottom
+
+### Dashboard Screen
+- Hamburger menu navigation
+- Section cards in LazyColumn
+- Quick action buttons
+- Status summaries
+- Alerts section
+
+---
+
 ## API Reference
 
 See `Fleet_Management_API_v2.postman_collection.json` for complete API documentation including:
@@ -503,6 +618,20 @@ See `Fleet_Management_API_v2.postman_collection.json` for complete API documenta
 - Trips CRUD, state management, costs
 - Dashboard statistics
 - Team management
+
+---
+
+## Prompts Reference
+
+See `.github/prompts/` for detailed implementation prompts:
+- `screen-flows.prompt.md` - Navigation and screen structure
+- `dashboard-sections.prompt.md` - Dashboard section details
+- `use-cases.prompt.md` - Application use cases
+- `new-feature.prompt.md` - Feature implementation guide
+- `compose-screen.prompt.md` - Screen templates
+- `mvi-contract.prompt.md` - MVI pattern templates
+- `api-integration.prompt.md` - API integration guide
+- `dto-mapper.prompt.md` - DTO and mapper templates
 
 ---
 
