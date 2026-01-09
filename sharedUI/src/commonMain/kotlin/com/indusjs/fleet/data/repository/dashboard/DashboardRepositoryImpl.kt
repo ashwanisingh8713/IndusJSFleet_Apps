@@ -11,6 +11,8 @@ import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.dashboard.DashboardMapper.toDomain
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.data.model.dashboard.DashboardDataDto
+import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
+import com.indusjs.fleet.domain.entity.dashboard.CostBreakdownItem
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.PendingPayment
 import com.indusjs.fleet.domain.entity.dashboard.PendingPaymentsData
@@ -129,7 +131,29 @@ class DashboardRepositoryImpl(
                         maintenanceCosts = data.maintenanceCosts,
                         fuelCosts = data.fuelCosts,
                         tollCosts = data.tollCosts,
-                        otherCosts = data.otherCosts
+                        otherCosts = data.otherCosts,
+                        // NEW: Detailed cost breakdowns
+                        driverAllowanceExpenses = data.driverAllowanceExpenses,
+                        parkingExpenses = data.parkingExpenses,
+                        loadingCharges = data.loadingCharges,
+                        unloadingCharges = data.unloadingCharges,
+                        chalanExpenses = data.chalanExpenses,
+                        permitExpenses = data.permitExpenses,
+                        insuranceExpenses = data.insuranceExpenses,
+                        tripCostBreakdown = data.tripCostBreakdown.map { dto ->
+                            CostBreakdownItem(
+                                costType = dto.costType,
+                                amount = dto.amount,
+                                count = dto.count
+                            )
+                        },
+                        maintenanceCostBreakdown = data.maintenanceCostBreakdown.map { dto ->
+                            CostBreakdownItem(
+                                costType = dto.costType,
+                                amount = dto.amount,
+                                count = dto.count
+                            )
+                        }
                     )
                 )
             } else {
@@ -172,6 +196,23 @@ class DashboardRepositoryImpl(
                 )
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch pending payments"))
+            }
+        } catch (e: AuthException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
+        }
+    }
+
+    override suspend fun getAlertsStatus(): Result<AlertsSummary> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getAlertsStatus(token)
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data.toDomain())
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to fetch alerts status"))
             }
         } catch (e: AuthException) {
             Result.Error(e)

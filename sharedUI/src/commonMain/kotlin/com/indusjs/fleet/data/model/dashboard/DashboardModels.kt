@@ -123,7 +123,20 @@ data class AlertDto(
     @SerialName("entity_name")
     val entityName: String? = null,
     @SerialName("created_at")
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    // NEW: Enhanced alert fields for vehicle/driver association
+    @SerialName("vehicle_id")
+    val vehicleId: Int? = null,
+    @SerialName("vehicle_registration_number")
+    val vehicleRegistrationNumber: String? = null,
+    @SerialName("driver_id")
+    val driverId: Int? = null,
+    @SerialName("driver_name")
+    val driverName: String? = null,
+    @SerialName("days_until_expiry")
+    val daysUntilExpiry: Int? = null,
+    @SerialName("expiry_date")
+    val expiryDate: String? = null
 ) : Dto
 
 /**
@@ -272,7 +285,37 @@ data class CostOverviewDto(
     @SerialName("toll_costs")
     val tollCosts: Double = 0.0,
     @SerialName("other_costs")
-    val otherCosts: Double = 0.0
+    val otherCosts: Double = 0.0,
+    // NEW: Detailed cost breakdowns
+    @SerialName("driver_allowance_expenses")
+    val driverAllowanceExpenses: Double = 0.0,
+    @SerialName("parking_expenses")
+    val parkingExpenses: Double = 0.0,
+    @SerialName("loading_charges")
+    val loadingCharges: Double = 0.0,
+    @SerialName("unloading_charges")
+    val unloadingCharges: Double = 0.0,
+    @SerialName("chalan_expenses")
+    val chalanExpenses: Double = 0.0,
+    @SerialName("permit_expenses")
+    val permitExpenses: Double = 0.0,
+    @SerialName("insurance_expenses")
+    val insuranceExpenses: Double = 0.0,
+    @SerialName("trip_cost_breakdown")
+    val tripCostBreakdown: List<CostBreakdownItemDto> = emptyList(),
+    @SerialName("maintenance_cost_breakdown")
+    val maintenanceCostBreakdown: List<CostBreakdownItemDto> = emptyList()
+) : Dto
+
+/**
+ * Cost breakdown item for detailed expense tracking.
+ */
+@Serializable
+data class CostBreakdownItemDto(
+    @SerialName("cost_type")
+    val costType: String = "",
+    val amount: Double = 0.0,
+    val count: Int = 0
 ) : Dto
 
 /**
@@ -439,4 +482,54 @@ data class ExpiryAlertDto(
     @SerialName("is_expired")
     val isExpired: Boolean = false,
     val priority: String = "warning" // critical, warning, info
+) : Dto
+
+/**
+ * Alerts Status API response.
+ */
+@Serializable
+data class AlertsStatusApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: AlertsStatusDto? = null
+)
+
+/**
+ * Alerts Status data from API with detailed counts.
+ */
+@Serializable
+data class AlertsStatusDto(
+    @SerialName("total_alerts")
+    val totalAlerts: Int = 0,
+    @SerialName("critical_alerts")
+    val criticalAlerts: Int = 0,
+    @SerialName("warning_alerts")
+    val warningAlerts: Int = 0,
+    @SerialName("info_alerts")
+    val infoAlerts: Int = 0,
+    @SerialName("document_expiring")
+    val documentExpiring: Int = 0,
+    @SerialName("license_expiring")
+    val licenseExpiring: Int = 0,
+    @SerialName("pending_payments")
+    val pendingPayments: Int = 0,
+    @SerialName("maintenance_vehicles")
+    val maintenanceVehicles: Int = 0,
+    // NEW: Detailed expiry counts
+    @SerialName("document_expired")
+    val documentExpired: Int = 0,
+    @SerialName("document_expiring_7_days")
+    val documentExpiring7Days: Int = 0,
+    @SerialName("document_expiring_30_days")
+    val documentExpiring30Days: Int = 0,
+    @SerialName("license_expired")
+    val licenseExpired: Int = 0,
+    @SerialName("license_expiring_7_days")
+    val licenseExpiring7Days: Int = 0,
+    @SerialName("license_expiring_30_days")
+    val licenseExpiring30Days: Int = 0,
+    @SerialName("maintenance_vehicles_count")
+    val maintenanceVehiclesCount: Int = 0,
+    // Alerts list
+    val alerts: List<AlertDto> = emptyList()
 ) : Dto

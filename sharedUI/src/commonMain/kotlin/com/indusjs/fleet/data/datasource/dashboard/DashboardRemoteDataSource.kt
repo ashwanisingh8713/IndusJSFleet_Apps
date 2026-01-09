@@ -4,10 +4,10 @@ import co.touchlab.kermit.Logger
 import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.RemoteDataSource
+import com.indusjs.fleet.data.model.dashboard.AlertsStatusApiResponse
 import com.indusjs.fleet.data.model.dashboard.CostOverviewApiResponse
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.data.model.dashboard.DashboardApiResponse
-import com.indusjs.fleet.data.model.dashboard.DashboardDataDto
 import com.indusjs.fleet.data.model.dashboard.PendingPaymentsApiResponse
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -39,6 +39,12 @@ interface DashboardRemoteDataSource : RemoteDataSource {
      * Fetches pending payments list.
      */
     suspend fun getPendingPayments(token: String, page: Int = 1, perPage: Int = 20): PendingPaymentsApiResponse
+
+    /**
+     * Fetches alerts status with detailed counts by type/priority.
+     * Includes document expiry, license expiry, maintenance vehicles, etc.
+     */
+    suspend fun getAlertsStatus(token: String): AlertsStatusApiResponse
 }
 
 /**
@@ -111,6 +117,22 @@ class DashboardRemoteDataSourceImpl(
         }
     }
 
+    override suspend fun getAlertsStatus(token: String): AlertsStatusApiResponse {
+        return try {
+            log.d { "Fetching alerts status" }
+            val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.DASHBOARD_ALERTS_STATUS}") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            handleAlertsStatusResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch alerts status: ${e.message}" }
+            AlertsStatusApiResponse(
+                success = false,
+                message = ApiErrorHandler.getNetworkErrorMessage(e)
+            )
+        }
+    }
+
     private suspend fun handleDashboardResponse(response: HttpResponse): DashboardApiResponse {
         val responseBody = response.bodyAsText()
         log.d { "Dashboard response status: ${response.status}" }
@@ -177,5 +199,26 @@ class DashboardRemoteDataSourceImpl(
             )
         }
     }
-}
 
+    private suspend fun handleAlertsStatusResponse(response: HttpResponse): AlertsStatusApiResponse {
+        val responseBody = response.bodyAsText()
+        log.d { "Alerts status response status: ${response.status}" }
+
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<AlertsStatusApiResponse>(responseBody)
+            } else {
+                AlertsStatusApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to parse alerts status response: ${e.message}" }
+            AlertsStatusApiResponse(
+                success = false,
+                message = "Failed to parse response: ${e.message}"
+            )
+        }
+    }
+}

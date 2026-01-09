@@ -56,6 +56,7 @@ import com.indusjs.fleet.core.util.formatLastUpdated
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertPriority
+import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
@@ -245,6 +246,14 @@ fun DashboardScreen(
                                     }
                                 )
                             }
+                            // Last updated info
+                            if (state.lastUpdated != null) {
+                                Text(
+                                    text = "Updated: ${formatLastUpdated(state.lastUpdated)}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
                         }
                     },
                     navigationIcon = {
@@ -378,6 +387,7 @@ fun DashboardScreen(
                                 vehicleStatus = state.vehicleStatus,
                                 driverStatus = state.driverStatus,
                                 tripSummary = state.tripSummary,
+                                alertsSummary = state.alertsSummary,
                                 onVehiclesClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToVehicles) },
                                 onDriversClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToDrivers) },
                                 onTripsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToTrips) },
@@ -621,6 +631,7 @@ private fun DashboardContent(
     vehicleStatus: VehicleStatusSummary,
     driverStatus: DriverStatusSummary,
     tripSummary: TripSummary,
+    alertsSummary: AlertsSummary,
     onVehiclesClick: () -> Unit,
     onDriversClick: () -> Unit,
     onTripsClick: () -> Unit,
@@ -659,7 +670,21 @@ private fun DashboardContent(
             )
         }
 
-        // 1. Cost Overview Section with Filter - only show for onboarding or when has cost data
+        // 1. Quick Actions Section - Right after Fleet Overview
+        item {
+            QuickActionsSection(
+                onVehiclesClick = onVehiclesClick,
+                onDriversClick = onDriversClick,
+                onTripsClick = onTripsClick,
+                onMapsClick = onMapsClick,
+                onAddTripCostClick = onAddTripCostClick,
+                onAddVehicleCostClick = onAddVehicleCostClick,
+                hasVehicles = vehicleStatus.total > 0,
+                hasTrips = tripSummary.total > 0
+            )
+        }
+
+        // 2. Cost Overview Section with Filter - only show for onboarding or when has cost data
         if (shouldShowCostOverview) {
             item {
                 CostOverviewSection(
@@ -677,7 +702,7 @@ private fun DashboardContent(
             }
         }
 
-        // 2. Pending Payments Section - Only show if there are pending payments
+        // 3. Pending Payments Section - Only show if there are pending payments
         if (tripSummary.total > 0 && (pendingPayments.isNotEmpty() || totalPendingAmount > 0 || isLoadingPendingPayments)) {
             item {
                 PendingPaymentsSection(
@@ -688,7 +713,7 @@ private fun DashboardContent(
             }
         }
 
-        // 3. Vehicle Status Section
+        // 4. Vehicle Status Section
         item {
             VehicleStatusSection(
                 vehicleStatus = vehicleStatus,
@@ -697,7 +722,7 @@ private fun DashboardContent(
             )
         }
 
-        // 4. Trips Section
+        // 5. Trips Section
         item {
             TripsStatusSection(
                 tripSummary = tripSummary,
@@ -707,37 +732,23 @@ private fun DashboardContent(
             )
         }
 
-        // 5. Alerts Section
-        if (stats.alerts.isNotEmpty() || (stats.documentStats?.expiringDocuments ?: 0) > 0) {
-            item {
-                AlertsSection(
-                    alerts = stats.alerts,
-                    documentStats = stats.documentStats,
-                    onAlertDismiss = onAlertDismiss
-                )
-            }
+        // 6. Alerts Section - Always show to display alert status
+        item {
+            AlertsSection(
+                alerts = stats.alerts,
+                documentStats = stats.documentStats,
+                alertsSummary = alertsSummary,
+                vehicleStatus = vehicleStatus,
+                onAlertDismiss = onAlertDismiss
+            )
         }
 
-        // 6. Drivers Section
+        // 7. Drivers Section
         item {
             DriversStatusSection(
                 driverStatus = driverStatus,
                 onClick = onDriversClick,
                 onAddDriverClick = onAddDriverClick
-            )
-        }
-
-        // Quick Actions Section
-        item {
-            QuickActionsSection(
-                onVehiclesClick = onVehiclesClick,
-                onDriversClick = onDriversClick,
-                onTripsClick = onTripsClick,
-                onMapsClick = onMapsClick,
-                onAddTripCostClick = onAddTripCostClick,
-                onAddVehicleCostClick = onAddVehicleCostClick,
-                hasVehicles = vehicleStatus.total > 0,
-                hasTrips = tripSummary.total > 0
             )
         }
     }
@@ -1769,25 +1780,43 @@ private fun CostOverviewSection(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header with filter tabs
+            // Enhanced Header with icon container
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_info),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Cost Overview",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (costOverview.isProfit) Color(0xFF4CAF50).copy(alpha = 0.15f)
+                                else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (costOverview.isProfit) "📈" else "📊",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Financial Overview",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (!hasNoFleet) {
+                            Text(
+                                text = selectedFilter.label,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
 
                 // Filter chips - clean pill style (hide if no fleet)
@@ -2542,6 +2571,8 @@ private fun TripsStatusSection(
 private fun AlertsSection(
     alerts: List<Alert>,
     documentStats: DocumentStats?,
+    alertsSummary: AlertsSummary,
+    vehicleStatus: VehicleStatusSummary,
     onAlertDismiss: (String) -> Unit
 ) {
     Card(
@@ -2572,17 +2603,91 @@ private fun AlertsSection(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                // Alert count badge
+                // Alert count badge - use alertsSummary if available
+                val alertCount = if (alertsSummary.totalAlerts > 0) alertsSummary.totalAlerts else alerts.size
                 Text(
-                    text = "${alerts.size}",
+                    text = "$alertCount",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.error
                 )
             }
 
-            // Document expiry stats - clean text style
-            if (documentStats != null && (documentStats.expiringDocuments > 0 || documentStats.expiredDocuments > 0)) {
+            // Enhanced Alerts Summary with detailed counts
+            if (alertsSummary.totalAlerts > 0) {
+                // Priority breakdown row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (alertsSummary.criticalAlerts > 0) {
+                        AlertCountBadge(
+                            count = alertsSummary.criticalAlerts,
+                            label = "Critical",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    if (alertsSummary.warningAlerts > 0) {
+                        AlertCountBadge(
+                            count = alertsSummary.warningAlerts,
+                            label = "Warning",
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                    if (alertsSummary.infoAlerts > 0) {
+                        AlertCountBadge(
+                            count = alertsSummary.infoAlerts,
+                            label = "Info",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // Detailed expiry breakdown
+                if (alertsSummary.documentExpired > 0 || alertsSummary.documentExpiring7Days > 0 ||
+                    alertsSummary.licenseExpired > 0 || alertsSummary.licenseExpiring7Days > 0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Document expiry
+                        if (alertsSummary.documentExpired > 0) {
+                            ExpiryInfoChip(
+                                icon = "📄",
+                                count = alertsSummary.documentExpired,
+                                label = "Docs Expired",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        if (alertsSummary.documentExpiring7Days > 0) {
+                            ExpiryInfoChip(
+                                icon = "📄",
+                                count = alertsSummary.documentExpiring7Days,
+                                label = "Docs 7d",
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
+                        // License expiry
+                        if (alertsSummary.licenseExpired > 0) {
+                            ExpiryInfoChip(
+                                icon = "📋",
+                                count = alertsSummary.licenseExpired,
+                                label = "License Expired",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        if (alertsSummary.licenseExpiring7Days > 0) {
+                            ExpiryInfoChip(
+                                icon = "📋",
+                                count = alertsSummary.licenseExpiring7Days,
+                                label = "License 7d",
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
+                    }
+                }
+            } else if (documentStats != null && (documentStats.expiringDocuments > 0 || documentStats.expiredDocuments > 0)) {
+                // Fallback to document stats - clean text style
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -2620,18 +2725,131 @@ private fun AlertsSection(
                 }
             }
 
-            if (alerts.isNotEmpty()) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-            }
+            // Determine which alerts to display - prefer alertsSummary.alerts if available
+            val displayAlerts = if (alertsSummary.alerts.isNotEmpty()) alertsSummary.alerts else alerts
 
-            // Alert items - clean list style
-            alerts.take(3).forEach { alert ->
-                CleanAlertItem(
-                    alert = alert,
-                    onDismiss = { onAlertDismiss(alert.id) }
+            // Check for document issues:
+            // 1. Documents expired
+            // 2. Documents expiring soon
+            // 3. Vehicles exist but no/few documents uploaded
+            val totalDocs = documentStats?.totalDocuments ?: 0
+            val expiredDocs = documentStats?.expiredDocuments ?: 0
+            val expiringDocs = documentStats?.expiringDocuments ?: 0
+
+            // Missing documents: vehicles exist but total documents is less than vehicles
+            // (Each vehicle should have at least 1 document like RC)
+            val hasMissingDocuments = vehicleStatus.total > 0 && totalDocs < vehicleStatus.total
+            val vehiclesWithoutDocs = if (hasMissingDocuments) (vehicleStatus.total - totalDocs).coerceAtLeast(0) else 0
+
+            // Has document issues (expired or expiring)
+            val hasDocumentIssues = expiredDocs > 0 || expiringDocs > 0
+
+            val hasNoAlerts = displayAlerts.isEmpty() &&
+                             alertsSummary.totalAlerts == 0 &&
+                             !hasMissingDocuments &&
+                             !hasDocumentIssues
+
+            if (hasNoAlerts) {
+                // No alerts - show success state
+                SectionEmptyState(
+                    iconRes = Res.drawable.ic_check,
+                    title = "All clear!",
+                    message = "No alerts at this time",
+                    successStyle = true
                 )
+            } else {
+                // Show missing documents warning
+                if (hasMissingDocuments) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "📄",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Missing Documents",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                                Text(
+                                    text = if (vehiclesWithoutDocs > 0)
+                                        "$vehiclesWithoutDocs vehicle(s) need documents uploaded"
+                                    else
+                                        "Some vehicles are missing required documents",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Show expired/expiring documents warning (when not showing missing docs warning)
+                if (!hasMissingDocuments && hasDocumentIssues) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (expiredDocs > 0)
+                            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                        else
+                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = if (expiredDocs > 0) "⚠️" else "⏰",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (expiredDocs > 0) "Documents Expired" else "Documents Expiring Soon",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (expiredDocs > 0)
+                                        MaterialTheme.colorScheme.error
+                                    else
+                                        MaterialTheme.colorScheme.tertiary
+                                )
+                                Text(
+                                    text = buildString {
+                                        if (expiredDocs > 0) append("$expiredDocs expired")
+                                        if (expiredDocs > 0 && expiringDocs > 0) append(", ")
+                                        if (expiringDocs > 0) append("$expiringDocs expiring soon")
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (displayAlerts.isNotEmpty()) {
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                }
+
+                // Alert items - clean list style
+                displayAlerts.take(3).forEach { alert ->
+                    CleanAlertItem(
+                        alert = alert,
+                        onDismiss = { onAlertDismiss(alert.id) }
+                    )
+                }
             }
         }
     }
@@ -2677,12 +2895,64 @@ private fun CleanAlertItem(
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = alert.title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = alertColor
-            )
+            // Title with entity info for document/license alerts
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = alert.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = alertColor
+                )
+                // Show days until expiry badge
+                alert.daysUntilExpiry?.let { days ->
+                    val badgeColor = when {
+                        days < 0 -> MaterialTheme.colorScheme.error
+                        days <= 7 -> MaterialTheme.colorScheme.tertiary
+                        else -> MaterialTheme.colorScheme.primary
+                    }
+                    val badgeText = when {
+                        days < 0 -> "${-days}d overdue"
+                        days == 0 -> "Today"
+                        else -> "${days}d left"
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = badgeColor.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = badgeText,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = badgeColor,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+
+            // Show vehicle registration for document alerts
+            if (alert.type == AlertType.DOCUMENT_EXPIRY && alert.vehicleRegistrationNumber != null) {
+                Text(
+                    text = "🚛 ${alert.vehicleRegistrationNumber}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            // Show driver name for license alerts
+            if (alert.type == AlertType.LICENSE_EXPIRY && alert.driverName != null) {
+                Text(
+                    text = "👤 ${alert.driverName}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
             Text(
                 text = alert.message,
                 style = MaterialTheme.typography.bodySmall,
@@ -3347,7 +3617,7 @@ private fun RatioLegendItem(
             text = "$count",
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = label,
@@ -3506,3 +3776,62 @@ private fun UtilizationLegendItem(color: Color, label: String) {
     }
 }
 
+/**
+ * Alert Count Badge - Shows alert count by priority
+ */
+@Composable
+private fun AlertCountBadge(
+    count: Int,
+    label: String,
+    color: Color
+) {
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = color.copy(alpha = 0.12f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "$count",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = color
+            )
+        }
+    }
+}
+
+/**
+ * Expiry Info Chip - Shows expiry info with icon
+ */
+@Composable
+private fun ExpiryInfoChip(
+    icon: String,
+    count: Int,
+    label: String,
+    color: Color
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = icon,
+            style = MaterialTheme.typography.labelSmall
+        )
+        Text(
+            text = "$count $label",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = color
+        )
+    }
+}

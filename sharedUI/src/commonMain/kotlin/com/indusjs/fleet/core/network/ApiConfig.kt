@@ -35,6 +35,10 @@ object ApiConfig {
         const val DASHBOARD = "/dashboard"
         const val DASHBOARD_COST_OVERVIEW = "/dashboard/cost-overview"
         const val DASHBOARD_PENDING_PAYMENTS = "/dashboard/pending-payments"
+        const val DASHBOARD_ALERTS_STATUS = "/dashboard/alerts-status"
+        const val DASHBOARD_VEHICLE_STATUS = "/dashboard/vehicle-status"
+        const val DASHBOARD_TRIPS_STATUS = "/dashboard/trips-status"
+        const val DASHBOARD_DRIVERS_STATUS = "/dashboard/drivers-status"
 
         // Trip Costs
         const val TRIP_COST_TYPES = "/trip-costs/types"

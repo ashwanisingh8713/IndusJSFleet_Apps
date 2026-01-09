@@ -1,6 +1,9 @@
 package com.indusjs.fleet.data.mapper.dashboard
 
 import com.indusjs.fleet.data.model.dashboard.AlertDto
+import com.indusjs.fleet.data.model.dashboard.AlertsStatusDto
+import com.indusjs.fleet.data.model.dashboard.CostBreakdownItemDto
+import com.indusjs.fleet.data.model.dashboard.CostOverviewDto
 import com.indusjs.fleet.data.model.dashboard.DashboardDataDto
 import com.indusjs.fleet.data.model.dashboard.DocumentStatsDto
 import com.indusjs.fleet.data.model.dashboard.LiveStatusDto
@@ -12,6 +15,9 @@ import com.indusjs.fleet.data.model.dashboard.UserInfoDto
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertPriority
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
+import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
+import com.indusjs.fleet.domain.entity.dashboard.CostBreakdownItem
+import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
 import com.indusjs.fleet.domain.entity.dashboard.DashboardUserInfo
 import com.indusjs.fleet.domain.entity.dashboard.DocumentStats
@@ -93,7 +99,14 @@ object DashboardMapper {
             entityId = entityId,
             entityName = entityName,
             createdAt = createdAt,
-            timestamp = 0L // Timestamp can be parsed from createdAt if needed
+            timestamp = 0L,
+            // NEW: Enhanced alert fields
+            vehicleId = vehicleId,
+            vehicleRegistrationNumber = vehicleRegistrationNumber,
+            driverId = driverId,
+            driverName = driverName,
+            daysUntilExpiry = daysUntilExpiry,
+            expiryDate = expiryDate
         )
     }
 
@@ -156,5 +169,63 @@ object DashboardMapper {
             expiredDocuments = expiredDocuments
         )
     }
-}
 
+    // NEW: Cost Overview mapper with detailed breakdowns
+    fun CostOverviewDto.toDomain(): CostOverview {
+        return CostOverview(
+            filter = filter,
+            periodLabel = periodLabel,
+            totalExpenses = totalExpenses,
+            totalRevenue = totalRevenue,
+            profitLoss = profitLoss,
+            isProfit = isProfit,
+            completedTrips = completedTrips,
+            tripCosts = tripCosts,
+            maintenanceCosts = maintenanceCosts,
+            fuelCosts = fuelCosts,
+            tollCosts = tollCosts,
+            otherCosts = otherCosts,
+            // NEW: Detailed cost breakdowns
+            driverAllowanceExpenses = driverAllowanceExpenses,
+            parkingExpenses = parkingExpenses,
+            loadingCharges = loadingCharges,
+            unloadingCharges = unloadingCharges,
+            chalanExpenses = chalanExpenses,
+            permitExpenses = permitExpenses,
+            insuranceExpenses = insuranceExpenses,
+            tripCostBreakdown = tripCostBreakdown.map { it.toDomain() },
+            maintenanceCostBreakdown = maintenanceCostBreakdown.map { it.toDomain() }
+        )
+    }
+
+    fun CostBreakdownItemDto.toDomain(): CostBreakdownItem {
+        return CostBreakdownItem(
+            costType = costType,
+            amount = amount,
+            count = count
+        )
+    }
+
+    // NEW: Alerts Status mapper with detailed counts
+    fun AlertsStatusDto.toDomain(): AlertsSummary {
+        return AlertsSummary(
+            totalAlerts = totalAlerts,
+            criticalAlerts = criticalAlerts,
+            warningAlerts = warningAlerts,
+            infoAlerts = infoAlerts,
+            documentExpiring = documentExpiring,
+            licenseExpiring = licenseExpiring,
+            pendingPayments = pendingPayments,
+            maintenanceVehicles = maintenanceVehicles,
+            // NEW: Detailed expiry counts
+            documentExpired = documentExpired,
+            documentExpiring7Days = documentExpiring7Days,
+            documentExpiring30Days = documentExpiring30Days,
+            licenseExpired = licenseExpired,
+            licenseExpiring7Days = licenseExpiring7Days,
+            licenseExpiring30Days = licenseExpiring30Days,
+            maintenanceVehiclesCount = maintenanceVehiclesCount,
+            alerts = alerts.map { it.toDomain() }
+        )
+    }
+}

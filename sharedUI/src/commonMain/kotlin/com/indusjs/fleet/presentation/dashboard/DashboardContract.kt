@@ -5,6 +5,7 @@ import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.domain.entity.dashboard.Alert
+import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
 import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
@@ -58,6 +59,10 @@ object DashboardContract {
         // Expiry Alerts (for documents)
         val expiryAlerts: List<ExpiryAlert> = emptyList(),
 
+        // Alerts Summary with detailed counts
+        val alertsSummary: AlertsSummary = AlertsSummary(),
+        val isLoadingAlertsSummary: Boolean = false,
+
         // Notification count (for badge)
         val notificationCount: Int = 0
     ) : UiState
@@ -83,6 +88,9 @@ object DashboardContract {
 
         // Pending Payments
         data object LoadPendingPayments : Intent
+
+        // Alerts Status
+        data object LoadAlertsStatus : Intent
 
         // Navigation to Add Cost screens
         data object NavigateToAddTripCost : Intent

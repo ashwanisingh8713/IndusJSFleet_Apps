@@ -111,7 +111,14 @@ data class Alert(
     val entityName: String? = null,
     val createdAt: String? = null,
     val timestamp: Long = 0L,
-    val isRead: Boolean = false
+    val isRead: Boolean = false,
+    // NEW: Enhanced alert fields for vehicle/driver association
+    val vehicleId: Int? = null,
+    val vehicleRegistrationNumber: String? = null,
+    val driverId: Int? = null,
+    val driverName: String? = null,
+    val daysUntilExpiry: Int? = null,
+    val expiryDate: String? = null
 )
 
 /**
@@ -196,6 +203,15 @@ data class DashboardUserInfo(
 // ============ DASHBOARD V2 Domain Entities ============
 
 /**
+ * Cost breakdown item for detailed expense tracking.
+ */
+data class CostBreakdownItem(
+    val costType: String = "",
+    val amount: Double = 0.0,
+    val count: Int = 0
+)
+
+/**
  * Cost Overview domain entity.
  */
 data class CostOverview(
@@ -210,7 +226,41 @@ data class CostOverview(
     val maintenanceCosts: Double = 0.0,
     val fuelCosts: Double = 0.0,
     val tollCosts: Double = 0.0,
-    val otherCosts: Double = 0.0
+    val otherCosts: Double = 0.0,
+    // NEW: Detailed cost breakdowns
+    val driverAllowanceExpenses: Double = 0.0,
+    val parkingExpenses: Double = 0.0,
+    val loadingCharges: Double = 0.0,
+    val unloadingCharges: Double = 0.0,
+    val chalanExpenses: Double = 0.0,
+    val permitExpenses: Double = 0.0,
+    val insuranceExpenses: Double = 0.0,
+    val tripCostBreakdown: List<CostBreakdownItem> = emptyList(),
+    val maintenanceCostBreakdown: List<CostBreakdownItem> = emptyList()
+)
+
+/**
+ * Alerts Summary with detailed counts by type/priority.
+ */
+data class AlertsSummary(
+    val totalAlerts: Int = 0,
+    val criticalAlerts: Int = 0,
+    val warningAlerts: Int = 0,
+    val infoAlerts: Int = 0,
+    val documentExpiring: Int = 0,
+    val licenseExpiring: Int = 0,
+    val pendingPayments: Int = 0,
+    val maintenanceVehicles: Int = 0,
+    // NEW: Detailed expiry counts
+    val documentExpired: Int = 0,
+    val documentExpiring7Days: Int = 0,
+    val documentExpiring30Days: Int = 0,
+    val licenseExpired: Int = 0,
+    val licenseExpiring7Days: Int = 0,
+    val licenseExpiring30Days: Int = 0,
+    val maintenanceVehiclesCount: Int = 0,
+    // Alerts list
+    val alerts: List<Alert> = emptyList()
 )
 
 /**
@@ -311,4 +361,3 @@ data class ExpiryAlert(
     val isExpired: Boolean = false,
     val priority: String = "warning"
 )
-

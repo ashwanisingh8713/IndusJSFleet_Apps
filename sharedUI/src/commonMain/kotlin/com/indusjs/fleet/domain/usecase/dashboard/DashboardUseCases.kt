@@ -2,6 +2,7 @@ package com.indusjs.fleet.domain.usecase.dashboard
 
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
+import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.PendingPaymentsData
 import com.indusjs.fleet.domain.repository.dashboard.DashboardData
@@ -92,5 +93,17 @@ class GetPendingPaymentsUseCase(
 ) {
     suspend operator fun invoke(page: Int = 1, perPage: Int = 20): Result<PendingPaymentsData> =
         repository.getPendingPayments(page, perPage)
+}
+
+/**
+ * Get alerts status with detailed counts by type/priority.
+ * Includes document expiry, license expiry, maintenance vehicles, etc.
+ */
+@Inject
+class GetAlertsStatusUseCase(
+    private val repository: DashboardRepository
+) {
+    suspend operator fun invoke(): Result<AlertsSummary> =
+        repository.getAlertsStatus()
 }
 

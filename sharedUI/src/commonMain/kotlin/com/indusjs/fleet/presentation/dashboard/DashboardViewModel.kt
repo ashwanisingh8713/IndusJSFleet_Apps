@@ -9,6 +9,7 @@ import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
 import com.indusjs.fleet.domain.entity.dashboard.PendingPayment
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
+import com.indusjs.fleet.domain.usecase.dashboard.GetAlertsStatusUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetCostOverviewUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetDashboardUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetPendingPaymentsUseCase
@@ -30,7 +31,8 @@ class DashboardViewModel(
     private val getDashboardUseCase: GetDashboardUseCase,
     private val refreshDashboardUseCase: RefreshDashboardUseCase,
     private val getCostOverviewUseCase: GetCostOverviewUseCase? = null,
-    private val getPendingPaymentsUseCase: GetPendingPaymentsUseCase? = null
+    private val getPendingPaymentsUseCase: GetPendingPaymentsUseCase? = null,
+    private val getAlertsStatusUseCase: GetAlertsStatusUseCase? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     // Track if we've received fresh data from network
@@ -57,6 +59,7 @@ class DashboardViewModel(
             is Intent.ChangeCostFilter -> changeCostFilter(intent.filter)
             is Intent.LoadCostOverview -> loadCostOverview()
             is Intent.LoadPendingPayments -> loadPendingPayments()
+            is Intent.LoadAlertsStatus -> loadAlertsStatus()
             is Intent.NavigateToAddTripCost -> sendEffect(Effect.NavigateToAddTripCost)
             is Intent.NavigateToAddVehicleCost -> sendEffect(Effect.NavigateToAddVehicleCost)
             is Intent.NavigateToNotifications -> sendEffect(Effect.NavigateToNotifications)
@@ -158,6 +161,7 @@ class DashboardViewModel(
                             // Load additional data after main dashboard loads
                             loadCostOverview()
                             loadPendingPayments()
+                            loadAlertsStatus()
                         }
                     }
                     is Result.Error -> {
@@ -226,6 +230,35 @@ class DashboardViewModel(
                             isLoadingPendingPayments = false,
                             pendingPaymentsError = result.message ?: "Failed to load pending payments"
                         )
+                    }
+                }
+                is Result.Loading -> { /* ignore */ }
+            }
+        }
+    }
+
+    /**
+     * Load alerts status with detailed counts.
+     */
+    private suspend fun loadAlertsStatus() {
+        val useCase = getAlertsStatusUseCase ?: return
+
+        updateState { copy(isLoadingAlertsSummary = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = useCase()) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isLoadingAlertsSummary = false,
+                            alertsSummary = result.data,
+                            notificationCount = result.data.totalAlerts
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(isLoadingAlertsSummary = false)
                     }
                 }
                 is Result.Loading -> { /* ignore */ }

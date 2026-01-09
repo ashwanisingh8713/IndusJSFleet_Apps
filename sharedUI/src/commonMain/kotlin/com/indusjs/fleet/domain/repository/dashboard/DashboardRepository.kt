@@ -2,6 +2,7 @@ package com.indusjs.fleet.domain.repository.dashboard
 
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
+import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
 import com.indusjs.fleet.domain.entity.dashboard.DashboardUserInfo
@@ -60,6 +61,12 @@ interface DashboardRepository : Repository {
      * Get pending payments list with pagination.
      */
     suspend fun getPendingPayments(page: Int = 1, perPage: Int = 20): Result<PendingPaymentsData>
+
+    /**
+     * Get alerts status with detailed counts by type/priority.
+     * Includes document expiry, license expiry, maintenance vehicles, etc.
+     */
+    suspend fun getAlertsStatus(): Result<AlertsSummary>
 }
 
 /**
@@ -76,4 +83,3 @@ data class DashboardData(
     val isFromCache: Boolean = false,
     val cachedAt: Long? = null
 )
-

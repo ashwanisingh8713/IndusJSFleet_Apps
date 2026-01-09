@@ -34,7 +34,10 @@ import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
+import com.indusjs.fleet.domain.usecase.dashboard.GetAlertsStatusUseCase
+import com.indusjs.fleet.domain.usecase.dashboard.GetCostOverviewUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetDashboardUseCase
+import com.indusjs.fleet.domain.usecase.dashboard.GetPendingPaymentsUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.RefreshDashboardUseCase
 import com.indusjs.fleet.domain.usecase.driver.CreateDriverUseCase
 import com.indusjs.fleet.domain.usecase.driver.DeleteDriverUseCase
@@ -199,6 +202,9 @@ class DefaultViewModelProvider : ViewModelProvider {
     }
     private val getDashboardUseCase by lazy { GetDashboardUseCase(dashboardRepository) }
     private val refreshDashboardUseCase by lazy { RefreshDashboardUseCase(dashboardRepository) }
+    private val getCostOverviewUseCase by lazy { GetCostOverviewUseCase(dashboardRepository) }
+    private val getPendingPaymentsUseCase by lazy { GetPendingPaymentsUseCase(dashboardRepository) }
+    private val getAlertsStatusUseCase by lazy { GetAlertsStatusUseCase(dashboardRepository) }
 
     // Lazy-initialized Costs feature dependencies
     private val costsRemoteDataSource by lazy { CostsRemoteDataSourceImpl(httpClient) }
@@ -219,7 +225,10 @@ class DefaultViewModelProvider : ViewModelProvider {
     override fun dashboardViewModel() = DashboardViewModel(
         dispatcherProvider,
         getDashboardUseCase,
-        refreshDashboardUseCase
+        refreshDashboardUseCase,
+        getCostOverviewUseCase,
+        getPendingPaymentsUseCase,
+        getAlertsStatusUseCase
     )
 
     override fun vehiclesViewModel() = VehiclesViewModel(
