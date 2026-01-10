@@ -104,8 +104,8 @@ object CreateTripContract {
          */
         val canViewTripPrice: Boolean
             get() {
-                val role = userRole.lowercase()
-                return role == "owner" || role == "general_manager" || role == "generalmanager"
+                val role = userRole.lowercase().replace("_", "")
+                return role == "owner" || role == "generalmanager"
             }
 
         val isFormValid: Boolean

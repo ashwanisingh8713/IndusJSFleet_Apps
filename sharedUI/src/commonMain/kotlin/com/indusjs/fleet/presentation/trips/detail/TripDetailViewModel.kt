@@ -138,6 +138,8 @@ class TripDetailViewModel(
                 log.e { "Failed to get user role: ${e.message}" }
                 ""
             }
+            val normalizedRole = userRole.lowercase().replace("_", "")
+            log.d { "TripDetailViewModel - userRole: '$userRole', normalized: '$normalizedRole', canEdit: ${normalizedRole == "owner" || normalizedRole == "generalmanager" || normalizedRole == "manager"}" }
             updateState { copy(userRole = userRole) }
 
             when (val result = getTripByIdUseCase(tripId)) {

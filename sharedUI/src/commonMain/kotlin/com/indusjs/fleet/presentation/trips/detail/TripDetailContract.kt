@@ -143,11 +143,11 @@ object TripDetailContract {
         val canEdit: Boolean
             get() {
                 if (trip == null) return false
-                val role = userRole.lowercase()
+                val role = userRole.lowercase().replace("_", "")
                 // Owner and General Manager can edit any trip state
-                if (role == "owner" || role == "general_manager" || role == "generalmanager") return true
+                if (role == "owner" || role == "generalmanager") return true
                 // Manager can only edit planned trips
-                if (role == "manager") return trip?.status == TripStatus.PLANNED
+                if (role == "manager") return trip.status == TripStatus.PLANNED
                 // Supervisor cannot edit
                 return false
             }
@@ -158,8 +158,8 @@ object TripDetailContract {
          */
         val canViewTripPrice: Boolean
             get() {
-                val role = userRole.lowercase()
-                return role == "owner" || role == "general_manager" || role == "generalmanager"
+                val role = userRole.lowercase().replace("_", "")
+                return role == "owner" || role == "generalmanager"
             }
     }
 

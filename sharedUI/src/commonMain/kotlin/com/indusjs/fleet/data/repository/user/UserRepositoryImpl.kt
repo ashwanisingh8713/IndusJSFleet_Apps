@@ -16,6 +16,7 @@ import com.indusjs.fleet.domain.entity.user.User
 import com.indusjs.fleet.domain.entity.user.UserProfile
 import com.indusjs.fleet.domain.entity.user.UserRole
 import com.indusjs.fleet.domain.repository.user.UserRepository
+import co.touchlab.kermit.Logger
 import dev.zacsweers.metro.Inject
 
 /**
@@ -27,6 +28,8 @@ class UserRepositoryImpl(
     private val remoteDataSource: UserRemoteDataSource,
     private val localDataSource: UserLocalDataSource
 ) : UserRepository {
+
+    private val log = Logger.withTag("UserRepositoryImpl")
 
     override suspend fun signUp(
         email: String,
@@ -64,8 +67,11 @@ class UserRepositoryImpl(
         val authResult = response.data?.toDomain()
             ?: throw ApiException(response.message ?: "Login failed")
 
+        val roleToSave = UserRole.toApiString(authResult.user.role)
+        log.d { "Login successful - User: ${authResult.user.email}, Role enum: ${authResult.user.role}, Role to save: '$roleToSave'" }
+
         localDataSource.saveAuthToken(authResult.token)
-        localDataSource.saveUserRole(UserRole.toApiString(authResult.user.role))
+        localDataSource.saveUserRole(roleToSave)
         authResult
     }
 

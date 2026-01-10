@@ -50,6 +50,8 @@ class CreateTripViewModel(
                 log.e { "Failed to get user role: ${e.message}" }
                 ""
             }
+            val normalizedRole = userRole.lowercase().replace("_", "")
+            log.d { "CreateTripViewModel - userRole: '$userRole', normalized: '$normalizedRole', canViewTripPrice: ${normalizedRole == "owner" || normalizedRole == "generalmanager"}" }
             updateState { copy(userRole = userRole) }
         }
     }
