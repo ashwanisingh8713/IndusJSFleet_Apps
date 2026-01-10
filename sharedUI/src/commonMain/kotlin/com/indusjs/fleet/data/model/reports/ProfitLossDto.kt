@@ -21,6 +21,17 @@ data class ProfitLossResponse<T>(
 )
 
 /**
+ * Period object in P&L responses
+ */
+@Serializable
+data class PeriodDto(
+    @SerialName("start_date")
+    val startDate: String? = null,
+    @SerialName("end_date")
+    val endDate: String? = null
+)
+
+/**
  * Single Trip Profit/Loss DTO
  * GET /trips/{trip_id}/profit-loss
  */
@@ -32,6 +43,8 @@ data class TripProfitLossDto(
     val vehicleId: Int? = null,
     @SerialName("vehicle_number")
     val vehicleNumber: String? = null,
+    @SerialName("vehicle_registration")
+    val vehicleRegistration: String? = null,
     @SerialName("driver_id")
     val driverId: Int? = null,
     @SerialName("driver_name")
@@ -42,14 +55,24 @@ data class TripProfitLossDto(
     val endLocation: String? = null,
     @SerialName("scheduled_date")
     val scheduledDate: String? = null,
+    @SerialName("trip_date")
+    val tripDate: String? = null,
     @SerialName("state")
     val state: String? = null,
+    @SerialName("status")
+    val status: String? = null,
+    @SerialName("distance")
+    val distance: Double? = null,
+    @SerialName("trip_price")
+    val tripPrice: Double = 0.0,
     @SerialName("purchase_price")
     val purchasePrice: Double = 0.0,
     @SerialName("selling_value")
     val sellingValue: Double = 0.0,
     @SerialName("total_trip_costs")
     val totalTripCosts: Double = 0.0,
+    @SerialName("total_cost")
+    val totalCost: Double = 0.0,
     @SerialName("total_expenses")
     val totalExpenses: Double = 0.0,
     @SerialName("gross_profit")
@@ -60,6 +83,10 @@ data class TripProfitLossDto(
     val profitMargin: Double = 0.0,
     @SerialName("is_profitable")
     val isProfitable: Boolean = false,
+    @SerialName("payment_status")
+    val paymentStatus: String? = null,
+    @SerialName("pending_amount")
+    val pendingAmount: Double = 0.0,
     @SerialName("cost_breakdown")
     val costBreakdown: List<CostBreakdownItemDto>? = null
 )
@@ -74,12 +101,14 @@ data class VehicleProfitLossDto(
     val vehicleId: Int,
     @SerialName("vehicle_number")
     val vehicleNumber: String? = null,
+    @SerialName("vehicle_registration")
+    val vehicleRegistration: String? = null,
     @SerialName("make")
     val make: String? = null,
     @SerialName("model")
     val model: String? = null,
     @SerialName("period")
-    val period: String? = null,
+    val period: PeriodDto? = null,
     @SerialName("start_date")
     val startDate: String? = null,
     @SerialName("end_date")
@@ -88,12 +117,22 @@ data class VehicleProfitLossDto(
     val totalTrips: Int = 0,
     @SerialName("completed_trips")
     val completedTrips: Int = 0,
+    @SerialName("total_distance")
+    val totalDistance: Double = 0.0,
     @SerialName("total_revenue")
     val totalRevenue: Double = 0.0,
     @SerialName("total_trip_costs")
     val totalTripCosts: Double = 0.0,
     @SerialName("total_maintenance_costs")
     val totalMaintenanceCosts: Double = 0.0,
+    @SerialName("total_cost")
+    val totalCost: Double = 0.0,
+    @SerialName("fuel_cost")
+    val fuelCost: Double = 0.0,
+    @SerialName("maintenance_cost")
+    val maintenanceCost: Double = 0.0,
+    @SerialName("other_cost")
+    val otherCost: Double = 0.0,
     @SerialName("total_expenses")
     val totalExpenses: Double = 0.0,
     @SerialName("gross_profit")
@@ -102,8 +141,14 @@ data class VehicleProfitLossDto(
     val netProfit: Double = 0.0,
     @SerialName("profit_margin")
     val profitMargin: Double = 0.0,
+    @SerialName("profit_status")
+    val profitStatus: String? = null,
     @SerialName("is_profitable")
     val isProfitable: Boolean = false,
+    @SerialName("avg_profit_per_trip")
+    val avgProfitPerTrip: Double = 0.0,
+    @SerialName("avg_profit_per_km")
+    val avgProfitPerKm: Double = 0.0,
     @SerialName("cost_breakdown")
     val costBreakdown: List<CostBreakdownItemDto>? = null,
     @SerialName("trip_summary")
@@ -478,6 +523,4 @@ data class PLAlertDto(
     @SerialName("vehicle_number")
     val vehicleNumber: String? = null
 )
-
-
 

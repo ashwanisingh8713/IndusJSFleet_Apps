@@ -1,12 +1,19 @@
 package com.indusjs.fleet.presentation.reports.trip
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -14,16 +21,18 @@ import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetCard
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.fleet.core.util.formatPercentage
 import com.indusjs.fleet.domain.entity.reports.TripProfitLoss
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.presentation.reports.trip.TripPLContract.Effect
 import com.indusjs.fleet.presentation.reports.trip.TripPLContract.Intent
 import com.indusjs.fleet.presentation.reports.trip.TripPLContract.State
 import indusjsfleet.sharedui.generated.resources.*
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * Trip Profit/Loss Screen
+ * Trip Profit/Loss Screen - Enhanced UI
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,11 +41,17 @@ fun TripProfitLossScreen(
     onNavigateBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is Effect.ShowSnackbar -> { /* Handle snackbar */ }
+                is Effect.ShowSnackbar -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(effect.message)
+                    }
+                }
             }
         }
     }
@@ -44,37 +59,81 @@ fun TripProfitLossScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Trip P&L") },
+                title = {
+                    Column {
+                        Text(
+                            text = "Trip P&L Report",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Profit & Loss by Trip",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh"
-                        )
+                    if (!state.isLoading) {
+                        IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_refresh),
+                                contentDescription = "Refresh",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(paddingValues)
+        ) {
+            TripPLContent(
+                state = state,
+                viewModel = viewModel
+            )
+
+            // Loading overlay
+            if (state.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Generating Report...", fontWeight = FontWeight.Medium)
+                        }
                     }
                 }
-            )
-        }
-    ) { paddingValues ->
-        when {
-            state.isLoading -> LoadingContent()
-            state.error != null -> ErrorContent(
-                error = state.error!!,
-                onRetry = { viewModel.sendIntent(Intent.Refresh) }
-            )
-            else -> TripPLContent(
-                state = state,
-                viewModel = viewModel,
-                modifier = Modifier.padding(paddingValues)
-            )
+            }
         }
     }
 }
@@ -82,19 +141,24 @@ fun TripProfitLossScreen(
 @Composable
 private fun TripPLContent(
     state: State,
-    viewModel: TripPLViewModel,
-    modifier: Modifier = Modifier
+    viewModel: TripPLViewModel
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Header Card
+        item {
+            HeaderCard()
+        }
+
         // Vehicle Selection
         item {
             VehicleSelectionCard(
                 vehicles = state.vehicles,
                 selectedVehicleId = state.selectedVehicleId,
+                isLoading = state.isLoadingVehicles,
                 onVehicleSelected = { viewModel.sendIntent(Intent.SelectVehicle(it)) }
             )
         }
@@ -103,24 +167,113 @@ private fun TripPLContent(
         item {
             Button(
                 onClick = { viewModel.sendIntent(Intent.GenerateReport) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = state.selectedVehicleId != null && !state.isLoading
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                enabled = state.selectedVehicleId != null && !state.isLoading,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
-                Text("Generate Trip Report")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("📊", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Generate Trip Report",
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        }
+
+        // Error message
+        if (state.error != null && state.results.isEmpty()) {
+            item {
+                ErrorCard(error = state.error!!)
             }
         }
 
         // Results
         if (state.results.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📈 Trip Results (${state.results.size})",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    // Summary badge
+                    val profitable = state.results.count { it.isProfitable }
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Text(
+                            text = "✅ $profitable Profitable",
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
             items(state.results) { result ->
                 TripPLResultCard(result)
             }
-        } else if (!state.isLoading && state.selectedVehicleId != null) {
+        } else if (!state.isLoading && state.selectedVehicleId != null && state.error == null) {
             item {
+                EmptyStateCard()
+            }
+        }
+
+        // Bottom spacing
+        item { Spacer(modifier = Modifier.height(32.dp)) }
+    }
+}
+
+@Composable
+private fun HeaderCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("🚀", style = MaterialTheme.typography.headlineSmall)
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
                 Text(
-                    text = "No trip data available. Generate a report to see P&L.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
+                    text = "Trip Analysis",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "View profit/loss for each trip of a vehicle",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -131,32 +284,87 @@ private fun TripPLContent(
 private fun VehicleSelectionCard(
     vehicles: List<Vehicle>,
     selectedVehicleId: String?,
+    isLoading: Boolean,
     onVehicleSelected: (String) -> Unit
 ) {
-    FleetCard {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Select Vehicle",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("🚚", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Select Vehicle",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (isLoading) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
 
-            vehicles.forEach { vehicle ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = vehicle.id == selectedVehicleId,
-                        onClick = { onVehicleSelected(vehicle.id) }
-                    )
-                    Text(
-                        text = vehicle.registrationNumber,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (vehicles.isEmpty() && !isLoading) {
+                Text(
+                    text = "No vehicles found",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(16.dp)
+                )
+            } else {
+                vehicles.forEach { vehicle ->
+                    val isSelected = vehicle.id == selectedVehicleId
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onVehicleSelected(vehicle.id) },
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        else
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = { onVehicleSelected(vehicle.id) },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text(
+                                    text = vehicle.registrationNumber,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                                Text(
+                                    text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim().ifEmpty { "Vehicle" },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -164,76 +372,227 @@ private fun VehicleSelectionCard(
 }
 
 @Composable
-private fun TripPLResultCard(result: TripProfitLoss) {
-    FleetCard {
-        Column(
+private fun ErrorCard(error: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+        )
+    ) {
+        Row(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            Text("⚠️", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
                 Text(
-                    text = "Trip #${result.tripId}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    text = "Error",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error
                 )
-                result.state?.let { state ->
-                    AssistChip(
-                        onClick = { },
-                        label = { Text(state.replaceFirstChar { it.uppercase() }) }
-                    )
-                }
-            }
-
-            result.scheduledDate?.let { date ->
                 Text(
-                    text = date,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Selling", style = MaterialTheme.typography.bodySmall)
-                    Text(
-                        formatCurrency(result.sellingValue),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Expenses", style = MaterialTheme.typography.bodySmall)
-                    Text(
-                        formatCurrency(result.totalExpenses),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Net Profit", style = MaterialTheme.typography.bodySmall)
-                    Text(
-                        formatCurrency(result.netProfit),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = if (result.isProfitable) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-
-            if (result.startLocation != null && result.endLocation != null) {
-                HorizontalDivider()
-                Text(
-                    text = "${result.startLocation} → ${result.endLocation}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer
                 )
             }
         }
     }
 }
 
+@Composable
+private fun EmptyStateCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("📋", style = MaterialTheme.typography.displaySmall)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "No Trips Found",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "No trip data available for this vehicle",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun TripPLResultCard(result: TripProfitLoss) {
+    val isProfit = result.isProfitable
+    val profitColor = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        modifier = Modifier.size(36.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("🚀", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Trip #${result.tripId}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        result.scheduledDate?.let { date ->
+                            Text(
+                                text = date,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                // Profit/Loss Badge
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = profitColor.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = if (isProfit) "✅ Profit" else "⚠️ Loss",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = profitColor,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Main KPIs
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                MiniKPI(
+                    label = "Revenue",
+                    value = formatCurrency(result.sellingValue),
+                    color = Color(0xFF10B981)
+                )
+                MiniKPI(
+                    label = "Expenses",
+                    value = formatCurrency(result.totalExpenses),
+                    color = Color(0xFFF59E0B)
+                )
+                MiniKPI(
+                    label = "Net Profit",
+                    value = formatCurrency(result.netProfit),
+                    color = profitColor
+                )
+            }
+
+            // Route info
+            if (result.startLocation != null && result.endLocation != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("📍", style = MaterialTheme.typography.labelMedium)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${result.startLocation} → ${result.endLocation}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Cost Breakdown (if available)
+            if (result.costBreakdown.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "💰 Cost Breakdown",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                result.costBreakdown.forEach { cost ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = cost.costType.replaceFirstChar { it.uppercaseChar() },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = formatCurrency(cost.amount),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MiniKPI(
+    label: String,
+    value: String,
+    color: Color
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}

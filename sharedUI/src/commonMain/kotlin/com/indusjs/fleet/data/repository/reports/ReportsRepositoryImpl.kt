@@ -187,12 +187,12 @@ private fun TripProfitLossDto.toDomain() = TripProfitLoss(
 
 private fun VehicleProfitLossDto.toDomain() = VehicleProfitLoss(
     vehicleId = vehicleId,
-    vehicleNumber = vehicleNumber,
+    vehicleNumber = vehicleNumber ?: vehicleRegistration,
     make = make,
     model = model,
-    period = period,
-    startDate = startDate,
-    endDate = endDate,
+    period = period?.let { "${it.startDate ?: ""} to ${it.endDate ?: ""}" },
+    startDate = startDate ?: period?.startDate,
+    endDate = endDate ?: period?.endDate,
     totalTrips = totalTrips,
     completedTrips = completedTrips,
     totalRevenue = totalRevenue,
