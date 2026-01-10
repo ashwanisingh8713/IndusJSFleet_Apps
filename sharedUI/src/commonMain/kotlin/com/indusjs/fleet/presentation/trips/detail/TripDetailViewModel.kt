@@ -751,12 +751,19 @@ class TripDetailViewModel(
         val exportDate = com.indusjs.fleet.core.util.getCurrentFormattedDateHumanReadable()
         val exportTime = com.indusjs.fleet.core.util.getCurrentFormattedTime()
 
-        // Format scheduled date as human readable
-        val scheduledDateHumanReadable = trip?.scheduledDate?.let {
-            com.indusjs.fleet.core.util.formatDateToHumanReadable(it)
-        } ?: trip?.plannedStart?.let {
-            com.indusjs.fleet.core.util.formatDateToHumanReadable(it)
-        }
+        // Extract departure date and time
+        val (departureDate, departureTime) = extractDateTime(
+            isoDateTime = trip?.plannedStart,
+            date = trip?.scheduledDate,
+            time = trip?.startTime
+        )
+
+        // Extract arrival date and time
+        val (arrivalDate, arrivalTime) = extractDateTime(
+            isoDateTime = trip?.plannedEnd,
+            date = trip?.deliveryDate,
+            time = trip?.deliveryTime
+        )
 
         val pdfData = TripDetailContract.TripCostsPdfData(
             tripId = trip?.id ?: state.tripId,
@@ -765,9 +772,15 @@ class TripDetailViewModel(
             driverName = trip?.driverName,
             startLocation = trip?.startLocation?.address,
             endLocation = trip?.endLocation?.address,
-            scheduledDate = scheduledDateHumanReadable,
+            departureDate = departureDate,
+            departureTime = departureTime,
+            arrivalDate = arrivalDate,
+            arrivalTime = arrivalTime,
             tripStatus = trip?.status?.let { TripStatus.toApiString(it) },
             tripStatusLabel = trip?.status?.let { getStatusLabel(it) },
+            estimatedDistance = trip?.displayInfo?.distanceValue?.takeIf { it != "NA" && it != "N/A" },
+            estimatedDuration = trip?.displayInfo?.durationValue?.takeIf { it != "NA" && it != "N/A" },
+            customerName = trip?.customerName,
             costs = state.costs,
             totalCost = state.totalCost,
             costsByType = costsByTypeWithTotals,
@@ -777,6 +790,43 @@ class TripDetailViewModel(
 
         log.d { "Sending ExportPdf effect with tripId: ${pdfData.tripId}, totalCost: ${pdfData.totalCost}" }
         sendEffect(Effect.ExportPdf(pdfData))
+    }
+
+    /**
+     * Extract date and time from ISO datetime or separate date/time fields.
+     * Returns Pair(date as DD-MM-YYYY, time as HH:MM)
+     */
+    private fun extractDateTime(
+        isoDateTime: String?,
+        date: String?,
+        time: String?
+    ): Pair<String?, String?> {
+        if (!isoDateTime.isNullOrBlank()) {
+            return try {
+                // Parse ISO 8601: 2026-01-04T11:11:00Z
+                val parts = isoDateTime.replace("Z", "").split("T")
+                if (parts.size == 2) {
+                    val datePart = parts[0] // 2026-01-04
+                    val timePart = parts[1].take(5) // 11:11
+
+                    // Convert date to DD-MM-YYYY
+                    val dateComponents = datePart.split("-")
+                    val formattedDate = if (dateComponents.size == 3) {
+                        "${dateComponents[2]}-${dateComponents[1]}-${dateComponents[0]}"
+                    } else {
+                        datePart
+                    }
+
+                    Pair(formattedDate, timePart)
+                } else {
+                    Pair(isoDateTime, null)
+                }
+            } catch (e: Exception) {
+                Pair(isoDateTime, null)
+            }
+        }
+
+        return Pair(date, time)
     }
 
     /**

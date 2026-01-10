@@ -900,7 +900,7 @@
 		},
 		{
 			"name": "08. Trip Costs",
-			"description": "Trip expense tracking (16 cost types).\n\n**Date Format**: DD-MM-YYYY (e.g., 31-12-2025)\n**Time Format**: HH:MM 24-hour (e.g., 14:30)\n\n**Cost Types**: fuel, toll, driver_allowance, parking, loading_charges, unloading_charges, insurance, permit, registration_renewal, fitness_check, emission_test, state_permit, national_permit, chalan, other\n\n**Fuel-specific fields (when cost_type='fuel')**: fuel_type, fuel_quantity, fuel_rate, km_per_liter\n**Other cost type (when cost_type='other')**: custom_cost_type_name",
+			"description": "Trip expense tracking (16 cost types).\n\n**Date Format**: DD-MM-YYYY (e.g., 31-12-2025)\n**Time Format**: HH:MM 24-hour (e.g., 14:30)\n\n**Cost Types**: fuel, toll, driver_allowance, parking, loading_charges, unloading_charges, insurance, permit, registration_renewal, fitness_check, emission_test, state_permit, national_permit, chalan, other\n\n**Fuel-specific fields (when cost_type='fuel')**: fuel_type, fuel_quantity, fuel_rate, km_per_liter\n**Other cost type (when cost_type='other')**: custom_cost_type_name\n\n**Response includes created_by_user**: All trip cost responses include a `created_by_user` object with `id`, `first_name`, `last_name`, and `role` fields identifying who created the cost entry.",
 			"item": [
 				{
 					"name": "Get Cost Types",

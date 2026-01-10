@@ -65,14 +65,20 @@ object TripCostsPdfHtmlGenerator {
             color: #666;
             font-size: 14px;
         }
+        .header .vehicle-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-top: 8px;
+        }
         .header .status-badge {
             display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 11px;
+            padding: 6px 16px;
+            border-radius: 16px;
+            font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
-            margin-top: 8px;
+            margin-top: 10px;
         }
         .status-badge.planned, .status-text.planned {
             background: #E3F2FD;
@@ -93,16 +99,27 @@ object TripCostsPdfHtmlGenerator {
         .status-text {
             font-weight: 600;
         }
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1976D2;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .trip-info {
-            background: #f5f5f5;
+            background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .trip-info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
         }
         .info-item {
             display: flex;
@@ -116,41 +133,92 @@ object TripCostsPdfHtmlGenerator {
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-bottom: 2px;
         }
         .info-value {
             font-weight: 600;
             font-size: 13px;
+            color: #333;
         }
         .route-info {
             background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .route-row {
             display: flex;
-            align-items: center;
-            margin: 8px 0;
+            align-items: flex-start;
+            margin: 10px 0;
         }
         .route-icon {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            margin-right: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 12px;
+            flex-shrink: 0;
         }
         .route-icon.start { background: #4CAF50; color: white; }
         .route-icon.end { background: #F44336; color: white; }
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
+        .route-text {
+            flex: 1;
+        }
+        .route-label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .route-value {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+        }
+        .route-arrow {
+            text-align: center;
             color: #1976D2;
-            margin: 20px 0 10px 0;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #e0e0e0;
+            font-size: 16px;
+            margin: 5px 0;
+            padding-left: 36px;
+        }
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .schedule-box {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .schedule-box.departure {
+            border-left: 4px solid #4CAF50;
+        }
+        .schedule-box.arrival {
+            border-left: 4px solid #FF9800;
+        }
+        .schedule-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .schedule-date {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+        .schedule-time {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
         }
         .summary-box {
             background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
@@ -167,7 +235,7 @@ object TripCostsPdfHtmlGenerator {
             opacity: 0.9;
         }
         .summary-box .total-amount {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
             margin-top: 5px;
         }
@@ -228,14 +296,26 @@ object TripCostsPdfHtmlGenerator {
         .footer {
             margin-top: 30px;
             padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
+            border-top: 2px solid #e0e0e0;
             text-align: center;
-            color: #999;
+            color: #666;
             font-size: 10px;
         }
         .footer .company {
-            font-weight: 600;
+            font-weight: 700;
             color: #1976D2;
+            font-size: 14px;
+        }
+        .footer .export-info {
+            margin-top: 8px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .footer .trip-id {
+            margin-top: 5px;
+            font-size: 9px;
+            color: #999;
         }
     </style>
 </head>
@@ -243,54 +323,89 @@ object TripCostsPdfHtmlGenerator {
     <div class="header">
         <h1>Trip Costs Report</h1>
         <div class="subtitle">${pdfData.tripNumber ?: "Trip Report"}</div>
+        <div class="vehicle-number">🚚 ${pdfData.vehicleNumber ?: "N/A"}</div>
         ${pdfData.tripStatusLabel?.let { 
             "<div class=\"status-badge ${getStatusClass(pdfData.tripStatus)}\">$it</div>"
         } ?: ""}
     </div>
 
+    <div class="section-title">📋 Trip Information</div>
     <div class="trip-info">
         <div class="trip-info-grid">
             <div class="info-item">
-                <span class="info-label">Vehicle</span>
+                <span class="info-label">🚚 Vehicle Registration</span>
                 <span class="info-value">${pdfData.vehicleNumber ?: "N/A"}</span>
             </div>
             <div class="info-item">
-                <span class="info-label">Driver</span>
+                <span class="info-label">👤 Driver</span>
                 <span class="info-value">${pdfData.driverName ?: "N/A"}</span>
             </div>
             <div class="info-item">
-                <span class="info-label">Scheduled Date</span>
-                <span class="info-value">${pdfData.scheduledDate ?: "N/A"}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Trip Status</span>
+                <span class="info-label">📊 Trip Status</span>
                 <span class="info-value status-text ${getStatusClass(pdfData.tripStatus)}">${pdfData.tripStatusLabel ?: "N/A"}</span>
             </div>
-            <div class="info-item full-width">
-                <span class="info-label">Exported On</span>
-                <span class="info-value">${pdfData.exportDate} at ${pdfData.exportTime}</span>
+            ${pdfData.customerName?.let { """
+            <div class="info-item">
+                <span class="info-label">🏢 Customer</span>
+                <span class="info-value">$it</span>
             </div>
+            """ } ?: ""}
+            ${pdfData.estimatedDistance?.let { """
+            <div class="info-item">
+                <span class="info-label">📏 Estimated Distance</span>
+                <span class="info-value">$it km</span>
+            </div>
+            """ } ?: ""}
+            ${pdfData.estimatedDuration?.let { """
+            <div class="info-item">
+                <span class="info-label">⏱️ Estimated Duration</span>
+                <span class="info-value">$it</span>
+            </div>
+            """ } ?: ""}
         </div>
     </div>
 
+    <div class="section-title">📍 Route</div>
     <div class="route-info">
         <div class="route-row">
             <div class="route-icon start">A</div>
-            <span>${pdfData.startLocation ?: "N/A"}</span>
+            <div class="route-text">
+                <div class="route-label">From</div>
+                <div class="route-value">${pdfData.startLocation ?: "N/A"}</div>
+            </div>
         </div>
+        <div class="route-arrow">↓</div>
         <div class="route-row">
             <div class="route-icon end">B</div>
-            <span>${pdfData.endLocation ?: "N/A"}</span>
+            <div class="route-text">
+                <div class="route-label">To</div>
+                <div class="route-value">${pdfData.endLocation ?: "N/A"}</div>
+            </div>
         </div>
     </div>
 
-    <div class="summary-box">
-        <div class="total-label">Total Cost</div>
-        <div class="total-amount">₹${formatAmount(pdfData.totalCost)}</div>
-        <div class="entry-count">${pdfData.costs.size} ${if (pdfData.costs.size == 1) "entry" else "entries"}</div>
+    <div class="section-title">📅 Schedule</div>
+    <div class="schedule-grid">
+        <div class="schedule-box departure">
+            <div class="schedule-title">🚀 Departure</div>
+            <div class="schedule-date">${pdfData.departureDate ?: "N/A"}</div>
+            <div class="schedule-time">${pdfData.departureTime?.let { "at $it" } ?: ""}</div>
+        </div>
+        <div class="schedule-box arrival">
+            <div class="schedule-title">🏁 Arrival</div>
+            <div class="schedule-date">${pdfData.arrivalDate ?: "N/A"}</div>
+            <div class="schedule-time">${pdfData.arrivalTime?.let { "at $it" } ?: ""}</div>
+        </div>
     </div>
 
-    <div class="section-title">Cost Breakdown by Type</div>
+    <div class="section-title">💰 Cost Summary</div>
+    <div class="summary-box">
+        <div class="total-label">Total Expenses</div>
+        <div class="total-amount">₹${formatAmount(pdfData.totalCost)}</div>
+        <div class="entry-count">${pdfData.costs.size} ${if (pdfData.costs.size == 1) "entry" else "entries"} • ${pdfData.costsByType.size} ${if (pdfData.costsByType.size == 1) "category" else "categories"}</div>
+    </div>
+
+    <div class="section-title">📊 Cost Breakdown by Type</div>
     <div class="cost-type-summary">
 """)
 
@@ -307,13 +422,13 @@ object TripCostsPdfHtmlGenerator {
             append("""
     </div>
 
-    <div class="section-title">Detailed Cost Entries</div>
+    <div class="section-title">📝 Detailed Cost Entries</div>
     <table>
         <thead>
             <tr>
-                <th>Date</th>
+                <th>Date & Time</th>
                 <th>Type</th>
-                <th>Notes</th>
+                <th>Description</th>
                 <th style="text-align: right;">Amount</th>
             </tr>
         </thead>
@@ -322,9 +437,16 @@ object TripCostsPdfHtmlGenerator {
 
             // Individual cost entries
             pdfData.costs.forEach { cost ->
+                val dateTimeStr = buildString {
+                    append(formatCostDate(cost.date))
+                    cost.time?.takeIf { it.isNotBlank() }?.let {
+                        append(" at ")
+                        append(it)
+                    }
+                }
                 append("""
             <tr>
-                <td>${formatCostDate(cost.date)}${cost.time?.let { " $it" } ?: ""}</td>
+                <td>$dateTimeStr</td>
                 <td>${formatCostType(cost.costType)}</td>
                 <td>${cost.notes ?: "-"}</td>
                 <td class="amount-cell">₹${formatAmount(cost.amount)}</td>
@@ -338,7 +460,10 @@ object TripCostsPdfHtmlGenerator {
 
     <div class="footer">
         <div class="company">IndusJS Fleet</div>
-        <div>Generated on ${pdfData.exportDate} at ${pdfData.exportTime}</div>
+        <div class="export-info">
+            📄 Exported on <strong>${pdfData.exportDate}</strong> at <strong>${pdfData.exportTime}</strong>
+        </div>
+        <div class="trip-id">Trip ID: ${pdfData.tripId} | ${pdfData.vehicleNumber ?: "N/A"}</div>
     </div>
 </body>
 </html>
@@ -391,4 +516,3 @@ object TripCostsPdfHtmlGenerator {
         }
     }
 }
-

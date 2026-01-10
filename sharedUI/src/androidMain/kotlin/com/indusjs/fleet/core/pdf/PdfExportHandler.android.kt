@@ -1,23 +1,35 @@
 package com.indusjs.fleet.core.pdf
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
+import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.indusjs.fleet.presentation.trips.detail.TripDetailContract
 import java.io.File
@@ -26,9 +38,22 @@ import java.io.FileOutputStream
 private const val TAG = "PdfExportHandler"
 
 /**
+ * Result of PDF generation containing file path and metadata.
+ */
+data class PdfExportResult(
+    val file: File,
+    val fileName: String,
+    val filePath: String,
+    val vehicleNumber: String,
+    val tripNumber: String,
+    val exportDateTime: String
+)
+
+/**
  * Android implementation of PdfExportHandler.
- * Uses native Android PDF APIs to generate PDF and share via Intent.
- * Saves PDF to: internalStorage/IndusJSFleet/exportedPdf/
+ * Uses native Android PDF APIs to generate PDF.
+ * Saves PDF to: /sdcard/IndusJSFleet/exportedPdf/
+ * Shows dialog with "Done" and "Share" options after export.
  * Naming: VehicleNumber_TripId_StartEndDate.pdf
  */
 @Composable
@@ -39,8 +64,62 @@ actual fun PdfExportHandler(
 ) {
     val context = LocalContext.current
     var isExporting by remember { mutableStateOf(false) }
+    var exportResult by remember { mutableStateOf<PdfExportResult?>(null) }
+    var showResultDialog by remember { mutableStateOf(false) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
+    var pendingPdfData by remember { mutableStateOf<TripDetailContract.TripCostsPdfData?>(null) }
 
-    // Track if we should process this pdfData
+    // Permission launcher for legacy storage permission (Android 9 and below)
+    val storagePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Permission granted, proceed with export
+            pendingPdfData?.let { data ->
+                performExport(data, context,
+                    onSuccess = { result ->
+                        exportResult = result
+                        showResultDialog = true
+                        isExporting = false
+                    },
+                    onError = { error ->
+                        isExporting = false
+                        onExportError(error)
+                    }
+                )
+            }
+        } else {
+            isExporting = false
+            onExportError("Storage permission is required to save PDF")
+        }
+        pendingPdfData = null
+    }
+
+    // For Android 11+ (API 30+), we need MANAGE_EXTERNAL_STORAGE
+    val manageStorageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (hasStoragePermission(context)) {
+            pendingPdfData?.let { data ->
+                performExport(data, context,
+                    onSuccess = { result ->
+                        exportResult = result
+                        showResultDialog = true
+                        isExporting = false
+                    },
+                    onError = { error ->
+                        isExporting = false
+                        onExportError(error)
+                    }
+                )
+            }
+        } else {
+            isExporting = false
+            onExportError("Storage permission is required to save PDF")
+        }
+        pendingPdfData = null
+    }
+
     val currentDataId = pdfData?.tripId
 
     LaunchedEffect(currentDataId) {
@@ -48,24 +127,271 @@ actual fun PdfExportHandler(
             isExporting = true
             Log.d(TAG, "Starting PDF export for trip: ${pdfData.tripId}")
 
-            // Run on main thread using Handler
-            Handler(Looper.getMainLooper()).post {
-                try {
-                    val pdfFile = generateNativePdf(context, pdfData)
-                    if (pdfFile != null && pdfFile.exists()) {
-                        Log.d(TAG, "PDF generated successfully: ${pdfFile.absolutePath}")
-                        sharePdfFile(context, pdfFile, pdfData.tripNumber ?: "Trip Costs")
-                        isExporting = false
-                        onExportComplete()
-                    } else {
-                        Log.e(TAG, "PDF file was not created")
-                        isExporting = false
-                        onExportError("Failed to create PDF file")
+            // Check permissions first
+            when {
+                hasStoragePermission(context) -> {
+                    // Permission already granted, proceed
+                    performExport(pdfData, context,
+                        onSuccess = { result ->
+                            exportResult = result
+                            showResultDialog = true
+                            isExporting = false
+                        },
+                        onError = { error ->
+                            isExporting = false
+                            onExportError(error)
+                        }
+                    )
+                }
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+                    // Android 11+, need MANAGE_EXTERNAL_STORAGE
+                    pendingPdfData = pdfData
+                    showPermissionDialog = true
+                }
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+                    // Android 6-10, request WRITE_EXTERNAL_STORAGE
+                    pendingPdfData = pdfData
+                    storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+                else -> {
+                    // Below Android 6, permission is granted at install time
+                    performExport(pdfData, context,
+                        onSuccess = { result ->
+                            exportResult = result
+                            showResultDialog = true
+                            isExporting = false
+                        },
+                        onError = { error ->
+                            isExporting = false
+                            onExportError(error)
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    // Permission dialog for Android 11+
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showPermissionDialog = false
+                isExporting = false
+                pendingPdfData = null
+            },
+            title = { Text("Storage Permission Required") },
+            text = {
+                Text("To save PDFs to your device, please grant 'All files access' permission in the next screen.\n\nGo to Settings > Allow access to manage all files")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPermissionDialog = false
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                                data = Uri.parse("package:${context.packageName}")
+                            }
+                            manageStorageLauncher.launch(intent)
+                        }
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "PDF export exception", e)
-                    isExporting = false
-                    onExportError(e.message ?: "Failed to export PDF")
+                ) {
+                    Text("Open Settings")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showPermissionDialog = false
+                        isExporting = false
+                        pendingPdfData = null
+                        onExportError("Storage permission is required to save PDF")
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Show result dialog after successful export
+    if (showResultDialog && exportResult != null) {
+        PdfExportResultDialog(
+            result = exportResult!!,
+            onDone = {
+                showResultDialog = false
+                exportResult = null
+                onExportComplete()
+            },
+            onShare = {
+                sharePdfFile(context, exportResult!!.file, exportResult!!.tripNumber, exportResult!!.exportDateTime)
+                showResultDialog = false
+                exportResult = null
+                onExportComplete()
+            }
+        )
+    }
+}
+
+/**
+ * Check if storage permission is granted.
+ */
+private fun hasStoragePermission(context: Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        Environment.isExternalStorageManager()
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        true // Below Android 6, permission is granted at install time
+    }
+}
+
+/**
+ * Perform the actual PDF export.
+ */
+private fun performExport(
+    pdfData: TripDetailContract.TripCostsPdfData,
+    context: Context,
+    onSuccess: (PdfExportResult) -> Unit,
+    onError: (String) -> Unit
+) {
+    Handler(Looper.getMainLooper()).post {
+        try {
+            val result = generateNativePdf(pdfData)
+            if (result != null && result.file.exists()) {
+                Log.d(TAG, "PDF generated successfully: ${result.filePath}")
+                onSuccess(result)
+            } else {
+                Log.e(TAG, "PDF file was not created")
+                onError("Failed to create PDF file")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "PDF export exception", e)
+            onError(e.message ?: "Failed to export PDF")
+        }
+    }
+}
+
+/**
+ * Dialog shown after PDF export is complete.
+ * Shows saved location and provides "Done" and "Share" options.
+ */
+@Composable
+private fun PdfExportResultDialog(
+    result: PdfExportResult,
+    onDone: () -> Unit,
+    onShare: () -> Unit
+) {
+    Dialog(onDismissRequest = onDone) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Title with 8dp padding
+                Text(
+                    text = "${result.vehicleNumber} Current Trip Costs exported successfully",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // File info card
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(text = "📄", style = MaterialTheme.typography.bodyMedium)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "File Name",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = result.fileName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(text = "📁", style = MaterialTheme.typography.bodyMedium)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "Saved Location",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = result.filePath,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDone,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(text = "Done", fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Button(
+                        onClick = onShare,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text(text = "📤", style = MaterialTheme.typography.bodyLarge)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "Share", fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
@@ -73,7 +399,8 @@ actual fun PdfExportHandler(
 }
 
 /**
- * Generate PDF file name based on: VehicleNumber_TripId_StartEndDate
+ * Generate PDF file name based on: VehicleNumber_TripId_DepartureDate_to_ArrivalDate
+ * Example: UP64AB1234_Trip1_10-Feb-2026_to_12-Mar-2026.pdf
  */
 private fun generatePdfFileName(pdfData: TripDetailContract.TripCostsPdfData): String {
     val vehicleNumber = pdfData.vehicleNumber
@@ -84,30 +411,53 @@ private fun generatePdfFileName(pdfData: TripDetailContract.TripCostsPdfData): S
 
     val tripId = pdfData.tripId
 
-    // Format start date (from scheduledDate or extract from costs)
-    val startDate = pdfData.scheduledDate
-        ?.replace("-", "")
-        ?.replace("/", "")
-        ?.take(8)
+    // Format departure date as DD-MMM-YYYY (e.g., 10-Feb-2026)
+    val startDate = formatDateForFileName(pdfData.departureDate) ?: "NA"
+
+    // Format arrival date as DD-MMM-YYYY (e.g., 12-Mar-2026)
+    val endDate = formatDateForFileName(pdfData.arrivalDate)
+        ?: formatDateForFileName(pdfData.exportDate)
         ?: "NA"
 
-    // Get end date from the last cost entry or use export date
-    val endDate = pdfData.exportDate
-        .replace("-", "")
-        .replace("/", "")
-        .take(8)
-
-    return "${vehicleNumber}_Trip${tripId}_${startDate}_${endDate}.pdf"
+    return "${vehicleNumber}_Trip${tripId}_${startDate}_to_${endDate}.pdf"
 }
 
 /**
- * Get the PDF export directory: sdcard/Documents/IndusJSFleet/exportedPdf/
- * Uses public Documents directory for easy access from file managers.
+ * Format date from DD-MM-YYYY to DD-MMM-YYYY for file naming.
+ * Example: 10-02-2026 -> 10-Feb-2026
  */
-private fun getPdfExportDirectory(context: Context): File {
-    // Use public Documents directory on external storage (sdcard)
-    val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-    val pdfDir = File(documentsDir, "IndusJSFleet/exportedPdf")
+private fun formatDateForFileName(dateString: String?): String? {
+    if (dateString.isNullOrBlank()) return null
+
+    val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+    return try {
+        // Handle DD-MM-YYYY format
+        val parts = dateString.split("-")
+        if (parts.size == 3) {
+            val day = parts[0]
+            val monthIndex = parts[1].toIntOrNull()?.minus(1) ?: return dateString.replace("-", "")
+            val year = parts[2]
+
+            if (monthIndex in 0..11) {
+                "$day-${months[monthIndex]}-$year"
+            } else {
+                dateString.replace("-", "")
+            }
+        } else {
+            dateString.replace("-", "")
+        }
+    } catch (e: Exception) {
+        dateString.replace("-", "")
+    }
+}
+
+/**
+ * Get the PDF export directory: /sdcard/IndusJSFleet/exportedPdf/
+ */
+private fun getPdfExportDirectory(): File {
+    val sdcard = Environment.getExternalStorageDirectory()
+    val pdfDir = File(sdcard, "IndusJSFleet/exportedPdf")
 
     if (!pdfDir.exists()) {
         val created = pdfDir.mkdirs()
@@ -119,35 +469,29 @@ private fun getPdfExportDirectory(context: Context): File {
 
 /**
  * Generate PDF using native Android Canvas-based drawing.
- * This is more reliable than WebView-based approach.
+ * Returns PdfExportResult with file path and metadata.
  */
 private fun generateNativePdf(
-    context: Context,
     pdfData: TripDetailContract.TripCostsPdfData
-): File? {
+): PdfExportResult? {
     Log.d(TAG, "Generating native PDF...")
 
     val fileName = generatePdfFileName(pdfData)
     Log.d(TAG, "PDF file name: $fileName")
 
-    // A4 size in points (72 points per inch)
     val pageWidth = 595
     val pageHeight = 842
 
     val pdfDocument = PdfDocument()
-
-    // Create page
     val pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create()
     val page = pdfDocument.startPage(pageInfo)
     val canvas = page.canvas
 
-    // Draw content
     drawPdfContent(canvas, pdfData, pageWidth, pageHeight)
 
     pdfDocument.finishPage(page)
 
-    // Save to IndusJSFleet/exportedPdf directory
-    val pdfDir = getPdfExportDirectory(context)
+    val pdfDir = getPdfExportDirectory()
     val pdfFile = File(pdfDir, fileName)
 
     try {
@@ -159,7 +503,14 @@ private fun generateNativePdf(
         pdfDocument.close()
     }
 
-    return pdfFile
+    return PdfExportResult(
+        file = pdfFile,
+        fileName = fileName,
+        filePath = "/sdcard/IndusJSFleet/exportedPdf/$fileName",
+        vehicleNumber = pdfData.vehicleNumber ?: "Vehicle",
+        tripNumber = pdfData.tripNumber ?: "Trip #${pdfData.tripId}",
+        exportDateTime = "${pdfData.exportDate} at ${pdfData.exportTime}"
+    )
 }
 
 private fun drawPdfContent(
@@ -171,7 +522,6 @@ private fun drawPdfContent(
     val margin = 40f
     var yPos = margin
 
-    // Paints
     val titlePaint = Paint().apply {
         color = Color.parseColor("#1976D2")
         textSize = 24f
@@ -243,37 +593,59 @@ private fun drawPdfContent(
     yPos += 20f
 
     // Trip Info Section
-    canvas.drawRect(margin, yPos, pageWidth - margin, yPos + 80f, bgPaint)
+    canvas.drawRect(margin, yPos, pageWidth - margin, yPos + 100f, bgPaint)
     yPos += 15f
 
     // Vehicle
-    canvas.drawText("VEHICLE", margin + 10, yPos, labelPaint)
+    canvas.drawText("VEHICLE REGISTRATION", margin + 10, yPos, labelPaint)
     canvas.drawText(pdfData.vehicleNumber ?: "N/A", margin + 10, yPos + 15f, valuePaint)
 
+    // Trip Status
+    canvas.drawText("TRIP STATUS", pageWidth / 2f, yPos, labelPaint)
+    canvas.drawText(pdfData.tripStatusLabel ?: "N/A", pageWidth / 2f, yPos + 15f, valuePaint)
+
+    yPos += 35f
+
     // Driver
-    canvas.drawText("DRIVER", pageWidth / 2f, yPos, labelPaint)
-    canvas.drawText(pdfData.driverName ?: "N/A", pageWidth / 2f, yPos + 15f, valuePaint)
+    canvas.drawText("DRIVER", margin + 10, yPos, labelPaint)
+    canvas.drawText(pdfData.driverName ?: "N/A", margin + 10, yPos + 15f, valuePaint)
 
-    yPos += 40f
+    // Customer
+    canvas.drawText("CUSTOMER", pageWidth / 2f, yPos, labelPaint)
+    canvas.drawText(pdfData.customerName ?: "N/A", pageWidth / 2f, yPos + 15f, valuePaint)
 
-    // Scheduled Date
-    canvas.drawText("SCHEDULED DATE", margin + 10, yPos, labelPaint)
-    canvas.drawText(pdfData.scheduledDate ?: "N/A", margin + 10, yPos + 15f, valuePaint)
-
-    // Export Date
-    canvas.drawText("EXPORT DATE", pageWidth / 2f, yPos, labelPaint)
-    canvas.drawText(pdfData.exportDate, pageWidth / 2f, yPos + 15f, valuePaint)
-
-    yPos += 45f
+    yPos += 55f
 
     // Route Section
     canvas.drawRect(margin, yPos, pageWidth - margin, yPos + 60f, primaryBgPaint)
     yPos += 20f
 
-    canvas.drawText("📍 FROM: ${pdfData.startLocation ?: "N/A"}", margin + 10, yPos, normalPaint)
+    canvas.drawText("FROM: ${pdfData.startLocation ?: "N/A"}", margin + 10, yPos, normalPaint)
     yPos += 25f
-    canvas.drawText("📍 TO: ${pdfData.endLocation ?: "N/A"}", margin + 10, yPos, normalPaint)
+    canvas.drawText("TO: ${pdfData.endLocation ?: "N/A"}", margin + 10, yPos, normalPaint)
     yPos += 30f
+
+    // Schedule Section
+    canvas.drawRect(margin, yPos, pageWidth - margin, yPos + 50f, bgPaint)
+    yPos += 15f
+
+    // Departure
+    canvas.drawText("DEPARTURE", margin + 10, yPos, labelPaint)
+    val departureText = buildString {
+        append(pdfData.departureDate ?: "N/A")
+        pdfData.departureTime?.let { append(" at $it") }
+    }
+    canvas.drawText(departureText, margin + 10, yPos + 15f, valuePaint)
+
+    // Arrival
+    canvas.drawText("ARRIVAL", pageWidth / 2f, yPos, labelPaint)
+    val arrivalText = buildString {
+        append(pdfData.arrivalDate ?: "N/A")
+        pdfData.arrivalTime?.let { append(" at $it") }
+    }
+    canvas.drawText(arrivalText, pageWidth / 2f, yPos + 15f, valuePaint)
+
+    yPos += 45f
 
     // Total Cost Box
     yPos += 10f
@@ -348,7 +720,7 @@ private fun drawPdfContent(
 
     // Table rows
     pdfData.costs.forEachIndexed { index, cost ->
-        if (yPos > pageHeight - 60) return@forEachIndexed // Prevent overflow
+        if (yPos > pageHeight - 70) return@forEachIndexed // Prevent overflow
 
         if (index % 2 == 0) {
             canvas.drawRect(margin, yPos - 3f, pageWidth - margin, yPos + 17f, bgPaint)
@@ -368,7 +740,7 @@ private fun drawPdfContent(
     }
 
     // Footer
-    yPos = pageHeight - 40f
+    yPos = pageHeight - 55f
     canvas.drawLine(margin, yPos, pageWidth - margin, yPos, linePaint)
     yPos += 15f
 
@@ -377,9 +749,31 @@ private fun drawPdfContent(
         textSize = 10f
         isAntiAlias = true
     }
-    val footer = "IndusJS Fleet • Generated on ${pdfData.exportDate}"
-    val footerWidth = footerPaint.measureText(footer)
-    canvas.drawText(footer, (pageWidth - footerWidth) / 2, yPos, footerPaint)
+
+    val companyPaint = Paint().apply {
+        color = Color.parseColor("#1976D2")
+        textSize = 12f
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        isAntiAlias = true
+    }
+    val companyName = "IndusJS Fleet"
+    val companyWidth = companyPaint.measureText(companyName)
+    canvas.drawText(companyName, (pageWidth - companyWidth) / 2, yPos, companyPaint)
+    yPos += 15f
+
+    val exportInfo = "Exported on ${pdfData.exportDate} at ${pdfData.exportTime}"
+    val exportWidth = footerPaint.measureText(exportInfo)
+    canvas.drawText(exportInfo, (pageWidth - exportWidth) / 2, yPos, footerPaint)
+    yPos += 12f
+
+    val tripIdPaint = Paint().apply {
+        color = Color.parseColor("#BBBBBB")
+        textSize = 9f
+        isAntiAlias = true
+    }
+    val tripIdInfo = "Trip ID: ${pdfData.tripId} | ${pdfData.vehicleNumber ?: "N/A"}"
+    val tripIdWidth = tripIdPaint.measureText(tripIdInfo)
+    canvas.drawText(tripIdInfo, (pageWidth - tripIdWidth) / 2, yPos, tripIdPaint)
 }
 
 private fun formatAmount(amount: Double): String {
@@ -417,7 +811,10 @@ private fun formatDate(dateString: String): String {
     }
 }
 
-private fun sharePdfFile(context: Context, pdfFile: File, title: String) {
+/**
+ * Share PDF file via Intent with subject containing date and time.
+ */
+private fun sharePdfFile(context: Context, pdfFile: File, tripNumber: String, exportDateTime: String) {
     Log.d(TAG, "Sharing PDF file: ${pdfFile.absolutePath}")
 
     try {
@@ -428,15 +825,18 @@ private fun sharePdfFile(context: Context, pdfFile: File, title: String) {
         )
         Log.d(TAG, "FileProvider URI: $uri")
 
+        val subject = "Trip Costs Report - $tripNumber - $exportDateTime"
+
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "application/pdf"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "Trip Costs Report - $title")
-            putExtra(Intent.EXTRA_TEXT, "Please find attached the Trip Costs Report for $title")
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+            putExtra(Intent.EXTRA_TEXT, "Please find attached the Trip Costs Report.\n\nTrip: $tripNumber\nExported: $exportDateTime")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        val chooserIntent = Intent.createChooser(shareIntent, "Share PDF via")
+        val chooserTitle = "Share: $tripNumber ($exportDateTime)"
+        val chooserIntent = Intent.createChooser(shareIntent, chooserTitle)
         chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooserIntent)
 
@@ -446,4 +846,3 @@ private fun sharePdfFile(context: Context, pdfFile: File, title: String) {
         throw e
     }
 }
-

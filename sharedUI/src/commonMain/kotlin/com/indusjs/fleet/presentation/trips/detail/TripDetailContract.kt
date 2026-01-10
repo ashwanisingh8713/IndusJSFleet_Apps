@@ -224,14 +224,27 @@ object TripDetailContract {
         val tripNumber: String?,
         val vehicleNumber: String?,
         val driverName: String?,
+        // Route
         val startLocation: String?,
         val endLocation: String?,
-        val scheduledDate: String?,
+        // Schedule - Departure
+        val departureDate: String?,
+        val departureTime: String?,
+        // Schedule - Arrival
+        val arrivalDate: String?,
+        val arrivalTime: String?,
+        // Trip Info
         val tripStatus: String?,
         val tripStatusLabel: String?,
+        val estimatedDistance: String?,
+        val estimatedDuration: String?,
+        // Customer
+        val customerName: String?,
+        // Costs
         val costs: List<TripCostDto>,
         val totalCost: Double,
         val costsByType: Map<String, Double>,
+        // Export metadata
         val exportDate: String,
         val exportTime: String
     )

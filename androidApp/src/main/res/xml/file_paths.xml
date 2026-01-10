@@ -15,6 +15,16 @@
         name="indusjs_pdfs"
         path="Documents/IndusJSFleet/exportedPdf/" />
 
+    <!-- IndusJS Fleet exported PDFs in root sdcard -->
+    <external-path
+        name="indusjs_root_pdfs"
+        path="IndusJSFleet/exportedPdf/" />
+
+    <!-- Root external storage for legacy support -->
+    <external-path
+        name="external_root"
+        path="." />
+
     <!-- App's cache directory -->
     <cache-path
         name="cache"

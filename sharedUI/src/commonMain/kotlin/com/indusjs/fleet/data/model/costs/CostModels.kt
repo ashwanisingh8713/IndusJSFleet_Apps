@@ -114,9 +114,36 @@ data class TripCostDto(
     val fuelRate: Double? = null,
     @SerialName("km_per_liter")
     val kmPerLiter: Double? = null,
+    // Created by info
+    @SerialName("owner_id")
+    val ownerId: Int? = null,
+    @SerialName("created_by")
+    val createdBy: Int? = null,
+    @SerialName("created_by_user")
+    val createdByUser: CreatedByUserDto? = null,
     @SerialName("created_at")
     val createdAt: String? = null
 ) : Dto
+
+/**
+ * Created By User DTO - contains info about who added the cost.
+ */
+@Serializable
+data class CreatedByUserDto(
+    val id: Int = 0,
+    @SerialName("first_name")
+    val firstName: String? = null,
+    @SerialName("last_name")
+    val lastName: String? = null,
+    val role: String? = null,
+    val email: String? = null
+) : Dto {
+    val fullName: String
+        get() = listOfNotNull(firstName, lastName).joinToString(" ").ifBlank { "Unknown" }
+
+    val roleLabel: String
+        get() = role?.replaceFirstChar { it.uppercaseChar() } ?: ""
+}
 
 /**
  * Trip Costs List API response.
