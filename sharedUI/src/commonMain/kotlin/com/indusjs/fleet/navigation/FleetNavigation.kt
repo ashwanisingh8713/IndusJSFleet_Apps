@@ -14,6 +14,11 @@ import com.indusjs.fleet.presentation.drivers.DriversScreen
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverScreen
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailScreen
 import com.indusjs.fleet.presentation.maps.MapsScreen
+import com.indusjs.fleet.presentation.reports.ReportsScreen
+import com.indusjs.fleet.presentation.reports.consolidated.ConsolidatedPLScreen
+import com.indusjs.fleet.presentation.reports.cost.CostAnalysisScreen
+import com.indusjs.fleet.presentation.reports.trip.TripProfitLossScreen
+import com.indusjs.fleet.presentation.reports.vehicle.VehicleProfitLossScreen
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberScreen
 import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailScreen
 import com.indusjs.fleet.presentation.team.list.TeamListScreen
@@ -92,6 +97,7 @@ fun fleetEntryProvider(
                 onNavigateToMaps = { backStack.add(FleetRoute.Maps) },
                 onNavigateToProfile = { backStack.add(FleetRoute.Profile) },
                 onNavigateToTeam = { backStack.add(FleetRoute.TeamList) },
+                onNavigateToReports = { backStack.add(FleetRoute.Reports) },
                 onNavigateToAddTripCost = { backStack.add(FleetRoute.TripCostEntry) },
                 onNavigateToAddVehicleCost = { backStack.add(FleetRoute.MaintenanceCostEntry) },
                 onNavigateToAddVehicle = { backStack.add(FleetRoute.AddVehicle) },
@@ -288,6 +294,52 @@ fun fleetEntryProvider(
             TeamMemberDetailScreen(
                 viewModel = viewModel,
                 memberId = route.memberId,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        // ==================== Reports ====================
+
+        is FleetRoute.Reports -> NavEntry(route) {
+            val viewModel = rememberViewModel { reportsViewModel() }
+            ReportsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateToVehiclePL = { backStack.add(FleetRoute.VehicleProfitLoss) },
+                onNavigateToTripPL = { backStack.add(FleetRoute.TripProfitLoss) },
+                onNavigateToCostAnalysis = { backStack.add(FleetRoute.CostAnalysis) },
+                onNavigateToConsolidatedPL = { backStack.add(FleetRoute.ConsolidatedPL) }
+            )
+        }
+
+        is FleetRoute.VehicleProfitLoss -> NavEntry(route) {
+            val viewModel = rememberViewModel { vehiclePLViewModel() }
+            VehicleProfitLossScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.TripProfitLoss -> NavEntry(route) {
+            val viewModel = rememberViewModel { tripPLViewModel() }
+            TripProfitLossScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.CostAnalysis -> NavEntry(route) {
+            val viewModel = rememberViewModel { costAnalysisViewModel() }
+            CostAnalysisScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.ConsolidatedPL -> NavEntry(route) {
+            val viewModel = rememberViewModel { consolidatedPLViewModel() }
+            ConsolidatedPLScreen(
+                viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
         }

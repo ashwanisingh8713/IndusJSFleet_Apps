@@ -4,11 +4,34 @@ import com.indusjs.fleet.domain.entity.Entity
 
 /**
  * User roles in the Fleet Management system.
+ * Hierarchy: Owner > General Manager > Manager > Supervisor
  */
 enum class UserRole {
     OWNER,
+    GENERAL_MANAGER,
     MANAGER,
-    SUPERVISOR
+    SUPERVISOR;
+
+    companion object {
+        fun fromString(value: String): UserRole {
+            return when (value.lowercase().replace("_", "").replace(" ", "")) {
+                "owner" -> OWNER
+                "generalmanager", "gm" -> GENERAL_MANAGER
+                "manager" -> MANAGER
+                "supervisor" -> SUPERVISOR
+                else -> SUPERVISOR // Default to lowest privilege
+            }
+        }
+
+        fun toApiString(role: UserRole): String {
+            return when (role) {
+                OWNER -> "owner"
+                GENERAL_MANAGER -> "general_manager"
+                MANAGER -> "manager"
+                SUPERVISOR -> "supervisor"
+            }
+        }
+    }
 }
 
 /**
@@ -30,6 +53,39 @@ data class User(
 
     val isOwner: Boolean
         get() = role == UserRole.OWNER
+
+    val isGeneralManager: Boolean
+        get() = role == UserRole.GENERAL_MANAGER
+
+    val isManager: Boolean
+        get() = role == UserRole.MANAGER
+
+    val isSupervisor: Boolean
+        get() = role == UserRole.SUPERVISOR
+
+    /** Owner or General Manager - has financial access */
+    val hasFinancialAccess: Boolean
+        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
+
+    /** Can edit trips in any state */
+    val canEditTripInAnyState: Boolean
+        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
+
+    /** Can manage team members */
+    val canManageTeam: Boolean
+        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
+
+    /** Can assign caretakers to vehicles/drivers */
+    val canAssignCaretaker: Boolean
+        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
+
+    /** Can view trip_price field */
+    val canViewTripPrice: Boolean
+        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
+
+    /** Can delete costs */
+    val canDeleteCosts: Boolean
+        get() = role != UserRole.SUPERVISOR
 }
 
 /**

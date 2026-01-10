@@ -7,6 +7,7 @@ import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.util.convertToIsoDateTime
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
 import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
 import com.indusjs.fleet.domain.usecase.trip.CreateTripWithDataUseCase
@@ -15,6 +16,7 @@ import com.indusjs.fleet.presentation.trips.create.CreateTripContract.Effect
 import com.indusjs.fleet.presentation.trips.create.CreateTripContract.Intent
 import com.indusjs.fleet.presentation.trips.create.CreateTripContract.State
 import dev.zacsweers.metro.Inject
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -31,12 +33,26 @@ class CreateTripViewModel(
     private val getVehiclesUseCase: GetVehiclesUseCase,
     private val getDriversUseCase: GetDriversUseCase,
     private val createTripWithDataUseCase: CreateTripWithDataUseCase,
+    private val userLocalDataSource: UserLocalDataSource,
     private val googlePlacesService: GooglePlacesService? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     private val log = Logger.withTag("CreateTripViewModel")
     private var startLocationSearchJob: Job? = null
     private var endLocationSearchJob: Job? = null
+
+    init {
+        // Load user role on init
+        viewModelScope.launch(dispatcherProvider.io) {
+            val userRole = try {
+                userLocalDataSource.getUserRole() ?: ""
+            } catch (e: Exception) {
+                log.e { "Failed to get user role: ${e.message}" }
+                ""
+            }
+            updateState { copy(userRole = userRole) }
+        }
+    }
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
@@ -100,6 +116,9 @@ class CreateTripViewModel(
             is Intent.UpdateCustomerContact -> updateState { copy(customerContact = intent.value) }
             is Intent.UpdatePriority -> updateState { copy(priority = intent.value) }
             is Intent.UpdateNotes -> updateState { copy(notes = intent.value) }
+
+            // Pricing updates
+            is Intent.UpdateTripPrice -> updateState { copy(tripPrice = intent.value) }
 
             // Actions
             is Intent.CreateTrip -> createTrip()
@@ -468,7 +487,8 @@ class CreateTripViewModel(
                 customerName = state.customerName.takeIf { it.isNotBlank() },
                 customerContact = state.customerContact.takeIf { it.isNotBlank() },
                 priority = state.priority.takeIf { it.isNotBlank() }?.lowercase(),
-                notes = state.notes.takeIf { it.isNotBlank() }
+                notes = state.notes.takeIf { it.isNotBlank() },
+                tripPrice = state.tripPrice.toDoubleOrNull()
             )
 
             when (val result = createTripWithDataUseCase(createTripData)) {

@@ -1,0 +1,91 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-12-location",
+		"name": "12. Location Tracking",
+		"description": "Real-time vehicle location tracking endpoints.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Update Vehicle Location",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"vehicle_id\": 1,\n    \"latitude\": 19.0760,\n    \"longitude\": 72.8777,\n    \"speed\": 45.5,\n    \"heading\": 180,\n    \"accuracy\": 10,\n    \"altitude\": 50,\n    \"timestamp\": \"2026-01-15T10:30:00Z\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/locations", "host": ["{{base_url}}"], "path": ["locations"]}
+			}
+		},
+		{
+			"name": "Bulk Update Locations",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"locations\": [\n        {\n            \"vehicle_id\": 1,\n            \"latitude\": 19.0760,\n            \"longitude\": 72.8777,\n            \"speed\": 45.5,\n            \"heading\": 180,\n            \"timestamp\": \"2026-01-15T10:30:00Z\"\n        },\n        {\n            \"vehicle_id\": 2,\n            \"latitude\": 18.5204,\n            \"longitude\": 73.8567,\n            \"speed\": 50.0,\n            \"heading\": 90,\n            \"timestamp\": \"2026-01-15T10:30:00Z\"\n        }\n    ]\n}"
+				},
+				"url": {"raw": "{{base_url}}/locations/bulk", "host": ["{{base_url}}"], "path": ["locations", "bulk"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Current Location",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/location", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "location"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Location History",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/vehicles/{{vehicle_id}}/location/history?start_date=2026-01-15T00:00:00Z&end_date=2026-01-15T23:59:59Z",
+					"host": ["{{base_url}}"],
+					"path": ["vehicles", "{{vehicle_id}}", "location", "history"],
+					"query": [
+						{"key": "start_date", "value": "2026-01-15T00:00:00Z"},
+						{"key": "end_date", "value": "2026-01-15T23:59:59Z"},
+						{"key": "interval", "value": "5", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get All Vehicle Locations",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/locations/vehicles", "host": ["{{base_url}}"], "path": ["locations", "vehicles"]}
+			}
+		},
+		{
+			"name": "Get Live Tracking Status",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/locations/live-status", "host": ["{{base_url}}"], "path": ["locations", "live-status"]}
+			}
+		}
+	]
+}
+

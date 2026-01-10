@@ -471,6 +471,7 @@ private fun EnhancedTeamMemberCard(
                     .clip(CircleShape)
                     .background(
                         when (member.role) {
+                            TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
                             TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
                             TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
                         }
@@ -482,6 +483,7 @@ private fun EnhancedTeamMemberCard(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = when (member.role) {
+                        TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.onTertiary
                         TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.onPrimary
                         TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.onSecondary
                     }
@@ -514,6 +516,7 @@ private fun EnhancedTeamMemberCard(
                     Surface(
                         shape = RoundedCornerShape(6.dp),
                         color = when (member.role) {
+                            TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
                             TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                             TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
                         }
@@ -523,6 +526,7 @@ private fun EnhancedTeamMemberCard(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = when (member.role) {
+                                TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
                                 TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
                                 TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
                             },

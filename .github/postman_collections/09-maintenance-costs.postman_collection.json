@@ -1,0 +1,143 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-09-maintenance-costs",
+		"name": "09. Maintenance Costs",
+		"description": "Vehicle maintenance cost management.\n\n## Cost Types\nservice, repair, tyre, battery, oil_change, brake, engine, body, electrical, ac, washing, other\n\n## Permissions\n- Add/Edit: All roles\n- Delete: Owner, GM, Manager only",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"},
+		{"key": "cost_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Get Maintenance Cost Types",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/maintenance-costs/types", "host": ["{{base_url}}"], "path": ["maintenance-costs", "types"]}
+			}
+		},
+		{
+			"name": "Create Maintenance Cost",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cost_type\": \"tyre\",\n    \"amount\": 5000.00,\n    \"date\": \"2026-01-10T12:00:00Z\",\n    \"description\": \"Front tyre replacement\",\n    \"notes\": \"MRF tyres\",\n    \"vendor_name\": \"MRF Tyre Shop\",\n    \"invoice_no\": \"INV78901\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Maintenance Costs",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs",
+					"host": ["{{base_url}}"],
+					"path": ["vehicles", "{{vehicle_id}}", "maintenance-costs"],
+					"query": [
+						{"key": "cost_types", "value": "tyre,service", "disabled": true},
+						{"key": "start_date", "value": "2026-01-01T00:00:00Z", "disabled": true},
+						{"key": "end_date", "value": "2026-01-31T23:59:59Z", "disabled": true},
+						{"key": "page", "value": "1", "disabled": true},
+						{"key": "per_page", "value": "20", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Maintenance Cost",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/maintenance-costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["maintenance-costs", "{{cost_id}}"]}
+			}
+		},
+		{
+			"name": "Update Maintenance Cost",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cost_type\": \"tyre\",\n    \"amount\": 5500.00,\n    \"description\": \"Front tyre replacement - updated\",\n    \"notes\": \"MRF ZLO tyres\",\n    \"vendor_name\": \"MRF Authorized Dealer\",\n    \"invoice_no\": \"INV78902\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/maintenance-costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["maintenance-costs", "{{cost_id}}"]}
+			}
+		},
+		{
+			"name": "Delete Maintenance Cost",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/maintenance-costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["maintenance-costs", "{{cost_id}}"]}
+			}
+		},
+		{
+			"name": "Bulk Create Maintenance Costs",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"costs\": [\n        {\n            \"cost_type\": \"tyre\",\n            \"amount\": 5000.00,\n            \"date\": \"2026-01-10T12:00:00Z\",\n            \"description\": \"Front tyre\",\n            \"notes\": \"MRF\",\n            \"vendor_name\": \"MRF Shop\",\n            \"invoice_no\": \"INV001\"\n        },\n        {\n            \"cost_type\": \"oil_change\",\n            \"amount\": 1500.00,\n            \"date\": \"2026-01-10T12:00:00Z\",\n            \"description\": \"Engine oil change\",\n            \"vendor_name\": \"Service Center\"\n        }\n    ]\n}"
+				},
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs/bulk", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs", "bulk"]}
+			}
+		},
+		{
+			"name": "Get Maintenance Cost Summary",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs/summary",
+					"host": ["{{base_url}}"],
+					"path": ["vehicles", "{{vehicle_id}}", "maintenance-costs", "summary"],
+					"query": [
+						{"key": "start_date", "value": "2026-01-01T00:00:00Z", "disabled": true},
+						{"key": "end_date", "value": "2026-01-31T23:59:59Z", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get All Maintenance Costs (Owner)",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/maintenance-costs",
+					"host": ["{{base_url}}"],
+					"path": ["maintenance-costs"],
+					"query": [
+						{"key": "vehicle_id", "value": "1", "disabled": true},
+						{"key": "cost_types", "value": "tyre,service", "disabled": true},
+						{"key": "start_date", "value": "2026-01-01T00:00:00Z", "disabled": true},
+						{"key": "end_date", "value": "2026-01-31T23:59:59Z", "disabled": true}
+					]
+				}
+			}
+		}
+	]
+}
+

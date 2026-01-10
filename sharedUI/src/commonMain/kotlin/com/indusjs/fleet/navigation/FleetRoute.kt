@@ -58,5 +58,13 @@ sealed interface FleetRoute : NavKey {
     @Serializable data object TeamList : FleetRoute
     @Serializable data object CreateTeamMember : FleetRoute
     @Serializable data class TeamMemberDetail(val memberId: String) : FleetRoute
+
+    // ==================== Reports Routes ====================
+
+    @Serializable data object Reports : FleetRoute
+    @Serializable data object VehicleProfitLoss : FleetRoute
+    @Serializable data object TripProfitLoss : FleetRoute
+    @Serializable data object CostAnalysis : FleetRoute
+    @Serializable data object ConsolidatedPL : FleetRoute
 }
 

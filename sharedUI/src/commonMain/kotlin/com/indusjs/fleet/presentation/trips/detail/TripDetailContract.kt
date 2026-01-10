@@ -33,6 +33,9 @@ object TripDetailContract {
         val trip: Trip? = null,
         val tripId: String = "",
 
+        // User role for permission check
+        val userRole: String = "",
+
         // Edit mode
         val isEditMode: Boolean = false,
 
@@ -83,6 +86,9 @@ object TripDetailContract {
         val priority: String = "",
         val notes: String = "",
 
+        // Editable fields - Pricing
+        val tripPrice: String = "",
+
         // Trip costs
         val costs: List<TripCostDto> = emptyList(),
         val totalCost: Double = 0.0,
@@ -127,6 +133,34 @@ object TripDetailContract {
 
         val hasCosts: Boolean
             get() = costs.isNotEmpty()
+
+        /**
+         * Determines if the user can edit this trip.
+         * - Owner and General Manager can edit trips in any state
+         * - Manager can only edit trips in PLANNED state
+         * - Supervisor cannot edit trips
+         */
+        val canEdit: Boolean
+            get() {
+                if (trip == null) return false
+                val role = userRole.lowercase()
+                // Owner and General Manager can edit any trip state
+                if (role == "owner" || role == "general_manager" || role == "generalmanager") return true
+                // Manager can only edit planned trips
+                if (role == "manager") return trip?.status == TripStatus.PLANNED
+                // Supervisor cannot edit
+                return false
+            }
+
+        /**
+         * Determines if the user can view trip_price.
+         * Only Owner and General Manager can see trip pricing.
+         */
+        val canViewTripPrice: Boolean
+            get() {
+                val role = userRole.lowercase()
+                return role == "owner" || role == "general_manager" || role == "generalmanager"
+            }
     }
 
     /**
@@ -181,6 +215,9 @@ object TripDetailContract {
         // Other updates
         data class UpdatePriority(val value: String) : Intent
         data class UpdateNotes(val value: String) : Intent
+
+        // Pricing updates
+        data class UpdateTripPrice(val value: String) : Intent
 
         // Status update (quick action)
         data class UpdateStatus(val status: TripStatus) : Intent

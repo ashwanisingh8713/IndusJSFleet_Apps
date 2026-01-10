@@ -1,0 +1,38 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-13-health",
+		"name": "13. Health & Metrics",
+		"description": "API health check and metrics endpoints.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "api_base", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api", "type": "string"},
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"}
+	],
+	"item": [
+		{
+			"name": "API Health Check",
+			"request": {
+				"method": "GET",
+				"url": {"raw": "{{api_base}}/health", "host": ["{{api_base}}"], "path": ["health"]}
+			}
+		},
+		{
+			"name": "API Status",
+			"request": {
+				"method": "GET",
+				"url": {"raw": "{{api_base}}/status", "host": ["{{api_base}}"], "path": ["status"]}
+			}
+		},
+		{
+			"name": "Get Metrics (Admin)",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/metrics", "host": ["{{base_url}}"], "path": ["metrics"]}
+			}
+		}
+	]
+}
+

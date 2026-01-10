@@ -91,6 +91,8 @@ data class TripDto(
     val sellingValue: Double? = null,
     @SerialName("estimated_expense")
     val estimatedExpense: Double? = null,
+    @SerialName("trip_price")
+    val tripPrice: Double? = null,
     // Payment
     @SerialName("payment_status")
     val paymentStatus: String? = null,
@@ -397,6 +399,8 @@ data class CreateTripRequest(
     val sellingValue: Double? = null,
     @SerialName("estimated_expense")
     val estimatedExpense: Double? = null,
+    @SerialName("trip_price")
+    val tripPrice: Double? = null,
     // Payment
     @SerialName("payment_status")
     val paymentStatus: String? = null,
@@ -477,6 +481,10 @@ data class UpdateTripRequest(
     val customerName: String? = null,
     @SerialName("customer_contact")
     val customerContact: String? = null,
+
+    // Pricing
+    @SerialName("trip_price")
+    val tripPrice: Double? = null,
 
     // Other
     @SerialName("priority")

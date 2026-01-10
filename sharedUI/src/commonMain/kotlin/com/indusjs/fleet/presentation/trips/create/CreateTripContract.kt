@@ -26,6 +26,9 @@ object CreateTripContract {
      * UI State for the Create Trip screen.
      */
     data class State(
+        // User role for permission checks
+        val userRole: String = "",
+
         // Vehicle & Driver selection
         val vehicles: List<Vehicle> = emptyList(),
         val drivers: List<Driver> = emptyList(),
@@ -56,6 +59,9 @@ object CreateTripContract {
         val customerContact: String = "",
         val priority: String = "normal",
         val notes: String = "",
+
+        // Pricing
+        val tripPrice: String = "",
 
         // Validation errors
         val vehicleError: String? = null,
@@ -91,6 +97,16 @@ object CreateTripContract {
         val priorityOptions: List<String> = priorities,
         val cargoTypeOptions: List<String> = cargoTypes
     ) : UiState {
+
+        /**
+         * Determines if the user can view and set trip_price.
+         * Only Owner and General Manager can see trip pricing.
+         */
+        val canViewTripPrice: Boolean
+            get() {
+                val role = userRole.lowercase()
+                return role == "owner" || role == "general_manager" || role == "generalmanager"
+            }
 
         val isFormValid: Boolean
             get() = selectedVehicle != null &&
@@ -155,6 +171,9 @@ object CreateTripContract {
         data class UpdateCustomerContact(val value: String) : Intent
         data class UpdatePriority(val value: String) : Intent
         data class UpdateNotes(val value: String) : Intent
+
+        // Pricing updates
+        data class UpdateTripPrice(val value: String) : Intent
 
         // Actions
         data object CreateTrip : Intent

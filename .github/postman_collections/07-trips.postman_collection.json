@@ -1,0 +1,188 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-07-trips",
+		"name": "07. Trips",
+		"description": "Trip management endpoints.\n\n## Date Format\n- Date: DD-MM-YYYY\n- DateTime: ISO 8601 (2026-01-15T08:00:00Z)\n\n## Trip States\nplanned, in_progress, completed, cancelled",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "trip_id", "value": "1", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"},
+		{"key": "driver_id", "value": "1", "type": "string"},
+		{"key": "stop_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Create Trip",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"vehicle_id\": 1,\n    \"driver_id\": 1,\n    \"scheduled_date\": \"15-01-2026\",\n    \"start_time\": \"2026-01-15T08:00:00Z\",\n    \"delivery_date\": \"15-01-2026\",\n    \"delivery_time\": \"2026-01-15T18:00:00Z\",\n    \"start_location\": \"Mumbai\",\n    \"start_lat\": 19.0760,\n    \"start_lng\": 72.8777,\n    \"end_location\": \"Pune\",\n    \"end_lat\": 18.5204,\n    \"end_lng\": 73.8567,\n    \"estimated_distance\": 150.5,\n    \"cargo_type\": \"general\",\n    \"cargo_description\": \"Electronics\",\n    \"cargo_loading_weight\": 500,\n    \"weight_unit\": \"kg\",\n    \"customer_name\": \"ABC Corp\",\n    \"customer_contact\": \"+919876543210\",\n    \"priority\": \"normal\",\n    \"trip_price\": 15000,\n    \"notes\": \"Handle with care\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips", "host": ["{{base_url}}"], "path": ["trips"]}
+			}
+		},
+		{
+			"name": "List Trips",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/trips?page=1&per_page=20",
+					"host": ["{{base_url}}"],
+					"path": ["trips"],
+					"query": [
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"},
+						{"key": "state", "value": "in_progress", "disabled": true},
+						{"key": "vehicle_id", "value": "1", "disabled": true},
+						{"key": "driver_id", "value": "1", "disabled": true},
+						{"key": "priority", "value": "high", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Trip",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]}
+			}
+		},
+		{
+			"name": "Update Trip",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"vehicle_id\": 2,\n    \"driver_id\": 2,\n    \"start_location\": \"Mumbai Updated\",\n    \"end_location\": \"Pune Updated\",\n    \"customer_name\": \"XYZ Corp\",\n    \"priority\": \"high\",\n    \"trip_price\": 18000\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]}
+			}
+		},
+		{
+			"name": "Update Trip State",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"state\": \"in_progress\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/state", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "state"]}
+			}
+		},
+		{
+			"name": "Update Trip Location",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"current_lat\": 18.9500,\n    \"current_lng\": 73.2000\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/location", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "location"]}
+			}
+		},
+		{
+			"name": "Update Trip Progress",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"covered_distance\": 100.5,\n    \"covered_duration_minutes\": 120,\n    \"current_lat\": 18.7500,\n    \"current_lng\": 73.5000\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/progress", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "progress"]}
+			}
+		},
+		{
+			"name": "Delete Trip",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]}
+			}
+		},
+		{
+			"name": "Get Trip Stops",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/stops", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "stops"]}
+			}
+		},
+		{
+			"name": "Add Trip Stop",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"stop_order\": 1,\n    \"location\": \"Lonavala\",\n    \"latitude\": 18.7557,\n    \"longitude\": 73.4091,\n    \"arrival_time\": \"2026-01-15T10:00:00Z\",\n    \"stop_duration\": 30,\n    \"notes\": \"Rest stop\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/stops", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "stops"]}
+			}
+		},
+		{
+			"name": "Mark Stop Completed",
+			"request": {
+				"method": "PATCH",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/stops/{{stop_id}}/complete", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "stops", "{{stop_id}}", "complete"]}
+			}
+		},
+		{
+			"name": "Get Trip Fuel Info",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/fuel", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "fuel"]}
+			}
+		},
+		{
+			"name": "Update Trip Fuel Usage",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"used_fuel_quantity\": 35\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/fuel", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "fuel"]}
+			}
+		}
+	]
+}
+

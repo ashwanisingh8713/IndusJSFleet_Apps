@@ -13,6 +13,11 @@ import com.indusjs.fleet.presentation.drivers.DriversViewModel
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailViewModel
 import com.indusjs.fleet.presentation.maps.MapsViewModel
+import com.indusjs.fleet.presentation.reports.ReportsViewModel
+import com.indusjs.fleet.presentation.reports.consolidated.ConsolidatedPLViewModel
+import com.indusjs.fleet.presentation.reports.cost.CostAnalysisViewModel
+import com.indusjs.fleet.presentation.reports.trip.TripPLViewModel
+import com.indusjs.fleet.presentation.reports.vehicle.VehiclePLViewModel
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
 import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailViewModel
 import com.indusjs.fleet.presentation.team.list.TeamListViewModel
@@ -65,6 +70,13 @@ interface ViewModelProvider {
     // Cost Entry ViewModels
     fun tripCostEntryViewModel(): TripCostEntryViewModel
     fun maintenanceCostEntryViewModel(): MaintenanceCostEntryViewModel
+
+    // Reports ViewModels
+    fun reportsViewModel(): ReportsViewModel
+    fun vehiclePLViewModel(): VehiclePLViewModel
+    fun tripPLViewModel(): TripPLViewModel
+    fun costAnalysisViewModel(): CostAnalysisViewModel
+    fun consolidatedPLViewModel(): ConsolidatedPLViewModel
 }
 
 /**

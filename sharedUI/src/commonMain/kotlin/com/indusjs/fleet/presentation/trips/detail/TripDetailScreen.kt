@@ -25,6 +25,7 @@ import com.indusjs.fleet.core.ui.FleetDateFieldCompact
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.FleetTimeFieldCompact
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
@@ -168,7 +169,7 @@ fun TripDetailScreen(
                     }
                 },
                 actions = {
-                    if (!state.isEditMode && state.trip != null && state.trip?.status == TripStatus.PLANNED) {
+                    if (!state.isEditMode && state.trip != null && state.canEdit) {
                         IconButton(onClick = { viewModel.sendIntent(TripDetailContract.Intent.EnterEditMode) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_edit),
@@ -274,7 +275,7 @@ fun TripDetailScreen(
 
                         item { ScheduleSection(trip = state.trip!!) }
 
-                        item { CargoSection(trip = state.trip!!) }
+                        item { CargoSection(trip = state.trip!!, canViewTripPrice = state.canViewTripPrice) }
 
                         item { AdditionalInfoSection(trip = state.trip!!) }
 
@@ -884,8 +885,8 @@ private fun formatIsoDateTime(isoDateTime: String): String {
 }
 
 @Composable
-private fun CargoSection(trip: Trip) {
-    val hasCargo = trip.cargoType != null || trip.cargoDescription != null || trip.customerName != null
+private fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
+    val hasCargo = trip.cargoType != null || trip.cargoDescription != null || trip.customerName != null || (canViewTripPrice && trip.tripPrice != null)
 
     if (hasCargo) {
         EnhancedSectionCard(
@@ -904,6 +905,16 @@ private fun CargoSection(trip: Trip) {
             }
             trip.customerName?.let {
                 EnhancedInfoRow(icon = "👤", label = "Customer", value = it)
+            }
+            // Only show trip_price for Owner and General Manager
+            if (canViewTripPrice) {
+                trip.tripPrice?.let {
+                    EnhancedInfoRow(
+                        icon = "💰",
+                        label = "Trip Price",
+                        value = "₹${formatCurrency(it)}"
+                    )
+                }
             }
             trip.priority?.let {
                 val priorityIcon = getPriorityIcon(it)
@@ -1525,6 +1536,30 @@ private fun EditModeContent(
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Trip Price - Only visible to Owner and General Manager
+                if (state.canViewTripPrice) {
+                    OutlinedTextField(
+                        value = state.tripPrice,
+                        onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateTripPrice(it)) },
+                        label = { Text("Trip Price (₹)") },
+                        leadingIcon = { Text("💰", modifier = Modifier.padding(start = 8.dp)) },
+                        placeholder = { Text("Enter trip price") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        supportingText = {
+                            Text(
+                                text = "Expected Cost + Profit",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 // Priority selector
                 Text("Priority", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)

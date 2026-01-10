@@ -1,0 +1,133 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-08-trip-costs",
+		"name": "08. Trip Costs",
+		"description": "Trip cost management.\n\n## Cost Types\nfuel, toll, driver_allowance, parking, loading_charges, unloading_charges, chalan, permit, other\n\n## Permissions\n- Add/Edit: All roles\n- Delete: Owner, GM, Manager only",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "trip_id", "value": "1", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"},
+		{"key": "cost_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Get Trip Cost Types",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-costs/types", "host": ["{{base_url}}"], "path": ["trip-costs", "types"]}
+			}
+		},
+		{
+			"name": "Create Trip Cost",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_type\": \"fuel\",\n    \"amount\": 2500.00,\n    \"date\": \"2026-01-15T10:00:00Z\",\n    \"description\": \"Diesel refill at HP Pump\",\n    \"notes\": \"Full tank\",\n    \"vendor_name\": \"HP Petrol Pump\",\n    \"invoice_no\": \"INV123456\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
+			}
+		},
+		{
+			"name": "Get Trip Costs",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/trips/{{trip_id}}/costs",
+					"host": ["{{base_url}}"],
+					"path": ["trips", "{{trip_id}}", "costs"],
+					"query": [
+						{"key": "cost_types", "value": "fuel,toll", "disabled": true},
+						{"key": "start_date", "value": "2026-01-01T00:00:00Z", "disabled": true},
+						{"key": "end_date", "value": "2026-01-31T23:59:59Z", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Trip Cost",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["trip-costs", "{{cost_id}}"]}
+			}
+		},
+		{
+			"name": "Update Trip Cost",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cost_type\": \"fuel\",\n    \"amount\": 2800.00,\n    \"description\": \"Diesel refill - updated\",\n    \"notes\": \"Full tank plus extra\",\n    \"vendor_name\": \"HP Petrol Pump\",\n    \"invoice_no\": \"INV123457\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trip-costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["trip-costs", "{{cost_id}}"]}
+			}
+		},
+		{
+			"name": "Delete Trip Cost",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["trip-costs", "{{cost_id}}"]}
+			}
+		},
+		{
+			"name": "Bulk Create Trip Costs",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"costs\": [\n        {\n            \"cost_type\": \"fuel\",\n            \"amount\": 2500.00,\n            \"date\": \"2026-01-15T10:00:00Z\",\n            \"description\": \"Diesel refill\"\n        },\n        {\n            \"cost_type\": \"toll\",\n            \"amount\": 350.00,\n            \"date\": \"2026-01-15T11:00:00Z\",\n            \"description\": \"Mumbai-Pune Expressway\"\n        }\n    ]\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/costs/bulk", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "costs", "bulk"]}
+			}
+		},
+		{
+			"name": "Get Trip Cost Summary",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/costs/summary", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "costs", "summary"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Trip Costs",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/vehicles/{{vehicle_id}}/trip-costs",
+					"host": ["{{base_url}}"],
+					"path": ["vehicles", "{{vehicle_id}}", "trip-costs"],
+					"query": [
+						{"key": "cost_types", "value": "fuel,toll", "disabled": true},
+						{"key": "start_date", "value": "2026-01-01T00:00:00Z", "disabled": true},
+						{"key": "end_date", "value": "2026-01-31T23:59:59Z", "disabled": true}
+					]
+				}
+			}
+		}
+	]
+}
+

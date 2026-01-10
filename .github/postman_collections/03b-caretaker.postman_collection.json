@@ -1,0 +1,114 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-03b-caretaker",
+		"name": "03b. Caretaker Management",
+		"description": "Caretaker assignment for vehicles and drivers.\n\n## Access\n- Owner and General Manager only",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"},
+		{"key": "driver_id", "value": "1", "type": "string"},
+		{"key": "caretaker_id", "value": "5", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Assign Caretaker to Vehicle",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"caretaker_id\": 5\n}"
+				},
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/assign-caretaker", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "assign-caretaker"]}
+			}
+		},
+		{
+			"name": "Remove Caretaker from Vehicle",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/remove-caretaker", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "remove-caretaker"]}
+			}
+		},
+		{
+			"name": "Assign Caretaker to Driver",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"caretaker_id\": 5\n}"
+				},
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/assign-caretaker", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "assign-caretaker"]}
+			}
+		},
+		{
+			"name": "Remove Caretaker from Driver",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/remove-caretaker", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "remove-caretaker"]}
+			}
+		},
+		{
+			"name": "Bulk Assign Caretaker",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"caretaker_id\": 5,\n    \"vehicle_ids\": [1, 2, 3],\n    \"driver_ids\": [1, 2]\n}"
+				},
+				"url": {"raw": "{{base_url}}/caretakers/assign-bulk", "host": ["{{base_url}}"], "path": ["caretakers", "assign-bulk"]}
+			}
+		},
+		{
+			"name": "Reassign Caretaker Bulk",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"from_caretaker_id\": 5,\n    \"to_caretaker_id\": 7\n}"
+				},
+				"url": {"raw": "{{base_url}}/caretakers/reassign-bulk", "host": ["{{base_url}}"], "path": ["caretakers", "reassign-bulk"]}
+			}
+		},
+		{
+			"name": "Get Caretaker Assignments",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/caretakers/{{caretaker_id}}/assignments", "host": ["{{base_url}}"], "path": ["caretakers", "{{caretaker_id}}", "assignments"]}
+			}
+		},
+		{
+			"name": "Get Orphaned Assignments",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/caretakers/orphaned-assignments", "host": ["{{base_url}}"], "path": ["caretakers", "orphaned-assignments"]}
+			}
+		}
+	]
+}
+

@@ -7,6 +7,7 @@ import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.util.convertToIsoDateTime
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.model.trip.UpdateTripRequest
 import com.indusjs.fleet.domain.entity.trip.TripStatus
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
@@ -43,6 +44,7 @@ class TripDetailViewModel(
     private val tripRepository: TripRepository,
     private val getVehiclesUseCase: GetVehiclesUseCase,
     private val getDriversUseCase: GetDriversUseCase,
+    private val userLocalDataSource: UserLocalDataSource,
     private val googlePlacesService: GooglePlacesService? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
@@ -109,6 +111,9 @@ class TripDetailViewModel(
             is Intent.UpdatePriority -> updateState { copy(priority = intent.value) }
             is Intent.UpdateNotes -> updateState { copy(notes = intent.value) }
 
+            // Pricing updates
+            is Intent.UpdateTripPrice -> updateState { copy(tripPrice = intent.value) }
+
             // Actions
             is Intent.UpdateStatus -> updateStatus(intent.status)
             is Intent.SaveChanges -> saveChanges()
@@ -126,6 +131,15 @@ class TripDetailViewModel(
         updateState { copy(isLoading = true, error = null, tripId = tripId) }
 
         withContext(dispatcherProvider.io) {
+            // Load user role for permission check
+            val userRole = try {
+                userLocalDataSource.getUserRole() ?: ""
+            } catch (e: Exception) {
+                log.e { "Failed to get user role: ${e.message}" }
+                ""
+            }
+            updateState { copy(userRole = userRole) }
+
             when (val result = getTripByIdUseCase(tripId)) {
                 is Result.Success -> {
                     val trip = result.data
@@ -168,7 +182,8 @@ class TripDetailViewModel(
                             cargoDescription = trip.cargoDescription ?: "",
                             customerName = trip.customerName ?: "",
                             priority = trip.priority ?: "",
-                            notes = trip.notes ?: ""
+                            notes = trip.notes ?: "",
+                            tripPrice = trip.tripPrice?.toString() ?: ""
                         )
                     }
                     // Load trip costs
@@ -648,6 +663,7 @@ class TripDetailViewModel(
                 cargoLoadingWeight = state.cargoWeight.toDoubleOrNull(),
                 customerName = state.customerName.takeIf { it.isNotBlank() },
                 customerContact = state.customerContact.takeIf { it.isNotBlank() },
+                tripPrice = state.tripPrice.toDoubleOrNull(),
                 priority = state.priority.lowercase().takeIf { it.isNotBlank() },
                 notes = state.notes.takeIf { it.isNotBlank() }
             )

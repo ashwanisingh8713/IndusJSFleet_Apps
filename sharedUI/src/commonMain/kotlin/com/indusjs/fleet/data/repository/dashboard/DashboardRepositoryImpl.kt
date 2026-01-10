@@ -11,9 +11,11 @@ import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.dashboard.DashboardMapper.toDomain
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.data.model.dashboard.DashboardDataDto
+import com.indusjs.fleet.data.model.dashboard.FinancialPeriod
 import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import com.indusjs.fleet.domain.entity.dashboard.CostBreakdownItem
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
+import com.indusjs.fleet.domain.entity.dashboard.FinancialSummary
 import com.indusjs.fleet.domain.entity.dashboard.PendingPayment
 import com.indusjs.fleet.domain.entity.dashboard.PendingPaymentsData
 import com.indusjs.fleet.domain.repository.dashboard.DashboardData
@@ -213,6 +215,42 @@ class DashboardRepositoryImpl(
                 Result.Success(response.data.toDomain())
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch alerts status"))
+            }
+        } catch (e: AuthException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
+        }
+    }
+
+    override suspend fun getFinancialSummary(period: FinancialPeriod): Result<FinancialSummary> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getFinancialSummary(token, period)
+
+            if (response.success && response.data != null) {
+                val data = response.data
+                Result.Success(
+                    FinancialSummary(
+                        period = data.period,
+                        periodLabel = data.periodLabel,
+                        totalRevenue = data.totalRevenue,
+                        totalExpenses = data.totalExpenses,
+                        netProfit = data.netProfit,
+                        profitMargin = data.profitMargin,
+                        profitStatus = data.profitStatus,
+                        pendingPayments = data.pendingPayments,
+                        completedTrips = data.completedTrips,
+                        avgTripRevenue = data.avgTripRevenue,
+                        avgTripProfit = data.avgTripProfit,
+                        fuelCost = data.fuelCost,
+                        tollCost = data.tollCost,
+                        maintenanceCost = data.maintenanceCost,
+                        otherCost = data.otherCost
+                    )
+                )
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to fetch financial summary"))
             }
         } catch (e: AuthException) {
             Result.Error(e)

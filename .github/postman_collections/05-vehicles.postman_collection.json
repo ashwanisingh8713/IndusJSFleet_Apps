@@ -1,0 +1,147 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-05-vehicles",
+		"name": "05. Vehicles",
+		"description": "Vehicle management endpoints.\n\n## Permissions\n- Create: Owner, GM, Manager\n- Edit: Owner, GM, Manager\n- Delete: Owner, GM only",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Register Vehicle",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"registration_number\": \"MH12AB1234\",\n    \"make\": \"Tata\",\n    \"model\": \"Ace\",\n    \"year\": 2023,\n    \"vehicle_type\": \"truck\",\n    \"fuel_type\": \"diesel\",\n    \"capacity\": 1000,\n    \"color\": \"white\",\n    \"mileage\": 15.5\n}"
+				},
+				"url": {"raw": "{{base_url}}/vehicles", "host": ["{{base_url}}"], "path": ["vehicles"]}
+			}
+		},
+		{
+			"name": "List Vehicles",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/vehicles?page=1&per_page=20",
+					"host": ["{{base_url}}"],
+					"path": ["vehicles"],
+					"query": [
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"},
+						{"key": "state", "value": "active", "disabled": true},
+						{"key": "vehicle_type", "value": "truck", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Vehicle",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}"]}
+			}
+		},
+		{
+			"name": "Update Vehicle",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"make\": \"Tata\",\n    \"model\": \"Ace Gold\",\n    \"year\": 2024,\n    \"vehicle_type\": \"truck\",\n    \"fuel_type\": \"diesel\",\n    \"capacity\": 1200,\n    \"color\": \"blue\",\n    \"mileage\": 16.0\n}"
+				},
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}"]}
+			}
+		},
+		{
+			"name": "Update Vehicle State",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"state\": \"maintenance\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/state", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "state"]}
+			}
+		},
+		{
+			"name": "Delete Vehicle",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Overview",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/overview", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "overview"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Trips",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/trips", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "trips"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Full Detail",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/detail", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "detail"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Current Location",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/location", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "location"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Location History",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/vehicles/{{vehicle_id}}/location/history?start_date=01-01-2026&end_date=31-01-2026",
+					"host": ["{{base_url}}"],
+					"path": ["vehicles", "{{vehicle_id}}", "location", "history"],
+					"query": [
+						{"key": "start_date", "value": "01-01-2026"},
+						{"key": "end_date", "value": "31-01-2026"}
+					]
+				}
+			}
+		}
+	]
+}
+

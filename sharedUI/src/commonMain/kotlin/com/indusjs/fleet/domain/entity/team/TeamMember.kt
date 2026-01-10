@@ -2,8 +2,10 @@ package com.indusjs.fleet.domain.entity.team
 
 /**
  * Team member role enum.
+ * Hierarchy: General Manager > Manager > Supervisor
  */
 enum class TeamMemberRole {
+    GENERAL_MANAGER,
     MANAGER,
     SUPERVISOR;
 
@@ -11,18 +13,20 @@ enum class TeamMemberRole {
      * Convert role to API string representation.
      */
     fun toApiString(): String = when (this) {
+        GENERAL_MANAGER -> "general_manager"
         MANAGER -> "manager"
         SUPERVISOR -> "supervisor"
     }
 
     companion object {
         /**
-         * Parse role from API string, defaulting to MANAGER if unknown.
+         * Parse role from API string, defaulting to SUPERVISOR if unknown.
          */
-        fun fromApiString(value: String): TeamMemberRole = when (value.lowercase()) {
+        fun fromApiString(value: String): TeamMemberRole = when (value.lowercase().replace("_", "").replace(" ", "")) {
+            "generalmanager", "gm" -> GENERAL_MANAGER
             "manager" -> MANAGER
             "supervisor" -> SUPERVISOR
-            else -> MANAGER
+            else -> SUPERVISOR
         }
     }
 }
@@ -45,6 +49,7 @@ data class TeamMember(
     val fullName: String get() = "$firstName $lastName"
 
     val roleDisplayName: String get() = when (role) {
+        TeamMemberRole.GENERAL_MANAGER -> "General Manager"
         TeamMemberRole.MANAGER -> "Manager"
         TeamMemberRole.SUPERVISOR -> "Supervisor"
     }

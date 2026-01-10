@@ -2,9 +2,14 @@ package com.indusjs.fleet.presentation.team.create
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.PermissionUtils
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
+import com.indusjs.fleet.domain.entity.user.UserRole
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import dev.zacsweers.metro.Inject
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -15,10 +20,44 @@ import kotlinx.coroutines.withContext
 @Inject
 class CreateTeamMemberViewModel(
     private val dispatcherProvider: DispatcherProvider,
-    private val teamRepository: TeamRepository
+    private val teamRepository: TeamRepository,
+    private val userLocalDataSource: UserLocalDataSource
 ) : MviViewModel<CreateTeamMemberContract.State, CreateTeamMemberContract.Intent, CreateTeamMemberContract.Effect>(
     CreateTeamMemberContract.State()
 ) {
+
+    init {
+        // Load user role and determine available roles for creation
+        viewModelScope.launch(dispatcherProvider.io) {
+            val userRole = try {
+                userLocalDataSource.getUserRole() ?: ""
+            } catch (e: Exception) {
+                ""
+            }
+
+            // Determine which roles the current user can create
+            val creatableRoles = PermissionUtils.getCreatableRoles(userRole)
+            val availableTeamRoles = creatableRoles.mapNotNull {
+                when (it) {
+                    UserRole.GENERAL_MANAGER -> TeamMemberRole.GENERAL_MANAGER
+                    UserRole.MANAGER -> TeamMemberRole.MANAGER
+                    UserRole.SUPERVISOR -> TeamMemberRole.SUPERVISOR
+                    else -> null
+                }
+            }
+
+            // Default to first available role or Manager
+            val defaultRole = availableTeamRoles.firstOrNull() ?: TeamMemberRole.MANAGER
+
+            updateState {
+                copy(
+                    currentUserRole = userRole,
+                    availableRoles = availableTeamRoles.ifEmpty { listOf(TeamMemberRole.MANAGER, TeamMemberRole.SUPERVISOR) },
+                    selectedRole = defaultRole
+                )
+            }
+        }
+    }
 
     override suspend fun handleIntent(intent: CreateTeamMemberContract.Intent) {
         when (intent) {

@@ -15,6 +15,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -146,6 +147,7 @@ fun DashboardScreen(
     onNavigateToMaps: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
     onNavigateToTeam: () -> Unit = {},
+    onNavigateToReports: () -> Unit = {},
     onNavigateToAddTripCost: () -> Unit = {},
     onNavigateToAddVehicleCost: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
@@ -188,6 +190,7 @@ fun DashboardScreen(
                 NavigationDrawerContent(
                     userName = state.userName.ifEmpty { "User" },
                     userRole = state.userRole,
+                    hasFinancialAccess = state.hasFinancialAccess,
                     onNavigateToVehicles = {
                         scope.launch { drawerState.close() }
                         onNavigateToVehicles()
@@ -207,6 +210,10 @@ fun DashboardScreen(
                     onNavigateToTeam = {
                         scope.launch { drawerState.close() }
                         onNavigateToTeam()
+                    },
+                    onNavigateToReports = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToReports()
                     },
                     onNavigateToProfile = {
                         scope.launch { drawerState.close() }
@@ -389,6 +396,7 @@ fun DashboardScreen(
                                 driverStatus = state.driverStatus,
                                 tripSummary = state.tripSummary,
                                 alertsSummary = state.alertsSummary,
+                                hasFinancialAccess = state.hasFinancialAccess,
                                 onVehiclesClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToVehicles) },
                                 onDriversClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToDrivers) },
                                 onTripsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToTrips) },
@@ -420,11 +428,13 @@ fun DashboardScreen(
 private fun NavigationDrawerContent(
     userName: String,
     userRole: String,
+    hasFinancialAccess: Boolean,
     onNavigateToVehicles: () -> Unit,
     onNavigateToDrivers: () -> Unit,
     onNavigateToTrips: () -> Unit,
     onNavigateToMaps: () -> Unit,
     onNavigateToTeam: () -> Unit,
+    onNavigateToReports: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
     Column(
@@ -569,6 +579,22 @@ private fun NavigationDrawerContent(
             modifier = Modifier.padding(horizontal = 12.dp)
         )
 
+        // Reports & P/L - Only visible to Owner and General Manager
+        if (hasFinancialAccess) {
+            NavigationDrawerItem(
+                icon = {
+                    Text(
+                        text = "📊",
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                label = { Text("Reports & P/L") },
+                selected = false,
+                onClick = onNavigateToReports,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+        }
+
         NavigationDrawerItem(
             icon = {
                 Icon(
@@ -634,6 +660,7 @@ private fun DashboardContent(
     driverStatus: DriverStatusSummary,
     tripSummary: TripSummary,
     alertsSummary: AlertsSummary,
+    hasFinancialAccess: Boolean,
     onVehiclesClick: () -> Unit,
     onDriversClick: () -> Unit,
     onTripsClick: () -> Unit,
@@ -647,11 +674,9 @@ private fun DashboardContent(
     onCreateTripClick: () -> Unit
     ) {
         // Determine if Cost Overview should be shown
-        val hasNoFleet = vehicleStatus.total == 0 && tripSummary.total == 0
-        val hasNoCostData = costOverview.totalExpenses == 0.0 &&
-                            costOverview.profitLoss == 0.0 &&
-                            costOverview.completedTrips == 0
-        val shouldShowCostOverview = hasNoFleet || !hasNoCostData
+        // Only show for Owner and General Manager (financial access)
+        val hasFleet = vehicleStatus.total > 0 || tripSummary.total > 0
+        val shouldShowCostOverview = hasFinancialAccess // Only show for roles with financial access
 
         LazyColumn(
         modifier = Modifier
@@ -704,9 +729,9 @@ private fun DashboardContent(
             }
         }
 
-        // 3. Pending Payments Section - Only show if loaded and has pending payments
+        // 3. Pending Payments Section - Only show for roles with financial access
         // Don't show during loading to avoid flickering when navigating back
-        if (hasPendingPaymentsLoaded && tripSummary.total > 0 && (pendingPayments.isNotEmpty() || totalPendingAmount > 0)) {
+        if (hasFinancialAccess && hasPendingPaymentsLoaded && tripSummary.total > 0 && (pendingPayments.isNotEmpty() || totalPendingAmount > 0)) {
             item {
                 PendingPaymentsSection(
                     payments = pendingPayments,
@@ -1755,7 +1780,62 @@ private fun OfflineBanner(
 // ============ CLEAN DASHBOARD SECTIONS ============
 
 /**
- * Cost Overview Section - Clean design with context-aware empty states.
+ * Get date range string for the selected filter.
+ */
+private fun getDateRangeForFilter(filter: CostOverviewFilter): String {
+    // Use platform-specific currentTimeMillis and convert to date
+    val currentTimeMs = com.indusjs.fleet.core.util.currentTimeMillis()
+
+    // Approximate calculation for current date
+    // Days since epoch (Jan 1, 1970)
+    val daysSinceEpoch = currentTimeMs / (24 * 60 * 60 * 1000L)
+
+    // Simple date calculation (approximate but sufficient for display)
+    val year = 1970 + (daysSinceEpoch / 365.25).toInt()
+    val dayOfYear = ((daysSinceEpoch % 365.25)).toInt()
+
+    // Approximate month and day
+    val monthDays = intArrayOf(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+    var month = 1
+    var remainingDays = dayOfYear
+    for (i in 0 until 12) {
+        if (remainingDays < monthDays[i]) {
+            month = i + 1
+            break
+        }
+        remainingDays -= monthDays[i]
+    }
+    val day = (remainingDays + 1).coerceIn(1, 31)
+
+    return when (filter) {
+        CostOverviewFilter.TODAY -> {
+            val dayStr = if (day < 10) "0$day" else "$day"
+            val monthStr = if (month < 10) "0$month" else "$month"
+            "$dayStr-$monthStr-$year"
+        }
+        CostOverviewFilter.WEEKLY -> {
+            // Calculate week range (simplified)
+            val startDay = (day - (daysSinceEpoch % 7).toInt()).coerceAtLeast(1)
+            val endDay = (startDay + 6).coerceAtMost(31)
+            val startDayStr = if (startDay < 10) "0$startDay" else "$startDay"
+            val endDayStr = if (endDay < 10) "0$endDay" else "$endDay"
+            val monthStr = if (month < 10) "0$month" else "$month"
+            "$startDayStr-$monthStr to $endDayStr-$monthStr"
+        }
+        CostOverviewFilter.MONTHLY -> {
+            val monthName = when (month) {
+                1 -> "January"; 2 -> "February"; 3 -> "March"; 4 -> "April"
+                5 -> "May"; 6 -> "June"; 7 -> "July"; 8 -> "August"
+                9 -> "September"; 10 -> "October"; 11 -> "November"; 12 -> "December"
+                else -> ""
+            }
+            "$monthName $year"
+        }
+    }
+}
+
+/**
+ * Cost Overview Section - Modern professional design with enhanced visuals.
  */
 @Composable
 private fun CostOverviewSection(
@@ -1770,127 +1850,260 @@ private fun CostOverviewSection(
     onAddVehicleClick: () -> Unit,
     onCreateTripClick: () -> Unit
 ) {
-
     val hasNoFleet = vehicleStatus.total == 0 && tripSummary.total == 0
+    val profitColor = Color(0xFF10B981) // Green
+    val lossColor = Color(0xFFEF4444) // Red
+    val expenseColor = Color(0xFFF59E0B) // Amber
+
+    // Calculate date range for display
+    val dateRangeText = remember(selectedFilter) { getDateRangeForFilter(selectedFilter) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Enhanced Header with icon container
+            // Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Icon with gradient background
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (costOverview.isProfit) Color(0xFF4CAF50).copy(alpha = 0.15f)
-                                else MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                                brush = Brush.linearGradient(
+                                    colors = if (costOverview.isProfit)
+                                        listOf(Color(0xFF10B981), Color(0xFF059669))
+                                    else
+                                        listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
+                                )
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (costOverview.isProfit) "📈" else "📊",
-                            style = MaterialTheme.typography.titleMedium
+                            text = "💰",
+                            style = MaterialTheme.typography.titleLarge
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(14.dp))
                     Column {
                         Text(
                             text = "Financial Overview",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         if (!hasNoFleet) {
                             Text(
-                                text = selectedFilter.label,
+                                text = when (selectedFilter) {
+                                    CostOverviewFilter.TODAY -> "Today's summary"
+                                    CostOverviewFilter.WEEKLY -> "This week's summary"
+                                    CostOverviewFilter.MONTHLY -> "This month's summary"
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
+            }
 
-                // Filter chips - clean pill style (hide if no fleet)
-                if (!hasNoFleet) {
+            // Period Filter Tabs with date range (hide if no fleet)
+            if (!hasNoFleet) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .padding(2.dp),
-                        horizontalArrangement = Arrangement.spacedBy(0.dp)
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         CostOverviewFilter.entries.forEach { filter ->
                             val isSelected = selectedFilter == filter
-                            Surface(
+                            val label = when (filter) {
+                                CostOverviewFilter.TODAY -> "Today"
+                                CostOverviewFilter.WEEKLY -> "This Week"
+                                CostOverviewFilter.MONTHLY -> "This Month"
+                            }
+                            Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .clickable { onFilterChange(filter) },
-                                shape = RoundedCornerShape(18.dp),
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        if (isSelected) MaterialTheme.colorScheme.primary
+                                        else Color.Transparent
+                                    )
+                                    .clickable { onFilterChange(filter) }
+                                    .padding(vertical = 10.dp),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = filter.label.take(1),
-                                    style = MaterialTheme.typography.labelSmall,
+                                    text = label,
+                                    style = MaterialTheme.typography.labelMedium,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        }
+                    }
+
+                    // Date range indicator
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📅",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = dateRangeText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
+            // Content with fixed minimum height to prevent fluctuation
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 140.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(32.dp),
+                        strokeWidth = 3.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else if (hasNoFleet) {
+                    // Empty State - Getting Started
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "🚀", style = MaterialTheme.typography.headlineMedium)
+                        }
+                        Text(
+                            text = "Get Started",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Add vehicles and create trips to track your finances",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    // Financial Stats Content
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Financial Stats Cards
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Expenses Card
+                            FinancialStatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = "💸",
+                                label = "Expenses",
+                                value = "₹${formatAmount(costOverview.totalExpenses)}",
+                                backgroundColor = expenseColor.copy(alpha = 0.1f),
+                                valueColor = expenseColor
+                            )
+
+                            // Profit/Loss Card
+                            FinancialStatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = if (costOverview.isProfit) "📈" else "📉",
+                                label = if (costOverview.isProfit) "Profit" else "Loss",
+                                value = "₹${formatAmount(kotlin.math.abs(costOverview.profitLoss))}",
+                                backgroundColor = if (costOverview.isProfit) profitColor.copy(alpha = 0.1f) else lossColor.copy(alpha = 0.1f),
+                                valueColor = if (costOverview.isProfit) profitColor else lossColor
+                            )
+                        }
+
+                        // Trips Count Row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "🚛", style = MaterialTheme.typography.titleMedium)
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = "Completed Trips",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            Text(
+                                text = costOverview.completedTrips.toString(),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
                 }
             }
 
-            if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
-                    )
-                }
-            } else if (hasNoFleet) {
-                // No vehicles AND no trips - getting started state
-                SectionEmptyState(
-                    iconRes = Res.drawable.ic_fleet_logo,
-                    title = "Get started with your fleet",
-                    message = "Add vehicles and create trips to track costs"
-                )
-
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                // Show getting started buttons
+            // Getting Started Buttons (only for empty state)
+            if (!isLoading && hasNoFleet) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    FilledTonalButton(
+                    Button(
                         onClick = onAddVehicleClick,
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Icon(
@@ -1898,143 +2111,69 @@ private fun CostOverviewSection(
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Add Vehicle",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Add Vehicle", fontWeight = FontWeight.SemiBold)
                     }
 
-                    FilledTonalButton(
+                    OutlinedButton(
                         onClick = onCreateTripClick,
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_add),
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Create Trip",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            } else {
-                // Stats row - clean number display
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    // Total Expenses
-                    CleanStatItem(
-                        label = "Expenses",
-                        value = "₹${formatAmount(costOverview.totalExpenses)}",
-                        valueColor = MaterialTheme.colorScheme.error
-                    )
-
-                    // Vertical Divider
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(48.dp)
-                            .background(MaterialTheme.colorScheme.outlineVariant)
-                    )
-
-                    // Profit/Loss
-                    CleanStatItem(
-                        label = if (costOverview.isProfit) "Profit" else "Loss",
-                        value = "₹${formatAmount(kotlin.math.abs(costOverview.profitLoss))}",
-                        valueColor = if (costOverview.isProfit) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
-                    )
-
-                    // Vertical Divider
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(48.dp)
-                            .background(MaterialTheme.colorScheme.outlineVariant)
-                    )
-
-                    // Completed Trips
-                    CleanStatItem(
-                        label = "Trips",
-                        value = costOverview.completedTrips.toString(),
-                        valueColor = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                // Add Cost Buttons - consistent eye-catching design
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Trip Cost Button
-                    FilledTonalButton(
-                        onClick = onAddTripCostClick,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Trip Cost",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    // Vehicle Cost Button
-                    FilledTonalButton(
-                        onClick = onAddVehicleCostClick,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_vehicle),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Vehicle Cost",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Create Trip", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * Financial stat card with icon, label and value
+ */
+@Composable
+private fun FinancialStatCard(
+    modifier: Modifier = Modifier,
+    icon: String,
+    label: String,
+    value: String,
+    backgroundColor: Color,
+    valueColor: Color
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(backgroundColor)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(text = icon, style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = valueColor
+        )
     }
 }
 

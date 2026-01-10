@@ -1,0 +1,97 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-10-dashboard",
+		"name": "10. Dashboard",
+		"description": "Dashboard and overview endpoints.\n\n## Access\n- Financial Summary: Owner, GM only\n- Cost Overview: Owner, GM only\n- Pending Payments: Owner, GM only\n- Team Stats: Owner, GM only\n- Document Stats: Owner, GM, Manager",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Get Unified Dashboard",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/dashboard", "host": ["{{base_url}}"], "path": ["dashboard"]}
+			}
+		},
+		{
+			"name": "Get Financial Summary (Owner/GM)",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/dashboard/financial-summary?period=monthly",
+					"host": ["{{base_url}}"],
+					"path": ["dashboard", "financial-summary"],
+					"query": [
+						{"key": "period", "value": "monthly", "description": "today, weekly, monthly, yearly"}
+					]
+				},
+				"description": "Returns simple financial KPIs:\n- total_revenue (from trip_price)\n- total_expenses\n- net_profit\n- profit_margin\n- profit_status (profit/loss/break_even)\n- pending_payments\n- completed_trips\n- avg_trip_revenue\n- avg_trip_profit"
+			}
+		},
+		{
+			"name": "Get Cost Overview (Owner/GM)",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/dashboard/cost-overview?filter=monthly",
+					"host": ["{{base_url}}"],
+					"path": ["dashboard", "cost-overview"],
+					"query": [{"key": "filter", "value": "monthly"}]
+				},
+				"description": "Returns detailed cost breakdown by type (fuel, toll, maintenance, etc.)"
+			}
+		},
+		{
+			"name": "Get Pending Payments (Owner/GM)",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/dashboard/pending-payments?page=1&per_page=20",
+					"host": ["{{base_url}}"],
+					"path": ["dashboard", "pending-payments"],
+					"query": [
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Alerts Status",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/dashboard/alerts-status", "host": ["{{base_url}}"], "path": ["dashboard", "alerts-status"]}
+			}
+		},
+		{
+			"name": "Get Fleet Stats",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/dashboard/fleet-stats", "host": ["{{base_url}}"], "path": ["dashboard", "fleet-stats"]}
+			}
+		},
+		{
+			"name": "Get Dashboard Summary",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/dashboard/summary", "host": ["{{base_url}}"], "path": ["dashboard", "summary"]}
+			}
+		}
+	]
+}
+

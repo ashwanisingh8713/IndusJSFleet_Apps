@@ -48,6 +48,7 @@ class UserRepositoryImpl(
             ?: throw ApiException(response.message ?: "Sign up failed")
 
         localDataSource.saveAuthToken(authResult.token)
+        localDataSource.saveUserRole(authResult.user.role.name.lowercase())
         authResult
     }
 
@@ -63,6 +64,7 @@ class UserRepositoryImpl(
             ?: throw ApiException(response.message ?: "Login failed")
 
         localDataSource.saveAuthToken(authResult.token)
+        localDataSource.saveUserRole(authResult.user.role.name.lowercase())
         authResult
     }
 

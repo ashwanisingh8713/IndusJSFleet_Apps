@@ -8,6 +8,8 @@ import com.indusjs.fleet.data.model.dashboard.AlertsStatusApiResponse
 import com.indusjs.fleet.data.model.dashboard.CostOverviewApiResponse
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.data.model.dashboard.DashboardApiResponse
+import com.indusjs.fleet.data.model.dashboard.FinancialPeriod
+import com.indusjs.fleet.data.model.dashboard.FinancialSummaryApiResponse
 import com.indusjs.fleet.data.model.dashboard.PendingPaymentsApiResponse
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -45,6 +47,12 @@ interface DashboardRemoteDataSource : RemoteDataSource {
      * Includes document expiry, license expiry, maintenance vehicles, etc.
      */
     suspend fun getAlertsStatus(token: String): AlertsStatusApiResponse
+
+    /**
+     * Fetches financial summary with KPIs for dashboard.
+     * Available to Owner and General Manager only.
+     */
+    suspend fun getFinancialSummary(token: String, period: FinancialPeriod): FinancialSummaryApiResponse
 }
 
 /**
@@ -127,6 +135,23 @@ class DashboardRemoteDataSourceImpl(
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch alerts status: ${e.message}" }
             AlertsStatusApiResponse(
+                success = false,
+                message = ApiErrorHandler.getNetworkErrorMessage(e)
+            )
+        }
+    }
+
+    override suspend fun getFinancialSummary(token: String, period: FinancialPeriod): FinancialSummaryApiResponse {
+        return try {
+            log.d { "Fetching financial summary with period: ${period.value}" }
+            val response: HttpResponse = httpClient.get("$baseUrl/dashboard/financial-summary") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("period", period.value)
+            }
+            handleFinancialSummaryResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch financial summary: ${e.message}" }
+            FinancialSummaryApiResponse(
                 success = false,
                 message = ApiErrorHandler.getNetworkErrorMessage(e)
             )
@@ -216,6 +241,28 @@ class DashboardRemoteDataSourceImpl(
         } catch (e: Exception) {
             log.e(e) { "Failed to parse alerts status response: ${e.message}" }
             AlertsStatusApiResponse(
+                success = false,
+                message = "Failed to parse response: ${e.message}"
+            )
+        }
+    }
+
+    private suspend fun handleFinancialSummaryResponse(response: HttpResponse): FinancialSummaryApiResponse {
+        val responseBody = response.bodyAsText()
+        log.d { "Financial summary response status: ${response.status}" }
+
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<FinancialSummaryApiResponse>(responseBody)
+            } else {
+                FinancialSummaryApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to parse financial summary response: ${e.message}" }
+            FinancialSummaryApiResponse(
                 success = false,
                 message = "Failed to parse response: ${e.message}"
             )

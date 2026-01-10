@@ -533,3 +533,65 @@ data class AlertsStatusDto(
     // Alerts list
     val alerts: List<AlertDto> = emptyList()
 ) : Dto
+
+// ============ FINANCIAL SUMMARY API ============
+
+/**
+ * Financial Summary API response.
+ * GET /dashboard/financial-summary?period=monthly
+ */
+@Serializable
+data class FinancialSummaryApiResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val data: FinancialSummaryDto? = null
+)
+
+/**
+ * Financial Summary DTO - Simple KPIs for dashboard.
+ * Available to Owner and General Manager only.
+ */
+@Serializable
+data class FinancialSummaryDto(
+    @SerialName("period")
+    val period: String = "monthly",
+    @SerialName("period_label")
+    val periodLabel: String = "",
+    @SerialName("total_revenue")
+    val totalRevenue: Double = 0.0,
+    @SerialName("total_expenses")
+    val totalExpenses: Double = 0.0,
+    @SerialName("net_profit")
+    val netProfit: Double = 0.0,
+    @SerialName("profit_margin")
+    val profitMargin: Double = 0.0,
+    @SerialName("profit_status")
+    val profitStatus: String = "neutral", // "profit", "loss", "break_even"
+    @SerialName("pending_payments")
+    val pendingPayments: Double = 0.0,
+    @SerialName("completed_trips")
+    val completedTrips: Int = 0,
+    @SerialName("avg_trip_revenue")
+    val avgTripRevenue: Double = 0.0,
+    @SerialName("avg_trip_profit")
+    val avgTripProfit: Double = 0.0,
+    // Cost breakdown
+    @SerialName("fuel_cost")
+    val fuelCost: Double = 0.0,
+    @SerialName("toll_cost")
+    val tollCost: Double = 0.0,
+    @SerialName("maintenance_cost")
+    val maintenanceCost: Double = 0.0,
+    @SerialName("other_cost")
+    val otherCost: Double = 0.0
+) : Dto
+
+/**
+ * Financial summary period options.
+ */
+enum class FinancialPeriod(val value: String, val label: String) {
+    TODAY("today", "Today"),
+    WEEKLY("weekly", "This Week"),
+    MONTHLY("monthly", "This Month"),
+    YEARLY("yearly", "This Year")
+}

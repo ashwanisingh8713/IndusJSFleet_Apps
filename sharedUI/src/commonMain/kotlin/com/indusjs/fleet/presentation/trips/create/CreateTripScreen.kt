@@ -157,6 +157,30 @@ fun CreateTripScreen(
                     }
                 }
 
+                // Pricing Section - Only visible to Owner and General Manager
+                if (state.canViewTripPrice) {
+                    item {
+                        SectionCard(title = "💰 Pricing") {
+                            OutlinedTextField(
+                                value = state.tripPrice,
+                                onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateTripPrice(it)) },
+                                label = { Text("Trip Price (₹)") },
+                                placeholder = { Text("Enter trip price") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth(),
+                                supportingText = {
+                                    Text(
+                                        text = "Expected Cost + Profit",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+
                 // Notes Section
                 item {
                     SectionCard(title = "📝 Notes") {

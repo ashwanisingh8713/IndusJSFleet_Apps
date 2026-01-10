@@ -36,6 +36,27 @@ import androidx.compose.ui.unit.sp
  */
 
 /**
+ * Simple reusable card component with consistent styling.
+ * Used throughout the app for grouping content.
+ */
+@Composable
+fun FleetCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(content = content)
+    }
+}
+
+/**
  * Standard item card with title, subtitle, and optional actions.
  * Clean, professional styling with subtle elevation.
  */

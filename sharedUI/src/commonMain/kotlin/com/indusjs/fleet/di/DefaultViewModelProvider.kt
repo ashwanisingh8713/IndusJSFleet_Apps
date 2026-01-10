@@ -10,6 +10,7 @@ import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
+import com.indusjs.fleet.data.datasource.reports.ReportsRemoteDataSource
 import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.trip.TripRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSourceImpl
@@ -23,6 +24,7 @@ import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
 import com.indusjs.fleet.data.repository.costs.CostsRepositoryImpl
 import com.indusjs.fleet.data.repository.dashboard.DashboardRepositoryImpl
 import com.indusjs.fleet.data.repository.driver.DriverRepositoryImpl
+import com.indusjs.fleet.data.repository.reports.ReportsRepositoryImpl
 import com.indusjs.fleet.data.repository.team.TeamRepositoryImpl
 import com.indusjs.fleet.data.repository.trip.TripRepositoryImpl
 import com.indusjs.fleet.data.repository.user.UserRepositoryImpl
@@ -30,6 +32,7 @@ import com.indusjs.fleet.data.repository.vehicle.VehicleRepositoryImpl
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.dashboard.DashboardRepository
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
+import com.indusjs.fleet.domain.repository.reports.ReportsRepository
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
@@ -65,6 +68,11 @@ import com.indusjs.fleet.presentation.drivers.DriversViewModel
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailViewModel
 import com.indusjs.fleet.presentation.maps.MapsViewModel
+import com.indusjs.fleet.presentation.reports.ReportsViewModel
+import com.indusjs.fleet.presentation.reports.consolidated.ConsolidatedPLViewModel
+import com.indusjs.fleet.presentation.reports.cost.CostAnalysisViewModel
+import com.indusjs.fleet.presentation.reports.trip.TripPLViewModel
+import com.indusjs.fleet.presentation.reports.vehicle.VehiclePLViewModel
 import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
 import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailViewModel
 import com.indusjs.fleet.presentation.team.list.TeamListViewModel
@@ -213,6 +221,12 @@ class DefaultViewModelProvider : ViewModelProvider {
         CostsRepositoryImpl(costsRemoteDataSource, userLocalDataSource)
     }
 
+    // Lazy-initialized Reports feature dependencies
+    private val reportsRemoteDataSource by lazy { ReportsRemoteDataSource(httpClient, json) }
+    private val reportsRepository: ReportsRepository by lazy {
+        ReportsRepositoryImpl(reportsRemoteDataSource, userLocalDataSource)
+    }
+
     // Auth ViewModels
     override fun loginViewModel() = LoginViewModel(dispatcherProvider, userRepository)
     override fun signUpViewModel() = SignUpViewModel(dispatcherProvider, userRepository)
@@ -286,6 +300,7 @@ class DefaultViewModelProvider : ViewModelProvider {
         getVehiclesUseCase,
         getDriversUseCase,
         createTripWithDataUseCase,
+        userLocalDataSource,
         googlePlacesService
     )
 
@@ -298,6 +313,7 @@ class DefaultViewModelProvider : ViewModelProvider {
         tripRepository,
         getVehiclesUseCase,
         getDriversUseCase,
+        userLocalDataSource,
         googlePlacesService
     )
 
@@ -305,7 +321,7 @@ class DefaultViewModelProvider : ViewModelProvider {
 
     override fun teamListViewModel() = TeamListViewModel(dispatcherProvider, teamRepository)
 
-    override fun createTeamMemberViewModel() = CreateTeamMemberViewModel(dispatcherProvider, teamRepository)
+    override fun createTeamMemberViewModel() = CreateTeamMemberViewModel(dispatcherProvider, teamRepository, userLocalDataSource)
 
     override fun teamMemberDetailViewModel() = TeamMemberDetailViewModel(dispatcherProvider, teamRepository)
 
@@ -320,4 +336,15 @@ class DefaultViewModelProvider : ViewModelProvider {
         vehicleRepository,
         costsRepository
     )
+
+    // Reports ViewModels
+    override fun reportsViewModel() = ReportsViewModel(reportsRepository)
+
+    override fun vehiclePLViewModel() = VehiclePLViewModel(reportsRepository, vehicleRepository)
+
+    override fun tripPLViewModel() = TripPLViewModel(reportsRepository, vehicleRepository)
+
+    override fun costAnalysisViewModel() = CostAnalysisViewModel(reportsRepository)
+
+    override fun consolidatedPLViewModel() = ConsolidatedPLViewModel(reportsRepository, vehicleRepository)
 }

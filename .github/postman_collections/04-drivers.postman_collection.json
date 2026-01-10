@@ -1,0 +1,115 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-04-drivers",
+		"name": "04. Drivers",
+		"description": "Driver management endpoints.\n\n## Permissions\n- Create: Owner, GM, Manager\n- Edit: Owner, GM, Manager\n- Delete: Owner, GM only",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "driver_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Create Driver",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"Rajesh\",\n    \"last_name\": \"Kumar\",\n    \"mobile\": \"+919876543215\",\n    \"email\": \"rajesh@example.com\",\n    \"license_number\": \"DL12345678901234\",\n    \"license_expiry\": \"31-12-2026\",\n    \"address\": \"123 Main St, Mumbai\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/drivers", "host": ["{{base_url}}"], "path": ["drivers"]}
+			}
+		},
+		{
+			"name": "List Drivers",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/drivers?page=1&per_page=20",
+					"host": ["{{base_url}}"],
+					"path": ["drivers"],
+					"query": [
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"},
+						{"key": "status", "value": "active", "disabled": true},
+						{"key": "is_active", "value": "true", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Available Drivers",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/drivers/available", "host": ["{{base_url}}"], "path": ["drivers", "available"]}
+			}
+		},
+		{
+			"name": "Get Driver",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}"]}
+			}
+		},
+		{
+			"name": "Update Driver",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"Rajesh\",\n    \"last_name\": \"Kumar Updated\",\n    \"mobile\": \"+919876543216\",\n    \"email\": \"rajesh.updated@example.com\",\n    \"license_expiry\": \"31-12-2027\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}"]}
+			}
+		},
+		{
+			"name": "Update Driver Status",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\": \"on_leave\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/status", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "status"]}
+			}
+		},
+		{
+			"name": "Toggle Driver Active",
+			"request": {
+				"method": "PATCH",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/toggle-active", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "toggle-active"]}
+			}
+		},
+		{
+			"name": "Delete Driver",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}"]}
+			}
+		}
+	]
+}
+

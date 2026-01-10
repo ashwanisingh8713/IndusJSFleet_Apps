@@ -361,3 +361,32 @@ data class ExpiryAlert(
     val isExpired: Boolean = false,
     val priority: String = "warning"
 )
+
+// ============ FINANCIAL SUMMARY ============
+
+/**
+ * Financial Summary domain entity - Simple KPIs for dashboard.
+ * Available to Owner and General Manager only.
+ */
+data class FinancialSummary(
+    val period: String = "monthly",
+    val periodLabel: String = "",
+    val totalRevenue: Double = 0.0,
+    val totalExpenses: Double = 0.0,
+    val netProfit: Double = 0.0,
+    val profitMargin: Double = 0.0,
+    val profitStatus: String = "neutral", // "profit", "loss", "break_even"
+    val pendingPayments: Double = 0.0,
+    val completedTrips: Int = 0,
+    val avgTripRevenue: Double = 0.0,
+    val avgTripProfit: Double = 0.0,
+    // Cost breakdown
+    val fuelCost: Double = 0.0,
+    val tollCost: Double = 0.0,
+    val maintenanceCost: Double = 0.0,
+    val otherCost: Double = 0.0
+) {
+    val isProfit: Boolean get() = profitStatus == "profit"
+    val isLoss: Boolean get() = profitStatus == "loss"
+    val isBreakEven: Boolean get() = profitStatus == "break_even"
+}

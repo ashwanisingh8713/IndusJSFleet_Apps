@@ -24,7 +24,11 @@ object CreateTeamMemberContract {
         val isPasswordVisible: Boolean = false,
         val isConfirmPasswordVisible: Boolean = false,
         val isLoading: Boolean = false,
-        val error: String? = null
+        val error: String? = null,
+        // Current user's role for permission filtering
+        val currentUserRole: String = "",
+        // Roles that the current user can create
+        val availableRoles: List<TeamMemberRole> = listOf(TeamMemberRole.MANAGER, TeamMemberRole.SUPERVISOR)
     ) : UiState
 
     /**

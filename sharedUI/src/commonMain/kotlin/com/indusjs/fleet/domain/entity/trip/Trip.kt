@@ -105,6 +105,8 @@ data class Trip(
     val priority: String? = null,
     val notes: String? = null,
     val createdAt: String? = null,
+    // Pricing
+    val tripPrice: Double? = null,
     // Cost summary - null means not loaded, 0.0 means no costs
     val totalCost: Double? = null,
     // State-based display info for UI
@@ -150,6 +152,7 @@ data class CreateTripData(
     val purchasePrice: Double? = null,
     val sellingValue: Double? = null,
     val estimatedExpense: Double? = null,
+    val tripPrice: Double? = null,
     // Payment
     val paymentStatus: String? = null,
     val pendingAmount: Double? = null,

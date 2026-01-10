@@ -4,14 +4,17 @@ import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
+import com.indusjs.fleet.data.model.dashboard.FinancialPeriod
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
+import com.indusjs.fleet.domain.entity.dashboard.FinancialSummary
 import com.indusjs.fleet.domain.entity.dashboard.PendingPayment
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 import com.indusjs.fleet.domain.usecase.dashboard.GetAlertsStatusUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetCostOverviewUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetDashboardUseCase
+import com.indusjs.fleet.domain.usecase.dashboard.GetFinancialSummaryUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetPendingPaymentsUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.RefreshDashboardUseCase
 import com.indusjs.fleet.presentation.dashboard.DashboardContract.Effect
@@ -32,7 +35,8 @@ class DashboardViewModel(
     private val refreshDashboardUseCase: RefreshDashboardUseCase,
     private val getCostOverviewUseCase: GetCostOverviewUseCase? = null,
     private val getPendingPaymentsUseCase: GetPendingPaymentsUseCase? = null,
-    private val getAlertsStatusUseCase: GetAlertsStatusUseCase? = null
+    private val getAlertsStatusUseCase: GetAlertsStatusUseCase? = null,
+    private val getFinancialSummaryUseCase: GetFinancialSummaryUseCase? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     companion object {
@@ -74,9 +78,15 @@ class DashboardViewModel(
             is Intent.DismissOfflineBanner -> dismissOfflineBanner()
             is Intent.RetryConnection -> retryConnection()
 
-            // New intents
+            // Cost Overview
             is Intent.ChangeCostFilter -> changeCostFilter(intent.filter)
             is Intent.LoadCostOverview -> loadCostOverview()
+
+            // Financial Summary
+            is Intent.ChangeFinancialPeriod -> changeFinancialPeriod(intent.period)
+            is Intent.LoadFinancialSummary -> loadFinancialSummary()
+
+            // Other intents
             is Intent.LoadPendingPayments -> loadPendingPayments()
             is Intent.LoadAlertsStatus -> loadAlertsStatus()
             is Intent.NavigateToAddTripCost -> sendEffect(Effect.NavigateToAddTripCost)
@@ -181,6 +191,10 @@ class DashboardViewModel(
                             loadCostOverview()
                             loadPendingPayments()
                             loadAlertsStatus()
+                            // Load financial summary for Owner/GM
+                            if (data.userInfo.role.lowercase() in listOf("owner", "general_manager", "generalmanager")) {
+                                loadFinancialSummary()
+                            }
                         }
                     }
                     is Result.Error -> {
@@ -306,6 +320,46 @@ class DashboardViewModel(
     private suspend fun changeCostFilter(filter: CostOverviewFilter) {
         updateState { copy(selectedCostFilter = filter) }
         loadCostOverview()
+    }
+
+    /**
+     * Change financial period and reload summary.
+     */
+    private suspend fun changeFinancialPeriod(period: FinancialPeriod) {
+        updateState { copy(selectedFinancialPeriod = period) }
+        loadFinancialSummary()
+    }
+
+    /**
+     * Load financial summary for Owner/General Manager.
+     */
+    private suspend fun loadFinancialSummary() {
+        val useCase = getFinancialSummaryUseCase ?: return
+
+        updateState { copy(isLoadingFinancialSummary = true, financialSummaryError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = useCase(state.value.selectedFinancialPeriod)) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isLoadingFinancialSummary = false,
+                            financialSummary = result.data,
+                            financialSummaryError = null
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingFinancialSummary = false,
+                            financialSummaryError = result.message ?: "Failed to load financial summary"
+                        )
+                    }
+                }
+                is Result.Loading -> { /* ignore */ }
+            }
+        }
     }
 
     /**

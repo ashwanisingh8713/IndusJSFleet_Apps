@@ -2,10 +2,12 @@ package com.indusjs.fleet.domain.repository.dashboard
 
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
+import com.indusjs.fleet.data.model.dashboard.FinancialPeriod
 import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
 import com.indusjs.fleet.domain.entity.dashboard.DashboardUserInfo
+import com.indusjs.fleet.domain.entity.dashboard.FinancialSummary
 import com.indusjs.fleet.domain.entity.dashboard.PendingPaymentsData
 import com.indusjs.fleet.domain.repository.Repository
 import kotlinx.coroutines.flow.Flow
@@ -67,6 +69,12 @@ interface DashboardRepository : Repository {
      * Includes document expiry, license expiry, maintenance vehicles, etc.
      */
     suspend fun getAlertsStatus(): Result<AlertsSummary>
+
+    /**
+     * Get financial summary with KPIs for dashboard.
+     * Available to Owner and General Manager only.
+     */
+    suspend fun getFinancialSummary(period: FinancialPeriod): Result<FinancialSummary>
 }
 
 /**

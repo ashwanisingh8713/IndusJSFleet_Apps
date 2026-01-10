@@ -103,6 +103,8 @@ class TripMapper {
             priority = dto.priority,
             notes = dto.notes,
             createdAt = dto.createdAt,
+            // Pricing
+            tripPrice = dto.tripPrice,
             // Map cost summary - use flat totalCost from v2 API or embedded cost_summary
             totalCost = dto.totalCost?.takeIf { it > 0 } ?: dto.costSummary?.totalCost?.takeIf { it > 0 },
             displayInfo = displayInfo

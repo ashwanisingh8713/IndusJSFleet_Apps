@@ -124,31 +124,27 @@ fun CreateTeamMemberScreen(
                 fontWeight = FontWeight.Medium
             )
 
+            // Dynamic role selection based on available roles
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Manager Card
-                RoleSelectionCard(
-                    title = "Manager",
-                    emoji = "👔",
-                    description = "Can manage drivers and trips",
-                    isSelected = state.selectedRole == TeamMemberRole.MANAGER,
-                    onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectRole(TeamMemberRole.MANAGER)) },
-                    modifier = Modifier.weight(1f),
-                    enabled = !state.isLoading
-                )
-
-                // Supervisor Card
-                RoleSelectionCard(
-                    title = "Supervisor",
-                    emoji = "👷",
-                    description = "Can view and track operations",
-                    isSelected = state.selectedRole == TeamMemberRole.SUPERVISOR,
-                    onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectRole(TeamMemberRole.SUPERVISOR)) },
-                    modifier = Modifier.weight(1f),
-                    enabled = !state.isLoading
-                )
+                state.availableRoles.forEach { role ->
+                    val (title, emoji, description) = when (role) {
+                        TeamMemberRole.GENERAL_MANAGER -> Triple("General Manager", "👨‍💼", "Full operational & financial access")
+                        TeamMemberRole.MANAGER -> Triple("Manager", "👔", "Can manage drivers and trips")
+                        TeamMemberRole.SUPERVISOR -> Triple("Supervisor", "👷", "Can view and track operations")
+                    }
+                    RoleSelectionCard(
+                        title = title,
+                        emoji = emoji,
+                        description = description,
+                        isSelected = state.selectedRole == role,
+                        onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectRole(role)) },
+                        modifier = Modifier.weight(1f),
+                        enabled = !state.isLoading
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -325,7 +321,11 @@ fun CreateTeamMemberScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    val roleText = if (state.selectedRole == TeamMemberRole.MANAGER) "Manager" else "Supervisor"
+                    val roleText = when (state.selectedRole) {
+                        TeamMemberRole.GENERAL_MANAGER -> "General Manager"
+                        TeamMemberRole.MANAGER -> "Manager"
+                        TeamMemberRole.SUPERVISOR -> "Supervisor"
+                    }
                     Text("Create $roleText")
                 }
             }

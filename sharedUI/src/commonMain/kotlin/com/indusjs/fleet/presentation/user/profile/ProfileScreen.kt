@@ -280,14 +280,19 @@ private fun RoleBadge(role: UserRole) {
             MaterialTheme.colorScheme.primary,
             "👑"
         )
+        UserRole.GENERAL_MANAGER -> Triple(
+            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
+            MaterialTheme.colorScheme.tertiary,
+            "👨‍💼"
+        )
         UserRole.MANAGER -> Triple(
             MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
             MaterialTheme.colorScheme.secondary,
             "💼"
         )
         UserRole.SUPERVISOR -> Triple(
-            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant,
             "👁️"
         )
     }

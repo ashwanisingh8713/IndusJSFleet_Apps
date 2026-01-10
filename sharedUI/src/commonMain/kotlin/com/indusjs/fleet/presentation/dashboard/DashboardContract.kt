@@ -4,12 +4,14 @@ import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
+import com.indusjs.fleet.data.model.dashboard.FinancialPeriod
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.DashboardStats
 import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
 import com.indusjs.fleet.domain.entity.dashboard.ExpiryAlert
+import com.indusjs.fleet.domain.entity.dashboard.FinancialSummary
 import com.indusjs.fleet.domain.entity.dashboard.PendingPayment
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
@@ -40,6 +42,12 @@ object DashboardContract {
         val isLoadingCostOverview: Boolean = false,
         val costOverviewError: String? = null,
 
+        // Financial Summary (Owner/GM only)
+        val financialSummary: FinancialSummary? = null,
+        val selectedFinancialPeriod: FinancialPeriod = FinancialPeriod.MONTHLY,
+        val isLoadingFinancialSummary: Boolean = false,
+        val financialSummaryError: String? = null,
+
         // Pending Payments
         val pendingPayments: List<PendingPayment> = emptyList(),
         val totalPendingAmount: Double = 0.0,
@@ -66,7 +74,22 @@ object DashboardContract {
 
         // Notification count (for badge)
         val notificationCount: Int = 0
-    ) : UiState
+    ) : UiState {
+        /**
+         * Determines if the user can view financial data.
+         * Only Owner and General Manager have financial access.
+         */
+        val hasFinancialAccess: Boolean
+            get() {
+                val role = userRole.lowercase()
+                return role == "owner" || role == "general_manager" || role == "generalmanager" || role == "general manager"
+            }
+
+        /**
+         * Whether financial summary is loaded and available.
+         */
+        val hasFinancialSummary: Boolean get() = financialSummary != null
+    }
 
     /**
      * User intents for the Dashboard screen.
@@ -86,6 +109,10 @@ object DashboardContract {
         // Cost Overview
         data class ChangeCostFilter(val filter: CostOverviewFilter) : Intent
         data object LoadCostOverview : Intent
+
+        // Financial Summary
+        data class ChangeFinancialPeriod(val period: FinancialPeriod) : Intent
+        data object LoadFinancialSummary : Intent
 
         // Pending Payments
         data object LoadPendingPayments : Intent
@@ -121,7 +148,7 @@ object DashboardContract {
         data object NavigateToAddVehicleCost : Effect
         data object NavigateToNotifications : Effect
 
-        // Navigation to Add enti   ties (from empty states)
+        // Navigation to Add entities (from empty states)
         data object NavigateToAddVehicle : Effect
         data object NavigateToAddDriver : Effect
         data object NavigateToCreateTrip : Effect
