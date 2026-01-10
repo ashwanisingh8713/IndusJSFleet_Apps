@@ -68,11 +68,12 @@ object UserMapper {
         )
     }
 
-    private fun String.toUserRole(): UserRole = when (this.lowercase()) {
+    private fun String.toUserRole(): UserRole = when (this.lowercase().replace("_", "")) {
         "owner" -> UserRole.OWNER
+        "generalmanager", "gm" -> UserRole.GENERAL_MANAGER
         "manager" -> UserRole.MANAGER
         "supervisor" -> UserRole.SUPERVISOR
-        else -> UserRole.OWNER
+        else -> UserRole.SUPERVISOR // Default to lowest privilege for safety
     }
 }
 

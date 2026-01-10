@@ -14,6 +14,7 @@ import com.indusjs.fleet.data.model.user.UpdateProfileRequest
 import com.indusjs.fleet.domain.entity.user.AuthResult
 import com.indusjs.fleet.domain.entity.user.User
 import com.indusjs.fleet.domain.entity.user.UserProfile
+import com.indusjs.fleet.domain.entity.user.UserRole
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import dev.zacsweers.metro.Inject
 
@@ -48,7 +49,7 @@ class UserRepositoryImpl(
             ?: throw ApiException(response.message ?: "Sign up failed")
 
         localDataSource.saveAuthToken(authResult.token)
-        localDataSource.saveUserRole(authResult.user.role.name.lowercase())
+        localDataSource.saveUserRole(UserRole.toApiString(authResult.user.role))
         authResult
     }
 
@@ -64,7 +65,7 @@ class UserRepositoryImpl(
             ?: throw ApiException(response.message ?: "Login failed")
 
         localDataSource.saveAuthToken(authResult.token)
-        localDataSource.saveUserRole(authResult.user.role.name.lowercase())
+        localDataSource.saveUserRole(UserRole.toApiString(authResult.user.role))
         authResult
     }
 
