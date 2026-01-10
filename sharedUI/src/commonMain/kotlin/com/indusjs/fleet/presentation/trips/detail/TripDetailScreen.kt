@@ -169,7 +169,8 @@ fun TripDetailScreen(
                     }
                 },
                 actions = {
-                    if (!state.isEditMode && state.trip != null && state.canEdit) {
+                    // Show edit button if user can edit (full or price-only)
+                    if (!state.isEditMode && state.trip != null && state.showEditButton) {
                         IconButton(onClick = { viewModel.sendIntent(TripDetailContract.Intent.EnterEditMode) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_edit),
@@ -912,7 +913,7 @@ private fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
                     EnhancedInfoRow(
                         icon = "💰",
                         label = "Trip Price",
-                        value = "₹${formatCurrency(it)}"
+                        value = formatCurrency(it)
                     )
                 }
             }

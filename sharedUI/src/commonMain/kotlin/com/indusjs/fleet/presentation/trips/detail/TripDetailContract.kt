@@ -161,6 +161,24 @@ object TripDetailContract {
                 val role = userRole.lowercase().replace("_", "")
                 return role == "owner" || role == "generalmanager"
             }
+
+        /**
+         * Determines if the user can edit trip_price only (not full trip).
+         * Owner and General Manager can edit trip_price in ANY state including completed.
+         * This allows price adjustments even after trip completion.
+         */
+        val canEditTripPriceOnly: Boolean
+            get() {
+                if (trip == null) return false
+                val role = userRole.lowercase().replace("_", "")
+                return role == "owner" || role == "generalmanager"
+            }
+
+        /**
+         * Shows edit button if user can fully edit OR can edit price only.
+         */
+        val showEditButton: Boolean
+            get() = canEdit || canEditTripPriceOnly
     }
 
     /**
