@@ -1,5 +1,6 @@
 package com.indusjs.fleet.data.repository.reports
 
+import co.touchlab.kermit.Logger
 import com.indusjs.error.exception.AuthException
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.reports.ReportsRemoteDataSource
@@ -18,6 +19,8 @@ class ReportsRepositoryImpl(
     private val remoteDataSource: ReportsRemoteDataSource,
     private val userLocalDataSource: UserLocalDataSource
 ) : ReportsRepository {
+
+    private val log = Logger.withTag("ReportsRepositoryImpl")
 
     /**
      * Retrieves auth token or throws AuthException.
@@ -151,15 +154,24 @@ class ReportsRepositoryImpl(
         startDate: String?,
         endDate: String?
     ): Result<PLSummary> {
+        log.d { "=== getPLSummary Repository ===" }
+        log.d { "Request: startDate=$startDate, endDate=$endDate" }
         return try {
             val token = requireAuthToken()
+            log.d { "Auth token retrieved successfully" }
             val dto = remoteDataSource.getPLSummary(token, startDate, endDate)
             if (dto != null) {
-                Result.Success(dto.toDomain())
+                log.d { "DTO received, converting to domain" }
+                val domain = dto.toDomain()
+                log.d { "Domain conversion complete: revenue=${domain.totalRevenue}, expenses=${domain.totalExpenses}" }
+                Result.Success(domain)
             } else {
+                log.e { "DTO is null - API returned no data" }
                 Result.Error(Exception("P&L summary not found"), "Failed to fetch P&L summary")
             }
         } catch (e: Exception) {
+            log.e { "Exception in getPLSummary: ${e.message}" }
+            log.e { "Exception type: ${e::class.simpleName}" }
             Result.Error(e, e.message ?: "Failed to fetch P&L summary")
         }
     }

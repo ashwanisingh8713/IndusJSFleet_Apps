@@ -238,33 +238,53 @@ class ReportsRemoteDataSource(
         endDate: String? = null
     ): PLSummaryDto? {
         val url = "${ApiConfig.BASE_URL}/reports/profit-loss/summary"
-        log.d { "Fetching P&L summary: startDate=$startDate, endDate=$endDate" }
+        log.d { "=== getPLSummary API CALL ===" }
+        log.d { "URL: $url" }
+        log.d { "Params: start_date=$startDate, end_date=$endDate" }
+        log.d { "Token present: ${token.isNotBlank()}" }
 
         return try {
             val response: HttpResponse = httpClient.get(url) {
                 header(HttpHeaders.Authorization, "Bearer $token")
-                startDate?.let { parameter("start_date", it) }
-                endDate?.let { parameter("end_date", it) }
+                startDate?.let {
+                    log.d { "Adding start_date parameter: $it" }
+                    parameter("start_date", it)
+                }
+                endDate?.let {
+                    log.d { "Adding end_date parameter: $it" }
+                    parameter("end_date", it)
+                }
             }
             val body = response.bodyAsText()
             log.d { "Response status: ${response.status}" }
+            log.d { "Response body length: ${body.length} chars" }
             log.d { "Response body: $body" }
 
             if (response.status.isSuccess()) {
                 try {
+                    log.d { "Parsing response..." }
                     val result = json.decodeFromString<ProfitLossResponse<PLSummaryDto>>(body)
+                    log.d { "Parse success: success=${result.success}, message=${result.message}" }
+                    log.d { "Data present: ${result.data != null}" }
+                    if (result.data != null) {
+                        log.d { "Data overview: totalRevenue=${result.data.overview?.totalRevenue}, totalExpenses=${result.data.overview?.totalExpenses}" }
+                        log.d { "Data period: startDate=${result.data.period?.startDate}, endDate=${result.data.period?.endDate}" }
+                    }
                     result.data
                 } catch (e: Exception) {
                     log.e { "Failed to parse P&L summary response: ${e.message}" }
+                    log.e { "Exception type: ${e::class.simpleName}" }
                     log.e { "Response was: $body" }
                     null
                 }
             } else {
-                log.e { "Failed to fetch P&L summary: ${response.status}" }
+                log.e { "API failed with status: ${response.status}" }
+                log.e { "Error body: $body" }
                 null
             }
         } catch (e: Exception) {
-            log.e { "Error fetching P&L summary: ${e.message}" }
+            log.e { "Network error fetching P&L summary: ${e.message}" }
+            log.e { "Exception type: ${e::class.simpleName}" }
             null
         }
     }

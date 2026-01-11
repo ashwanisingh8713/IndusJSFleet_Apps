@@ -23,14 +23,19 @@ class ReportsViewModel(
     private val log = Logger.withTag("ReportsViewModel")
 
     init {
+        log.d { "ReportsViewModel initialized, sending LoadSummary intent" }
         sendIntent(Intent.LoadSummary)
     }
 
     override suspend fun handleIntent(intent: Intent) {
+        log.d { "handleIntent: $intent" }
         when (intent) {
             is Intent.LoadSummary -> loadSummary()
             is Intent.Refresh -> loadSummary()
-            is Intent.SelectPeriod -> handlePeriodSelection(intent.period)
+            is Intent.SelectPeriod -> {
+                log.d { "SelectPeriod: ${intent.period.label} (${intent.period.value})" }
+                handlePeriodSelection(intent.period)
+            }
             is Intent.SetCustomDateRange -> handleCustomDateRange(intent.startDate, intent.endDate)
             is Intent.ShowDateRangePicker -> updateState { copy(showDateRangePicker = true) }
             is Intent.HideDateRangePicker -> updateState { copy(showDateRangePicker = false) }
@@ -46,21 +51,25 @@ class ReportsViewModel(
     }
 
     private suspend fun handlePeriodSelection(period: ReportPeriod) {
+        log.d { "handlePeriodSelection: period=${period.label}" }
         if (period == ReportPeriod.CUSTOM) {
+            log.d { "Custom period selected, showing date picker" }
             updateState { copy(selectedPeriod = period, showDateRangePicker = true) }
         } else {
             // Calculate date range for the selected period
             val (startDate, endDate) = calculateDateRangeForPeriod(period)
-            log.d { "Period ${period.label} -> dates: $startDate to $endDate" }
+            log.d { "Calculated date range for ${period.label}: $startDate to $endDate" }
             updateState {
                 copy(selectedPeriod = period, startDate = startDate, endDate = endDate)
             }
+            log.d { "State updated, now calling loadSummary with dates: $startDate to $endDate" }
             // Pass calculated dates directly to avoid stale state
             loadSummary(startDateOverride = startDate, endDateOverride = endDate)
         }
     }
 
     private suspend fun handleCustomDateRange(startDate: String, endDate: String) {
+        log.d { "handleCustomDateRange: $startDate to $endDate" }
         updateState {
             copy(
                 startDate = startDate,
@@ -79,10 +88,12 @@ class ReportsViewModel(
      */
     private fun calculateDateRangeForPeriod(period: ReportPeriod): Pair<String, String> {
         val nowMs = currentTimeMillis()
+        log.d { "Current time millis: $nowMs" }
         val today = Instant.fromEpochMilliseconds(nowMs)
             .toLocalDateTime(TimeZone.currentSystemDefault()).date
+        log.d { "Today's date: $today" }
 
-        return when (period) {
+        val result = when (period) {
             ReportPeriod.TODAY -> {
                 val dateStr = today.toString() // YYYY-MM-DD
                 dateStr to dateStr
@@ -90,6 +101,7 @@ class ReportsViewModel(
             ReportPeriod.WEEKLY -> {
                 // Start of current week (Monday) to today
                 val dayOfWeek = today.dayOfWeek.isoDayNumber // Monday = 1, Sunday = 7
+                log.d { "Day of week: $dayOfWeek (${today.dayOfWeek})" }
                 val startOfWeek = today.minus(DatePeriod(days = dayOfWeek - 1))
                 startOfWeek.toString() to today.toString()
             }
@@ -108,6 +120,8 @@ class ReportsViewModel(
                 "" to ""
             }
         }
+        log.d { "calculateDateRangeForPeriod(${period.label}) = ${result.first} to ${result.second}" }
+        return result
     }
 
     /**
@@ -119,26 +133,41 @@ class ReportsViewModel(
         endDateOverride: String? = null
     ) {
         val currentState = state.value
+        log.d { "loadSummary called: startDateOverride=$startDateOverride, endDateOverride=$endDateOverride" }
+        log.d { "Current state: selectedPeriod=${currentState.selectedPeriod.label}, startDate=${currentState.startDate}, endDate=${currentState.endDate}" }
+
         updateState { copy(isLoading = true, error = null) }
 
         // Use overrides if provided, otherwise calculate from current period
         val (startDate, endDate) = if (!startDateOverride.isNullOrBlank() && !endDateOverride.isNullOrBlank()) {
+            log.d { "Using override dates: $startDateOverride to $endDateOverride" }
             startDateOverride to endDateOverride
         } else if (currentState.startDate.isNotBlank() && currentState.endDate.isNotBlank()) {
+            log.d { "Using state dates: ${currentState.startDate} to ${currentState.endDate}" }
             currentState.startDate to currentState.endDate
         } else {
+            log.d { "Calculating dates from period: ${currentState.selectedPeriod.label}" }
             // Calculate based on current period
             calculateDateRangeForPeriod(currentState.selectedPeriod)
         }
 
-        log.d { "Loading summary: startDate=$startDate, endDate=$endDate, period=${currentState.selectedPeriod.label}" }
+        log.d { "=== CALLING API ===" }
+        log.d { "API Request: startDate=$startDate, endDate=$endDate" }
 
         // Call API with start_date and end_date only (no period param)
         when (val result = reportsRepository.getPLSummary(startDate, endDate)) {
             is Result.Success -> {
                 val summary = result.data
+                log.d { "=== API SUCCESS ===" }
+                log.d { "Summary received: totalRevenue=${summary.totalRevenue}, totalExpenses=${summary.totalExpenses}" }
+                log.d { "Summary period: startDate=${summary.startDate}, endDate=${summary.endDate}" }
+                log.d { "Summary stats: totalTrips=${summary.totalTrips}, completedTrips=${summary.completedTrips}" }
+                log.d { "Summary profit: grossProfit=${summary.grossProfit}, margin=${summary.profitMarginPercentage}%" }
+                log.d { "Expense breakdown count: ${summary.expenseBreakdown.size}" }
+
                 // Convert expense breakdown to CostBreakdownItem for pie chart
                 val breakdown = summary.expenseBreakdown.map { item ->
+                    log.d { "Expense: ${item.type} = ${item.amount} (${item.percentage}%)" }
                     CostBreakdownItem(
                         costType = item.type,
                         amount = item.amount,
@@ -152,12 +181,17 @@ class ReportsViewModel(
                         expenseBreakdown = breakdown
                     )
                 }
+                log.d { "State updated with new summary data" }
             }
             is Result.Error -> {
+                log.e { "=== API ERROR ===" }
                 log.e { "Failed to load summary: ${result.message}" }
+                log.e { "Exception: ${result.exception}" }
                 updateState { copy(isLoading = false, error = result.message ?: "Failed to load summary") }
             }
-            is Result.Loading -> { /* Already handled */ }
+            is Result.Loading -> {
+                log.d { "Result.Loading received" }
+            }
         }
     }
 
