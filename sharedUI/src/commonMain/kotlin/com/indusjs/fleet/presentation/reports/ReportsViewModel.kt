@@ -47,8 +47,9 @@ class ReportsViewModel(
         if (period == ReportPeriod.CUSTOM) {
             updateState { copy(selectedPeriod = period, showDateRangePicker = true) }
         } else {
+            // Update state first, then load with the new period passed directly
             updateState { copy(selectedPeriod = period, startDate = "", endDate = "") }
-            loadSummary()
+            loadSummary(periodOverride = period)
         }
     }
 
@@ -61,29 +62,47 @@ class ReportsViewModel(
                 selectedPeriod = ReportPeriod.CUSTOM
             )
         }
-        loadSummary()
+        // Pass dates directly to avoid stale state issues
+        loadSummary(
+            periodOverride = ReportPeriod.CUSTOM,
+            startDateOverride = startDate,
+            endDateOverride = endDate
+        )
     }
 
-    private suspend fun loadSummary() {
+    /**
+     * Load P&L summary with optional overrides for period and dates.
+     * This ensures we don't use stale state values after state updates.
+     */
+    private suspend fun loadSummary(
+        periodOverride: ReportPeriod? = null,
+        startDateOverride: String? = null,
+        endDateOverride: String? = null
+    ) {
         val currentState = state.value
         updateState { copy(isLoading = true, error = null) }
 
+        // Use overrides if provided, otherwise fall back to current state
+        val effectivePeriod = periodOverride ?: currentState.selectedPeriod
+
         // Determine date range based on period
-        val (startDate, endDate) = when (currentState.selectedPeriod) {
+        val (startDate, endDate) = when (effectivePeriod) {
             ReportPeriod.CUSTOM -> {
-                currentState.startDate.takeIf { it.isNotBlank() } to
-                currentState.endDate.takeIf { it.isNotBlank() }
+                val start = startDateOverride ?: currentState.startDate.takeIf { it.isNotBlank() }
+                val end = endDateOverride ?: currentState.endDate.takeIf { it.isNotBlank() }
+                start to end
             }
             else -> null to null // API will use period parameter
         }
 
-        val period = if (currentState.selectedPeriod != ReportPeriod.CUSTOM) {
-            currentState.selectedPeriod.value
+        // Set period for non-custom selections
+        val period = if (effectivePeriod != ReportPeriod.CUSTOM) {
+            effectivePeriod.value
         } else null
 
-        log.d { "Loading summary: period=$period, startDate=$startDate, endDate=$endDate" }
+        log.d { "Loading summary: period=$period (${effectivePeriod.label}), startDate=$startDate, endDate=$endDate" }
 
-        when (val result = reportsRepository.getPLSummary(startDate, endDate)) {
+        when (val result = reportsRepository.getPLSummary(startDate, endDate, period)) {
             is Result.Success -> {
                 val summary = result.data
                 // Convert expense breakdown to CostBreakdownItem for pie chart

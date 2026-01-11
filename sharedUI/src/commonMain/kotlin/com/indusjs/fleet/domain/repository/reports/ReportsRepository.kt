@@ -64,10 +64,13 @@ interface ReportsRepository : Repository {
 
     /**
      * Get P&L summary with alerts
+     * @param period Period filter: "today", "weekly", "monthly", "yearly"
+     * @param startDate Custom start date (for custom period)
+     * @param endDate Custom end date (for custom period)
      */
     suspend fun getPLSummary(
         startDate: String? = null,
-        endDate: String? = null
+        endDate: String? = null,
+        period: String? = null
     ): Result<PLSummary>
 }
-

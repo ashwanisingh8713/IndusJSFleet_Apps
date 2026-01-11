@@ -235,14 +235,16 @@ class ReportsRemoteDataSource(
     suspend fun getPLSummary(
         token: String,
         startDate: String? = null,
-        endDate: String? = null
+        endDate: String? = null,
+        period: String? = null
     ): PLSummaryDto? {
         val url = "${ApiConfig.BASE_URL}/reports/profit-loss/summary"
-        log.d { "Fetching P&L summary: startDate=$startDate, endDate=$endDate" }
+        log.d { "Fetching P&L summary: period=$period, startDate=$startDate, endDate=$endDate" }
 
         return try {
             val response: HttpResponse = httpClient.get(url) {
                 header(HttpHeaders.Authorization, "Bearer $token")
+                period?.let { parameter("period", it) }
                 startDate?.let { parameter("start_date", it) }
                 endDate?.let { parameter("end_date", it) }
             }
@@ -269,4 +271,3 @@ class ReportsRemoteDataSource(
         }
     }
 }
-
