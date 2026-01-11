@@ -341,6 +341,10 @@ private fun ErrorBanner(error: String, onRetry: () -> Unit) {
 private fun PLSummaryCards(summary: PLSummary) {
     val isProfit = summary.isProfitable
 
+    // Format dates to DD-MM-YYYY
+    val formattedStartDate = summary.startDate?.let { formatDateToDDMMYYYY(it) } ?: ""
+    val formattedEndDate = summary.endDate?.let { formatDateToDDMMYYYY(it) } ?: "Current"
+
     // Animated progress for profit margin
     var animationPlayed by remember { mutableStateOf(false) }
     val animatedMargin by animateFloatAsState(
@@ -367,31 +371,34 @@ private fun PLSummaryCards(summary: PLSummary) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(text = "📊", style = MaterialTheme.typography.titleMedium)
+                Text(text = "💰", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = "Financial Performance",
+                    text = "Financial Overview",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            // Period info
-            Text(
-                text = "${summary.startDate ?: ""} - ${summary.endDate ?: "Current"}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            // Period info with formatted dates
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh
+            ) {
+                Text(
+                    text = "$formattedStartDate - $formattedEndDate",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
         }
 
-        // Main Profit/Loss Card
+        // Main Net Result Card - Using neutral/positive language
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(
-                    if (isProfit) ProfitGreen.copy(alpha = 0.1f)
-                    else LossRed.copy(alpha = 0.1f)
-                )
+                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
                 .padding(16.dp)
         ) {
             Column(
@@ -399,27 +406,31 @@ private fun PLSummaryCards(summary: PLSummary) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Status Badge
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (isProfit) ProfitGreen else LossRed
+                // Status - Use positive language
+                Text(
+                    text = "Net Result",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Main Amount with indicator
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = if (isProfit) "PROFIT" else "LOSS",
-                        style = MaterialTheme.typography.labelSmall,
+                        text = if (isProfit) "+" else "-",
+                        style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        color = if (isProfit) ProfitGreen else MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        text = formatCurrency(kotlin.math.abs(summary.grossProfit)),
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isProfit) ProfitGreen else MaterialTheme.colorScheme.error
                     )
                 }
-
-                // Main Amount
-                Text(
-                    text = formatCurrency(kotlin.math.abs(summary.grossProfit)),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isProfit) ProfitGreen else LossRed
-                )
 
                 // Margin with progress
                 Row(
@@ -428,7 +439,7 @@ private fun PLSummaryCards(summary: PLSummary) {
                 ) {
                     Box(
                         modifier = Modifier
-                            .width(100.dp)
+                            .width(80.dp)
                             .height(6.dp)
                             .clip(RoundedCornerShape(3.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -438,7 +449,7 @@ private fun PLSummaryCards(summary: PLSummary) {
                                 .fillMaxWidth(animatedMargin)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(3.dp))
-                                .background(if (isProfit) ProfitGreen else LossRed)
+                                .background(MaterialTheme.colorScheme.primary)
                         )
                     }
                     Text(
@@ -460,21 +471,15 @@ private fun PLSummaryCards(summary: PLSummary) {
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .background(ProfitGreen.copy(alpha = 0.08f))
                     .padding(12.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(text = "📈", style = MaterialTheme.typography.labelMedium)
-                        Text(
-                            text = "Revenue",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = "Revenue",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Text(
                         text = formatCurrency(summary.totalRevenue),
                         style = MaterialTheme.typography.titleMedium,
@@ -489,21 +494,15 @@ private fun PLSummaryCards(summary: PLSummary) {
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .background(WarningAmber.copy(alpha = 0.08f))
                     .padding(12.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(text = "💸", style = MaterialTheme.typography.labelMedium)
-                        Text(
-                            text = "Expenses",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = "Expenses",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Text(
                         text = formatCurrency(summary.totalExpenses),
                         style = MaterialTheme.typography.titleMedium,
@@ -1229,249 +1228,190 @@ private fun QuickInsightsSection(summary: PLSummary) {
     ) {
         // Section Header
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(text = "💡", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = "Quick Insights",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            Text(text = "💡", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "Quick Insights",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
         }
 
-        // Top Performer & Needs Attention Cards
+        // Top Performer & Needs Review Cards
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Top Performer Card
-            EnhancedInsightCard(
+            ImprovedInsightCard(
                 modifier = Modifier.weight(1f),
                 icon = "🏆",
                 title = "Top Performer",
                 value = summary.topPerformingVehicle?.registrationNumber ?: "N/A",
                 subtitle = if (summary.topPerformingVehicle != null)
                     "+${formatCurrency(summary.topPerformingVehicle.profit)}" else "No data",
-                isPositive = true,
-                badgeText = if (summary.topPerformingVehicle != null) "BEST" else null
+                cardType = InsightCardType.POSITIVE
             )
 
-            // Needs Attention Card
+            // Needs Review Card - Use neutral language
             val worstVehicle = summary.lossMakingVehiclesList.firstOrNull()
-            EnhancedInsightCard(
+            ImprovedInsightCard(
                 modifier = Modifier.weight(1f),
-                icon = if (worstVehicle != null) "⚠️" else "✅",
-                title = "Needs Attention",
-                value = worstVehicle?.registrationNumber ?: "All Good!",
+                icon = if (worstVehicle != null) "📋" else "✅",
+                title = if (worstVehicle != null) "Needs Review" else "All Clear",
+                value = worstVehicle?.registrationNumber ?: "Great!",
                 subtitle = if (worstVehicle != null)
-                    "-${formatCurrency(worstVehicle.loss)}" else "No losses",
-                isPositive = worstVehicle == null,
-                badgeText = if (worstVehicle != null) "ALERT" else null
+                    "${formatCurrency(worstVehicle.loss)} expenses" else "No issues",
+                cardType = if (worstVehicle != null) InsightCardType.NEUTRAL else InsightCardType.POSITIVE
             )
         }
 
-        // Key Metrics Row with better styling
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+        // Key Metrics Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                EnhancedQuickStatItem(
-                    icon = "🚛",
-                    value = "${summary.profitableVehicles}",
-                    total = "${summary.totalVehicles}",
-                    label = "Profitable Vehicles",
-                    progressColor = ProfitGreen,
-                    progress = if (summary.totalVehicles > 0)
-                        summary.profitableVehicles.toFloat() / summary.totalVehicles else 0f
-                )
+            // Vehicles Metric
+            MetricCard(
+                modifier = Modifier.weight(1f),
+                value = "${summary.profitableVehicles}/${summary.totalVehicles}",
+                label = "Profitable Vehicles",
+                progress = if (summary.totalVehicles > 0)
+                    summary.profitableVehicles.toFloat() / summary.totalVehicles else 0f
+            )
 
-                Box(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(50.dp)
-                        .background(MaterialTheme.colorScheme.outlineVariant)
-                )
+            // Trips Metric
+            MetricCard(
+                modifier = Modifier.weight(1f),
+                value = "${summary.profitableTrips}/${summary.completedTrips}",
+                label = "Profitable Trips",
+                progress = if (summary.completedTrips > 0)
+                    summary.profitableTrips.toFloat() / summary.completedTrips else 0f
+            )
 
-                EnhancedQuickStatItem(
-                    icon = "🛣️",
-                    value = "${summary.profitableTrips}",
-                    total = "${summary.completedTrips}",
-                    label = "Profitable Trips",
-                    progressColor = ProfitGreen,
-                    progress = if (summary.completedTrips > 0)
-                        summary.profitableTrips.toFloat() / summary.completedTrips else 0f
-                )
-
-                Box(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(50.dp)
-                        .background(MaterialTheme.colorScheme.outlineVariant)
-                )
-
-                EnhancedQuickStatItem(
-                    icon = "📈",
-                    value = "${summary.profitMarginPercentage.toInt()}%",
-                    total = null,
-                    label = "Margin",
-                    progressColor = if (summary.isProfitable) ProfitGreen else LossRed,
-                    progress = (summary.profitMarginPercentage / 100f).toFloat().coerceIn(0f, 1f)
-                )
-            }
+            // Margin Metric
+            MetricCard(
+                modifier = Modifier.weight(1f),
+                value = "${summary.profitMarginPercentage.toInt()}%",
+                label = "Margin",
+                progress = (summary.profitMarginPercentage / 100f).toFloat().coerceIn(0f, 1f)
+            )
         }
     }
 }
 
+private enum class InsightCardType {
+    POSITIVE, NEUTRAL, NEGATIVE
+}
+
 @Composable
-private fun EnhancedInsightCard(
+private fun ImprovedInsightCard(
     modifier: Modifier = Modifier,
     icon: String,
     title: String,
     value: String,
     subtitle: String,
-    isPositive: Boolean,
-    badgeText: String? = null
+    cardType: InsightCardType
 ) {
-    val backgroundColor = if (isPositive)
-        ProfitGreen.copy(alpha = 0.1f)
-    else
-        LossRed.copy(alpha = 0.1f)
+    val backgroundColor = when (cardType) {
+        InsightCardType.POSITIVE -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        InsightCardType.NEUTRAL -> MaterialTheme.colorScheme.surfaceContainerHigh
+        InsightCardType.NEGATIVE -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+    }
 
-    val accentColor = if (isPositive) ProfitGreen else LossRed
+    val subtitleColor = when (cardType) {
+        InsightCardType.POSITIVE -> ProfitGreen
+        InsightCardType.NEUTRAL -> MaterialTheme.colorScheme.onSurfaceVariant
+        InsightCardType.NEGATIVE -> MaterialTheme.colorScheme.error
+    }
 
-    Card(
+    Box(
         modifier = modifier
-            .animateContentSize(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+            .padding(12.dp)
     ) {
-        Box {
-            Column(
-                modifier = Modifier.padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(text = icon, style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(text = icon, style = MaterialTheme.typography.titleSmall)
                 Text(
-                    text = value,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = accentColor
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            // Badge
-            badgeText?.let {
-                Surface(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp),
-                    shape = RoundedCornerShape(4.dp),
-                    color = accentColor
-                ) {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-            }
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = subtitleColor
+            )
         }
     }
 }
 
 @Composable
-private fun EnhancedQuickStatItem(
-    icon: String,
+private fun MetricCard(
+    modifier: Modifier = Modifier,
     value: String,
-    total: String?,
     label: String,
-    progressColor: Color,
     progress: Float
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(80.dp)
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(12.dp)
     ) {
-        Text(text = icon, style = MaterialTheme.typography.titleSmall)
-        Row(
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.Center
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = progressColor
+                color = MaterialTheme.colorScheme.primary
             )
-            if (total != null) {
-                Text(
-                    text = "/$total",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        // Mini progress bar
-        Box(
-            modifier = Modifier
-                .width(50.dp)
-                .height(4.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-        ) {
+
+            // Progress bar
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(progress)
-                    .fillMaxHeight()
+                    .fillMaxWidth()
+                    .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(progressColor)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+            }
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 2
             )
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 
@@ -1854,3 +1794,25 @@ private fun formatCostType(costType: String): String {
         .split(" ")
         .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
 }
+
+/**
+ * Convert date from YYYY-MM-DD or other formats to DD-MM-YYYY
+ */
+private fun formatDateToDDMMYYYY(date: String): String {
+    return try {
+        // Handle YYYY-MM-DD format
+        if (date.contains("-") && date.length >= 10) {
+            val parts = date.split("-")
+            if (parts.size >= 3 && parts[0].length == 4) {
+                "${parts[2].take(2)}-${parts[1]}-${parts[0]}"
+            } else {
+                date
+            }
+        } else {
+            date
+        }
+    } catch (e: Exception) {
+        date
+    }
+}
+
