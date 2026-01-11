@@ -5,6 +5,7 @@ import com.indusjs.fleet.data.datasource.reports.ReportsRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.repository.reports.ReportsRepositoryImpl
 import com.indusjs.fleet.domain.repository.reports.ReportsRepository
+import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.presentation.reports.ReportsViewModel
 import com.indusjs.fleet.presentation.reports.consolidated.ConsolidatedPLViewModel
@@ -49,6 +50,7 @@ abstract class ReportsFeatureGraph {
             @Provides json: Json,
             @Provides dispatcherProvider: DispatcherProvider,
             @Provides vehicleRepository: VehicleRepository,
+            @Provides tripRepository: TripRepository,
             @Provides userLocalDataSource: UserLocalDataSource
         ): ReportsFeatureGraph
     }
