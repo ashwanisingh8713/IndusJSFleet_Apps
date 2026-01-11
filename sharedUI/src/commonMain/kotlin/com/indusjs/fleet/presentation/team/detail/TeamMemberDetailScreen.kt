@@ -464,35 +464,47 @@ private fun EditMemberContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Role Selection (only for Owner)
-                if (state.canChangeRole) {
+                // Role Selection (based on permissions and not editing self)
+                if (state.canChangeRole && state.availableRoles.isNotEmpty() && !state.isSelf) {
                     Text(
                         text = "Role",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        FilterChip(
-                            selected = state.editRole == TeamMemberRole.MANAGER,
-                            onClick = {
-                                viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateRole(TeamMemberRole.MANAGER))
-                            },
-                            label = { Text("Manager") },
-                            leadingIcon = { Text("👔") },
-                            enabled = !state.isSaving
-                        )
-                        FilterChip(
-                            selected = state.editRole == TeamMemberRole.SUPERVISOR,
-                            onClick = {
-                                viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateRole(TeamMemberRole.SUPERVISOR))
-                            },
-                            label = { Text("Supervisor") },
-                            leadingIcon = { Text("👷") },
-                            enabled = !state.isSaving
-                        )
+
+                    // Use Column for 3+ roles, Row for 2
+                    if (state.availableRoles.size >= 3) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            state.availableRoles.forEach { role ->
+                                RoleFilterChip(
+                                    role = role,
+                                    isSelected = state.editRole == role,
+                                    onClick = {
+                                        viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateRole(role))
+                                    },
+                                    enabled = !state.isSaving,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    } else {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            state.availableRoles.forEach { role ->
+                                RoleFilterChip(
+                                    role = role,
+                                    isSelected = state.editRole == role,
+                                    onClick = {
+                                        viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateRole(role))
+                                    },
+                                    enabled = !state.isSaving
+                                )
+                            }
+                        }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -596,6 +608,32 @@ private fun DetailRow(
             )
         }
     }
+}
+
+/**
+ * Role filter chip for dynamic role selection.
+ */
+@Composable
+private fun RoleFilterChip(
+    role: TeamMemberRole,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val (icon, label) = when (role) {
+        TeamMemberRole.GENERAL_MANAGER -> "👨‍💼" to "General Manager"
+        TeamMemberRole.MANAGER -> "👔" to "Manager"
+        TeamMemberRole.SUPERVISOR -> "👷" to "Supervisor"
+    }
+    FilterChip(
+        selected = isSelected,
+        onClick = onClick,
+        label = { Text(label) },
+        leadingIcon = { Text(icon) },
+        enabled = enabled,
+        modifier = modifier
+    )
 }
 
 private fun formatDate(dateString: String): String {

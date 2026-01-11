@@ -46,27 +46,46 @@ object TeamListContract {
 
         // Role-based access helpers
         val isOwner: Boolean get() = currentUserRole.lowercase() == "owner"
+        val isGeneralManager: Boolean get() = currentUserRole.lowercase() == "general_manager"
         val isManager: Boolean get() = currentUserRole.lowercase() == "manager"
         val isSupervisor: Boolean get() = currentUserRole.lowercase() == "supervisor"
 
+        // Check if current user can create team members (Owner and GM only)
+        val canCreateTeamMember: Boolean get() = isOwner || isGeneralManager
+
         // Check if current user can edit a member
         fun canEdit(member: TeamMember): Boolean {
-            return isOwner || (isManager && member.role == TeamMemberRole.SUPERVISOR)
+            if (member.id == currentUserId) return false  // Cannot edit self
+            return when {
+                isOwner -> true  // Owner can edit anyone
+                isGeneralManager -> member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
+                else -> false  // Manager and Supervisor cannot edit
+            }
         }
 
         // Check if current user can toggle active status
         fun canToggleActive(member: TeamMember): Boolean {
             if (member.id == currentUserId) return false  // Cannot toggle self
-            return isOwner || (isManager && member.role == TeamMemberRole.SUPERVISOR)
+            return when {
+                isOwner -> true  // Owner can toggle anyone
+                isGeneralManager -> member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
+                else -> false  // Manager and Supervisor cannot toggle
+            }
         }
 
         // Check if current user can reset password
         fun canResetPassword(member: TeamMember): Boolean {
-            return isOwner || (isManager && member.role == TeamMemberRole.SUPERVISOR)
+            if (member.id == currentUserId) return false  // Cannot reset own password here
+            return when {
+                isOwner -> true  // Owner can reset anyone's password
+                isGeneralManager -> member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
+                else -> false  // Manager and Supervisor cannot reset passwords
+            }
         }
 
         // Check if current user can delete a member
         fun canDelete(member: TeamMember): Boolean {
+            if (member.id == currentUserId) return false  // Cannot delete self
             return isOwner  // Only owner can delete
         }
     }

@@ -177,9 +177,25 @@ private fun ReportsContent(
                 PLSummaryCards(summary = summary)
             }
 
+            // Quick Insights Section
+            item {
+                QuickInsightsSection(summary = summary)
+            }
+
             // Profit Margin Gauge
             item {
                 ProfitMarginCard(summary = summary)
+            }
+
+            // Loss Alerts Section (if any loss-making vehicles)
+            if (summary.lossMakingVehiclesList.isNotEmpty() || summary.lossMakingTrips > 0) {
+                item {
+                    LossAlertsSection(
+                        lossMakingVehicles = summary.lossMakingVehiclesList,
+                        lossMakingTripsCount = summary.lossMakingTrips,
+                        onViewDetails = onVehiclePLClick
+                    )
+                }
             }
 
             // Expense Breakdown Pie Chart
@@ -215,13 +231,6 @@ private fun ReportsContent(
                         registrationNumber = vehicle.registrationNumber ?: "N/A",
                         profit = vehicle.profit
                     )
-                }
-            }
-
-            // Loss Making Vehicles Alert
-            if (summary.lossMakingVehiclesList.isNotEmpty()) {
-                item {
-                    LossMakingVehiclesCard(vehicles = summary.lossMakingVehiclesList)
                 }
             }
         }
@@ -687,6 +696,290 @@ private fun LossMakingVehiclesCard(vehicles: List<com.indusjs.fleet.domain.entit
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Quick Insights Section - Shows top performer, worst performer, and highest cost category
+ */
+@Composable
+private fun QuickInsightsSection(summary: PLSummary) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(text = "💡", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = "Quick Insights",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Top Performer
+                InsightCard(
+                    modifier = Modifier.weight(1f),
+                    icon = "🏆",
+                    title = "Top Performer",
+                    value = summary.topPerformingVehicle?.registrationNumber ?: "N/A",
+                    subtitle = if (summary.topPerformingVehicle != null)
+                        "+${formatCurrency(summary.topPerformingVehicle.profit)}" else "No data",
+                    subtitleColor = Color(0xFF10B981),
+                    backgroundColor = Color(0xFF10B981).copy(alpha = 0.1f)
+                )
+
+                // Needs Attention
+                val worstVehicle = summary.lossMakingVehiclesList.firstOrNull()
+                InsightCard(
+                    modifier = Modifier.weight(1f),
+                    icon = "⚠️",
+                    title = "Needs Attention",
+                    value = worstVehicle?.registrationNumber ?: "All Good!",
+                    subtitle = if (worstVehicle != null)
+                        "-${formatCurrency(worstVehicle.loss)}" else "No losses",
+                    subtitleColor = if (worstVehicle != null) Color(0xFFEF4444) else Color(0xFF10B981),
+                    backgroundColor = if (worstVehicle != null)
+                        Color(0xFFEF4444).copy(alpha = 0.1f) else Color(0xFF10B981).copy(alpha = 0.1f)
+                )
+            }
+
+            // Quick Stats Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                QuickStatItem(
+                    icon = "🚛",
+                    value = "${summary.profitableVehicles}/${summary.totalVehicles}",
+                    label = "Profitable Vehicles"
+                )
+                QuickStatItem(
+                    icon = "🛣️",
+                    value = "${summary.profitableTrips}/${summary.completedTrips}",
+                    label = "Profitable Trips"
+                )
+                QuickStatItem(
+                    icon = "📈",
+                    value = "${summary.profitMarginPercentage.toInt()}%",
+                    label = "Margin"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InsightCard(
+    modifier: Modifier = Modifier,
+    icon: String,
+    title: String,
+    value: String,
+    subtitle: String,
+    subtitleColor: Color,
+    backgroundColor: Color
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(text = icon, style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = subtitleColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickStatItem(
+    icon: String,
+    value: String,
+    label: String
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = icon, style = MaterialTheme.typography.labelMedium)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Loss Alerts Section - Shows critical alerts for loss-making items
+ */
+@Composable
+private fun LossAlertsSection(
+    lossMakingVehicles: List<com.indusjs.fleet.domain.entity.reports.VehiclePerformer>,
+    lossMakingTripsCount: Int,
+    onViewDetails: () -> Unit
+) {
+    val totalAlerts = lossMakingVehicles.size + (if (lossMakingTripsCount > 0) 1 else 0)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFEF4444).copy(alpha = 0.08f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(text = "🚨", style = MaterialTheme.typography.titleMedium)
+                    Column {
+                        Text(
+                            text = "Loss Alerts",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFEF4444)
+                        )
+                        Text(
+                            text = "$totalAlerts item(s) need attention",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Vehicle Loss Alerts
+            lossMakingVehicles.take(3).forEach { vehicle ->
+                LossAlertItem(
+                    icon = "🚛",
+                    title = vehicle.registrationNumber ?: "Unknown Vehicle",
+                    amount = vehicle.loss,
+                    reason = "Vehicle making loss"
+                )
+            }
+
+            // Trip Loss Alert
+            if (lossMakingTripsCount > 0) {
+                LossAlertItem(
+                    icon = "🛣️",
+                    title = "$lossMakingTripsCount trip(s)",
+                    amount = 0.0, // We don't have individual trip loss amount in summary
+                    reason = "Making loss",
+                    showAmount = false
+                )
+            }
+
+            // View All Button
+            TextButton(
+                onClick = onViewDetails,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text(
+                    text = "View All Details →",
+                    color = Color(0xFFEF4444),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LossAlertItem(
+    icon: String,
+    title: String,
+    amount: Double,
+    reason: String,
+    showAmount: Boolean = true
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(text = icon, style = MaterialTheme.typography.bodyLarge)
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = reason,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        if (showAmount && amount > 0) {
+            Text(
+                text = "-${formatCurrency(amount)}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFEF4444)
+            )
         }
     }
 }

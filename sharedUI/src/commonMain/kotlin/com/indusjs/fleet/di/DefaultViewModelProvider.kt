@@ -319,11 +319,11 @@ class DefaultViewModelProvider : ViewModelProvider {
 
     override fun mapsViewModel() = MapsViewModel(dispatcherProvider)
 
-    override fun teamListViewModel() = TeamListViewModel(dispatcherProvider, teamRepository)
+    override fun teamListViewModel() = TeamListViewModel(dispatcherProvider, teamRepository, userLocalDataSource)
 
     override fun createTeamMemberViewModel() = CreateTeamMemberViewModel(dispatcherProvider, teamRepository, userLocalDataSource)
 
-    override fun teamMemberDetailViewModel() = TeamMemberDetailViewModel(dispatcherProvider, teamRepository)
+    override fun teamMemberDetailViewModel() = TeamMemberDetailViewModel(dispatcherProvider, teamRepository, userLocalDataSource)
 
     override fun tripCostEntryViewModel() = TripCostEntryViewModel(
         dispatcherProvider,

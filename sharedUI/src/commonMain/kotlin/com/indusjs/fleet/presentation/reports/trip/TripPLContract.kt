@@ -12,6 +12,27 @@ import com.indusjs.fleet.domain.entity.trip.Trip
  */
 object TripPLContract {
 
+    /**
+     * Sorting options for trip P&L results
+     */
+    enum class SortOption(val label: String) {
+        PROFIT_HIGH_LOW("Profit (High to Low)"),
+        PROFIT_LOW_HIGH("Profit (Low to High)"),
+        LOSS_HIGH_LOW("Loss (High to Low)"),
+        DATE_NEWEST("Date (Newest First)"),
+        DATE_OLDEST("Date (Oldest First)"),
+        REVENUE_HIGH_LOW("Revenue (High to Low)")
+    }
+
+    /**
+     * Filter options for profit/loss status
+     */
+    enum class PLStatusFilter(val label: String) {
+        ALL("All"),
+        PROFITABLE("Profitable"),
+        LOSS_MAKING("Loss Making")
+    }
+
     data class State(
         val isLoading: Boolean = false,
         val isLoadingTrips: Boolean = false,
@@ -26,7 +47,10 @@ object TripPLContract {
         // Results
         val results: List<TripProfitLoss> = emptyList(),
         // UI state
-        val tripsLoaded: Boolean = false
+        val tripsLoaded: Boolean = false,
+        // Sorting and filtering
+        val sortOption: SortOption = SortOption.PROFIT_HIGH_LOW,
+        val plStatusFilter: PLStatusFilter = PLStatusFilter.ALL
     ) : UiState {
         val hasResults: Boolean get() = results.isNotEmpty()
 
@@ -42,6 +66,32 @@ object TripPLContract {
                 (trip.customerName?.lowercase()?.contains(query) == true)
             }
         }
+
+        // Sorted and filtered results
+        val sortedFilteredResults: List<TripProfitLoss> get() {
+            val filtered = when (plStatusFilter) {
+                PLStatusFilter.ALL -> results
+                PLStatusFilter.PROFITABLE -> results.filter { it.isProfitable }
+                PLStatusFilter.LOSS_MAKING -> results.filter { !it.isProfitable }
+            }
+            return when (sortOption) {
+                SortOption.PROFIT_HIGH_LOW -> filtered.sortedByDescending { it.netProfit }
+                SortOption.PROFIT_LOW_HIGH -> filtered.sortedBy { it.netProfit }
+                SortOption.LOSS_HIGH_LOW -> filtered.sortedBy { it.netProfit }
+                SortOption.DATE_NEWEST -> filtered.sortedByDescending { it.scheduledDate ?: "" }
+                SortOption.DATE_OLDEST -> filtered.sortedBy { it.scheduledDate ?: "" }
+                SortOption.REVENUE_HIGH_LOW -> filtered.sortedByDescending { it.sellingValue }
+            }
+        }
+
+        // Summary stats
+        val totalProfitableTrips: Int get() = results.count { it.isProfitable }
+        val totalLossMakingTrips: Int get() = results.count { !it.isProfitable }
+        val totalRevenue: Double get() = results.sumOf { it.sellingValue }
+        val totalExpenses: Double get() = results.sumOf { it.totalExpenses }
+        val totalNetProfit: Double get() = results.sumOf { it.netProfit }
+        val averageMargin: Double get() = if (results.isNotEmpty())
+            results.map { it.profitMargin }.average() else 0.0
 
         // Computed properties
         val canLoadTrips: Boolean get() = startDate.isNotBlank() && endDate.isNotBlank()
@@ -64,6 +114,9 @@ object TripPLContract {
         // Generate report
         data object GenerateReport : Intent
         data object Refresh : Intent
+        // Sorting and filtering
+        data class UpdateSortOption(val option: SortOption) : Intent
+        data class UpdatePLStatusFilter(val filter: PLStatusFilter) : Intent
     }
 
     sealed interface Effect : UiEffect {

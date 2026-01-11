@@ -97,18 +97,21 @@ fun TeamListScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = { viewModel.sendIntent(TeamListContract.Intent.NavigateToCreateMember) },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_add),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Add Member", fontWeight = FontWeight.Medium)
+            // Only show FAB if user can create team members (Owner or General Manager)
+            if (state.canCreateTeamMember) {
+                ExtendedFloatingActionButton(
+                    onClick = { viewModel.sendIntent(TeamListContract.Intent.NavigateToCreateMember) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Add Member", fontWeight = FontWeight.Medium)
+                }
             }
         }
     ) { paddingValues ->

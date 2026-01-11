@@ -2,17 +2,19 @@ package com.indusjs.fleet.presentation.reports.vehicle
 
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.currentTimeMillis
 import com.indusjs.fleet.data.model.reports.MultiVehiclePLRequest
 import com.indusjs.fleet.domain.repository.reports.ReportsRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.presentation.reports.vehicle.VehiclePLContract.Effect
 import com.indusjs.fleet.presentation.reports.vehicle.VehiclePLContract.Intent
+import com.indusjs.fleet.presentation.reports.vehicle.VehiclePLContract.RecentReport
 import com.indusjs.fleet.presentation.reports.vehicle.VehiclePLContract.State
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.collectLatest
 
 /**
- * ViewModel for Vehicle P&L Screen
+ * ViewModel for Vehicle P&L Screen - Enhanced wizard-like flow
  */
 @Inject
 class VehiclePLViewModel(
@@ -27,13 +29,7 @@ class VehiclePLViewModel(
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
             is Intent.LoadVehicles -> loadVehicles()
-            is Intent.SelectVehicle -> updateState {
-                copy(
-                    selectedVehicleId = intent.vehicleId,
-                    showVehicleDropdown = false,
-                    vehicleSearchQuery = ""
-                )
-            }
+            is Intent.SelectVehicle -> selectVehicle(intent.vehicleId)
             is Intent.ToggleVehicle -> toggleVehicle(intent.vehicleId)
             is Intent.SelectAllVehicles -> updateState { copy(selectedVehicleIds = vehicles.map { it.id }.toSet()) }
             is Intent.ClearVehicles -> updateState { copy(selectedVehicleIds = emptySet()) }
@@ -49,23 +45,59 @@ class VehiclePLViewModel(
             is Intent.GenerateReport -> generateReport()
             is Intent.Refresh -> {
                 loadVehicles()
-                generateReport()
+                if (currentState.selectedVehicleId != null) {
+                    generateReport()
+                }
             }
-            // Search intents
-            is Intent.UpdateVehicleSearch -> updateState {
+            // Vehicle selector bottom sheet
+            is Intent.ShowVehicleSelector -> updateState { copy(showVehicleSelector = true) }
+            is Intent.DismissVehicleSelector -> updateState {
                 copy(
-                    vehicleSearchQuery = intent.query,
-                    showVehicleDropdown = intent.query.isNotBlank()
+                    showVehicleSelector = false,
+                    vehicleSearchQuery = ""
                 )
             }
-            is Intent.ToggleVehicleDropdown -> updateState { copy(showVehicleDropdown = !showVehicleDropdown) }
-            is Intent.ClearVehicleSearch -> updateState {
-                copy(
-                    vehicleSearchQuery = "",
-                    showVehicleDropdown = false
-                )
-            }
+            // Search
+            is Intent.UpdateVehicleSearch -> updateState { copy(vehicleSearchQuery = intent.query) }
+            is Intent.ClearVehicleSearch -> updateState { copy(vehicleSearchQuery = "") }
+            // Quick actions
+            is Intent.QuickReportFromRecent -> quickReportFromRecent(intent.report)
+            // Sorting and filtering
+            is Intent.UpdateSortOption -> updateState { copy(sortOption = intent.option, showSortMenu = false) }
+            is Intent.UpdatePLStatusFilter -> updateState { copy(plStatusFilter = intent.filter) }
+            is Intent.ToggleSortMenu -> updateState { copy(showSortMenu = !showSortMenu) }
+            is Intent.DismissSortMenu -> updateState { copy(showSortMenu = false) }
         }
+    }
+
+    private fun selectVehicle(vehicleId: String) {
+        val currentRecentIds = currentState.recentVehicleIds.toMutableList()
+        // Add to front, remove duplicates, limit to 5
+        currentRecentIds.remove(vehicleId)
+        currentRecentIds.add(0, vehicleId)
+        val updatedRecentIds = currentRecentIds.take(5)
+
+        updateState {
+            copy(
+                selectedVehicleId = vehicleId,
+                showVehicleSelector = false,
+                vehicleSearchQuery = "",
+                recentVehicleIds = updatedRecentIds
+            )
+        }
+    }
+
+    private suspend fun quickReportFromRecent(report: RecentReport) {
+        // Set the vehicle and period from the recent report
+        updateState {
+            copy(
+                selectedVehicleId = report.vehicleId,
+                period = report.period,
+                useCustomDateRange = report.period == "custom"
+            )
+        }
+        // Auto-generate the report
+        generateReport()
     }
 
     private suspend fun loadVehicles() {
@@ -128,7 +160,26 @@ class VehiclePLViewModel(
 
         when (val result = reportsRepository.getVehicleProfitLoss(vehicleId, currentState.period)) {
             is Result.Success -> {
-                updateState { copy(isLoading = false, result = result.data) }
+                val plResult = result.data
+                // Add to recent reports
+                val vehicle = currentState.selectedVehicle
+                if (vehicle != null && plResult != null) {
+                    val recentReport = RecentReport(
+                        vehicleId = vehicle.id,
+                        vehicleNumber = vehicle.registrationNumber,
+                        vehicleMakeModel = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim(),
+                        period = currentState.period,
+                        profitLoss = plResult.netProfit,
+                        isProfit = plResult.netProfit >= 0,
+                        generatedAt = currentTimeMillis()
+                    )
+                    val updatedReports = listOf(recentReport) + currentState.recentReports
+                        .filter { it.vehicleId != vehicle.id || it.period != currentState.period }
+                        .take(9)
+                    updateState { copy(isLoading = false, result = plResult, recentReports = updatedReports) }
+                } else {
+                    updateState { copy(isLoading = false, result = plResult) }
+                }
             }
             is Result.Error -> {
                 updateState { copy(isLoading = false, error = result.message ?: "Failed to generate report") }
@@ -164,4 +215,3 @@ class VehiclePLViewModel(
         }
     }
 }
-

@@ -2,6 +2,7 @@ package com.indusjs.fleet.presentation.team.list
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.domain.entity.team.TeamMember
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
 import com.indusjs.fleet.domain.repository.team.TeamRepository
@@ -16,7 +17,8 @@ import kotlinx.coroutines.withContext
 @Inject
 class TeamListViewModel(
     private val dispatcherProvider: DispatcherProvider,
-    private val teamRepository: TeamRepository
+    private val teamRepository: TeamRepository,
+    private val userLocalDataSource: UserLocalDataSource
 ) : MviViewModel<TeamListContract.State, TeamListContract.Intent, TeamListContract.Effect>(
     TeamListContract.State()
 ) {
@@ -47,6 +49,15 @@ class TeamListViewModel(
 
         withContext(dispatcherProvider.io) {
             try {
+                // Load current user info
+                val userRole = try {
+                    userLocalDataSource.getUserRole() ?: "owner"
+                } catch (e: Exception) { "owner" }
+
+                val userId = try {
+                    userLocalDataSource.getUserId() ?: ""
+                } catch (e: Exception) { "" }
+
                 val result = teamRepository.getTeamMembers()
 
                 result.fold(
@@ -55,7 +66,9 @@ class TeamListViewModel(
                             copy(
                                 isLoading = false,
                                 teamMembers = members,
-                                filteredMembers = applyFilters(members, selectedFilter, searchQuery)
+                                filteredMembers = applyFilters(members, selectedFilter, searchQuery),
+                                currentUserRole = userRole,
+                                currentUserId = userId
                             )
                         }
                     },
@@ -63,7 +76,9 @@ class TeamListViewModel(
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Failed to load team members"
+                                error = error.message ?: "Failed to load team members",
+                                currentUserRole = userRole,
+                                currentUserId = userId
                             )
                         }
                     }

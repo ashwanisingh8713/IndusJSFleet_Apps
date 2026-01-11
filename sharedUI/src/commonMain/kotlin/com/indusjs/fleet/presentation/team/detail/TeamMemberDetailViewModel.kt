@@ -2,7 +2,10 @@ package com.indusjs.fleet.presentation.team.detail
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.PermissionUtils
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
+import com.indusjs.fleet.domain.entity.user.UserRole
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.withContext
@@ -13,7 +16,8 @@ import kotlinx.coroutines.withContext
 @Inject
 class TeamMemberDetailViewModel(
     private val dispatcherProvider: DispatcherProvider,
-    private val teamRepository: TeamRepository
+    private val teamRepository: TeamRepository,
+    private val userLocalDataSource: UserLocalDataSource
 ) : MviViewModel<TeamMemberDetailContract.State, TeamMemberDetailContract.Intent, TeamMemberDetailContract.Effect>(
     TeamMemberDetailContract.State()
 ) {
@@ -52,14 +56,67 @@ class TeamMemberDetailViewModel(
 
         withContext(dispatcherProvider.io) {
             try {
+                // Load current user info
+                val userRole = try {
+                    userLocalDataSource.getUserRole() ?: "owner"
+                } catch (e: Exception) { "owner" }
+
+                val userId = try {
+                    userLocalDataSource.getUserId() ?: ""
+                } catch (e: Exception) { "" }
+
+                // Get available roles based on current user role
+                val creatableRoles = PermissionUtils.getCreatableRoles(userRole)
+                val availableTeamRoles = creatableRoles.mapNotNull {
+                    when (it) {
+                        UserRole.GENERAL_MANAGER -> TeamMemberRole.GENERAL_MANAGER
+                        UserRole.MANAGER -> TeamMemberRole.MANAGER
+                        UserRole.SUPERVISOR -> TeamMemberRole.SUPERVISOR
+                        else -> null
+                    }
+                }
+
                 val result = teamRepository.getTeamMember(memberId)
 
                 result.fold(
                     onSuccess = { member ->
+                        // Determine if user can edit this member
+                        val canEditMember = when {
+                            member.id == userId -> false  // Cannot edit self
+                            userRole.lowercase() == "owner" -> true
+                            userRole.lowercase() == "general_manager" ->
+                                member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
+                            else -> false
+                        }
+
+                        // Determine if user can change this member's role
+                        val canChangeRoleForMember = when {
+                            member.id == userId -> false  // Cannot change own role
+                            userRole.lowercase() == "owner" -> true
+                            userRole.lowercase() == "general_manager" ->
+                                member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
+                            else -> false
+                        }
+
+                        // Determine if user can toggle this member's active status
+                        val canToggleActiveMember = when {
+                            member.id == userId -> false  // Cannot toggle own status
+                            userRole.lowercase() == "owner" -> true
+                            userRole.lowercase() == "general_manager" ->
+                                member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
+                            else -> false
+                        }
+
                         updateState {
                             copy(
                                 isLoading = false,
                                 member = member,
+                                currentUserRole = userRole,
+                                currentUserId = userId,
+                                availableRoles = availableTeamRoles,
+                                canEdit = canEditMember,
+                                canChangeRole = canChangeRoleForMember,
+                                canToggleActive = canToggleActiveMember,
                                 // Initialize edit fields with current values
                                 editFirstName = member.firstName,
                                 editLastName = member.lastName,
@@ -130,7 +187,13 @@ class TeamMemberDetailViewModel(
         withContext(dispatcherProvider.io) {
             try {
                 val state = currentState
-                val roleToUpdate = if (state.canChangeRole) state.editRole else null
+                val roleToUpdate = if (state.canChangeRole && !state.isSelf) state.editRole else null
+
+                // Debug logging
+                println("TeamMemberDetailVM: Saving changes for member ${state.memberId}")
+                println("TeamMemberDetailVM: canChangeRole=${state.canChangeRole}, isSelf=${state.isSelf}")
+                println("TeamMemberDetailVM: editRole=${state.editRole}, roleToUpdate=$roleToUpdate")
+                println("TeamMemberDetailVM: currentUserRole=${state.currentUserRole}")
 
                 val result = teamRepository.updateTeamMember(
                     id = state.memberId,
@@ -139,7 +202,7 @@ class TeamMemberDetailViewModel(
                     email = state.editEmail.trim(),
                     mobile = state.editMobile.trim(),
                     role = roleToUpdate,
-                    isActive = state.editIsActive
+                    isActive = if (state.canToggleActive) state.editIsActive else null
                 )
 
                 result.fold(

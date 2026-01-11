@@ -36,13 +36,28 @@ object TeamMemberDetailContract {
         val mobileError: String? = null,
         // Current user permissions
         val currentUserRole: String = "owner",
+        val currentUserId: String = "",
+        val availableRoles: List<TeamMemberRole> = emptyList(),
         val canEdit: Boolean = true,
-        val canChangeRole: Boolean = true,  // Only owner
+        val canChangeRole: Boolean = true,
         val canToggleActive: Boolean = true
     ) : UiState {
         val isOwner: Boolean get() = currentUserRole.lowercase() == "owner"
+        val isGeneralManager: Boolean get() = currentUserRole.lowercase() == "general_manager"
+        val isSelf: Boolean get() = member?.id == currentUserId
         val displayName: String get() = member?.fullName ?: "Team Member"
         val initials: String get() = member?.initials ?: "TM"
+
+        // Computed: Can change role based on permissions and not editing self
+        val canChangeRoleComputed: Boolean get() {
+            if (isSelf) return false
+            val memberRole = member?.role ?: return false
+            return when {
+                isOwner -> true  // Owner can change any role
+                isGeneralManager -> memberRole == TeamMemberRole.MANAGER || memberRole == TeamMemberRole.SUPERVISOR
+                else -> false
+            }
+        }
     }
 
     /**

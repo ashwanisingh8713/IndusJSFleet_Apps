@@ -53,6 +53,7 @@ class UserRepositoryImpl(
 
         localDataSource.saveAuthToken(authResult.token)
         localDataSource.saveUserRole(UserRole.toApiString(authResult.user.role))
+        localDataSource.saveUserId(authResult.user.id)
         authResult
     }
 
@@ -72,6 +73,7 @@ class UserRepositoryImpl(
 
         localDataSource.saveAuthToken(authResult.token)
         localDataSource.saveUserRole(roleToSave)
+        localDataSource.saveUserId(authResult.user.id)
         authResult
     }
 

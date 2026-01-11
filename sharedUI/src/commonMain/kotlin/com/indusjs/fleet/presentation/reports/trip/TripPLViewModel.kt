@@ -38,6 +38,9 @@ class TripPLViewModel(
                     loadTrips()
                 }
             }
+            // Sorting and filtering
+            is Intent.UpdateSortOption -> updateState { copy(sortOption = intent.option) }
+            is Intent.UpdatePLStatusFilter -> updateState { copy(plStatusFilter = intent.filter) }
         }
     }
 

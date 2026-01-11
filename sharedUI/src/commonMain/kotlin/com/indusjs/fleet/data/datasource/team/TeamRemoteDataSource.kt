@@ -110,7 +110,8 @@ class TeamRemoteDataSourceImpl(
 
     override suspend fun updateTeamMember(token: String, id: String, request: UpdateTeamMemberRequest): TeamMemberApiResponse {
         return try {
-            log.d { "Updating team member: $id" }
+            log.d { "Updating team member: $id with role: ${request.role}" }
+            log.d { "Update request: firstName=${request.firstName}, lastName=${request.lastName}, email=${request.email}, role=${request.role}, isActive=${request.isActive}" }
             val response: HttpResponse = httpClient.put("$baseUrl$TEAM_MEMBERS_ENDPOINT/$id") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)

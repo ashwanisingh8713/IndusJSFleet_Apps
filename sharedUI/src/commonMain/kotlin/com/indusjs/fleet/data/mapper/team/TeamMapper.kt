@@ -25,6 +25,7 @@ object TeamMapper {
     fun List<TeamMemberDto>.toDomain(): List<TeamMember> = map { it.toDomain() }
 
     private fun String.toTeamMemberRole(): TeamMemberRole = when (this.lowercase()) {
+        "general_manager", "generalmanager", "gm" -> TeamMemberRole.GENERAL_MANAGER
         "manager" -> TeamMemberRole.MANAGER
         "supervisor" -> TeamMemberRole.SUPERVISOR
         else -> TeamMemberRole.SUPERVISOR

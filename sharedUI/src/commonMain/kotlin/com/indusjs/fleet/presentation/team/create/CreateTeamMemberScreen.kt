@@ -108,7 +108,11 @@ fun CreateTeamMemberScreen(
                 )
 
                 Text(
-                    text = "Create a Manager or Supervisor for your organization",
+                    text = when {
+                        state.availableRoles.size >= 3 -> "Create a General Manager, Manager, or Supervisor"
+                        state.availableRoles.size == 2 -> "Create a Manager or Supervisor for your organization"
+                        else -> "Create a team member for your organization"
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -124,26 +128,52 @@ fun CreateTeamMemberScreen(
                 fontWeight = FontWeight.Medium
             )
 
-            // Dynamic role selection based on available roles
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                state.availableRoles.forEach { role ->
-                    val (title, emoji, description) = when (role) {
-                        TeamMemberRole.GENERAL_MANAGER -> Triple("General Manager", "👨‍💼", "Full operational & financial access")
-                        TeamMemberRole.MANAGER -> Triple("Manager", "👔", "Can manage drivers and trips")
-                        TeamMemberRole.SUPERVISOR -> Triple("Supervisor", "👷", "Can view and track operations")
+            // Dynamic role selection layout based on number of available roles
+            if (state.availableRoles.size >= 3) {
+                // Vertical layout for 3 or more roles
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    state.availableRoles.forEach { role ->
+                        val (title, emoji, description) = when (role) {
+                            TeamMemberRole.GENERAL_MANAGER -> Triple("General Manager", "👨‍💼", "Full operational & financial access")
+                            TeamMemberRole.MANAGER -> Triple("Manager", "👔", "Can manage drivers and trips")
+                            TeamMemberRole.SUPERVISOR -> Triple("Supervisor", "👷", "Can view and track operations")
+                        }
+                        RoleSelectionCard(
+                            title = title,
+                            emoji = emoji,
+                            description = description,
+                            isSelected = state.selectedRole == role,
+                            onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectRole(role)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.isLoading
+                        )
                     }
-                    RoleSelectionCard(
-                        title = title,
-                        emoji = emoji,
-                        description = description,
-                        isSelected = state.selectedRole == role,
-                        onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectRole(role)) },
-                        modifier = Modifier.weight(1f),
-                        enabled = !state.isLoading
-                    )
+                }
+            } else {
+                // Horizontal layout for 2 roles
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    state.availableRoles.forEach { role ->
+                        val (title, emoji, description) = when (role) {
+                            TeamMemberRole.GENERAL_MANAGER -> Triple("General Manager", "👨‍💼", "Full operational & financial access")
+                            TeamMemberRole.MANAGER -> Triple("Manager", "👔", "Can manage drivers and trips")
+                            TeamMemberRole.SUPERVISOR -> Triple("Supervisor", "👷", "Can view and track operations")
+                        }
+                        RoleSelectionCard(
+                            title = title,
+                            emoji = emoji,
+                            description = description,
+                            isSelected = state.selectedRole == role,
+                            onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectRole(role)) },
+                            modifier = Modifier.weight(1f),
+                            enabled = !state.isLoading
+                        )
+                    }
                 }
             }
 
