@@ -114,7 +114,9 @@ fun VehicleProfitLossScreen(
                 onStartDateChange = { viewModel.sendIntent(Intent.UpdateStartDate(it)) },
                 onEndDateChange = { viewModel.sendIntent(Intent.UpdateEndDate(it)) },
                 onGenerateReport = { viewModel.sendIntent(Intent.GenerateReport) },
-                onQuickReport = { viewModel.sendIntent(Intent.QuickReportFromRecent(it)) }
+                onQuickReport = { viewModel.sendIntent(Intent.QuickReportFromRecent(it)) },
+                onSortChange = { viewModel.sendIntent(Intent.UpdateSortOption(it)) },
+                onFilterChange = { viewModel.sendIntent(Intent.UpdatePLStatusFilter(it)) }
             )
 
             // Loading overlay
@@ -177,7 +179,9 @@ private fun VehiclePLContent(
     onStartDateChange: (String) -> Unit,
     onEndDateChange: (String) -> Unit,
     onGenerateReport: () -> Unit,
-    onQuickReport: (RecentReport) -> Unit
+    onQuickReport: (RecentReport) -> Unit,
+    onSortChange: (SortOption) -> Unit,
+    onFilterChange: (PLStatusFilter) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -282,8 +286,8 @@ private fun VehiclePLContent(
                     sortOption = state.sortOption,
                     plStatusFilter = state.plStatusFilter,
                     resultCount = state.sortedFilteredResults.size,
-                    onSortChange = { /* TODO: Wire up intent */ },
-                    onFilterChange = { /* TODO: Wire up intent */ }
+                    onSortChange = onSortChange,
+                    onFilterChange = onFilterChange
                 )
             }
 
