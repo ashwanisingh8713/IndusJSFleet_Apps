@@ -248,6 +248,7 @@ class TeamListViewModel(
             .filter { member ->
                 when (filter) {
                     TeamListContract.FilterType.ALL -> true
+                    TeamListContract.FilterType.GENERAL_MANAGERS -> member.role == TeamMemberRole.GENERAL_MANAGER
                     TeamListContract.FilterType.MANAGERS -> member.role == TeamMemberRole.MANAGER
                     TeamListContract.FilterType.SUPERVISORS -> member.role == TeamMemberRole.SUPERVISOR
                 }

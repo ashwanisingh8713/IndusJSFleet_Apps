@@ -125,6 +125,7 @@ fun TeamListScreen(
             ) {
                 // Enhanced Stats Section
                 TeamStatsSection(
+                    generalManagersCount = state.generalManagersCount,
                     managersCount = state.managersCount,
                     supervisorsCount = state.supervisorsCount,
                     totalCount = state.teamMembers.size
@@ -219,6 +220,7 @@ fun TeamListScreen(
  */
 @Composable
 private fun TeamStatsSection(
+    generalManagersCount: Int,
     managersCount: Int,
     supervisorsCount: Int,
     totalCount: Int
@@ -236,9 +238,24 @@ private fun TeamStatsSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
+            StatItem(
+                icon = "🎯",
+                count = generalManagersCount,
+                label = "GM",
+                color = MaterialTheme.colorScheme.tertiary
+            )
+
+            // Divider
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(50.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+
             StatItem(
                 icon = "👔",
                 count = managersCount,
@@ -250,7 +267,7 @@ private fun TeamStatsSection(
             Box(
                 modifier = Modifier
                     .width(1.dp)
-                    .height(60.dp)
+                    .height(50.dp)
                     .background(MaterialTheme.colorScheme.outlineVariant)
             )
 
@@ -265,7 +282,7 @@ private fun TeamStatsSection(
             Box(
                 modifier = Modifier
                     .width(1.dp)
-                    .height(60.dp)
+                    .height(50.dp)
                     .background(MaterialTheme.colorScheme.outlineVariant)
             )
 
@@ -273,7 +290,7 @@ private fun TeamStatsSection(
                 icon = "👥",
                 count = totalCount,
                 label = "Total",
-                color = MaterialTheme.colorScheme.tertiary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -330,6 +347,7 @@ private fun EnhancedFilterTabs(
                     Text(
                         text = when (filter) {
                             TeamListContract.FilterType.ALL -> "All"
+                            TeamListContract.FilterType.GENERAL_MANAGERS -> "GM"
                             TeamListContract.FilterType.MANAGERS -> "Managers"
                             TeamListContract.FilterType.SUPERVISORS -> "Supervisors"
                         },
@@ -340,6 +358,7 @@ private fun EnhancedFilterTabs(
                     Text(
                         text = when (filter) {
                             TeamListContract.FilterType.ALL -> "👥"
+                            TeamListContract.FilterType.GENERAL_MANAGERS -> "🎯"
                             TeamListContract.FilterType.MANAGERS -> "👔"
                             TeamListContract.FilterType.SUPERVISORS -> "👷"
                         },

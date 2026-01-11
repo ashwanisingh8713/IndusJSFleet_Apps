@@ -16,6 +16,7 @@ object TeamListContract {
      */
     enum class FilterType {
         ALL,
+        GENERAL_MANAGERS,
         MANAGERS,
         SUPERVISORS
     }
@@ -39,6 +40,7 @@ object TeamListContract {
         val isResettingPassword: String? = null,  // Member ID being reset
         val showResetPasswordDialogForMemberId: String? = null
     ) : UiState {
+        val generalManagersCount: Int get() = teamMembers.count { it.role == TeamMemberRole.GENERAL_MANAGER }
         val managersCount: Int get() = teamMembers.count { it.role == TeamMemberRole.MANAGER }
         val supervisorsCount: Int get() = teamMembers.count { it.role == TeamMemberRole.SUPERVISOR }
 
