@@ -27,11 +27,22 @@ class VehiclePLViewModel(
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
             is Intent.LoadVehicles -> loadVehicles()
-            is Intent.SelectVehicle -> updateState { copy(selectedVehicleId = intent.vehicleId) }
+            is Intent.SelectVehicle -> updateState {
+                copy(
+                    selectedVehicleId = intent.vehicleId,
+                    showVehicleDropdown = false,
+                    vehicleSearchQuery = ""
+                )
+            }
             is Intent.ToggleVehicle -> toggleVehicle(intent.vehicleId)
             is Intent.SelectAllVehicles -> updateState { copy(selectedVehicleIds = vehicles.map { it.id }.toSet()) }
             is Intent.ClearVehicles -> updateState { copy(selectedVehicleIds = emptySet()) }
-            is Intent.UpdatePeriod -> updateState { copy(period = intent.period) }
+            is Intent.UpdatePeriod -> updateState {
+                copy(
+                    period = intent.period,
+                    useCustomDateRange = intent.period == "custom"
+                )
+            }
             is Intent.UpdateStartDate -> updateState { copy(startDate = intent.date) }
             is Intent.UpdateEndDate -> updateState { copy(endDate = intent.date) }
             is Intent.ToggleMultiMode -> updateState { copy(isMultiMode = !isMultiMode, result = null, multiResults = emptyList()) }
@@ -39,6 +50,20 @@ class VehiclePLViewModel(
             is Intent.Refresh -> {
                 loadVehicles()
                 generateReport()
+            }
+            // Search intents
+            is Intent.UpdateVehicleSearch -> updateState {
+                copy(
+                    vehicleSearchQuery = intent.query,
+                    showVehicleDropdown = intent.query.isNotBlank()
+                )
+            }
+            is Intent.ToggleVehicleDropdown -> updateState { copy(showVehicleDropdown = !showVehicleDropdown) }
+            is Intent.ClearVehicleSearch -> updateState {
+                copy(
+                    vehicleSearchQuery = "",
+                    showVehicleDropdown = false
+                )
             }
         }
     }

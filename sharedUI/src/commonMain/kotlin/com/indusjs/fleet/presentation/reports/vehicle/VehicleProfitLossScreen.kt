@@ -6,8 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,12 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.ui.ErrorContent
-import com.indusjs.fleet.core.ui.FleetCard
-import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.ui.FleetDateFieldCompact
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
 import com.indusjs.fleet.domain.entity.reports.VehicleProfitLoss
@@ -33,7 +32,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * Vehicle Profit/Loss Screen - Enhanced UI
+ * Vehicle Profit/Loss Screen - Enhanced UI with searchable dropdown for scalability
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -154,21 +153,32 @@ private fun VehiclePLContent(
             HeaderCard()
         }
 
-        // Vehicle Selection Card
+        // Searchable Vehicle Selection Card
         item {
-            VehicleSelectionCard(
-                vehicles = state.vehicles,
-                selectedVehicleId = state.selectedVehicleId,
+            SearchableVehicleCard(
+                vehicles = state.filteredVehicles,
+                allVehiclesCount = state.vehicles.size,
+                selectedVehicle = state.selectedVehicle,
+                searchQuery = state.vehicleSearchQuery,
+                showDropdown = state.showVehicleDropdown,
                 isLoading = state.isLoadingVehicles,
-                onVehicleSelected = { viewModel.sendIntent(Intent.SelectVehicle(it)) }
+                onSearchChange = { viewModel.sendIntent(Intent.UpdateVehicleSearch(it)) },
+                onVehicleSelected = { viewModel.sendIntent(Intent.SelectVehicle(it)) },
+                onToggleDropdown = { viewModel.sendIntent(Intent.ToggleVehicleDropdown) },
+                onClearSearch = { viewModel.sendIntent(Intent.ClearVehicleSearch) }
             )
         }
 
-        // Period Selection
+        // Period Selection with Date Range
         item {
-            PeriodSelectionCard(
+            PeriodAndDateRangeCard(
                 selectedPeriod = state.period,
-                onPeriodChange = { viewModel.sendIntent(Intent.UpdatePeriod(it)) }
+                useCustomDateRange = state.useCustomDateRange,
+                startDate = state.startDate,
+                endDate = state.endDate,
+                onPeriodChange = { viewModel.sendIntent(Intent.UpdatePeriod(it)) },
+                onStartDateChange = { viewModel.sendIntent(Intent.UpdateStartDate(it)) },
+                onEndDateChange = { viewModel.sendIntent(Intent.UpdateEndDate(it)) }
             )
         }
 
@@ -202,7 +212,7 @@ private fun VehiclePLContent(
         // Error message
         if (state.error != null && state.result == null) {
             item {
-                ErrorCard(error = state.error!!)
+                ErrorCard(error = state.error)
             }
         }
 
@@ -274,7 +284,7 @@ private fun HeaderCard() {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Select a vehicle to view profit/loss breakdown",
+                    text = "Search and select a vehicle to view profit/loss",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -284,11 +294,17 @@ private fun HeaderCard() {
 }
 
 @Composable
-private fun VehicleSelectionCard(
+private fun SearchableVehicleCard(
     vehicles: List<Vehicle>,
-    selectedVehicleId: String?,
+    allVehiclesCount: Int,
+    selectedVehicle: Vehicle?,
+    searchQuery: String,
+    showDropdown: Boolean,
     isLoading: Boolean,
-    onVehicleSelected: (String) -> Unit
+    onSearchChange: (String) -> Unit,
+    onVehicleSelected: (String) -> Unit,
+    onToggleDropdown: () -> Unit,
+    onClearSearch: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -308,82 +324,158 @@ private fun VehicleSelectionCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
+                Spacer(modifier = Modifier.weight(1f))
                 if (isLoading) {
-                    Spacer(modifier = Modifier.width(8.dp))
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp
                     )
+                } else {
+                    Text(
+                        text = "$allVehiclesCount vehicles",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            if (vehicles.isEmpty() && !isLoading) {
-                Text(
-                    text = "No vehicles found",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(16.dp)
-                )
-            } else {
-                vehicles.forEach { vehicle ->
-                    val isSelected = vehicle.id == selectedVehicleId
-                    Surface(
+            // Selected vehicle display or search field
+            if (selectedVehicle != null && searchQuery.isBlank()) {
+                // Show selected vehicle
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onToggleDropdown() },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                ) {
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { onVehicleSelected(vehicle.id) },
-                        color = if (isSelected)
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                        else
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        shape = RoundedCornerShape(12.dp)
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = isSelected,
-                                onClick = { onVehicleSelected(vehicle.id) },
-                                colors = RadioButtonDefaults.colors(
-                                    selectedColor = MaterialTheme.colorScheme.primary
-                                )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = selectedVehicle.registrationNumber,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold
                             )
-                            Column(modifier = Modifier.padding(start = 8.dp)) {
-                                Text(
-                                    text = vehicle.registrationNumber,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                                )
-                                Text(
-                                    text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim().ifEmpty { "Vehicle" },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            Text(
+                                text = "${selectedVehicle.make ?: ""} ${selectedVehicle.model ?: ""}".trim().ifEmpty { "Vehicle" },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text("✏️", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            } else {
+                // Search input
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchChange,
+                    label = { Text("Search by registration, make, model...") },
+                    placeholder = { Text("Type to search...") },
+                    leadingIcon = { Text("🔍", modifier = Modifier.padding(start = 8.dp)) },
+                    trailingIcon = {
+                        if (searchQuery.isNotBlank()) {
+                            IconButton(onClick = onClearSearch) {
+                                Text("✖️")
                             }
                         }
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+
+            // Dropdown with filtered results
+            if (showDropdown && vehicles.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .heightIn(max = 250.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        vehicles.take(50).forEachIndexed { index, vehicle ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onVehicleSelected(vehicle.id) },
+                                color = Color.Transparent
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = vehicle.registrationNumber,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim().ifEmpty { "Vehicle" },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                            if (index < vehicles.size - 1 && index < 49) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            }
+                        }
+                        if (vehicles.size > 50) {
+                            Text(
+                                text = "... and ${vehicles.size - 50} more. Refine your search.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
+            } else if (showDropdown && searchQuery.isNotBlank() && vehicles.isEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "No vehicles found matching \"$searchQuery\"",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(8.dp)
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PeriodSelectionCard(
+private fun PeriodAndDateRangeCard(
     selectedPeriod: String,
-    onPeriodChange: (String) -> Unit
+    useCustomDateRange: Boolean,
+    startDate: String,
+    endDate: String,
+    onPeriodChange: (String) -> Unit,
+    onStartDateChange: (String) -> Unit,
+    onEndDateChange: (String) -> Unit
 ) {
     val periods = listOf(
         "today" to "Today",
-        "weekly" to "This Week",
-        "monthly" to "This Month",
-        "yearly" to "This Year"
+        "weekly" to "Week",
+        "monthly" to "Month",
+        "yearly" to "Year",
+        "custom" to "Custom"
     )
 
     Card(
@@ -403,11 +495,12 @@ private fun PeriodSelectionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 periods.forEach { (value, label) ->
                     val isSelected = selectedPeriod == value
@@ -421,11 +514,42 @@ private fun PeriodSelectionCard(
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         },
-                        modifier = Modifier.weight(1f),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
                         )
+                    )
+                }
+            }
+
+            // Custom date range inputs
+            if (useCustomDateRange) {
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "📆 Custom Date Range",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    FleetDateFieldCompact(
+                        rawValue = startDate,
+                        onRawValueChange = onStartDateChange,
+                        label = "From Date",
+                        modifier = Modifier.weight(1f)
+                    )
+                    FleetDateFieldCompact(
+                        rawValue = endDate,
+                        onRawValueChange = onEndDateChange,
+                        label = "To Date",
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }

@@ -342,7 +342,7 @@ class DefaultViewModelProvider : ViewModelProvider {
 
     override fun vehiclePLViewModel() = VehiclePLViewModel(reportsRepository, vehicleRepository)
 
-    override fun tripPLViewModel() = TripPLViewModel(reportsRepository, vehicleRepository)
+    override fun tripPLViewModel() = TripPLViewModel(reportsRepository, tripRepository)
 
     override fun costAnalysisViewModel() = CostAnalysisViewModel(reportsRepository)
 

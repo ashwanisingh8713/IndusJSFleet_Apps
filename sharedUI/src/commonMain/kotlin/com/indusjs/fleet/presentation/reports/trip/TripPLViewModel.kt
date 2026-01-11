@@ -4,7 +4,7 @@ import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.data.model.reports.MultiTripPLRequest
 import com.indusjs.fleet.domain.repository.reports.ReportsRepository
-import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
+import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.presentation.reports.trip.TripPLContract.Effect
 import com.indusjs.fleet.presentation.reports.trip.TripPLContract.Intent
 import com.indusjs.fleet.presentation.reports.trip.TripPLContract.State
@@ -13,44 +13,78 @@ import kotlinx.coroutines.flow.collectLatest
 
 /**
  * ViewModel for Trip P&L Screen
+ * Trip-centric: Select date range -> Load trips -> Select trips -> Generate P&L
  */
 @Inject
 class TripPLViewModel(
     private val reportsRepository: ReportsRepository,
-    private val vehicleRepository: VehicleRepository
+    private val tripRepository: TripRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
-
-    init {
-        sendIntent(Intent.LoadVehicles)
-    }
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
-            is Intent.LoadVehicles -> loadVehicles()
-            is Intent.SelectVehicle -> updateState { copy(selectedVehicleId = intent.vehicleId) }
             is Intent.UpdateStartDate -> updateState { copy(startDate = intent.date) }
             is Intent.UpdateEndDate -> updateState { copy(endDate = intent.date) }
+            is Intent.LoadTrips -> loadTrips()
+            is Intent.ToggleTrip -> toggleTrip(intent.tripId)
+            is Intent.SelectAllTrips -> updateState {
+                copy(selectedTripIds = filteredTrips.map { it.id }.toSet())
+            }
+            is Intent.ClearSelection -> updateState { copy(selectedTripIds = emptySet()) }
+            is Intent.UpdateTripSearch -> updateState { copy(tripSearchQuery = intent.query) }
             is Intent.GenerateReport -> generateReport()
             is Intent.Refresh -> {
-                loadVehicles()
-                generateReport()
+                if (state.value.tripsLoaded) {
+                    loadTrips()
+                }
             }
         }
     }
 
-    private suspend fun loadVehicles() {
-        updateState { copy(isLoadingVehicles = true) }
+    private fun toggleTrip(tripId: String) {
+        updateState {
+            val newSelection = if (selectedTripIds.contains(tripId)) {
+                selectedTripIds - tripId
+            } else {
+                selectedTripIds + tripId
+            }
+            copy(selectedTripIds = newSelection)
+        }
+    }
 
-        vehicleRepository.getVehicles().collectLatest { result ->
+    private suspend fun loadTrips() {
+        val currentState = state.value
+
+        if (currentState.startDate.isBlank() || currentState.endDate.isBlank()) {
+            sendEffect(Effect.ShowSnackbar("Please select both start and end dates"))
+            return
+        }
+
+        updateState { copy(isLoadingTrips = true, error = null, trips = emptyList(), selectedTripIds = emptySet(), tripsLoaded = false) }
+
+        tripRepository.getTrips().collectLatest { result ->
             when (result) {
                 is Result.Success<*> -> {
                     @Suppress("UNCHECKED_CAST")
-                    val vehicles = result.data as? List<com.indusjs.fleet.domain.entity.vehicle.Vehicle> ?: emptyList()
-                    updateState { copy(isLoadingVehicles = false, vehicles = vehicles) }
+                    val allTrips = result.data as? List<com.indusjs.fleet.domain.entity.trip.Trip> ?: emptyList()
+
+                    // For now, include all trips
+                    // TODO: Add server-side date filtering when API supports it
+                    updateState {
+                        copy(
+                            isLoadingTrips = false,
+                            trips = allTrips,
+                            tripsLoaded = true
+                        )
+                    }
+
+                    if (allTrips.isEmpty()) {
+                        sendEffect(Effect.ShowSnackbar("No trips found"))
+                    }
                 }
                 is Result.Error -> {
-                    updateState { copy(isLoadingVehicles = false) }
-                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load vehicles"))
+                    updateState { copy(isLoadingTrips = false, tripsLoaded = false) }
+                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load trips"))
                 }
                 is Result.Loading -> { /* Already handled */ }
             }
@@ -60,21 +94,21 @@ class TripPLViewModel(
     private suspend fun generateReport() {
         val currentState = state.value
 
-        if (currentState.selectedVehicleId == null) {
-            sendEffect(Effect.ShowSnackbar("Please select a vehicle"))
-            return
-        }
-
-        val vehicleId = currentState.selectedVehicleId.toIntOrNull()
-        if (vehicleId == null) {
-            sendEffect(Effect.ShowSnackbar("Invalid vehicle ID"))
+        if (currentState.selectedTripIds.isEmpty()) {
+            sendEffect(Effect.ShowSnackbar("Please select at least one trip"))
             return
         }
 
         updateState { copy(isLoading = true, error = null) }
 
+        val tripIds = currentState.selectedTripIds.mapNotNull { it.toIntOrNull() }
+        if (tripIds.isEmpty()) {
+            updateState { copy(isLoading = false, error = "No valid trip IDs selected") }
+            return
+        }
+
         val request = MultiTripPLRequest(
-            vehicleId = vehicleId,
+            tripIds = tripIds,
             startDate = currentState.startDate.takeIf { it.isNotBlank() },
             endDate = currentState.endDate.takeIf { it.isNotBlank() }
         )
@@ -82,6 +116,9 @@ class TripPLViewModel(
         when (val result = reportsRepository.getMultiTripPL(request)) {
             is Result.Success -> {
                 updateState { copy(isLoading = false, results = result.data) }
+                if (result.data.isEmpty()) {
+                    sendEffect(Effect.ShowSnackbar("No P&L data available for selected trips"))
+                }
             }
             is Result.Error -> {
                 updateState { copy(isLoading = false, error = result.message ?: "Failed to generate report") }
