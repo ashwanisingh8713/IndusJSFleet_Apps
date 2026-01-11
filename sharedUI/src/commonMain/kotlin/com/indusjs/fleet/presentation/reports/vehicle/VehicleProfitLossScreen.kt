@@ -2,8 +2,11 @@ package com.indusjs.fleet.presentation.reports.vehicle
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -19,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -183,59 +187,62 @@ private fun VehiclePLContent(
     onSortChange: (SortOption) -> Unit,
     onFilterChange: (PLStatusFilter) -> Unit
 ) {
+    // Calculate current step
+    val currentStep = when {
+        state.result != null || state.multiResults.isNotEmpty() -> 3
+        state.selectedVehicleId != null -> 2
+        else -> 1
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Step Progress Indicator
+        item {
+            StepProgressIndicator(
+                currentStep = currentStep,
+                totalSteps = 3
+            )
+        }
+
         // Step 1: Vehicle Selection Card
         item {
-            VehicleSelectionCard(
+            EnhancedVehicleSelectionCard(
+                stepNumber = 1,
                 selectedVehicle = state.selectedVehicle,
                 vehicleCount = state.vehicles.size,
                 isLoading = state.isLoadingVehicles,
+                isCompleted = state.selectedVehicleId != null,
                 onClick = onShowVehicleSelector
             )
         }
 
-        // Step 2: Period Selection
-        item {
-            PeriodSelectionSection(
-                selectedPeriod = state.period,
-                useCustomDateRange = state.useCustomDateRange,
-                startDate = state.startDate,
-                endDate = state.endDate,
-                onPeriodChange = onPeriodChange,
-                onStartDateChange = onStartDateChange,
-                onEndDateChange = onEndDateChange
-            )
+        // Step 2: Period Selection (show after vehicle is selected)
+        if (state.selectedVehicleId != null) {
+            item {
+                EnhancedPeriodSelectionCard(
+                    stepNumber = 2,
+                    selectedPeriod = state.period,
+                    periodDisplayText = state.periodDisplayText,
+                    useCustomDateRange = state.useCustomDateRange,
+                    startDate = state.startDate,
+                    endDate = state.endDate,
+                    onPeriodChange = onPeriodChange,
+                    onStartDateChange = onStartDateChange,
+                    onEndDateChange = onEndDateChange
+                )
+            }
         }
 
-        // Generate Report Button
-        item {
-            Button(
-                onClick = onGenerateReport,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = state.canGenerateReport,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+        // Generate Report Button (only when no result yet)
+        if (state.selectedVehicleId != null && state.result == null) {
+            item {
+                EnhancedGenerateButton(
+                    enabled = state.canGenerateReport,
+                    onClick = onGenerateReport
                 )
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("📊", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        text = if (state.canGenerateReport) "Generate Report" else "Select a Vehicle",
-                        fontWeight = FontWeight.SemiBold,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
             }
         }
 
@@ -246,21 +253,20 @@ private fun VehiclePLContent(
             }
         }
 
-        // Results Section
+        // Results Section - Enhanced
         state.result?.let { result ->
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                ResultsHeader()
-            }
-            item {
-                VehiclePLResultCard(result)
+                EnhancedResultCard(
+                    result = result,
+                    onNewReport = onShowVehicleSelector
+                )
             }
         }
 
-        // Recent Reports Section (when no result is shown)
-        if (state.recentReports.isNotEmpty() && state.result == null) {
+        // Quick Access / Recent Reports Section (when no result is shown)
+        if (state.recentReports.isNotEmpty() && state.result == null && state.selectedVehicleId == null) {
             item {
-                RecentReportsSection(
+                QuickAccessSection(
                     recentReports = state.recentReports,
                     onQuickReport = onQuickReport
                 )
@@ -303,7 +309,773 @@ private fun VehiclePLContent(
 }
 
 // ============================================================================
-// Vehicle Selection Card
+// Step Progress Indicator - Shows wizard progress
+// ============================================================================
+
+@Composable
+private fun StepProgressIndicator(
+    currentStep: Int,
+    totalSteps: Int
+) {
+    val progress by animateFloatAsState(
+        targetValue = currentStep.toFloat() / totalSteps.toFloat(),
+        label = "progress"
+    )
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Step $currentStep of $totalSteps",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = when (currentStep) {
+                    1 -> "Select Vehicle"
+                    2 -> "Choose Period"
+                    3 -> "View Results"
+                    else -> ""
+                },
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp)),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    }
+}
+
+// ============================================================================
+// Enhanced Vehicle Selection Card with Step Number
+// ============================================================================
+
+@Composable
+private fun EnhancedVehicleSelectionCard(
+    stepNumber: Int,
+    selectedVehicle: Vehicle?,
+    vehicleCount: Int,
+    isLoading: Boolean,
+    isCompleted: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isCompleted)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            else MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isCompleted) 0.dp else 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Header with step number
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Step badge
+                Surface(
+                    modifier = Modifier.size(32.dp),
+                    shape = CircleShape,
+                    color = if (isCompleted) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (isCompleted) {
+                            Text("✓",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            Text("$stepNumber",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Select Vehicle",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (selectedVehicle != null) {
+                        Text(
+                            text = selectedVehicle.registrationNumber,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                }
+            }
+
+            // Vehicle Selection Button
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onClick),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        modifier = Modifier.size(48.dp),
+                        shape = CircleShape,
+                        color = if (selectedVehicle != null)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        else MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (selectedVehicle != null) "🚛" else "➕",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        if (selectedVehicle != null) {
+                            Text(
+                                text = selectedVehicle.registrationNumber,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${selectedVehicle.make ?: ""} ${selectedVehicle.model ?: ""}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            selectedVehicle.assignedDriverName?.let { driver ->
+                                Text(
+                                    text = "👤 $driver",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = "Tap to select vehicle",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "$vehicleCount vehicles available",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_chevron_right),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// Enhanced Period Selection Card with Step Number
+// ============================================================================
+
+@Composable
+private fun EnhancedPeriodSelectionCard(
+    stepNumber: Int,
+    selectedPeriod: String,
+    periodDisplayText: String,
+    useCustomDateRange: Boolean,
+    startDate: String,
+    endDate: String,
+    onPeriodChange: (String) -> Unit,
+    onStartDateChange: (String) -> Unit,
+    onEndDateChange: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Header with step number
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Surface(
+                    modifier = Modifier.size(32.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("$stepNumber",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+
+                Column {
+                    Text(
+                        text = "Select Period",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = periodDisplayText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            // Period Chips - Equal width
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                VehiclePLContract.PERIOD_OPTIONS.forEach { (periodKey, periodLabel) ->
+                    val isSelected = selectedPeriod == periodKey
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { onPeriodChange(periodKey) },
+                        label = {
+                            Text(
+                                text = periodLabel,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
+            }
+
+            // Custom Date Range
+            AnimatedVisibility(
+                visible = useCustomDateRange,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    FleetDateFieldCompact(
+                        rawValue = startDate,
+                        onRawValueChange = onStartDateChange,
+                        label = "From",
+                        modifier = Modifier.weight(1f)
+                    )
+                    FleetDateFieldCompact(
+                        rawValue = endDate,
+                        onRawValueChange = onEndDateChange,
+                        label = "To",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// Enhanced Generate Button
+// ============================================================================
+
+@Composable
+private fun EnhancedGenerateButton(
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp),
+        enabled = enabled,
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("📊", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "Generate Report",
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
+    }
+}
+
+// ============================================================================
+// Enhanced Result Card with Expandable Cost Breakdown
+// ============================================================================
+
+@Composable
+private fun EnhancedResultCard(
+    result: VehicleProfitLoss,
+    onNewReport: () -> Unit
+) {
+    var showDetails by remember { mutableStateOf(false) }
+    val isProfit = result.netProfit >= 0
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header with vehicle info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        modifier = Modifier.size(48.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("🚛", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
+                    Column {
+                        Text(
+                            text = result.vehicleNumber ?: "Vehicle #${result.vehicleId}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${result.totalTrips} trips • ${result.startDate ?: ""} - ${result.endDate ?: ""}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Profit/Loss Badge
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isProfit) Color(0xFF10B981).copy(alpha = 0.15f)
+                    else Color(0xFFEF4444).copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = if (isProfit) "PROFIT" else "LOSS",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            // Main KPI - Net Profit/Loss with gradient
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = if (isProfit)
+                                listOf(Color(0xFF10B981).copy(alpha = 0.15f), Color(0xFF10B981).copy(alpha = 0.05f))
+                            else
+                                listOf(Color(0xFFEF4444).copy(alpha = 0.15f), Color(0xFFEF4444).copy(alpha = 0.05f))
+                        )
+                    )
+                    .padding(20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = if (isProfit) "Net Profit" else "Net Loss",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = formatCurrency(kotlin.math.abs(result.netProfit)),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Margin:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        LinearProgressIndicator(
+                            progress = { (result.profitMargin.toFloat() / 100f).coerceIn(0f, 1f) },
+                            modifier = Modifier
+                                .width(80.dp)
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444),
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        Text(
+                            text = formatPercentage(result.profitMargin),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
+                        )
+                    }
+                }
+            }
+
+            // Revenue & Expenses side by side
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Revenue Card
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF10B981).copy(alpha = 0.1f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("📈", style = MaterialTheme.typography.titleLarge)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Revenue",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = formatCurrency(result.totalRevenue),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF10B981)
+                        )
+                    }
+                }
+
+                // Expenses Card
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF59E0B).copy(alpha = 0.1f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("📉", style = MaterialTheme.typography.titleLarge)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Expenses",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = formatCurrency(result.totalExpenses),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFF59E0B)
+                        )
+                    }
+                }
+            }
+
+            // Expandable Details Toggle
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDetails = !showDetails },
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (showDetails) "Hide Cost Breakdown" else "Show Cost Breakdown",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = if (showDetails) "▲" else "▼",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+
+            // Cost Breakdown (when expanded)
+            AnimatedVisibility(
+                visible = showDetails,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier.padding(top = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (result.costBreakdown.isNotEmpty()) {
+                        result.costBreakdown.forEach { item ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = item.costType.replaceFirstChar { it.uppercase() }.replace("_", " "),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    item.percentage?.let { pct ->
+                                        Text(
+                                            text = "${pct.toInt()}%",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Text(
+                                        text = formatCurrency(item.amount),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "No cost breakdown available",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onNewReport,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("🔄 New Report", style = MaterialTheme.typography.labelMedium)
+                }
+
+                Button(
+                    onClick = { /* TODO: Export/Share */ },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("📤 Share", style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// Quick Access Section for Recent Reports
+// ============================================================================
+
+@Composable
+private fun QuickAccessSection(
+    recentReports: List<RecentReport>,
+    onQuickReport: (RecentReport) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "⚡ Quick Access",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Recent Reports",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(recentReports, key = { "${it.vehicleId}_${it.period}_${it.generatedAt}" }) { report ->
+                QuickReportCard(
+                    report = report,
+                    onClick = { onQuickReport(report) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickReportCard(
+    report: RecentReport,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .width(160.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (report.isProfit)
+                Color(0xFF10B981).copy(alpha = 0.1f)
+            else Color(0xFFEF4444).copy(alpha = 0.1f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text("🚛", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = report.vehicleNumber,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Text(
+                text = report.vehicleMakeModel,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = formatCurrency(kotlin.math.abs(report.profitLoss)),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (report.isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = if (report.isProfit) Color(0xFF10B981).copy(alpha = 0.2f)
+                            else Color(0xFFEF4444).copy(alpha = 0.2f)
+                ) {
+                    Text(
+                        text = if (report.isProfit) "Profit" else "Loss",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = if (report.isProfit) Color(0xFF10B981) else Color(0xFFEF4444),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+                Text(
+                    text = report.period.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+// ============================================================================
+// Vehicle Selection Card (Legacy - kept for compatibility)
 // ============================================================================
 
 @Composable
