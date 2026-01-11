@@ -187,93 +187,112 @@ private fun VehiclePLContent(
     onSortChange: (SortOption) -> Unit,
     onFilterChange: (PLStatusFilter) -> Unit
 ) {
-    // Calculate current step
-    val currentStep = when {
-        state.result != null || state.multiResults.isNotEmpty() -> 3
-        state.selectedVehicleId != null -> 2
-        else -> 1
-    }
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Step Progress Indicator
-        item {
-            StepProgressIndicator(
-                currentStep = currentStep,
-                totalSteps = 3
-            )
-        }
-
-        // Step 1: Vehicle Selection Card
-        item {
-            EnhancedVehicleSelectionCard(
-                stepNumber = 1,
-                selectedVehicle = state.selectedVehicle,
-                vehicleCount = state.vehicles.size,
-                isLoading = state.isLoadingVehicles,
-                isCompleted = state.selectedVehicleId != null,
-                onClick = onShowVehicleSelector
-            )
-        }
-
-        // Step 2: Period Selection (show after vehicle is selected)
-        if (state.selectedVehicleId != null) {
+        // Results View (when result is available)
+        if (state.result != null) {
             item {
-                EnhancedPeriodSelectionCard(
-                    stepNumber = 2,
-                    selectedPeriod = state.period,
-                    periodDisplayText = state.periodDisplayText,
-                    useCustomDateRange = state.useCustomDateRange,
-                    startDate = state.startDate,
-                    endDate = state.endDate,
-                    onPeriodChange = onPeriodChange,
-                    onStartDateChange = onStartDateChange,
-                    onEndDateChange = onEndDateChange
-                )
-            }
-        }
-
-        // Generate Report Button (only when no result yet)
-        if (state.selectedVehicleId != null && state.result == null) {
-            item {
-                EnhancedGenerateButton(
-                    enabled = state.canGenerateReport,
-                    onClick = onGenerateReport
-                )
-            }
-        }
-
-        // Error message
-        if (state.error != null && state.result == null) {
-            item {
-                ErrorCard(error = state.error)
-            }
-        }
-
-        // Results Section - Enhanced
-        state.result?.let { result ->
-            item {
-                EnhancedResultCard(
-                    result = result,
+                CleanResultView(
+                    result = state.result!!,
                     onNewReport = onShowVehicleSelector
                 )
             }
-        }
+        } else {
+            // Selection Flow
 
-        // Quick Access / Recent Reports Section (when no result is shown)
-        if (state.recentReports.isNotEmpty() && state.result == null && state.selectedVehicleId == null) {
+            // Vehicle Selection
             item {
-                QuickAccessSection(
-                    recentReports = state.recentReports,
-                    onQuickReport = onQuickReport
+                CleanVehicleSelector(
+                    selectedVehicle = state.selectedVehicle,
+                    vehicleCount = state.vehicles.size,
+                    isLoading = state.isLoadingVehicles,
+                    onClick = onShowVehicleSelector
                 )
+            }
+
+            // Period Selection (only when vehicle is selected)
+            if (state.selectedVehicleId != null) {
+                item {
+                    CleanPeriodSelector(
+                        selectedPeriod = state.period,
+                        useCustomDateRange = state.useCustomDateRange,
+                        startDate = state.startDate,
+                        endDate = state.endDate,
+                        onPeriodChange = onPeriodChange,
+                        onStartDateChange = onStartDateChange,
+                        onEndDateChange = onEndDateChange
+                    )
+                }
+
+                // Generate Button
+                item {
+                    Button(
+                        onClick = onGenerateReport,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        enabled = state.canGenerateReport,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "Generate Report",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+
+            // Error
+            if (state.error != null) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = state.error ?: "Something went wrong",
+                            modifier = Modifier.padding(16.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+
+            // Recent Reports (when no vehicle selected)
+            if (state.recentReports.isNotEmpty() && state.selectedVehicleId == null) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Recent Reports",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                item {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(state.recentReports) { report ->
+                            RecentReportChip(
+                                report = report,
+                                onClick = { onQuickReport(report) }
+                            )
+                        }
+                    }
+                }
             }
         }
 
-        // Multi-Vehicle Summary Section (only shown when multi-results are available)
+        // Multi-Vehicle Results (if any)
         if (state.multiResults.isNotEmpty()) {
             item {
                 MultiVehicleSummaryCard(
@@ -286,7 +305,6 @@ private fun VehiclePLContent(
                 )
             }
 
-            // Sorting and Filtering Section (for multi results)
             item {
                 SortingFilterSection(
                     sortOption = state.sortOption,
@@ -297,7 +315,6 @@ private fun VehiclePLContent(
                 )
             }
 
-            // Multi-Vehicle Results List
             items(state.sortedFilteredResults, key = { it.vehicleId }) { result ->
                 VehiclePLResultCard(result)
             }
