@@ -149,12 +149,11 @@ class ReportsRepositoryImpl(
 
     override suspend fun getPLSummary(
         startDate: String?,
-        endDate: String?,
-        period: String?
+        endDate: String?
     ): Result<PLSummary> {
         return try {
             val token = requireAuthToken()
-            val dto = remoteDataSource.getPLSummary(token, startDate, endDate, period)
+            val dto = remoteDataSource.getPLSummary(token, startDate, endDate)
             if (dto != null) {
                 Result.Success(dto.toDomain())
             } else {
