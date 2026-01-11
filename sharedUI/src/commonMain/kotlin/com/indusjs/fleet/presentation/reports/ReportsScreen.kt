@@ -353,161 +353,239 @@ private fun PLSummaryCards(summary: PLSummary) {
         animationPlayed = true
     }
 
-    // Main Hero Card - Using Box with rounded corners and subtle background
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        // Header Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-                // Header with period info
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(text = "📊", style = MaterialTheme.typography.titleLarge)
-                        Column {
-                            Text(
-                                text = "Financial Performance",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "${summary.startDate ?: ""} - ${summary.endDate ?: "Current"}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(text = "📊", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = "Financial Performance",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-                    // Status Badge
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (isProfit) ProfitGreen else LossRed
-                    ) {
-                        Text(
-                            text = if (isProfit) "PROFIT" else "LOSS",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        )
-                    }
-                }
+            // Period info
+            Text(
+                text = "${summary.startDate ?: ""} - ${summary.endDate ?: "Current"}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
-                // Main Amount with Trend
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = if (isProfit) "Net Profit" else "Net Loss",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = formatCurrency(kotlin.math.abs(summary.grossProfit)),
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isProfit) ProfitGreen else LossRed
-                            )
-                            // Trend Arrow
-                            Text(
-                                text = if (isProfit) "▲" else "▼",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = if (isProfit) ProfitGreen else LossRed
-                            )
-                        }
-                    }
-                }
-
-                // Profit Margin Gauge
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+        // Main Profit/Loss Card
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    if (isProfit) ProfitGreen.copy(alpha = 0.1f)
+                    else LossRed.copy(alpha = 0.1f)
+                )
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Status Badge
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (isProfit) ProfitGreen else LossRed
                 ) {
                     Text(
-                        text = "Profit Margin",
+                        text = if (isProfit) "PROFIT" else "LOSS",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                // Main Amount
+                Text(
+                    text = formatCurrency(kotlin.math.abs(summary.grossProfit)),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isProfit) ProfitGreen else LossRed
+                )
+
+                // Margin with progress
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .height(12.dp)
-                            .clip(RoundedCornerShape(6.dp))
+                            .width(100.dp)
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(animatedMargin)
                                 .fillMaxHeight()
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        if (isProfit) listOf(ProfitGreen, ProfitGreenLight)
-                                        else listOf(LossRed, LossRedLight)
-                                    )
-                                )
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(if (isProfit) ProfitGreen else LossRed)
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${summary.profitMarginPercentage.toInt()}%",
+                        text = "${summary.profitMarginPercentage.toInt()}% margin",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        // Revenue & Expenses Cards Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Revenue Card
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .padding(12.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(text = "📈", style = MaterialTheme.typography.labelMedium)
+                        Text(
+                            text = "Revenue",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text(
+                        text = formatCurrency(summary.totalRevenue),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (isProfit) ProfitGreen else LossRed
+                        color = ProfitGreen
+                    )
+                }
+            }
+
+            // Expenses Card
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .padding(12.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(text = "💸", style = MaterialTheme.typography.labelMedium)
+                        Text(
+                            text = "Expenses",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text(
+                        text = formatCurrency(summary.totalExpenses),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = WarningAmber
+                    )
+                }
+            }
+        }
+
+        // Trips Summary
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${summary.completedTrips}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = InfoBlue
+                    )
+                    Text(
+                        text = "Trips",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.padding(vertical = 4.dp)
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(30.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                 )
 
-                // Revenue, Expenses, Pending Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    FinancialMetricItem(
-                        icon = "📈",
-                        label = "Revenue",
-                        value = formatCurrency(summary.totalRevenue),
-                        valueColor = ProfitGreen
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${summary.profitableTrips}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = ProfitGreen
                     )
-                    FinancialMetricItem(
-                        icon = "💸",
-                        label = "Expenses",
-                        value = formatCurrency(summary.totalExpenses),
-                        valueColor = WarningAmber
+                    Text(
+                        text = "Profitable",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    FinancialMetricItem(
-                        icon = "🚛",
-                        label = "Trips",
-                        value = "${summary.completedTrips}",
-                        valueColor = InfoBlue
+                }
+
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(30.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${summary.totalVehicles}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Vehicles",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         }
     }
+}
 
 @Composable
 private fun FinancialMetricItem(
