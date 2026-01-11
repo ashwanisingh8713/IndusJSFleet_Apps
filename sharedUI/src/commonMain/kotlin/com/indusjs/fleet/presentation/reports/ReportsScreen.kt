@@ -1076,77 +1076,75 @@ private fun TripSummaryCard(summary: PLSummary) {
 
 @Composable
 private fun TopPerformerCard(title: String, registrationNumber: String, profit: Double) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            ProfitGreen.copy(alpha = 0.15f),
-                            ProfitGreenLight.copy(alpha = 0.05f)
-                        )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        ProfitGreen.copy(alpha = 0.15f),
+                        ProfitGreenLight.copy(alpha = 0.05f)
                     )
                 )
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                // Trophy with golden background
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                listOf(Color(0xFFFFD700), Color(0xFFFFA500))
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Trophy with golden background
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(Color(0xFFFFD700), Color(0xFFFFA500))
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "🏆", style = MaterialTheme.typography.titleLarge)
-                    }
-                    Column {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = registrationNumber,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Text(text = "🏆", style = MaterialTheme.typography.titleMedium)
                 }
-                Column(horizontalAlignment = Alignment.End) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Profit",
+                        text = title,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "+${formatCurrency(profit)}",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = registrationNumber,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = ProfitGreen
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "Profit",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "+${formatCurrency(profit)}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = ProfitGreen
+                )
             }
         }
     }
