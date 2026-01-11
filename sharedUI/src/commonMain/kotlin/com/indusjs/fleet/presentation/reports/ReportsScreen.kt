@@ -340,11 +340,6 @@ private fun ErrorBanner(error: String, onRetry: () -> Unit) {
 @Composable
 private fun PLSummaryCards(summary: PLSummary) {
     val isProfit = summary.isProfitable
-    val gradientColors = if (isProfit) {
-        listOf(ProfitGreen.copy(alpha = 0.15f), ProfitGreenLight.copy(alpha = 0.05f))
-    } else {
-        listOf(LossRed.copy(alpha = 0.15f), LossRedLight.copy(alpha = 0.05f))
-    }
 
     // Animated progress for profit margin
     var animationPlayed by remember { mutableStateOf(false) }
@@ -358,22 +353,17 @@ private fun PLSummaryCards(summary: PLSummary) {
         animationPlayed = true
     }
 
-    // Main Hero Card
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    // Main Hero Card - Using Box with rounded corners and subtle background
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Brush.verticalGradient(gradientColors))
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
                 // Header with period info
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -518,7 +508,6 @@ private fun PLSummaryCards(summary: PLSummary) {
             }
         }
     }
-}
 
 @Composable
 private fun FinancialMetricItem(
@@ -1211,12 +1200,11 @@ private fun QuickInsightsSection(summary: PLSummary) {
         }
 
         // Key Metrics Row with better styling
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
         ) {
             Row(
                 modifier = Modifier
@@ -1293,7 +1281,7 @@ private fun EnhancedInsightCard(
             .animateContentSize(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box {
             Column(
@@ -1423,15 +1411,12 @@ private fun LossAlertsSection(
 
     var expanded by remember { mutableStateOf(true) }
 
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = LossRed.copy(alpha = 0.08f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(LossRed.copy(alpha = 0.08f))
+            .animateContentSize()
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
