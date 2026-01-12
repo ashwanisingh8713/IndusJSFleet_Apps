@@ -112,6 +112,11 @@ class VehicleDetailViewModel(
             is Intent.LoadHistory -> loadHistory()
             is Intent.LoadMoreHistory -> loadMoreHistory()
             is Intent.RefreshHistory -> refreshHistory()
+
+            // State change intents
+            is Intent.ShowStateChangeDialog -> updateState { copy(showStateChangeDialog = true) }
+            is Intent.HideStateChangeDialog -> updateState { copy(showStateChangeDialog = false) }
+            is Intent.UpdateVehicleState -> updateVehicleState(intent.newState, intent.reason)
         }
     }
 
@@ -1070,5 +1075,36 @@ class VehicleDetailViewModel(
             createdAt = createdAt,
             updatedAt = updatedAt
         )
+    }
+
+    // ==================== State Change ====================
+
+    private suspend fun updateVehicleState(newState: String, reason: String?) {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isBlank()) return
+
+        updateState { copy(isUpdatingState = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.updateVehicleState(vehicleId, newState, reason)) {
+                is Result.Success -> {
+                    val updatedVehicle = result.data
+                    updateState {
+                        copy(
+                            isUpdatingState = false,
+                            showStateChangeDialog = false,
+                            vehicle = updatedVehicle
+                        )
+                    }
+                    sendEffect(Effect.StateUpdated(newState))
+                    sendEffect(Effect.ShowSnackbar("Status updated to ${com.indusjs.fleet.core.constants.StatusConstants.VehicleState.getDisplayLabel(newState)}"))
+                }
+                is Result.Error -> {
+                    updateState { copy(isUpdatingState = false) }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to update vehicle state"))
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
     }
 }

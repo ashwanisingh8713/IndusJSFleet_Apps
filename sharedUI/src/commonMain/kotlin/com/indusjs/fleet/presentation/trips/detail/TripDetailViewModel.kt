@@ -124,6 +124,11 @@ class TripDetailViewModel(
             // Navigation & errors
             is Intent.NavigateBack -> sendEffect(Effect.NavigateBack)
             is Intent.ClearError -> updateState { copy(error = null) }
+
+            // State change intents
+            is Intent.ShowStateChangeDialog -> updateState { copy(showStateChangeDialog = true) }
+            is Intent.HideStateChangeDialog -> updateState { copy(showStateChangeDialog = false) }
+            is Intent.UpdateTripState -> updateTripState(intent.newState, intent.reason)
         }
     }
 
@@ -926,5 +931,36 @@ class TripDetailViewModel(
         val rawTime = time?.replace(":", "")?.filter { it.isDigit() }?.take(4) ?: ""
 
         return Pair(rawDate, rawTime)
+    }
+
+    // ==================== State Change ====================
+
+    private suspend fun updateTripState(newState: String, reason: String?) {
+        val tripId = currentState.tripId
+        if (tripId.isBlank()) return
+
+        updateState { copy(isUpdatingState = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = tripRepository.updateTripState(tripId, newState, reason)) {
+                is Result.Success -> {
+                    val updatedTrip = result.data
+                    updateState {
+                        copy(
+                            isUpdatingState = false,
+                            showStateChangeDialog = false,
+                            trip = updatedTrip
+                        )
+                    }
+                    sendEffect(Effect.StateUpdated(newState))
+                    sendEffect(Effect.ShowSnackbar("Status updated to ${com.indusjs.fleet.core.constants.StatusConstants.TripState.getDisplayLabel(newState)}"))
+                }
+                is Result.Error -> {
+                    updateState { copy(isUpdatingState = false) }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to update trip state"))
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
     }
 }

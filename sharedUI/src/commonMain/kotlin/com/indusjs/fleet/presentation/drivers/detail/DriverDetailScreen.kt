@@ -30,6 +30,8 @@ import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
 import com.indusjs.fleet.core.ui.convertDdMmYyyyToIso
 import com.indusjs.fleet.core.ui.convertIsoToDdMmYyyyRaw
 import com.indusjs.fleet.core.ui.history.HistoryTabContent
+import com.indusjs.fleet.core.ui.state.StateChangeDialog
+import com.indusjs.fleet.core.ui.state.getDriverStateOptions
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
@@ -77,6 +79,9 @@ fun DriverDetailScreen(
                 is DriverDetailContract.Effect.DriverUpdated -> {
                     // Refresh handled in ViewModel
                 }
+                is DriverDetailContract.Effect.StateUpdated -> {
+                    // State updated - handled by ViewModel
+                }
             }
         }
     }
@@ -108,15 +113,18 @@ fun DriverDetailScreen(
         )
     }
 
-    // Status change dialog
-    if (showStatusDialog) {
-        StatusChangeDialog(
-            currentStatus = state.driver?.status ?: DriverStatus.ACTIVE,
-            onStatusSelected = { status ->
+    // Status change dialog - use new StateChangeDialog
+    if (showStatusDialog && state.driver != null) {
+        StateChangeDialog(
+            title = "Change Driver Status",
+            currentStateLabel = DriverStatus.getDisplayLabel(state.driver!!.status),
+            stateOptions = getDriverStateOptions(state.driver!!.status),
+            onStateSelected = { newStatus ->
                 showStatusDialog = false
-                viewModel.sendIntent(DriverDetailContract.Intent.UpdateStatus(status))
+                viewModel.sendIntent(DriverDetailContract.Intent.UpdateDriverState(newStatus))
             },
-            onDismiss = { showStatusDialog = false }
+            onDismiss = { showStatusDialog = false },
+            isLoading = state.isUpdatingState
         )
     }
 

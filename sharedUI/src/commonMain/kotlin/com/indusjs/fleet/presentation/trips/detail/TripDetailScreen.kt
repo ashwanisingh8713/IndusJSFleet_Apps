@@ -25,6 +25,8 @@ import com.indusjs.fleet.core.ui.FleetDateFieldCompact
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.FleetTimeFieldCompact
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.ui.state.StateChangeDialog
+import com.indusjs.fleet.core.ui.state.getTripStateOptions
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.domain.entity.trip.Trip
@@ -84,6 +86,9 @@ fun TripDetailScreen(
                     isExportingPdf = true
                     pdfExportData = effect.pdfData
                 }
+                is TripDetailContract.Effect.StateUpdated -> {
+                    // State updated - handled by ViewModel
+                }
             }
         }
     }
@@ -115,15 +120,18 @@ fun TripDetailScreen(
         )
     }
 
-    // Status change dialog
-    if (showStatusDialog) {
-        StatusChangeDialog(
-            currentStatus = state.trip?.status ?: TripStatus.PLANNED,
-            onStatusSelected = { status ->
+    // Status change dialog - use new StateChangeDialog
+    if (showStatusDialog && state.trip != null) {
+        StateChangeDialog(
+            title = "Change Trip Status",
+            currentStateLabel = TripStatus.getDisplayLabel(state.trip!!.status),
+            stateOptions = getTripStateOptions(state.trip!!.status),
+            onStateSelected = { newState ->
                 showStatusDialog = false
-                viewModel.sendIntent(TripDetailContract.Intent.UpdateStatus(status))
+                viewModel.sendIntent(TripDetailContract.Intent.UpdateTripState(newState))
             },
-            onDismiss = { showStatusDialog = false }
+            onDismiss = { showStatusDialog = false },
+            isLoading = state.isUpdatingState
         )
     }
 

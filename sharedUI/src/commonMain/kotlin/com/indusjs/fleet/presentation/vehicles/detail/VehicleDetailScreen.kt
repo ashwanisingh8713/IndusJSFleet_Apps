@@ -34,6 +34,8 @@ import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.ui.caretaker.CaretakerInfoCard
 import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
 import com.indusjs.fleet.core.ui.history.HistoryTabContent
+import com.indusjs.fleet.core.ui.state.StateChangeDialog
+import com.indusjs.fleet.core.ui.state.getVehicleStateOptions
 import com.indusjs.fleet.domain.entity.vehicle.DocumentTypeDetail
 import com.indusjs.fleet.domain.entity.vehicle.RouteInfo
 import com.indusjs.fleet.domain.entity.vehicle.RouteStop
@@ -158,6 +160,9 @@ fun VehicleDetailScreen(
                 is VehicleDetailContract.Effect.CostDeleted -> {
                     // Cost deleted - list is refreshed in ViewModel
                 }
+                is VehicleDetailContract.Effect.StateUpdated -> {
+                    // State updated - handled by ViewModel
+                }
             }
         }
     }
@@ -186,6 +191,22 @@ fun VehicleDetailScreen(
                     Text("Cancel")
                 }
             }
+        )
+    }
+
+    // State Change Dialog
+    if (state.showStateChangeDialog && state.vehicle != null) {
+        StateChangeDialog(
+            title = "Change Vehicle Status",
+            currentStateLabel = VehicleStatus.getDisplayLabel(state.vehicle!!.status),
+            stateOptions = getVehicleStateOptions(state.vehicle!!.status),
+            onStateSelected = { newState ->
+                viewModel.sendIntent(VehicleDetailContract.Intent.UpdateVehicleState(newState))
+            },
+            onDismiss = {
+                viewModel.sendIntent(VehicleDetailContract.Intent.HideStateChangeDialog)
+            },
+            isLoading = state.isUpdatingState
         )
     }
 
@@ -233,8 +254,14 @@ fun VehicleDetailScreen(
                 },
                 actions = {
                     if (!state.isEditMode && vehicle != null) {
-                        // Status Badge
-                        StatusChip(status = vehicle.status)
+                        // Status Badge - clickable to change state
+                        Box(
+                            modifier = Modifier.clickable {
+                                viewModel.sendIntent(VehicleDetailContract.Intent.ShowStateChangeDialog)
+                            }
+                        ) {
+                            StatusChip(status = vehicle.status)
+                        }
                         Spacer(modifier = Modifier.width(8.dp))
                         // Edit Button
                         IconButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.EnterEditMode) }) {

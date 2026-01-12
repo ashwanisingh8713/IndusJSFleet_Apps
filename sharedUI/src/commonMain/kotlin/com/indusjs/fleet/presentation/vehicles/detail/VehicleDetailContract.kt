@@ -141,6 +141,10 @@ object VehicleDetailContract {
         val hasMoreHistory: Boolean = false,
         val historyTotalCount: Int = 0,
 
+        // State Change
+        val showStateChangeDialog: Boolean = false,
+        val isUpdatingState: Boolean = false,
+
         // Current selected tab
         val selectedTab: Int = 0
     ) : UiState {
@@ -257,6 +261,11 @@ object VehicleDetailContract {
         data object LoadHistory : Intent
         data object LoadMoreHistory : Intent
         data object RefreshHistory : Intent
+
+        // State Change
+        data object ShowStateChangeDialog : Intent
+        data object HideStateChangeDialog : Intent
+        data class UpdateVehicleState(val newState: String, val reason: String? = null) : Intent
     }
 
     /**
@@ -276,5 +285,6 @@ object VehicleDetailContract {
         data class DocumentDownloaded(val documentName: String, val fileBytes: ByteArray, val mimeType: String) : Effect
         data object DocumentDownloading : Effect
         data class CostDeleted(val costId: String) : Effect
+        data class StateUpdated(val newState: String) : Effect
     }
 }

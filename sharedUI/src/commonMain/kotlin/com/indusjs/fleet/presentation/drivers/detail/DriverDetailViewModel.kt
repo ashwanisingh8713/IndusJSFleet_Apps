@@ -83,6 +83,11 @@ class DriverDetailViewModel(
             is Intent.LoadHistory -> loadHistory()
             is Intent.LoadMoreHistory -> loadMoreHistory()
             is Intent.RefreshHistory -> refreshHistory()
+
+            // State change intents
+            is Intent.ShowStateChangeDialog -> updateState { copy(showStateChangeDialog = true) }
+            is Intent.HideStateChangeDialog -> updateState { copy(showStateChangeDialog = false) }
+            is Intent.UpdateDriverState -> updateDriverState(intent.newStatus, intent.reason)
         }
     }
 
@@ -514,6 +519,37 @@ class DriverDetailViewModel(
             createdAt = createdAt,
             updatedAt = updatedAt
         )
+    }
+
+    // ==================== State Change ====================
+
+    private suspend fun updateDriverState(newStatus: String, reason: String?) {
+        val driverId = currentState.driverId
+        if (driverId.isBlank()) return
+
+        updateState { copy(isUpdatingState = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = driverRepository.updateDriverStatusWithReason(driverId, newStatus, reason)) {
+                is Result.Success -> {
+                    val updatedDriver = result.data
+                    updateState {
+                        copy(
+                            isUpdatingState = false,
+                            showStateChangeDialog = false,
+                            driver = updatedDriver
+                        )
+                    }
+                    sendEffect(Effect.StateUpdated(newStatus))
+                    sendEffect(Effect.ShowSnackbar("Status updated to ${com.indusjs.fleet.core.constants.StatusConstants.DriverState.getDisplayLabel(newStatus)}"))
+                }
+                is Result.Error -> {
+                    updateState { copy(isUpdatingState = false) }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to update driver status"))
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
     }
 }
 

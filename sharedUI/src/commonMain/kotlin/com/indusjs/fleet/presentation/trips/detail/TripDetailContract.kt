@@ -111,7 +111,11 @@ object TripDetailContract {
         // Available options
         val priorityOptions: List<String> = priorities,
         val cargoTypeOptions: List<String> = cargoTypes,
-        val statusOptions: List<TripStatus> = TripStatus.entries
+        val statusOptions: List<TripStatus> = TripStatus.entries,
+
+        // State Change
+        val showStateChangeDialog: Boolean = false,
+        val isUpdatingState: Boolean = false
     ) : UiState {
 
         val isFormValid: Boolean
@@ -256,6 +260,11 @@ object TripDetailContract {
         // Error handling
         data object ClearError : Intent
         data object Refresh : Intent
+
+        // State Change
+        data object ShowStateChangeDialog : Intent
+        data object HideStateChangeDialog : Intent
+        data class UpdateTripState(val newState: String, val reason: String? = null) : Intent
     }
 
     /**
@@ -269,6 +278,7 @@ object TripDetailContract {
         data class TripCancelled(val tripId: String) : Effect
         data object TripUpdated : Effect
         data class ExportPdf(val pdfData: TripCostsPdfData) : Effect
+        data class StateUpdated(val newState: String) : Effect
     }
 
     /**

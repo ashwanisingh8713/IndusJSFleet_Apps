@@ -73,6 +73,10 @@ object DriverDetailContract {
         val hasMoreHistory: Boolean = false,
         val historyTotalCount: Int = 0,
 
+        // State Change
+        val showStateChangeDialog: Boolean = false,
+        val isUpdatingState: Boolean = false,
+
         // Current selected tab (0 = Overview, 1 = History)
         val selectedTab: Int = 0
     ) : UiState {
@@ -143,9 +147,15 @@ object DriverDetailContract {
         data class SelectTab(val tabIndex: Int) : Intent
 
         // History Tab
+        // History Tab
         data object LoadHistory : Intent
         data object LoadMoreHistory : Intent
         data object RefreshHistory : Intent
+
+        // State Change
+        data object ShowStateChangeDialog : Intent
+        data object HideStateChangeDialog : Intent
+        data class UpdateDriverState(val newStatus: String, val reason: String? = null) : Intent
     }
 
     /**
@@ -158,6 +168,7 @@ object DriverDetailContract {
         data object ShowDeleteConfirmation : Effect
         data class DriverDeleted(val driverId: String) : Effect
         data object DriverUpdated : Effect
+        data class StateUpdated(val newStatus: String) : Effect
     }
 }
 
