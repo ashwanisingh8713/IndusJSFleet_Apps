@@ -288,17 +288,17 @@ fun TripDetailScreen(
 
                         item { AdditionalInfoSection(trip = state.trip!!) }
 
-                        // Trip Costs Section - only show if there are costs
-                        if (state.hasCosts) {
-                            item {
-                                TripCostsSection(
-                                    costs = state.costs,
-                                    totalCost = state.totalCost,
-                                    costsByType = state.costsByType,
-                                    isLoading = state.isLoadingCosts,
-                                    onExportPdf = { viewModel.sendIntent(TripDetailContract.Intent.ExportCostsToPdf) }
-                                )
-                            }
+                        // Trip Costs Section - always show (with empty state if no costs)
+                        item {
+                            TripCostsSection(
+                                costs = state.costs,
+                                totalCost = state.totalCost,
+                                costsByType = state.costsByType,
+                                isLoading = state.isLoadingCosts,
+                                onExportPdf = if (state.hasCosts) {
+                                    { viewModel.sendIntent(TripDetailContract.Intent.ExportCostsToPdf) }
+                                } else null
+                            )
                         }
 
                         // Cancel button for planned trips
@@ -1743,42 +1743,71 @@ private fun TripCostsSection(
         title = "Trip Costs",
         icon = "💰"
     ) {
-        if (isLoading) {
-            TripCostsLoadingContent()
-        } else {
-            // Total Cost Header
-            com.indusjs.fleet.core.ui.costs.TotalCostHeader(
-                totalCost = totalCost,
-                transactionCount = costs.size,
-                categoryCount = costsByType.size
-            )
-
-            // Export to PDF Button
-            if (onExportPdf != null && costs.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                com.indusjs.fleet.core.ui.costs.ExportPdfButton(onClick = onExportPdf)
+        when {
+            isLoading -> {
+                TripCostsLoadingContent()
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Cost Breakdown Header
-            Text(
-                text = "Cost Breakdown",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 10.dp)
-            )
-
-            // Flat list of all costs - each item clickable to show dialog
-            costs.forEachIndexed { index, cost ->
-                com.indusjs.fleet.core.ui.costs.CostListItem(
-                    cost = cost,
+            costs.isEmpty() -> {
+                // Empty state
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "💸",
+                        style = MaterialTheme.typography.displaySmall
+                    )
+                    Text(
+                        text = "No costs recorded",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Trip expenses will appear here once added",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+            }
+            else -> {
+                // Total Cost Header
+                com.indusjs.fleet.core.ui.costs.TotalCostHeader(
                     totalCost = totalCost,
-                    onClick = { selectedCost = cost }
+                    transactionCount = costs.size,
+                    categoryCount = costsByType.size
                 )
-                if (index < costs.size - 1) {
-                    Spacer(modifier = Modifier.height(8.dp))
+
+                // Export to PDF Button
+                if (onExportPdf != null && costs.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    com.indusjs.fleet.core.ui.costs.ExportPdfButton(onClick = onExportPdf)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Cost Breakdown Header
+                Text(
+                    text = "Cost Breakdown",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 10.dp)
+                )
+
+                // Flat list of all costs - each item clickable to show dialog
+                costs.forEachIndexed { index, cost ->
+                    com.indusjs.fleet.core.ui.costs.CostListItem(
+                        cost = cost,
+                        totalCost = totalCost,
+                        onClick = { selectedCost = cost }
+                    )
+                    if (index < costs.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
         }
