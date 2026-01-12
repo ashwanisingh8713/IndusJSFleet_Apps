@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.ui.FleetDateField
 import com.indusjs.fleet.core.ui.FleetEmailField
 import com.indusjs.fleet.core.ui.FleetMobileField
+import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
 import com.indusjs.fleet.core.ui.convertIsoToDdMmYyyyRaw
 import com.indusjs.fleet.core.ui.convertDdMmYyyyToIso
 import com.indusjs.fleet.domain.entity.driver.LicenseType
@@ -298,6 +299,17 @@ fun CreateDriverScreen(
                     },
                     label = "Joining Date",
                     leadingEmoji = "📆"
+                )
+            }
+
+            // Caretaker Assignment Section
+            item {
+                CaretakerSectionCard(
+                    selectedCaretaker = state.selectedCaretaker,
+                    caretakers = state.caretakers,
+                    onCaretakerSelected = { viewModel.sendIntent(CreateDriverContract.Intent.SelectCaretaker(it)) },
+                    onRefresh = { viewModel.sendIntent(CreateDriverContract.Intent.RefreshCaretakers) },
+                    isLoading = state.isLoadingCaretakers
                 )
             }
 

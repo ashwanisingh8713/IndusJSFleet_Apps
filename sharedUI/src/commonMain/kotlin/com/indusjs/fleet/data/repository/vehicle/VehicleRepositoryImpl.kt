@@ -7,6 +7,7 @@ import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSource
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
+import com.indusjs.fleet.data.model.history.VehicleHistoryDataDto
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleWithDocumentsRequest
 import com.indusjs.fleet.data.model.vehicle.DocumentFileData
 import com.indusjs.fleet.domain.entity.vehicle.DocumentsSummary
@@ -362,6 +363,28 @@ class VehicleRepositoryImpl(
         return try {
             val token = requireAuthToken()
             remoteDataSource.downloadDocument(token, documentId)
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun getVehicleHistory(
+        id: String,
+        page: Int,
+        perPage: Int
+    ): Result<VehicleHistoryDataDto> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getVehicleHistory(token, id, page, perPage)
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                Result.Error(
+                    ApiException(response.message ?: "Failed to get vehicle history"),
+                    response.message
+                )
+            }
         } catch (e: Exception) {
             Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
         }

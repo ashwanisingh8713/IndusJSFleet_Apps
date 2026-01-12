@@ -6,6 +6,7 @@ import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.repository.driver.DriverRepositoryImpl
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
+import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.usecase.driver.CreateDriverUseCase
 import com.indusjs.fleet.domain.usecase.driver.DeleteDriverUseCase
 import com.indusjs.fleet.domain.usecase.driver.GetAvailableDriversUseCase
@@ -69,7 +70,8 @@ abstract class DriversFeatureGraph {
         fun create(
             @Provides httpClient: HttpClient,
             @Provides dispatcherProvider: DispatcherProvider,
-            @Provides userLocalDataSource: UserLocalDataSource
+            @Provides userLocalDataSource: UserLocalDataSource,
+            @Provides teamRepository: TeamRepository
         ): DriversFeatureGraph
     }
 }

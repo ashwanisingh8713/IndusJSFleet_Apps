@@ -1,9 +1,14 @@
 package com.indusjs.fleet.core.ui
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -889,3 +894,115 @@ fun convertIsoToDdMmYyyy(isoDate: String): String {
     return "${parts[2]}-${parts[1]}-${parts[0]}" // DD-MM-YYYY
 }
 
+// ============================================
+// Dropdown Components
+// ============================================
+
+/**
+ * Standard dropdown field with consistent styling.
+ * Reusable across all screens for dropdown selection.
+ *
+ * @param label Label for the field
+ * @param value Currently selected value (display text)
+ * @param placeholder Placeholder when no value is selected
+ * @param isExpanded Whether the dropdown is expanded
+ * @param error Error message to display (null if no error)
+ * @param enabled Whether the dropdown is enabled
+ * @param modifier Modifier for the field
+ * @param onToggle Called when dropdown should toggle open/close
+ * @param onDismiss Called when dropdown should dismiss
+ * @param content Composable content for dropdown items
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FleetDropdownField(
+    label: String,
+    value: String,
+    placeholder: String,
+    isExpanded: Boolean,
+    error: String? = null,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    onToggle: () -> Unit,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ExposedDropdownMenuBox(
+        expanded = isExpanded && enabled,
+        onExpandedChange = { if (enabled) onToggle() },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            readOnly = true,
+            enabled = enabled,
+            isError = error != null,
+            supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded && enabled)
+            },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+        )
+        ExposedDropdownMenu(
+            expanded = isExpanded && enabled,
+            onDismissRequest = onDismiss,
+            content = content
+        )
+    }
+}
+
+/**
+ * Simple dropdown field for selecting from a list of options.
+ *
+ * @param label Label for the field
+ * @param selectedValue Currently selected value (key)
+ * @param options List of key-label pairs for options
+ * @param placeholder Placeholder when no value is selected
+ * @param error Error message to display (null if no error)
+ * @param enabled Whether the dropdown is enabled
+ * @param modifier Modifier for the field
+ * @param onSelect Called when an option is selected with the key
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FleetSimpleDropdown(
+    label: String,
+    selectedValue: String?,
+    options: List<Pair<String, String>>,
+    placeholder: String = "Select option",
+    error: String? = null,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    onSelect: (String) -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val selectedLabel = options.find { it.first == selectedValue }?.second ?: ""
+
+    FleetDropdownField(
+        label = label,
+        value = selectedLabel,
+        placeholder = placeholder,
+        isExpanded = isExpanded,
+        error = error,
+        enabled = enabled,
+        modifier = modifier,
+        onToggle = { isExpanded = !isExpanded },
+        onDismiss = { isExpanded = false }
+    ) {
+        options.forEach { (key, displayLabel) ->
+            DropdownMenuItem(
+                text = { Text(displayLabel) },
+                onClick = {
+                    onSelect(key)
+                    isExpanded = false
+                }
+            )
+        }
+    }
+}

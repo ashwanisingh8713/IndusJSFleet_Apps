@@ -3,9 +3,11 @@ package com.indusjs.fleet.presentation.drivers.create
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
+import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.usecase.driver.CreateDriverUseCase
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverContract.Effect
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverContract.Intent
@@ -19,8 +21,14 @@ import kotlinx.coroutines.withContext
 @Inject
 class CreateDriverViewModel(
     private val dispatcherProvider: DispatcherProvider,
-    private val createDriverUseCase: CreateDriverUseCase
+    private val createDriverUseCase: CreateDriverUseCase,
+    private val teamRepository: TeamRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
+
+    init {
+        // Load caretakers (supervisors + managers) on init
+        sendIntent(Intent.LoadCaretakers)
+    }
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
@@ -39,6 +47,12 @@ class CreateDriverViewModel(
             is Intent.UpdateEmergencyContact -> updateState { copy(emergencyContact = intent.value) }
             is Intent.UpdateBloodGroup -> updateState { copy(bloodGroup = intent.value) }
             is Intent.UpdateJoiningDate -> updateState { copy(joiningDate = intent.value) }
+
+            // Caretaker management
+            is Intent.LoadCaretakers -> loadCaretakers()
+            is Intent.RefreshCaretakers -> refreshCaretakers()
+            is Intent.ToggleCaretakerDropdown -> updateState { copy(showCaretakerDropdown = !showCaretakerDropdown) }
+            is Intent.SelectCaretaker -> updateState { copy(selectedCaretaker = intent.caretaker, showCaretakerDropdown = false) }
 
             // Form actions
             is Intent.ValidateForm -> validateForm()
@@ -188,6 +202,77 @@ class CreateDriverViewModel(
         } catch (_: Exception) {
             0L
         }
+    }
+
+    /**
+     * Load caretakers from local cache first.
+     * If cache is empty, fetch from API.
+     */
+    private suspend fun loadCaretakers() {
+        updateState { copy(isLoadingCaretakers = true) }
+
+        withContext(dispatcherProvider.io) {
+            // First try to load from cache
+            val cacheResult = teamRepository.getCaretakersFromCache()
+            cacheResult.fold(
+                onSuccess = { cachedCaretakers ->
+                    if (cachedCaretakers.isNotEmpty()) {
+                        val caretakers = cachedCaretakers.map { it.toDto() }
+                        updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
+                    } else {
+                        // Cache is empty, fetch from API
+                        fetchCaretakersFromApi()
+                    }
+                },
+                onFailure = {
+                    // Cache failed, fetch from API
+                    fetchCaretakersFromApi()
+                }
+            )
+        }
+    }
+
+    /**
+     * Refresh caretakers from API and update local cache.
+     */
+    private suspend fun refreshCaretakers() {
+        updateState { copy(isLoadingCaretakers = true) }
+        withContext(dispatcherProvider.io) {
+            fetchCaretakersFromApi()
+        }
+    }
+
+    private suspend fun fetchCaretakersFromApi() {
+        val result = teamRepository.refreshTeamMembers()
+        result.fold(
+            onSuccess = { teamMembers ->
+                // Filter to only supervisors and managers
+                val caretakers = teamMembers
+                    .filter { member ->
+                        member.role.name.lowercase() in listOf("supervisor", "manager")
+                    }
+                    .map { it.toDto() }
+                updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
+            },
+            onFailure = {
+                updateState { copy(isLoadingCaretakers = false) }
+            }
+        )
+    }
+
+    private fun com.indusjs.fleet.domain.entity.team.TeamMember.toDto(): TeamMemberDto {
+        return TeamMemberDto(
+            id = id.toIntOrNull() ?: 0,
+            email = email,
+            mobile = mobile,
+            firstName = firstName,
+            lastName = lastName,
+            role = role.toApiString(),
+            ownerId = ownerId.toIntOrNull() ?: 0,
+            isActive = isActive,
+            createdAt = createdAt,
+            updatedAt = updatedAt
+        )
     }
 }
 

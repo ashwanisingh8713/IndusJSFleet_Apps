@@ -1,48 +1,158 @@
 package com.indusjs.fleet.data.model.costs
 
+import com.indusjs.fleet.core.ui.CostTypeGroup
+import com.indusjs.fleet.core.ui.CostTypeItem
 import com.indusjs.fleet.data.model.Dto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Trip Cost Types.
+ * Trip Cost Types - Fallback values if API cache is empty.
+ * These match the structure from /trip-costs/types API.
  */
 object TripCostTypes {
     val types = listOf(
-        "fuel" to "Fuel",
-        "toll" to "Toll",
-        "driver_allowance" to "Driver Allowance",
-        "loading" to "Loading",
-        "unloading" to "Unloading",
-        "parking" to "Parking",
-        "rto" to "RTO",
-        "police" to "Police",
-        "repair" to "Repair",
-        "food" to "Food",
-        "halt" to "Halt",
-        "commission" to "Commission",
-        "weighing" to "Weighing",
-        "detention" to "Detention",
-        "miscellaneous" to "Miscellaneous",
-        "other" to "Other"
+        // Fuel & Energy
+        "TC-001-001" to "Petrol",
+        "TC-001-002" to "Diesel",
+        "TC-001-003" to "CNG / LPG",
+        "TC-001-004" to "EV Charging",
+        // Toll & Parking
+        "TC-002-001" to "Toll Charges",
+        "TC-002-002" to "Parking Fees",
+        "TC-002-003" to "Entry Charges",
+        // Loading & Unloading
+        "TC-003-001" to "Loading Charges",
+        "TC-003-002" to "Unloading Charges",
+        "TC-003-003" to "Crane / Forklift",
+        "TC-003-004" to "Labor Charges",
+        // Driver Expenses
+        "TC-004-001" to "Driver Allowance",
+        "TC-004-002" to "Driver Food",
+        "TC-004-003" to "Driver Accommodation",
+        // Permits & Compliance
+        "TC-005-001" to "State Permit",
+        "TC-005-002" to "National Permit",
+        "TC-005-003" to "Special Permit",
+        "TC-005-004" to "Chalan / Fine",
+        // Miscellaneous
+        "TC-006-001" to "Police / RTO",
+        "TC-006-002" to "Weighbridge",
+        "TC-006-003" to "Commission / Brokerage",
+        "TC-006-004" to "Other"
+    )
+
+    /**
+     * Groups with proper group IDs matching the API structure.
+     */
+    val groups: List<CostTypeGroup> = listOf(
+        CostTypeGroup(
+            groupId = "TC-G-001",
+            groupName = "Fuel & Energy",
+            items = listOf(
+                CostTypeItem("TC-001-001", "Petrol"),
+                CostTypeItem("TC-001-002", "Diesel"),
+                CostTypeItem("TC-001-003", "CNG / LPG"),
+                CostTypeItem("TC-001-004", "EV Charging")
+            )
+        ),
+        CostTypeGroup(
+            groupId = "TC-G-002",
+            groupName = "Toll & Parking",
+            items = listOf(
+                CostTypeItem("TC-002-001", "Toll Charges"),
+                CostTypeItem("TC-002-002", "Parking Fees"),
+                CostTypeItem("TC-002-003", "Entry Charges")
+            )
+        ),
+        CostTypeGroup(
+            groupId = "TC-G-003",
+            groupName = "Loading & Unloading",
+            items = listOf(
+                CostTypeItem("TC-003-001", "Loading Charges"),
+                CostTypeItem("TC-003-002", "Unloading Charges"),
+                CostTypeItem("TC-003-003", "Crane / Forklift"),
+                CostTypeItem("TC-003-004", "Labor Charges")
+            )
+        ),
+        CostTypeGroup(
+            groupId = "TC-G-004",
+            groupName = "Driver Expenses",
+            items = listOf(
+                CostTypeItem("TC-004-001", "Driver Allowance"),
+                CostTypeItem("TC-004-002", "Driver Food"),
+                CostTypeItem("TC-004-003", "Driver Accommodation")
+            )
+        ),
+        CostTypeGroup(
+            groupId = "TC-G-005",
+            groupName = "Permits & Compliance",
+            items = listOf(
+                CostTypeItem("TC-005-001", "State Permit"),
+                CostTypeItem("TC-005-002", "National Permit"),
+                CostTypeItem("TC-005-003", "Special Permit"),
+                CostTypeItem("TC-005-004", "Chalan / Fine")
+            )
+        ),
+        CostTypeGroup(
+            groupId = "TC-G-006",
+            groupName = "Miscellaneous",
+            items = listOf(
+                CostTypeItem("TC-006-001", "Police / RTO"),
+                CostTypeItem("TC-006-002", "Weighbridge"),
+                CostTypeItem("TC-006-003", "Commission / Brokerage"),
+                CostTypeItem("TC-006-004", "Other")
+            )
+        )
     )
 }
 
 /**
- * Maintenance Cost Types.
+ * Maintenance Cost Types - Fallback values if API cache is empty.
+ * These match the structure from /maintenance-costs/types API.
  */
 object MaintenanceCostTypes {
     val types = listOf(
-        "tyre" to "Tyre",
-        "oil_change" to "Oil Change",
-        "servicing" to "Servicing",
-        "battery" to "Battery",
-        "brake" to "Brake",
-        "engine" to "Engine",
-        "body_work" to "Body Work",
-        "electrical" to "Electrical",
-        "cleaning" to "Cleaning",
-        "other" to "Other"
+        // Regular Maintenance
+        "VMC-001-001" to "Engine Oil Change",
+        "VMC-001-002" to "Oil Filter Replacement",
+        "VMC-001-003" to "Air Filter Replacement",
+        "VMC-001-004" to "Wheel Alignment & Balancing",
+        "VMC-001-005" to "General Servicing Labor",
+        // Repairs & Replacements
+        "VMC-002-001" to "Brake Pads / Discs",
+        "VMC-002-002" to "Battery Replacement",
+        "VMC-002-003" to "Tyres Replacement",
+        "VMC-002-004" to "Clutch Repair",
+        "VMC-002-005" to "Suspension Repair"
+    )
+
+    /**
+     * Groups with proper group IDs matching the API structure.
+     */
+    val groups: List<CostTypeGroup> = listOf(
+        CostTypeGroup(
+            groupId = "VMC-G-001",
+            groupName = "Regular Maintenance",
+            items = listOf(
+                CostTypeItem("VMC-001-001", "Engine Oil Change"),
+                CostTypeItem("VMC-001-002", "Oil Filter Replacement"),
+                CostTypeItem("VMC-001-003", "Air Filter Replacement"),
+                CostTypeItem("VMC-001-004", "Wheel Alignment & Balancing"),
+                CostTypeItem("VMC-001-005", "General Servicing Labor")
+            )
+        ),
+        CostTypeGroup(
+            groupId = "VMC-G-002",
+            groupName = "Repairs & Replacements",
+            items = listOf(
+                CostTypeItem("VMC-002-001", "Brake Pads / Discs"),
+                CostTypeItem("VMC-002-002", "Battery Replacement"),
+                CostTypeItem("VMC-002-003", "Tyres Replacement"),
+                CostTypeItem("VMC-002-004", "Clutch Repair"),
+                CostTypeItem("VMC-002-005", "Suspension Repair")
+            )
+        )
     )
 }
 
@@ -51,9 +161,10 @@ object MaintenanceCostTypes {
  */
 object FuelTypes {
     val types = listOf(
-        "diesel" to "Diesel",
-        "petrol" to "Petrol",
-        "cng" to "CNG"
+        "TC-001-002" to "Diesel",
+        "TC-001-001" to "Petrol",
+        "TC-001-003" to "CNG / LPG",
+        "TC-001-004" to "EV Charging"
     )
 }
 
@@ -68,29 +179,81 @@ data class TripCostApiResponse(
 )
 
 /**
- * Trip Cost Types API response.
+ * Cost Types API response - for /trip-costs/types and /maintenance-costs/types APIs.
+ * Structure: { success, message, data: { category_id, category_name, groups: [...] } }
  */
 @Serializable
 data class CostTypesApiResponse(
     val success: Boolean,
     val message: String? = null,
-    val data: CostTypesDataDto? = null
+    val data: CostTypeCategoryDto? = null
 )
 
+/**
+ * Cost Type Category - top level wrapper for cost types.
+ * Contains category info and grouped cost type items.
+ */
 @Serializable
-data class CostTypesDataDto(
-    val types: List<CostTypeDto> = emptyList()
-) : Dto
+data class CostTypeCategoryDto(
+    @SerialName("category_id")
+    val categoryId: String,
+    @SerialName("category_name")
+    val categoryName: String,
+    val groups: List<CostTypeGroupDto> = emptyList()
+) : Dto {
+    /**
+     * Flattens all cost types from all groups into a single list of value to label pairs.
+     * Useful for dropdowns and selection.
+     */
+    fun toFlatList(): List<Pair<String, String>> {
+        return groups.flatMap { group ->
+            group.items.map { item -> item.value to item.label }
+        }
+    }
 
+    /**
+     * Converts to CostTypeGroup list with full group IDs for reliable category detection.
+     */
+    fun toCostTypeGroups(): List<CostTypeGroup> {
+        return groups.map { group ->
+            CostTypeGroup(
+                groupId = group.groupId,
+                groupName = group.groupName,
+                items = group.items.map { item ->
+                    CostTypeItem(id = item.value, label = item.label)
+                }
+            )
+        }
+    }
+}
+
+/**
+ * Cost Type Group - groups related cost types (e.g., "Fuel & Energy", "Toll & Parking").
+ */
 @Serializable
-data class CostTypeDto(
-    val id: String,
-    val name: String,
-    val description: String? = null
+data class CostTypeGroupDto(
+    @SerialName("group_id")
+    val groupId: String,
+    @SerialName("group_name")
+    val groupName: String,
+    val items: List<CostTypeItemDto> = emptyList()
 ) : Dto
 
 /**
+ * Individual cost type item.
+ * API returns: { id, value, label }
+ */
+@Serializable
+data class CostTypeItemDto(
+    val id: String,
+    val value: String,
+    val label: String
+) : Dto
+
+
+/**
  * Trip Cost DTO.
+ * Updated to match API with cost_id, cost_label, group_id structure.
  */
 @Serializable
 data class TripCostDto(
@@ -99,6 +262,16 @@ data class TripCostDto(
     val tripId: Int = 0,
     @SerialName("vehicle_id")
     val vehicleId: Int = 0,
+    // New structured cost fields per API
+    @SerialName("cost_id")
+    val costId: String? = null,
+    @SerialName("cost_label")
+    val costLabel: String? = null,
+    @SerialName("group_id")
+    val groupId: String? = null,
+    @SerialName("custom_cost_label")
+    val customCostLabel: String? = null,
+    // Legacy field (kept for backward compatibility)
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -123,7 +296,19 @@ data class TripCostDto(
     val createdByUser: CreatedByUserDto? = null,
     @SerialName("created_at")
     val createdAt: String? = null
-) : Dto
+) : Dto {
+    /**
+     * Returns the display label - prefers custom_cost_label, then cost_label, falls back to cost_type.
+     */
+    val displayLabel: String
+        get() = customCostLabel ?: costLabel ?: costType.replace("_", " ").replaceFirstChar { it.uppercase() }
+
+    /**
+     * Returns true if this is a fuel category cost (group TC-G-001).
+     */
+    val isFuelCost: Boolean
+        get() = groupId == "TC-G-001"
+}
 
 /**
  * Created By User DTO - contains info about who added the cost.
@@ -168,6 +353,7 @@ data class TripCostsListDto(
 
 /**
  * Create Trip Cost request.
+ * Updated to use structured cost fields (cost_id, cost_label, group_id).
  * Note: API expects trip_id and vehicle_id as integers.
  */
 @Serializable
@@ -176,6 +362,16 @@ data class CreateTripCostRequest(
     val tripId: Int,
     @SerialName("vehicle_id")
     val vehicleId: Int,
+    // New structured cost fields per API
+    @SerialName("cost_id")
+    val costId: String,
+    @SerialName("cost_label")
+    val costLabel: String,
+    @SerialName("group_id")
+    val groupId: String,
+    @SerialName("custom_cost_label")
+    val customCostLabel: String? = null,
+    // Legacy field - still required for backward compatibility
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -203,11 +399,21 @@ data class BulkCreateTripCostsRequest(
 
 /**
  * Individual cost item for bulk creation.
+ * Updated with structured cost fields (cost_id, cost_label, group_id).
  * Note: trip_id is taken from URL path and vehicle_id from the trip record.
- * Do NOT include trip_id or vehicle_id in the request body.
  */
 @Serializable
 data class BulkCostItem(
+    // New structured cost fields per API
+    @SerialName("cost_id")
+    val costId: String,
+    @SerialName("cost_label")
+    val costLabel: String,
+    @SerialName("group_id")
+    val groupId: String,
+    @SerialName("custom_cost_label")
+    val customCostLabel: String? = null,
+    // Legacy field
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -243,12 +449,23 @@ data class BulkTripCostsResultDto(
 
 /**
  * Maintenance Cost DTO.
+ * Updated to match API with cost_id, cost_label, group_id structure.
  */
 @Serializable
 data class MaintenanceCostDto(
     val id: Int = 0,
     @SerialName("vehicle_id")
     val vehicleId: Int = 0,
+    // New structured cost fields per API
+    @SerialName("cost_id")
+    val costId: String? = null,
+    @SerialName("cost_label")
+    val costLabel: String? = null,
+    @SerialName("group_id")
+    val groupId: String? = null,
+    @SerialName("custom_cost_label")
+    val customCostLabel: String? = null,
+    // Legacy field (kept for backward compatibility)
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -262,7 +479,13 @@ data class MaintenanceCostDto(
     val invoiceNo: String? = null,
     @SerialName("created_at")
     val createdAt: String? = null
-) : Dto
+) : Dto {
+    /**
+     * Returns the display label - prefers custom_cost_label, then cost_label, falls back to cost_type.
+     */
+    val displayLabel: String
+        get() = customCostLabel ?: costLabel ?: costType.replace("_", " ").replaceFirstChar { it.uppercase() }
+}
 
 /**
  * Maintenance Cost API response.
@@ -297,12 +520,23 @@ data class MaintenanceCostsListDto(
 
 /**
  * Create Maintenance Cost request.
+ * Updated to use structured cost fields (cost_id, cost_label, group_id).
  * Note: API expects vehicle_id as integer.
  */
 @Serializable
 data class CreateMaintenanceCostRequest(
     @SerialName("vehicle_id")
     val vehicleId: Int,
+    // New structured cost fields per API
+    @SerialName("cost_id")
+    val costId: String,
+    @SerialName("cost_label")
+    val costLabel: String,
+    @SerialName("group_id")
+    val groupId: String,
+    @SerialName("custom_cost_label")
+    val customCostLabel: String? = null,
+    // Legacy field - still required for backward compatibility
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,
@@ -326,10 +560,21 @@ data class BulkCreateMaintenanceCostsRequest(
 
 /**
  * Individual maintenance cost item for bulk creation.
+ * Updated with structured cost fields (cost_id, cost_label, group_id).
  * Note: vehicle_id is passed in the URL path, not in the body.
  */
 @Serializable
 data class BulkMaintenanceCostItem(
+    // New structured cost fields per API
+    @SerialName("cost_id")
+    val costId: String,
+    @SerialName("cost_label")
+    val costLabel: String,
+    @SerialName("group_id")
+    val groupId: String,
+    @SerialName("custom_cost_label")
+    val customCostLabel: String? = null,
+    // Legacy field
     @SerialName("cost_type")
     val costType: String,
     val amount: Double,

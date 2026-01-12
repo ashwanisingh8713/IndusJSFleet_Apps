@@ -68,5 +68,22 @@ interface TeamRepository : Repository {
      * Delete a team member.
      */
     suspend fun deleteTeamMember(id: String): Result<Unit>
+
+    // ==================== Local Storage Methods ====================
+
+    /**
+     * Get team members from local cache.
+     */
+    suspend fun getTeamMembersFromCache(): Result<List<TeamMember>>
+
+    /**
+     * Get caretakers (supervisors + managers) from local cache.
+     */
+    suspend fun getCaretakersFromCache(): Result<List<TeamMember>>
+
+    /**
+     * Refresh team members from API and update local cache.
+     */
+    suspend fun refreshTeamMembers(): Result<List<TeamMember>>
 }
 

@@ -22,6 +22,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.CostTypeGroup
+import com.indusjs.fleet.core.ui.CostTypeSelection
+import com.indusjs.fleet.core.ui.CostTypeTwoLevelSelector
 import com.indusjs.fleet.core.ui.DateInputField
 import com.indusjs.fleet.core.ui.TimeInputField
 import com.indusjs.fleet.data.model.costs.TripCostDto
@@ -174,16 +177,16 @@ fun TripCostEntryScreen(
                     CostEntryRowCard(
                         index = actualIndex,
                         entry = entry,
-                        costTypeOptions = state.costTypeOptions,
+                        costTypeGroups = state.costTypeGroups,
                         fuelTypeOptions = state.fuelTypeOptions,
                         canDelete = state.costEntries.size > 1,
                         onToggleExpanded = { viewModel.sendIntent(TripCostEntryContract.Intent.ToggleRowExpanded(entry.id)) },
                         onDelete = { viewModel.sendIntent(TripCostEntryContract.Intent.RemoveCostRow(entry.id)) },
-                        onSelectCostType = { type, label ->
-                            viewModel.sendIntent(TripCostEntryContract.Intent.SelectCostType(entry.id, type, label))
+                        onSelectCostType = { selection ->
+                            viewModel.sendIntent(TripCostEntryContract.Intent.SelectCostType(entry.id, selection))
                         },
-                        onToggleCostTypeDropdown = {
-                            viewModel.sendIntent(TripCostEntryContract.Intent.ToggleCostTypeDropdown(entry.id))
+                        onCategoryChanged = { groupId, groupName ->
+                            viewModel.sendIntent(TripCostEntryContract.Intent.UpdateSelectedCategory(entry.id, groupId, groupName))
                         },
                         onDateChange = { viewModel.sendIntent(TripCostEntryContract.Intent.UpdateDate(entry.id, it)) },
                         onTimeChange = { viewModel.sendIntent(TripCostEntryContract.Intent.UpdateTime(entry.id, it)) },
@@ -493,13 +496,13 @@ private fun TripDetailsCard(
 private fun CostEntryRowCard(
     index: Int,
     entry: CostEntryRow,
-    costTypeOptions: List<Pair<String, String>>,
+    costTypeGroups: List<CostTypeGroup>,
     fuelTypeOptions: List<Pair<String, String>>,
     canDelete: Boolean,
     onToggleExpanded: () -> Unit,
     onDelete: () -> Unit,
-    onSelectCostType: (String, String) -> Unit,
-    onToggleCostTypeDropdown: () -> Unit,
+    onSelectCostType: (CostTypeSelection) -> Unit,
+    onCategoryChanged: (groupId: String, groupName: String) -> Unit,
     onDateChange: (String) -> Unit,
     onTimeChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
@@ -604,36 +607,19 @@ private fun CostEntryRowCard(
                 ) {
                     HorizontalDivider()
 
-                    // Cost Type dropdown
-                    ExposedDropdownMenuBox(
-                        expanded = entry.showCostTypeDropdown,
-                        onExpandedChange = { onToggleCostTypeDropdown() }
-                    ) {
-                        OutlinedTextField(
-                            value = entry.costTypeLabel,
-                            onValueChange = {},
-                            label = { Text("Cost Type *") },
-                            placeholder = { Text("Select cost type") },
-                            modifier = Modifier.fillMaxWidth().menuAnchor(),
-                            readOnly = true,
-                            isError = entry.costTypeError != null,
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = entry.showCostTypeDropdown)
-                            },
-                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = entry.showCostTypeDropdown,
-                            onDismissRequest = onToggleCostTypeDropdown
-                        ) {
-                            costTypeOptions.forEach { (type, label) ->
-                                DropdownMenuItem(
-                                    text = { Text(label) },
-                                    onClick = { onSelectCostType(type, label) }
-                                )
-                            }
-                        }
-                    }
+                    // Cost Type two-level selector (category dropdown + chip items)
+                    CostTypeTwoLevelSelector(
+                        groups = costTypeGroups,
+                        selectedCostType = entry.costType,
+                        onCostTypeSelected = { selection ->
+                            onSelectCostType(selection)
+                        },
+                        onCategoryChanged = { groupId, groupName ->
+                            onCategoryChanged(groupId, groupName)
+                        },
+                        isError = entry.costTypeError != null,
+                        errorMessage = entry.costTypeError
+                    )
 
                     // Custom cost type name (if "Other" selected)
                     if (entry.isOtherCostType) {
@@ -692,34 +678,20 @@ private fun CostEntryRowCard(
                             fontWeight = FontWeight.Medium
                         )
 
-                        // Fuel Type dropdown
-                        ExposedDropdownMenuBox(
-                            expanded = entry.showFuelTypeDropdown,
-                            onExpandedChange = { onToggleFuelTypeDropdown() }
-                        ) {
-                            OutlinedTextField(
-                                value = fuelTypeOptions.find { it.first == entry.fuelType }?.second ?: "",
-                                onValueChange = {},
-                                label = { Text("Fuel Type *") },
-                                modifier = Modifier.fillMaxWidth().menuAnchor(),
-                                readOnly = true,
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = entry.showFuelTypeDropdown)
-                                },
-                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                        // Fuel Type - read-only, auto-populated from selected Cost Type
+                        OutlinedTextField(
+                            value = entry.costTypeLabel.ifBlank { "Select a fuel type above" },
+                            onValueChange = {},
+                            label = { Text("Fuel Type") },
+                            modifier = Modifier.fillMaxWidth(),
+                            readOnly = true,
+                            enabled = false,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            ExposedDropdownMenu(
-                                expanded = entry.showFuelTypeDropdown,
-                                onDismissRequest = onToggleFuelTypeDropdown
-                            ) {
-                                fuelTypeOptions.forEach { (type, label) ->
-                                    DropdownMenuItem(
-                                        text = { Text(label) },
-                                        onClick = { onSelectFuelType(type) }
-                                    )
-                                }
-                            }
-                        }
+                        )
 
                         // Fuel Quantity & Rate
                         Row(
@@ -908,4 +880,6 @@ private fun CostHistoryItem(cost: TripCostDto) {
         }
     }
 }
+
+
 

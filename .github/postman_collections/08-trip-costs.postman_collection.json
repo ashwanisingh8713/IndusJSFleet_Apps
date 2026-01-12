@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "fleet-api-08-trip-costs",
 		"name": "08. Trip Costs",
-		"description": "Trip cost management.\n\n## Cost Types\nfuel, toll, driver_allowance, parking, loading_charges, unloading_charges, chalan, permit, other\n\n## Permissions\n- Add/Edit: All roles\n- Delete: Owner, GM, Manager only",
+		"description": "Trip cost management with structured cost IDs.\n\n## Cost Structure\nAll costs require:\n- `cost_id`: Unique identifier (e.g., TC-001-002)\n- `cost_label`: Display label (e.g., Diesel)\n- `group_id`: Group identifier (e.g., TC-G-001)\n\n## Cost Groups\n\n**TC-G-001 - Fuel & Energy:**\n- TC-001-001 (Petrol), TC-001-002 (Diesel), TC-001-003 (CNG/LPG), TC-001-004 (EV Charging)\n- Extra fields: fuel_quantity, fuel_rate, km_per_liter\n\n**TC-G-002 - Toll & Parking:**\n- TC-002-001 (Toll), TC-002-002 (Parking), TC-002-003 (Entry Charges)\n\n**TC-G-003 - Loading & Unloading:**\n- TC-003-001 (Loading), TC-003-002 (Unloading), TC-003-003 (Crane/Forklift), TC-003-004 (Labor)\n\n**TC-G-004 - Driver Expenses:**\n- TC-004-001 (Allowance), TC-004-002 (Food), TC-004-003 (Accommodation)\n\n**TC-G-005 - Permits & Compliance:**\n- TC-005-001 (State Permit), TC-005-002 (National Permit), TC-005-003 (Special Permit), TC-005-004 (Chalan/Fine)\n\n**TC-G-006 - Miscellaneous:**\n- TC-006-001 (Police), TC-006-002 (RTO), TC-006-003 (Weighbridge), TC-006-004 (Commission), TC-006-005 (Other)\n- TC-006-005 requires: custom_cost_label\n\n## Permissions\n- Add/Edit: All roles\n- Delete: Owner, GM, Manager only",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -23,10 +23,11 @@
 				"method": "GET",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/trip-costs/types", "host": ["{{base_url}}"], "path": ["trip-costs", "types"]}
-			}
+			},
+			"description": "Returns all trip cost types organized by groups."
 		},
 		{
-			"name": "Create Trip Cost",
+			"name": "Create Trip Cost - Fuel (Diesel)",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -35,10 +36,42 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_type\": \"fuel\",\n    \"amount\": 2500.00,\n    \"date\": \"2026-01-15T10:00:00Z\",\n    \"description\": \"Diesel refill at HP Pump\",\n    \"notes\": \"Full tank\",\n    \"vendor_name\": \"HP Petrol Pump\",\n    \"invoice_no\": \"INV123456\"\n}"
+					"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_id\": \"TC-001-002\",\n    \"cost_label\": \"Diesel\",\n    \"group_id\": \"TC-G-001\",\n    \"amount\": 5000.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"10:30\",\n    \"notes\": \"Diesel refill at HP Pump\",\n    \"fuel_quantity\": 55.5,\n    \"fuel_rate\": 90.09,\n    \"km_per_liter\": 4.5\n}"
+				},
+				"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
+			},
+			"description": "Create fuel cost with fuel-specific fields."
+		},
+		{
+			"name": "Create Trip Cost - Toll",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_id\": \"TC-002-001\",\n    \"cost_label\": \"Toll Charges\",\n    \"group_id\": \"TC-G-002\",\n    \"amount\": 350.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"11:15\",\n    \"notes\": \"Mumbai-Pune Expressway Toll\"\n}"
 				},
 				"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
 			}
+		},
+		{
+			"name": "Create Trip Cost - Other (Custom)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_id\": \"TC-006-005\",\n    \"cost_label\": \"Other\",\n    \"group_id\": \"TC-G-006\",\n    \"amount\": 200.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"14:00\",\n    \"custom_cost_label\": \"Driver Meals\",\n    \"notes\": \"Lunch expense for driver\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
+			},
+			"description": "Create 'Other' cost with custom label."
 		},
 		{
 			"name": "Get Trip Costs",
@@ -48,11 +81,27 @@
 				"url": {
 					"raw": "{{base_url}}/trips/{{trip_id}}/costs",
 					"host": ["{{base_url}}"],
-					"path": ["trips", "{{trip_id}}", "costs"],
+					"path": ["trips", "{{trip_id}}", "costs"]
+				}
+			}
+		},
+		{
+			"name": "Get Vehicle Trip Costs",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/vehicles/{{vehicle_id}}/trip-costs?page=1&per_page=20&cost_id=&start_date=&end_date=&sort_by=date&sort_order=desc",
+					"host": ["{{base_url}}"],
+					"path": ["vehicles", "{{vehicle_id}}", "trip-costs"],
 					"query": [
-						{"key": "cost_types", "value": "fuel,toll", "disabled": true},
-						{"key": "start_date", "value": "2026-01-01T00:00:00Z", "disabled": true},
-						{"key": "end_date", "value": "2026-01-31T23:59:59Z", "disabled": true}
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"},
+						{"key": "cost_id", "value": "", "description": "Filter by cost_id (comma-separated)"},
+						{"key": "start_date", "value": "", "description": "DD-MM-YYYY"},
+						{"key": "end_date", "value": "", "description": "DD-MM-YYYY"},
+						{"key": "sort_by", "value": "date"},
+						{"key": "sort_order", "value": "desc"}
 					]
 				}
 			}
@@ -75,7 +124,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"cost_type\": \"fuel\",\n    \"amount\": 2800.00,\n    \"description\": \"Diesel refill - updated\",\n    \"notes\": \"Full tank plus extra\",\n    \"vendor_name\": \"HP Petrol Pump\",\n    \"invoice_no\": \"INV123457\"\n}"
+					"raw": "{\n    \"cost_id\": \"TC-001-002\",\n    \"cost_label\": \"Diesel\",\n    \"group_id\": \"TC-G-001\",\n    \"amount\": 5500.00,\n    \"notes\": \"Updated amount\",\n    \"fuel_quantity\": 60.0,\n    \"fuel_rate\": 91.67\n}"
 				},
 				"url": {"raw": "{{base_url}}/trip-costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["trip-costs", "{{cost_id}}"]}
 			}
@@ -98,10 +147,11 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"costs\": [\n        {\n            \"cost_type\": \"fuel\",\n            \"amount\": 2500.00,\n            \"date\": \"2026-01-15T10:00:00Z\",\n            \"description\": \"Diesel refill\"\n        },\n        {\n            \"cost_type\": \"toll\",\n            \"amount\": 350.00,\n            \"date\": \"2026-01-15T11:00:00Z\",\n            \"description\": \"Mumbai-Pune Expressway\"\n        }\n    ]\n}"
+					"raw": "{\n    \"costs\": [\n        {\n            \"cost_id\": \"TC-001-002\",\n            \"cost_label\": \"Diesel\",\n            \"group_id\": \"TC-G-001\",\n            \"amount\": 5000.00,\n            \"date\": \"2026-12-20T10:30:00Z\",\n            \"notes\": \"Diesel refill at HP Pump\",\n            \"fuel_quantity\": 55.5,\n            \"fuel_rate\": 90.09,\n            \"km_per_liter\": 4.5\n        },\n        {\n            \"cost_id\": \"TC-002-001\",\n            \"cost_label\": \"Toll Charges\",\n            \"group_id\": \"TC-G-002\",\n            \"amount\": 300.00,\n            \"date\": \"2026-12-20T11:00:00Z\",\n            \"notes\": \"Toll plaza fee\"\n        }\n    ]\n}"
 				},
 				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/costs/bulk", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "costs", "bulk"]}
-			}
+			},
+			"description": "Bulk create trip costs. Date/Time in ISO 8601 format."
 		},
 		{
 			"name": "Get Trip Cost Summary",
@@ -109,21 +159,30 @@
 				"method": "GET",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/costs/summary", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "costs", "summary"]}
-			}
+			},
+			"description": "Get aggregated cost summary with fuel metrics and breakdown by group."
 		},
 		{
-			"name": "Get Vehicle Trip Costs",
+			"name": "Get Trip Cost Details",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/costs/details", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "costs", "details"]}
+			},
+			"description": "Get trip costs grouped by category (operating, cargo, compliance, penalty, misc)."
+		},
+		{
+			"name": "Get Trip Cost History",
 			"request": {
 				"method": "GET",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {
-					"raw": "{{base_url}}/vehicles/{{vehicle_id}}/trip-costs",
+					"raw": "{{base_url}}/trips/{{trip_id}}/costs/history?page=1&per_page=20",
 					"host": ["{{base_url}}"],
-					"path": ["vehicles", "{{vehicle_id}}", "trip-costs"],
+					"path": ["trips", "{{trip_id}}", "costs", "history"],
 					"query": [
-						{"key": "cost_types", "value": "fuel,toll", "disabled": true},
-						{"key": "start_date", "value": "2026-01-01T00:00:00Z", "disabled": true},
-						{"key": "end_date", "value": "2026-01-31T23:59:59Z", "disabled": true}
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"}
 					]
 				}
 			}

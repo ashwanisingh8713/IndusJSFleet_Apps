@@ -3,9 +3,12 @@ package com.indusjs.fleet.presentation.drivers.detail
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
+import com.indusjs.fleet.domain.repository.driver.DriverRepository
+import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.usecase.driver.DeleteDriverUseCase
 import com.indusjs.fleet.domain.usecase.driver.GetDriverByIdUseCase
 import com.indusjs.fleet.domain.usecase.driver.ToggleDriverActiveUseCase
@@ -15,6 +18,8 @@ import com.indusjs.fleet.presentation.drivers.detail.DriverDetailContract.Effect
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailContract.Intent
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailContract.State
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -27,7 +32,9 @@ class DriverDetailViewModel(
     private val updateDriverUseCase: UpdateDriverUseCase,
     private val updateDriverStatusUseCase: UpdateDriverStatusUseCase,
     private val toggleDriverActiveUseCase: ToggleDriverActiveUseCase,
-    private val deleteDriverUseCase: DeleteDriverUseCase
+    private val deleteDriverUseCase: DeleteDriverUseCase,
+    private val driverRepository: DriverRepository,
+    private val teamRepository: TeamRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     override suspend fun handleIntent(intent: Intent) {
@@ -54,6 +61,13 @@ class DriverDetailViewModel(
             // Actions
             is Intent.UpdateStatus -> updateStatus(intent.status)
             is Intent.ToggleActive -> toggleActive()
+
+            // Caretaker assignment
+            is Intent.LoadCaretakers -> loadCaretakers()
+            is Intent.RefreshCaretakers -> refreshCaretakers()
+            is Intent.ToggleCaretakerDropdown -> updateState { copy(showCaretakerDropdown = !showCaretakerDropdown) }
+            is Intent.SelectCaretaker -> updateState { copy(selectedCaretaker = intent.caretaker, showCaretakerDropdown = false) }
+
             is Intent.SaveChanges -> saveChanges()
             is Intent.DeleteDriver -> sendEffect(Effect.ShowDeleteConfirmation)
             is Intent.ConfirmDelete -> confirmDelete()
@@ -61,6 +75,26 @@ class DriverDetailViewModel(
             // Navigation & errors
             is Intent.NavigateBack -> sendEffect(Effect.NavigateBack)
             is Intent.ClearError -> updateState { copy(error = null) }
+
+            // Tab selection
+            is Intent.SelectTab -> selectTab(intent.tabIndex)
+
+            // History tab intents
+            is Intent.LoadHistory -> loadHistory()
+            is Intent.LoadMoreHistory -> loadMoreHistory()
+            is Intent.RefreshHistory -> refreshHistory()
+        }
+    }
+
+    private fun selectTab(tabIndex: Int) {
+        updateState { copy(selectedTab = tabIndex) }
+        // Load tab data if needed
+        when (tabIndex) {
+            1 -> if (currentState.historyItems.isEmpty()) {
+                kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
+                    loadHistory()
+                }
+            }
         }
     }
 
@@ -105,7 +139,11 @@ class DriverDetailViewModel(
     }
 
     private fun enterEditMode() {
-        updateState { copy(isEditMode = true) }
+        updateState { copy(isEditMode = true, isLoadingCaretakers = true) }
+        // Load caretakers
+        kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
+            loadCaretakers()
+        }
     }
 
     private fun exitEditMode() {
@@ -342,6 +380,140 @@ class DriverDetailViewModel(
         } catch (_: Exception) {
             0L
         }
+    }
+
+    // ==================== History Tab Functions ====================
+
+    private suspend fun loadHistory() {
+        val driverId = currentState.driver?.id ?: currentState.driverId
+        if (driverId.isBlank()) return
+
+        updateState { copy(isLoadingHistory = true, historyError = null, historyPage = 1) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = driverRepository.getDriverHistory(driverId, 1, 20)) {
+                is Result.Success -> {
+                    val data = result.data
+                    updateState {
+                        copy(
+                            isLoadingHistory = false,
+                            historyItems = data.history ?: emptyList(),
+                            historyPage = data.page,
+                            hasMoreHistory = data.page < data.totalPages,
+                            historyTotalCount = data.totalCount
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingHistory = false,
+                            historyError = result.message ?: "Failed to load history"
+                        )
+                    }
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+    private suspend fun loadMoreHistory() {
+        val driverId = currentState.driver?.id ?: currentState.driverId
+        if (driverId.isBlank()) return
+        if (currentState.isLoadingHistory || !currentState.hasMoreHistory) return
+
+        val nextPage = currentState.historyPage + 1
+        updateState { copy(isLoadingHistory = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = driverRepository.getDriverHistory(driverId, nextPage, 20)) {
+                is Result.Success -> {
+                    val data = result.data
+                    updateState {
+                        copy(
+                            isLoadingHistory = false,
+                            historyItems = historyItems + (data.history ?: emptyList()),
+                            historyPage = data.page,
+                            hasMoreHistory = data.page < data.totalPages
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState { copy(isLoadingHistory = false) }
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+    private suspend fun refreshHistory() {
+        updateState { copy(historyItems = emptyList(), historyPage = 1, hasMoreHistory = false) }
+        loadHistory()
+    }
+
+    // ==================== Caretaker Management ====================
+
+    private suspend fun loadCaretakers() {
+        updateState { copy(isLoadingCaretakers = true) }
+
+        withContext(dispatcherProvider.io) {
+            // First try to load from cache
+            val cacheResult = teamRepository.getCaretakersFromCache()
+            cacheResult.fold(
+                onSuccess = { cachedCaretakers ->
+                    if (cachedCaretakers.isNotEmpty()) {
+                        val caretakers = cachedCaretakers.map { it.toDto() }
+                        updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
+                    } else {
+                        // Cache is empty, fetch from API
+                        fetchCaretakersFromApi()
+                    }
+                },
+                onFailure = {
+                    // Cache failed, fetch from API
+                    fetchCaretakersFromApi()
+                }
+            )
+        }
+    }
+
+    private suspend fun refreshCaretakers() {
+        updateState { copy(isLoadingCaretakers = true) }
+        withContext(dispatcherProvider.io) {
+            fetchCaretakersFromApi()
+        }
+    }
+
+    private suspend fun fetchCaretakersFromApi() {
+        val result = teamRepository.refreshTeamMembers()
+        result.fold(
+            onSuccess = { teamMembers ->
+                val caretakers = teamMembers
+                    .filter { member ->
+                        member.role.name.lowercase() in listOf("supervisor", "manager")
+                    }
+                    .map { it.toDto() }
+                updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
+            },
+            onFailure = {
+                updateState { copy(isLoadingCaretakers = false) }
+            }
+        )
+    }
+
+    private fun com.indusjs.fleet.domain.entity.team.TeamMember.toDto(): TeamMemberDto {
+        return TeamMemberDto(
+            id = id.toIntOrNull() ?: 0,
+            email = email,
+            mobile = mobile,
+            firstName = firstName,
+            lastName = lastName,
+            role = role.toApiString(),
+            ownerId = ownerId.toIntOrNull() ?: 0,
+            isActive = isActive,
+            createdAt = createdAt,
+            updatedAt = updatedAt
+        )
     }
 }
 

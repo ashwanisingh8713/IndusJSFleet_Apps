@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.RemoteDataSource
+import com.indusjs.fleet.data.model.history.VehicleHistoryApiResponse
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleRequest
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleWithDocumentsRequest
 import com.indusjs.fleet.data.model.vehicle.UpdateVehicleRequest
@@ -73,6 +74,9 @@ interface VehicleRemoteDataSource : RemoteDataSource {
 
     // Document Download
     suspend fun downloadDocument(token: String, documentId: String): Result<ByteArray>
+
+    // History API
+    suspend fun getVehicleHistory(token: String, id: String, page: Int, perPage: Int): VehicleHistoryApiResponse
 }
 
 /**
@@ -513,6 +517,28 @@ class VehicleRemoteDataSourceImpl(
         } catch (e: Exception) {
             log.e(e) { "Failed to download document: ${e.message}" }
             Result.Error(e, e.message ?: "Download failed")
+        }
+    }
+
+    override suspend fun getVehicleHistory(
+        token: String,
+        id: String,
+        page: Int,
+        perPage: Int
+    ): VehicleHistoryApiResponse {
+        return try {
+            log.d { "Fetching vehicle history for id: $id, page: $page" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/history") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("page", page)
+                parameter("per_page", perPage)
+            }
+            val bodyText = response.bodyAsText()
+            log.d { "Vehicle history response: $bodyText" }
+            json.decodeFromString<VehicleHistoryApiResponse>(bodyText)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch vehicle history: ${e.message}" }
+            VehicleHistoryApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(e))
         }
     }
 }

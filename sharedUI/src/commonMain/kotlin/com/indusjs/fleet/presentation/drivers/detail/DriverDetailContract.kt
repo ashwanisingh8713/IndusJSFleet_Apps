@@ -3,6 +3,8 @@ package com.indusjs.fleet.presentation.drivers.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.data.model.history.HistoryItemDto
+import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
@@ -55,7 +57,24 @@ object DriverDetailContract {
         // Available options
         val licenseTypes: List<LicenseType> = LicenseType.entries,
         val bloodGroupOptions: List<String> = bloodGroups,
-        val statusOptions: List<DriverStatus> = DriverStatus.entries
+        val statusOptions: List<DriverStatus> = DriverStatus.entries,
+
+        // Caretaker assignment
+        val caretakers: List<TeamMemberDto> = emptyList(),
+        val selectedCaretaker: TeamMemberDto? = null,
+        val showCaretakerDropdown: Boolean = false,
+        val isLoadingCaretakers: Boolean = false,
+
+        // History Tab
+        val historyItems: List<HistoryItemDto> = emptyList(),
+        val isLoadingHistory: Boolean = false,
+        val historyError: String? = null,
+        val historyPage: Int = 1,
+        val hasMoreHistory: Boolean = false,
+        val historyTotalCount: Int = 0,
+
+        // Current selected tab (0 = Overview, 1 = History)
+        val selectedTab: Int = 0
     ) : UiState {
 
         val isFormValid: Boolean
@@ -100,6 +119,12 @@ object DriverDetailContract {
         // Toggle active
         data object ToggleActive : Intent
 
+        // Caretaker assignment
+        data object LoadCaretakers : Intent
+        data object RefreshCaretakers : Intent
+        data object ToggleCaretakerDropdown : Intent
+        data class SelectCaretaker(val caretaker: TeamMemberDto?) : Intent
+
         // Save changes
         data object SaveChanges : Intent
 
@@ -113,6 +138,14 @@ object DriverDetailContract {
         // Error handling
         data object ClearError : Intent
         data object Refresh : Intent
+
+        // Tab selection
+        data class SelectTab(val tabIndex: Int) : Intent
+
+        // History Tab
+        data object LoadHistory : Intent
+        data object LoadMoreHistory : Intent
+        data object RefreshHistory : Intent
     }
 
     /**

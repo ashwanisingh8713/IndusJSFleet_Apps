@@ -340,13 +340,37 @@
 					"description": "Reset a team member's password. **Owner and General Manager can access.**\n\n- General Manager can only reset passwords for Manager and Supervisor"
 				},
 				{
-					"name": "Delete Team Member",
+					"name": "Disable Team Member",
 					"request": {
 						"method": "DELETE",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/team/members/1", "host": ["{{base_url}}"], "path": ["team", "members", "1"]}
 					},
-					"description": "Delete a team member. **Owner only.**\n\nNote: Consider using Toggle Active to disable instead of delete to preserve audit trail."
+					"description": "Disables a team member (sets is_active to false). Team members cannot be permanently deleted.\n\n**Owner only.**\n\n**Note:** Use PATCH /team/members/:id/toggle-active to re-enable."
+				},
+				{
+					"name": "Get Team Member History",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/team/members/1/history?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["team", "members", "1", "history"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
+					},
+					"description": "Get complete audit trail of all changes made to this team member. **Owner and General Manager only.**"
+				}
+			]
+		},
+		{
+			"name": "03c. Audit Logs",
+			"description": "View system audit logs for all entity changes. Owner and General Manager only.",
+			"item": [
+				{
+					"name": "Get Audit Logs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/audit-logs?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["audit-logs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "entity_type", "value": "vehicle", "disabled": true}, {"key": "entity_id", "value": "1", "disabled": true}, {"key": "action", "value": "update", "disabled": true}, {"key": "user_id", "value": "1", "disabled": true}, {"key": "start_date", "value": "2025-01-01", "disabled": true}, {"key": "end_date", "value": "2025-12-31", "disabled": true}]}
+					},
+					"description": "Get paginated audit logs with optional filters.\n\n**Filters:**\n- `entity_type`: vehicle, driver, user, trip, etc.\n- `entity_id`: Specific entity ID\n- `action`: create, update, delete\n- `user_id`: Filter by user who made the change\n- `start_date`: Filter from date (YYYY-MM-DD)\n- `end_date`: Filter to date (YYYY-MM-DD)\n\n**Owner and General Manager only.**"
 				}
 			]
 		},
@@ -469,7 +493,7 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"first_name\": \"Ramesh\",\n    \"last_name\": \"Kumar\",\n    \"mobile\": \"+919876543213\",\n    \"email\": \"ramesh@example.com\",\n    \"license_number\": \"DL1234567890\",\n    \"license_expiry\": \"31-12-2026\",\n    \"license_type\": \"HMV\",\n    \"date_of_birth\": \"15-01-1990\",\n    \"address\": \"123 Main Street, Delhi\",\n    \"emergency_contact\": \"+919876543214\",\n    \"blood_group\": \"O+\"\n}"
+							"raw": "{\n    \"first_name\": \"Ramesh\",\n    \"last_name\": \"Kumar\",\n    \"mobile\": \"+919876543213\",\n    \"email\": \"ramesh@example.com\",\n    \"license_number\": \"DL1234567890\",\n    \"license_expiry\": \"31-12-2026\",\n    \"license_type\": \"HMV\",\n    \"date_of_birth\": \"15-01-1990\",\n    \"address\": \"123 Main Street, Delhi\",\n    \"emergency_contact\": \"+919876543214\",\n    \"blood_group\": \"O+\",\n    \"caretaker_id\": null\n}"
 						},
 						"url": {"raw": "{{base_url}}/drivers", "host": ["{{base_url}}"], "path": ["drivers"]}
 					}
@@ -531,11 +555,155 @@
 					}
 				},
 				{
-					"name": "Delete Driver",
+					"name": "Disable Driver",
 					"request": {
 						"method": "DELETE",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}"]}
+					},
+					"description": "Disables a driver (sets is_active to false). Drivers cannot be permanently deleted.\n\n**Note:** Use PATCH /drivers/:id/toggle-active to re-enable."
+				},
+				{
+					"name": "Get Driver History",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/history?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "history"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
+					},
+					"description": "Get complete audit trail of all changes made to this driver."
+				},
+				{
+					"name": "--- Driver Costs (Owner/GM Only) ---",
+					"item": []
+				},
+				{
+					"name": "Create Driver Cost - Salary",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cost_id\": \"DC-001-001\",\n    \"cost_label\": \"Monthly Salary\",\n    \"group_id\": \"DC-G-001\",\n    \"amount\": 25000.00,\n    \"date\": \"31-12-2025\",\n    \"month\": \"2025-12\",\n    \"description\": \"December 2025 Salary\",\n    \"notes\": \"Paid via bank transfer\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs"]}
+					}
+				},
+				{
+					"name": "Create Driver Cost - Trip Bonus",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"trip_id\": 1,\n    \"cost_id\": \"DC-002-001\",\n    \"cost_label\": \"Trip Bonus\",\n    \"group_id\": \"DC-G-002\",\n    \"amount\": 500.00,\n    \"date\": \"15-12-2025\",\n    \"description\": \"Bonus for long-haul trip\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs"]}
+					}
+				},
+				{
+					"name": "Create Driver Cost - Deduction",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cost_id\": \"DC-003-001\",\n    \"cost_label\": \"Advance Recovery\",\n    \"group_id\": \"DC-G-003\",\n    \"amount\": 2000.00,\n    \"date\": \"31-12-2025\",\n    \"month\": \"2025-12\",\n    \"description\": \"Advance recovery installment\",\n    \"is_deduction\": true\n}"
+						},
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs"]}
+					}
+				},
+				{
+					"name": "Get Driver Costs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "group_id", "value": "", "disabled": true}, {"key": "month", "value": "", "disabled": true}, {"key": "start_date", "value": "", "disabled": true}, {"key": "end_date", "value": "", "disabled": true}]}
+					}
+				},
+				{
+					"name": "Get Driver Cost",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs/1", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs", "1"]}
+					}
+				},
+				{
+					"name": "Update Driver Cost",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 27000.00,\n    \"notes\": \"Updated salary amount\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs/1", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs", "1"]}
+					}
+				},
+				{
+					"name": "Delete Driver Cost",
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs/1", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs", "1"]}
+					}
+				},
+				{
+					"name": "Bulk Create Driver Costs",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"costs\": [\n        {\n            \"cost_id\": \"DC-001-001\",\n            \"cost_label\": \"Monthly Salary\",\n            \"group_id\": \"DC-G-001\",\n            \"amount\": 25000.00,\n            \"date\": \"31-12-2025\",\n            \"month\": \"2025-12\"\n        },\n        {\n            \"cost_id\": \"DC-002-002\",\n            \"cost_label\": \"Performance Bonus\",\n            \"group_id\": \"DC-G-002\",\n            \"amount\": 5000.00,\n            \"date\": \"31-12-2025\"\n        }\n    ]\n}"
+						},
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs/bulk", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs", "bulk"]}
+					}
+				},
+				{
+					"name": "Get Driver Financial Summary",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/financial-summary?period=monthly", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "financial-summary"], "query": [{"key": "period", "value": "monthly", "description": "today, weekly, monthly, quarterly, yearly, custom"}]}
+					}
+				},
+				{
+					"name": "Get Driver Earnings",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/earnings?period=monthly", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "earnings"], "query": [{"key": "period", "value": "monthly"}]}
+					}
+				}
+			]
+		},
+		{
+			"name": "04a. Cost Types",
+			"description": "Get all available cost types for trips, maintenance, and drivers",
+			"item": [
+				{
+					"name": "Get Trip Cost Types",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/cost-types/trip", "host": ["{{base_url}}"], "path": ["cost-types", "trip"]}
+					}
+				},
+				{
+					"name": "Get Maintenance Cost Types",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/cost-types/maintenance", "host": ["{{base_url}}"], "path": ["cost-types", "maintenance"]}
+					}
+				},
+				{
+					"name": "Get Driver Cost Types",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/cost-types/driver", "host": ["{{base_url}}"], "path": ["cost-types", "driver"]}
 					}
 				}
 			]
@@ -565,7 +733,7 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"registration_number\": \"MH12AB1234\",\n    \"make\": \"Tata\",\n    \"model\": \"Prima\",\n    \"year\": 2022,\n    \"vehicle_type\": \"truck\",\n    \"fuel_type\": \"diesel\",\n    \"capacity\": 16.5,\n    \"color\": \"White\"\n}"
+							"raw": "{\n    \"registration_number\": \"MH12AB1234\",\n    \"make\": \"Tata\",\n    \"model\": \"Prima\",\n    \"year\": 2022,\n    \"vehicle_type\": \"truck\",\n    \"fuel_type\": \"diesel\",\n    \"capacity\": 16.5,\n    \"color\": \"White\",\n    \"caretaker_id\": null\n}"
 						},
 						"url": {"raw": "{{base_url}}/vehicles", "host": ["{{base_url}}"], "path": ["vehicles"]}
 					}
@@ -593,11 +761,11 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"make\": \"Mahindra\",\n    \"model\": \"E9\",\n    \"year\": 2023,\n    \"vehicle_type\": \"car\",\n    \"fuel_type\": \"electric\",\n    \"capacity\": 4,\n    \"color\": \"green\",\n    \"mileage\": 100.5,\n    \"assigned_driver_id\": 1\n}"
+							"raw": "{\n    \"make\": \"Mahindra\",\n    \"model\": \"E9\",\n    \"year\": 2023,\n    \"vehicle_type\": \"car\",\n    \"fuel_type\": \"electric\",\n    \"capacity\": 4,\n    \"color\": \"green\",\n    \"mileage\": 100.5,\n    \"assigned_driver_id\": 1,\n    \"caretaker_id\": null\n}"
 						},
 						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}"]}
 					},
-					"description": "Update a vehicle. All fields are optional.\n\n**Supported Fields:**\n- `make`: Vehicle manufacturer\n- `model`: Vehicle model\n- `year`: Manufacturing year\n- `vehicle_type`: Type of vehicle (car, truck, etc.)\n- `fuel_type`: Fuel type (diesel, petrol, electric, cng)\n- `capacity`: Cargo capacity\n- `color`: Vehicle color\n- `mileage`: Fuel efficiency (km per liter or km per charge)\n- `assigned_driver_id`: ID of the assigned driver (optional, can be null)\n\n**Response includes:**\n- `mileage`: Vehicle mileage\n- `assigned_driver_id`: Assigned driver ID\n- `assigned_driver`: Full driver object if assigned"
+					"description": "Update a vehicle. All fields are optional.\n\n**Supported Fields:**\n- `make`: Vehicle manufacturer\n- `model`: Vehicle model\n- `year`: Manufacturing year\n- `vehicle_type`: Type of vehicle (car, truck, etc.)\n- `fuel_type`: Fuel type (diesel, petrol, electric, cng)\n- `capacity`: Cargo capacity\n- `color`: Vehicle color\n- `mileage`: Fuel efficiency (km per liter or km per charge)\n- `assigned_driver_id`: ID of the assigned driver (optional, can be null)\n- `caretaker_id`: ID of caretaker (Manager/Supervisor) - optional\n\n**Response includes:**\n- `mileage`: Vehicle mileage\n- `assigned_driver_id`: Assigned driver ID\n- `assigned_driver`: Full driver object if assigned\n- `caretaker`: Caretaker object if assigned"
 				},
 				{
 					"name": "Update Vehicle State",
@@ -612,12 +780,22 @@
 					}
 				},
 				{
-					"name": "Delete Vehicle",
+					"name": "Disable Vehicle",
 					"request": {
 						"method": "DELETE",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}"]}
-					}
+					},
+					"description": "Disables a vehicle (sets state to inactive). Vehicles cannot be permanently deleted.\n\n**Note:** Use PATCH /vehicles/:id/state with state='active' to re-enable."
+				},
+				{
+					"name": "Get Vehicle History",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/history?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "history"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
+					},
+					"description": "Get complete audit trail of all changes made to this vehicle."
 				},
 				{
 					"name": "Get Vehicle Location",
@@ -1020,7 +1198,7 @@
 		},
 		{
 			"name": "08. Trip Costs",
-			"description": "Trip expense tracking (16 cost types).\n\n**Date Format**: DD-MM-YYYY (e.g., 31-12-2025)\n**Time Format**: HH:MM 24-hour (e.g., 14:30)\n\n**Cost Types**: fuel, toll, driver_allowance, parking, loading_charges, unloading_charges, insurance, permit, registration_renewal, fitness_check, emission_test, state_permit, national_permit, chalan, other\n\n**Fuel-specific fields (when cost_type='fuel')**: fuel_type, fuel_quantity, fuel_rate, km_per_liter\n**Other cost type (when cost_type='other')**: custom_cost_type_name\n\n**Response includes created_by_user**: All trip cost responses include a `created_by_user` object with `id`, `first_name`, `last_name`, and `role` fields identifying who created the cost entry.",
+			"description": "Trip expense tracking with structured cost IDs.\n\n**Date Format**: DD-MM-YYYY (e.g., 31-12-2025)\n**Time Format**: HH:MM 24-hour (e.g., 14:30)\n\n**NEW Cost Structure (Required Fields):**\n- `cost_id`: Unique cost identifier (e.g., TC-001-002 for Diesel)\n- `cost_label`: Human-readable name (e.g., Diesel)\n- `group_id`: Group identifier (e.g., TC-G-001 for Fuel & Energy)\n\n**Trip Cost Groups:**\n- TC-G-001: Fuel & Energy (Petrol, Diesel, CNG/LPG, EV Charging)\n- TC-G-002: Toll & Parking (Toll Charges, Parking Fees, Entry Charges)\n- TC-G-003: Loading & Unloading (Loading, Unloading, Crane/Forklift, Labor)\n- TC-G-004: Driver Expenses (Allowance, Food, Accommodation)\n- TC-G-005: Permits & Compliance (State/National/Special Permit, Chalan/Fine)\n- TC-G-006: Miscellaneous (Police, RTO, Weighbridge, Commission, Other)\n\n**Fuel-specific fields (for group TC-G-001)**: fuel_quantity, fuel_rate, km_per_liter\n**Custom label (for cost_id TC-006-005 'Other')**: custom_cost_label\n\n**Response includes created_by_user**: All trip cost responses include a `created_by_user` object with `id`, `first_name`, `last_name`, and `role` fields.",
 			"item": [
 				{
 					"name": "Get Cost Types",
@@ -1029,20 +1207,20 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/trip-costs/types", "host": ["{{base_url}}"], "path": ["trip-costs", "types"]}
 					},
-					"description": "Returns all 16 cost types with category labels (operating, cargo, compliance, penalty, misc)."
+					"description": "Returns all trip cost types organized by groups. Response includes category_id, category_name, and groups array with group_id, group_name, and items (id, value, label)."
 				},
 				{
-					"name": "Create Trip Cost - Fuel",
+					"name": "Create Trip Cost - Fuel (Diesel)",
 					"request": {
 						"method": "POST",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_type\": \"fuel\",\n    \"amount\": 5000.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"10:30\",\n    \"notes\": \"Diesel refill at HP Pump\",\n    \"fuel_type\": \"diesel\",\n    \"fuel_quantity\": 55.5,\n    \"fuel_rate\": 90.09,\n    \"km_per_liter\": 4.5\n}"
+							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_id\": \"TC-001-002\",\n    \"cost_label\": \"Diesel\",\n    \"group_id\": \"TC-G-001\",\n    \"amount\": 5000.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"10:30\",\n    \"notes\": \"Diesel refill at HP Pump\",\n    \"fuel_quantity\": 55.5,\n    \"fuel_rate\": 90.09,\n    \"km_per_liter\": 4.5\n}"
 						},
 						"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
 					},
-					"description": "Create fuel cost with fuel-specific fields: fuel_type (diesel/petrol/cng), fuel_quantity (liters), fuel_rate (INR/liter), km_per_liter (efficiency)."
+					"description": "Create fuel cost (Diesel). Required: cost_id, cost_label, group_id. Fuel-specific: fuel_quantity (liters), fuel_rate (INR/liter), km_per_liter (efficiency)."
 				},
 				{
 					"name": "Create Trip Cost - Toll",
@@ -1051,7 +1229,7 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_type\": \"toll\",\n    \"amount\": 350.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"11:15\",\n    \"notes\": \"Mumbai-Pune Expressway Toll\"\n}"
+							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_id\": \"TC-002-001\",\n    \"cost_label\": \"Toll Charges\",\n    \"group_id\": \"TC-G-002\",\n    \"amount\": 350.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"11:15\",\n    \"notes\": \"Mumbai-Pune Expressway Toll\"\n}"
 						},
 						"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
 					}
@@ -1063,10 +1241,11 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_type\": \"other\",\n    \"amount\": 200.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"14:00\",\n    \"custom_cost_type_name\": \"Driver Meals\",\n    \"notes\": \"Lunch expense for driver\"\n}"
+							"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"cost_id\": \"TC-006-005\",\n    \"cost_label\": \"Other\",\n    \"group_id\": \"TC-G-006\",\n    \"amount\": 200.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"14:00\",\n    \"custom_cost_label\": \"Driver Meals\",\n    \"notes\": \"Lunch expense for driver\"\n}"
 						},
 						"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
-					}
+					},
+					"description": "Create 'Other' cost with custom label. Use cost_id TC-006-005 and provide custom_cost_label for description."
 				},
 				{
 					"name": "Get Trip Cost",
@@ -1077,7 +1256,7 @@
 					}
 				},
 				{
-					"name": "Update Trip Cost",
+						"name": "Update Trip Cost",
 					"request": {
 						"method": "PUT",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
@@ -1140,46 +1319,47 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"costs\": [\n    {\n      \"cost_type\": \"fuel\",\n      \"amount\": 5000.00,\n      \"date\": \"2026-12-20T10:30:00Z\",\n      \"time\": \"2026-12-20T10:30:00Z\",\n      \"notes\": \"Diesel refill at HP Pump\",\n      \"fuel_type\": \"diesel\",\n      \"fuel_quantity\": 55.5,\n      \"fuel_rate\": 90.09\n    },\n    {\n      \"cost_type\": \"toll\",\n      \"amount\": 300.00,\n      \"date\": \"2026-12-20T11:00:00Z\",\n      \"time\": \"2026-12-20T11:00:00Z\",\n      \"notes\": \"Toll plaza fee\"\n    }\n  ]\n}"
+							"raw": "{\n  \"costs\": [\n    {\n      \"cost_id\": \"TC-001-002\",\n      \"cost_label\": \"Diesel\",\n      \"group_id\": \"TC-G-001\",\n      \"amount\": 5000.00,\n      \"date\": \"2026-12-20T10:30:00Z\",\n      \"time\": \"2026-12-20T10:30:00Z\",\n      \"notes\": \"Diesel refill at HP Pump\",\n      \"fuel_quantity\": 55.5,\n      \"fuel_rate\": 90.09,\n      \"km_per_liter\": 4.5\n    },\n    {\n      \"cost_id\": \"TC-002-001\",\n      \"cost_label\": \"Toll Charges\",\n      \"group_id\": \"TC-G-002\",\n      \"amount\": 300.00,\n      \"date\": \"2026-12-20T11:00:00Z\",\n      \"time\": \"2026-12-20T11:00:00Z\",\n      \"notes\": \"Toll plaza fee\"\n    }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/trips/{{trip_id}}/costs/bulk",
 							"host": ["{{base_url}}"],
 							"path": ["trips", "{{trip_id}}", "costs", "bulk"]
 						},
-						"description": "Bulk create trip costs.\n\n**Date/Time Format:** ISO 8601 (e.g., 2026-12-20T10:30:00Z)\n\n**Note:** trip_id is taken from URL path and vehicle_id is taken from the trip record. Do NOT include trip_id or vehicle_id in the request body.\n\n**Fields:**\n- `cost_type`: Required (fuel, toll, driver_allowance, parking, loading_charges, unloading_charges, etc.)\n- `amount`: Required, must be > 0\n- `date`: Required, ISO 8601 format\n- `time`: Optional, ISO 8601 format (time portion will be extracted as HH:MM)\n- `notes`, `custom_cost_type_name`: Optional\n- For fuel: `fuel_type`, `fuel_quantity`, `fuel_rate`, `km_per_liter` (Optional)"
+						"description": "Bulk create trip costs.\n\n**Date/Time Format:** ISO 8601 (e.g., 2026-12-20T10:30:00Z)\n\n**Note:** trip_id is taken from URL path and vehicle_id is taken from the trip record. Do NOT include trip_id or vehicle_id in the request body.\n\n**Required Fields:**\n- `cost_id`: Cost type ID (e.g., TC-001-002 for Diesel)\n- `cost_label`: Display label (e.g., Diesel)\n- `group_id`: Group ID (e.g., TC-G-001 for Fuel & Energy)\n- `amount`: Must be > 0\n- `date`: ISO 8601 format\n\n**Optional Fields:**\n- `time`: ISO 8601 format (time portion extracted as HH:MM)\n- `notes`: Additional notes\n- `custom_cost_label`: For 'Other' type (TC-006-005)\n- For Fuel group (TC-G-001): `fuel_quantity`, `fuel_rate`, `km_per_liter`"
 					},
 					"response": [
 						{
 							"name": "Success",
 							"status": "201",
-							"body": "{\n  \"success\": true,\n  \"message\": \"Trip costs processed\",\n  \"created_count\": 2,\n  \"error_count\": 0,\n  \"costs\": [\n    {\n      \"id\": 101,\n      \"trip_id\": 1,\n      \"vehicle_id\": 1,\n      \"cost_type\": \"fuel\",\n      \"amount\": 5000.00,\n      \"date\": \"2026-12-20T10:30:00Z\",\n      \"time\": \"10:30\",\n      \"notes\": \"Diesel refill at HP Pump\"\n    }\n  ]\n}"
+							"body": "{\n  \"success\": true,\n  \"message\": \"Trip costs processed\",\n  \"created_count\": 2,\n  \"error_count\": 0,\n  \"costs\": [\n    {\n      \"id\": 101,\n      \"trip_id\": 1,\n      \"vehicle_id\": 1,\n      \"cost_id\": \"TC-001-002\",\n      \"cost_label\": \"Diesel\",\n      \"group_id\": \"TC-G-001\",\n      \"amount\": 5000.00,\n      \"date\": \"2026-12-20T10:30:00Z\",\n      \"time\": \"10:30\",\n      \"notes\": \"Diesel refill at HP Pump\",\n      \"fuel_quantity\": 55.5,\n      \"fuel_rate\": 90.09,\n      \"km_per_liter\": 4.5\n    }\n  ]\n}"
 						},
 						{
 							"name": "Validation Error",
 							"status": "400",
-							"body": "{\n  \"success\": false,\n  \"message\": \"All entries failed validation\",\n  \"data\": {\n    \"error_count\": 1,\n    \"errors\": [\"Entry 1: date is required (ISO 8601 format, e.g., 2026-12-10T12:00:00Z)\"]\n  }\n}"
+							"body": "{\n  \"success\": false,\n  \"message\": \"All entries failed validation\",\n  \"data\": {\n    \"error_count\": 1,\n    \"errors\": [\"Entry 1: invalid cost_id or group_id\"]\n  }\n}"
 						},
 						{
 							"name": "Partial Success",
 							"status": "206",
-							"body": "{\n  \"success\": true,\n  \"message\": \"Some trip costs failed validation\",\n  \"created_count\": 1,\n  \"error_count\": 1,\n  \"costs\": [{\"id\": 102, \"cost_type\": \"toll\", \"amount\": 300.00}],\n  \"errors\": [\"Entry 2: date is required (ISO 8601 format)\"]\n}"
+							"body": "{\n  \"success\": true,\n  \"message\": \"Some trip costs failed validation\",\n  \"created_count\": 1,\n  \"error_count\": 1,\n  \"costs\": [{\"id\": 102, \"cost_id\": \"TC-002-001\", \"cost_label\": \"Toll Charges\", \"amount\": 300.00}],\n  \"errors\": [\"Entry 2: date is required (ISO 8601 format)\"]\n}"
 						}
-						},
+					]
+				},
 		{
 			"name": "Get Vehicle Trip Costs",
 			"request": {
 				"method": "GET",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/trip-costs?page=1&per_page=20&cost_type=&start_date=&end_date=&sort_by=date&sort_order=desc", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "trip-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "cost_type", "value": "", "description": "Filter by cost type - single (fuel) or comma-separated (fuel,toll,parking). Invalid types are silently ignored."}, {"key": "start_date", "value": "", "description": "Filter by start date (DD-MM-YYYY)"}, {"key": "end_date", "value": "", "description": "Filter by end date (DD-MM-YYYY)"}, {"key": "sort_by", "value": "date", "description": "Sort by: date, amount, cost_type, created_at"}, {"key": "sort_order", "value": "desc", "description": "Sort order: asc, desc"}]}
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/trip-costs?page=1&per_page=20&cost_id=&start_date=&end_date=&sort_by=date&sort_order=desc", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "trip-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "cost_id", "value": "", "description": "Filter by cost_id - single (TC-001-002) or comma-separated (TC-001-002,TC-002-001). Invalid IDs are silently ignored."}, {"key": "start_date", "value": "", "description": "Filter by start date (DD-MM-YYYY)"}, {"key": "end_date", "value": "", "description": "Filter by end date (DD-MM-YYYY)"}, {"key": "sort_by", "value": "date", "description": "Sort by: date, amount, cost_id, created_at"}, {"key": "sort_order", "value": "desc", "description": "Sort order: asc, desc"}]}
 			},
-			"description": "Get all trip costs for a vehicle with pagination, filtering, and sorting.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `per_page`: Items per page (default: 10, max: 100)\n- `cost_type`: Filter by cost type - supports single value or comma-separated list (e.g., `fuel,toll,parking`)\n- `start_date`: Filter by start date (DD-MM-YYYY)\n- `end_date`: Filter by end date (DD-MM-YYYY)\n- `sort_by`: Sort field (date, amount, cost_type, created_at)\n- `sort_order`: Sort direction (asc, desc)\n\n**Multi Cost Type Filter Examples:**\n- Single type: `cost_type=fuel`\n- Multiple types: `cost_type=fuel,toll,parking`\n- With date range: `cost_type=fuel,toll&start_date=01-01-2025&end_date=31-12-2025`\n\n**Valid Cost Types:** fuel, toll, driver_allowance, parking, loading_charges, unloading_charges, insurance, permit, registration_renewal, fitness_check, emission_test, state_permit, national_permit, chalan, other\n\n**Response includes:**\n- `costs`: Array of trip cost records\n- `total_cost`: Overall total for this vehicle\n- `filtered_total`: Total for filtered results\n- `cost_by_type`: Breakdown by cost type (filtered if cost_types applied)\n- `count`, `page`, `per_page`, `total_pages`\n- `has_more`: Boolean for infinite scroll\n- `next_page`: Next page number (null if no more)\n- `applied_filters`: Currently applied filters with `cost_types` as array"
+			"description": "Get all trip costs for a vehicle with pagination, filtering, and sorting.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `per_page`: Items per page (default: 10, max: 100)\n- `cost_id`: Filter by cost_id - supports single value or comma-separated list (e.g., `TC-001-002,TC-002-001`)\n- `start_date`: Filter by start date (DD-MM-YYYY)\n- `end_date`: Filter by end date (DD-MM-YYYY)\n- `sort_by`: Sort field (date, amount, cost_id, created_at)\n- `sort_order`: Sort direction (asc, desc)\n\n**Multi Cost ID Filter Examples:**\n- Single: `cost_id=TC-001-002`\n- Multiple: `cost_id=TC-001-002,TC-002-001,TC-002-002`\n- With date range: `cost_id=TC-001-002,TC-002-001&start_date=01-01-2025&end_date=31-12-2025`\n\n**Response includes:**\n- `costs`: Array of trip cost records with cost_id, cost_label, group_id\n- `total_cost`: Overall total for this vehicle\n- `filtered_total`: Total for filtered results\n- `cost_by_group`: Breakdown by group_id\n- `count`, `page`, `per_page`, `total_pages`\n- `has_more`: Boolean for infinite scroll\n- `next_page`: Next page number (null if no more)\n- `applied_filters`: Currently applied filters"
 		}
 	]
 },
 {
 	"name": "09. Maintenance Costs",
-	"description": "Vehicle maintenance tracking (10 cost types).\n\n**Date Format**: DD-MM-YYYY (e.g., 31-12-2025)\n**Time Format**: HH:MM 24-hour (e.g., 14:30)\n\n**Cost Types**: tyre, battery, oil_change, brake_service, engine_repair, clutch_repair, suspension, electrical, body_work, other",
+	"description": "Vehicle maintenance tracking with structured cost IDs.\n\n**Date Format**: DD-MM-YYYY (e.g., 31-12-2025)\n**Time Format**: HH:MM 24-hour (e.g., 14:30)\n\n**NEW Cost Structure (Required Fields):**\n- `cost_id`: Unique cost identifier (e.g., VMC-002-003 for Tyres Replacement)\n- `cost_label`: Human-readable name (e.g., Tyres Replacement)\n- `group_id`: Group identifier (e.g., VMC-G-002 for Repairs & Replacements)\n\n**Maintenance Cost Groups:**\n- VMC-G-001: Regular Maintenance (Oil Change, Filters, Alignment, Servicing)\n- VMC-G-002: Repairs & Replacements (Brake Pads, Battery, Tyres, Clutch, Suspension)\n- VMC-G-003: Electrical & AC (AC Service, Wiring, Alternator, Lights)\n- VMC-G-004: Body & Exterior (Denting, Windshield, Body Parts, Washing)\n- VMC-G-005: Engine & Transmission (Overhaul, Gearbox, Radiator, Fuel System)\n- VMC-G-006: Miscellaneous (Accessories, GPS/Tracking, Other)\n- VMC-G-007: Wheels & Tires (Rotation, Alignment, Replacement)\n\n**Custom label (for cost_id VMC-006-003 'Other')**: custom_cost_label",
 	"item": [
 		{
 			"name": "Get Maintenance Cost Types",
@@ -1187,28 +1367,43 @@
 				"method": "GET",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/maintenance-costs/types", "host": ["{{base_url}}"], "path": ["maintenance-costs", "types"]}
-			}
+			},
+			"description": "Returns all maintenance cost types organized by groups. Response includes category_id, category_name, and groups array with group_id, group_name, and items (id, value, label)."
 		},
 		{
-			"name": "Create Maintenance Cost",
+			"name": "Create Maintenance Cost - Tyres",
 			"request": {
 				"method": "POST",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"vehicle_id\": 1,\n    \"cost_type\": \"tyre\",\n    \"amount\": 25000.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"14:00\",\n    \"description\": \"Replaced 2 front tyres\",\n    \"notes\": \"MRF brand\",\n    \"vendor_name\": \"Sharma Tyre Works\",\n    \"invoice_no\": \"INV-2025-001\"\n}"
+					"raw": "{\n    \"vehicle_id\": 1,\n    \"cost_id\": \"VMC-002-003\",\n    \"cost_label\": \"Tyres Replacement\",\n    \"group_id\": \"VMC-G-002\",\n    \"amount\": 25000.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"14:00\",\n    \"description\": \"Replaced 2 front tyres\",\n    \"notes\": \"MRF brand\",\n    \"vendor_name\": \"Sharma Tyre Works\",\n    \"invoice_no\": \"INV-2025-001\"\n}"
 				},
 				"url": {"raw": "{{base_url}}/maintenance-costs", "host": ["{{base_url}}"], "path": ["maintenance-costs"]}
-			}
+			},
+			"description": "Create maintenance cost. Required: cost_id, cost_label, group_id, vehicle_id, amount, date."
+		},
+		{
+			"name": "Create Maintenance Cost - Other (Custom)",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"vehicle_id\": 1,\n    \"cost_id\": \"VMC-006-003\",\n    \"cost_label\": \"Other\",\n    \"group_id\": \"VMC-G-006\",\n    \"amount\": 1500.00,\n    \"date\": \"20-12-2025\",\n    \"time\": \"16:00\",\n    \"custom_cost_label\": \"Insurance Premium\",\n    \"description\": \"Quarterly insurance payment\",\n    \"vendor_name\": \"ICICI Lombard\",\n    \"invoice_no\": \"INS-2025-Q4\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/maintenance-costs", "host": ["{{base_url}}"], "path": ["maintenance-costs"]}
+			},
+			"description": "Create 'Other' maintenance cost with custom label. Use cost_id VMC-006-003 and provide custom_cost_label."
 		},
 		{
 			"name": "List All Maintenance Costs",
 			"request": {
 				"method": "GET",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-				"url": {"raw": "{{base_url}}/maintenance-costs?page=1&per_page=20&vehicle_id=&cost_type=&start_date=&end_date=", "host": ["{{base_url}}"], "path": ["maintenance-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "vehicle_id", "value": "", "description": "Filter by vehicle ID"}, {"key": "cost_type", "value": "", "description": "Filter by cost type - single (tyre) or comma-separated (tyre,battery,oil_change)"}, {"key": "start_date", "value": "", "description": "Filter by start date (DD-MM-YYYY)"}, {"key": "end_date", "value": "", "description": "Filter by end date (DD-MM-YYYY)"}]}
+				"url": {"raw": "{{base_url}}/maintenance-costs?page=1&per_page=20&vehicle_id=&cost_id=&start_date=&end_date=", "host": ["{{base_url}}"], "path": ["maintenance-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "vehicle_id", "value": "", "description": "Filter by vehicle ID"}, {"key": "cost_id", "value": "", "description": "Filter by cost_id - single (VMC-002-003) or comma-separated (VMC-002-003,VMC-001-001)"}, {"key": "start_date", "value": "", "description": "Filter by start date (DD-MM-YYYY)"}, {"key": "end_date", "value": "", "description": "Filter by end date (DD-MM-YYYY)"}]}
 			},
-			"description": "Get all maintenance costs for the organization.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `per_page`: Items per page (default: 10, max: 100)\n- `vehicle_id`: Filter by specific vehicle\n- `cost_type`: Filter by cost type - single value or comma-separated (e.g., `tyre,battery,oil_change`)\n- `start_date`: Filter by start date (DD-MM-YYYY)\n- `end_date`: Filter by end date (DD-MM-YYYY)\n\n**Valid Cost Types:** tyre, battery, oil_change, brake_service, engine_repair, ac_service, body_work, cleaning, hydraulic_repair, other"
+			"description": "Get all maintenance costs for the organization.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `per_page`: Items per page (default: 10, max: 100)\n- `vehicle_id`: Filter by specific vehicle\n- `cost_id`: Filter by cost_id - single value or comma-separated (e.g., `VMC-002-003,VMC-001-001`)\n- `start_date`: Filter by start date (DD-MM-YYYY)\n- `end_date`: Filter by end date (DD-MM-YYYY)"
 		},
 		{
 			"name": "Get Maintenance Cost",
@@ -1225,7 +1420,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"amount\": 26000.00,\n    \"notes\": \"Updated with GST\"\n}"
+					"raw": "{\n    \"amount\": 26000.00,\n    \"notes\": \"Updated with GST\",\n    \"cost_id\": \"VMC-002-003\",\n    \"cost_label\": \"Tyres Replacement\",\n    \"group_id\": \"VMC-G-002\"\n}"
 				},
 				"url": {"raw": "{{base_url}}/maintenance-costs/1", "host": ["{{base_url}}"], "path": ["maintenance-costs", "1"]}
 			}
@@ -1243,9 +1438,9 @@
 			"request": {
 				"method": "GET",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs?page=1&per_page=20&cost_type=&start_date=&end_date=&sort_by=date&sort_order=desc", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "cost_type", "value": "", "description": "Filter by cost type - single (tyre) or comma-separated (tyre,battery,oil_change). Invalid types are silently ignored."}, {"key": "start_date", "value": "", "description": "Filter by start date (DD-MM-YYYY)"}, {"key": "end_date", "value": "", "description": "Filter by end date (DD-MM-YYYY)"}, {"key": "sort_by", "value": "date", "description": "Sort by: date, amount, cost_type, created_at"}, {"key": "sort_order", "value": "desc", "description": "Sort order: asc, desc"}]}
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs?page=1&per_page=20&cost_id=&start_date=&end_date=&sort_by=date&sort_order=desc", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "cost_id", "value": "", "description": "Filter by cost_id - single (VMC-002-003) or comma-separated (VMC-002-003,VMC-001-001). Invalid IDs are silently ignored."}, {"key": "start_date", "value": "", "description": "Filter by start date (DD-MM-YYYY)"}, {"key": "end_date", "value": "", "description": "Filter by end date (DD-MM-YYYY)"}, {"key": "sort_by", "value": "date", "description": "Sort by: date, amount, cost_id, created_at"}, {"key": "sort_order", "value": "desc", "description": "Sort order: asc, desc"}]}
 			},
-			"description": "Get all maintenance costs for a vehicle with pagination, filtering, and sorting.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `per_page`: Items per page (default: 10, max: 100)\n- `cost_type`: Filter by cost type - supports single value or comma-separated list (e.g., `tyre,battery,oil_change`)\n- `start_date`: Filter by start date (DD-MM-YYYY)\n- `end_date`: Filter by end date (DD-MM-YYYY)\n- `sort_by`: Sort field (date, amount, cost_type, created_at)\n- `sort_order`: Sort direction (asc, desc)\n\n**Multi Cost Type Filter Examples:**\n- Single type: `cost_type=tyre`\n- Multiple types: `cost_type=tyre,battery,oil_change`\n- With date range: `cost_type=tyre,battery&start_date=01-01-2025&end_date=31-12-2025`\n\n**Valid Cost Types:** tyre, battery, oil_change, brake_service, engine_repair, ac_service, body_work, cleaning, hydraulic_repair, other\n\n**Response includes:**\n- `costs`: Array of maintenance cost records\n- `total_cost`: Overall total for this vehicle\n- `filtered_total`: Total for filtered results\n- `cost_by_type`: Breakdown by cost type (filtered if cost_types applied)\n- `count`, `page`, `per_page`, `total_pages`\n- `has_more`: Boolean for infinite scroll\n- `next_page`: Next page number (null if no more)\n- `applied_filters`: Currently applied filters with `cost_types` as array"
+			"description": "Get all maintenance costs for a vehicle with pagination, filtering, and sorting.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `per_page`: Items per page (default: 10, max: 100)\n- `cost_id`: Filter by cost_id - supports single value or comma-separated list (e.g., `VMC-002-003,VMC-001-001`)\n- `start_date`: Filter by start date (DD-MM-YYYY)\n- `end_date`: Filter by end date (DD-MM-YYYY)\n- `sort_by`: Sort field (date, amount, cost_id, created_at)\n- `sort_order`: Sort direction (asc, desc)\n\n**Response includes:**\n- `costs`: Array of maintenance cost records with cost_id, cost_label, group_id\n- `total_cost`: Overall total for this vehicle\n- `filtered_total`: Total for filtered results\n- `cost_by_group`: Breakdown by group_id\n- `count`, `page`, `per_page`, `total_pages`\n- `has_more`: Boolean for infinite scroll\n- `next_page`: Next page number (null if no more)\n- `applied_filters`: Currently applied filters"
 		},
 		{
 			"name": "Get Maintenance History",
@@ -1270,26 +1465,26 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"costs\": [\n        {\n            \"cost_type\": \"oil_change\",\n            \"amount\": 5000.00,\n            \"date\": \"2026-12-20T10:00:00Z\",\n            \"time\": \"2026-12-20T10:00:00Z\",\n            \"description\": \"Regular oil change\",\n            \"notes\": \"Castrol 5W30\",\n            \"vendor_name\": \"ABC Service Center\",\n            \"invoice_no\": \"INV-001\"\n        },\n        {\n            \"cost_type\": \"cleaning\",\n            \"amount\": 500.00,\n            \"date\": \"2026-12-20T11:00:00Z\",\n            \"time\": \"2026-12-20T11:00:00Z\",\n            \"description\": \"Full wash\",\n            \"notes\": \"Interior + Exterior\"\n        }\n    ]\n}"
+					"raw": "{\n    \"costs\": [\n        {\n            \"cost_id\": \"VMC-001-001\",\n            \"cost_label\": \"Engine Oil Change\",\n            \"group_id\": \"VMC-G-001\",\n            \"amount\": 5000.00,\n            \"date\": \"2026-12-20T10:00:00Z\",\n            \"time\": \"2026-12-20T10:00:00Z\",\n            \"description\": \"Regular oil change\",\n            \"notes\": \"Castrol 5W30\",\n            \"vendor_name\": \"ABC Service Center\",\n            \"invoice_no\": \"INV-001\"\n        },\n        {\n            \"cost_id\": \"VMC-004-004\",\n            \"cost_label\": \"Washing & Cleaning\",\n            \"group_id\": \"VMC-G-004\",\n            \"amount\": 500.00,\n            \"date\": \"2026-12-20T11:00:00Z\",\n            \"time\": \"2026-12-20T11:00:00Z\",\n            \"description\": \"Full wash\",\n            \"notes\": \"Interior + Exterior\"\n        }\n    ]\n}"
 				},
 				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs/bulk", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs", "bulk"]},
-				"description": "Bulk create maintenance costs.\n\n**Date/Time Format:** ISO 8601 (e.g., 2026-12-20T10:00:00Z)\n\n**Note:** vehicle_id is taken from URL path. Do NOT include vehicle_id in the request body.\n\n**Fields:**\n- `cost_type`: Required (tyre, battery, oil_change, brake_service, engine_repair, ac_service, body_work, cleaning, hydraulic_repair, other)\n- `amount`: Required, must be > 0\n- `date`: Required, ISO 8601 format\n- `time`: Optional, ISO 8601 format (time portion will be extracted as HH:MM)\n- `description`, `notes`, `vendor_name`, `invoice_no`: Optional"
+				"description": "Bulk create maintenance costs.\n\n**Date/Time Format:** ISO 8601 (e.g., 2026-12-20T10:00:00Z)\n\n**Note:** vehicle_id is taken from URL path. Do NOT include vehicle_id in the request body.\n\n**Required Fields:**\n- `cost_id`: Cost type ID (e.g., VMC-001-001 for Engine Oil Change)\n- `cost_label`: Display label (e.g., Engine Oil Change)\n- `group_id`: Group ID (e.g., VMC-G-001 for Regular Maintenance)\n- `amount`: Must be > 0\n- `date`: ISO 8601 format\n\n**Optional Fields:**\n- `time`: ISO 8601 format (time portion extracted as HH:MM)\n- `description`, `notes`, `vendor_name`, `invoice_no`\n- `custom_cost_label`: For 'Other' type (VMC-006-003)"
 			},
 			"response": [
 				{
 					"name": "Success",
 					"status": "201",
-					"body": "{\n  \"success\": true,\n  \"message\": \"Maintenance costs processed\",\n  \"created_count\": 2,\n  \"error_count\": 0,\n  \"costs\": [\n    {\n      \"id\": 1,\n      \"vehicle_id\": 1,\n      \"cost_type\": \"oil_change\",\n      \"amount\": 5000.00,\n      \"date\": \"2026-12-20T10:00:00Z\",\n      \"time\": \"10:00\"\n    }\n  ]\n}"
+					"body": "{\n  \"success\": true,\n  \"message\": \"Maintenance costs processed\",\n  \"created_count\": 2,\n  \"error_count\": 0,\n  \"costs\": [\n    {\n      \"id\": 1,\n      \"vehicle_id\": 1,\n      \"cost_id\": \"VMC-001-001\",\n      \"cost_label\": \"Engine Oil Change\",\n      \"group_id\": \"VMC-G-001\",\n      \"amount\": 5000.00,\n      \"date\": \"2026-12-20T10:00:00Z\",\n      \"time\": \"10:00\"\n    }\n  ]\n}"
 				},
 				{
 					"name": "Validation Error",
 					"status": "400",
-					"body": "{\n  \"success\": false,\n  \"message\": \"All entries failed validation\",\n  \"data\": {\n    \"error_count\": 1,\n    \"errors\": [\"Entry 1: date is required (ISO 8601 format, e.g., 2026-12-10T12:00:00Z)\"]\n  }\n}"
+					"body": "{\n  \"success\": false,\n  \"message\": \"All entries failed validation\",\n  \"data\": {\n    \"error_count\": 1,\n    \"errors\": [\"Entry 1: invalid cost_id or group_id\"]\n  }\n}"
 				},
 				{
 					"name": "Partial Success",
 					"status": "206",
-					"body": "{\n  \"success\": true,\n  \"message\": \"Some maintenance costs failed validation\",\n  \"created_count\": 1,\n  \"error_count\": 1,\n  \"costs\": [{\"id\": 1, \"cost_type\": \"oil_change\", \"amount\": 5000.00}],\n  \"errors\": [\"Entry 2: date is required (ISO 8601 format)\"]\n}"
+					"body": "{\n  \"success\": true,\n  \"message\": \"Some maintenance costs failed validation\",\n  \"created_count\": 1,\n  \"error_count\": 1,\n  \"costs\": [{\"id\": 1, \"cost_id\": \"VMC-001-001\", \"cost_label\": \"Engine Oil Change\", \"amount\": 5000.00}],\n  \"errors\": [\"Entry 2: date is required (ISO 8601 format)\"]\n}"
 				}
 			]
 		}
@@ -1342,7 +1537,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/dashboard/cost-overview?filter=today", "host": ["{{base_url}}"], "path": ["dashboard", "cost-overview"], "query": [{"key": "filter", "value": "today"}]}
 			},
-			"description": "Today's cost overview with detailed breakdown.\n\n**Response Fields:**\n- `period`: Filter period (today/weekly/monthly)\n- `total_expenses`: Sum of all trip and maintenance costs\n- `total_revenue`: Total selling value of completed trips\n- `total_profit`: Gross profit (revenue - purchase)\n- `total_loss`: Loss amount if negative profit\n- `net_profit_loss`: Net profit after expenses\n- `completed_trips`: Number of completed trips\n- `fuel_expenses`: Total fuel costs\n- `toll_expenses`: Total toll costs\n- `maintenance_expenses`: Total maintenance costs\n- `other_expenses`: Other trip costs\n- `pending_payments`: Total pending payment amount\n- `received_payments`: Total received payment amount\n\n**NEW - Detailed Breakdowns:**\n- `driver_allowance_expenses`: Driver allowance costs\n- `parking_expenses`: Parking costs\n- `loading_charges`: Loading costs\n- `unloading_charges`: Unloading costs\n- `chalan_expenses`: Penalty/Challan costs\n- `permit_expenses`: Permit costs\n- `insurance_expenses`: Insurance costs\n- `trip_cost_breakdown`: Array of {cost_type, amount, count} for each trip cost type\n- `maintenance_cost_breakdown`: Array of {cost_type, amount, count} for each maintenance cost type"
+			"description": "Today's cost overview with detailed breakdown.\n\n**Response Fields:**\n- `period`: Filter period (today/weekly/monthly)\n- `total_expenses`: Sum of all trip and maintenance costs\n- `total_revenue`: Total revenue from completed trips (trip_price)\n- `total_profit`: Gross profit (revenue - expenses)\n- `total_loss`: Loss amount if negative profit\n- `net_profit_loss`: Net profit after expenses\n- `completed_trips`: Number of completed trips\n- `fuel_expenses`: Total fuel costs (group TC-G-001)\n- `toll_expenses`: Total toll costs (group TC-G-002)\n- `maintenance_expenses`: Total maintenance costs\n- `other_expenses`: Other trip costs\n- `pending_payments`: Total pending payment amount\n- `received_payments`: Total received payment amount\n\n**NEW - Detailed Breakdowns:**\n- `driver_allowance_expenses`: Driver allowance costs\n- `parking_expenses`: Parking costs\n- `loading_charges`: Loading costs\n- `unloading_charges`: Unloading costs\n- `chalan_expenses`: Penalty/Challan costs\n- `permit_expenses`: Permit costs\n- `insurance_expenses`: Insurance costs\n- `trip_cost_breakdown`: Array of {cost_id, amount, count} for each trip cost type\n- `maintenance_cost_breakdown`: Array of {cost_id, amount, count} for each maintenance cost type"
 		},
 		{
 			"name": "Cost Overview - Weekly",
@@ -1518,7 +1713,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"cost_types\": [\"fuel\", \"toll\", \"maintenance\"],\n    \"start_date\": \"2025-01-01\",\n    \"end_date\": \"2025-12-31\",\n    \"vehicle_ids\": [1, 2]\n}"
+					"raw": "{\n    \"cost_ids\": [\"TC-001-002\", \"TC-002-001\", \"VMC-001-001\"],\n    \"start_date\": \"2025-01-01\",\n    \"end_date\": \"2025-12-31\",\n    \"vehicle_ids\": [1, 2]\n}"
 				},
 				"url": {"raw": "{{base_url}}/reports/profit-loss/cost-types", "host": ["{{base_url}}"], "path": ["reports", "profit-loss", "cost-types"]}
 			}
@@ -1530,7 +1725,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"vehicle_ids\": [1, 2, 3],\n    \"trip_ids\": [1, 2, 3, 4, 5],\n    \"cost_types\": [\"fuel\", \"toll\", \"driver_allowance\"],\n    \"start_date\": \"2025-01-01\",\n    \"end_date\": \"2025-12-31\",\n    \"group_by\": \"month\"\n}"
+					"raw": "{\n    \"vehicle_ids\": [1, 2, 3],\n    \"trip_ids\": [1, 2, 3, 4, 5],\n    \"cost_ids\": [\"TC-001-002\", \"TC-002-001\", \"TC-004-001\"],\n    \"start_date\": \"2025-01-01\",\n    \"end_date\": \"2025-12-31\",\n    \"group_by\": \"month\"\n}"
 				},
 				"url": {"raw": "{{base_url}}/reports/profit-loss/consolidated", "host": ["{{base_url}}"], "path": ["reports", "profit-loss", "consolidated"]}
 			}
@@ -1588,7 +1783,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"locations\": [\n        {\n            \"vehicle_id\": 1,\n            \"latitude\": 19.0760,\n            \"longitude\": 72.8777,\n            \"speed\": 45.5\n        },\n        {\n            \"vehicle_id\": 2,\n            \"latitude\": 18.5204,\n            \"longitude\": 73.8567,\n            \"speed": 60.0\n        }\n    ]\n}"
+					"raw": "{\n    \"locations\": [\n        {\n            \"vehicle_id\": 1,\n            \"latitude\": 19.0760,\n            \"longitude\": 72.8777,\n            \"speed\": 45.5\n        },\n        {\n            \"vehicle_id\": 2,\n            \"latitude\": 18.5204,\n            \"longitude\": 73.8567,\n            \"speed\": 60.0\n        }\n    ]\n}"
 				},
 				"url": {"raw": "{{base_url}}/locations/track/bulk", "host": ["{{base_url}}"], "path": ["locations", "track", "bulk"]}
 			}
@@ -1621,5 +1816,7 @@
 				"url": {"raw": "http://localhost:8080/metrics", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["metrics"]}
 			}
 		}
+	]
+}
 	]
 }

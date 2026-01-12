@@ -58,29 +58,29 @@ class TeamListViewModel(
                     userLocalDataSource.getUserId() ?: ""
                 } catch (e: Exception) { "" }
 
-                val result = teamRepository.getTeamMembers()
+                // First try to load from cache
+                val cacheResult = teamRepository.getTeamMembersFromCache()
 
-                result.fold(
+                cacheResult.fold(
                     onSuccess = { members ->
-                        updateState {
-                            copy(
-                                isLoading = false,
-                                teamMembers = members,
-                                filteredMembers = applyFilters(members, selectedFilter, searchQuery),
-                                currentUserRole = userRole,
-                                currentUserId = userId
-                            )
+                        if (members.isNotEmpty()) {
+                            updateState {
+                                copy(
+                                    isLoading = false,
+                                    teamMembers = members,
+                                    filteredMembers = applyFilters(members, selectedFilter, searchQuery),
+                                    currentUserRole = userRole,
+                                    currentUserId = userId
+                                )
+                            }
+                        } else {
+                            // Cache is empty, fetch from API
+                            fetchFromApi(userRole, userId)
                         }
                     },
-                    onFailure = { error ->
-                        updateState {
-                            copy(
-                                isLoading = false,
-                                error = error.message ?: "Failed to load team members",
-                                currentUserRole = userRole,
-                                currentUserId = userId
-                            )
-                        }
+                    onFailure = {
+                        // Cache failed, fetch from API
+                        fetchFromApi(userRole, userId)
                     }
                 )
             } catch (e: Exception) {
@@ -94,32 +94,52 @@ class TeamListViewModel(
         }
     }
 
+    private suspend fun fetchFromApi(userRole: String, userId: String) {
+        val result = teamRepository.refreshTeamMembers()
+
+        result.fold(
+            onSuccess = { members ->
+                updateState {
+                    copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        teamMembers = members,
+                        filteredMembers = applyFilters(members, selectedFilter, searchQuery),
+                        currentUserRole = userRole,
+                        currentUserId = userId
+                    )
+                }
+            },
+            onFailure = { error ->
+                updateState {
+                    copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        error = error.message ?: "Failed to load team members",
+                        currentUserRole = userRole,
+                        currentUserId = userId
+                    )
+                }
+            }
+        )
+    }
+
     private suspend fun refreshTeamMembers() {
         updateState { copy(isRefreshing = true, error = null) }
 
         withContext(dispatcherProvider.io) {
             try {
-                val result = teamRepository.getTeamMembers()
+                // Load current user info
+                val userRole = try {
+                    userLocalDataSource.getUserRole() ?: "owner"
+                } catch (e: Exception) { "owner" }
 
-                result.fold(
-                    onSuccess = { members ->
-                        updateState {
-                            copy(
-                                isRefreshing = false,
-                                teamMembers = members,
-                                filteredMembers = applyFilters(members, selectedFilter, searchQuery)
-                            )
-                        }
-                    },
-                    onFailure = { error ->
-                        updateState {
-                            copy(
-                                isRefreshing = false,
-                                error = error.message ?: "Failed to refresh team members"
-                            )
-                        }
-                    }
-                )
+                val userId = try {
+                    userLocalDataSource.getUserId() ?: ""
+                } catch (e: Exception) { "" }
+
+                // Refresh from API and update local cache
+                fetchFromApi(userRole, userId)
             } catch (e: Exception) {
                 updateState {
                     copy(

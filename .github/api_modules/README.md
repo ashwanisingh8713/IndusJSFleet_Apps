@@ -19,6 +19,18 @@ Complete API documentation for Fleet Management System with 50K+ vehicle support
 - **Time**: `HH:MM` 24-hour format (e.g., 14:30)
 - **DateTime (ISO)**: `2025-12-31T14:30:00Z` for timestamp fields
 
+## Cost Structure (NEW)
+
+All trip and maintenance costs now use structured IDs:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `cost_id` | Unique identifier | TC-001-002 |
+| `cost_label` | Human-readable label | Diesel |
+| `group_id` | Group identifier | TC-G-001 |
+
+See [cost_types.md](../prompts/cost_types.md) for complete reference.
+
 ---
 
 ## API Modules
@@ -157,4 +169,3 @@ The original Postman collection is available at:
 ## Support
 
 For API support or issues, refer to the main [README.md](../../README.md) or documentation in `/doc_prompts/`.
-

@@ -1,0 +1,68 @@
+{
+  "category_id": "VMC-001",
+  "category_name": "Vehicle Maintenance Costs",
+  "groups": [
+    {
+      "group_id": "VMC-G-001",
+      "group_name": "Regular Maintenance",
+      "items": [
+        {
+          "id": "VMC-001-001",
+          "value": "VMC-001-001",
+          "label": "Engine Oil Change"
+        },
+        {
+          "id": "VMC-001-002",
+          "value": "VMC-001-002",
+          "label": "Oil Filter Replacement"
+        },
+        {
+          "id": "VMC-001-003",
+          "value": "VMC-001-003",
+          "label": "Air Filter Replacement"
+        },
+        {
+          "id": "VMC-001-004",
+          "value": "VMC-001-004",
+          "label": "Wheel Alignment & Balancing"
+        },
+        {
+          "id": "VMC-001-005",
+          "value": "VMC-001-005",
+          "label": "General Servicing Labor"
+        }
+      ]
+    },
+    {
+      "group_id": "VMC-G-002",
+      "group_name": "Repairs & Replacements",
+      "items": [
+        {
+          "id": "VMC-002-001",
+          "value": "VMC-002-001",
+          "label": "Brake Pads / Discs"
+        },
+        {
+          "id": "VMC-002-002",
+          "value": "VMC-002-002",
+          "label": "Battery Replacement"
+        },
+        {
+          "id": "VMC-002-003",
+          "value": "VMC-002-003",
+          "label": "Tyres Replacement"
+        },
+        {
+          "id": "VMC-002-004",
+          "value": "VMC-002-004",
+          "label": "Clutch Repair"
+        },
+        {
+          "id": "VMC-002-005",
+          "value": "VMC-002-005",
+          "label": "Suspension Repair"
+        }
+      ]
+    }
+  ]
+}

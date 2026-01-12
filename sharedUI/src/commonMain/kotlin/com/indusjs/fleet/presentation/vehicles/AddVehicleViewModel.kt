@@ -3,11 +3,13 @@ package com.indusjs.fleet.presentation.vehicles
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.vehicle.DocumentStatus
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
+import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleWithDocumentsUseCase
 import com.indusjs.fleet.presentation.vehicles.AddVehicleContract.Effect
 import com.indusjs.fleet.presentation.vehicles.AddVehicleContract.Intent
@@ -24,11 +26,17 @@ import kotlinx.coroutines.withContext
 @Inject
 class AddVehicleViewModel(
     private val dispatcherProvider: DispatcherProvider,
-    private val createVehicleWithDocumentsUseCase: CreateVehicleWithDocumentsUseCase
+    private val createVehicleWithDocumentsUseCase: CreateVehicleWithDocumentsUseCase,
+    private val teamRepository: TeamRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     companion object {
         private var documentIdCounter = 0L
+    }
+
+    init {
+        // Load caretakers (supervisors + managers) on init
+        sendIntent(Intent.LoadCaretakers)
     }
 
     override suspend fun handleIntent(intent: Intent) {
@@ -58,6 +66,12 @@ class AddVehicleViewModel(
             is Intent.RemoveDocument -> removeDocument(intent.documentId)
             is Intent.UpdateDocumentExpiry -> updateDocumentExpiry(intent.documentId, intent.expiryDate)
             is Intent.UpdateDocumentExpiryDate -> updateDocumentExpiryDate(intent.type, intent.rawDigits)
+
+            // Caretaker management
+            is Intent.LoadCaretakers -> loadCaretakers()
+            is Intent.RefreshCaretakers -> refreshCaretakers()
+            is Intent.ToggleCaretakerDropdown -> updateState { copy(showCaretakerDropdown = !showCaretakerDropdown) }
+            is Intent.SelectCaretaker -> updateState { copy(selectedCaretaker = intent.caretaker, showCaretakerDropdown = false) }
 
             // Form actions
             is Intent.ValidateBasicInfo -> validateBasicInfo()
@@ -332,6 +346,77 @@ class AddVehicleViewModel(
             DocumentType.DRIVER_LICENSE -> "Driver License"
             DocumentType.OTHER -> "Other Document"
         }
+    }
+
+    /**
+     * Load caretakers from local cache first.
+     * If cache is empty, fetch from API.
+     */
+    private suspend fun loadCaretakers() {
+        updateState { copy(isLoadingCaretakers = true) }
+
+        withContext(dispatcherProvider.io) {
+            // First try to load from cache
+            val cacheResult = teamRepository.getCaretakersFromCache()
+            cacheResult.fold(
+                onSuccess = { cachedCaretakers ->
+                    if (cachedCaretakers.isNotEmpty()) {
+                        val caretakers = cachedCaretakers.map { it.toDto() }
+                        updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
+                    } else {
+                        // Cache is empty, fetch from API
+                        fetchCaretakersFromApi()
+                    }
+                },
+                onFailure = {
+                    // Cache failed, fetch from API
+                    fetchCaretakersFromApi()
+                }
+            )
+        }
+    }
+
+    /**
+     * Refresh caretakers from API and update local cache.
+     */
+    private suspend fun refreshCaretakers() {
+        updateState { copy(isLoadingCaretakers = true) }
+        withContext(dispatcherProvider.io) {
+            fetchCaretakersFromApi()
+        }
+    }
+
+    private suspend fun fetchCaretakersFromApi() {
+        val result = teamRepository.refreshTeamMembers()
+        result.fold(
+            onSuccess = { teamMembers ->
+                // Filter to only supervisors and managers
+                val caretakers = teamMembers
+                    .filter { member ->
+                        member.role.name.lowercase() in listOf("supervisor", "manager")
+                    }
+                    .map { it.toDto() }
+                updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
+            },
+            onFailure = {
+                updateState { copy(isLoadingCaretakers = false) }
+            }
+        )
+    }
+
+    private fun com.indusjs.fleet.domain.entity.team.TeamMember.toDto(): TeamMemberDto {
+        return TeamMemberDto(
+            id = id.toIntOrNull() ?: 0,
+            email = email,
+            mobile = mobile,
+            firstName = firstName,
+            lastName = lastName,
+            role = role.toApiString(),
+            ownerId = ownerId.toIntOrNull() ?: 0,
+            isActive = isActive,
+            createdAt = createdAt,
+            updatedAt = updatedAt
+        )
     }
 }
 

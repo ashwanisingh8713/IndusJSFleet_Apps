@@ -196,10 +196,19 @@ data class FleetProfitLossDto(
 )
 
 /**
- * Cost Breakdown Item DTO
+ * Cost Breakdown Item DTO.
+ * Updated to include structured cost fields (cost_id, cost_label, group_id).
  */
 @Serializable
 data class CostBreakdownItemDto(
+    // New structured cost fields per API
+    @SerialName("cost_id")
+    val costId: String? = null,
+    @SerialName("cost_label")
+    val costLabel: String? = null,
+    @SerialName("group_id")
+    val groupId: String? = null,
+    // Legacy field (kept for backward compatibility)
     @SerialName("cost_type")
     val costType: String,
     @SerialName("amount")
@@ -208,7 +217,13 @@ data class CostBreakdownItemDto(
     val count: Int = 0,
     @SerialName("percentage")
     val percentage: Double = 0.0
-)
+) {
+    /**
+     * Returns the display label - prefers cost_label, falls back to cost_type.
+     */
+    val displayLabel: String
+        get() = costLabel ?: costType.replace("_", " ").replaceFirstChar { it.uppercase() }
+}
 
 /**
  * Trip Summary Item DTO

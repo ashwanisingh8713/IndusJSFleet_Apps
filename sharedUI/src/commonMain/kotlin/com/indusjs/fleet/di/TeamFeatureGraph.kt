@@ -1,6 +1,9 @@
 package com.indusjs.fleet.di
 
 import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.fleet.data.database.dao.TeamMembersDao
+import com.indusjs.fleet.data.datasource.team.TeamLocalDataSource
+import com.indusjs.fleet.data.datasource.team.TeamLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSource
 import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
@@ -29,7 +32,8 @@ abstract class TeamFeatureScope private constructor()
  * val teamGraph = TeamFeatureGraph.Factory::class.create(
  *     httpClient = AppDependencies.httpClient,
  *     dispatcherProvider = AppDependencies.dispatcherProvider,
- *     userLocalDataSource = userGraph.userLocalDataSource
+ *     userLocalDataSource = userGraph.userLocalDataSource,
+ *     teamMembersDao = fleetDatabase.teamMembersDao()
  * )
  * ```
  */
@@ -39,6 +43,9 @@ abstract class TeamFeatureGraph {
 
     @Binds
     abstract fun bindTeamRemoteDataSource(impl: TeamRemoteDataSourceImpl): TeamRemoteDataSource
+
+    @Binds
+    abstract fun bindTeamLocalDataSource(impl: TeamLocalDataSourceImpl): TeamLocalDataSource
 
     @Binds
     abstract fun bindTeamRepository(impl: TeamRepositoryImpl): TeamRepository
@@ -54,7 +61,8 @@ abstract class TeamFeatureGraph {
         fun create(
             @Provides httpClient: HttpClient,
             @Provides dispatcherProvider: DispatcherProvider,
-            @Provides userLocalDataSource: UserLocalDataSource
+            @Provides userLocalDataSource: UserLocalDataSource,
+            @Provides teamMembersDao: TeamMembersDao
         ): TeamFeatureGraph
     }
 }

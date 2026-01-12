@@ -49,7 +49,7 @@
 					"path": ["dashboard", "cost-overview"],
 					"query": [{"key": "filter", "value": "monthly"}]
 				},
-				"description": "Returns detailed cost breakdown by type (fuel, toll, maintenance, etc.)"
+				"description": "Returns detailed cost breakdown with cost_id, cost_label, and group_id.\n\nResponse includes:\n- trip_cost_breakdown: [{cost_id, cost_label, group_id, amount, count}]\n- maintenance_cost_breakdown: [{cost_id, cost_label, group_id, amount, count}]"
 			}
 		},
 		{

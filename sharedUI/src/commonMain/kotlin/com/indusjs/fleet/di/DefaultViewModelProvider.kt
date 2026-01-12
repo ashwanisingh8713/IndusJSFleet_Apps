@@ -1,10 +1,12 @@
 package com.indusjs.fleet.di
 
 import com.indusjs.fleet.core.auth.AuthenticationManager
+import com.indusjs.fleet.core.init.AppInitializer
 import com.indusjs.dispatcher.DefaultDispatcherProvider
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
 import com.indusjs.fleet.data.database.FleetDatabase
+import com.indusjs.fleet.data.datasource.costs.CostsLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.costs.CostsRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
@@ -21,6 +23,7 @@ import com.indusjs.fleet.data.mapper.driver.DriverMapper
 import com.indusjs.fleet.data.mapper.trip.TripMapper
 import com.indusjs.fleet.data.mapper.trip.TripStopMapper
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
+import com.indusjs.fleet.data.repository.costs.CostTypesRepositoryImpl
 import com.indusjs.fleet.data.repository.costs.CostsRepositoryImpl
 import com.indusjs.fleet.data.repository.dashboard.DashboardRepositoryImpl
 import com.indusjs.fleet.data.repository.driver.DriverRepositoryImpl
@@ -29,6 +32,8 @@ import com.indusjs.fleet.data.repository.team.TeamRepositoryImpl
 import com.indusjs.fleet.data.repository.trip.TripRepositoryImpl
 import com.indusjs.fleet.data.repository.user.UserRepositoryImpl
 import com.indusjs.fleet.data.repository.vehicle.VehicleRepositoryImpl
+import com.indusjs.fleet.data.datasource.team.TeamLocalDataSourceImpl
+import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.dashboard.DashboardRepository
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
@@ -37,6 +42,9 @@ import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
+import com.indusjs.fleet.domain.usecase.costs.GetMaintenanceCostTypesUseCase
+import com.indusjs.fleet.domain.usecase.costs.GetTripCostTypesUseCase
+import com.indusjs.fleet.domain.usecase.costs.InitializeCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetAlertsStatusUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetCostOverviewUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetDashboardUseCase
@@ -114,11 +122,15 @@ class DefaultViewModelProvider : ViewModelProvider {
     // Lazy-initialized database for offline caching
     private val database: FleetDatabase by lazy { FleetDatabase(settings, json) }
 
+    private val log = co.touchlab.kermit.Logger.withTag("DefaultViewModelProvider")
+
     init {
         // Register session clear callback with AuthenticationManager
         // This ensures the session is cleared before redirecting to login on 401
         AuthenticationManager.registerSessionClearCallback {
-            settings.clear()
+            log.w { "Session clear callback invoked - clearing auth data only" }
+            // Only clear auth-related data, not all settings
+            userLocalDataSource.clearSession()
         }
     }
 
@@ -150,7 +162,7 @@ class DefaultViewModelProvider : ViewModelProvider {
     // Lazy-initialized User feature dependencies
     private val userLocalDataSource by lazy { UserLocalDataSourceImpl(settings) }
     private val userRemoteDataSource by lazy { UserRemoteDataSourceImpl(httpClient) }
-    private val userRepository: UserRepository by lazy {
+    override val userRepository: UserRepository by lazy {
         UserRepositoryImpl(userRemoteDataSource, userLocalDataSource)
     }
 
@@ -196,8 +208,9 @@ class DefaultViewModelProvider : ViewModelProvider {
 
     // Lazy-initialized Team feature dependencies
     private val teamRemoteDataSource by lazy { TeamRemoteDataSourceImpl(httpClient) }
+    private val teamLocalDataSource by lazy { TeamLocalDataSourceImpl(database.teamMembersDao()) }
     private val teamRepository: TeamRepository by lazy {
-        TeamRepositoryImpl(teamRemoteDataSource, userLocalDataSource)
+        TeamRepositoryImpl(teamRemoteDataSource, userLocalDataSource, teamLocalDataSource)
     }
 
     // Lazy-initialized Dashboard feature dependencies with Settings-based caching
@@ -217,8 +230,22 @@ class DefaultViewModelProvider : ViewModelProvider {
 
     // Lazy-initialized Costs feature dependencies
     private val costsRemoteDataSource by lazy { CostsRemoteDataSourceImpl(httpClient) }
+    private val costsLocalDataSource by lazy { CostsLocalDataSourceImpl(database.costTypesDao(), json) }
     private val costsRepository: CostsRepository by lazy {
         CostsRepositoryImpl(costsRemoteDataSource, userLocalDataSource)
+    }
+
+    // Cost Types Repository and Use Cases
+    private val costTypesRepository: CostTypesRepository by lazy {
+        CostTypesRepositoryImpl(costsRemoteDataSource, costsLocalDataSource, userLocalDataSource)
+    }
+    private val initializeCostTypesUseCase by lazy { InitializeCostTypesUseCase(costTypesRepository) }
+    private val getTripCostTypesUseCase by lazy { GetTripCostTypesUseCase(costTypesRepository) }
+    private val getMaintenanceCostTypesUseCase by lazy { GetMaintenanceCostTypesUseCase(costTypesRepository) }
+
+    // App Initializer - handles one-time initialization tasks
+    val appInitializer: AppInitializer by lazy {
+        AppInitializer(initializeCostTypesUseCase, dispatcherProvider)
     }
 
     // Lazy-initialized Reports feature dependencies
@@ -254,7 +281,8 @@ class DefaultViewModelProvider : ViewModelProvider {
 
     override fun addVehicleViewModel() = AddVehicleViewModel(
         dispatcherProvider,
-        createVehicleWithDocumentsUseCase
+        createVehicleWithDocumentsUseCase,
+        teamRepository
     )
 
     override fun vehicleDetailViewModel() = VehicleDetailViewModel(
@@ -264,7 +292,8 @@ class DefaultViewModelProvider : ViewModelProvider {
         deleteVehicleUseCase,
         vehicleRepository,
         getDriversUseCase,
-        costsRepository
+        costsRepository,
+        teamRepository
     )
 
     override fun driversViewModel() = DriversViewModel(
@@ -277,7 +306,8 @@ class DefaultViewModelProvider : ViewModelProvider {
 
     override fun createDriverViewModel() = CreateDriverViewModel(
         dispatcherProvider,
-        createDriverUseCase
+        createDriverUseCase,
+        teamRepository
     )
 
     override fun driverDetailViewModel() = DriverDetailViewModel(
@@ -286,7 +316,9 @@ class DefaultViewModelProvider : ViewModelProvider {
         updateDriverUseCase,
         updateDriverStatusUseCase,
         toggleDriverActiveUseCase,
-        deleteDriverUseCase
+        deleteDriverUseCase,
+        driverRepository,
+        teamRepository
     )
 
     override fun tripsViewModel() = TripsViewModel(
@@ -328,13 +360,15 @@ class DefaultViewModelProvider : ViewModelProvider {
     override fun tripCostEntryViewModel() = TripCostEntryViewModel(
         dispatcherProvider,
         tripRepository,
-        costsRepository
+        costsRepository,
+        getTripCostTypesUseCase
     )
 
     override fun maintenanceCostEntryViewModel() = MaintenanceCostEntryViewModel(
         dispatcherProvider,
         vehicleRepository,
-        costsRepository
+        costsRepository,
+        getMaintenanceCostTypesUseCase
     )
 
     // Reports ViewModels

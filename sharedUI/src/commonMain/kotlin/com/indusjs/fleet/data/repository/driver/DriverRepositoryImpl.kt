@@ -7,6 +7,7 @@ import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.driver.DriverMapper
+import com.indusjs.fleet.data.model.history.DriverHistoryDataDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
@@ -154,6 +155,28 @@ class DriverRepositoryImpl(
                 Result.Success(Unit)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to delete driver"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun getDriverHistory(
+        id: String,
+        page: Int,
+        perPage: Int
+    ): Result<DriverHistoryDataDto> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getDriverHistory(token, id, page, perPage)
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                Result.Error(
+                    ApiException(response.message ?: "Failed to get driver history"),
+                    response.message
+                )
             }
         } catch (e: Exception) {
             Result.Error(e, ApiErrorHandler.extractErrorMessage(e))

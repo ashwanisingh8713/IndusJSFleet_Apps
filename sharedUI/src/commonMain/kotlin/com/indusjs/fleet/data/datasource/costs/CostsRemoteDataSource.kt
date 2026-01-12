@@ -25,6 +25,10 @@ import kotlinx.serialization.json.Json
  * Remote data source interface for cost operations.
  */
 interface CostsRemoteDataSource : RemoteDataSource {
+    // Cost Types APIs (no auth required for initial fetch)
+    suspend fun getTripCostTypes(): CostTypesApiResponse
+    suspend fun getMaintenanceCostTypes(): CostTypesApiResponse
+
     suspend fun createTripCost(token: String, request: CreateTripCostRequest): TripCostApiResponse
     suspend fun bulkCreateTripCosts(token: String, tripId: String, request: BulkCreateTripCostsRequest): BulkTripCostsApiResponse
     suspend fun getTripCosts(token: String, tripId: String): TripCostsListApiResponse
@@ -79,6 +83,51 @@ class CostsRemoteDataSourceImpl(
         ignoreUnknownKeys = true
         coerceInputValues = true
         encodeDefaults = true
+    }
+
+    override suspend fun getTripCostTypes(): CostTypesApiResponse {
+        return try {
+            log.d { "Fetching trip cost types" }
+            val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.TRIP_COST_TYPES}")
+            handleCostTypesResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch trip cost types: ${e.message}" }
+            CostTypesApiResponse(
+                success = false,
+                message = e.message ?: "Network error occurred"
+            )
+        }
+    }
+
+    override suspend fun getMaintenanceCostTypes(): CostTypesApiResponse {
+        return try {
+            log.d { "Fetching maintenance cost types" }
+            val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.MAINTENANCE_COST_TYPES}")
+            handleCostTypesResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch maintenance cost types: ${e.message}" }
+            CostTypesApiResponse(
+                success = false,
+                message = e.message ?: "Network error occurred"
+            )
+        }
+    }
+
+    private suspend fun handleCostTypesResponse(response: HttpResponse): CostTypesApiResponse {
+        val responseBody = response.bodyAsText()
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<CostTypesApiResponse>(responseBody)
+            } else {
+                CostTypesApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to parse cost types response: ${e.message}" }
+            CostTypesApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+        }
     }
 
     override suspend fun createTripCost(token: String, request: CreateTripCostRequest): TripCostApiResponse {

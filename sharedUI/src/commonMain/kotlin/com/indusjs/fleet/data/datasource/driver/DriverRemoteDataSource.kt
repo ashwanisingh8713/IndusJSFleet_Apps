@@ -8,6 +8,7 @@ import com.indusjs.fleet.data.model.driver.DriverApiResponse
 import com.indusjs.fleet.data.model.driver.DriverDto
 import com.indusjs.fleet.data.model.driver.UpdateDriverRequest
 import com.indusjs.fleet.data.model.driver.UpdateDriverStatusRequest
+import com.indusjs.fleet.data.model.history.DriverHistoryApiResponse
 import co.touchlab.kermit.Logger
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -46,6 +47,9 @@ interface DriverRemoteDataSource : RemoteDataSource {
     suspend fun updateDriverStatus(token: String, id: String, status: String): DriverApiResponse<DriverDto>
     suspend fun toggleDriverActive(token: String, id: String): DriverApiResponse<DriverDto>
     suspend fun deleteDriver(token: String, id: String): DriverApiResponse<Unit>
+
+    // History API
+    suspend fun getDriverHistory(token: String, id: String, page: Int, perPage: Int): DriverHistoryApiResponse
 }
 
 /**
@@ -308,6 +312,28 @@ class DriverRemoteDataSourceImpl(
         } catch (e: Exception) {
             log.e(e) { "Failed to parse delete response: ${e.message}" }
             DriverApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+        }
+    }
+
+    override suspend fun getDriverHistory(
+        token: String,
+        id: String,
+        page: Int,
+        perPage: Int
+    ): DriverHistoryApiResponse {
+        return try {
+            log.d { "Fetching driver history for id: $id, page: $page" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/history") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("page", page)
+                parameter("per_page", perPage)
+            }
+            val bodyText = response.bodyAsText()
+            log.d { "Driver history response: $bodyText" }
+            json.decodeFromString<DriverHistoryApiResponse>(bodyText)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch driver history: ${e.message}" }
+            DriverHistoryApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(e))
         }
     }
 }

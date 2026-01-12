@@ -90,6 +90,26 @@ fun TeamListScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(
+                        onClick = { viewModel.sendIntent(TeamListContract.Intent.RefreshTeamMembers) },
+                        enabled = !state.isRefreshing && !state.isLoading
+                    ) {
+                        if (state.isRefreshing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_refresh),
+                                contentDescription = "Refresh",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface

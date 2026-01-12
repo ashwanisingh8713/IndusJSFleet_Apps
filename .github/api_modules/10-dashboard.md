@@ -7,6 +7,7 @@ Dashboard and overview endpoints.
 | Feature | Owner | General Manager | Manager | Supervisor |
 |---------|-------|-----------------|---------|------------|
 | View Full Dashboard | ✅ | ✅ | ✅ | ✅ |
+| View Financial Summary | ✅ | ✅ | ❌ | ❌ |
 | View Cost Overview | ✅ | ✅ | ❌ | ❌ |
 | View Pending Payments | ✅ | ✅ | ❌ | ❌ |
 | View Team Stats | ✅ | ✅ | ❌ | ❌ |
@@ -28,84 +29,69 @@ Authorization: Bearer {{token}}
     "success": true,
     "message": "Dashboard retrieved successfully",
     "data": {
-        "user_info": {
-            "id": 1,
-            "first_name": "John",
-            "last_name": "Doe",
-            "role": "owner",
-            "email": "john@example.com"
-        },
-        "fleet_overview": {
-            "total_vehicles": 50,
-            "active_vehicles": 45,
-            "maintenance_vehicles": 3,
-            "inactive_vehicles": 2,
-            "total_drivers": 40,
-            "active_drivers": 35,
-            "drivers_on_trip": 10,
-            "drivers_on_leave": 5,
-            "total_trips": 500,
-            "ongoing_trips": 15,
-            "planned_trips": 20,
-            "completed_trips": 450
-        },
-        "today_summary": {
-            "completed_trips_today": 5,
-            "total_distance_today": 750.5,
-            "total_fuel_filled": 200,
-            "total_fuel_used": 180,
-            "total_fuel_cost": 18000,
-            "active_vehicles_now": 10,
-            "new_trips_today": 8,
-            "alerts_count": 3
-        },
-        "alerts": [
-            {
-                "id": "doc_exp_1",
-                "type": "DOCUMENT_EXPIRY",
-                "priority": "warning",
-                "title": "Insurance Expiring",
-                "message": "Vehicle MH12AB1234 insurance expires in 7 days",
-                "entity_type": "vehicle",
-                "entity_id": 1,
-                "vehicle_registration_number": "MH12AB1234",
-                "days_until_expiry": 7
-            }
-        ],
+        "user_info": {...},
+        "fleet_overview": {...},
+        "today_summary": {...},
+        "alerts": [...],
         "total_alerts": 3,
-        "quick_actions": {
-            "vehicles_count": 50,
-            "drivers_count": 40,
-            "trips_count": 15,
-            "alerts_count": 3
-        },
-        "live_status": {
-            "active_vehicles": 10,
-            "idle_vehicles": 5,
-            "offline_vehicles": 35
-        },
-        "team_stats": {
-            "total_managers": 3,
-            "total_supervisors": 5,
-            "total_members": 8
-        },
-        "document_stats": {
-            "total_documents": 150,
-            "expiring_documents": 5,
-            "expired_documents": 2
-        },
-        "last_updated": "2025-01-15T10:30:00Z"
+        "quick_actions": {...},
+        "live_status": {...},
+        "team_stats": {...},
+        "document_stats": {...},
+        "last_updated": "2026-01-15T10:30:00Z"
     }
 }
 ```
 
-**Note:** `team_stats` is only returned for Owner and General Manager. `document_stats` is returned for Owner, General Manager, and Manager.
+---
+
+### Get Financial Summary (Owner/GM Only)
+```http
+GET {{base_url}}/dashboard/financial-summary?period=monthly
+Authorization: Bearer {{token}}
+```
+
+**Query Parameters:**
+| Parameter | Description | Options |
+|-----------|-------------|---------|
+| period | Time period | `today`, `weekly`, `monthly`, `yearly` |
+
+**Response:**
+```json
+{
+    "success": true,
+    "data": {
+        "period": "monthly",
+        "start_date": "2025-12-11",
+        "end_date": "2026-01-11",
+        "total_revenue": 500000.00,
+        "total_expenses": 200000.00,
+        "trip_costs": 150000.00,
+        "maintenance_costs": 50000.00,
+        "net_profit": 300000.00,
+        "profit_margin": 60.0,
+        "profit_status": "profit",
+        "pending_payments": 50000.00,
+        "received_payments": 450000.00,
+        "completed_trips": 45,
+        "total_trips": 50,
+        "avg_trip_revenue": 11111.11,
+        "avg_trip_cost": 4444.44,
+        "avg_trip_profit": 6666.67
+    }
+}
+```
+
+**Notes:**
+- Revenue is calculated from `trip_price` of completed trips
+- Expenses include both trip costs and maintenance costs
+- `profit_status`: `profit`, `loss`, or `break_even`
 
 ---
 
-### Get Cost Overview
+### Get Cost Overview (Owner/GM Only)
 ```http
-GET {{base_url}}/dashboard/cost-overview
+GET {{base_url}}/dashboard/cost-overview?filter=monthly
 Authorization: Bearer {{token}}
 ```
 
@@ -119,43 +105,44 @@ Authorization: Bearer {{token}}
 {
     "success": true,
     "data": {
-        "filter": "monthly",
-        "total_trip_cost": 150000.00,
-        "total_maintenance_cost": 50000.00,
-        "grand_total": 200000.00,
-        "trip_cost_breakdown": [
-            {"cost_type": "fuel", "amount": 80000, "count": 50},
-            {"cost_type": "toll", "amount": 25000, "count": 100},
-            {"cost_type": "driver_allowance", "amount": 30000, "count": 40}
-        ],
-        "maintenance_cost_breakdown": [
-            {"cost_type": "service", "amount": 30000, "count": 10},
-            {"cost_type": "tyre", "amount": 15000, "count": 5}
-        ],
-        "completed_trips": 45,
+        "period": "monthly",
+        "total_expenses": 200000.00,
         "total_revenue": 500000.00,
+        "total_profit": 300000.00,
+        "total_loss": 0,
+        "net_profit_loss": 300000.00,
+        "completed_trips": 45,
         "fuel_expenses": 80000.00,
         "toll_expenses": 25000.00,
-        "driver_allowance_expenses": 30000.00
+        "maintenance_expenses": 50000.00,
+        "other_expenses": 15000.00,
+        "pending_payments": 50000.00,
+        "received_payments": 450000.00,
+        "trip_cost_breakdown": [
+            {"cost_id": "TC-001-002", "cost_label": "Diesel", "group_id": "TC-G-001", "amount": 80000, "count": 50},
+            {"cost_id": "TC-002-001", "cost_label": "Toll Charges", "group_id": "TC-G-002", "amount": 25000, "count": 100}
+        ],
+        "maintenance_cost_breakdown": [
+            {"cost_id": "VMC-001-001", "cost_label": "Engine Oil Change", "group_id": "VMC-G-001", "amount": 30000, "count": 10},
+            {"cost_id": "VMC-002-003", "cost_label": "Tyres Replacement", "group_id": "VMC-G-002", "amount": 15000, "count": 5}
+        ],
+        "driver_allowance_expenses": 30000.00,
+        "parking_expenses": 5000.00,
+        "loading_charges": 8000.00,
+        "unloading_charges": 7000.00,
+        "chalan_expenses": 2000.00,
+        "permit_expenses": 3000.00
     }
 }
 ```
 
-**Access:** Owner and General Manager only
-
 ---
 
-### Get Pending Payments
+### Get Pending Payments (Owner/GM Only)
 ```http
-GET {{base_url}}/dashboard/pending-payments
+GET {{base_url}}/dashboard/pending-payments?page=1&per_page=20
 Authorization: Bearer {{token}}
 ```
-
-**Query Parameters:**
-| Parameter | Description |
-|-----------|-------------|
-| page | Page number |
-| per_page | Items per page |
 
 **Response:**
 ```json
@@ -173,7 +160,7 @@ Authorization: Bearer {{token}}
                 "partial_payment_amount": 5000,
                 "pending_amount": 10000,
                 "payment_status": "partial",
-                "scheduled_date": "2025-01-10"
+                "scheduled_date": "2026-01-10"
             }
         ],
         "total_pending": 50000.00,
@@ -183,8 +170,6 @@ Authorization: Bearer {{token}}
     }
 }
 ```
-
-**Access:** Owner and General Manager only
 
 ---
 
@@ -214,23 +199,16 @@ Authorization: Bearer {{token}}
 
 ---
 
-### Get Fleet Stats
-```http
-GET {{base_url}}/dashboard/fleet-stats
-Authorization: Bearer {{token}}
+## Revenue Calculation
+
+All financial APIs use `trip_price` as the revenue source:
+
 ```
-
-Returns detailed fleet statistics.
-
----
-
-### Get Fleet Summary
-```http
-GET {{base_url}}/dashboard/summary
-Authorization: Bearer {{token}}
+Revenue = SUM(trip_price) for completed trips
+Expenses = SUM(trip_costs) + SUM(maintenance_costs)
+Net Profit = Revenue - Expenses
+Profit Margin = (Net Profit / Revenue) * 100
 ```
-
-Returns quick summary for mobile app home screen.
 
 ---
 
@@ -241,16 +219,7 @@ Returns quick summary for mobile app home screen.
 {
     "success": false,
     "message": "Access denied",
-    "error": "Cost overview is only available to Owner and General Manager"
-}
-```
-
-### Invalid Filter
-```json
-{
-    "success": false,
-    "message": "Invalid filter",
-    "error": "filter must be one of: today, weekly, monthly"
+    "error": "Financial summary is only available to Owner and General Manager"
 }
 ```
 

@@ -44,10 +44,43 @@ fun App(
     onSaveDocument: ((documentName: String, fileBytes: ByteArray, mimeType: String) -> Unit)? = null
 ) = AppTheme(onThemeChanged) {
 
-    // Navigation 3 back stack
-    val backStack: NavBackStack<FleetRoute> = remember { NavBackStack(FleetRoute.Login) }
     val snackbarHostState = remember { SnackbarHostState() }
     val viewModelProvider = remember { DefaultViewModelProvider() }
+
+    // Check if user is already logged in to determine initial route
+    var isCheckingAuth by remember { mutableStateOf(true) }
+    var initialRoute by remember { mutableStateOf<FleetRoute>(FleetRoute.Login) }
+
+    // Check auth status on app launch
+    LaunchedEffect(Unit) {
+        co.touchlab.kermit.Logger.d("App") { "Checking auth status on app launch..." }
+        try {
+            val isLoggedIn = viewModelProvider.userRepository.isLoggedIn()
+            co.touchlab.kermit.Logger.d("App") { "Auth check result: isLoggedIn=$isLoggedIn" }
+            initialRoute = if (isLoggedIn) FleetRoute.Dashboard else FleetRoute.Login
+            co.touchlab.kermit.Logger.d("App") { "Initial route set to: $initialRoute" }
+        } catch (e: Exception) {
+            co.touchlab.kermit.Logger.e("App", e) { "Auth check failed: ${e.message}" }
+            // If check fails, default to login
+            initialRoute = FleetRoute.Login
+        } finally {
+            isCheckingAuth = false
+            co.touchlab.kermit.Logger.d("App") { "Auth check complete, isCheckingAuth=$isCheckingAuth" }
+        }
+    }
+
+    // Navigation 3 back stack - initialized with the correct route after auth check
+    val backStack: NavBackStack<FleetRoute> = remember(initialRoute, isCheckingAuth) {
+        if (!isCheckingAuth) NavBackStack(initialRoute) else NavBackStack(FleetRoute.Login)
+    }
+
+    // Initialize app on first composition (cost types caching, etc.)
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(isCheckingAuth) {
+        if (!isCheckingAuth) {
+            viewModelProvider.appInitializer.initialize(scope)
+        }
+    }
 
     // Handle authentication events (session expiry, logout)
     LaunchedEffect(Unit) {
@@ -76,22 +109,32 @@ fun App(
             .windowInsetsPadding(WindowInsets.safeDrawing),
         color = MaterialTheme.colorScheme.background
     ) {
-        Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) }
-        ) { paddingValues ->
-            Box(modifier = Modifier.padding(paddingValues)) {
-                ProvideViewModels(viewModelProvider) {
-                    NavDisplay(
-                        backStack = backStack,
-                        entryProvider = fleetEntryProvider(
+        if (isCheckingAuth) {
+            // Show loading while checking auth status
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) }
+            ) { paddingValues ->
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    ProvideViewModels(viewModelProvider) {
+                        NavDisplay(
                             backStack = backStack,
-                            onPickFile = onPickFile,
-                            onOpenDocument = onOpenDocument,
-                            onDownloadDocument = onDownloadDocument,
-                            onSaveDocument = onSaveDocument
-                        ),
-                        onBack = { backStack.removeLastOrNull() }
-                    )
+                            entryProvider = fleetEntryProvider(
+                                backStack = backStack,
+                                onPickFile = onPickFile,
+                                onOpenDocument = onOpenDocument,
+                                onDownloadDocument = onDownloadDocument,
+                                onSaveDocument = onSaveDocument
+                            ),
+                            onBack = { backStack.removeLastOrNull() }
+                        )
+                    }
                 }
             }
         }

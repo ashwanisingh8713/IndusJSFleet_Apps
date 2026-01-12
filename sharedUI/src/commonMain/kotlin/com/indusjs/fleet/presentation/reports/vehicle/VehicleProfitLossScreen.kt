@@ -32,6 +32,7 @@ import com.indusjs.fleet.core.ui.FleetDateFieldCompact
 import com.indusjs.fleet.core.ui.FleetSearchField
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
+import com.indusjs.fleet.domain.entity.reports.CostBreakdownItem
 import com.indusjs.fleet.domain.entity.reports.VehicleProfitLoss
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
@@ -187,140 +188,222 @@ private fun VehiclePLContent(
     onSortChange: (SortOption) -> Unit,
     onFilterChange: (PLStatusFilter) -> Unit
 ) {
+    // Determine current step
+    val currentStep = when {
+        state.result != null -> 3
+        state.selectedVehicleId != null -> 2
+        else -> 1
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Sticky Vehicle Header - always visible at top
-        StickyVehicleHeader(
-            selectedVehicle = state.selectedVehicle,
-            vehicleCount = state.vehicles.size,
-            isLoading = state.isLoadingVehicles,
-            onChangeVehicle = onShowVehicleSelector
-        )
+        // Step Indicator - only show when not viewing results
+        if (state.result == null) {
+            WizardStepIndicator(
+                currentStep = currentStep,
+                steps = listOf("Select Vehicle", "Select Period", "View Report")
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+        }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Content based on state
         when {
-            // Show result
+            // ========== STEP 3: Results ==========
             state.result != null -> {
+                // Result Header with vehicle info and New Report button
+                ResultHeaderCard(
+                    vehicleNumber = state.result!!.vehicleNumber ?: "Vehicle",
+                    vehicleMakeModel = "${state.selectedVehicle?.make ?: ""} ${state.selectedVehicle?.model ?: ""}".trim(),
+                    period = state.result!!.period ?: state.period,
+                    onNewReport = onShowVehicleSelector
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    item { PLResultKPICard(result = state.result!!) }
+
+                    if (state.result!!.costBreakdown.isNotEmpty()) {
+                        item { PLCostBreakdownCard(costs = state.result!!.costBreakdown) }
+                    }
+
                     item {
-                        CompactResultCard(
-                            result = state.result!!,
-                            onNewReport = onShowVehicleSelector
-                        )
-                    }
-                }
-            }
-
-            // Vehicle selected - show period selection
-            state.selectedVehicleId != null -> {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Period Selection
-                    InlinePeriodSelector(
-                        selectedPeriod = state.period,
-                        useCustomDateRange = state.useCustomDateRange,
-                        startDate = state.startDate,
-                        endDate = state.endDate,
-                        onPeriodChange = onPeriodChange,
-                        onStartDateChange = onStartDateChange,
-                        onEndDateChange = onEndDateChange
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // Error
-                    if (state.error != null) {
-                        Surface(
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.errorContainer
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(
-                                text = state.error ?: "Something went wrong",
-                                modifier = Modifier.padding(12.dp),
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-
-                    // Generate Button
-                    Button(
-                        onClick = onGenerateReport,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        enabled = state.canGenerateReport,
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text(
-                            text = "Generate Report",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            }
-
-            // No vehicle selected - show helper
-            else -> {
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    // Recent Reports
-                    if (state.recentReports.isNotEmpty()) {
-                        Text(
-                            text = "Recent Reports",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(state.recentReports) { report ->
-                                SmallRecentReportCard(
-                                    report = report,
-                                    onClick = { onQuickReport(report) }
-                                )
+                            OutlinedButton(
+                                onClick = onShowVehicleSelector,
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text("🔄 New Report")
+                            }
+                            Button(
+                                onClick = { /* TODO: Export */ },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text("📄 Export PDF")
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.weight(1f))
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                }
+            }
 
-                    // Helper text and button
-                    Column(
+            // ========== STEP 2: Period Selection ==========
+            state.selectedVehicleId != null -> {
+                // Selected Vehicle Card with Change button
+                SelectedVehicleDisplayCard(
+                    vehicle = state.selectedVehicle!!,
+                    onChangeVehicle = onShowVehicleSelector
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Period selection title
+                Text(
+                    text = "📅 Select Report Period",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Period selection card
+                PeriodSelectionChipsCard(
+                    selectedPeriod = state.period,
+                    useCustomDateRange = state.useCustomDateRange,
+                    startDate = state.startDate,
+                    endDate = state.endDate,
+                    onPeriodChange = onPeriodChange,
+                    onStartDateChange = onStartDateChange,
+                    onEndDateChange = onEndDateChange
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Error message
+                if (state.error != null) {
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = "Select a vehicle to generate P&L report",
+                            text = state.error ?: "Something went wrong",
+                            modifier = Modifier.padding(12.dp),
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                // Generate Report Button
+                Button(
+                    onClick = onGenerateReport,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    enabled = state.canGenerateReport,
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        text = "📊 Generate Report",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            // ========== STEP 1: Vehicle Selection ==========
+            else -> {
+                // Welcome Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = "📊", style = MaterialTheme.typography.displaySmall)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Vehicle Profit & Loss",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Analyze financial performance of your vehicles",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedButton(
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Button(
                             onClick = onShowVehicleSelector,
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp)
                         ) {
-                            Text("Browse ${state.vehicles.size} Vehicles")
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text("🚛")
+                                Text(
+                                    text = "Select Vehicle",
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (state.vehicles.isNotEmpty()) {
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f)
+                                    ) {
+                                        Text(
+                                            text = "${state.vehicles.size}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
-
-                    Spacer(modifier = Modifier.weight(1f))
                 }
+
+                // Recent Reports
+                if (state.recentReports.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "⏱ Recent Reports",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(state.recentReports) { report ->
+                            RecentReportCard(report = report, onClick = { onQuickReport(report) })
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f)
+                )
             }
         }
 
@@ -358,424 +441,105 @@ private fun VehiclePLContent(
 }
 
 // ============================================================================
-// Sticky Vehicle Header - Always visible at top with Change button
+// Wizard Step Indicator
 // ============================================================================
 
 @Composable
-private fun StickyVehicleHeader(
-    selectedVehicle: Vehicle?,
-    vehicleCount: Int,
-    isLoading: Boolean,
-    onChangeVehicle: () -> Unit
+private fun WizardStepIndicator(
+    currentStep: Int,
+    steps: List<String>
 ) {
-    Surface(
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
-        color = if (selectedVehicle != null)
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-        else MaterialTheme.colorScheme.surfaceContainerLow,
-        onClick = onChangeVehicle
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (selectedVehicle != null) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = selectedVehicle.registrationNumber,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                        ) {
+        steps.forEachIndexed { index, step ->
+            val stepNumber = index + 1
+            val isCompleted = stepNumber < currentStep
+            val isCurrent = stepNumber == currentStep
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                // Step circle
+                Surface(
+                    modifier = Modifier.size(28.dp),
+                    shape = CircleShape,
+                    color = when {
+                        isCompleted -> Color(0xFF10B981)
+                        isCurrent -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    }
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (isCompleted) {
                             Text(
-                                text = "Selected",
+                                text = "✓",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = "$stepNumber",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isCurrent) MaterialTheme.colorScheme.onPrimary
+                                       else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                    Text(
-                        text = "${selectedVehicle.make ?: ""} ${selectedVehicle.model ?: ""}".trim()
-                            .ifEmpty { "Vehicle" },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
-                TextButton(
-                    onClick = onChangeVehicle,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                ) {
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                // Step label (only show for current on small screens)
+                if (isCurrent) {
                     Text(
-                        text = "Change",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            } else {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Select Vehicle",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "$vehicleCount vehicles available",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_chevron_right),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ============================================================================
-// Inline Period Selector - Compact horizontal chips
-// ============================================================================
-
-@Composable
-private fun InlinePeriodSelector(
-    selectedPeriod: String,
-    useCustomDateRange: Boolean,
-    startDate: String,
-    endDate: String,
-    onPeriodChange: (String) -> Unit,
-    onStartDateChange: (String) -> Unit,
-    onEndDateChange: (String) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(
-            text = "Select Period",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            listOf(
-                "weekly" to "Week",
-                "monthly" to "Month",
-                "yearly" to "Year",
-                "custom" to "Custom"
-            ).forEach { (key, label) ->
-                val isSelected = selectedPeriod == key
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onPeriodChange(key) },
-                    label = {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                )
-            }
-        }
-
-        AnimatedVisibility(visible = useCustomDateRange) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                FleetDateFieldCompact(
-                    rawValue = startDate,
-                    onRawValueChange = onStartDateChange,
-                    label = "From",
-                    modifier = Modifier.weight(1f)
-                )
-                FleetDateFieldCompact(
-                    rawValue = endDate,
-                    onRawValueChange = onEndDateChange,
-                    label = "To",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-// ============================================================================
-// Compact Result Card - Clean P&L display
-// ============================================================================
-
-@Composable
-private fun CompactResultCard(
-    result: VehicleProfitLoss,
-    onNewReport: () -> Unit
-) {
-    val isProfit = result.netProfit >= 0
-    val profitColor = Color(0xFF10B981)
-    val lossColor = Color(0xFFEF4444)
-    var showBreakdown by remember { mutableStateOf(false) }
-
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Main KPI
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isProfit) profitColor.copy(alpha = 0.1f)
-                else lossColor.copy(alpha = 0.1f)
-            )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = if (isProfit) "Net Profit" else "Net Loss",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = if (isProfit) profitColor.copy(alpha = 0.2f)
-                        else lossColor.copy(alpha = 0.2f)
-                    ) {
-                        Text(
-                            text = "${result.totalTrips} trips",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (isProfit) profitColor else lossColor,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = formatCurrency(kotlin.math.abs(result.netProfit)),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isProfit) profitColor else lossColor
-                )
-                Text(
-                    text = "Margin: ${formatPercentage(result.profitMargin)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        // Revenue & Expenses
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Card(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Revenue",
+                        text = step,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = formatCurrency(result.totalRevenue),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = profitColor
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
-            }
-            Card(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Expenses",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = formatCurrency(result.totalExpenses),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFFF59E0B)
-                    )
-                }
-            }
-        }
 
-        // Cost Breakdown (collapsible)
-        if (result.costBreakdown.isNotEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Row(
+                // Connector line (except for last step)
+                if (index < steps.size - 1) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showBreakdown = !showBreakdown },
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Cost Breakdown",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = if (showBreakdown) "Hide" else "Show",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    AnimatedVisibility(visible = showBreakdown) {
-                        Column(
-                            modifier = Modifier.padding(top = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            result.costBreakdown.forEach { item ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = item.costType.replace("_", " ")
-                                            .replaceFirstChar { it.uppercase() },
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    Text(
-                                        text = formatCurrency(item.amount),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
-                    }
+                            .weight(1f)
+                            .height(2.dp)
+                            .padding(horizontal = 4.dp)
+                            .background(
+                                if (isCompleted) Color(0xFF10B981)
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                    )
                 }
             }
         }
-
-        // New Report button
-        OutlinedButton(
-            onClick = onNewReport,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text("Generate New Report")
-        }
     }
 }
 
 // ============================================================================
-// Small Recent Report Card
+// Selected Vehicle Display Card - Clear with Change button
 // ============================================================================
 
 @Composable
-private fun SmallRecentReportCard(
-    report: RecentReport,
-    onClick: () -> Unit
+private fun SelectedVehicleDisplayCard(
+    vehicle: Vehicle,
+    onChangeVehicle: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .width(110.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                text = report.vehicleNumber,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = report.period.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = formatCurrency(kotlin.math.abs(report.profitLoss)),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = if (report.isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
-            )
-        }
-    }
-}
-
-// ============================================================================
-// Clean Vehicle Selector - Simple card to select vehicle
-// ============================================================================
-
-@Composable
-private fun CleanVehicleSelector(
-    selectedVehicle: Vehicle?,
-    vehicleCount: Int,
-    isLoading: Boolean,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = Color(0xFF10B981).copy(alpha = 0.1f)
         )
     ) {
         Row(
@@ -784,49 +548,45 @@ private fun CleanVehicleSelector(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Vehicle",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                if (selectedVehicle != null) {
-                    Text(
-                        text = selectedVehicle.registrationNumber,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "${selectedVehicle.make ?: ""} ${selectedVehicle.model ?: ""}".trim(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    Text(
-                        text = "Select a vehicle",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "$vehicleCount available",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+            // Checkmark
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = CircleShape,
+                color = Color(0xFF10B981)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("✓", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
 
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Vehicle Info
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = vehicle.registrationNumber,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
-            } else {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_chevron_right),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
+                Text(
+                    text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim().ifEmpty { "Vehicle" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Change Vehicle Button
+            OutlinedButton(
+                onClick = onChangeVehicle,
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    text = "Change Vehicle",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
@@ -834,11 +594,11 @@ private fun CleanVehicleSelector(
 }
 
 // ============================================================================
-// Clean Period Selector - Simple period chips
+// Period Selection Card with Chips
 // ============================================================================
 
 @Composable
-private fun CleanPeriodSelector(
+private fun PeriodSelectionChipsCard(
     selectedPeriod: String,
     useCustomDateRange: Boolean,
     startDate: String,
@@ -858,19 +618,14 @@ private fun CleanPeriodSelector(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "Period",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
+            // Period chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 listOf(
-                    "monthly" to "Month",
                     "weekly" to "Week",
+                    "monthly" to "Month",
                     "yearly" to "Year",
                     "custom" to "Custom"
                 ).forEach { (key, label) ->
@@ -881,7 +636,8 @@ private fun CleanPeriodSelector(
                         label = {
                             Text(
                                 text = label,
-                                style = MaterialTheme.typography.labelMedium
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                         },
                         modifier = Modifier.weight(1f),
@@ -893,6 +649,7 @@ private fun CleanPeriodSelector(
                 }
             }
 
+            // Custom date range
             AnimatedVisibility(visible = useCustomDateRange) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -917,95 +674,117 @@ private fun CleanPeriodSelector(
 }
 
 // ============================================================================
-// Clean Result View - Professional P&L display
+// Result Header Card - Shows vehicle info and New Report action
 // ============================================================================
 
 @Composable
-private fun CleanResultView(
-    result: VehicleProfitLoss,
+private fun ResultHeaderCard(
+    vehicleNumber: String,
+    vehicleMakeModel: String,
+    period: String,
     onNewReport: () -> Unit
 ) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("🚛", style = MaterialTheme.typography.headlineSmall)
+                Column {
+                    Text(
+                        text = vehicleNumber,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "$vehicleMakeModel • ${period.replaceFirstChar { it.uppercase() }}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            TextButton(onClick = onNewReport) {
+                Text(
+                    text = "New Report",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+// ============================================================================
+// P&L Result KPI Card
+// ============================================================================
+
+@Composable
+private fun PLResultKPICard(result: VehicleProfitLoss) {
     val isProfit = result.netProfit >= 0
     val profitColor = Color(0xFF10B981)
     val lossColor = Color(0xFFEF4444)
     val expenseColor = Color(0xFFF59E0B)
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Vehicle Header
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = result.vehicleNumber ?: "Vehicle #${result.vehicleId}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "${result.totalTrips} trips • ${result.period ?: ""}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = if (isProfit) profitColor.copy(alpha = 0.1f)
-                            else lossColor.copy(alpha = 0.1f)
-                ) {
-                    Text(
-                        text = if (isProfit) "Profit" else "Loss",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = if (isProfit) profitColor else lossColor,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
-                }
-            }
-        }
-
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // Main KPI - Net Profit/Loss
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (isProfit) profitColor.copy(alpha = 0.08f)
-                                else lossColor.copy(alpha = 0.08f)
+                containerColor = if (isProfit) profitColor.copy(alpha = 0.1f)
+                                else lossColor.copy(alpha = 0.1f)
             )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = if (isProfit) "Net Profit" else "Net Loss",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = if (isProfit) "Net Profit" else "Net Loss",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = if (isProfit) profitColor.copy(alpha = 0.2f)
+                                else lossColor.copy(alpha = 0.2f)
+                    ) {
+                        Text(
+                            text = "${result.totalTrips} trips",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isProfit) profitColor else lossColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = formatCurrency(kotlin.math.abs(result.netProfit)),
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (isProfit) profitColor else lossColor
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Margin: ${formatPercentage(result.profitMargin)}",
                     style = MaterialTheme.typography.bodyMedium,
@@ -1014,7 +793,7 @@ private fun CleanResultView(
             }
         }
 
-        // Revenue & Expenses
+        // Revenue & Expenses Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -1023,23 +802,24 @@ private fun CleanResultView(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    containerColor = profitColor.copy(alpha = 0.1f)
                 )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Revenue",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("📈", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
+                        text = "Revenue",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
                         text = formatCurrency(result.totalRevenue),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
                         color = profitColor
                     )
                 }
@@ -1049,1126 +829,120 @@ private fun CleanResultView(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    containerColor = expenseColor.copy(alpha = 0.1f)
                 )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Expenses",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("💸", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
+                        text = "Expenses",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
                         text = formatCurrency(result.totalExpenses),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
                         color = expenseColor
                     )
                 }
             }
         }
+    }
+}
 
-        // Trip Stats
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
-        ) {
+// ============================================================================
+// P&L Cost Breakdown Card
+// ============================================================================
+
+@Composable
+private fun PLCostBreakdownCard(costs: List<CostBreakdownItem>) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                    .clickable { expanded = !expanded },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${result.totalTrips}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Total Trips",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier
-                        .height(40.dp)
-                        .width(1.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
+                Text(
+                    text = "💰 Cost Breakdown",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
                 )
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "${result.completedTrips}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Completed",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = if (expanded) "Hide ▲" else "Show ▼",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
-        }
 
-        // Cost Breakdown (if available)
-        if (result.costBreakdown.isNotEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
-            ) {
+            AnimatedVisibility(visible = expanded) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "Cost Breakdown",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    result.costBreakdown.forEach { item ->
+                    costs.forEach { item ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = item.costType.replaceFirstChar { it.uppercase() }
-                                    .replace("_", " "),
+                                text = item.costType.replace("_", " ")
+                                    .replaceFirstChar { it.uppercase() },
                                 style = MaterialTheme.typography.bodyMedium
                             )
-                            Text(
-                                text = formatCurrency(item.amount),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // New Report Button
-        OutlinedButton(
-            onClick = onNewReport,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text("Generate New Report")
-        }
-    }
-}
-
-// ============================================================================
-// Recent Report Chip - Simple chip for recent reports
-// ============================================================================
-
-@Composable
-private fun RecentReportChip(
-    report: RecentReport,
-    onClick: () -> Unit
-) {
-    val isProfit = report.isProfit
-
-    Card(
-        modifier = Modifier
-            .width(140.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = report.vehicleNumber,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = report.period.replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = formatCurrency(kotlin.math.abs(report.profitLoss)),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
-            )
-        }
-    }
-}
-
-// ============================================================================
-// Step Progress Indicator - Shows wizard progress
-// ============================================================================
-
-@Composable
-private fun StepProgressIndicator(
-    currentStep: Int,
-    totalSteps: Int
-) {
-    val progress by animateFloatAsState(
-        targetValue = currentStep.toFloat() / totalSteps.toFloat(),
-        label = "progress"
-    )
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Step $currentStep of $totalSteps",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = when (currentStep) {
-                    1 -> "Select Vehicle"
-                    2 -> "Choose Period"
-                    3 -> "View Results"
-                    else -> ""
-                },
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp)),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    }
-}
-
-// ============================================================================
-// Enhanced Vehicle Selection Card with Step Number
-// ============================================================================
-
-@Composable
-private fun EnhancedVehicleSelectionCard(
-    stepNumber: Int,
-    selectedVehicle: Vehicle?,
-    vehicleCount: Int,
-    isLoading: Boolean,
-    isCompleted: Boolean,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isCompleted)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isCompleted) 0.dp else 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Header with step number
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Step badge
-                Surface(
-                    modifier = Modifier.size(32.dp),
-                    shape = CircleShape,
-                    color = if (isCompleted) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.surfaceVariant
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        if (isCompleted) {
-                            Text("✓",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        } else {
-                            Text("$stepNumber",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Select Vehicle",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    if (selectedVehicle != null) {
-                        Text(
-                            text = selectedVehicle.registrationNumber,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                }
-            }
-
-            // Vehicle Selection Button
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onClick),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
-                        color = if (selectedVehicle != null)
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                        else MaterialTheme.colorScheme.surfaceVariant
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = if (selectedVehicle != null) "🚛" else "➕",
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        if (selectedVehicle != null) {
-                            Text(
-                                text = selectedVehicle.registrationNumber,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "${selectedVehicle.make ?: ""} ${selectedVehicle.model ?: ""}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            selectedVehicle.assignedDriverName?.let { driver ->
-                                Text(
-                                    text = "👤 $driver",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        } else {
-                            Text(
-                                text = "Tap to select vehicle",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = "$vehicleCount vehicles available",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_chevron_right),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ============================================================================
-// Enhanced Period Selection Card with Step Number
-// ============================================================================
-
-@Composable
-private fun EnhancedPeriodSelectionCard(
-    stepNumber: Int,
-    selectedPeriod: String,
-    periodDisplayText: String,
-    useCustomDateRange: Boolean,
-    startDate: String,
-    endDate: String,
-    onPeriodChange: (String) -> Unit,
-    onStartDateChange: (String) -> Unit,
-    onEndDateChange: (String) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Header with step number
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Surface(
-                    modifier = Modifier.size(32.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("$stepNumber",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                }
-
-                Column {
-                    Text(
-                        text = "Select Period",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = periodDisplayText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            // Period Chips - Equal width
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                VehiclePLContract.PERIOD_OPTIONS.forEach { (periodKey, periodLabel) ->
-                    val isSelected = selectedPeriod == periodKey
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { onPeriodChange(periodKey) },
-                        label = {
-                            Text(
-                                text = periodLabel,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
-                }
-            }
-
-            // Custom Date Range
-            AnimatedVisibility(
-                visible = useCustomDateRange,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    FleetDateFieldCompact(
-                        rawValue = startDate,
-                        onRawValueChange = onStartDateChange,
-                        label = "From",
-                        modifier = Modifier.weight(1f)
-                    )
-                    FleetDateFieldCompact(
-                        rawValue = endDate,
-                        onRawValueChange = onEndDateChange,
-                        label = "To",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ============================================================================
-// Enhanced Generate Button
-// ============================================================================
-
-@Composable
-private fun EnhancedGenerateButton(
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp),
-        enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text("📊", style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = "Generate Report",
-                fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.titleSmall
-            )
-        }
-    }
-}
-
-// ============================================================================
-// Enhanced Result Card with Expandable Cost Breakdown
-// ============================================================================
-
-@Composable
-private fun EnhancedResultCard(
-    result: VehicleProfitLoss,
-    onNewReport: () -> Unit
-) {
-    var showDetails by remember { mutableStateOf(false) }
-    val isProfit = result.netProfit >= 0
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header with vehicle info
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text("🚛", style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
-                    Column {
-                        Text(
-                            text = result.vehicleNumber ?: "Vehicle #${result.vehicleId}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "${result.totalTrips} trips • ${result.startDate ?: ""} - ${result.endDate ?: ""}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                // Profit/Loss Badge
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isProfit) Color(0xFF10B981).copy(alpha = 0.15f)
-                    else Color(0xFFEF4444).copy(alpha = 0.15f)
-                ) {
-                    Text(
-                        text = if (isProfit) "PROFIT" else "LOSS",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
-                }
-            }
-
-            // Main KPI - Net Profit/Loss with gradient
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = if (isProfit)
-                                listOf(Color(0xFF10B981).copy(alpha = 0.15f), Color(0xFF10B981).copy(alpha = 0.05f))
-                            else
-                                listOf(Color(0xFFEF4444).copy(alpha = 0.15f), Color(0xFFEF4444).copy(alpha = 0.05f))
-                        )
-                    )
-                    .padding(20.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = if (isProfit) "Net Profit" else "Net Loss",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = formatCurrency(kotlin.math.abs(result.netProfit)),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Margin:",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        LinearProgressIndicator(
-                            progress = { (result.profitMargin.toFloat() / 100f).coerceIn(0f, 1f) },
-                            modifier = Modifier
-                                .width(80.dp)
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp)),
-                            color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444),
-                            trackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                        Text(
-                            text = formatPercentage(result.profitMargin),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
-                        )
-                    }
-                }
-            }
-
-            // Revenue & Expenses side by side
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Revenue Card
-                Surface(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFF10B981).copy(alpha = 0.1f)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("📈", style = MaterialTheme.typography.titleLarge)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Revenue",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = formatCurrency(result.totalRevenue),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF10B981)
-                        )
-                    }
-                }
-
-                // Expenses Card
-                Surface(
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFFF59E0B).copy(alpha = 0.1f)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("📉", style = MaterialTheme.typography.titleLarge)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Expenses",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = formatCurrency(result.totalExpenses),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFF59E0B)
-                        )
-                    }
-                }
-            }
-
-            // Expandable Details Toggle
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showDetails = !showDetails },
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (showDetails) "Hide Cost Breakdown" else "Show Cost Breakdown",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = if (showDetails) "▲" else "▼",
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
-            }
-
-            // Cost Breakdown (when expanded)
-            AnimatedVisibility(
-                visible = showDetails,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(
-                    modifier = Modifier.padding(top = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    if (result.costBreakdown.isNotEmpty()) {
-                        result.costBreakdown.forEach { item ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = item.costType.replaceFirstChar { it.uppercase() }.replace("_", " "),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    item.percentage?.let { pct ->
-                                        Text(
-                                            text = "${pct.toInt()}%",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (item.percentage > 0) {
                                     Text(
-                                        text = formatCurrency(item.amount),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium
+                                        text = "${item.percentage.toInt()}%",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
+                                Text(
+                                    text = formatCurrency(item.amount),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
                             }
                         }
-                    } else {
-                        Text(
-                            text = "No cost breakdown available",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(8.dp)
-                        )
                     }
                 }
             }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-            // Action Buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onNewReport,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("🔄 New Report", style = MaterialTheme.typography.labelMedium)
-                }
-
-                Button(
-                    onClick = { /* TODO: Export/Share */ },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("📤 Share", style = MaterialTheme.typography.labelMedium)
-                }
-            }
         }
     }
 }
 
 // ============================================================================
-// Quick Access Section for Recent Reports
+// Sticky Vehicle Header - Always visible at top with Change button (LEGACY - REMOVE)
 // ============================================================================
 
 @Composable
-private fun QuickAccessSection(
-    recentReports: List<RecentReport>,
-    onQuickReport: (RecentReport) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "⚡ Quick Access",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = "Recent Reports",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(recentReports, key = { "${it.vehicleId}_${it.period}_${it.generatedAt}" }) { report ->
-                QuickReportCard(
-                    report = report,
-                    onClick = { onQuickReport(report) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuickReportCard(
-    report: RecentReport,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .width(160.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (report.isProfit)
-                Color(0xFF10B981).copy(alpha = 0.1f)
-            else Color(0xFFEF4444).copy(alpha = 0.1f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text("🚛", style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    text = report.vehicleNumber,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Text(
-                text = report.vehicleMakeModel,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = formatCurrency(kotlin.math.abs(report.profitLoss)),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (report.isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = if (report.isProfit) Color(0xFF10B981).copy(alpha = 0.2f)
-                            else Color(0xFFEF4444).copy(alpha = 0.2f)
-                ) {
-                    Text(
-                        text = if (report.isProfit) "Profit" else "Loss",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = if (report.isProfit) Color(0xFF10B981) else Color(0xFFEF4444),
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-                Text(
-                    text = report.period.replaceFirstChar { it.uppercase() },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-// ============================================================================
-// Vehicle Selection Card (Legacy - kept for compatibility)
-// ============================================================================
-
-@Composable
-private fun VehicleSelectionCard(
+private fun StickyVehicleHeader(
     selectedVehicle: Vehicle?,
     vehicleCount: Int,
     isLoading: Boolean,
-    onClick: () -> Unit
+    onChangeVehicle: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selectedVehicle != null)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Icon
-            Surface(
-                modifier = Modifier.size(56.dp),
-                shape = CircleShape,
-                color = if (selectedVehicle != null)
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                else MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = if (selectedVehicle != null) "🚛" else "➕",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Content
-            Column(modifier = Modifier.weight(1f)) {
-                if (selectedVehicle != null) {
-                    Text(
-                        text = selectedVehicle.registrationNumber,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "${selectedVehicle.make ?: ""} ${selectedVehicle.model ?: ""} • ${selectedVehicle.year ?: ""}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    selectedVehicle.assignedDriverName?.let { driver ->
-                        Text(
-                            text = "👤 $driver",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    Text(
-                        text = "Select Vehicle",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = if (isLoading) "Loading vehicles..." else "Tap to browse $vehicleCount vehicles",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Chevron / Loading
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_chevron_right),
-                    contentDescription = "Select",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-    }
+    // Legacy - not used anymore
 }
 
 // ============================================================================
-// Period Selection Section
-// ============================================================================
-
-@Composable
-private fun PeriodSelectionSection(
-    selectedPeriod: String,
-    useCustomDateRange: Boolean,
-    startDate: String,
-    endDate: String,
-    onPeriodChange: (String) -> Unit,
-    onStartDateChange: (String) -> Unit,
-    onEndDateChange: (String) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Section Header
-        Text(
-            text = "📅 Select Period",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        // Period Chips
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            VehiclePLContract.PERIOD_OPTIONS.forEach { (periodKey, periodLabel) ->
-                val isSelected = selectedPeriod == periodKey
-                FilterChip(
-                    selected = isSelected,
-                    onClick = { onPeriodChange(periodKey) },
-                    label = {
-                        Text(
-                            text = periodLabel,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                )
-            }
-        }
-
-        // Custom Date Range (animated visibility)
-        AnimatedVisibility(visible = useCustomDateRange) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    FleetDateFieldCompact(
-                        rawValue = startDate,
-                        onRawValueChange = onStartDateChange,
-                        label = "From",
-                        modifier = Modifier.weight(1f)
-                    )
-                    FleetDateFieldCompact(
-                        rawValue = endDate,
-                        onRawValueChange = onEndDateChange,
-                        label = "To",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ============================================================================
-// Vehicle Selector Bottom Sheet Content - Enhanced for 100+ vehicles
+// Vehicle Selector Bottom Sheet Content
 // ============================================================================
 
 @Composable
@@ -2185,10 +959,10 @@ private fun VehicleSelectorContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.85f) // Take more screen space for better browsing
+            .fillMaxHeight(0.85f)
             .padding(horizontal = 16.dp)
     ) {
-        // Header with vehicle count
+        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2215,7 +989,7 @@ private fun VehicleSelectorContent(
             }
         }
 
-        // Search Field with result count
+        // Search Field
         FleetSearchField(
             query = searchQuery,
             onQueryChange = onSearchChange,
@@ -2223,7 +997,6 @@ private fun VehicleSelectorContent(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Search result indicator
         if (searchQuery.isNotBlank()) {
             Text(
                 text = "${vehicles.size} result${if (vehicles.size != 1) "s" else ""} found",
@@ -2245,14 +1018,12 @@ private fun VehicleSelectorContent(
                 CircularProgressIndicator()
             }
         } else {
-            // Main scrollable content
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Recent Vehicles Section (if available and no search)
                 if (recentVehicles.isNotEmpty() && searchQuery.isBlank()) {
                     item {
                         Text(
@@ -2269,11 +1040,29 @@ private fun VehicleSelectorContent(
                             modifier = Modifier.padding(bottom = 8.dp)
                         ) {
                             items(recentVehicles, key = { "recent_${it.id}" }) { vehicle ->
-                                CompactRecentVehicleChip(
-                                    vehicle = vehicle,
-                                    isSelected = vehicle.id == selectedVehicleId,
-                                    onClick = { onVehicleSelected(vehicle.id) }
-                                )
+                                Surface(
+                                    modifier = Modifier.clickable { onVehicleSelected(vehicle.id) },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (vehicle.id == selectedVehicleId)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(10.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = vehicle.registrationNumber,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim().take(12),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -2285,7 +1074,6 @@ private fun VehicleSelectorContent(
                     }
                 }
 
-                // All Vehicles header
                 item {
                     Text(
                         text = if (searchQuery.isNotBlank()) "Results" else "All Vehicles",
@@ -2308,287 +1096,88 @@ private fun VehicleSelectorContent(
                                 text = if (searchQuery.isNotBlank())
                                     "No vehicles match \"$searchQuery\""
                                 else "No vehicles available",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodyMedium
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 } else {
-                    // Compact vehicle list items
                     items(vehicles, key = { it.id }) { vehicle ->
-                        CompactVehicleListItem(
-                            vehicle = vehicle,
-                            isSelected = vehicle.id == selectedVehicleId,
-                            onClick = { onVehicleSelected(vehicle.id) }
-                        )
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onVehicleSelected(vehicle.id) },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (vehicle.id == selectedVehicleId)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else Color.Transparent
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = vehicle.registrationNumber,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text(
+                                            text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim().ifEmpty { "-" },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f, fill = false)
+                                        )
+                                        vehicle.assignedDriverName?.let { driver ->
+                                            Text(
+                                                text = "• $driver",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Status dot
+                                val statusColor = when (vehicle.status) {
+                                    VehicleStatus.ACTIVE -> Color(0xFF10B981)
+                                    VehicleStatus.IN_MAINTENANCE -> Color(0xFFF59E0B)
+                                    VehicleStatus.INACTIVE -> Color(0xFFEF4444)
+                                    VehicleStatus.OUT_OF_SERVICE -> Color(0xFF6B7280)
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(statusColor, CircleShape)
+                                )
+
+                                if (vehicle.id == selectedVehicleId) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_check),
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
-                // Bottom spacing
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
     }
 }
 
-// Compact Recent Vehicle Chip for quick selection
-@Composable
-private fun CompactRecentVehicleChip(
-    vehicle: Vehicle,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceContainerHigh
-    ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = vehicle.registrationNumber,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1
-            )
-            Text(
-                text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim().take(12),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-// Compact Vehicle List Item - optimized for many items
-@Composable
-private fun CompactVehicleListItem(
-    vehicle: Vehicle,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-        else Color.Transparent
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Vehicle info - compact layout
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = vehicle.registrationNumber,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim().ifEmpty { "-" },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    vehicle.assignedDriverName?.let { driver ->
-                        Text(
-                            text = "• $driver",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-
-            // Compact status indicator (just a dot)
-            CompactStatusDot(status = vehicle.status)
-
-            // Selection check
-            if (isSelected) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    painter = painterResource(Res.drawable.ic_check),
-                    contentDescription = "Selected",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompactStatusDot(status: VehicleStatus) {
-    val color = when (status) {
-        VehicleStatus.ACTIVE -> Color(0xFF10B981)
-        VehicleStatus.IN_MAINTENANCE -> Color(0xFFF59E0B)
-        VehicleStatus.INACTIVE -> Color(0xFFEF4444)
-        VehicleStatus.OUT_OF_SERVICE -> Color(0xFF6B7280)
-    }
-    Box(
-        modifier = Modifier
-            .size(8.dp)
-            .background(color, CircleShape)
-    )
-}
-
-@Composable
-private fun RecentVehicleChip(
-    vehicle: Vehicle,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceContainerHigh
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text("🚛", style = MaterialTheme.typography.bodyMedium)
-            Column {
-                Text(
-                    text = vehicle.registrationNumber,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun VehicleListItem(
-    vehicle: Vehicle,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceContainerLow
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Vehicle icon
-            Surface(
-                modifier = Modifier.size(44.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text("🚛", style = MaterialTheme.typography.titleMedium)
-                }
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Vehicle info
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = vehicle.registrationNumber,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "${vehicle.make ?: ""} ${vehicle.model ?: ""} • ${vehicle.year ?: ""}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                vehicle.assignedDriverName?.let { driver ->
-                    Text(
-                        text = "👤 $driver",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Status badge
-            VehicleStatusBadge(status = vehicle.status)
-        }
-    }
-}
-
-@Composable
-private fun VehicleStatusBadge(status: VehicleStatus) {
-    val (color, text) = when (status) {
-        VehicleStatus.ACTIVE -> Color(0xFF10B981) to "Active"
-        VehicleStatus.IN_MAINTENANCE -> Color(0xFFF59E0B) to "Maintenance"
-        VehicleStatus.INACTIVE -> Color(0xFFEF4444) to "Inactive"
-        VehicleStatus.OUT_OF_SERVICE -> Color(0xFF6B7280) to "Out of Service"
-    }
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = color.copy(alpha = 0.15f)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
-    }
-}
-
 // ============================================================================
-// Recent Reports Section
+// Recent Report Card
 // ============================================================================
-
-@Composable
-private fun RecentReportsSection(
-    recentReports: List<RecentReport>,
-    onQuickReport: (RecentReport) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = "⏱️ Recent Reports",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(recentReports, key = { "${it.vehicleId}_${it.period}_${it.generatedAt}" }) { report ->
-                RecentReportCard(
-                    report = report,
-                    onClick = { onQuickReport(report) }
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun RecentReportCard(
@@ -2597,9 +1186,9 @@ private fun RecentReportCard(
 ) {
     Card(
         modifier = Modifier
-            .width(160.dp)
+            .width(140.dp)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (report.isProfit)
                 Color(0xFF10B981).copy(alpha = 0.1f)
@@ -2641,212 +1230,7 @@ private fun RecentReportCard(
 }
 
 // ============================================================================
-// Results Section
-// ============================================================================
-
-@Composable
-private fun ResultsHeader() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text("📈", style = MaterialTheme.typography.titleMedium)
-        Text(
-            text = "Report Results",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun VehiclePLResultCard(result: VehicleProfitLoss) {
-    val isProfit = result.netProfit >= 0
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Vehicle Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text("🚛", style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
-                    Column {
-                        Text(
-                            text = result.vehicleNumber ?: "Vehicle #${result.vehicleId}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        val periodText = buildString {
-                            append("${result.totalTrips} trips")
-                            if (!result.startDate.isNullOrBlank() && !result.endDate.isNullOrBlank()) {
-                                append(" • ${result.startDate} - ${result.endDate}")
-                            } else if (!result.period.isNullOrBlank()) {
-                                append(" • ${result.period}")
-                            }
-                        }
-                        Text(
-                            text = periodText,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                // Profit/Loss Badge
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isProfit) Color(0xFF10B981).copy(alpha = 0.15f)
-                    else Color(0xFFEF4444).copy(alpha = 0.15f)
-                ) {
-                    Text(
-                        text = if (isProfit) "PROFIT" else "LOSS",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
-                }
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-            // Financial Summary
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                FinancialItem(
-                    label = "Revenue",
-                    value = formatCurrency(result.totalRevenue),
-                    color = Color(0xFF10B981)
-                )
-                FinancialItem(
-                    label = "Expenses",
-                    value = formatCurrency(result.totalExpenses),
-                    color = Color(0xFFF59E0B)
-                )
-                FinancialItem(
-                    label = if (isProfit) "Profit" else "Loss",
-                    value = formatCurrency(kotlin.math.abs(result.netProfit)),
-                    color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
-                )
-            }
-
-            // Profit Margin
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Profit Margin",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    LinearProgressIndicator(
-                        progress = { (result.profitMargin.toFloat() / 100f).coerceIn(0f, 1f) },
-                        modifier = Modifier
-                            .width(100.dp)
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444),
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                    Text(
-                        text = formatPercentage(result.profitMargin),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FinancialItem(
-    label: String,
-    value: String,
-    color: Color
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-    }
-}
-
-@Composable
-private fun ErrorCard(error: String?) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text("⚠️", style = MaterialTheme.typography.titleMedium)
-            Column {
-                Text(
-                    text = "Something went wrong",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.error
-                )
-                Text(
-                    text = error ?: "Unknown error occurred",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-    }
-}
-
-// ============================================================================
-// Multi-Vehicle Summary Section
+// Multi Vehicle Summary Card
 // ============================================================================
 
 @Composable
@@ -2873,7 +1257,6 @@ fun MultiVehicleSummaryCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -2899,34 +1282,56 @@ fun MultiVehicleSummaryCard(
                 }
             }
 
-            // Vehicle Counts
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                SummaryStatItem(
-                    icon = "🚛",
-                    value = "$totalVehicles",
-                    label = "Total Vehicles",
-                    color = MaterialTheme.colorScheme.primary
-                )
-                SummaryStatItem(
-                    icon = "✅",
-                    value = "$profitableCount",
-                    label = "Profitable",
-                    color = Color(0xFF10B981)
-                )
-                SummaryStatItem(
-                    icon = "⚠️",
-                    value = "$lossMakingCount",
-                    label = "Loss Making",
-                    color = Color(0xFFEF4444)
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🚛", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        text = "$totalVehicles",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Total",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("✅", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        text = "$profitableCount",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF10B981)
+                    )
+                    Text(
+                        text = "Profitable",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("⚠️", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        text = "$lossMakingCount",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFEF4444)
+                    )
+                    Text(
+                        text = "Loss Making",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // Financial Summary
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -2975,31 +1380,8 @@ fun MultiVehicleSummaryCard(
     }
 }
 
-@Composable
-private fun SummaryStatItem(
-    icon: String,
-    value: String,
-    label: String,
-    color: Color
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = icon, style = MaterialTheme.typography.titleSmall)
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
 // ============================================================================
-// Sorting and Filtering Section
+// Sorting Filter Section
 // ============================================================================
 
 @Composable
@@ -3021,7 +1403,6 @@ fun SortingFilterSection(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Result count and filter status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -3039,7 +1420,6 @@ fun SortingFilterSection(
                 )
             }
 
-            // Filter chips
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -3061,37 +1441,110 @@ fun SortingFilterSection(
                     )
                 }
             }
+        }
+    }
+}
 
-            // Sort options as chips
+// ============================================================================
+// Vehicle PL Result Card
+// ============================================================================
+
+@Composable
+private fun VehiclePLResultCard(result: VehicleProfitLoss) {
+    val isProfit = result.netProfit >= 0
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                listOf(
-                    SortOption.PROFIT_HIGH_LOW,
-                    SortOption.LOSS_HIGH_LOW,
-                    SortOption.REVENUE_HIGH_LOW,
-                    SortOption.TRIPS_HIGH_LOW
-                ).forEach { option ->
-                    FilterChip(
-                        selected = sortOption == option,
-                        onClick = { onSortChange(option) },
-                        label = {
-                            Text(
-                                text = when (option) {
-                                    SortOption.PROFIT_HIGH_LOW -> "Most Profit"
-                                    SortOption.LOSS_HIGH_LOW -> "Most Loss"
-                                    SortOption.REVENUE_HIGH_LOW -> "Revenue"
-                                    SortOption.TRIPS_HIGH_LOW -> "Trips"
-                                    else -> option.label
-                                },
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("🚛", style = MaterialTheme.typography.titleMedium)
+                    Column {
+                        Text(
+                            text = result.vehicleNumber ?: "Vehicle #${result.vehicleId}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
                         )
+                        Text(
+                            text = "${result.totalTrips} trips",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isProfit) Color(0xFF10B981).copy(alpha = 0.15f)
+                    else Color(0xFFEF4444).copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = formatCurrency(kotlin.math.abs(result.netProfit)),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Revenue",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = formatCurrency(result.totalRevenue),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF10B981)
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Expenses",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = formatCurrency(result.totalExpenses),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFFF59E0B)
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Margin",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = formatPercentage(result.profitMargin),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
                     )
                 }
             }

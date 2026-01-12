@@ -5,6 +5,8 @@ import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import com.indusjs.fleet.data.model.costs.TripCostDto
+import com.indusjs.fleet.data.model.history.HistoryItemDto
+import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.vehicle.DocumentsSummary
 import com.indusjs.fleet.domain.entity.vehicle.RouteInfo
@@ -54,6 +56,12 @@ object VehicleDetailContract {
         val selectedDriver: Driver? = null,
         val showDriverDropdown: Boolean = false,
         val isLoadingDrivers: Boolean = false,
+
+        // Caretaker assignment
+        val caretakers: List<TeamMemberDto> = emptyList(),
+        val selectedCaretaker: TeamMemberDto? = null,
+        val showCaretakerDropdown: Boolean = false,
+        val isLoadingCaretakers: Boolean = false,
 
         // Validation errors
         val makeError: String? = null,
@@ -125,6 +133,14 @@ object VehicleDetailContract {
         val costToDeleteId: String? = null,
         val costToDeleteType: String? = null,
 
+        // History Tab
+        val historyItems: List<HistoryItemDto> = emptyList(),
+        val isLoadingHistory: Boolean = false,
+        val historyError: String? = null,
+        val historyPage: Int = 1,
+        val hasMoreHistory: Boolean = false,
+        val historyTotalCount: Int = 0,
+
         // Current selected tab
         val selectedTab: Int = 0
     ) : UiState {
@@ -166,6 +182,12 @@ object VehicleDetailContract {
         // Driver assignment
         data object ToggleDriverDropdown : Intent
         data class SelectDriver(val driver: Driver?) : Intent
+
+        // Caretaker assignment
+        data object LoadCaretakers : Intent
+        data object RefreshCaretakers : Intent
+        data object ToggleCaretakerDropdown : Intent
+        data class SelectCaretaker(val caretaker: TeamMemberDto?) : Intent
 
         // Save changes
         data object SaveChanges : Intent
@@ -230,6 +252,11 @@ object VehicleDetailContract {
         data class DeleteCost(val costId: String, val costType: String) : Intent
         data object ConfirmDeleteCost : Intent
         data object DismissDeleteCostDialog : Intent
+
+        // History Tab
+        data object LoadHistory : Intent
+        data object LoadMoreHistory : Intent
+        data object RefreshHistory : Intent
     }
 
     /**

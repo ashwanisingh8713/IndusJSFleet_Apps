@@ -3,6 +3,7 @@ package com.indusjs.fleet.presentation.vehicles
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
@@ -51,7 +52,13 @@ object AddVehicleContract {
         // Available options
         val vehicleTypes: List<VehicleType> = VehicleType.entries,
         val fuelTypes: List<String> = listOf("Diesel", "Petrol", "CNG", "Electric", "Hybrid"),
-        val documentTypes: List<DocumentType> = DocumentType.entries
+        val documentTypes: List<DocumentType> = DocumentType.entries,
+
+        // Caretaker assignment (optional)
+        val caretakers: List<TeamMemberDto> = emptyList(),
+        val selectedCaretaker: TeamMemberDto? = null,
+        val showCaretakerDropdown: Boolean = false,
+        val isLoadingCaretakers: Boolean = false
     ) : UiState {
         val isBasicInfoValid: Boolean
             get() = registrationNumber.isNotBlank() &&
@@ -103,6 +110,12 @@ object AddVehicleContract {
         data class RemoveDocument(val documentId: String) : Intent
         data class UpdateDocumentExpiry(val documentId: String, val expiryDate: Long) : Intent
         data class UpdateDocumentExpiryDate(val type: DocumentType, val rawDigits: String) : Intent
+
+        // Caretaker management
+        data object LoadCaretakers : Intent
+        data object RefreshCaretakers : Intent
+        data object ToggleCaretakerDropdown : Intent
+        data class SelectCaretaker(val caretaker: TeamMemberDto?) : Intent
 
         // Form actions
         data object ValidateBasicInfo : Intent

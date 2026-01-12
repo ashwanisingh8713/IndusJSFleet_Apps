@@ -1,6 +1,7 @@
 package com.indusjs.fleet.domain.repository.vehicle
 
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.data.model.history.VehicleHistoryDataDto
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDetail
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
@@ -101,5 +102,17 @@ interface VehicleRepository : Repository {
      * GET /documents/{id}/download
      */
     suspend fun downloadDocument(documentId: String): Result<ByteArray>
+
+    // ==================== History APIs ====================
+
+    /**
+     * Get vehicle history with pagination.
+     * GET /vehicles/{id}/history?page=1&per_page=20
+     */
+    suspend fun getVehicleHistory(
+        id: String,
+        page: Int = 1,
+        perPage: Int = 20
+    ): Result<VehicleHistoryDataDto>
 }
 

@@ -1,12 +1,16 @@
 package com.indusjs.fleet.data.repository.team
 
+import co.touchlab.kermit.Logger
 import com.indusjs.error.exception.ApiException
 import com.indusjs.error.exception.AuthException
+import com.indusjs.fleet.data.database.entity.TeamMemberEntity
+import com.indusjs.fleet.data.datasource.team.TeamLocalDataSource
 import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.team.TeamMapper.toDomain
 import com.indusjs.fleet.data.model.team.CreateTeamMemberRequest
 import com.indusjs.fleet.data.model.team.ResetPasswordRequest
+import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.data.model.team.UpdateTeamMemberRequest
 import com.indusjs.fleet.domain.entity.team.TeamMember
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
@@ -15,13 +19,16 @@ import dev.zacsweers.metro.Inject
 
 /**
  * Implementation of TeamRepository.
- * Handles team member CRUD operations via remote data source.
+ * Handles team member CRUD operations via remote data source with local caching.
  */
 @Inject
 class TeamRepositoryImpl(
     private val remoteDataSource: TeamRemoteDataSource,
-    private val userLocalDataSource: UserLocalDataSource
+    private val userLocalDataSource: UserLocalDataSource,
+    private val localDataSource: TeamLocalDataSource
 ) : TeamRepository {
+
+    private val log = Logger.withTag("TeamRepository")
 
     override suspend fun createTeamMember(
         email: String,
@@ -45,8 +52,16 @@ class TeamRepositoryImpl(
             )
         )
 
-        response.data?.toDomain()
+        val teamMember = response.data?.toDomain()
             ?: throw ApiException(response.message ?: "Failed to create team member")
+
+        // Save to local cache
+        response.data?.let { dto ->
+            localDataSource.saveTeamMember(dto.toEntity())
+            log.d { "Saved new team member to cache: ${teamMember.fullName}" }
+        }
+
+        teamMember
     }
 
     override suspend fun getTeamMembers(): Result<List<TeamMember>> = runCatching {
@@ -54,7 +69,15 @@ class TeamRepositoryImpl(
         val response = remoteDataSource.getTeamMembers(token = token)
 
         if (response.success && response.data != null) {
-            response.data.team?.toDomain() ?: emptyList()
+            val members = response.data.team?.toDomain() ?: emptyList()
+
+            // Save to local cache
+            response.data.team?.let { dtos ->
+                localDataSource.saveTeamMembers(dtos.map { it.toEntity() })
+                log.d { "Saved ${dtos.size} team members to cache" }
+            }
+
+            members
         } else {
             throw ApiException(response.message ?: "Failed to get team members")
         }
@@ -106,16 +129,32 @@ class TeamRepositoryImpl(
             )
         )
 
-        response.data?.toDomain()
+        val teamMember = response.data?.toDomain()
             ?: throw ApiException(response.message ?: "Failed to update team member")
+
+        // Update local cache
+        response.data?.let { dto ->
+            localDataSource.saveTeamMember(dto.toEntity())
+            log.d { "Updated team member in cache: ${teamMember.fullName}" }
+        }
+
+        teamMember
     }
 
     override suspend fun toggleTeamMemberActive(id: String): Result<TeamMember> = runCatching {
         val token = requireAuthToken()
         val response = remoteDataSource.toggleTeamMemberActive(token = token, id = id)
 
-        response.data?.toDomain()
+        val teamMember = response.data?.toDomain()
             ?: throw ApiException(response.message ?: "Failed to toggle team member status")
+
+        // Update local cache
+        response.data?.let { dto ->
+            localDataSource.saveTeamMember(dto.toEntity())
+            log.d { "Updated team member status in cache: ${teamMember.fullName}" }
+        }
+
+        teamMember
     }
 
     override suspend fun resetTeamMemberPassword(id: String, newPassword: String): Result<Unit> = runCatching {
@@ -138,6 +177,39 @@ class TeamRepositoryImpl(
         if (!response.success) {
             throw ApiException(response.message ?: "Failed to delete team member")
         }
+
+        // Remove from local cache
+        localDataSource.deleteTeamMember(id.toIntOrNull() ?: 0)
+        log.d { "Deleted team member from cache: $id" }
+    }
+
+    // ==================== Local Cache Methods ====================
+
+    override suspend fun getTeamMembersFromCache(): Result<List<TeamMember>> = runCatching {
+        localDataSource.getTeamMembers().map { it.toDomain() }
+    }
+
+    override suspend fun getCaretakersFromCache(): Result<List<TeamMember>> = runCatching {
+        localDataSource.getCaretakers().map { it.toDomain() }
+    }
+
+    override suspend fun refreshTeamMembers(): Result<List<TeamMember>> = runCatching {
+        val token = requireAuthToken()
+        val response = remoteDataSource.getTeamMembers(token = token)
+
+        if (response.success && response.data != null) {
+            val members = response.data.team?.toDomain() ?: emptyList()
+
+            // Save to local cache
+            response.data.team?.let { dtos ->
+                localDataSource.saveTeamMembers(dtos.map { it.toEntity() })
+                log.d { "Refreshed ${dtos.size} team members in cache" }
+            }
+
+            members
+        } else {
+            throw ApiException(response.message ?: "Failed to refresh team members")
+        }
     }
 
     /**
@@ -147,5 +219,33 @@ class TeamRepositoryImpl(
         return userLocalDataSource.getAuthToken()
             ?: throw AuthException.unauthenticated()
     }
+
+    // ==================== Extension Functions ====================
+
+    private fun TeamMemberDto.toEntity(): TeamMemberEntity = TeamMemberEntity(
+        id = id,
+        email = email,
+        mobile = mobile,
+        firstName = firstName,
+        lastName = lastName,
+        role = role,
+        ownerId = ownerId,
+        isActive = isActive,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+
+    private fun TeamMemberEntity.toDomain(): TeamMember = TeamMember(
+        id = id.toString(),
+        email = email,
+        mobile = mobile,
+        firstName = firstName,
+        lastName = lastName,
+        role = TeamMemberRole.fromApiString(role),
+        ownerId = ownerId.toString(),
+        isActive = isActive,
+        createdAt = createdAt,
+        updatedAt = updatedAt ?: ""
+    )
 }
 

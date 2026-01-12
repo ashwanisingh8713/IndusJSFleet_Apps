@@ -1,16 +1,21 @@
 package com.indusjs.fleet.presentation.trips.cost
 
+import androidx.lifecycle.viewModelScope
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.core.ui.CostTypeSelection
 import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
 import com.indusjs.fleet.data.model.costs.BulkCostItem
 import com.indusjs.fleet.data.model.costs.BulkCreateTripCostsRequest
+import com.indusjs.fleet.data.model.costs.TripCostTypes
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
+import com.indusjs.fleet.domain.usecase.costs.GetTripCostTypesUseCase
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -20,13 +25,65 @@ import kotlinx.coroutines.withContext
 class TripCostEntryViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val tripRepository: TripRepository,
-    private val costsRepository: CostsRepository
+    private val costsRepository: CostsRepository,
+    private val getTripCostTypesUseCase: GetTripCostTypesUseCase? = null
 ) : MviViewModel<TripCostEntryContract.State, TripCostEntryContract.Intent, TripCostEntryContract.Effect>(
     TripCostEntryContract.State()
 ) {
 
     init {
         sendIntent(TripCostEntryContract.Intent.LoadTrips)
+        loadCostTypes()
+    }
+
+    /**
+     * Load cost types from local cache (populated on app launch).
+     * Falls back to hardcoded types if cache is empty or use case is not provided.
+     */
+    private fun loadCostTypes() {
+        viewModelScope.launch(dispatcherProvider.io) {
+            try {
+                // Try to get grouped cost types first
+                val groupedDto = getTripCostTypesUseCase?.getGrouped()
+                if (groupedDto != null && groupedDto.groups.isNotEmpty()) {
+                    val flat = groupedDto.toFlatList()
+                    val groups = groupedDto.toCostTypeGroups()
+                    updateState {
+                        copy(
+                            costTypeOptions = flat,
+                            costTypeGroups = groups
+                        )
+                    }
+                } else {
+                    // Fallback to flat list and create grouped structure
+                    val costTypes = getTripCostTypesUseCase?.invoke()
+                    if (!costTypes.isNullOrEmpty()) {
+                        updateState {
+                            copy(
+                                costTypeOptions = costTypes,
+                                costTypeGroups = TripCostTypes.groups
+                            )
+                        }
+                    } else {
+                        // Use hardcoded fallback with grouped structure
+                        updateState {
+                            copy(
+                                costTypeOptions = TripCostTypes.types,
+                                costTypeGroups = TripCostTypes.groups
+                            )
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+                // Use hardcoded fallback on error
+                updateState {
+                    copy(
+                        costTypeOptions = TripCostTypes.types,
+                        costTypeGroups = TripCostTypes.groups
+                    )
+                }
+            }
+        }
     }
 
     override suspend fun handleIntent(intent: TripCostEntryContract.Intent) {
@@ -41,7 +98,8 @@ class TripCostEntryViewModel(
             is TripCostEntryContract.Intent.ToggleRowExpanded -> toggleRowExpanded(intent.rowId)
 
             // Cost entry updates
-            is TripCostEntryContract.Intent.SelectCostType -> selectCostType(intent.rowId, intent.costType, intent.label)
+            is TripCostEntryContract.Intent.SelectCostType -> selectCostType(intent.rowId, intent.selection)
+            is TripCostEntryContract.Intent.UpdateSelectedCategory -> updateSelectedCategory(intent.rowId, intent.groupId, intent.groupName)
             is TripCostEntryContract.Intent.ToggleCostTypeDropdown -> toggleCostTypeDropdown(intent.rowId)
             is TripCostEntryContract.Intent.UpdateDate -> updateRowField(intent.rowId) { it.copy(date = intent.value, dateError = null) }
             is TripCostEntryContract.Intent.UpdateTime -> updateRowField(intent.rowId) { it.copy(time = intent.value) }
@@ -127,17 +185,43 @@ class TripCostEntryViewModel(
         updateRowField(rowId) { it.copy(isExpanded = !it.isExpanded) }
     }
 
-    private fun selectCostType(rowId: String, costType: String, label: String) {
+    private fun selectCostType(rowId: String, selection: CostTypeSelection) {
         updateRowField(rowId) {
             it.copy(
-                costType = costType,
-                costTypeLabel = label,
+                costType = selection.costTypeId,
+                costTypeLabel = selection.costTypeLabel,
+                selectedGroupId = selection.groupId,
+                selectedGroupName = selection.groupName,
                 showCostTypeDropdown = false,
                 costTypeError = null,
-                // Reset fuel fields if not fuel type
-                fuelQuantity = if (costType != "fuel") "" else it.fuelQuantity,
-                fuelRate = if (costType != "fuel") "" else it.fuelRate,
-                kmPerLiter = if (costType != "fuel") "" else it.kmPerLiter
+                // Auto-set fuelType to match selected cost type (used as read-only display)
+                fuelType = if (selection.isFuelCategory) selection.costTypeId else it.fuelType,
+                // Clear fuel fields if switching away from fuel type
+                fuelQuantity = if (selection.isFuelCategory) it.fuelQuantity else "",
+                fuelRate = if (selection.isFuelCategory) it.fuelRate else "",
+                kmPerLiter = if (selection.isFuelCategory) it.kmPerLiter else ""
+            )
+        }
+    }
+
+    /**
+     * Update selected category immediately when category dropdown changes.
+     * This enables immediate show/hide of Fuel Details section.
+     */
+    private fun updateSelectedCategory(rowId: String, groupId: String, groupName: String) {
+        updateRowField(rowId) {
+            val isFuelCategory = groupId == CostTypeSelection.FUEL_ENERGY_GROUP_ID
+
+            it.copy(
+                selectedGroupId = groupId,
+                selectedGroupName = groupName,
+                // Clear cost type when category changes (user needs to select from new chips)
+                costType = "",
+                costTypeLabel = "",
+                // Clear fuel fields if switching away from fuel category
+                fuelQuantity = if (isFuelCategory) it.fuelQuantity else "",
+                fuelRate = if (isFuelCategory) it.fuelRate else "",
+                kmPerLiter = if (isFuelCategory) it.kmPerLiter else ""
             )
         }
     }
@@ -238,6 +322,14 @@ class TripCostEntryViewModel(
         // Convert date/time to ISO 8601 format for v2 API
         val bulkItems = validEntries.map { entry ->
             BulkCostItem(
+                // New structured cost fields
+                costId = entry.costType,
+                costLabel = entry.costTypeLabel.ifBlank { entry.costType },
+                groupId = entry.selectedGroupId.ifBlank { "TC-G-006" }, // Default to Miscellaneous
+                customCostLabel = if (entry.isOtherCostType && entry.customCostTypeName.isNotBlank()) {
+                    entry.customCostTypeName
+                } else null,
+                // Legacy field
                 costType = if (entry.isOtherCostType && entry.customCostTypeName.isNotBlank()) {
                     entry.customCostTypeName
                 } else {

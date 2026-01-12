@@ -234,6 +234,36 @@ Body: {
 
 ---
 
+## Database Schema Changes
+
+### Users Table (Updated)
+```sql
+-- New role value added
+role VARCHAR(50) CHECK (role IN ('owner', 'general_manager', 'manager', 'supervisor'))
+
+-- New field
+created_by_id INTEGER REFERENCES users(id)
+```
+
+### Vehicles Table (Add Caretaker)
+```sql
+ALTER TABLE vehicles 
+  ADD COLUMN caretaker_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE vehicles 
+  ADD COLUMN updated_by_id INTEGER REFERENCES users(id);
+
+CREATE INDEX idx_vehicles_caretaker ON vehicles(caretaker_id);
+```
+
+### Drivers Table (Add Caretaker)
+```sql
+ALTER TABLE drivers 
+  ADD COLUMN caretaker_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE drivers 
+  ADD COLUMN updated_by_id INTEGER REFERENCES users(id);
+
+CREATE INDEX idx_drivers_caretaker ON drivers(caretaker_id);
+```
 
 ---
 

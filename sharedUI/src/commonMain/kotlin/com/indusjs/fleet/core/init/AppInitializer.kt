@@ -1,0 +1,70 @@
+package com.indusjs.fleet.core.init
+
+import co.touchlab.kermit.Logger
+import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.error.result.Result
+import com.indusjs.fleet.domain.usecase.costs.InitializeCostTypesUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
+/**
+ * App Initializer - handles one-time initialization tasks on app launch.
+ *
+ * Current responsibilities:
+ * - Initialize cost types from API (one-time save to local storage)
+ *
+ * Future responsibilities can be added here:
+ * - Initialize user preferences
+ * - Sync offline data
+ * - Initialize analytics
+ */
+class AppInitializer(
+    private val initializeCostTypesUseCase: InitializeCostTypesUseCase,
+    private val dispatcherProvider: DispatcherProvider
+) {
+    private val log = Logger.withTag("AppInitializer")
+
+    private var isInitialized = false
+
+    /**
+     * Initialize the app with one-time setup tasks.
+     * This runs on a background thread and doesn't block the UI.
+     *
+     * @param scope The coroutine scope to run initialization in
+     */
+    fun initialize(scope: CoroutineScope) {
+        if (isInitialized) {
+            log.d { "App already initialized, skipping" }
+            return
+        }
+
+        scope.launch(dispatcherProvider.io) {
+            log.d { "Starting app initialization..." }
+
+            // Initialize cost types (one-time fetch and save)
+            when (val result = initializeCostTypesUseCase()) {
+                is Result.Success -> {
+                    log.d { "Cost types initialization completed successfully" }
+                }
+                is Result.Error -> {
+                    log.w { "Cost types initialization failed: ${result.message}" }
+                    // Don't block app - cost type screens will use fallback hardcoded types
+                }
+                is Result.Loading -> {
+                    // Shouldn't happen for this use case
+                }
+            }
+
+            isInitialized = true
+            log.d { "App initialization completed" }
+        }
+    }
+
+    /**
+     * Reset initialization state (useful for testing or re-initialization).
+     */
+    fun reset() {
+        isInitialized = false
+    }
+}
+

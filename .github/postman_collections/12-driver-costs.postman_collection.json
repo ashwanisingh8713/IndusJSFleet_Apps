@@ -1,0 +1,178 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-12-driver-costs",
+		"name": "12. Driver Costs",
+		"description": "Driver cost management - salaries, incentives, deductions.\n\n## Access\n- ALL endpoints: Owner and General Manager ONLY\n\n## Cost Structure\nAll driver costs require:\n- `cost_id`: Unique identifier (e.g., DC-001-001)\n- `cost_label`: Display label (e.g., Monthly Salary)\n- `group_id`: Group identifier (e.g., DC-G-001)\n\n## Cost Groups\n\n**DC-G-001 - Salary & Wages:**\n- DC-001-001 (Monthly Salary), DC-001-002 (Daily Wages), DC-001-003 (Overtime), DC-001-004 (Holiday Pay)\n\n**DC-G-002 - Incentives & Bonuses:**\n- DC-002-001 (Trip Bonus), DC-002-002 (Performance Bonus), DC-002-003 (Fuel Savings), DC-002-004 (On-Time Delivery), DC-002-005 (Safety Bonus)\n\n**DC-G-003 - Deductions:**\n- DC-003-001 (Advance Recovery), DC-003-002 (Damage Deduction), DC-003-003 (Fine), DC-003-004 (Loan EMI), DC-003-005 (Insurance)\n\n**DC-G-004 - Other:**\n- DC-004-001 (Training), DC-004-002 (Uniform), DC-004-003 (Medical), DC-004-004 (License Renewal), DC-004-005 (Other)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "driver_id", "value": "1", "type": "string"},
+		{"key": "cost_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Get Driver Cost Types",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/cost-types/driver", "host": ["{{base_url}}"], "path": ["cost-types", "driver"]}
+			},
+			"description": "Returns all driver cost types organized by groups."
+		},
+		{
+			"name": "Create Driver Cost - Salary",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"driver_id\": 1,\n    \"cost_id\": \"DC-001-001\",\n    \"cost_label\": \"Monthly Salary\",\n    \"group_id\": \"DC-G-001\",\n    \"amount\": 25000.00,\n    \"date\": \"31-12-2025\",\n    \"month\": \"2025-12\",\n    \"description\": \"December 2025 Salary\",\n    \"notes\": \"Paid via bank transfer\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs"]}
+			},
+			"description": "Create monthly salary cost for driver."
+		},
+		{
+			"name": "Create Driver Cost - Trip Bonus",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"driver_id\": 1,\n    \"trip_id\": 1,\n    \"cost_id\": \"DC-002-001\",\n    \"cost_label\": \"Trip Bonus\",\n    \"group_id\": \"DC-G-002\",\n    \"amount\": 500.00,\n    \"date\": \"15-12-2025\",\n    \"description\": \"Bonus for long-haul trip\",\n    \"notes\": \"Mumbai to Delhi delivery\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs"]}
+			},
+			"description": "Create trip bonus linked to specific trip."
+		},
+		{
+			"name": "Create Driver Cost - Deduction",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"driver_id\": 1,\n    \"cost_id\": \"DC-003-001\",\n    \"cost_label\": \"Advance Recovery\",\n    \"group_id\": \"DC-G-003\",\n    \"amount\": 2000.00,\n    \"date\": \"31-12-2025\",\n    \"month\": \"2025-12\",\n    \"description\": \"Advance recovery installment\",\n    \"is_deduction\": true\n}"
+				},
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs"]}
+			},
+			"description": "Create deduction (advance recovery, fine, etc.)."
+		},
+		{
+			"name": "Get Driver Costs",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/drivers/{{driver_id}}/costs?page=1&per_page=20&group_id=&month=&start_date=&end_date=",
+					"host": ["{{base_url}}"],
+					"path": ["drivers", "{{driver_id}}", "costs"],
+					"query": [
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"},
+						{"key": "group_id", "value": "", "description": "Filter by group (DC-G-001 to DC-G-004)"},
+						{"key": "month", "value": "", "description": "Filter by month (YYYY-MM)"},
+						{"key": "start_date", "value": "", "description": "DD-MM-YYYY"},
+						{"key": "end_date", "value": "", "description": "DD-MM-YYYY"}
+					]
+				}
+			},
+			"description": "Get all costs for a driver with filtering and summary."
+		},
+		{
+			"name": "Get Driver Cost",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs", "{{cost_id}}"]}
+			}
+		},
+		{
+			"name": "Update Driver Cost",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 27000.00,\n    \"notes\": \"Updated salary amount\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs", "{{cost_id}}"]}
+			}
+		},
+		{
+			"name": "Delete Driver Cost",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs/{{cost_id}}", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs", "{{cost_id}}"]}
+			}
+		},
+		{
+			"name": "Bulk Create Driver Costs",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"costs\": [\n        {\n            \"cost_id\": \"DC-001-001\",\n            \"cost_label\": \"Monthly Salary\",\n            \"group_id\": \"DC-G-001\",\n            \"amount\": 25000.00,\n            \"date\": \"31-12-2025\",\n            \"month\": \"2025-12\",\n            \"description\": \"December salary\"\n        },\n        {\n            \"cost_id\": \"DC-002-002\",\n            \"cost_label\": \"Performance Bonus\",\n            \"group_id\": \"DC-G-002\",\n            \"amount\": 5000.00,\n            \"date\": \"31-12-2025\",\n            \"month\": \"2025-12\",\n            \"description\": \"Quarterly performance bonus\"\n        }\n    ]\n}"
+				},
+				"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/costs/bulk", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "costs", "bulk"]}
+			},
+			"description": "Bulk create multiple driver costs at once."
+		},
+		{
+			"name": "Get Driver Financial Summary",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/drivers/{{driver_id}}/financial-summary?period=monthly",
+					"host": ["{{base_url}}"],
+					"path": ["drivers", "{{driver_id}}", "financial-summary"],
+					"query": [
+						{"key": "period", "value": "monthly", "description": "today, weekly, monthly, quarterly, yearly, custom"}
+					]
+				}
+			},
+			"description": "Get complete financial summary for a driver including trips, earnings, costs, and efficiency metrics."
+		},
+		{
+			"name": "Get Driver Earnings",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/drivers/{{driver_id}}/earnings?period=monthly",
+					"host": ["{{base_url}}"],
+					"path": ["drivers", "{{driver_id}}", "earnings"],
+					"query": [
+						{"key": "period", "value": "monthly", "description": "today, weekly, monthly, quarterly, yearly"}
+					]
+				}
+			},
+			"description": "Get driver earnings summary with monthly breakdown."
+		}
+	]
+}
+

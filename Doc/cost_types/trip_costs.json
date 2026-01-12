@@ -1,0 +1,152 @@
+{
+  "category_id": "TC-001",
+  "category_name": "Trip Costs",
+  "groups": [
+    {
+      "group_id": "TC-G-001",
+      "group_name": "Fuel & Energy",
+      "items": [
+        {
+          "id": "TC-001-001",
+          "value": "TC-001-001",
+          "label": "Petrol"
+        },
+        {
+          "id": "TC-001-002",
+          "value": "TC-001-002",
+          "label": "Diesel"
+        },
+        {
+          "id": "TC-001-003",
+          "value": "TC-001-003",
+          "label": "CNG / LPG"
+        },
+        {
+          "id": "TC-001-004",
+          "value": "TC-001-004",
+          "label": "EV Charging"
+        }
+      ]
+    },
+    {
+      "group_id": "TC-G-002",
+      "group_name": "Toll & Parking",
+      "items": [
+        {
+          "id": "TC-002-001",
+          "value": "TC-002-001",
+          "label": "Toll Charges"
+        },
+        {
+          "id": "TC-002-002",
+          "value": "TC-002-002",
+          "label": "Parking Fees"
+        },
+        {
+          "id": "TC-002-003",
+          "value": "TC-002-003",
+          "label": "Entry Charges"
+        }
+      ]
+    },
+    {
+      "group_id": "TC-G-003",
+      "group_name": "Loading & Unloading",
+      "items": [
+        {
+          "id": "TC-003-001",
+          "value": "TC-003-001",
+          "label": "Loading Charges"
+        },
+        {
+          "id": "TC-003-002",
+          "value": "TC-003-002",
+          "label": "Unloading Charges"
+        },
+        {
+          "id": "TC-003-003",
+          "value": "TC-003-003",
+          "label": "Crane / Forklift"
+        },
+        {
+          "id": "TC-003-004",
+          "value": "TC-003-004",
+          "label": "Labor Charges"
+        }
+      ]
+    },
+    {
+      "group_id": "TC-G-004",
+      "group_name": "Driver Expenses",
+      "items": [
+        {
+          "id": "TC-004-001",
+          "value": "TC-004-001",
+          "label": "Driver Allowance"
+        },
+        {
+          "id": "TC-004-002",
+          "value": "TC-004-002",
+          "label": "Driver Food"
+        },
+        {
+          "id": "TC-004-003",
+          "value": "TC-004-003",
+          "label": "Driver Accommodation"
+        }
+      ]
+    },
+    {
+      "group_id": "TC-G-005",
+      "group_name": "Permits & Compliance",
+      "items": [
+        {
+          "id": "TC-005-001",
+          "value": "TC-005-001",
+          "label": "State Permit"
+        },
+        {
+          "id": "TC-005-002",
+          "value": "TC-005-002",
+          "label": "National Permit"
+        },
+        {
+          "id": "TC-005-003",
+          "value": "TC-005-003",
+          "label": "Special Permit"
+        },
+        {
+          "id": "TC-005-004",
+          "value": "TC-005-004",
+          "label": "Chalan / Fine"
+        }
+      ]
+    },
+    {
+      "group_id": "TC-G-006",
+      "group_name": "Miscellaneous",
+      "items": [
+        {
+          "id": "TC-006-001",
+          "value": "TC-006-001",
+          "label": "Police / RTO"
+        },
+        {
+          "id": "TC-006-002",
+          "value": "TC-006-002",
+          "label": "Weighbridge"
+        },
+        {
+          "id": "TC-006-003",
+          "value": "TC-006-003",
+          "label": "Commission / Brokerage"
+        },
+        {
+          "id": "TC-006-004",
+          "value": "TC-006-004",
+          "label": "Other"
+        }
+      ]
+    }
+  ]
+}

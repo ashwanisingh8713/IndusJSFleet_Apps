@@ -113,8 +113,8 @@ Authorization: Bearer {{token}}
         "payment_status": "paid",
         "pending_amount": 0,
         "cost_breakdown": [
-            {"cost_type": "fuel", "amount": 5000.00, "count": 2},
-            {"cost_type": "toll", "amount": 350.00, "count": 3}
+            {"cost_id": "TC-001-002", "cost_label": "Diesel", "group_id": "TC-G-001", "amount": 5000.00, "count": 2},
+            {"cost_id": "TC-002-001", "cost_label": "Toll Charges", "group_id": "TC-G-002", "amount": 350.00, "count": 3}
         ]
     }
 }
@@ -202,9 +202,11 @@ Content-Type: application/json
 
 ### Get Cost Type Profit/Loss
 ```http
-GET {{base_url}}/reports/profit-loss/cost-type/fuel
+GET {{base_url}}/reports/profit-loss/cost-type/TC-001-002
 Authorization: Bearer {{token}}
 ```
+
+**Note:** Use cost_id (e.g., TC-001-002 for Diesel, VMC-002-003 for Tyres)
 
 ### Get Multi Cost Type Analysis
 ```http
@@ -216,7 +218,7 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-    "cost_types": ["fuel", "toll", "maintenance"],
+    "cost_ids": ["TC-001-002", "TC-002-001", "VMC-001-001"],
     "vehicle_ids": [1, 2, 3],
     "start_date": "01-01-2026",
     "end_date": "31-01-2026"
@@ -239,7 +241,7 @@ Content-Type: application/json
 {
     "vehicle_ids": [1, 2, 3],
     "trip_ids": [1, 2, 3, 4, 5],
-    "cost_types": ["fuel", "toll", "maintenance"],
+    "cost_ids": ["TC-001-002", "TC-002-001", "TC-004-001"],
     "start_date": "01-01-2026",
     "end_date": "31-01-2026"
 }

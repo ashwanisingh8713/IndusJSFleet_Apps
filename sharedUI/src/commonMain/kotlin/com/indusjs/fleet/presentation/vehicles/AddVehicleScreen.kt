@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.ui.FleetDateField
 import com.indusjs.fleet.core.ui.FleetMobileField
+import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
@@ -375,6 +376,17 @@ private fun BasicInfoStep(
                 onRawValueChange = { onIntent(AddVehicleContract.Intent.UpdateOwnerContact(it)) },
                 label = "Owner Contact",
                 placeholder = "Enter 10-digit mobile"
+            )
+        }
+
+        // Caretaker Assignment Section
+        item {
+            CaretakerSectionCard(
+                selectedCaretaker = state.selectedCaretaker,
+                caretakers = state.caretakers,
+                onCaretakerSelected = { onIntent(AddVehicleContract.Intent.SelectCaretaker(it)) },
+                onRefresh = { onIntent(AddVehicleContract.Intent.RefreshCaretakers) },
+                isLoading = state.isLoadingCaretakers
             )
         }
 

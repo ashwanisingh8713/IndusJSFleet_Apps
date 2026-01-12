@@ -31,6 +31,9 @@ import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.DateInputField
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.ui.caretaker.CaretakerInfoCard
+import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
+import com.indusjs.fleet.core.ui.history.HistoryTabContent
 import com.indusjs.fleet.domain.entity.vehicle.DocumentTypeDetail
 import com.indusjs.fleet.domain.entity.vehicle.RouteInfo
 import com.indusjs.fleet.domain.entity.vehicle.RouteStop
@@ -53,7 +56,8 @@ private enum class VehicleDetailTab(val title: String, val icon: String) {
     TRIPS("Trips", "🚀"),
     COSTS("Costs", "💰"),
     ROUTE("Route & Stops", "📍"),
-    DOCUMENTS("Documents", "📄")
+    DOCUMENTS("Documents", "📄"),
+    HISTORY("History", "📋")
 }
 
 /**
@@ -449,7 +453,7 @@ private fun VehicleDetailTabbedContent(
             modifier = Modifier.fillMaxSize()
         ) { page ->
             when (tabs[page]) {
-                VehicleDetailTab.OVERVIEW -> OverviewTabContent(vehicle = vehicle, viewModel = viewModel)
+                VehicleDetailTab.OVERVIEW -> OverviewTabContent(vehicle = vehicle, state = state, viewModel = viewModel)
                 VehicleDetailTab.TRIPS -> TripsTabContent(
                     tripsList = state.tripsList,
                     tripsSummary = state.tripsSummary,
@@ -487,6 +491,14 @@ private fun VehicleDetailTabbedContent(
                         viewModel.sendIntent(VehicleDetailContract.Intent.ReplaceDocument(documentType, documentTypeName))
                     }
                 )
+                VehicleDetailTab.HISTORY -> HistoryTabContent(
+                    items = state.historyItems,
+                    isLoading = state.isLoadingHistory,
+                    error = state.historyError,
+                    hasMore = state.hasMoreHistory,
+                    onLoadMore = { viewModel.sendIntent(VehicleDetailContract.Intent.LoadMoreHistory) },
+                    onRetry = { viewModel.sendIntent(VehicleDetailContract.Intent.LoadHistory) }
+                )
             }
         }
     }
@@ -498,6 +510,7 @@ private fun VehicleDetailTabbedContent(
 @Composable
 private fun OverviewTabContent(
     vehicle: Vehicle,
+    state: VehicleDetailContract.State,
     viewModel: VehicleDetailViewModel
 ) {
     LazyColumn(
@@ -518,6 +531,16 @@ private fun OverviewTabContent(
         // Assigned Driver Section - only show if driver is assigned
         if (vehicle.assignedDriverId != null) {
             item { AssignedDriverSection(vehicle = vehicle) }
+        }
+
+        // Caretaker Assignment Section
+        item {
+            CaretakerInfoCard(
+                caretaker = state.selectedCaretaker,
+                onChangeCaretaker = if (state.isEditMode) {
+                    { viewModel.sendIntent(VehicleDetailContract.Intent.LoadCaretakers) }
+                } else null
+            )
         }
 
         // Status Section
@@ -2410,6 +2433,15 @@ private fun EditModeContent(
                 }
             }
         }
+
+        // ==================== Caretaker Assignment Section ====================
+        CaretakerSectionCard(
+            selectedCaretaker = state.selectedCaretaker,
+            caretakers = state.caretakers,
+            onCaretakerSelected = { viewModel.sendIntent(VehicleDetailContract.Intent.SelectCaretaker(it)) },
+            onRefresh = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshCaretakers) },
+            isLoading = state.isLoadingCaretakers
+        )
     }
 }
 

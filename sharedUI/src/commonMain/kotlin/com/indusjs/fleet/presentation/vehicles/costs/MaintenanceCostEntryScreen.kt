@@ -18,7 +18,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.ui.CostTypeGroup
+import com.indusjs.fleet.core.ui.CostTypeSelection
+import com.indusjs.fleet.core.ui.CostTypeTwoLevelSelector
 import com.indusjs.fleet.core.ui.DateInputField
+import com.indusjs.fleet.core.ui.FleetDropdownField
+import com.indusjs.fleet.core.ui.FleetSectionCard
 import com.indusjs.fleet.core.ui.TimeInputField
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import indusjsfleet.sharedui.generated.resources.*
@@ -120,8 +125,8 @@ fun MaintenanceCostEntryScreen(
             ) {
                 // Section 1: Vehicle Selection
                 item {
-                    MaintenanceSectionCard(title = "🚛 Select Vehicle") {
-                        MaintenanceDropdownField(
+                    FleetSectionCard(title = "🚛 Select Vehicle") {
+                        FleetDropdownField(
                             label = "Vehicle *",
                             value = state.selectedVehicle?.let { "${it.registrationNumber} - ${it.make} ${it.model}" } ?: "",
                             placeholder = "Select a vehicle",
@@ -174,15 +179,15 @@ fun MaintenanceCostEntryScreen(
                     MaintenanceCostRowCard(
                         row = row,
                         rowNumber = index + 1,
-                        costTypeOptions = state.costTypeOptions,
+                        costTypeGroups = state.costTypeGroups,
                         canDelete = state.costEntries.size > 1,
                         onToggleExpanded = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ToggleRowExpanded(row.id)) },
                         onDelete = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.RemoveCostRow(row.id)) },
-                        onSelectCostType = { type, label ->
-                            viewModel.sendIntent(MaintenanceCostEntryContract.Intent.SelectCostType(row.id, type, label))
+                        onSelectCostType = { selection ->
+                            viewModel.sendIntent(MaintenanceCostEntryContract.Intent.SelectCostType(row.id, selection))
                         },
-                        onToggleCostTypeDropdown = {
-                            viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ToggleCostTypeDropdown(row.id))
+                        onCategoryChanged = { groupId, groupName ->
+                            viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateSelectedCategory(row.id, groupId, groupName))
                         },
                         onUpdateDate = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateDate(row.id, it)) },
                         onUpdateTime = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateTime(row.id, it)) },
@@ -190,7 +195,10 @@ fun MaintenanceCostEntryScreen(
                         onUpdateDescription = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateDescription(row.id, it)) },
                         onUpdateNotes = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateNotes(row.id, it)) },
                         onUpdateVendorName = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateVendorName(row.id, it)) },
-                        onUpdateInvoiceNo = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateInvoiceNo(row.id, it)) }
+                        onUpdateInvoiceNo = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateInvoiceNo(row.id, it)) },
+                        onUpdateFuelQuantity = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateFuelQuantity(row.id, it)) },
+                        onUpdateFuelRate = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateFuelRate(row.id, it)) },
+                        onUpdateKmPerLiter = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.UpdateKmPerLiter(row.id, it)) }
                     )
                 }
 
@@ -284,28 +292,28 @@ fun MaintenanceCostEntryScreen(
 private fun MaintenanceCostRowCard(
     row: MaintenanceCostRow,
     rowNumber: Int,
-    costTypeOptions: List<Pair<String, String>>,
+    costTypeGroups: List<CostTypeGroup>,
     canDelete: Boolean,
     onToggleExpanded: () -> Unit,
     onDelete: () -> Unit,
-    onSelectCostType: (String, String) -> Unit,
-    onToggleCostTypeDropdown: () -> Unit,
+    onSelectCostType: (CostTypeSelection) -> Unit,
+    onCategoryChanged: (groupId: String, groupName: String) -> Unit,
     onUpdateDate: (String) -> Unit,
     onUpdateTime: (String) -> Unit,
     onUpdateAmount: (String) -> Unit,
     onUpdateDescription: (String) -> Unit,
     onUpdateNotes: (String) -> Unit,
     onUpdateVendorName: (String) -> Unit,
-    onUpdateInvoiceNo: (String) -> Unit
+    onUpdateInvoiceNo: (String) -> Unit,
+    onUpdateFuelQuantity: (String) -> Unit,
+    onUpdateFuelRate: (String) -> Unit,
+    onUpdateKmPerLiter: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (row.isValid)
-                MaterialTheme.colorScheme.surface
-            else
-                MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -394,21 +402,120 @@ private fun MaintenanceCostRowCard(
                     modifier = Modifier.padding(top = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Cost Type dropdown
-                    MaintenanceDropdownField(
-                        label = "Cost Type *",
-                        value = row.costTypeLabel,
-                        placeholder = "Select maintenance type",
-                        isExpanded = row.showCostTypeDropdown,
-                        error = row.costTypeError,
-                        onToggle = onToggleCostTypeDropdown,
-                        onDismiss = onToggleCostTypeDropdown
+                    // Cost Type two-level selector (category dropdown + chip items)
+                    CostTypeTwoLevelSelector(
+                        groups = costTypeGroups,
+                        selectedCostType = row.costType,
+                        onCostTypeSelected = { selection ->
+                            onSelectCostType(selection)
+                        },
+                        onCategoryChanged = { groupId, groupName ->
+                            onCategoryChanged(groupId, groupName)
+                        },
+                        isError = row.costTypeError != null,
+                        errorMessage = row.costTypeError
+                    )
+
+                    // Fuel Details Section - shown immediately when Fuel & Energy category is selected
+                    AnimatedVisibility(
+                        visible = row.isFuelCostType,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
                     ) {
-                        costTypeOptions.forEach { (type, label) ->
-                            DropdownMenuItem(
-                                text = { Text(label) },
-                                onClick = { onSelectCostType(type, label) }
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                             )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = "⛽ Fuel Details",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+
+                                // Fuel Type - read-only, auto-populated from selected Cost Type
+                                OutlinedTextField(
+                                    value = row.costTypeLabel.ifBlank { "Select a fuel type above" },
+                                    onValueChange = {},
+                                    label = { Text("Fuel Type") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    readOnly = true,
+                                    enabled = false,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                )
+
+                                // Fuel Quantity & Rate in a row
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = row.fuelQuantity,
+                                        onValueChange = onUpdateFuelQuantity,
+                                        label = { Text("Quantity (L)") },
+                                        placeholder = { Text("Liters") },
+                                        modifier = Modifier.weight(1f),
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                    )
+
+                                    OutlinedTextField(
+                                        value = row.fuelRate,
+                                        onValueChange = onUpdateFuelRate,
+                                        label = { Text("Rate (₹/L)") },
+                                        placeholder = { Text("Per liter") },
+                                        modifier = Modifier.weight(1f),
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                    )
+                                }
+
+                                // Km per Liter
+                                OutlinedTextField(
+                                    value = row.kmPerLiter,
+                                    onValueChange = onUpdateKmPerLiter,
+                                    label = { Text("Mileage (Km/L)") },
+                                    placeholder = { Text("Km per liter") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                )
+
+                                // Calculated total
+                                val quantity = row.fuelQuantity.toDoubleOrNull() ?: 0.0
+                                val rate = row.fuelRate.toDoubleOrNull() ?: 0.0
+                                if (quantity > 0 && rate > 0) {
+                                    val calculatedTotal = quantity * rate
+                                    Surface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text("Calculated Total:", fontWeight = FontWeight.Medium)
+                                            Text(
+                                                "₹${((calculatedTotal * 100).toLong() / 100.0)}",
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -502,73 +609,6 @@ private fun MaintenanceCostRowCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MaintenanceSectionCard(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            content()
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MaintenanceDropdownField(
-    label: String,
-    value: String,
-    placeholder: String,
-    isExpanded: Boolean,
-    error: String? = null,
-    enabled: Boolean = true,
-    onToggle: () -> Unit,
-    onDismiss: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    ExposedDropdownMenuBox(
-        expanded = isExpanded && enabled,
-        onExpandedChange = { if (enabled) onToggle() }
-    ) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
-            label = { Text(label) },
-            placeholder = { Text(placeholder) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(),
-            readOnly = true,
-            enabled = enabled,
-            isError = error != null,
-            supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded && enabled)
-            },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-        )
-        ExposedDropdownMenu(
-            expanded = isExpanded && enabled,
-            onDismissRequest = onDismiss,
-            content = content
-        )
-    }
-}
 
 @Composable
 private fun MaintenanceHistoryDialog(

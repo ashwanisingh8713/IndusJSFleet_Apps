@@ -25,8 +25,11 @@ import com.indusjs.fleet.core.ui.FleetEmailField
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.FleetStatusBadge
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.ui.caretaker.CaretakerInfoCard
+import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
 import com.indusjs.fleet.core.ui.convertDdMmYyyyToIso
 import com.indusjs.fleet.core.ui.convertIsoToDdMmYyyyRaw
+import com.indusjs.fleet.core.ui.history.HistoryTabContent
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
@@ -209,48 +212,30 @@ fun DriverDetailScreen(
                 )
             }
             state.driver != null -> {
-                LazyColumn(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(padding),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(padding)
                 ) {
                     if (state.isEditMode) {
-                        // Edit Mode
-                        item { EditModeContent(state, viewModel) }
+                        // Edit Mode - Full screen form
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            item { EditModeContent(state, viewModel) }
+                            item { Spacer(modifier = Modifier.height(80.dp)) }
+                        }
                     } else {
-                        // View Mode
-                        item {
-                            DriverHeader(driver = state.driver!!)
-                        }
-
-                        item { ContactSection(driver = state.driver!!) }
-
-                        item { LicenseSection(driver = state.driver!!) }
-
-                        item { PersonalSection(driver = state.driver!!) }
-
-                        item { MetadataSection(driver = state.driver!!) }
-
-                        // Delete button
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            OutlinedButton(
-                                onClick = { viewModel.sendIntent(DriverDetailContract.Intent.DeleteDriver) },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.error
-                                )
-                            ) {
-                                Text("🗑️ Delete Driver")
-                            }
-                        }
+                        // View Mode with Tabs
+                        DriverDetailTabs(
+                            state = state,
+                            viewModel = viewModel
+                        )
                     }
-
-                    // Bottom spacing
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
                 }
             }
         }
@@ -278,6 +263,129 @@ fun DriverDetailScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * Tab definitions for Driver Detail Screen
+ */
+private enum class DriverDetailTab(val title: String, val icon: String) {
+    OVERVIEW("Overview", "📋"),
+    HISTORY("History", "📜")
+}
+
+/**
+ * Tabbed layout for Driver Detail
+ */
+@Composable
+private fun DriverDetailTabs(
+    state: DriverDetailContract.State,
+    viewModel: DriverDetailViewModel
+) {
+    val tabs = DriverDetailTab.entries
+    var selectedTab by remember { mutableStateOf(0) }
+
+    // Load history when switching to history tab
+    LaunchedEffect(selectedTab) {
+        viewModel.sendIntent(DriverDetailContract.Intent.SelectTab(selectedTab))
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Tab Row
+        TabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary
+        ) {
+            tabs.forEachIndexed { index, tab ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(tab.icon)
+                            Text(
+                                text = tab.title,
+                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                )
+            }
+        }
+
+        // Tab Content
+        when (tabs[selectedTab]) {
+            DriverDetailTab.OVERVIEW -> DriverOverviewContent(
+                state = state,
+                viewModel = viewModel
+            )
+            DriverDetailTab.HISTORY -> HistoryTabContent(
+                items = state.historyItems,
+                isLoading = state.isLoadingHistory,
+                error = state.historyError,
+                hasMore = state.hasMoreHistory,
+                onLoadMore = { viewModel.sendIntent(DriverDetailContract.Intent.LoadMoreHistory) },
+                onRetry = { viewModel.sendIntent(DriverDetailContract.Intent.LoadHistory) }
+            )
+        }
+    }
+}
+
+/**
+ * Overview tab content with driver info
+ */
+@Composable
+private fun DriverOverviewContent(
+    state: DriverDetailContract.State,
+    viewModel: DriverDetailViewModel
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item { DriverHeader(driver = state.driver!!) }
+
+        item { ContactSection(driver = state.driver!!) }
+
+        item { LicenseSection(driver = state.driver!!) }
+
+        item { PersonalSection(driver = state.driver!!) }
+
+        item { MetadataSection(driver = state.driver!!) }
+
+        // Caretaker Assignment Section
+        item {
+            CaretakerInfoCard(
+                caretaker = state.selectedCaretaker,
+                onChangeCaretaker = if (state.isEditMode) {
+                    { viewModel.sendIntent(DriverDetailContract.Intent.LoadCaretakers) }
+                } else null
+            )
+        }
+
+        // Delete button
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = { viewModel.sendIntent(DriverDetailContract.Intent.DeleteDriver) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("🗑️ Delete Driver")
+            }
+        }
+
+        // Bottom spacing
+        item { Spacer(modifier = Modifier.height(80.dp)) }
     }
 }
 
@@ -704,6 +812,17 @@ private fun EditModeContent(
             label = "Emergency Contact",
             placeholder = "Enter 10-digit mobile",
             leadingEmoji = "🆘"
+        )
+
+        HorizontalDivider()
+
+        // Caretaker Assignment Section
+        CaretakerSectionCard(
+            selectedCaretaker = state.selectedCaretaker,
+            caretakers = state.caretakers,
+            onCaretakerSelected = { viewModel.sendIntent(DriverDetailContract.Intent.SelectCaretaker(it)) },
+            onRefresh = { viewModel.sendIntent(DriverDetailContract.Intent.RefreshCaretakers) },
+            isLoading = state.isLoadingCaretakers
         )
     }
 }

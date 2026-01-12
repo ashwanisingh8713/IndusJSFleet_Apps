@@ -3,6 +3,8 @@ package com.indusjs.fleet.presentation.trips.cost
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.core.ui.CostTypeGroup
+import com.indusjs.fleet.core.ui.CostTypeSelection
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.data.model.costs.TripCostTypes
 import com.indusjs.fleet.data.model.costs.FuelTypes
@@ -16,13 +18,15 @@ data class CostEntryRow(
     val id: String = Random.nextLong().toString(),
     val costType: String = "",
     val costTypeLabel: String = "",
+    val selectedGroupId: String = "",   // group_id for reliable category detection
+    val selectedGroupName: String = "", // group_name for display
     val date: String = "",
     val time: String = "",
     val amount: String = "",
     val notes: String = "",
     val customCostTypeName: String = "",
     // Fuel specific
-    val fuelType: String = "diesel",
+    val fuelType: String = "TC-001-002", // Default to Diesel
     val fuelQuantity: String = "",
     val fuelRate: String = "",
     val kmPerLiter: String = "",
@@ -35,8 +39,14 @@ data class CostEntryRow(
     val showCostTypeDropdown: Boolean = false,
     val showFuelTypeDropdown: Boolean = false
 ) {
-    val isFuelCostType: Boolean get() = costType == "fuel"
-    val isOtherCostType: Boolean get() = costType == "other"
+    // Fuel & Energy group detection using group_id (TC-G-001)
+    val isFuelCostType: Boolean
+        get() = selectedGroupId == CostTypeSelection.FUEL_ENERGY_GROUP_ID ||
+                costType.startsWith("TC-001")
+
+    // Miscellaneous > Other is TC-006-004
+    val isOtherCostType: Boolean
+        get() = costType == CostTypeSelection.OTHER_COST_TYPE_ID || costType == "other"
 
     val isValid: Boolean
         get() = costType.isNotBlank() &&
@@ -80,6 +90,7 @@ object TripCostEntryContract {
 
         // Available options
         val costTypeOptions: List<Pair<String, String>> = TripCostTypes.types,
+        val costTypeGroups: List<CostTypeGroup> = TripCostTypes.groups,
         val fuelTypeOptions: List<Pair<String, String>> = FuelTypes.types
     ) : UiState {
 
@@ -117,7 +128,8 @@ object TripCostEntryContract {
         data class ToggleRowExpanded(val rowId: String) : Intent
 
         // Cost entry field updates
-        data class SelectCostType(val rowId: String, val costType: String, val label: String) : Intent
+        data class SelectCostType(val rowId: String, val selection: CostTypeSelection) : Intent
+        data class UpdateSelectedCategory(val rowId: String, val groupId: String, val groupName: String) : Intent
         data class ToggleCostTypeDropdown(val rowId: String) : Intent
         data class UpdateDate(val rowId: String, val value: String) : Intent
         data class UpdateTime(val rowId: String, val value: String) : Intent
@@ -153,4 +165,3 @@ object TripCostEntryContract {
         data class CostsSaved(val count: Int) : Effect
     }
 }
-

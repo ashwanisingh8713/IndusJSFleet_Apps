@@ -1,6 +1,7 @@
 package com.indusjs.fleet.domain.repository.driver
 
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.data.model.history.DriverHistoryDataDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.repository.Repository
@@ -57,5 +58,17 @@ interface DriverRepository : Repository {
      * Only Owners can delete drivers.
      */
     suspend fun deleteDriver(id: String): Result<Unit>
+
+    // ==================== History APIs ====================
+
+    /**
+     * Get driver history with pagination.
+     * GET /drivers/{id}/history?page=1&per_page=20
+     */
+    suspend fun getDriverHistory(
+        id: String,
+        page: Int = 1,
+        perPage: Int = 20
+    ): Result<DriverHistoryDataDto>
 }
 

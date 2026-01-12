@@ -5,6 +5,7 @@ import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSource
 import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSourceImpl
 import com.indusjs.fleet.data.repository.vehicle.VehicleRepositoryImpl
+import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.DeleteVehicleUseCase
@@ -61,7 +62,8 @@ abstract class VehiclesFeatureGraph {
         fun create(
             @Provides httpClient: HttpClient,
             @Provides dispatcherProvider: DispatcherProvider,
-            @Provides userLocalDataSource: UserLocalDataSource
+            @Provides userLocalDataSource: UserLocalDataSource,
+            @Provides teamRepository: TeamRepository
         ): VehiclesFeatureGraph
     }
 }
