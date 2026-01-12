@@ -8,6 +8,7 @@ import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSource
 import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
 import com.indusjs.fleet.data.model.history.VehicleHistoryDataDto
+import com.indusjs.fleet.data.model.state.StateHistoryResponseDto
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleWithDocumentsRequest
 import com.indusjs.fleet.data.model.vehicle.DocumentFileData
 import com.indusjs.fleet.domain.entity.vehicle.DocumentsSummary
@@ -382,6 +383,53 @@ class VehicleRepositoryImpl(
             } else {
                 Result.Error(
                     ApiException(response.message ?: "Failed to get vehicle history"),
+                    response.message
+                )
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    // ==================== State Management ====================
+
+    override suspend fun updateVehicleState(
+        id: String,
+        newState: String,
+        reason: String?,
+        notes: String?
+    ): Result<Vehicle> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.updateVehicleState(token, id, newState, reason, notes)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(
+                    ApiException(response.message ?: "Failed to update vehicle state"),
+                    response.message
+                )
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun getVehicleStateHistory(
+        id: String,
+        page: Int,
+        perPage: Int
+    ): Result<StateHistoryResponseDto> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getVehicleStateHistory(token, id, page, perPage)
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                Result.Error(
+                    ApiException(response.message ?: "Failed to get vehicle state history"),
                     response.message
                 )
             }

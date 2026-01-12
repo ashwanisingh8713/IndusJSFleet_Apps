@@ -8,6 +8,7 @@ import com.indusjs.fleet.data.datasource.trip.TripRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.trip.TripMapper
 import com.indusjs.fleet.data.mapper.trip.TripStopMapper
+import com.indusjs.fleet.data.model.state.StateHistoryResponseDto
 import com.indusjs.fleet.data.model.trip.CreateTripRequest
 import com.indusjs.fleet.data.model.trip.UpdateTripRequest
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
@@ -335,6 +336,53 @@ class TripRepositoryImpl(
                 Result.Success(Unit)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to delete trip stop"), response.message)
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    // ==================== State Management ====================
+
+    override suspend fun updateTripState(
+        id: String,
+        newState: String,
+        reason: String?,
+        notes: String?
+    ): Result<Trip> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.updateTripState(token, id, newState, reason, notes)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(
+                    ApiException(response.message ?: "Failed to update trip state"),
+                    response.message
+                )
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun getTripStateHistory(
+        id: String,
+        page: Int,
+        perPage: Int
+    ): Result<StateHistoryResponseDto> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getTripStateHistory(token, id, page, perPage)
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                Result.Error(
+                    ApiException(response.message ?: "Failed to get trip state history"),
+                    response.message
+                )
             }
         } catch (e: Exception) {
             Result.Error(e, ApiErrorHandler.extractErrorMessage(e))

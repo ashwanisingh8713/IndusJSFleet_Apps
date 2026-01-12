@@ -1,13 +1,86 @@
 package com.indusjs.fleet.domain.entity.vehicle
 
+import com.indusjs.fleet.core.constants.StatusConstants
+
 /**
  * Vehicle status enumeration.
+ * Matches API values: inactive, active, on_route, maintenance, damaged, decommissioned
  */
 enum class VehicleStatus {
-    ACTIVE,
     INACTIVE,
-    IN_MAINTENANCE,
-    OUT_OF_SERVICE
+    ACTIVE,
+    ON_ROUTE,
+    MAINTENANCE,
+    DAMAGED,
+    DECOMMISSIONED;
+
+    companion object {
+        /**
+         * Convert API string to VehicleStatus enum.
+         */
+        fun fromApiString(value: String): VehicleStatus = when (value.lowercase()) {
+            StatusConstants.VehicleState.INACTIVE -> INACTIVE
+            StatusConstants.VehicleState.ACTIVE -> ACTIVE
+            StatusConstants.VehicleState.ON_ROUTE -> ON_ROUTE
+            StatusConstants.VehicleState.MAINTENANCE, "in_maintenance" -> MAINTENANCE
+            StatusConstants.VehicleState.DAMAGED -> DAMAGED
+            StatusConstants.VehicleState.DECOMMISSIONED, "out_of_service", "retired" -> DECOMMISSIONED
+            else -> ACTIVE
+        }
+
+        /**
+         * Convert VehicleStatus enum to API string.
+         */
+        fun toApiString(status: VehicleStatus): String = when (status) {
+            INACTIVE -> StatusConstants.VehicleState.INACTIVE
+            ACTIVE -> StatusConstants.VehicleState.ACTIVE
+            ON_ROUTE -> StatusConstants.VehicleState.ON_ROUTE
+            MAINTENANCE -> StatusConstants.VehicleState.MAINTENANCE
+            DAMAGED -> StatusConstants.VehicleState.DAMAGED
+            DECOMMISSIONED -> StatusConstants.VehicleState.DECOMMISSIONED
+        }
+
+        /**
+         * Get display label for status.
+         */
+        fun getDisplayLabel(status: VehicleStatus): String =
+            StatusConstants.VehicleState.getDisplayLabel(toApiString(status))
+
+        /**
+         * Get icon for status.
+         */
+        fun getIcon(status: VehicleStatus): String =
+            StatusConstants.VehicleState.getIcon(toApiString(status))
+
+        /**
+         * Get color scheme for status.
+         */
+        fun getColorScheme(status: VehicleStatus): StatusConstants.StateColorScheme =
+            StatusConstants.VehicleState.getColorScheme(toApiString(status))
+
+        /**
+         * Check if vehicle is available for assignment.
+         */
+        fun isAvailableForAssignment(status: VehicleStatus): Boolean =
+            StatusConstants.VehicleState.isAvailableForAssignment(toApiString(status))
+
+        /**
+         * Get valid transitions from current status.
+         */
+        fun getValidTransitions(status: VehicleStatus): List<VehicleStatus> {
+            return StatusConstants.VehicleTransitions.getValidTransitions(toApiString(status))
+                .mapNotNull { state ->
+                    try { fromApiString(state) } catch (e: Exception) { null }
+                }
+        }
+
+        /**
+         * Check if transition is valid.
+         */
+        fun canTransition(from: VehicleStatus, to: VehicleStatus): Boolean {
+            return StatusConstants.VehicleTransitions.canTransition(toApiString(from), toApiString(to))
+        }
+    }
 }
 
 /**

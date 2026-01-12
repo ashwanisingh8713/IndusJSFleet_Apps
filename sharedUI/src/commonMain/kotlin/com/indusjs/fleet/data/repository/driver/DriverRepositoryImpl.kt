@@ -8,6 +8,7 @@ import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.driver.DriverMapper
 import com.indusjs.fleet.data.model.history.DriverHistoryDataDto
+import com.indusjs.fleet.data.model.state.StateHistoryResponseDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
@@ -175,6 +176,53 @@ class DriverRepositoryImpl(
             } else {
                 Result.Error(
                     ApiException(response.message ?: "Failed to get driver history"),
+                    response.message
+                )
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    // ==================== State Management ====================
+
+    override suspend fun updateDriverStatusWithReason(
+        id: String,
+        newStatus: String,
+        reason: String?,
+        notes: String?
+    ): Result<Driver> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.updateDriverStatusWithReason(token, id, newStatus, reason, notes)
+
+            if (response.success && response.data != null) {
+                Result.Success(mapper.mapToDomain(response.data))
+            } else {
+                Result.Error(
+                    ApiException(response.message ?: "Failed to update driver status"),
+                    response.message
+                )
+            }
+        } catch (e: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun getDriverStateHistory(
+        id: String,
+        page: Int,
+        perPage: Int
+    ): Result<StateHistoryResponseDto> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getDriverStateHistory(token, id, page, perPage)
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                Result.Error(
+                    ApiException(response.message ?: "Failed to get driver state history"),
                     response.message
                 )
             }

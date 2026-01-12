@@ -3,6 +3,8 @@ package com.indusjs.fleet.data.datasource.trip
 import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.RemoteDataSource
+import com.indusjs.fleet.data.model.state.StateHistoryResponseDto
+import com.indusjs.fleet.data.model.state.StateUpdateRequestDto
 import com.indusjs.fleet.data.model.trip.CreateTripRequest
 import com.indusjs.fleet.data.model.trip.CreateTripStopRequest
 import com.indusjs.fleet.data.model.trip.TripApiResponse
@@ -19,6 +21,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
@@ -51,6 +54,22 @@ interface TripRemoteDataSource : RemoteDataSource {
     suspend fun updateTripLocation(token: String, tripId: String, lat: Double, lng: Double): TripApiResponse<TripDto>
     suspend fun cancelTrip(token: String, id: String): TripApiResponse<Unit>
     suspend fun getTripsByVehicleId(token: String, vehicleId: String): TripApiResponse<List<TripDto>>
+
+    // State Management APIs
+    suspend fun updateTripState(
+        token: String,
+        id: String,
+        state: String,
+        reason: String? = null,
+        notes: String? = null
+    ): TripApiResponse<TripDto>
+
+    suspend fun getTripStateHistory(
+        token: String,
+        id: String,
+        page: Int,
+        perPage: Int
+    ): TripApiResponse<StateHistoryResponseDto>
 
     // Trip Stops
     suspend fun getTripStops(token: String, tripId: String): TripStopsApiResponse
@@ -362,6 +381,60 @@ class TripRemoteDataSourceImpl(
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to delete trip stop: ${e.message}" }
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    // ==================== State Management APIs ====================
+
+    override suspend fun updateTripState(
+        token: String,
+        id: String,
+        state: String,
+        reason: String?,
+        notes: String?
+    ): TripApiResponse<TripDto> {
+        return try {
+            log.d { "Updating trip state: $id -> $state" }
+            val request = StateUpdateRequestDto(
+                state = state,
+                reason = reason,
+                notes = notes
+            )
+            val response: HttpResponse = httpClient.patch("$baseUrl/$id/state") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            parseSingleResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to update trip state: ${e.message}" }
+            TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    override suspend fun getTripStateHistory(
+        token: String,
+        id: String,
+        page: Int,
+        perPage: Int
+    ): TripApiResponse<StateHistoryResponseDto> {
+        return try {
+            log.d { "Fetching trip state history: $id, page=$page" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/state-history") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("page", page)
+                parameter("per_page", perPage)
+            }
+            val bodyText = response.bodyAsText()
+            log.d { "Trip state history response: $bodyText" }
+            if (response.status.isSuccess()) {
+                json.decodeFromString<TripApiResponse<StateHistoryResponseDto>>(bodyText)
+            } else {
+                TripApiResponse(success = false, message = "Request failed with status ${response.status}")
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch trip state history: ${e.message}" }
             TripApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }

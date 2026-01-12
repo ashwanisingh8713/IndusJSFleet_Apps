@@ -903,20 +903,19 @@ private fun EditSectionHeader(
 
 // Helper functions
 @Composable
-private fun getStatusColor(status: DriverStatus) = when (status) {
-    DriverStatus.ACTIVE -> MaterialTheme.colorScheme.primary
-    DriverStatus.INACTIVE -> MaterialTheme.colorScheme.error
-    DriverStatus.ON_TRIP -> MaterialTheme.colorScheme.tertiary
-    DriverStatus.ON_LEAVE -> MaterialTheme.colorScheme.secondary
-    DriverStatus.SUSPENDED -> MaterialTheme.colorScheme.error
+private fun getStatusColor(status: DriverStatus): androidx.compose.ui.graphics.Color {
+    val colorScheme = DriverStatus.getColorScheme(status)
+    return when (colorScheme) {
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.primary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> MaterialTheme.colorScheme.secondary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.tertiary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
+    }
 }
-private fun getStatusDisplayName(status: DriverStatus): String = when (status) {
-    DriverStatus.ACTIVE -> "Active"
-    DriverStatus.INACTIVE -> "Inactive"
-    DriverStatus.ON_TRIP -> "On Trip"
-    DriverStatus.ON_LEAVE -> "On Leave"
-    DriverStatus.SUSPENDED -> "Suspended"
-}
+
+private fun getStatusDisplayName(status: DriverStatus): String =
+    DriverStatus.getDisplayLabel(status)
 
 private fun getLicenseTypeLabel(type: LicenseType): String = when (type) {
     LicenseType.LMV -> "LMV"

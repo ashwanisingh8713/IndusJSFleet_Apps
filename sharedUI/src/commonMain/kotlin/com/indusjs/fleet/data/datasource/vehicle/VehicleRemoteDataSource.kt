@@ -5,6 +5,8 @@ import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.indusjs.fleet.data.model.history.VehicleHistoryApiResponse
+import com.indusjs.fleet.data.model.state.StateHistoryResponseDto
+import com.indusjs.fleet.data.model.state.StateUpdateRequestDto
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleRequest
 import com.indusjs.fleet.data.model.vehicle.CreateVehicleWithDocumentsRequest
 import com.indusjs.fleet.data.model.vehicle.UpdateVehicleRequest
@@ -25,6 +27,7 @@ import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -48,6 +51,22 @@ interface VehicleRemoteDataSource : RemoteDataSource {
     suspend fun createVehicleWithDocuments(token: String, request: CreateVehicleWithDocumentsRequest): VehicleApiResponse<VehicleDto>
     suspend fun updateVehicle(token: String, id: String, request: UpdateVehicleRequest): VehicleApiResponse<VehicleDto>
     suspend fun deleteVehicle(token: String, id: String): VehicleApiResponse<Unit>
+
+    // State Management APIs
+    suspend fun updateVehicleState(
+        token: String,
+        id: String,
+        state: String,
+        reason: String? = null,
+        notes: String? = null
+    ): VehicleApiResponse<VehicleDto>
+
+    suspend fun getVehicleStateHistory(
+        token: String,
+        id: String,
+        page: Int,
+        perPage: Int
+    ): VehicleApiResponse<StateHistoryResponseDto>
 
     // Vehicle Detail APIs (new endpoints - may not be implemented in backend yet)
     suspend fun getVehicleDetail(token: String, id: String): VehicleApiResponse<VehicleDetailDto>
@@ -312,6 +331,54 @@ class VehicleRemoteDataSourceImpl(
             parseResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch vehicle documents: ${e.message}" }
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    // ==================== State Management APIs ====================
+
+    override suspend fun updateVehicleState(
+        token: String,
+        id: String,
+        state: String,
+        reason: String?,
+        notes: String?
+    ): VehicleApiResponse<VehicleDto> {
+        return try {
+            log.d { "Updating vehicle state: $id -> $state" }
+            val request = StateUpdateRequestDto(
+                state = state,
+                reason = reason,
+                notes = notes
+            )
+            val response: HttpResponse = httpClient.patch("$baseUrl/$id/state") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            parseSingleResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to update vehicle state: ${e.message}" }
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    override suspend fun getVehicleStateHistory(
+        token: String,
+        id: String,
+        page: Int,
+        perPage: Int
+    ): VehicleApiResponse<StateHistoryResponseDto> {
+        return try {
+            log.d { "Fetching vehicle state history: $id, page=$page" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/state-history") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("page", page)
+                parameter("per_page", perPage)
+            }
+            parseResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch vehicle state history: ${e.message}" }
             VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }

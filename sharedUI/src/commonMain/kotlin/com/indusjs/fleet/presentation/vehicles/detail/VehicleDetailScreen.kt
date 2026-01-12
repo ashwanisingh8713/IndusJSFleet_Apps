@@ -1886,28 +1886,19 @@ private fun DocumentTypeCard(
 
 @Composable
 private fun StatusChip(status: VehicleStatus) {
-    val (containerColor, contentColor, text) = when (status) {
-        VehicleStatus.ACTIVE -> Triple(
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.primary,
-            "✓ Active"
-        )
-        VehicleStatus.INACTIVE -> Triple(
-            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.secondary,
-            "○ Inactive"
-        )
-        VehicleStatus.IN_MAINTENANCE -> Triple(
-            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.tertiary,
-            "🔧 Maintenance"
-        )
-        VehicleStatus.OUT_OF_SERVICE -> Triple(
-            MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.error,
-            "✗ Out of Service"
-        )
+    val colorScheme = VehicleStatus.getColorScheme(status)
+    val baseColor = when (colorScheme) {
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.primary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> MaterialTheme.colorScheme.secondary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.tertiary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
     }
+    val containerColor = baseColor.copy(alpha = 0.15f)
+    val contentColor = baseColor
+    val icon = VehicleStatus.getIcon(status)
+    val label = VehicleStatus.getDisplayLabel(status)
+    val text = "$icon $label"
 
     Surface(
         shape = RoundedCornerShape(20.dp),
@@ -2480,12 +2471,8 @@ private fun getVehicleTypeLabel(type: VehicleType): String = when (type) {
     VehicleType.TRAILER -> "Trailer"
 }
 
-private fun getStatusLabel(status: VehicleStatus): String = when (status) {
-    VehicleStatus.ACTIVE -> "Active"
-    VehicleStatus.INACTIVE -> "Inactive"
-    VehicleStatus.IN_MAINTENANCE -> "In Maintenance"
-    VehicleStatus.OUT_OF_SERVICE -> "Out of Service"
-}
+private fun getStatusLabel(status: VehicleStatus): String =
+    VehicleStatus.getDisplayLabel(status)
 
 private fun formatDate(timestamp: Long): String {
     if (timestamp <= 0) return "N/A"

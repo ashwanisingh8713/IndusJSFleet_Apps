@@ -851,12 +851,7 @@ class TripDetailViewModel(
      * Get human-readable status label for trip status.
      */
     private fun getStatusLabel(status: TripStatus): String {
-        return when (status) {
-            TripStatus.PLANNED -> "Planned"
-            TripStatus.IN_PROGRESS -> "In Progress"
-            TripStatus.COMPLETED -> "Completed"
-            TripStatus.CANCELLED -> "Cancelled"
-        }
+        return TripStatus.getDisplayLabel(status)
     }
 
     /**

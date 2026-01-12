@@ -509,32 +509,18 @@ private fun EnhancedStatusBadge(
     status: TripStatus,
     onClick: () -> Unit
 ) {
-    val (containerColor, contentColor, icon, text) = when (status) {
-        TripStatus.PLANNED -> listOf(
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.primary,
-            "📋",
-            "Planned"
-        )
-        TripStatus.IN_PROGRESS -> listOf(
-            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.tertiary,
-            "🚀",
-            "In Progress"
-        )
-        TripStatus.COMPLETED -> listOf(
-            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.secondary,
-            "✅",
-            "Completed"
-        )
-        TripStatus.CANCELLED -> listOf(
-            MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.error,
-            "❌",
-            "Cancelled"
-        )
+    val colorScheme = TripStatus.getColorScheme(status)
+    val baseColor = when (colorScheme) {
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.secondary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> MaterialTheme.colorScheme.tertiary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.primary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
     }
+    val containerColor = baseColor.copy(alpha = 0.15f)
+    val contentColor = baseColor
+    val icon = TripStatus.getIcon(status)
+    val text = TripStatus.getDisplayLabel(status)
 
     Surface(
         onClick = onClick,
@@ -1693,12 +1679,7 @@ private fun StatusChangeDialog(
             Column {
                 TripStatus.entries.forEach { status ->
                     val isSelected = status == currentStatus
-                    val statusIcon = when (status) {
-                        TripStatus.PLANNED -> "📋"
-                        TripStatus.IN_PROGRESS -> "🚀"
-                        TripStatus.COMPLETED -> "✅"
-                        TripStatus.CANCELLED -> "❌"
-                    }
+                    val statusIcon = TripStatus.getIcon(status)
                     Surface(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         shape = RoundedCornerShape(12.dp),
@@ -1711,7 +1692,7 @@ private fun StatusChangeDialog(
                             Text(statusIcon, style = MaterialTheme.typography.titleMedium)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = TripStatus.toApiString(status).replaceFirstChar { it.uppercaseChar() },
+                                text = TripStatus.getDisplayLabel(status),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )

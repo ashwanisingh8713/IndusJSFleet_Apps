@@ -1143,11 +1143,13 @@ private fun VehicleSelectorContent(
                                 }
 
                                 // Status dot
-                                val statusColor = when (vehicle.status) {
-                                    VehicleStatus.ACTIVE -> Color(0xFF10B981)
-                                    VehicleStatus.IN_MAINTENANCE -> Color(0xFFF59E0B)
-                                    VehicleStatus.INACTIVE -> Color(0xFFEF4444)
-                                    VehicleStatus.OUT_OF_SERVICE -> Color(0xFF6B7280)
+                                val colorScheme = VehicleStatus.getColorScheme(vehicle.status)
+                                val statusColor = when (colorScheme) {
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> Color(0xFF10B981)
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> Color(0xFFF59E0B)
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> Color(0xFFEF4444)
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> Color(0xFF3B82F6)
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> Color(0xFF6B7280)
                                 }
                                 Box(
                                     modifier = Modifier

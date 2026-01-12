@@ -1,32 +1,84 @@
 package com.indusjs.fleet.domain.entity.driver
 
+import com.indusjs.fleet.core.constants.StatusConstants
+
 /**
  * Driver status enumeration.
- * Matches API values: active, inactive, on_trip, on_leave, suspended
+ * Matches API values: inactive, active, on_route, on_leave, suspended, terminated
  */
 enum class DriverStatus {
-    ACTIVE,
     INACTIVE,
-    ON_TRIP,
+    ACTIVE,
+    ON_ROUTE,
     ON_LEAVE,
-    SUSPENDED;
+    SUSPENDED,
+    TERMINATED;
 
     companion object {
+        /**
+         * Convert API string to DriverStatus enum.
+         */
         fun fromApiString(value: String): DriverStatus = when (value.lowercase()) {
-            "active" -> ACTIVE
-            "inactive" -> INACTIVE
-            "on_trip" -> ON_TRIP
-            "on_leave" -> ON_LEAVE
-            "suspended" -> SUSPENDED
+            StatusConstants.DriverState.INACTIVE -> INACTIVE
+            StatusConstants.DriverState.ACTIVE -> ACTIVE
+            StatusConstants.DriverState.ON_ROUTE, "on_trip" -> ON_ROUTE
+            StatusConstants.DriverState.ON_LEAVE -> ON_LEAVE
+            StatusConstants.DriverState.SUSPENDED -> SUSPENDED
+            StatusConstants.DriverState.TERMINATED -> TERMINATED
             else -> ACTIVE
         }
 
+        /**
+         * Convert DriverStatus enum to API string.
+         */
         fun toApiString(status: DriverStatus): String = when (status) {
-            ACTIVE -> "active"
-            INACTIVE -> "inactive"
-            ON_TRIP -> "on_trip"
-            ON_LEAVE -> "on_leave"
-            SUSPENDED -> "suspended"
+            INACTIVE -> StatusConstants.DriverState.INACTIVE
+            ACTIVE -> StatusConstants.DriverState.ACTIVE
+            ON_ROUTE -> StatusConstants.DriverState.ON_ROUTE
+            ON_LEAVE -> StatusConstants.DriverState.ON_LEAVE
+            SUSPENDED -> StatusConstants.DriverState.SUSPENDED
+            TERMINATED -> StatusConstants.DriverState.TERMINATED
+        }
+
+        /**
+         * Get display label for status.
+         */
+        fun getDisplayLabel(status: DriverStatus): String =
+            StatusConstants.DriverState.getDisplayLabel(toApiString(status))
+
+        /**
+         * Get icon for status.
+         */
+        fun getIcon(status: DriverStatus): String =
+            StatusConstants.DriverState.getIcon(toApiString(status))
+
+        /**
+         * Get color scheme for status.
+         */
+        fun getColorScheme(status: DriverStatus): StatusConstants.StateColorScheme =
+            StatusConstants.DriverState.getColorScheme(toApiString(status))
+
+        /**
+         * Check if driver is available for assignment.
+         */
+        fun isAvailableForAssignment(status: DriverStatus): Boolean =
+            StatusConstants.DriverState.isAvailableForAssignment(toApiString(status))
+
+        /**
+         * Get valid transitions from current status.
+         */
+        fun getValidTransitions(status: DriverStatus): List<DriverStatus> {
+            return StatusConstants.DriverTransitions.getValidTransitions(toApiString(status))
+                .mapNotNull { state ->
+                    try { fromApiString(state) } catch (e: Exception) { null }
+                }
+        }
+
+        /**
+         * Check if transition is valid.
+         */
+        fun canTransition(from: DriverStatus, to: DriverStatus): Boolean {
+            return StatusConstants.DriverTransitions.canTransition(toApiString(from), toApiString(to))
         }
     }
 }

@@ -383,12 +383,15 @@ private fun VehicleInfoItem(
 
 @Composable
 private fun StatusBadge(status: VehicleStatus) {
-    val (color, text) = when (status) {
-        VehicleStatus.ACTIVE -> MaterialTheme.colorScheme.primary to "Active"
-        VehicleStatus.INACTIVE -> MaterialTheme.colorScheme.secondary to "Inactive"
-        VehicleStatus.IN_MAINTENANCE -> MaterialTheme.colorScheme.tertiary to "Maintenance"
-        VehicleStatus.OUT_OF_SERVICE -> MaterialTheme.colorScheme.error to "Out of Service"
+    val colorScheme = VehicleStatus.getColorScheme(status)
+    val color = when (colorScheme) {
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.primary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> MaterialTheme.colorScheme.secondary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.tertiary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
     }
+    val text = VehicleStatus.getDisplayLabel(status)
 
     // Using reusable FleetStatusBadge component
     FleetStatusBadge(

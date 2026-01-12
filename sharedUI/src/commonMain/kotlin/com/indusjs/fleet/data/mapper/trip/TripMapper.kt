@@ -133,8 +133,8 @@ class TripMapper {
 
         // Build distance display based on state (fallback when API display not available)
         val (distanceValue, distanceLabel, estimatedDist, coveredDist, totalDist) = when (status) {
-            TripStatus.PLANNED -> {
-                // Planned: Show estimated distance (prefer API label, then compute)
+            TripStatus.PLANNED, TripStatus.ASSIGNED -> {
+                // Planned/Assigned: Show estimated distance (prefer API label, then compute)
                 val estDist = distanceInfo?.estimatedDistance ?: dto.estimatedDistance
                 // Use API-provided label first, then compute from raw value
                 val value = apiEstimatedDistanceLabel
@@ -144,8 +144,8 @@ class TripMapper {
                 val label = "Est. Distance"
                 DistanceResult(value, label, estDist, null, null)
             }
-            TripStatus.IN_PROGRESS -> {
-                // In Progress: Show covered distance or fallback to estimated
+            TripStatus.ON_ROUTE, TripStatus.DELAYED -> {
+                // On Route/Delayed: Show covered distance or fallback to estimated
                 val covered = distanceInfo?.coveredDistance ?: dto.actualDistance
                 val total = distanceInfo?.totalDistance ?: dto.estimatedDistance
                 val value = covered?.let { if (it > 0) "${it.toInt()} km" else null }
@@ -154,8 +154,8 @@ class TripMapper {
                 val label = if (covered != null && covered > 0) "Covered" else "Distance"
                 DistanceResult(value, label, dto.estimatedDistance, covered, total)
             }
-            TripStatus.COMPLETED, TripStatus.CANCELLED -> {
-                // Completed: Show total/actual distance
+            TripStatus.COMPLETED, TripStatus.CANCELLED, TripStatus.FAILED -> {
+                // Completed/Cancelled/Failed: Show total/actual distance
                 val total = distanceInfo?.totalDistance ?: dto.actualDistance ?: dto.estimatedDistance
                 val value = total?.let { if (it > 0) "${it.toInt()} km" else "NA" } ?: "NA"
                 val label = "Distance"
@@ -173,8 +173,8 @@ class TripMapper {
 
         // Build duration display based on state (fallback when API display not available)
         val (durationValue, durationLabel, plannedMins, actualMins) = when (status) {
-            TripStatus.PLANNED -> {
-                // Planned: Show estimated/planned duration (prefer API label, then compute)
+            TripStatus.PLANNED, TripStatus.ASSIGNED -> {
+                // Planned/Assigned: Show estimated/planned duration (prefer API label, then compute)
                 val plannedMinutes = durationInfo?.plannedDurationMinutes ?: dto.estimatedDurationMinutes
                 // Use API-provided label first, then compute from raw value
                 val value = apiEstimatedDurationLabel
@@ -183,14 +183,14 @@ class TripMapper {
                     ?: "NA"
                 DurationResult(value, "Est. Duration", plannedMinutes, null)
             }
-            TripStatus.IN_PROGRESS -> {
-                // In Progress: Show actual/active duration
+            TripStatus.ON_ROUTE, TripStatus.DELAYED -> {
+                // On Route/Delayed: Show actual/active duration
                 val actualMins = durationInfo?.actualDurationMinutes
                 val value = actualMins?.let { if (it > 0) formatDuration(it) else "NA" } ?: "NA"
                 DurationResult(value, "Duration", durationInfo?.plannedDurationMinutes, actualMins)
             }
-            TripStatus.COMPLETED, TripStatus.CANCELLED -> {
-                // Completed: Show final duration
+            TripStatus.COMPLETED, TripStatus.CANCELLED, TripStatus.FAILED -> {
+                // Completed/Cancelled/Failed: Show final duration
                 val actualMins = durationInfo?.actualDurationMinutes
                 val value = actualMins?.let { if (it > 0) formatDuration(it) else "NA" } ?: "NA"
                 DurationResult(value, "Duration", durationInfo?.plannedDurationMinutes, actualMins)

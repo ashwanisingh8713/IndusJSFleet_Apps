@@ -523,19 +523,21 @@ private fun TripSelectionItem(
                 )
             }
             // State badge
-            val statusStr = trip.status.name.lowercase().replace("_", " ")
-            val stateColor = when (trip.status) {
-                TripStatus.COMPLETED -> Color(0xFF10B981)
-                TripStatus.IN_PROGRESS -> Color(0xFF3B82F6)
-                TripStatus.PLANNED -> Color(0xFFF59E0B)
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            val statusStr = TripStatus.getDisplayLabel(trip.status)
+            val colorScheme = TripStatus.getColorScheme(trip.status)
+            val stateColor = when (colorScheme) {
+                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> Color(0xFF10B981)
+                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> Color(0xFFF59E0B)
+                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> Color(0xFF3B82F6)
+                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> Color(0xFFEF4444)
+                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.onSurfaceVariant
             }
             Surface(
                 shape = RoundedCornerShape(6.dp),
                 color = stateColor.copy(alpha = 0.15f)
             ) {
                 Text(
-                    text = statusStr.replaceFirstChar { it.uppercase() },
+                    text = statusStr,
                     style = MaterialTheme.typography.labelSmall,
                     color = stateColor,
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)

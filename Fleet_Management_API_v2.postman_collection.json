@@ -469,6 +469,75 @@
 			]
 		},
 		{
+			"name": "03b. Entity States",
+			"description": "Entity state management. Get available states, valid transitions, and state change history.\n\n**Vehicle States:** inactive, active, on_route, maintenance, damaged, decommissioned\n**Driver Statuses:** inactive, active, on_route, on_leave, suspended, terminated\n**Trip States:** planned, assigned, on_route, completed, cancelled, failed, delayed",
+			"item": [
+				{
+					"name": "Get All States",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/states", "host": ["{{base_url}}"], "path": ["states"]}
+					},
+					"description": "Get all available states for vehicles, drivers, and trips."
+				},
+				{
+					"name": "Get Vehicle States",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/states/vehicles", "host": ["{{base_url}}"], "path": ["states", "vehicles"]}
+					},
+					"description": "Get all vehicle states with descriptions and valid transitions."
+				},
+				{
+					"name": "Get Driver Statuses",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/states/drivers", "host": ["{{base_url}}"], "path": ["states", "drivers"]}
+					},
+					"description": "Get all driver statuses with descriptions and valid transitions."
+				},
+				{
+					"name": "Get Trip States",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/states/trips", "host": ["{{base_url}}"], "path": ["states", "trips"]}
+					},
+					"description": "Get all trip states with descriptions and valid transitions."
+				},
+				{
+					"name": "Get Vehicle State History",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/state-history", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "state-history"]}
+					},
+					"description": "Get the state change history for a specific vehicle. Shows who changed it, when, and from/to states."
+				},
+				{
+					"name": "Get Driver State History",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/state-history", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "state-history"]}
+					},
+					"description": "Get the status change history for a specific driver. Shows who changed it, when, and from/to statuses."
+				},
+				{
+					"name": "Get Trip State History",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/state-history", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "state-history"]}
+					},
+					"description": "Get the state change history for a specific trip. Shows who changed it, when, and from/to states."
+				}
+			]
+		},
+		{
 			"name": "04. Drivers",
 			"description": "Driver management",
 			"item": [
@@ -1085,7 +1154,7 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"state\": \"in_progress\"\n}"
+							"raw": "{\n    \"state\": \"on_route\"\n}"
 						},
 						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/state", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "state"]}
 					}
@@ -1571,7 +1640,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/dashboard/vehicle-status", "host": ["{{base_url}}"], "path": ["dashboard", "vehicle-status"]}
 			},
-			"description": "Vehicle counts by status. Response: on_trip_planned, on_trip_in_progress, under_maintenance, active, inactive, total."
+			"description": "Vehicle counts by state. Response: inactive, active, on_route, maintenance, damaged, decommissioned, total."
 		},
 		{
 			"name": "Trips Status",
@@ -1580,7 +1649,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/dashboard/trips-status", "host": ["{{base_url}}"], "path": ["dashboard", "trips-status"]}
 			},
-			"description": "Trip counts by status with delayed detection. Response: in_progress, planned, delayed, completed_today, completed_total, cancelled, total, recent_trips[]."
+			"description": "Trip counts by state. Response: planned, assigned, on_route, delayed, completed, cancelled, failed, completed_today, total, recent_trips[]."
 		},
 		{
 			"name": "Drivers Status",
@@ -1589,7 +1658,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/dashboard/drivers-status", "host": ["{{base_url}}"], "path": ["dashboard", "drivers-status"]}
 			},
-			"description": "Driver availability counts. Response: on_trip_planned, on_trip_in_progress, available, on_leave, inactive, total."
+			"description": "Driver counts by status. Response: inactive, active, on_route, on_leave, suspended, terminated, total."
 		},
 		{
 			"name": "Alerts Status",

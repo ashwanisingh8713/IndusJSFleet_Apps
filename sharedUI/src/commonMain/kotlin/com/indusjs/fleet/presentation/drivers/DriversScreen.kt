@@ -195,13 +195,7 @@ private fun StatusFilterChips(
 }
 
 private fun getStatusDisplayName(status: DriverStatus): String {
-    return when (status) {
-        DriverStatus.ACTIVE -> "Active"
-        DriverStatus.INACTIVE -> "Inactive"
-        DriverStatus.ON_TRIP -> "On Trip"
-        DriverStatus.ON_LEAVE -> "On Leave"
-        DriverStatus.SUSPENDED -> "Suspended"
-    }
+    return DriverStatus.getDisplayLabel(status)
 }
 
 @Composable
@@ -406,13 +400,15 @@ private fun DriverInfoItem(
 
 @Composable
 private fun StatusBadge(status: DriverStatus) {
-    val (color, text) = when (status) {
-        DriverStatus.ACTIVE -> MaterialTheme.colorScheme.primary to "Active"
-        DriverStatus.INACTIVE -> MaterialTheme.colorScheme.error to "Inactive"
-        DriverStatus.ON_TRIP -> MaterialTheme.colorScheme.tertiary to "On Trip"
-        DriverStatus.ON_LEAVE -> MaterialTheme.colorScheme.secondary to "On Leave"
-        DriverStatus.SUSPENDED -> MaterialTheme.colorScheme.error to "Suspended"
+    val colorScheme = DriverStatus.getColorScheme(status)
+    val color = when (colorScheme) {
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.primary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> MaterialTheme.colorScheme.secondary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.tertiary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
     }
+    val text = DriverStatus.getDisplayLabel(status)
 
     // Using reusable FleetStatusBadge component
     FleetStatusBadge(

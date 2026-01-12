@@ -191,12 +191,7 @@ private fun StatusFilterChips(
 }
 
 private fun getStatusDisplayName(status: TripStatus): String {
-    return when (status) {
-        TripStatus.PLANNED -> "Planned"
-        TripStatus.IN_PROGRESS -> "In Progress"
-        TripStatus.COMPLETED -> "Completed"
-        TripStatus.CANCELLED -> "Cancelled"
-    }
+    return TripStatus.getDisplayLabel(status)
 }
 
 @Composable
@@ -378,8 +373,8 @@ private fun TripCard(
                 }
             }
 
-            // Progress indicator for In Progress trips
-            if (trip.status == TripStatus.IN_PROGRESS && trip.displayInfo.progressPercent != null) {
+            // Progress indicator for On Route trips
+            if (trip.status == TripStatus.ON_ROUTE && trip.displayInfo.progressPercent != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 TripProgressIndicator(
                     progressPercent = trip.displayInfo.progressPercent,
@@ -467,8 +462,8 @@ private fun RouteSection(trip: Trip) {
             }
         }
 
-        // Current Location (if in progress)
-        if (trip.status == TripStatus.IN_PROGRESS && trip.currentLocation != null) {
+        // Current Location (if on route)
+        if (trip.status == TripStatus.ON_ROUTE && trip.currentLocation != null) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -583,12 +578,15 @@ private fun TripInfoItem(
 
 @Composable
 private fun StatusBadge(status: TripStatus) {
-    val (color, text) = when (status) {
-        TripStatus.PLANNED -> MaterialTheme.colorScheme.primary to "Planned"
-        TripStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary to "In Progress"
-        TripStatus.COMPLETED -> MaterialTheme.colorScheme.secondary to "Completed"
-        TripStatus.CANCELLED -> MaterialTheme.colorScheme.error to "Cancelled"
+    val colorScheme = TripStatus.getColorScheme(status)
+    val color = when (colorScheme) {
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.secondary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> MaterialTheme.colorScheme.tertiary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.primary
+        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
     }
+    val text = TripStatus.getDisplayLabel(status)
 
     // Using reusable FleetStatusBadge component
     FleetStatusBadge(

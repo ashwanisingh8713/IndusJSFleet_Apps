@@ -198,27 +198,16 @@ class VehicleMapper {
 
     /**
      * Parse API vehicle status/state string to VehicleStatus enum.
-     * API uses: active, inactive, maintenance, retired
+     * API uses: inactive, active, on_route, maintenance, damaged, decommissioned
      */
-    private fun parseVehicleStatus(status: String): VehicleStatus = when (status.lowercase()) {
-        "active" -> VehicleStatus.ACTIVE
-        "inactive" -> VehicleStatus.INACTIVE
-        "maintenance" -> VehicleStatus.IN_MAINTENANCE
-        "retired" -> VehicleStatus.OUT_OF_SERVICE
-        "in_maintenance" -> VehicleStatus.IN_MAINTENANCE
-        "out_of_service" -> VehicleStatus.OUT_OF_SERVICE
-        else -> VehicleStatus.ACTIVE
-    }
+    private fun parseVehicleStatus(status: String): VehicleStatus =
+        VehicleStatus.fromApiString(status)
 
     /**
      * Convert VehicleStatus enum to API string.
      */
-    private fun vehicleStatusToApiString(status: VehicleStatus): String = when (status) {
-        VehicleStatus.ACTIVE -> "active"
-        VehicleStatus.INACTIVE -> "inactive"
-        VehicleStatus.IN_MAINTENANCE -> "maintenance"
-        VehicleStatus.OUT_OF_SERVICE -> "retired"
-    }
+    private fun vehicleStatusToApiString(status: VehicleStatus): String =
+        VehicleStatus.toApiString(status)
 
     /**
      * Parse timestamp string to Long.

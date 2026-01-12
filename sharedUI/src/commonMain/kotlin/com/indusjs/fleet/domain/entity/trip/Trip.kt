@@ -1,29 +1,105 @@
 package com.indusjs.fleet.domain.entity.trip
 
+import com.indusjs.fleet.core.constants.StatusConstants
+
 /**
  * Trip status enumeration.
- * Matches API values: planned, in_progress, completed, cancelled
+ * Matches API values: planned, assigned, on_route, completed, cancelled, failed, delayed
  */
 enum class TripStatus {
     PLANNED,
-    IN_PROGRESS,
+    ASSIGNED,
+    ON_ROUTE,
     COMPLETED,
-    CANCELLED;
+    CANCELLED,
+    FAILED,
+    DELAYED;
 
     companion object {
+        /**
+         * Convert API string to TripStatus enum.
+         */
         fun fromApiString(value: String): TripStatus = when (value.lowercase()) {
-            "planned" -> PLANNED
-            "in_progress" -> IN_PROGRESS
-            "completed" -> COMPLETED
-            "cancelled" -> CANCELLED
+            StatusConstants.TripState.PLANNED -> PLANNED
+            StatusConstants.TripState.ASSIGNED -> ASSIGNED
+            StatusConstants.TripState.ON_ROUTE, "in_progress" -> ON_ROUTE
+            StatusConstants.TripState.COMPLETED -> COMPLETED
+            StatusConstants.TripState.CANCELLED -> CANCELLED
+            StatusConstants.TripState.FAILED -> FAILED
+            StatusConstants.TripState.DELAYED -> DELAYED
             else -> PLANNED
         }
 
+        /**
+         * Convert TripStatus enum to API string.
+         */
         fun toApiString(status: TripStatus): String = when (status) {
-            PLANNED -> "planned"
-            IN_PROGRESS -> "in_progress"
-            COMPLETED -> "completed"
-            CANCELLED -> "cancelled"
+            PLANNED -> StatusConstants.TripState.PLANNED
+            ASSIGNED -> StatusConstants.TripState.ASSIGNED
+            ON_ROUTE -> StatusConstants.TripState.ON_ROUTE
+            COMPLETED -> StatusConstants.TripState.COMPLETED
+            CANCELLED -> StatusConstants.TripState.CANCELLED
+            FAILED -> StatusConstants.TripState.FAILED
+            DELAYED -> StatusConstants.TripState.DELAYED
+        }
+
+        /**
+         * Get display label for status.
+         */
+        fun getDisplayLabel(status: TripStatus): String =
+            StatusConstants.TripState.getDisplayLabel(toApiString(status))
+
+        /**
+         * Get icon for status.
+         */
+        fun getIcon(status: TripStatus): String =
+            StatusConstants.TripState.getIcon(toApiString(status))
+
+        /**
+         * Get color scheme for status.
+         */
+        fun getColorScheme(status: TripStatus): StatusConstants.StateColorScheme =
+            StatusConstants.TripState.getColorScheme(toApiString(status))
+
+        /**
+         * Check if trip is in progress.
+         */
+        fun isInProgress(status: TripStatus): Boolean =
+            StatusConstants.TripState.isInProgress(toApiString(status))
+
+        /**
+         * Check if trip is editable.
+         */
+        fun isEditable(status: TripStatus): Boolean =
+            StatusConstants.TripState.isEditable(toApiString(status))
+
+        /**
+         * Check if trip can be cancelled.
+         */
+        fun isCancellable(status: TripStatus): Boolean =
+            StatusConstants.TripState.isCancellable(toApiString(status))
+
+        /**
+         * Check if trip is finished.
+         */
+        fun isFinished(status: TripStatus): Boolean =
+            StatusConstants.TripState.isFinished(toApiString(status))
+
+        /**
+         * Get valid transitions from current status.
+         */
+        fun getValidTransitions(status: TripStatus): List<TripStatus> {
+            return StatusConstants.TripTransitions.getValidTransitions(toApiString(status))
+                .mapNotNull { state ->
+                    try { fromApiString(state) } catch (e: Exception) { null }
+                }
+        }
+
+        /**
+         * Check if transition is valid.
+         */
+        fun canTransition(from: TripStatus, to: TripStatus): Boolean {
+            return StatusConstants.TripTransitions.canTransition(toApiString(from), toApiString(to))
         }
     }
 }

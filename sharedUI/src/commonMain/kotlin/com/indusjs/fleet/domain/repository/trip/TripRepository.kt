@@ -1,6 +1,7 @@
 package com.indusjs.fleet.domain.repository.trip
 
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.data.model.state.StateHistoryResponseDto
 import com.indusjs.fleet.data.model.trip.UpdateTripRequest
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
 import com.indusjs.fleet.domain.entity.trip.CreateTripStopData
@@ -45,14 +46,44 @@ interface TripRepository : Repository {
     /**
      * Update an existing trip with UpdateTripRequest.
      * Supports updating Vehicle, Driver, Schedule, Location, Cargo, Customer, Priority.
-     * Only works for trips in 'planned' state.
+     * Only works for trips in 'planned' or 'assigned' state.
      */
     suspend fun updateTripWithRequest(id: String, request: UpdateTripRequest): Result<Trip>
 
     /**
-     * Update trip status.
+     * Update trip status (legacy method).
      */
     suspend fun updateTripStatus(id: String, status: TripStatus): Result<Trip>
+
+    /**
+     * Update trip state with reason and notes.
+     * PATCH /trips/{id}/state
+     *
+     * @param id Trip ID
+     * @param newState New state value (from StatusConstants.TripState)
+     * @param reason Optional reason for state change
+     * @param notes Optional notes for state change
+     *
+     * Note: This also updates Vehicle and Driver states automatically:
+     * - Trip → on_route: Vehicle → on_route, Driver → on_route
+     * - Trip → completed/cancelled/failed: Vehicle → active, Driver → active
+     */
+    suspend fun updateTripState(
+        id: String,
+        newState: String,
+        reason: String? = null,
+        notes: String? = null
+    ): Result<Trip>
+
+    /**
+     * Get trip state change history.
+     * GET /trips/{id}/state-history
+     */
+    suspend fun getTripStateHistory(
+        id: String,
+        page: Int = 1,
+        perPage: Int = 20
+    ): Result<StateHistoryResponseDto>
 
     /**
      * Update trip progress (for in_progress trips).

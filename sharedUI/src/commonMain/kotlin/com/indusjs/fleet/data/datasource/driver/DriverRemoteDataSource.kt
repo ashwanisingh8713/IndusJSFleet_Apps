@@ -9,6 +9,8 @@ import com.indusjs.fleet.data.model.driver.DriverDto
 import com.indusjs.fleet.data.model.driver.UpdateDriverRequest
 import com.indusjs.fleet.data.model.driver.UpdateDriverStatusRequest
 import com.indusjs.fleet.data.model.history.DriverHistoryApiResponse
+import com.indusjs.fleet.data.model.state.StateHistoryResponseDto
+import com.indusjs.fleet.data.model.state.StatusUpdateRequestDto
 import co.touchlab.kermit.Logger
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -48,8 +50,20 @@ interface DriverRemoteDataSource : RemoteDataSource {
     suspend fun toggleDriverActive(token: String, id: String): DriverApiResponse<DriverDto>
     suspend fun deleteDriver(token: String, id: String): DriverApiResponse<Unit>
 
+    // Status update with reason and notes
+    suspend fun updateDriverStatusWithReason(
+        token: String,
+        id: String,
+        status: String,
+        reason: String? = null,
+        notes: String? = null
+    ): DriverApiResponse<DriverDto>
+
     // History API
     suspend fun getDriverHistory(token: String, id: String, page: Int, perPage: Int): DriverHistoryApiResponse
+
+    // State History API
+    suspend fun getDriverStateHistory(token: String, id: String, page: Int, perPage: Int): DriverApiResponse<StateHistoryResponseDto>
 }
 
 /**
@@ -334,6 +348,58 @@ class DriverRemoteDataSourceImpl(
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch driver history: ${e.message}" }
             DriverHistoryApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(e))
+        }
+    }
+
+    override suspend fun updateDriverStatusWithReason(
+        token: String,
+        id: String,
+        status: String,
+        reason: String?,
+        notes: String?
+    ): DriverApiResponse<DriverDto> {
+        return try {
+            log.d { "Updating driver status: $id -> $status" }
+            val request = StatusUpdateRequestDto(
+                status = status,
+                reason = reason,
+                notes = notes
+            )
+            val response: HttpResponse = httpClient.patch("$baseUrl/$id/status") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            parseSingleResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to update driver status: ${e.message}" }
+            DriverApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun getDriverStateHistory(
+        token: String,
+        id: String,
+        page: Int,
+        perPage: Int
+    ): DriverApiResponse<StateHistoryResponseDto> {
+        return try {
+            log.d { "Fetching driver state history: $id, page=$page" }
+            val response: HttpResponse = httpClient.get("$baseUrl/$id/state-history") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("page", page)
+                parameter("per_page", perPage)
+            }
+            val bodyText = response.bodyAsText()
+            log.d { "State history response: $bodyText" }
+            if (response.status.isSuccess()) {
+                json.decodeFromString<DriverApiResponse<StateHistoryResponseDto>>(bodyText)
+            } else {
+                DriverApiResponse(success = false, message = "Request failed with status ${response.status}")
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch driver state history: ${e.message}" }
+            DriverApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(e))
         }
     }
 }

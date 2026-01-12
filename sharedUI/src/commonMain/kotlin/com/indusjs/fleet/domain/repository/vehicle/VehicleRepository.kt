@@ -2,6 +2,7 @@ package com.indusjs.fleet.domain.repository.vehicle
 
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.history.VehicleHistoryDataDto
+import com.indusjs.fleet.data.model.state.StateHistoryResponseDto
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDetail
 import com.indusjs.fleet.domain.entity.vehicle.VehicleDocument
@@ -50,6 +51,34 @@ interface VehicleRepository : Repository {
      * Delete a vehicle by ID.
      */
     suspend fun deleteVehicle(id: String): Result<Unit>
+
+    // ==================== State Management APIs ====================
+
+    /**
+     * Update vehicle state.
+     * PATCH /vehicles/{id}/state
+     *
+     * @param id Vehicle ID
+     * @param newState New state value (from StatusConstants.VehicleState)
+     * @param reason Optional reason for state change
+     * @param notes Optional notes for state change
+     */
+    suspend fun updateVehicleState(
+        id: String,
+        newState: String,
+        reason: String? = null,
+        notes: String? = null
+    ): Result<Vehicle>
+
+    /**
+     * Get vehicle state change history.
+     * GET /vehicles/{id}/state-history
+     */
+    suspend fun getVehicleStateHistory(
+        id: String,
+        page: Int = 1,
+        perPage: Int = 20
+    ): Result<StateHistoryResponseDto>
 
     // ==================== Vehicle Detail APIs ====================
 

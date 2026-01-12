@@ -2,6 +2,7 @@ package com.indusjs.fleet.domain.repository.driver
 
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.history.DriverHistoryDataDto
+import com.indusjs.fleet.data.model.state.StateHistoryResponseDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.repository.Repository
@@ -44,9 +45,25 @@ interface DriverRepository : Repository {
 
     /**
      * Update driver status.
-     * Valid statuses: active, inactive, on_trip, on_leave, suspended
+     * Valid statuses: inactive, active, on_route, on_leave, suspended, terminated
      */
     suspend fun updateDriverStatus(id: String, status: DriverStatus): Result<Driver>
+
+    /**
+     * Update driver status with reason and notes.
+     * PATCH /drivers/{id}/status
+     *
+     * @param id Driver ID
+     * @param newStatus New status value (from StatusConstants.DriverState)
+     * @param reason Optional reason for status change
+     * @param notes Optional notes for status change
+     */
+    suspend fun updateDriverStatusWithReason(
+        id: String,
+        newStatus: String,
+        reason: String? = null,
+        notes: String? = null
+    ): Result<Driver>
 
     /**
      * Toggle driver active state (activate/deactivate).
@@ -70,5 +87,15 @@ interface DriverRepository : Repository {
         page: Int = 1,
         perPage: Int = 20
     ): Result<DriverHistoryDataDto>
+
+    /**
+     * Get driver state change history.
+     * GET /drivers/{id}/state-history
+     */
+    suspend fun getDriverStateHistory(
+        id: String,
+        page: Int = 1,
+        perPage: Int = 20
+    ): Result<StateHistoryResponseDto>
 }
 
