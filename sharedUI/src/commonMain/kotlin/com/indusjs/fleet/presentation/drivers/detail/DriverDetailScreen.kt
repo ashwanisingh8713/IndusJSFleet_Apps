@@ -243,7 +243,8 @@ fun DriverDetailScreen(
                         // View Mode with Tabs
                         DriverDetailTabs(
                             state = state,
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            onStatusClick = { showStatusDialog = true }
                         )
                     }
                 }
@@ -291,7 +292,8 @@ private enum class DriverDetailTab(val title: String, val icon: String) {
 @Composable
 private fun DriverDetailTabs(
     state: DriverDetailContract.State,
-    viewModel: DriverDetailViewModel
+    viewModel: DriverDetailViewModel,
+    onStatusClick: () -> Unit = {}
 ) {
     val tabs = DriverDetailTab.entries
     var selectedTab by remember { mutableStateOf(0) }
@@ -332,7 +334,8 @@ private fun DriverDetailTabs(
         when (tabs[selectedTab]) {
             DriverDetailTab.OVERVIEW -> DriverOverviewContent(
                 state = state,
-                viewModel = viewModel
+                viewModel = viewModel,
+                onStatusClick = onStatusClick
             )
             DriverDetailTab.COSTS -> DriverCostsTabContent(
                 state = state,
@@ -356,7 +359,8 @@ private fun DriverDetailTabs(
 @Composable
 private fun DriverOverviewContent(
     state: DriverDetailContract.State,
-    viewModel: DriverDetailViewModel
+    viewModel: DriverDetailViewModel,
+    onStatusClick: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier
@@ -365,7 +369,12 @@ private fun DriverOverviewContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { DriverHeader(driver = state.driver!!) }
+        item {
+            DriverHeader(
+                driver = state.driver!!,
+                onStatusClick = onStatusClick
+            )
+        }
 
         item { ContactSection(driver = state.driver!!) }
 
@@ -1483,4 +1492,3 @@ private fun formatDate(timestamp: Long): String {
         "N/A"
     }
 }
-

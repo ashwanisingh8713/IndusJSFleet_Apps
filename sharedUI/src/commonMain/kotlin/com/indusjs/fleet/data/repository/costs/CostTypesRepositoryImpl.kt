@@ -8,6 +8,7 @@ import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.model.costs.CostTypeCategoryDto
 import com.indusjs.fleet.data.model.costs.MaintenanceCostTypes
 import com.indusjs.fleet.data.model.costs.TripCostTypes
+import com.indusjs.fleet.data.model.driver.DriverCostTypes
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import dev.zacsweers.metro.Inject
 
@@ -15,7 +16,7 @@ import dev.zacsweers.metro.Inject
  * Implementation of CostTypesRepository.
  *
  * Handles fetching cost types from API and caching them locally.
- * Cost types are fetched once on first app launch and never updated.
+ * Cost types are fetched on first app launch and can be refreshed manually.
  * Falls back to hardcoded types if API fails and no cache exists.
  */
 @Inject
@@ -58,6 +59,7 @@ class CostTypesRepositoryImpl(
 
         var tripTypesFetched = false
         var maintenanceTypesFetched = false
+        var driverTypesFetched = false
 
         // Fetch trip cost types
         try {
@@ -65,9 +67,6 @@ class CostTypesRepositoryImpl(
             log.d { "Trip cost types API response: success=${tripResponse.success}, message=${tripResponse.message}" }
             if (tripResponse.success && tripResponse.data != null) {
                 log.d { "Trip cost types data: ${tripResponse.data.groups.size} groups" }
-                tripResponse.data.groups.forEach { group ->
-                    log.d { "  Group: ${group.groupName} - ${group.items.size} items" }
-                }
                 localDataSource.saveTripCostTypes(tripResponse.data)
                 tripTypesFetched = true
                 log.d { "Trip cost types fetched and cached successfully" }
@@ -84,9 +83,6 @@ class CostTypesRepositoryImpl(
             log.d { "Maintenance cost types API response: success=${maintenanceResponse.success}, message=${maintenanceResponse.message}" }
             if (maintenanceResponse.success && maintenanceResponse.data != null) {
                 log.d { "Maintenance cost types data: ${maintenanceResponse.data.groups.size} groups" }
-                maintenanceResponse.data.groups.forEach { group ->
-                    log.d { "  Group: ${group.groupName} - ${group.items.size} items" }
-                }
                 localDataSource.saveMaintenanceCostTypes(maintenanceResponse.data)
                 maintenanceTypesFetched = true
                 log.d { "Maintenance cost types fetched and cached successfully" }
@@ -97,14 +93,90 @@ class CostTypesRepositoryImpl(
             log.e(e) { "Error fetching maintenance cost types: ${e.message}" }
         }
 
+        // Fetch driver cost types
+        try {
+            val driverResponse = remoteDataSource.getDriverCostTypes()
+            log.d { "Driver cost types API response: success=${driverResponse.success}, message=${driverResponse.message}" }
+            if (driverResponse.success && driverResponse.data != null) {
+                log.d { "Driver cost types data: ${driverResponse.data.groups.size} groups" }
+                localDataSource.saveDriverCostTypes(driverResponse.data)
+                driverTypesFetched = true
+                log.d { "Driver cost types fetched and cached successfully" }
+            } else {
+                log.w { "Failed to fetch driver cost types: ${driverResponse.message}" }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Error fetching driver cost types: ${e.message}" }
+        }
+
         return if (tripTypesFetched && maintenanceTypesFetched) {
             Result.Success(Unit)
-        } else if (tripTypesFetched || maintenanceTypesFetched) {
-            log.w { "Partial success: trip=$tripTypesFetched, maintenance=$maintenanceTypesFetched" }
+        } else if (tripTypesFetched || maintenanceTypesFetched || driverTypesFetched) {
+            log.w { "Partial success: trip=$tripTypesFetched, maintenance=$maintenanceTypesFetched, driver=$driverTypesFetched" }
             Result.Success(Unit)
         } else {
             log.w { "Failed to fetch any cost types, will use hardcoded fallback" }
             Result.Success(Unit)
+        }
+    }
+
+    override suspend fun refreshTripCostTypes(): Result<Unit> {
+        log.d { "Refreshing trip cost types from API..." }
+
+        try {
+            val response = remoteDataSource.getTripCostTypes()
+            if (response.success && response.data != null) {
+                localDataSource.clearTripCostTypes()
+                localDataSource.saveTripCostTypes(response.data)
+                log.d { "Trip cost types refreshed successfully: ${response.data.groups.size} groups" }
+                return Result.Success(Unit)
+            } else {
+                log.w { "Failed to refresh trip cost types: ${response.message}" }
+                return Result.Error(Exception(response.message ?: "Failed to fetch trip cost types"))
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Error refreshing trip cost types: ${e.message}" }
+            return Result.Error(e, "Failed to refresh trip cost types: ${e.message}")
+        }
+    }
+
+    override suspend fun refreshMaintenanceCostTypes(): Result<Unit> {
+        log.d { "Refreshing maintenance cost types from API..." }
+
+        try {
+            val response = remoteDataSource.getMaintenanceCostTypes()
+            if (response.success && response.data != null) {
+                localDataSource.clearMaintenanceCostTypes()
+                localDataSource.saveMaintenanceCostTypes(response.data)
+                log.d { "Maintenance cost types refreshed successfully: ${response.data.groups.size} groups" }
+                return Result.Success(Unit)
+            } else {
+                log.w { "Failed to refresh maintenance cost types: ${response.message}" }
+                return Result.Error(Exception(response.message ?: "Failed to fetch maintenance cost types"))
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Error refreshing maintenance cost types: ${e.message}" }
+            return Result.Error(e, "Failed to refresh maintenance cost types: ${e.message}")
+        }
+    }
+
+    override suspend fun refreshDriverCostTypes(): Result<Unit> {
+        log.d { "Refreshing driver cost types from API..." }
+
+        try {
+            val response = remoteDataSource.getDriverCostTypes()
+            if (response.success && response.data != null) {
+                localDataSource.clearDriverCostTypes()
+                localDataSource.saveDriverCostTypes(response.data)
+                log.d { "Driver cost types refreshed successfully: ${response.data.groups.size} groups" }
+                return Result.Success(Unit)
+            } else {
+                log.w { "Failed to refresh driver cost types: ${response.message}" }
+                return Result.Error(Exception(response.message ?: "Failed to fetch driver cost types"))
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Error refreshing driver cost types: ${e.message}" }
+            return Result.Error(e, "Failed to refresh driver cost types: ${e.message}")
         }
     }
 
@@ -114,6 +186,10 @@ class CostTypesRepositoryImpl(
 
     override suspend fun getMaintenanceCostTypes(): CostTypeCategoryDto? {
         return localDataSource.getMaintenanceCostTypes()
+    }
+
+    override suspend fun getDriverCostTypes(): CostTypeCategoryDto? {
+        return localDataSource.getDriverCostTypes()
     }
 
     override suspend fun getTripCostTypesFlat(): List<Pair<String, String>> {
@@ -129,6 +205,14 @@ class CostTypesRepositoryImpl(
         log.d { "getMaintenanceCostTypesFlat: cached=${cached != null}, groups=${cached?.groups?.size ?: 0}" }
         val result = cached?.toFlatList() ?: MaintenanceCostTypes.types
         log.d { "getMaintenanceCostTypesFlat: returning ${result.size} items" }
+        return result
+    }
+
+    override suspend fun getDriverCostTypesFlat(): List<Pair<String, String>> {
+        val cached = localDataSource.getDriverCostTypes()
+        log.d { "getDriverCostTypesFlat: cached=${cached != null}, groups=${cached?.groups?.size ?: 0}" }
+        val result = cached?.toFlatList() ?: DriverCostTypes.types
+        log.d { "getDriverCostTypesFlat: returning ${result.size} items" }
         return result
     }
 

@@ -28,6 +28,7 @@ interface CostsRemoteDataSource : RemoteDataSource {
     // Cost Types APIs (no auth required for initial fetch)
     suspend fun getTripCostTypes(): CostTypesApiResponse
     suspend fun getMaintenanceCostTypes(): CostTypesApiResponse
+    suspend fun getDriverCostTypes(): CostTypesApiResponse
 
     suspend fun createTripCost(token: String, request: CreateTripCostRequest): TripCostApiResponse
     suspend fun bulkCreateTripCosts(token: String, tripId: String, request: BulkCreateTripCostsRequest): BulkTripCostsApiResponse
@@ -118,6 +119,20 @@ class CostsRemoteDataSourceImpl(
             handleCostTypesResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch maintenance cost types: ${e.message}" }
+            CostTypesApiResponse(
+                success = false,
+                message = e.message ?: "Network error occurred"
+            )
+        }
+    }
+
+    override suspend fun getDriverCostTypes(): CostTypesApiResponse {
+        return try {
+            log.d { "Fetching driver cost types" }
+            val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.DRIVER_COST_TYPES}")
+            handleCostTypesResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch driver cost types: ${e.message}" }
             CostTypesApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"

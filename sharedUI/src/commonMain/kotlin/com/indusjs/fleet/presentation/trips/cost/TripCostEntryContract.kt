@@ -88,6 +88,9 @@ object TripCostEntryContract {
         val isSaving: Boolean = false,
         val error: String? = null,
 
+        // Refresh cost types
+        val isRefreshingCostTypes: Boolean = false,
+
         // Available options
         val costTypeOptions: List<Pair<String, String>> = TripCostTypes.types,
         val costTypeGroups: List<CostTypeGroup> = TripCostTypes.groups,
@@ -117,6 +120,7 @@ object TripCostEntryContract {
     sealed interface Intent : UiIntent {
         // Load data
         data object LoadTrips : Intent
+        data object RefreshCostTypes : Intent
 
         // Trip selection
         data class SelectTrip(val trip: Trip) : Intent

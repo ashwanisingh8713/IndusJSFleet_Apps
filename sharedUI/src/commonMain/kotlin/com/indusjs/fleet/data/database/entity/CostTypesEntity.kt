@@ -33,3 +33,17 @@ data class MaintenanceCostTypesEntity(
     val savedAt: Long // Timestamp when data was saved
 ) : DbEntity
 
+/**
+ * Entity for caching Driver Cost Types locally.
+ * Stores the complete cost types data fetched from API.
+ *
+ * This is saved once on first app launch and never updated again.
+ */
+@Serializable
+data class DriverCostTypesEntity(
+    val id: Int = 1, // Singleton - only one record
+    val categoryId: String,
+    val categoryName: String,
+    val groupsJson: String, // JSON serialized list of CostTypeGroupDto
+    val savedAt: Long // Timestamp when data was saved
+) : DbEntity

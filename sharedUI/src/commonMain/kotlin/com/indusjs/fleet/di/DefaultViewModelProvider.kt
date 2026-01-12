@@ -362,6 +362,7 @@ class DefaultViewModelProvider : ViewModelProvider {
         dispatcherProvider,
         tripRepository,
         costsRepository,
+        costTypesRepository,
         getTripCostTypesUseCase
     )
 
@@ -369,6 +370,7 @@ class DefaultViewModelProvider : ViewModelProvider {
         dispatcherProvider,
         vehicleRepository,
         costsRepository,
+        costTypesRepository,
         getMaintenanceCostTypesUseCase
     )
 

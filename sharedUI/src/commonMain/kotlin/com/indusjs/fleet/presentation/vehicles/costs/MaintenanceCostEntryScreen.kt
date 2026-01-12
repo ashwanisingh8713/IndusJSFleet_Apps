@@ -85,6 +85,25 @@ fun MaintenanceCostEntryScreen(
                     }
                 },
                 actions = {
+                    // Refresh cost types button
+                    IconButton(
+                        onClick = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.RefreshCostTypes) },
+                        enabled = !state.isRefreshingCostTypes
+                    ) {
+                        if (state.isRefreshingCostTypes) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_refresh),
+                                contentDescription = "Refresh Cost Types",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                     // History button
                     IconButton(
                         onClick = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ShowHistory) },

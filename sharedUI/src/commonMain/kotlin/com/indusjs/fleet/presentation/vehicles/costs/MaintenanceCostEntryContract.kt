@@ -41,6 +41,9 @@ object MaintenanceCostEntryContract {
         val isSaving: Boolean = false,
         val error: String? = null,
 
+        // Refresh cost types
+        val isRefreshingCostTypes: Boolean = false,
+
         // Validation errors
         val vehicleError: String? = null,
 
@@ -63,6 +66,7 @@ object MaintenanceCostEntryContract {
     sealed interface Intent : UiIntent {
         // Load data
         data object LoadVehicles : Intent
+        data object RefreshCostTypes : Intent
 
         // Vehicle selection
         data class SelectVehicle(val vehicle: Vehicle) : Intent

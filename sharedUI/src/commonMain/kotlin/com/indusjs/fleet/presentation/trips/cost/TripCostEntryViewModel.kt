@@ -12,6 +12,7 @@ import com.indusjs.fleet.data.model.costs.BulkCreateTripCostsRequest
 import com.indusjs.fleet.data.model.costs.TripCostTypes
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
+import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.usecase.costs.GetTripCostTypesUseCase
 import dev.zacsweers.metro.Inject
@@ -26,6 +27,7 @@ class TripCostEntryViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val tripRepository: TripRepository,
     private val costsRepository: CostsRepository,
+    private val costTypesRepository: CostTypesRepository,
     private val getTripCostTypesUseCase: GetTripCostTypesUseCase? = null
 ) : MviViewModel<TripCostEntryContract.State, TripCostEntryContract.Intent, TripCostEntryContract.Effect>(
     TripCostEntryContract.State()
@@ -89,6 +91,7 @@ class TripCostEntryViewModel(
     override suspend fun handleIntent(intent: TripCostEntryContract.Intent) {
         when (intent) {
             is TripCostEntryContract.Intent.LoadTrips -> loadTrips()
+            is TripCostEntryContract.Intent.RefreshCostTypes -> refreshCostTypes()
             is TripCostEntryContract.Intent.SelectTrip -> selectTrip(intent.trip)
             is TripCostEntryContract.Intent.ToggleTripDropdown -> updateState { copy(showTripDropdown = !showTripDropdown) }
 
@@ -126,6 +129,42 @@ class TripCostEntryViewModel(
             is TripCostEntryContract.Intent.SaveCosts -> saveCosts()
             is TripCostEntryContract.Intent.NavigateBack -> sendEffect(TripCostEntryContract.Effect.NavigateBack)
             is TripCostEntryContract.Intent.ClearError -> updateState { copy(error = null) }
+        }
+    }
+
+    /**
+     * Refresh cost types from API and reload into UI.
+     */
+    private suspend fun refreshCostTypes() {
+        updateState { copy(isRefreshingCostTypes = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = costTypesRepository.refreshTripCostTypes()) {
+                is Result.Success -> {
+                    // Reload cost types from local DB
+                    val groupedDto = costTypesRepository.getTripCostTypes()
+                    if (groupedDto != null && groupedDto.groups.isNotEmpty()) {
+                        val flat = groupedDto.toFlatList()
+                        val groups = groupedDto.toCostTypeGroups()
+                        updateState {
+                            copy(
+                                isRefreshingCostTypes = false,
+                                costTypeOptions = flat,
+                                costTypeGroups = groups
+                            )
+                        }
+                        sendEffect(TripCostEntryContract.Effect.ShowSnackbar("Cost types updated"))
+                    } else {
+                        updateState { copy(isRefreshingCostTypes = false) }
+                        sendEffect(TripCostEntryContract.Effect.ShowSnackbar("Cost types updated"))
+                    }
+                }
+                is Result.Error -> {
+                    updateState { copy(isRefreshingCostTypes = false) }
+                    sendEffect(TripCostEntryContract.Effect.ShowError(result.message ?: "Failed to refresh cost types"))
+                }
+                is Result.Loading -> { /* ignore */ }
+            }
         }
     }
 

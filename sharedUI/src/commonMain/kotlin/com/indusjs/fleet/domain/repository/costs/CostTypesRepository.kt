@@ -7,8 +7,8 @@ import com.indusjs.fleet.domain.repository.Repository
 /**
  * Repository interface for cost types operations.
  *
- * Cost types are fetched once on first app launch and persisted forever.
- * They are never updated unless the app data is cleared.
+ * Cost types are fetched on first app launch and persisted.
+ * They can be refreshed manually from the cost entry screens.
  */
 interface CostTypesRepository : Repository {
 
@@ -20,6 +20,33 @@ interface CostTypesRepository : Repository {
      * @return Result.Error if not cached and API fetch failed
      */
     suspend fun initializeCostTypesIfNeeded(): Result<Unit>
+
+    /**
+     * Force refresh trip cost types from API.
+     * Clears existing cache and fetches fresh data.
+     *
+     * @return Result.Success if successfully fetched and cached
+     * @return Result.Error if API fetch failed
+     */
+    suspend fun refreshTripCostTypes(): Result<Unit>
+
+    /**
+     * Force refresh maintenance cost types from API.
+     * Clears existing cache and fetches fresh data.
+     *
+     * @return Result.Success if successfully fetched and cached
+     * @return Result.Error if API fetch failed
+     */
+    suspend fun refreshMaintenanceCostTypes(): Result<Unit>
+
+    /**
+     * Force refresh driver cost types from API.
+     * Clears existing cache and fetches fresh data.
+     *
+     * @return Result.Success if successfully fetched and cached
+     * @return Result.Error if API fetch failed
+     */
+    suspend fun refreshDriverCostTypes(): Result<Unit>
 
     /**
      * Get cached trip cost types.
@@ -38,6 +65,14 @@ interface CostTypesRepository : Repository {
     suspend fun getMaintenanceCostTypes(): CostTypeCategoryDto?
 
     /**
+     * Get cached driver cost types.
+     * Returns the full category with grouped cost types.
+     *
+     * @return Cached driver cost types or null if not yet cached
+     */
+    suspend fun getDriverCostTypes(): CostTypeCategoryDto?
+
+    /**
      * Get trip cost types as a flat list of id to name pairs.
      * Useful for dropdowns and selection.
      */
@@ -50,8 +85,13 @@ interface CostTypesRepository : Repository {
     suspend fun getMaintenanceCostTypesFlat(): List<Pair<String, String>>
 
     /**
+     * Get driver cost types as a flat list of id to name pairs.
+     * Useful for dropdowns and selection.
+     */
+    suspend fun getDriverCostTypesFlat(): List<Pair<String, String>>
+
+    /**
      * Check if cost types are already cached.
      */
     suspend fun hasCostTypesCached(): Boolean
 }
-

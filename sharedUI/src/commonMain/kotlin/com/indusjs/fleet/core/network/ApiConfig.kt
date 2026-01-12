@@ -40,13 +40,21 @@ object ApiConfig {
         const val DASHBOARD_TRIPS_STATUS = "/dashboard/trips-status"
         const val DASHBOARD_DRIVERS_STATUS = "/dashboard/drivers-status"
 
+        // Cost Types (cached in local DB)
+        const val COST_TYPES_TRIP = "/cost-types/trip"
+        const val COST_TYPES_MAINTENANCE = "/cost-types/maintenance"
+        const val COST_TYPES_DRIVER = "/cost-types/driver"
+
         // Trip Costs
-        const val TRIP_COST_TYPES = "/trip-costs/types"
+        const val TRIP_COST_TYPES = "/cost-types/trip"
         const val TRIP_COSTS = "/trip-costs"
 
         // Maintenance Costs
-        const val MAINTENANCE_COST_TYPES = "/maintenance-costs/types"
+        const val MAINTENANCE_COST_TYPES = "/cost-types/maintenance"
         const val MAINTENANCE_COSTS = "/maintenance-costs"
+
+        // Driver Cost Types
+        const val DRIVER_COST_TYPES = "/cost-types/driver"
     }
 
     /**
@@ -54,4 +62,3 @@ object ApiConfig {
      */
     const val TIMEOUT_MS = 30_000L
 }
-

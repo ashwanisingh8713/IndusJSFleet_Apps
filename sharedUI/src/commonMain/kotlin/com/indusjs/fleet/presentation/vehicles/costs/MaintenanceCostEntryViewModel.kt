@@ -12,6 +12,7 @@ import com.indusjs.fleet.data.model.costs.BulkMaintenanceCostItem
 import com.indusjs.fleet.data.model.costs.MaintenanceCostTypes
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
+import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.domain.usecase.costs.GetMaintenanceCostTypesUseCase
 import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryContract.Effect
@@ -29,6 +30,7 @@ class MaintenanceCostEntryViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val vehicleRepository: VehicleRepository,
     private val costsRepository: CostsRepository,
+    private val costTypesRepository: CostTypesRepository,
     private val getMaintenanceCostTypesUseCase: GetMaintenanceCostTypesUseCase? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
@@ -90,6 +92,7 @@ class MaintenanceCostEntryViewModel(
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
             is Intent.LoadVehicles -> loadVehicles()
+            is Intent.RefreshCostTypes -> refreshCostTypes()
             is Intent.SelectVehicle -> selectVehicle(intent.vehicle)
             is Intent.ToggleVehicleDropdown -> updateState { copy(showVehicleDropdown = !showVehicleDropdown) }
 
@@ -133,6 +136,42 @@ class MaintenanceCostEntryViewModel(
             is Intent.SaveCosts -> saveCosts()
             is Intent.NavigateBack -> sendEffect(Effect.NavigateBack)
             is Intent.ClearError -> updateState { copy(error = null) }
+        }
+    }
+
+    /**
+     * Refresh cost types from API and reload into UI.
+     */
+    private suspend fun refreshCostTypes() {
+        updateState { copy(isRefreshingCostTypes = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = costTypesRepository.refreshMaintenanceCostTypes()) {
+                is Result.Success -> {
+                    // Reload cost types from local DB
+                    val groupedDto = costTypesRepository.getMaintenanceCostTypes()
+                    if (groupedDto != null && groupedDto.groups.isNotEmpty()) {
+                        val flat = groupedDto.toFlatList()
+                        val groups = groupedDto.toCostTypeGroups()
+                        updateState {
+                            copy(
+                                isRefreshingCostTypes = false,
+                                costTypeOptions = flat,
+                                costTypeGroups = groups
+                            )
+                        }
+                        sendEffect(Effect.ShowSnackbar("Cost types updated"))
+                    } else {
+                        updateState { copy(isRefreshingCostTypes = false) }
+                        sendEffect(Effect.ShowSnackbar("Cost types updated"))
+                    }
+                }
+                is Result.Error -> {
+                    updateState { copy(isRefreshingCostTypes = false) }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to refresh cost types"))
+                }
+                is Result.Loading -> { /* ignore */ }
+            }
         }
     }
 
