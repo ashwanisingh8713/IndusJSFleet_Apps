@@ -7,6 +7,7 @@ import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
+import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
@@ -38,7 +39,8 @@ class VehicleDetailViewModel(
     private val vehicleRepository: VehicleRepository,
     private val getDriversUseCase: GetDriversUseCase,
     private val costsRepository: CostsRepository,
-    private val teamRepository: TeamRepository
+    private val teamRepository: TeamRepository,
+    private val costTypesRepository: CostTypesRepository? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     override suspend fun handleIntent(intent: Intent) {
@@ -101,6 +103,7 @@ class VehicleDetailViewModel(
 
             // Costs tab intents
             is Intent.LoadCosts -> loadCosts()
+            is Intent.LoadCostTypes -> loadCostTypes()
             is Intent.LoadMoreCosts -> loadMoreCosts()
             is Intent.RefreshCosts -> refreshCosts()
             is Intent.UpdateCostsDateRange -> updateCostsDateRange(intent.startDate, intent.endDate)
@@ -687,6 +690,37 @@ class VehicleDetailViewModel(
         "tyre", "battery", "oil_change", "brake_service", "engine_repair", "clutch_repair",
         "suspension", "electrical", "body_work", "cleaning", "servicing", "other"
     )
+
+    /**
+     * Load cost type groups from local database for the filter UI.
+     */
+    private suspend fun loadCostTypes() {
+        if (costTypesRepository == null) return
+
+        updateState { copy(isLoadingCostTypes = true) }
+
+        withContext(dispatcherProvider.io) {
+            try {
+                // Load trip cost types
+                val tripCostTypesGrouped = costTypesRepository.getTripCostTypes()
+                val tripGroups = tripCostTypesGrouped?.toCostTypeGroups() ?: emptyList()
+
+                // Load maintenance cost types
+                val maintenanceCostTypesGrouped = costTypesRepository.getMaintenanceCostTypes()
+                val maintenanceGroups = maintenanceCostTypesGrouped?.toCostTypeGroups() ?: emptyList()
+
+                updateState {
+                    copy(
+                        isLoadingCostTypes = false,
+                        tripCostTypeGroups = tripGroups,
+                        maintenanceCostTypeGroups = maintenanceGroups
+                    )
+                }
+            } catch (e: Exception) {
+                updateState { copy(isLoadingCostTypes = false) }
+            }
+        }
+    }
 
     private suspend fun loadCosts() {
         val vehicleId = currentState.vehicleId

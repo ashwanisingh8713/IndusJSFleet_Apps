@@ -3,6 +3,7 @@ package com.indusjs.fleet.presentation.vehicles.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.core.ui.CostTypeGroup
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.data.model.history.HistoryItemDto
@@ -128,6 +129,10 @@ object VehicleDetailContract {
         val showCostsFilterSheet: Boolean = false,
         val costsSortBy: String = "date",
         val costsSortOrder: String = "desc",
+        // Cost type options from local database
+        val tripCostTypeGroups: List<CostTypeGroup> = emptyList(),
+        val maintenanceCostTypeGroups: List<CostTypeGroup> = emptyList(),
+        val isLoadingCostTypes: Boolean = false,
         // Delete Cost Dialog
         val showDeleteCostDialog: Boolean = false,
         val costToDeleteId: String? = null,
@@ -245,6 +250,7 @@ object VehicleDetailContract {
 
         // Costs Tab
         data object LoadCosts : Intent
+        data object LoadCostTypes : Intent
         data object LoadMoreCosts : Intent
         data object RefreshCosts : Intent
         data class UpdateCostsDateRange(val startDate: String, val endDate: String) : Intent

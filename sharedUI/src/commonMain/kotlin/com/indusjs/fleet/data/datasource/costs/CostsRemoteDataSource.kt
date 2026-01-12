@@ -432,13 +432,14 @@ class CostsRemoteDataSourceImpl(
         sortOrder: String
     ): VehicleTripCostsApiResponse {
         return try {
-            log.d { "Fetching trip costs for vehicle: $vehicleId, page: $page" }
+            log.d { "Fetching trip costs for vehicle: $vehicleId, page: $page, costId: $costType" }
             val response: HttpResponse = httpClient.get("$baseUrl/vehicles/$vehicleId/trip-costs") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 url {
                     parameters.append("page", page.toString())
                     parameters.append("per_page", perPage.toString())
-                    costType?.let { parameters.append("cost_type", it) }
+                    // API uses cost_id parameter for filtering
+                    costType?.let { parameters.append("cost_id", it) }
                     startDate?.let { parameters.append("start_date", it) }
                     endDate?.let { parameters.append("end_date", it) }
                     parameters.append("sort_by", sortBy)
@@ -464,13 +465,14 @@ class CostsRemoteDataSourceImpl(
         sortOrder: String
     ): VehicleMaintenanceCostsApiResponse {
         return try {
-            log.d { "Fetching maintenance costs for vehicle: $vehicleId, page: $page" }
+            log.d { "Fetching maintenance costs for vehicle: $vehicleId, page: $page, costId: $costType" }
             val response: HttpResponse = httpClient.get("$baseUrl/vehicles/$vehicleId/maintenance-costs") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 url {
                     parameters.append("page", page.toString())
                     parameters.append("per_page", perPage.toString())
-                    costType?.let { parameters.append("cost_type", it) }
+                    // API uses cost_id parameter for filtering
+                    costType?.let { parameters.append("cost_id", it) }
                     startDate?.let { parameters.append("start_date", it) }
                     endDate?.let { parameters.append("end_date", it) }
                     parameters.append("sort_by", sortBy)

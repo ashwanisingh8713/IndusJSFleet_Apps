@@ -2559,6 +2559,8 @@ private fun CostsTabContent(
             tempStartDate = state.costsStartDate
             tempEndDate = state.costsEndDate
             tempSelectedFilters = state.selectedCostTypeFilters
+            // Load cost types from local database when filter sheet opens
+            viewModel.sendIntent(VehicleDetailContract.Intent.LoadCostTypes)
         }
     }
 
@@ -2581,6 +2583,7 @@ private fun CostsTabContent(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .padding(bottom = 24.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
                 // Header
                 Row(
@@ -2625,57 +2628,141 @@ private fun CostsTabContent(
                 Text("Select one or more", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Trip Cost Types
-                Text("Trip Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.height(6.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val tripCostTypes = listOf("fuel", "toll", "driver_allowance", "parking", "loading_charges", "unloading_charges", "chalan", "other")
-                    tripCostTypes.forEach { type ->
-                        FilterChip(
-                            selected = tempSelectedFilters.contains(type),
-                            onClick = {
-                                tempSelectedFilters = if (tempSelectedFilters.contains(type)) {
-                                    tempSelectedFilters - type
-                                } else {
-                                    tempSelectedFilters + type
-                                }
-                            },
-                            label = { Text(getCostTypeLabel(type)) },
-                            leadingIcon = if (tempSelectedFilters.contains(type)) {
-                                { Text("✓", style = MaterialTheme.typography.labelSmall) }
-                            } else null
-                        )
+                // Loading indicator for cost types
+                if (state.isLoadingCostTypes) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
-                }
+                } else {
+                    // Trip Cost Types - from local database
+                    if (state.tripCostTypeGroups.isNotEmpty()) {
+                        Text("Trip Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(6.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Maintenance Cost Types
-                Text("Maintenance Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
-                Spacer(modifier = Modifier.height(6.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val maintenanceCostTypes = listOf("tyre", "battery", "oil_change", "brake_service", "engine_repair", "electrical", "body_work", "cleaning", "servicing")
-                    maintenanceCostTypes.forEach { type ->
-                        FilterChip(
-                            selected = tempSelectedFilters.contains(type),
-                            onClick = {
-                                tempSelectedFilters = if (tempSelectedFilters.contains(type)) {
-                                    tempSelectedFilters - type
-                                } else {
-                                    tempSelectedFilters + type
+                        state.tripCostTypeGroups.forEach { group ->
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                group.items.forEach { item ->
+                                    FilterChip(
+                                        selected = tempSelectedFilters.contains(item.id),
+                                        onClick = {
+                                            tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
+                                                tempSelectedFilters - item.id
+                                            } else {
+                                                tempSelectedFilters + item.id
+                                            }
+                                        },
+                                        label = { Text(item.label) },
+                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
+                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                        } else null
+                                    )
                                 }
-                            },
-                            label = { Text(getCostTypeLabel(type)) },
-                            leadingIcon = if (tempSelectedFilters.contains(type)) {
-                                { Text("✓", style = MaterialTheme.typography.labelSmall) }
-                            } else null
-                        )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    } else {
+                        // Fallback to hardcoded trip cost types
+                        Text("Trip Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val tripCostTypes = listOf("fuel", "toll", "driver_allowance", "parking", "loading_charges", "unloading_charges", "chalan", "other")
+                            tripCostTypes.forEach { type ->
+                                FilterChip(
+                                    selected = tempSelectedFilters.contains(type),
+                                    onClick = {
+                                        tempSelectedFilters = if (tempSelectedFilters.contains(type)) {
+                                            tempSelectedFilters - type
+                                        } else {
+                                            tempSelectedFilters + type
+                                        }
+                                    },
+                                    label = { Text(getCostTypeLabel(type)) },
+                                    leadingIcon = if (tempSelectedFilters.contains(type)) {
+                                        { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                    } else null
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Maintenance Cost Types - from local database
+                    if (state.maintenanceCostTypeGroups.isNotEmpty()) {
+                        Text("Maintenance Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        state.maintenanceCostTypeGroups.forEach { group ->
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                group.items.forEach { item ->
+                                    FilterChip(
+                                        selected = tempSelectedFilters.contains(item.id),
+                                        onClick = {
+                                            tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
+                                                tempSelectedFilters - item.id
+                                            } else {
+                                                tempSelectedFilters + item.id
+                                            }
+                                        },
+                                        label = { Text(item.label) },
+                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
+                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                        } else null
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    } else {
+                        // Fallback to hardcoded maintenance cost types
+                        Text("Maintenance Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val maintenanceCostTypes = listOf("tyre", "battery", "oil_change", "brake_service", "engine_repair", "electrical", "body_work", "cleaning", "servicing")
+                            maintenanceCostTypes.forEach { type ->
+                                FilterChip(
+                                    selected = tempSelectedFilters.contains(type),
+                                    onClick = {
+                                        tempSelectedFilters = if (tempSelectedFilters.contains(type)) {
+                                            tempSelectedFilters - type
+                                        } else {
+                                            tempSelectedFilters + type
+                                        }
+                                    },
+                                    label = { Text(getCostTypeLabel(type)) },
+                                    leadingIcon = if (tempSelectedFilters.contains(type)) {
+                                        { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                    } else null
+                                )
+                            }
+                        }
                     }
                 }
 
