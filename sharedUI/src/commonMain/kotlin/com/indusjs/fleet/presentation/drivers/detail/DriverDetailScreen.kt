@@ -917,7 +917,8 @@ private fun CostsFilterSheet(
 
 @Composable
 private fun DriverHeader(
-    driver: Driver
+    driver: Driver,
+    onStatusClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -977,11 +978,28 @@ private fun DriverHeader(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Status Badge
-            FleetStatusBadge(
-                status = getStatusDisplayName(driver.status),
-                color = getStatusColor(driver.status)
-            )
+            // Status Badge - Clickable to change status
+            Surface(
+                onClick = onStatusClick,
+                shape = RoundedCornerShape(16.dp),
+                color = getStatusColor(driver.status).copy(alpha = 0.1f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    FleetStatusBadge(
+                        status = getStatusDisplayName(driver.status),
+                        color = getStatusColor(driver.status)
+                    )
+                    Text(
+                        text = "▼",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = getStatusColor(driver.status)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
