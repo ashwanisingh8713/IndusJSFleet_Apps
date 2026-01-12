@@ -318,7 +318,8 @@ class DefaultViewModelProvider : ViewModelProvider {
         toggleDriverActiveUseCase,
         deleteDriverUseCase,
         driverRepository,
-        teamRepository
+        teamRepository,
+        costsRepository
     )
 
     override fun tripsViewModel() = TripsViewModel(

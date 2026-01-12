@@ -3,10 +3,12 @@ package com.indusjs.fleet.presentation.drivers.detail
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.data.model.driver.DriverCostTypes
 import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
+import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.usecase.driver.DeleteDriverUseCase
@@ -21,6 +23,11 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
+import kotlin.time.Clock
 
 /**
  * ViewModel for the Driver Detail screen implementing MVI pattern.
@@ -34,7 +41,8 @@ class DriverDetailViewModel(
     private val toggleDriverActiveUseCase: ToggleDriverActiveUseCase,
     private val deleteDriverUseCase: DeleteDriverUseCase,
     private val driverRepository: DriverRepository,
-    private val teamRepository: TeamRepository
+    private val teamRepository: TeamRepository,
+    private val costsRepository: CostsRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     override suspend fun handleIntent(intent: Intent) {
@@ -79,6 +87,17 @@ class DriverDetailViewModel(
             // Tab selection
             is Intent.SelectTab -> selectTab(intent.tabIndex)
 
+            // Costs tab intents
+            is Intent.LoadCosts -> loadCosts()
+            is Intent.LoadMoreCosts -> loadMoreCosts()
+            is Intent.RefreshCosts -> refreshCosts()
+            is Intent.UpdateCostsDateRange -> updateState { copy(costsStartDate = intent.startDate, costsEndDate = intent.endDate) }
+            is Intent.UpdateCostsMonth -> updateState { copy(costsMonth = intent.month) }
+            is Intent.ShowCostsFilterSheet -> updateState { copy(showCostsFilterSheet = true) }
+            is Intent.HideCostsFilterSheet -> updateState { copy(showCostsFilterSheet = false) }
+            is Intent.ApplyCostFilters -> applyCostFilters(intent.startDate, intent.endDate, intent.month)
+            is Intent.ClearCostFilters -> clearCostFilters()
+
             // History tab intents
             is Intent.LoadHistory -> loadHistory()
             is Intent.LoadMoreHistory -> loadMoreHistory()
@@ -93,9 +112,14 @@ class DriverDetailViewModel(
 
     private fun selectTab(tabIndex: Int) {
         updateState { copy(selectedTab = tabIndex) }
-        // Load tab data if needed
+        // Load tab data if needed (0 = Overview, 1 = Costs, 2 = History)
         when (tabIndex) {
-            1 -> if (currentState.historyItems.isEmpty()) {
+            1 -> if (currentState.costs.isEmpty() && !currentState.isLoadingCosts) {
+                kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
+                    loadCosts()
+                }
+            }
+            2 -> if (currentState.historyItems.isEmpty() && !currentState.isLoadingHistory) {
                 kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
                     loadHistory()
                 }
@@ -385,6 +409,150 @@ class DriverDetailViewModel(
         } catch (_: Exception) {
             0L
         }
+    }
+
+    // ==================== Costs Tab Functions ====================
+
+    /**
+     * Get default from date for API calls when user hasn't entered a date
+     */
+    private fun getDefaultFromDate(): String = "01-01-1971"
+
+    /**
+     * Get default to date (current date + 1 week) for API calls
+     */
+    private fun getDefaultToDate(): String {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val futureDate = today.plus(7, DateTimeUnit.DAY)
+        val day = futureDate.day.toString().padStart(2, '0')
+        val month = futureDate.month.ordinal.plus(1).toString().padStart(2, '0')
+        val year = futureDate.year.toString()
+        return "$day-$month-$year"
+    }
+
+    private suspend fun loadCosts() {
+        val driverId = currentState.driver?.id ?: currentState.driverId
+        if (driverId.isBlank()) return
+
+        updateState { copy(isLoadingCosts = true, costsError = null, costsPage = 1) }
+
+        val startDate = currentState.costsStartDate.takeIf { it.isNotBlank() } ?: getDefaultFromDate()
+        val endDate = currentState.costsEndDate.takeIf { it.isNotBlank() } ?: getDefaultToDate()
+        val month = currentState.costsMonth.takeIf { it.isNotBlank() }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = costsRepository.getDriverCosts(
+                driverId = driverId,
+                page = 1,
+                perPage = 50,
+                groupId = null,
+                month = month,
+                startDate = if (month == null) startDate else null,
+                endDate = if (month == null) endDate else null
+            )) {
+                is Result.Success -> {
+                    val data = result.data
+                    val costs = data.costs
+                    val summary = data.summary
+
+                    // Calculate totals
+                    val totalEarnings = summary?.totalEarnings ?: costs.filter { !it.isDeductionCost }.sumOf { it.amount }
+                    val totalDeductions = summary?.totalDeductions ?: costs.filter { it.isDeductionCost }.sumOf { it.amount }
+                    val netAmount = summary?.netAmount ?: (totalEarnings - totalDeductions)
+
+                    updateState {
+                        copy(
+                            isLoadingCosts = false,
+                            costs = costs,
+                            costsTotalAmount = totalEarnings,
+                            costsDeductionsAmount = totalDeductions,
+                            costsNetAmount = netAmount,
+                            costsPage = data.page,
+                            hasMoreCosts = data.page < data.totalPages
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingCosts = false,
+                            costsError = result.message ?: "Failed to load costs"
+                        )
+                    }
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+    private suspend fun loadMoreCosts() {
+        val driverId = currentState.driver?.id ?: currentState.driverId
+        if (driverId.isBlank() || !currentState.hasMoreCosts || currentState.isLoadingCosts) return
+
+        val nextPage = currentState.costsPage + 1
+        updateState { copy(isLoadingCosts = true) }
+
+        val startDate = currentState.costsStartDate.takeIf { it.isNotBlank() } ?: getDefaultFromDate()
+        val endDate = currentState.costsEndDate.takeIf { it.isNotBlank() } ?: getDefaultToDate()
+        val month = currentState.costsMonth.takeIf { it.isNotBlank() }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = costsRepository.getDriverCosts(
+                driverId = driverId,
+                page = nextPage,
+                perPage = 50,
+                groupId = null,
+                month = month,
+                startDate = if (month == null) startDate else null,
+                endDate = if (month == null) endDate else null
+            )) {
+                is Result.Success -> {
+                    val data = result.data
+                    updateState {
+                        copy(
+                            isLoadingCosts = false,
+                            costs = costs + data.costs,
+                            costsPage = data.page,
+                            hasMoreCosts = data.page < data.totalPages
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState { copy(isLoadingCosts = false) }
+                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load more costs"))
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+    private suspend fun refreshCosts() {
+        updateState { copy(costs = emptyList(), costsPage = 1, hasMoreCosts = false) }
+        loadCosts()
+    }
+
+    private suspend fun applyCostFilters(startDate: String, endDate: String, month: String) {
+        updateState {
+            copy(
+                costsStartDate = startDate,
+                costsEndDate = endDate,
+                costsMonth = month,
+                showCostsFilterSheet = false
+            )
+        }
+        refreshCosts()
+    }
+
+    private suspend fun clearCostFilters() {
+        updateState {
+            copy(
+                costsStartDate = "",
+                costsEndDate = "",
+                costsMonth = "",
+                showCostsFilterSheet = false
+            )
+        }
+        refreshCosts()
     }
 
     // ==================== History Tab Functions ====================

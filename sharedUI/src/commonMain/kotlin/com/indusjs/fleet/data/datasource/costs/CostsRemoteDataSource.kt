@@ -64,6 +64,18 @@ interface CostsRemoteDataSource : RemoteDataSource {
 
     suspend fun deleteTripCost(token: String, costId: String): DeleteCostApiResponse
     suspend fun deleteMaintenanceCost(token: String, costId: String): DeleteCostApiResponse
+
+    // Driver Costs APIs
+    suspend fun getDriverCosts(
+        token: String,
+        driverId: String,
+        page: Int,
+        perPage: Int,
+        groupId: String?,
+        month: String?,
+        startDate: String?,
+        endDate: String?
+    ): com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse
 }
 
 /**
@@ -528,6 +540,61 @@ class CostsRemoteDataSourceImpl(
             }
         } catch (e: Exception) {
             DeleteCostApiResponse(success = false, message = "Failed to parse response: ${e.message}")
+        }
+    }
+
+    // ==================== Driver Costs Implementation ====================
+
+    override suspend fun getDriverCosts(
+        token: String,
+        driverId: String,
+        page: Int,
+        perPage: Int,
+        groupId: String?,
+        month: String?,
+        startDate: String?,
+        endDate: String?
+    ): com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse {
+        return try {
+            log.d { "Fetching driver costs for driver: $driverId, page: $page" }
+            val response: HttpResponse = httpClient.get("$baseUrl/drivers/$driverId/costs") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                url {
+                    parameters.append("page", page.toString())
+                    parameters.append("per_page", perPage.toString())
+                    groupId?.let { parameters.append("group_id", it) }
+                    month?.let { parameters.append("month", it) }
+                    startDate?.let { parameters.append("start_date", it) }
+                    endDate?.let { parameters.append("end_date", it) }
+                }
+            }
+            handleDriverCostsResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch driver costs: ${e.message}" }
+            com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse(
+                success = false,
+                message = e.message ?: "Network error"
+            )
+        }
+    }
+
+    private suspend fun handleDriverCostsResponse(response: HttpResponse): com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse {
+        val responseBody = response.bodyAsText()
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse>(responseBody)
+            } else {
+                com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to parse driver costs response: ${e.message}" }
+            com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse(
+                success = false,
+                message = "Failed to parse response: ${e.message}"
+            )
         }
     }
 }

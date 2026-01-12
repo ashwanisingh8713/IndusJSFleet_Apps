@@ -10,6 +10,7 @@ import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.data.model.costs.TripCostSummaryDto
 import com.indusjs.fleet.data.model.costs.VehicleMaintenanceCostsDataDto
 import com.indusjs.fleet.data.model.costs.VehicleTripCostsDataDto
+import com.indusjs.fleet.data.model.driver.DriverCostsListDto
 import com.indusjs.fleet.domain.repository.Repository
 
 /**
@@ -91,4 +92,28 @@ interface CostsRepository : Repository {
      * Delete a maintenance cost by ID.
      */
     suspend fun deleteMaintenanceCost(costId: String): Result<Unit>
+
+    // ==================== Driver Costs APIs ====================
+
+    /**
+     * Get costs for a specific driver with pagination and filtering.
+     * GET /drivers/{driver_id}/costs
+     *
+     * @param driverId Driver ID
+     * @param page Page number (default: 1)
+     * @param perPage Items per page (default: 20)
+     * @param groupId Filter by group_id (e.g., DC-G-001 for Salary)
+     * @param month Filter by month (format: YYYY-MM)
+     * @param startDate Filter by start date (DD-MM-YYYY)
+     * @param endDate Filter by end date (DD-MM-YYYY)
+     */
+    suspend fun getDriverCosts(
+        driverId: String,
+        page: Int = 1,
+        perPage: Int = 20,
+        groupId: String? = null,
+        month: String? = null,
+        startDate: String? = null,
+        endDate: String? = null
+    ): Result<DriverCostsListDto>
 }

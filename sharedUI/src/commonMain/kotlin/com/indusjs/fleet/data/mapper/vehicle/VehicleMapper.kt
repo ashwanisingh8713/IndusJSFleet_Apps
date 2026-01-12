@@ -295,8 +295,8 @@ class VehicleMapper {
     private fun mapVehicleTripItemToDomain(dto: VehicleTripItemDto): VehicleTripItem = VehicleTripItem(
         id = dto.id.toString(),
         tripNumber = dto.tripNumber,
-        origin = dto.origin,
-        destination = dto.destination,
+        origin = dto.resolvedOrigin,
+        destination = dto.resolvedDestination,
         state = dto.state,
         stateLabel = dto.stateLabel,
         scheduledDate = dto.scheduledDate,

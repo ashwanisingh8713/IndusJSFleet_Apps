@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,6 +33,7 @@ import com.indusjs.fleet.core.ui.convertIsoToDdMmYyyyRaw
 import com.indusjs.fleet.core.ui.history.HistoryTabContent
 import com.indusjs.fleet.core.ui.state.StateChangeDialog
 import com.indusjs.fleet.core.ui.state.getDriverStateOptions
+import com.indusjs.fleet.core.util.formatCostAmount
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
@@ -279,6 +281,7 @@ fun DriverDetailScreen(
  */
 private enum class DriverDetailTab(val title: String, val icon: String) {
     OVERVIEW("Overview", "📋"),
+    COSTS("Costs", "💰"),
     HISTORY("History", "📜")
 }
 
@@ -328,6 +331,10 @@ private fun DriverDetailTabs(
         // Tab Content
         when (tabs[selectedTab]) {
             DriverDetailTab.OVERVIEW -> DriverOverviewContent(
+                state = state,
+                viewModel = viewModel
+            )
+            DriverDetailTab.COSTS -> DriverCostsTabContent(
                 state = state,
                 viewModel = viewModel
             )
@@ -396,6 +403,517 @@ private fun DriverOverviewContent(
         item { Spacer(modifier = Modifier.height(80.dp)) }
     }
 }
+
+/**
+ * Costs tab content displaying driver earnings, deductions, and costs.
+ */
+@Composable
+private fun DriverCostsTabContent(
+    state: DriverDetailContract.State,
+    viewModel: DriverDetailViewModel
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            // Initial loading
+            state.isLoadingCosts && state.costs.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        CircularProgressIndicator()
+                        Text(
+                            text = "Loading costs...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Error state
+            state.costsError != null && state.costs.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "⚠️",
+                            style = MaterialTheme.typography.displayMedium
+                        )
+                        Text(
+                            text = state.costsError,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        OutlinedButton(onClick = { viewModel.sendIntent(DriverDetailContract.Intent.LoadCosts) }) {
+                            Text("Retry")
+                        }
+                    }
+                }
+            }
+
+            // Empty state
+            state.costs.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(32.dp)
+                    ) {
+                        Text(
+                            text = "💰",
+                            style = MaterialTheme.typography.displayLarge
+                        )
+                        Text(
+                            text = "No costs recorded",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Driver cost entries will appear here",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Content with costs
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Summary Card
+                    item {
+                        DriverCostsSummaryCard(
+                            earnings = state.costsTotalAmount,
+                            deductions = state.costsDeductionsAmount,
+                            netAmount = state.costsNetAmount,
+                            costCount = state.costs.size
+                        )
+                    }
+
+                    // Filter Row
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Cost Entries",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            OutlinedButton(
+                                onClick = { viewModel.sendIntent(DriverDetailContract.Intent.ShowCostsFilterSheet) },
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                            ) {
+                                Text("🔍 Filter")
+                            }
+                        }
+                    }
+
+                    // Active Filters Display
+                    if (state.costsStartDate.isNotBlank() || state.costsEndDate.isNotBlank() || state.costsMonth.isNotBlank()) {
+                        item {
+                            ActiveFiltersRow(
+                                startDate = state.costsStartDate,
+                                endDate = state.costsEndDate,
+                                month = state.costsMonth,
+                                onClear = { viewModel.sendIntent(DriverDetailContract.Intent.ClearCostFilters) }
+                            )
+                        }
+                    }
+
+                    // Cost Items
+                    items(state.costs.size) { index ->
+                        val cost = state.costs[index]
+                        DriverCostItem(cost = cost)
+
+                        // Load more when reaching the end
+                        if (index == state.costs.size - 1 && state.hasMoreCosts && !state.isLoadingCosts) {
+                            LaunchedEffect(Unit) {
+                                viewModel.sendIntent(DriverDetailContract.Intent.LoadMoreCosts)
+                            }
+                        }
+                    }
+
+                    // Loading more indicator
+                    if (state.isLoadingCosts && state.costs.isNotEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            }
+                        }
+                    }
+
+                    // Bottom spacing
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                }
+            }
+        }
+
+        // Filter Bottom Sheet
+        if (state.showCostsFilterSheet) {
+            CostsFilterSheet(
+                startDate = state.costsStartDate,
+                endDate = state.costsEndDate,
+                month = state.costsMonth,
+                onApply = { start, end, month ->
+                    viewModel.sendIntent(DriverDetailContract.Intent.ApplyCostFilters(start, end, month))
+                },
+                onDismiss = { viewModel.sendIntent(DriverDetailContract.Intent.HideCostsFilterSheet) }
+            )
+        }
+    }
+}
+
+/**
+ * Summary card showing earnings, deductions, and net amount.
+ */
+@Composable
+private fun DriverCostsSummaryCard(
+    earnings: Double,
+    deductions: Double,
+    netAmount: Double,
+    costCount: Int
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Net Amount Header
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Net Amount",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = "₹${formatCostAmount(netAmount)}",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (netAmount >= 0) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.error
+                )
+                Text(
+                    text = "$costCount entries",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                )
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
+
+            // Earnings and Deductions Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "💰 Earnings",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = "₹${formatCostAmount(earnings)}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "📉 Deductions",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = "- ₹${formatCostAmount(deductions)}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Single driver cost item row.
+ */
+@Composable
+private fun DriverCostItem(cost: com.indusjs.fleet.data.model.driver.DriverCostDto) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                // Cost Label
+                Text(
+                    text = cost.displayLabel,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Date and Description
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "📅 ${cost.date}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (!cost.description.isNullOrBlank()) {
+                        Text(
+                            text = " • ${cost.description}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                }
+
+                // Month if available
+                cost.month?.let { month ->
+                    Text(
+                        text = "📆 $month",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Amount
+            Column(horizontalAlignment = Alignment.End) {
+                val isDeduction = cost.isDeductionCost
+                Text(
+                    text = "${if (isDeduction) "- " else "+ "}₹${formatCostAmount(cost.amount)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDeduction) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.primary
+                )
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = if (isDeduction) MaterialTheme.colorScheme.errorContainer
+                            else MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = if (isDeduction) "Deduction" else "Earning",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isDeduction) MaterialTheme.colorScheme.onErrorContainer
+                                else MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Active filters display row.
+ */
+@Composable
+private fun ActiveFiltersRow(
+    startDate: String,
+    endDate: String,
+    month: String,
+    onClear: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "🔍",
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    text = when {
+                        month.isNotBlank() -> "Month: $month"
+                        startDate.isNotBlank() && endDate.isNotBlank() -> "$startDate to $endDate"
+                        startDate.isNotBlank() -> "From: $startDate"
+                        endDate.isNotBlank() -> "To: $endDate"
+                        else -> "Filtered"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            TextButton(onClick = onClear) {
+                Text("Clear", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+/**
+ * Costs filter bottom sheet.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CostsFilterSheet(
+    startDate: String,
+    endDate: String,
+    month: String,
+    onApply: (String, String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var localStartDate by remember { mutableStateOf(startDate) }
+    var localEndDate by remember { mutableStateOf(endDate) }
+    var localMonth by remember { mutableStateOf(month) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Filter Costs",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Month Filter
+            OutlinedTextField(
+                value = localMonth,
+                onValueChange = {
+                    localMonth = it
+                    // Clear date range if month is set
+                    if (it.isNotBlank()) {
+                        localStartDate = ""
+                        localEndDate = ""
+                    }
+                },
+                label = { Text("Month (YYYY-MM)") },
+                placeholder = { Text("e.g., 2026-01") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            Text(
+                text = "— OR —",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
+            // Date Range
+            FleetDateField(
+                rawValue = localStartDate,
+                onRawValueChange = {
+                    localStartDate = it
+                    // Clear month if date range is used
+                    if (it.isNotBlank()) localMonth = ""
+                },
+                label = "Start Date",
+                placeholder = "DD-MM-YYYY"
+            )
+
+            FleetDateField(
+                rawValue = localEndDate,
+                onRawValueChange = {
+                    localEndDate = it
+                    if (it.isNotBlank()) localMonth = ""
+                },
+                label = "End Date",
+                placeholder = "DD-MM-YYYY"
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        localStartDate = ""
+                        localEndDate = ""
+                        localMonth = ""
+                        onApply("", "", "")
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Clear All")
+                }
+
+                Button(
+                    onClick = { onApply(localStartDate, localEndDate, localMonth) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Apply")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
 
 @Composable
 private fun DriverHeader(

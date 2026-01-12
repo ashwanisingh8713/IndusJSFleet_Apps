@@ -395,6 +395,7 @@ data class VehicleTripsDto(
 
 /**
  * Trip item DTO.
+ * Supports both field names from API: origin/destination OR start_location/end_location
  */
 @Serializable
 data class VehicleTripItemDto(
@@ -402,10 +403,16 @@ data class VehicleTripItemDto(
     val id: Int = 0,
     @SerialName("trip_number")
     val tripNumber: String? = null,
+    // Primary: origin/destination (some API responses use this)
     @SerialName("origin")
-    val origin: String = "",
+    val origin: String? = null,
     @SerialName("destination")
-    val destination: String = "",
+    val destination: String? = null,
+    // Alternative: start_location/end_location (some API responses use this)
+    @SerialName("start_location")
+    val startLocation: String? = null,
+    @SerialName("end_location")
+    val endLocation: String? = null,
     @SerialName("state")
     val state: String = "",
     @SerialName("state_label")
@@ -422,7 +429,13 @@ data class VehicleTripItemDto(
     val distance: Double? = null,
     @SerialName("duration")
     val duration: String? = null
-)
+) {
+    /** Resolved origin - prefers origin, falls back to startLocation */
+    val resolvedOrigin: String get() = origin?.takeIf { it.isNotBlank() } ?: startLocation ?: ""
+
+    /** Resolved destination - prefers destination, falls back to endLocation */
+    val resolvedDestination: String get() = destination?.takeIf { it.isNotBlank() } ?: endLocation ?: ""
+}
 
 /**
  * Vehicle Route DTO - Route & Stops tab.

@@ -16,6 +16,7 @@ import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.data.model.costs.TripCostSummaryDto
 import com.indusjs.fleet.data.model.costs.VehicleMaintenanceCostsDataDto
 import com.indusjs.fleet.data.model.costs.VehicleTripCostsDataDto
+import com.indusjs.fleet.data.model.driver.DriverCostsListDto
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import dev.zacsweers.metro.Inject
 
@@ -250,6 +251,43 @@ class CostsRepositoryImpl(
                 Result.Success(Unit)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to delete maintenance cost"))
+            }
+        } catch (e: AuthException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
+        }
+    }
+
+    // ==================== Driver Costs APIs ====================
+
+    override suspend fun getDriverCosts(
+        driverId: String,
+        page: Int,
+        perPage: Int,
+        groupId: String?,
+        month: String?,
+        startDate: String?,
+        endDate: String?
+    ): Result<DriverCostsListDto> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getDriverCosts(
+                token = token,
+                driverId = driverId,
+                page = page,
+                perPage = perPage,
+                groupId = groupId,
+                month = month,
+                startDate = startDate,
+                endDate = endDate
+            )
+
+            if (response.success && response.data != null) {
+                Result.Success(response.data)
+            } else {
+                // Return empty data instead of error
+                Result.Success(DriverCostsListDto())
             }
         } catch (e: AuthException) {
             Result.Error(e)

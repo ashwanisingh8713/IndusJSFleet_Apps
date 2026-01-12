@@ -20,6 +20,11 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
+import kotlin.time.Clock
 
 /**
  * ViewModel for the Vehicle Detail screen implementing MVI pattern.
@@ -659,10 +664,16 @@ class VehicleDetailViewModel(
 
     /**
      * Get default to date (current date + 1 week) for API calls when user hasn't entered a date
+     * Dynamically calculates based on current system date.
      */
     private fun getDefaultToDate(): String {
-        // Format: DD-MM-YYYY - Current date (Jan 5, 2026) + 7 days
-        return "12-01-2026"
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val futureDate = today.plus(7, DateTimeUnit.DAY)
+        // Format: DD-MM-YYYY
+        val day = futureDate.day.toString().padStart(2, '0')
+        val month = futureDate.month.ordinal.plus(1).toString().padStart(2, '0')
+        val year = futureDate.year.toString()
+        return "$day-$month-$year"
     }
 
     // Valid cost types for each API

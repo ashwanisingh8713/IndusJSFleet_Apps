@@ -3,6 +3,7 @@ package com.indusjs.fleet.presentation.drivers.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.data.model.driver.DriverCostDto
 import com.indusjs.fleet.data.model.history.HistoryItemDto
 import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.driver.Driver
@@ -65,7 +66,22 @@ object DriverDetailContract {
         val showCaretakerDropdown: Boolean = false,
         val isLoadingCaretakers: Boolean = false,
 
-        // History Tab
+        // Costs Tab (Tab index 1)
+        val costs: List<DriverCostDto> = emptyList(),
+        val costsTotalAmount: Double = 0.0,
+        val costsDeductionsAmount: Double = 0.0,
+        val costsNetAmount: Double = 0.0,
+        val isLoadingCosts: Boolean = false,
+        val costsError: String? = null,
+        val costsPage: Int = 1,
+        val hasMoreCosts: Boolean = false,
+        // Costs Filters
+        val costsStartDate: String = "",
+        val costsEndDate: String = "",
+        val costsMonth: String = "",  // Format: YYYY-MM for monthly filtering
+        val showCostsFilterSheet: Boolean = false,
+
+        // History Tab (Tab index 2)
         val historyItems: List<HistoryItemDto> = emptyList(),
         val isLoadingHistory: Boolean = false,
         val historyError: String? = null,
@@ -77,7 +93,7 @@ object DriverDetailContract {
         val showStateChangeDialog: Boolean = false,
         val isUpdatingState: Boolean = false,
 
-        // Current selected tab (0 = Overview, 1 = History)
+        // Current selected tab (0 = Overview, 1 = Costs, 2 = History)
         val selectedTab: Int = 0
     ) : UiState {
 
@@ -92,6 +108,9 @@ object DriverDetailContract {
 
         val canSave: Boolean
             get() = isFormValid && !isSaving && isEditMode
+
+        val hasCosts: Boolean
+            get() = costs.isNotEmpty()
     }
 
     /**
@@ -146,7 +165,17 @@ object DriverDetailContract {
         // Tab selection
         data class SelectTab(val tabIndex: Int) : Intent
 
-        // History Tab
+        // Costs Tab
+        data object LoadCosts : Intent
+        data object LoadMoreCosts : Intent
+        data object RefreshCosts : Intent
+        data class UpdateCostsDateRange(val startDate: String, val endDate: String) : Intent
+        data class UpdateCostsMonth(val month: String) : Intent
+        data object ShowCostsFilterSheet : Intent
+        data object HideCostsFilterSheet : Intent
+        data class ApplyCostFilters(val startDate: String, val endDate: String, val month: String) : Intent
+        data object ClearCostFilters : Intent
+
         // History Tab
         data object LoadHistory : Intent
         data object LoadMoreHistory : Intent
