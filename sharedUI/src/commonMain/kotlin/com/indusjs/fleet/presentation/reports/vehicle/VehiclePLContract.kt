@@ -7,9 +7,35 @@ import com.indusjs.fleet.domain.entity.reports.VehicleProfitLoss
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 
 /**
- * MVI Contract for Vehicle P&L Screen - Enhanced wizard-like flow
+ * MVI Contract for Vehicle P&L Screen - Enhanced with Fleet Overview mode
  */
 object VehiclePLContract {
+
+    /**
+     * View mode for displaying results
+     */
+    enum class ViewMode(val label: String, val icon: String) {
+        SUMMARY("Summary", "📊"),
+        LIST("List", "📋"),
+        CHART("Chart", "📈")
+    }
+
+    /**
+     * Chart type for visualization
+     */
+    enum class ChartType(val label: String) {
+        BAR("Bar Chart"),
+        PIE("Pie Chart")
+    }
+
+    /**
+     * Export format options
+     */
+    enum class ExportFormat(val label: String, val icon: String, val extension: String) {
+        PDF("PDF Report", "📄", "pdf"),
+        CSV("CSV Data", "📊", "csv"),
+        EXCEL("Excel Sheet", "📗", "xlsx")
+    }
 
     /**
      * Sorting options for vehicle P&L results
@@ -71,7 +97,24 @@ object VehiclePLContract {
         // Sorting and filtering
         val sortOption: SortOption = SortOption.PROFIT_HIGH_LOW,
         val plStatusFilter: PLStatusFilter = PLStatusFilter.ALL,
-        val showSortMenu: Boolean = false
+        val showSortMenu: Boolean = false,
+        // Fleet overview mode - shows all vehicles by default
+        val isFleetOverviewMode: Boolean = true,
+        // Filter bottom sheet for multi-vehicle selection
+        val showVehicleFilterSheet: Boolean = false,
+        // Temporary selection in filter sheet before applying
+        val tempSelectedVehicleIds: Set<String> = emptySet(),
+        // Export/Report generation state
+        val isGeneratingExport: Boolean = false,
+        val showExportOptions: Boolean = false,
+        // View mode - summary/list/chart
+        val viewMode: ViewMode = ViewMode.SUMMARY,
+        // Chart type for visualization
+        val chartType: ChartType = ChartType.BAR,
+        // Current period label for display
+        val currentPeriodLabel: String = "",
+        // Initial load completed
+        val initialLoadComplete: Boolean = false
     ) : UiState {
         val hasResult: Boolean get() = result != null || multiResults.isNotEmpty()
         val selectedVehicle: Vehicle? get() = vehicles.find { it.id == selectedVehicleId }
@@ -103,7 +146,7 @@ object VehiclePLContract {
             return when (sortOption) {
                 SortOption.PROFIT_HIGH_LOW -> filtered.sortedByDescending { it.netProfit }
                 SortOption.PROFIT_LOW_HIGH -> filtered.sortedBy { it.netProfit }
-                SortOption.LOSS_HIGH_LOW -> filtered.sortedBy { it.netProfit } // Lowest (most negative) first
+                SortOption.LOSS_HIGH_LOW -> filtered.sortedBy { it.netProfit }
                 SortOption.REVENUE_HIGH_LOW -> filtered.sortedByDescending { it.totalRevenue }
                 SortOption.EXPENSE_HIGH_LOW -> filtered.sortedByDescending { it.totalExpenses }
                 SortOption.TRIPS_HIGH_LOW -> filtered.sortedByDescending { it.totalTrips }
@@ -117,8 +160,14 @@ object VehiclePLContract {
         val totalExpenses: Double get() = multiResults.sumOf { it.totalExpenses }
         val totalNetProfit: Double get() = multiResults.sumOf { it.netProfit }
 
+        // Fleet overview stats
+        val fleetProfitMargin: Double get() = if (totalRevenue > 0) (totalNetProfit / totalRevenue) * 100 else 0.0
+        val averageProfitPerVehicle: Double get() = if (multiResults.isNotEmpty()) totalNetProfit / multiResults.size else 0.0
+        val topPerformer: VehicleProfitLoss? get() = multiResults.maxByOrNull { it.netProfit }
+        val worstPerformer: VehicleProfitLoss? get() = multiResults.minByOrNull { it.netProfit }
+
         // Can generate report check
-        val canGenerateReport: Boolean get() = selectedVehicleId != null && !isLoading
+        val canGenerateReport: Boolean get() = (selectedVehicleId != null || isFleetOverviewMode) && !isLoading
 
         // Period display text for UI
         val periodDisplayText: String get() = when (period) {
@@ -129,6 +178,15 @@ object VehiclePLContract {
             "custom" -> if (startDate.isNotBlank() && endDate.isNotBlank())
                 "$startDate - $endDate" else "Custom Range"
             else -> "This Month"
+        }
+
+        // Active filter count for badge
+        val activeFilterCount: Int get() {
+            var count = 0
+            if (tempSelectedVehicleIds.isNotEmpty() && tempSelectedVehicleIds.size != vehicles.size) count++
+            if (plStatusFilter != PLStatusFilter.ALL) count++
+            if (useCustomDateRange) count++
+            return count
         }
     }
 
@@ -141,7 +199,10 @@ object VehiclePLContract {
     )
 
     sealed interface Intent : UiIntent {
+        // Initialize screen in fleet overview mode (call on screen entry)
+        data object InitFleetOverview : Intent
         data object LoadVehicles : Intent
+        data object LoadFleetOverview : Intent
         data class SelectVehicle(val vehicleId: String) : Intent
         data class ToggleVehicle(val vehicleId: String) : Intent
         data object SelectAllVehicles : Intent
@@ -165,9 +226,24 @@ object VehiclePLContract {
         data class UpdatePLStatusFilter(val filter: PLStatusFilter) : Intent
         data object ToggleSortMenu : Intent
         data object DismissSortMenu : Intent
+        // Vehicle filter sheet for fleet overview
+        data object ShowVehicleFilterSheet : Intent
+        data object DismissVehicleFilterSheet : Intent
+        data class ToggleVehicleInFilter(val vehicleId: String) : Intent
+        data object SelectAllVehiclesInFilter : Intent
+        data object ClearVehicleFilter : Intent
+        data object ApplyVehicleFilter : Intent
+        // View mode
+        data class UpdateViewMode(val mode: ViewMode) : Intent
+        data class UpdateChartType(val type: ChartType) : Intent
+        // Export
+        data object ShowExportOptions : Intent
+        data object DismissExportOptions : Intent
+        data class ExportReport(val format: ExportFormat) : Intent
     }
 
     sealed interface Effect : UiEffect {
         data class ShowSnackbar(val message: String) : Effect
+        data class ExportGenerated(val fileName: String, val format: ExportFormat) : Effect
     }
 }

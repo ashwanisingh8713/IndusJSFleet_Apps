@@ -92,6 +92,48 @@ data class TripProfitLossDto(
 )
 
 /**
+ * Multi-Vehicle Profit/Loss Response wrapper DTO
+ * POST /reports/profit-loss/vehicles
+ *
+ * The API returns data in this structure:
+ * {
+ *   "period": {...},
+ *   "vehicles": [...],
+ *   "summary": {...}
+ * }
+ */
+@Serializable
+data class MultiVehiclePLResponseDto(
+    @SerialName("period")
+    val period: PeriodDto? = null,
+    @SerialName("vehicles")
+    val vehicles: List<VehicleProfitLossDto> = emptyList(),
+    @SerialName("summary")
+    val summary: MultiVehicleSummaryDto? = null
+)
+
+/**
+ * Summary section of multi-vehicle P&L response
+ */
+@Serializable
+data class MultiVehicleSummaryDto(
+    @SerialName("total_vehicles")
+    val totalVehicles: Int = 0,
+    @SerialName("total_revenue")
+    val totalRevenue: Double = 0.0,
+    @SerialName("total_expenses")
+    val totalExpenses: Double = 0.0,
+    @SerialName("total_profit_loss")
+    val totalProfitLoss: Double = 0.0,
+    @SerialName("average_profit_margin")
+    val averageProfitMargin: Double = 0.0,
+    @SerialName("profitable_vehicles")
+    val profitableVehicles: Int = 0,
+    @SerialName("loss_making_vehicles")
+    val lossMakingVehicles: Int = 0
+)
+
+/**
  * Single Vehicle Profit/Loss DTO
  * GET /vehicles/{vehicle_id}/profit-loss
  */

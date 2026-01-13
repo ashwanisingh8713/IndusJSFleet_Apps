@@ -115,8 +115,15 @@ class ReportsRemoteDataSource(
         log.d { "Response: $body" }
 
         return if (response.status.isSuccess()) {
-            val result = json.decodeFromString<ProfitLossResponse<List<VehicleProfitLossDto>>>(body)
-            result.data
+            try {
+                // Parse using the new wrapper DTO that matches the actual API structure
+                val result = json.decodeFromString<ProfitLossResponse<MultiVehiclePLResponseDto>>(body)
+                log.d { "Parsed vehicles: ${result.data?.vehicles?.size ?: 0}" }
+                result.data?.vehicles
+            } catch (e: Exception) {
+                log.e { "Failed to parse multi-vehicle P&L response: ${e.message}" }
+                null
+            }
         } else {
             log.e { "Failed to fetch multi-vehicle P&L: ${response.status}" }
             null
