@@ -732,10 +732,20 @@ class VehicleDetailViewModel(
         val startDate = currentState.costsStartDate.takeIf { it.isNotBlank() } ?: getDefaultFromDate()
         val endDate = currentState.costsEndDate.takeIf { it.isNotBlank() } ?: getDefaultToDate()
 
-        // Separate filters for each API based on valid cost types
+        // Separate filters for each API based on cost type ID prefix or legacy cost types
+        // New cost type IDs: TC-xxx-xxx for trip, VMC-xxx-xxx for maintenance
+        // Legacy cost types: fuel, toll, tyre, battery, etc.
         val selectedFilters = currentState.selectedCostTypeFilters
-        val tripFilters = selectedFilters.filter { it in tripCostTypes }
-        val maintenanceFilters = selectedFilters.filter { it in maintenanceCostTypes }
+
+        // Filter trip costs: either starts with "TC-" (new format) or is in legacy tripCostTypes set
+        val tripFilters = selectedFilters.filter {
+            it.startsWith("TC-") || it in tripCostTypes
+        }
+
+        // Filter maintenance costs: either starts with "VMC-" (new format) or is in legacy maintenanceCostTypes set
+        val maintenanceFilters = selectedFilters.filter {
+            it.startsWith("VMC-") || it in maintenanceCostTypes
+        }
 
         // If user selected filters but none match a category, skip that API call
         val hasAnyFilters = selectedFilters.isNotEmpty()
@@ -833,10 +843,19 @@ class VehicleDetailViewModel(
         val startDate = currentState.costsStartDate.takeIf { it.isNotBlank() } ?: getDefaultFromDate()
         val endDate = currentState.costsEndDate.takeIf { it.isNotBlank() } ?: getDefaultToDate()
 
-        // Separate filters for each API based on valid cost types
+        // Separate filters for each API based on cost type ID prefix or legacy cost types
+        // New cost type IDs: TC-xxx-xxx for trip, VMC-xxx-xxx for maintenance
         val selectedFilters = currentState.selectedCostTypeFilters
-        val tripFilters = selectedFilters.filter { it in tripCostTypes }
-        val maintenanceFilters = selectedFilters.filter { it in maintenanceCostTypes }
+
+        // Filter trip costs: either starts with "TC-" (new format) or is in legacy tripCostTypes set
+        val tripFilters = selectedFilters.filter {
+            it.startsWith("TC-") || it in tripCostTypes
+        }
+
+        // Filter maintenance costs: either starts with "VMC-" (new format) or is in legacy maintenanceCostTypes set
+        val maintenanceFilters = selectedFilters.filter {
+            it.startsWith("VMC-") || it in maintenanceCostTypes
+        }
 
         val hasAnyFilters = selectedFilters.isNotEmpty()
         val shouldLoadTrips = !hasAnyFilters || tripFilters.isNotEmpty()
