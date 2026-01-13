@@ -15,3 +15,8 @@ Pods/
 *.jks
 *.gpg
 *yarn.lock
+
+# Firebase config files (if using real credentials, uncomment these)
+# androidApp/google-services.json
+# iosApp/iosApp/GoogleService-Info.plist
+

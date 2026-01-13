@@ -20,6 +20,11 @@ kstore = "1.0.0"
 buildConfig = "5.6.5"
 materialKolor = "4.0.5"
 
+# Firebase & Crashlytics
+firebase-bom = "33.7.0"
+google-services = "4.4.2"
+firebase-crashlytics-plugin = "3.0.2"
+
 [libraries]
 
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
@@ -59,6 +64,11 @@ kstore-file = { module = "io.github.xxfast:kstore-file", version.ref = "kstore" 
 kstore-storage = { module = "io.github.xxfast:kstore-storage", version.ref = "kstore" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 
+# Firebase
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics-ktx" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics-ktx" }
+
 [plugins]
 
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -72,3 +82,8 @@ metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 room = { id = "androidx.room", version.ref = "room" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 buildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildConfig" }
+
+# Firebase & Google Services
+google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-plugin" }
+

@@ -10,4 +10,7 @@ plugins {
     alias(libs.plugins.room).apply(false)
     alias(libs.plugins.ksp).apply(false)
     alias(libs.plugins.buildConfig).apply(false)
+    // Firebase & Google Services
+    alias(libs.plugins.google.services).apply(false)
+    alias(libs.plugins.firebase.crashlytics).apply(false)
 }

@@ -17,6 +17,7 @@
         tools:ignore="ScopedStorage" />
 
     <application
+        android:name=".FleetApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="IndusJSFleet"
         android:theme="@android:style/Theme.Material.NoActionBar"
