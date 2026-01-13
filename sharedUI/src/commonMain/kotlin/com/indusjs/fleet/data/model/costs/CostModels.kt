@@ -271,11 +271,11 @@ data class TripCostDto(
     val groupId: String? = null,
     @SerialName("custom_cost_label")
     val customCostLabel: String? = null,
-    // Legacy field (kept for backward compatibility)
+    // Legacy field (kept for backward compatibility - now optional with default)
     @SerialName("cost_type")
-    val costType: String,
-    val amount: Double,
-    val date: String,
+    val costType: String = "",
+    val amount: Double = 0.0,
+    val date: String = "",
     val time: String? = null,
     val notes: String? = null,
     // Fuel specific fields
@@ -308,6 +308,12 @@ data class TripCostDto(
      */
     val isFuelCost: Boolean
         get() = groupId == "TC-G-001"
+
+    /**
+     * Returns the effective cost type identifier - prefers cost_id over legacy cost_type.
+     */
+    val effectiveCostType: String
+        get() = costId ?: costType
 }
 
 /**
@@ -465,11 +471,11 @@ data class MaintenanceCostDto(
     val groupId: String? = null,
     @SerialName("custom_cost_label")
     val customCostLabel: String? = null,
-    // Legacy field (kept for backward compatibility)
+    // Legacy field (kept for backward compatibility - now optional with default)
     @SerialName("cost_type")
-    val costType: String,
-    val amount: Double,
-    val date: String,
+    val costType: String = "",
+    val amount: Double = 0.0,
+    val date: String = "",
     val time: String? = null,
     val description: String? = null,
     val notes: String? = null,
@@ -485,6 +491,12 @@ data class MaintenanceCostDto(
      */
     val displayLabel: String
         get() = customCostLabel ?: costLabel ?: costType.replace("_", " ").replaceFirstChar { it.uppercase() }
+
+    /**
+     * Returns the effective cost type identifier - prefers cost_id over legacy cost_type.
+     */
+    val effectiveCostType: String
+        get() = costId ?: costType
 }
 
 /**

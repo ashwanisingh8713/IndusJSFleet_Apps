@@ -2345,8 +2345,7 @@ private fun EditModeContent(
                         text = "Assigned Driver",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                        color = MaterialTheme.colorScheme.primary                    )
                 }
 
                 // Driver Dropdown
@@ -2945,7 +2944,7 @@ private fun CostsTabContent(
                         Text(dateLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                         Text(" (${costs.size})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Text("₹${formatAmount(dateTotal)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                    Text("₹${formatAmount(dateTotal)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
                 }
             }
             costs.forEach { cost ->
@@ -3043,14 +3042,14 @@ private data class CostDisplayItem(
             return CostDisplayItem(
                 id = dto.id.toString(),
                 category = "trip",
-                costType = dto.costType,
+                costType = dto.effectiveCostType,
                 amount = dto.amount,
-                date = dto.date ?: "",
+                date = dto.date,
                 dateLabel = formatCostDateLabel(dto.date),
                 description = dto.notes,
                 vendorName = null,
-                icon = getCostTypeIcon(dto.costType),
-                typeLabel = getCostTypeLabel(dto.costType)
+                icon = getCostTypeIcon(dto.effectiveCostType),
+                typeLabel = dto.displayLabel
             )
         }
 
@@ -3058,14 +3057,14 @@ private data class CostDisplayItem(
             return CostDisplayItem(
                 id = dto.id.toString(),
                 category = "maintenance",
-                costType = dto.costType,
+                costType = dto.effectiveCostType,
                 amount = dto.amount,
-                date = dto.date ?: "",
+                date = dto.date,
                 dateLabel = formatCostDateLabel(dto.date),
                 description = dto.description,
                 vendorName = dto.vendorName,
-                icon = getCostTypeIcon(dto.costType),
-                typeLabel = getCostTypeLabel(dto.costType)
+                icon = getCostTypeIcon(dto.effectiveCostType),
+                typeLabel = dto.displayLabel
             )
         }
 
