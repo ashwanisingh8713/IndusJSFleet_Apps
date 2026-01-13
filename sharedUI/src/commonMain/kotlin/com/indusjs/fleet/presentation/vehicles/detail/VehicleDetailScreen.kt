@@ -2672,30 +2672,38 @@ private fun CostsTabContent(
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     } else {
-                        // Fallback to hardcoded trip cost types
+                        // Fallback to static cost types from TripCostTypes object
                         Text("Trip Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(6.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            val tripCostTypes = listOf("fuel", "toll", "driver_allowance", "parking", "loading_charges", "unloading_charges", "chalan", "other")
-                            tripCostTypes.forEach { type ->
-                                FilterChip(
-                                    selected = tempSelectedFilters.contains(type),
-                                    onClick = {
-                                        tempSelectedFilters = if (tempSelectedFilters.contains(type)) {
-                                            tempSelectedFilters - type
-                                        } else {
-                                            tempSelectedFilters + type
-                                        }
-                                    },
-                                    label = { Text(getCostTypeLabel(type)) },
-                                    leadingIcon = if (tempSelectedFilters.contains(type)) {
-                                        { Text("✓", style = MaterialTheme.typography.labelSmall) }
-                                    } else null
-                                )
+                        com.indusjs.fleet.data.model.costs.TripCostTypes.groups.forEach { group ->
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                group.items.forEach { item ->
+                                    FilterChip(
+                                        selected = tempSelectedFilters.contains(item.id),
+                                        onClick = {
+                                            tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
+                                                tempSelectedFilters - item.id
+                                            } else {
+                                                tempSelectedFilters + item.id
+                                            }
+                                        },
+                                        label = { Text(item.label) },
+                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
+                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                        } else null
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
 
@@ -2737,30 +2745,38 @@ private fun CostsTabContent(
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     } else {
-                        // Fallback to hardcoded maintenance cost types
+                        // Fallback to static cost types from MaintenanceCostTypes object
                         Text("Maintenance Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
                         Spacer(modifier = Modifier.height(6.dp))
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            val maintenanceCostTypes = listOf("tyre", "battery", "oil_change", "brake_service", "engine_repair", "electrical", "body_work", "cleaning", "servicing")
-                            maintenanceCostTypes.forEach { type ->
-                                FilterChip(
-                                    selected = tempSelectedFilters.contains(type),
-                                    onClick = {
-                                        tempSelectedFilters = if (tempSelectedFilters.contains(type)) {
-                                            tempSelectedFilters - type
-                                        } else {
-                                            tempSelectedFilters + type
-                                        }
-                                    },
-                                    label = { Text(getCostTypeLabel(type)) },
-                                    leadingIcon = if (tempSelectedFilters.contains(type)) {
-                                        { Text("✓", style = MaterialTheme.typography.labelSmall) }
-                                    } else null
-                                )
+                        com.indusjs.fleet.data.model.costs.MaintenanceCostTypes.groups.forEach { group ->
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                group.items.forEach { item ->
+                                    FilterChip(
+                                        selected = tempSelectedFilters.contains(item.id),
+                                        onClick = {
+                                            tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
+                                                tempSelectedFilters - item.id
+                                            } else {
+                                                tempSelectedFilters + item.id
+                                            }
+                                        },
+                                        label = { Text(item.label) },
+                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
+                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                        } else null
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }

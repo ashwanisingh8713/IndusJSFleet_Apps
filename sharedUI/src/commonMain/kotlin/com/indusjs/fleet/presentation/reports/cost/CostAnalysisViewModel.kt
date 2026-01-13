@@ -20,14 +20,20 @@ class CostAnalysisViewModel(
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
+            is Intent.LoadCostTypes -> loadCostTypes()
             is Intent.ToggleCostType -> toggleCostType(intent.costType)
-            is Intent.SelectAllCostTypes -> updateState { copy(selectedCostTypes = COST_TYPES.map { it.first }.toSet()) }
+            is Intent.SelectAllCostTypes -> updateState { copy(selectedCostTypes = allCostTypes.map { it.first }.toSet()) }
             is Intent.ClearCostTypes -> updateState { copy(selectedCostTypes = emptySet()) }
             is Intent.UpdateStartDate -> updateState { copy(startDate = intent.date) }
             is Intent.UpdateEndDate -> updateState { copy(endDate = intent.date) }
             is Intent.GenerateReport -> generateReport()
             is Intent.Refresh -> generateReport()
         }
+    }
+
+    private fun loadCostTypes() {
+        // TODO: Load cost types from repository when CostTypesRepository is injected
+        // For now, uses static fallback via State.allCostTypes computed property
     }
 
     private fun toggleCostType(costType: String) {
