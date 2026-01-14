@@ -45,7 +45,8 @@ fun App(
 ) = AppTheme(onThemeChanged) {
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val viewModelProvider = remember { DefaultViewModelProvider() }
+    // Use singleton instance to ensure Settings persistence across app lifecycle
+    val viewModelProvider = remember { DefaultViewModelProvider.getInstance() }
 
     // Check if user is already logged in to determine initial route
     var isCheckingAuth by remember { mutableStateOf(true) }

@@ -104,8 +104,24 @@ import kotlinx.serialization.json.Json
  *
  * In production with Metro DI fully configured, use MetroViewModelProvider instead.
  * This serves as a bridge during the migration to full Metro DI.
+ *
+ * IMPORTANT: Use getInstance() to get a shared singleton instance.
+ * This ensures the same Settings instance is used throughout the app lifecycle,
+ * which is critical for auth token persistence across app restarts.
  */
-class DefaultViewModelProvider : ViewModelProvider {
+class DefaultViewModelProvider private constructor() : ViewModelProvider {
+
+    companion object {
+        // Single instance - created lazily on first access
+        // In KMP, object initialization is thread-safe
+        private val _instance: DefaultViewModelProvider by lazy { DefaultViewModelProvider() }
+
+        /**
+         * Get the singleton instance of DefaultViewModelProvider.
+         * This ensures a single Settings instance is used throughout the app.
+         */
+        fun getInstance(): DefaultViewModelProvider = _instance
+    }
 
     override val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider()
 

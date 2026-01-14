@@ -15,9 +15,12 @@ import kotlinx.serialization.json.Json
  *
  * This uses the same Settings library already used in the project for UserLocalDataSource,
  * ensuring consistent cross-platform behavior without Room's platform limitations.
+ *
+ * IMPORTANT: The Settings instance MUST be injected from DI to ensure
+ * the same instance is used throughout the app.
  */
 class FleetDatabase(
-    settings: Settings = Settings(),
+    settings: Settings,
     json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 ) {
     private val dashboardDaoImpl = SettingsDashboardDao(settings, json)

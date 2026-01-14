@@ -21,10 +21,14 @@ interface UserLocalDataSource : LocalDataSource {
 
 /**
  * Implementation of UserLocalDataSource using multiplatform-settings.
+ *
+ * IMPORTANT: The Settings instance MUST be injected from DI to ensure
+ * the same instance is used throughout the app. Using Settings() directly
+ * can cause token persistence issues across app restarts.
  */
 @Inject
 class UserLocalDataSourceImpl(
-    private val settings: Settings = Settings()
+    private val settings: Settings
 ) : UserLocalDataSource {
 
     private val log = Logger.withTag("UserLocalDataSource")

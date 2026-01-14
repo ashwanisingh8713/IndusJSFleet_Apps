@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "indusjs-fleet-placeholder",
-    "storage_bucket": "indusjs-fleet-placeholder.appspot.com"
+    "project_number": "414300730573",
+    "project_id": "indusjsfleet",
+    "storage_bucket": "indusjsfleet.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:414300730573:android:25e90119bd4013d2326584",
         "android_client_info": {
           "package_name": "com.indusjs.fleet.androidApp"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIza_PLACEHOLDER_KEY_REPLACE_ME"
+          "current_key": "AIzaSyBppcTU-HbtrSrWsDZpjR3dJvfTlYodnLk"
         }
       ],
       "services": {
@@ -27,4 +27,3 @@
   ],
   "configuration_version": "1"
 }
-
