@@ -23,7 +23,7 @@ We have following screens in app.
     Trip Details -> TripDetailsScreen.kt
     Add Trip Cost -> TripCostEntryScreen.kt
     Edit Trip -> TripDetailScreen.kt
-    Add Vehicle Cost -> MaintenanceCostEntryScreen.kt
+    Add Maintenance Cost -> MaintenanceCostEntryScreen.kt
 
 
 

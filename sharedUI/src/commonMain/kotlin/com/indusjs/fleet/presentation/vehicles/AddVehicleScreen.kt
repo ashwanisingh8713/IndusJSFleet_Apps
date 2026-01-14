@@ -18,7 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.indusjs.fleet.core.ui.FleetDateField
+import com.indusjs.datetimepicker.FleetDatePicker
+import com.indusjs.datetimepicker.DateTimeUtils
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
@@ -607,10 +608,11 @@ private fun DocumentUploadCard(
             // Expiry Date Field (for documents that require expiry)
             if (documentType != DocumentType.REGISTRATION_CERTIFICATE && documentType != DocumentType.OTHER) {
                 Spacer(modifier = Modifier.height(12.dp))
-                FleetDateField(
-                    rawValue = expiryDateRaw,
-                    onRawValueChange = onExpiryDateChange,
-                    label = "Expiry Date"
+                FleetDatePicker(
+                    date = expiryDateRaw,
+                    onDateChange = onExpiryDateChange,
+                    label = "Expiry Date",
+                    minDate = DateTimeUtils.getCurrentDate()  // Expiry must be in future
                 )
             }
         }

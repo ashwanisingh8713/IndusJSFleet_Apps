@@ -9,15 +9,25 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 /**
- * A cross-platform DateTime picker component that displays date and time selection
- * in a single unified popup.
+ * Picker mode enum for different selection types.
+ */
+enum class PickerMode {
+    DATE_TIME,  // Both date and time
+    DATE_ONLY,  // Only date
+    TIME_ONLY   // Only time
+}
+
+/**
+ * A cross-platform DateTime picker component that supports:
+ * - DATE_TIME: Both date and time selection
+ * - DATE_ONLY: Only date selection
+ * - TIME_ONLY: Only time selection (Quick Select hidden)
  */
 @Composable
 fun FleetDateTimePicker(
@@ -25,7 +35,12 @@ fun FleetDateTimePicker(
     time: String,
     onDateTimeChange: (date: String, time: String) -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Date & Time",
+    mode: PickerMode = PickerMode.DATE_TIME,
+    label: String = when (mode) {
+        PickerMode.DATE_TIME -> "Date & Time"
+        PickerMode.DATE_ONLY -> "Date"
+        PickerMode.TIME_ONLY -> "Time"
+    },
     enabled: Boolean = true,
     isError: Boolean = false,
     errorMessage: String? = null,
@@ -34,16 +49,21 @@ fun FleetDateTimePicker(
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
-    // Build display value - no icons, just text with | separator
-    val displayValue = when {
-        date.isNotBlank() && time.isNotBlank() -> "$date  |  $time"
-        date.isNotBlank() -> date
-        time.isNotBlank() -> time
-        else -> ""
+    // Build display value based on mode - use formatted display (e.g., "18 April 2024, 10:30 AM")
+    val displayValue = when (mode) {
+        PickerMode.DATE_TIME -> DateTimeUtils.formatDateTimeForDisplay(date, time)
+        PickerMode.DATE_ONLY -> DateTimeUtils.formatDateForDisplay(date)
+        PickerMode.TIME_ONLY -> DateTimeUtils.formatTimeForDisplay(time)
+    }
+
+    // Placeholder based on mode
+    val placeholder = when (mode) {
+        PickerMode.DATE_TIME -> "Select date & time"
+        PickerMode.DATE_ONLY -> "Select date"
+        PickerMode.TIME_ONLY -> "Select time"
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        // Use OutlinedTextField style - looks like standard input
         OutlinedTextField(
             value = displayValue,
             onValueChange = {},
@@ -57,7 +77,7 @@ fun FleetDateTimePicker(
                 ) { showDialog = true },
             enabled = false,
             label = if (label.isNotEmpty()) { { Text(label) } } else null,
-            placeholder = { Text("Select date & time") },
+            placeholder = { Text(placeholder) },
             isError = isError,
             supportingText = if (isError && errorMessage != null) {
                 { Text(errorMessage, color = MaterialTheme.colorScheme.error) }
@@ -73,10 +93,11 @@ fun FleetDateTimePicker(
     }
 
     if (showDialog) {
-        DateTimePickerDialog(
+        PickerDialog(
+            mode = mode,
             initialDate = date,
             initialTime = time,
-            onDateTimeSelected = { newDate, newTime ->
+            onConfirm = { newDate, newTime ->
                 onDateTimeChange(newDate, newTime)
                 showDialog = false
             },
@@ -87,11 +108,68 @@ fun FleetDateTimePicker(
     }
 }
 
+/**
+ * Convenience composable for Date only picker.
+ */
 @Composable
-private fun DateTimePickerDialog(
+fun FleetDatePicker(
+    date: String,
+    onDateChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "Date",
+    enabled: Boolean = true,
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    minDate: String? = null,
+    maxDate: String? = null
+) {
+    FleetDateTimePicker(
+        date = date,
+        time = "",
+        onDateTimeChange = { newDate, _ -> onDateChange(newDate) },
+        modifier = modifier,
+        mode = PickerMode.DATE_ONLY,
+        label = label,
+        enabled = enabled,
+        isError = isError,
+        errorMessage = errorMessage,
+        minDate = minDate,
+        maxDate = maxDate
+    )
+}
+
+/**
+ * Convenience composable for Time only picker.
+ */
+@Composable
+fun FleetTimePicker(
+    time: String,
+    onTimeChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "Time",
+    enabled: Boolean = true,
+    isError: Boolean = false,
+    errorMessage: String? = null
+) {
+    FleetDateTimePicker(
+        date = "",
+        time = time,
+        onDateTimeChange = { _, newTime -> onTimeChange(newTime) },
+        modifier = modifier,
+        mode = PickerMode.TIME_ONLY,
+        label = label,
+        enabled = enabled,
+        isError = isError,
+        errorMessage = errorMessage
+    )
+}
+
+@Composable
+private fun PickerDialog(
+    mode: PickerMode,
     initialDate: String,
     initialTime: String,
-    onDateTimeSelected: (date: String, time: String) -> Unit,
+    onConfirm: (date: String, time: String) -> Unit,
     onDismiss: () -> Unit,
     minDate: String?,
     maxDate: String?
@@ -110,6 +188,12 @@ private fun DateTimePickerDialog(
             val now = DateTimeUtils.getCurrentDateParts(); listOf(now.first, now.second, now.third)
         }
         mutableStateOf(parts[2])
+    }
+
+    val dialogTitle = when (mode) {
+        PickerMode.DATE_TIME -> "Select Date & Time"
+        PickerMode.DATE_ONLY -> "Select Date"
+        PickerMode.TIME_ONLY -> "Select Time"
     }
 
     Dialog(
@@ -135,104 +219,79 @@ private fun DateTimePickerDialog(
             ) {
                 // Header Title
                 Text(
-                    text = "Select Date & Time",
+                    text = dialogTitle,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                // Single line Date & Time Preview - no icons
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = selectedDate,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "  |  ",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
-                        )
-                        Text(
-                            text = selectedTime,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
+                // Preview based on mode
+                PreviewSection(mode = mode, selectedDate = selectedDate, selectedTime = selectedTime)
+
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Date Picker Section - only for DATE_TIME and DATE_ONLY
+                if (mode == PickerMode.DATE_TIME || mode == PickerMode.DATE_ONLY) {
+                    DatePickerSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        selectedDate = selectedDate,
+                        calendarMonth = calendarMonth,
+                        calendarYear = calendarYear,
+                        onCalendarMonthYearChange = { month, year ->
+                            calendarMonth = month
+                            calendarYear = year
+                        },
+                        onDateSelected = { newDate ->
+                            selectedDate = newDate
+                            try {
+                                val parts = newDate.split("-").map { it.toInt() }
+                                calendarMonth = parts[1]
+                                calendarYear = parts[2]
+                            } catch (e: Exception) { }
+                        },
+                        minDate = minDate,
+                        maxDate = maxDate
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                Spacer(modifier = Modifier.height(12.dp))
+                // Time Picker Section - only for DATE_TIME and TIME_ONLY
+                if (mode == PickerMode.DATE_TIME || mode == PickerMode.TIME_ONLY) {
+                    TimePickerSection(
+                        modifier = Modifier.fillMaxWidth(),
+                        selectedTime = selectedTime,
+                        onTimeSelected = { selectedTime = it }
+                    )
 
-                // Date Picker Section
-                DatePickerSection(
-                    modifier = Modifier.fillMaxWidth(),
-                    selectedDate = selectedDate,
-                    calendarMonth = calendarMonth,
-                    calendarYear = calendarYear,
-                    onCalendarMonthYearChange = { month, year ->
-                        calendarMonth = month
-                        calendarYear = year
-                    },
-                    onDateSelected = { newDate ->
-                        selectedDate = newDate
-                        try {
-                            val parts = newDate.split("-").map { it.toInt() }
-                            calendarMonth = parts[1]
-                            calendarYear = parts[2]
-                        } catch (e: Exception) { }
-                    },
-                    minDate = minDate,
-                    maxDate = maxDate
-                )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
 
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                Spacer(modifier = Modifier.height(10.dp))
+                // Quick Shortcuts - only for DATE_TIME and DATE_ONLY (NOT for TIME_ONLY)
+                if (mode == PickerMode.DATE_TIME || mode == PickerMode.DATE_ONLY) {
+                    QuickDateShortcutsRow(
+                        onDateSelected = { newDate ->
+                            selectedDate = newDate
+                            try {
+                                val parts = newDate.split("-").map { it.toInt() }
+                                calendarMonth = parts[1]
+                                calendarYear = parts[2]
+                            } catch (e: Exception) { }
+                        },
+                        minDate = minDate,
+                        maxDate = maxDate
+                    )
 
-                // Time Picker Section
-                TimePickerSection(
-                    modifier = Modifier.fillMaxWidth(),
-                    selectedTime = selectedTime,
-                    onTimeSelected = { selectedTime = it }
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Quick Shortcuts
-                QuickDateShortcutsRow(
-                    onDateSelected = { newDate ->
-                        selectedDate = newDate
-                        try {
-                            val parts = newDate.split("-").map { it.toInt() }
-                            calendarMonth = parts[1]
-                            calendarYear = parts[2]
-                        } catch (e: Exception) { }
-                    },
-                    minDate = minDate,
-                    maxDate = maxDate
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
 
                 // Action Buttons
                 Row(
@@ -250,12 +309,53 @@ private fun DateTimePickerDialog(
                     Spacer(modifier = Modifier.width(12.dp))
 
                     Button(
-                        onClick = { onDateTimeSelected(selectedDate, selectedTime) }
+                        onClick = {
+                            when (mode) {
+                                PickerMode.DATE_TIME -> onConfirm(selectedDate, selectedTime)
+                                PickerMode.DATE_ONLY -> onConfirm(selectedDate, "")
+                                PickerMode.TIME_ONLY -> onConfirm("", selectedTime)
+                            }
+                        }
                     ) {
                         Text("Confirm")
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PreviewSection(
+    mode: PickerMode,
+    selectedDate: String,
+    selectedTime: String
+) {
+    // Format for display: "18 April 2024, 10:30 AM"
+    val displayText = when (mode) {
+        PickerMode.DATE_TIME -> DateTimeUtils.formatDateTimeForDisplay(selectedDate, selectedTime)
+        PickerMode.DATE_ONLY -> DateTimeUtils.formatDateForDisplay(selectedDate)
+        PickerMode.TIME_ONLY -> DateTimeUtils.formatTimeForDisplay(selectedTime)
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = displayText.ifBlank { "Select date & time" },
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         }
     }
 }
@@ -267,7 +367,6 @@ private fun QuickDateShortcutsRow(
     maxDate: String?
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Single line label with description
         Text(
             text = "Quick Select — Jump to date from today",
             style = MaterialTheme.typography.labelLarge,
@@ -315,3 +414,4 @@ private fun QuickDateShortcutsRow(
         }
     }
 }
+

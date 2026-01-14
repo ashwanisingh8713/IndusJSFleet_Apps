@@ -21,10 +21,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.ui.CostTypeGroup
 import com.indusjs.fleet.core.ui.CostTypeSelection
 import com.indusjs.fleet.core.ui.CostTypeTwoLevelSelector
-import com.indusjs.fleet.core.ui.DateInputField
 import com.indusjs.fleet.core.ui.FleetDropdownField
 import com.indusjs.fleet.core.ui.FleetSectionCard
-import com.indusjs.fleet.core.ui.TimeInputField
+import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -538,26 +537,18 @@ private fun MaintenanceCostRowCard(
                         }
                     }
 
-                    // Date & Time row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        DateInputField(
-                            value = row.date,
-                            onValueChange = onUpdateDate,
-                            label = "Date *",
-                            error = row.dateError,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        TimeInputField(
-                            value = row.time,
-                            onValueChange = onUpdateTime,
-                            label = "Time",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    // Date & Time picker (unified)
+                    FleetDateTimePicker(
+                        date = row.date,
+                        time = row.time,
+                        onDateTimeChange = { newDate, newTime ->
+                            onUpdateDate(newDate)
+                            onUpdateTime(newTime)
+                        },
+                        label = "Date & Time *",
+                        isError = row.dateError != null,
+                        errorMessage = row.dateError
+                    )
 
                     // Amount
                     OutlinedTextField(

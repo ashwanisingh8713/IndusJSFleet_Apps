@@ -13,9 +13,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.ui.FleetDateFieldCompact
+import com.indusjs.datetimepicker.FleetDateTimePicker
+import com.indusjs.datetimepicker.DateTimeUtils
 import com.indusjs.fleet.core.ui.FleetMobileField
-import com.indusjs.fleet.core.ui.FleetTimeFieldCompact
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import indusjsfleet.sharedui.generated.resources.*
@@ -683,28 +683,18 @@ private fun ScheduleSection(
             color = MaterialTheme.colorScheme.primary
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            FleetDateFieldCompact(
-                rawValue = state.departureDate,
-                onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureDate(it)) },
-                label = "Date",
-                isError = state.departureDateError != null,
-                errorMessage = state.departureDateError,
-                modifier = Modifier.weight(1f)
-            )
-
-            FleetTimeFieldCompact(
-                rawValue = state.departureTime,
-                onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureTime(it)) },
-                label = "Time (24hr)",
-                isError = state.departureTimeError != null,
-                errorMessage = state.departureTimeError,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        FleetDateTimePicker(
+            date = state.departureDate,
+            time = state.departureTime,
+            onDateTimeChange = { newDate, newTime ->
+                viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureDate(newDate))
+                viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureTime(newTime))
+            },
+            label = "Departure Date & Time *",
+            isError = state.departureDateError != null || state.departureTimeError != null,
+            errorMessage = state.departureDateError ?: state.departureTimeError,
+            minDate = DateTimeUtils.getCurrentDate()  // Can't depart in past
+        )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
@@ -716,24 +706,16 @@ private fun ScheduleSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            FleetDateFieldCompact(
-                rawValue = state.arrivalDate,
-                onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalDate(it)) },
-                label = "Date",
-                modifier = Modifier.weight(1f)
-            )
-
-            FleetTimeFieldCompact(
-                rawValue = state.arrivalTime,
-                onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalTime(it)) },
-                label = "Time (24hr)",
-                modifier = Modifier.weight(1f)
-            )
-        }
+        FleetDateTimePicker(
+            date = state.arrivalDate,
+            time = state.arrivalTime,
+            onDateTimeChange = { newDate, newTime ->
+                viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalDate(newDate))
+                viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalTime(newTime))
+            },
+            label = "Expected Arrival Date & Time",
+            minDate = state.departureDate.ifBlank { DateTimeUtils.getCurrentDate() }  // Must be after departure
+        )
     }
 }
 

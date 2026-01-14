@@ -15,12 +15,11 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.ui.FleetDateField
+import com.indusjs.datetimepicker.FleetDatePicker
+import com.indusjs.datetimepicker.DateTimeUtils
 import com.indusjs.fleet.core.ui.FleetEmailField
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
-import com.indusjs.fleet.core.ui.convertIsoToDdMmYyyyRaw
-import com.indusjs.fleet.core.ui.convertDdMmYyyyToIso
 import com.indusjs.fleet.domain.entity.driver.LicenseType
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -223,14 +222,11 @@ fun CreateDriverScreen(
             }
 
             item {
-                FleetDateField(
-                    rawValue = convertIsoToDdMmYyyyRaw(state.licenseExpiry),
-                    onRawValueChange = {
-                        val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
-                        viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseExpiry(isoFormatted))
-                    },
+                FleetDatePicker(
+                    date = state.licenseExpiry,
+                    onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseExpiry(it)) },
                     label = "License Expiry Date",
-                    leadingEmoji = "📅"
+                    minDate = DateTimeUtils.getCurrentDate()  // License expiry must be in future
                 )
             }
 
@@ -244,14 +240,14 @@ fun CreateDriverScreen(
             }
 
             item {
-                FleetDateField(
-                    rawValue = convertIsoToDdMmYyyyRaw(state.dateOfBirth),
-                    onRawValueChange = {
-                        val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
-                        viewModel.sendIntent(CreateDriverContract.Intent.UpdateDateOfBirth(isoFormatted))
-                    },
+                // Calculate max DOB date (18 years ago) for age validation
+                val maxDobDate = remember { DateTimeUtils.getDateFromToday(-18 * 365) }
+
+                FleetDatePicker(
+                    date = state.dateOfBirth,
+                    onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateDateOfBirth(it)) },
                     label = "Date of Birth",
-                    leadingEmoji = "🎂"
+                    maxDate = maxDobDate  // Driver must be at least 18 years old
                 )
             }
 
@@ -291,14 +287,10 @@ fun CreateDriverScreen(
             }
 
             item {
-                FleetDateField(
-                    rawValue = convertIsoToDdMmYyyyRaw(state.joiningDate),
-                    onRawValueChange = {
-                        val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
-                        viewModel.sendIntent(CreateDriverContract.Intent.UpdateJoiningDate(isoFormatted))
-                    },
-                    label = "Joining Date",
-                    leadingEmoji = "📆"
+                FleetDatePicker(
+                    date = state.joiningDate,
+                    onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateJoiningDate(it)) },
+                    label = "Joining Date"
                 )
             }
 

@@ -198,6 +198,7 @@ fun TripCostEntryScreen(
                         costTypeGroups = state.costTypeGroups,
                         fuelTypeOptions = state.fuelTypeOptions,
                         canDelete = state.costEntries.size > 1,
+                        tripStartDate = state.selectedTrip?.scheduledDate,  // Cost date must be >= Trip start date
                         onToggleExpanded = { viewModel.sendIntent(TripCostEntryContract.Intent.ToggleRowExpanded(entry.id)) },
                         onDelete = { viewModel.sendIntent(TripCostEntryContract.Intent.RemoveCostRow(entry.id)) },
                         onSelectCostType = { selection ->
@@ -517,6 +518,7 @@ private fun CostEntryRowCard(
     costTypeGroups: List<CostTypeGroup>,
     fuelTypeOptions: List<Pair<String, String>>,
     canDelete: Boolean,
+    tripStartDate: String? = null,  // Cost date must be >= Trip start date
     onToggleExpanded: () -> Unit,
     onDelete: () -> Unit,
     onSelectCostType: (CostTypeSelection) -> Unit,
@@ -661,7 +663,8 @@ private fun CostEntryRowCard(
                         },
                         label = "Date & Time *",
                         isError = entry.dateError != null,
-                        errorMessage = entry.dateError
+                        errorMessage = entry.dateError,
+                        minDate = tripStartDate  // Cost date must be >= Trip start date
                     )
 
                     // Amount

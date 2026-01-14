@@ -3,6 +3,9 @@ package com.indusjs.datetimepicker
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -30,6 +33,8 @@ internal fun DatePickerSection(
     minDate: String?,
     maxDate: String?
 ) {
+    var showMonthYearPicker by remember { mutableStateOf(false) }
+
     val selectedDay = if (selectedDate.isNotBlank()) {
         try {
             val parts = selectedDate.split("-").map { it.toInt() }
@@ -63,11 +68,29 @@ internal fun DatePickerSection(
                 Text(text = "◀", fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
 
-            Text(
-                text = "${DateTimeUtils.getMonthName(calendarMonth)} $calendarYear",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
+            // Clickable Month/Year - opens picker for quick navigation
+            Surface(
+                modifier = Modifier.clickable { showMonthYearPicker = !showMonthYearPicker },
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${DateTimeUtils.getMonthName(calendarMonth)} $calendarYear",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (showMonthYearPicker) "▲" else "▼",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             FilledTonalIconButton(
                 onClick = {
@@ -89,6 +112,20 @@ internal fun DatePickerSection(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Month/Year Picker (shown when clicked)
+        if (showMonthYearPicker) {
+            MonthYearPicker(
+                currentMonth = calendarMonth,
+                currentYear = calendarYear,
+                onMonthYearSelected = { month, year ->
+                    onCalendarMonthYearChange(month, year)
+                    showMonthYearPicker = false
+                },
+                onDismiss = { showMonthYearPicker = false }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         // Compact Calendar Grid
         CompactCalendarGrid(
             year = calendarYear,
@@ -101,6 +138,159 @@ internal fun DatePickerSection(
             minDate = minDate,
             maxDate = maxDate
         )
+    }
+}
+
+/**
+ * Month and Year picker for quick navigation to any date.
+ */
+@Composable
+private fun MonthYearPicker(
+    currentMonth: Int,
+    currentYear: Int,
+    onMonthYearSelected: (month: Int, year: Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var selectedMonth by remember { mutableStateOf(currentMonth) }
+    var selectedYear by remember { mutableStateOf(currentYear) }
+
+    // Year range: current year -50 to +50
+    val currentYearNow = DateTimeUtils.getCurrentDateParts().third
+    val yearRange = (currentYearNow - 50)..(currentYearNow + 50)
+    val years = yearRange.toList()
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 2.dp
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            // Header
+            Text(
+                text = "Select Month & Year",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Month Picker
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Month",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().height(150.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            state = rememberLazyListState(
+                                initialFirstVisibleItemIndex = maxOf(0, selectedMonth - 3)
+                            )
+                        ) {
+                            items((1..12).toList()) { month ->
+                                val isSelected = month == selectedMonth
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { selectedMonth = month },
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    else
+                                        Color.Transparent,
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = DateTimeUtils.getMonthName(month),
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Year Picker
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Year",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().height(150.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        val yearListState = rememberLazyListState(
+                            initialFirstVisibleItemIndex = maxOf(0, years.indexOf(selectedYear) - 2)
+                        )
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            state = yearListState
+                        ) {
+                            items(years) { year ->
+                                val isSelected = year == selectedYear
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { selectedYear = year },
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    else
+                                        Color.Transparent,
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = year.toString(),
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = { onMonthYearSelected(selectedMonth, selectedYear) }) {
+                    Text("Select")
+                }
+            }
+        }
     }
 }
 
