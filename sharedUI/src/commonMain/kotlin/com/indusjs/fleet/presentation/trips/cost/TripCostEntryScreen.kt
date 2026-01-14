@@ -22,11 +22,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.fleet.core.ui.CostTypeGroup
 import com.indusjs.fleet.core.ui.CostTypeSelection
 import com.indusjs.fleet.core.ui.CostTypeTwoLevelSelector
-import com.indusjs.fleet.core.ui.DateInputField
-import com.indusjs.fleet.core.ui.TimeInputField
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.indusjs.fleet.domain.entity.trip.Trip
 import indusjsfleet.sharedui.generated.resources.*
@@ -652,26 +651,18 @@ private fun CostEntryRowCard(
                         )
                     }
 
-                    // Date & Time row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        DateInputField(
-                            value = entry.date,
-                            onValueChange = onDateChange,
-                            label = "Date *",
-                            error = entry.dateError,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        TimeInputField(
-                            value = entry.time,
-                            onValueChange = onTimeChange,
-                            label = "Time",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    // Date & Time picker (unified)
+                    FleetDateTimePicker(
+                        date = entry.date,
+                        time = entry.time,
+                        onDateTimeChange = { newDate, newTime ->
+                            onDateChange(newDate)
+                            onTimeChange(newTime)
+                        },
+                        label = "Date & Time *",
+                        isError = entry.dateError != null,
+                        errorMessage = entry.dateError
+                    )
 
                     // Amount
                     OutlinedTextField(
@@ -899,8 +890,5 @@ private fun CostHistoryItem(cost: TripCostDto) {
         }
     }
 }
-
-
-
 
 

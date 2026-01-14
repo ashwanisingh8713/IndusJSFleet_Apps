@@ -37,6 +37,8 @@ kotlin {
             // IndusJS Libraries
             implementation(project(":ijs-error-lib"))
             implementation(project(":ijs-dispatcher-lib"))
+            implementation(project(":ijs-datetime-picker"))
+            implementation(project(":ijs-datetime-utils"))
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.ui)
