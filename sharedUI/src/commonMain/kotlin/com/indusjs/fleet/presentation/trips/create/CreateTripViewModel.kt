@@ -114,6 +114,7 @@ class CreateTripViewModel(
             is Intent.UpdateCargoType -> updateState { copy(cargoType = intent.value) }
             is Intent.UpdateCargoDescription -> updateState { copy(cargoDescription = intent.value) }
             is Intent.UpdateCargoWeight -> updateState { copy(cargoWeight = intent.value) }
+            is Intent.UpdateWeightUnit -> updateState { copy(weightUnit = intent.value) }
             is Intent.UpdateCustomerName -> updateState { copy(customerName = intent.value) }
             is Intent.UpdateCustomerContact -> updateState { copy(customerContact = intent.value) }
             is Intent.UpdatePriority -> updateState { copy(priority = intent.value) }

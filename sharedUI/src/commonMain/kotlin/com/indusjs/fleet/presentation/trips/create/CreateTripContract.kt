@@ -23,6 +23,11 @@ object CreateTripContract {
     val cargoTypes = listOf("gitti", "balu", "bhakshi", "enta", "hazardous", "valuable", "others")
 
     /**
+     * Weight unit options.
+     */
+    val weightUnits = listOf("KG", "M.Ton", "Quintal", "Liter", "CFT", "Bags")
+
+    /**
      * UI State for the Create Trip screen.
      */
     data class State(
@@ -52,9 +57,10 @@ object CreateTripContract {
         val arrivalTime: String = "",
 
         // Cargo & Customer
-        val cargoType: String = "gitti",
+        val cargoType: String = "",
         val cargoDescription: String = "",
         val cargoWeight: String = "",
+        val weightUnit: String = "",
         val customerName: String = "",
         val customerContact: String = "",
         val priority: String = "normal",
@@ -95,7 +101,8 @@ object CreateTripContract {
 
         // Available options
         val priorityOptions: List<String> = priorities,
-        val cargoTypeOptions: List<String> = cargoTypes
+        val cargoTypeOptions: List<String> = cargoTypes,
+        val weightUnitOptions: List<String> = weightUnits
     ) : UiState {
 
         /**
@@ -167,6 +174,7 @@ object CreateTripContract {
         data class UpdateCargoType(val value: String) : Intent
         data class UpdateCargoDescription(val value: String) : Intent
         data class UpdateCargoWeight(val value: String) : Intent
+        data class UpdateWeightUnit(val value: String) : Intent
         data class UpdateCustomerName(val value: String) : Intent
         data class UpdateCustomerContact(val value: String) : Intent
         data class UpdatePriority(val value: String) : Intent
@@ -195,4 +203,3 @@ object CreateTripContract {
         data class TripCreated(val tripId: String) : Effect
     }
 }
-

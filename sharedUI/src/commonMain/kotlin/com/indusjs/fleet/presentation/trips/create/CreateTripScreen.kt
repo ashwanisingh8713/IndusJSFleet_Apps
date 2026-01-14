@@ -14,7 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
-import com.indusjs.datetimepicker.DateTimeUtils
+import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
@@ -150,10 +150,24 @@ fun CreateTripScreen(
                     }
                 }
 
-                // Cargo & Customer Section
+                // Cargo Section
                 item {
-                    SectionCard(title = "📦 Cargo & Customer") {
+                    SectionCard(title = "📦 Cargo Details") {
                         CargoSection(state = state, viewModel = viewModel)
+                    }
+                }
+
+                // Priority Section (above Customer Details)
+                item {
+                    SectionCard(title = "🎯 Priority") {
+                        PrioritySection(state = state, viewModel = viewModel)
+                    }
+                }
+
+                // Customer Section
+                item {
+                    SectionCard(title = "👤 Customer Details") {
+                        CustomerSection(state = state, viewModel = viewModel)
                     }
                 }
 
@@ -446,39 +460,6 @@ private fun RouteSection(
             }
         )
 
-        // Start Location Coordinates (auto-filled or manual)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedTextField(
-                value = state.startLat,
-                onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateStartLat(it)) },
-                label = { Text("Latitude") },
-                placeholder = { Text("Auto-filled") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledTextColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-
-            OutlinedTextField(
-                value = state.startLng,
-                onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateStartLng(it)) },
-                label = { Text("Longitude") },
-                placeholder = { Text("Auto-filled") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledTextColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         // End Location with Autocomplete
         LocationSearchField(
@@ -500,37 +481,6 @@ private fun RouteSection(
             }
         )
 
-        // End Location Coordinates (auto-filled or manual)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedTextField(
-                value = state.endLat,
-                onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateEndLat(it)) },
-                label = { Text("Latitude") },
-                placeholder = { Text("Auto-filled") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledTextColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-
-            OutlinedTextField(
-                value = state.endLng,
-                onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateEndLng(it)) },
-                label = { Text("Longitude") },
-                placeholder = { Text("Auto-filled") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.weight(1f),
-                colors = OutlinedTextFieldDefaults.colors(
-                    disabledTextColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        }
 
         // Estimated Distance (auto-calculated when both locations are selected)
         Column {
@@ -623,8 +573,7 @@ private fun LocationSearchField(
             },
             isError = isError,
             supportingText = errorText?.let { { Text(it) } },
-            singleLine = false,
-            maxLines = 2,
+            singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor()
@@ -673,16 +622,8 @@ private fun ScheduleSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-
-        // Departure Section
-        Text(
-            text = "🚀 Departure (Required)",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Departure Date & Time (Required)
         FleetDateTimePicker(
             date = state.departureDate,
             time = state.departureTime,
@@ -693,19 +634,10 @@ private fun ScheduleSection(
             label = "Departure Date & Time *",
             isError = state.departureDateError != null || state.departureTimeError != null,
             errorMessage = state.departureDateError ?: state.departureTimeError,
-            minDate = DateTimeUtils.getCurrentDate()  // Can't depart in past
+            minDate = FleetDateTime.today()
         )
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-        // Arrival Section
-        Text(
-            text = "🏁 Expected Arrival (Optional)",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
+        // Expected Arrival Date & Time (Optional)
         FleetDateTimePicker(
             date = state.arrivalDate,
             time = state.arrivalTime,
@@ -714,69 +646,149 @@ private fun ScheduleSection(
                 viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalTime(newTime))
             },
             label = "Expected Arrival Date & Time",
-            minDate = state.departureDate.ifBlank { DateTimeUtils.getCurrentDate() }  // Must be after departure
+            minDate = state.departureDate.ifBlank { FleetDateTime.today() }
         )
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CargoSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
+    var showCargoTypeDropdown by remember { mutableStateOf(false) }
+    var showWeightUnitDropdown by remember { mutableStateOf(false) }
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Cargo Type selector
-        Column {
-            Text(
-                text = "Cargo Type *",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        // Cargo Type Dropdown
+        ExposedDropdownMenuBox(
+            expanded = showCargoTypeDropdown,
+            onExpandedChange = { showCargoTypeDropdown = it }
+        ) {
+            OutlinedTextField(
+                value = if (state.cargoType.isNotBlank()) state.cargoType.replaceFirstChar { it.uppercaseChar() } else "",
+                onValueChange = {},
+                label = { Text("Cargo Type *") },
+                placeholder = { Text("Select cargo type") },
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCargoTypeDropdown) },
+                modifier = Modifier.fillMaxWidth().menuAnchor()
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ExposedDropdownMenu(
+                expanded = showCargoTypeDropdown,
+                onDismissRequest = { showCargoTypeDropdown = false }
             ) {
                 state.cargoTypeOptions.forEach { cargo ->
-                    FilterChip(
-                        selected = state.cargoType.equals(cargo, ignoreCase = true),
-                        onClick = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoType(cargo)) },
-                        label = { Text(cargo.replaceFirstChar { it.uppercaseChar() }) }
+                    DropdownMenuItem(
+                        text = { Text(cargo.replaceFirstChar { it.uppercaseChar() }) },
+                        onClick = {
+                            viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoType(cargo))
+                            showCargoTypeDropdown = false
+                        }
                     )
                 }
             }
         }
 
+        // Cargo Description - single line
         OutlinedTextField(
             value = state.cargoDescription,
             onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoDescription(it)) },
             label = { Text("Cargo Description") },
-            placeholder = { Text("e.g., Office furniture and equipment") },
-            singleLine = false,
-            maxLines = 2,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = state.cargoWeight,
-            onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoWeight(it)) },
-            label = { Text("Cargo Weight (kg)") },
-            placeholder = { Text("e.g., 500") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            placeholder = { Text("e.g., Office furniture") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
-        HorizontalDivider()
+        // Cargo Weight with Unit dropdown
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            // Weight input - accepts only decimal numbers
+            OutlinedTextField(
+                value = state.cargoWeight,
+                onValueChange = { newValue ->
+                    // Only allow digits and decimal point
+                    if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                        viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoWeight(newValue))
+                    }
+                },
+                label = { Text("Cargo Weight") },
+                placeholder = { Text("e.g., 500") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
 
+            // Weight Unit Dropdown
+            ExposedDropdownMenuBox(
+                expanded = showWeightUnitDropdown,
+                onExpandedChange = { showWeightUnitDropdown = it },
+                modifier = Modifier.weight(0.6f)
+            ) {
+                OutlinedTextField(
+                    value = state.weightUnit,
+                    onValueChange = {},
+                    label = { Text("Unit") },
+                    placeholder = { Text("Select") },
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showWeightUnitDropdown) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = showWeightUnitDropdown,
+                    onDismissRequest = { showWeightUnitDropdown = false }
+                ) {
+                    state.weightUnitOptions.forEach { unit ->
+                        DropdownMenuItem(
+                            text = { Text(unit) },
+                            onClick = {
+                                viewModel.sendIntent(CreateTripContract.Intent.UpdateWeightUnit(unit))
+                                showWeightUnitDropdown = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PrioritySection(
+    state: CreateTripContract.State,
+    viewModel: CreateTripViewModel
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        state.priorityOptions.forEach { priority ->
+            FilterChip(
+                selected = state.priority.equals(priority, ignoreCase = true),
+                onClick = { viewModel.sendIntent(CreateTripContract.Intent.UpdatePriority(priority)) },
+                label = { Text(priority.replaceFirstChar { it.uppercaseChar() }) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CustomerSection(
+    state: CreateTripContract.State,
+    viewModel: CreateTripViewModel
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
             value = state.customerName,
             onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCustomerName(it)) },
             label = { Text("Customer Name") },
             placeholder = { Text("e.g., ABC Corporation") },
-            leadingIcon = { Text("👤", modifier = Modifier.padding(start = 12.dp)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -787,29 +799,5 @@ private fun CargoSection(
             label = "Customer Contact",
             placeholder = "Enter 10-digit mobile"
         )
-
-        // Priority selector
-        Column {
-            Text(
-                text = "Priority",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                state.priorityOptions.forEach { priority ->
-                    FilterChip(
-                        selected = state.priority.equals(priority, ignoreCase = true),
-                        onClick = { viewModel.sendIntent(CreateTripContract.Intent.UpdatePriority(priority)) },
-                        label = { Text(priority.replaceFirstChar { it.uppercaseChar() }) }
-                    )
-                }
-            }
-        }
     }
 }
-
