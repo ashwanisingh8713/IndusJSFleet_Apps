@@ -76,6 +76,13 @@ object CreateTripContract {
         val endLocationError: String? = null,
         val departureDateError: String? = null,
         val departureTimeError: String? = null,
+        val arrivalDateError: String? = null,
+        val cargoTypeError: String? = null,
+        val cargoWeightError: String? = null,
+        val weightUnitError: String? = null,
+        val customerNameError: String? = null,
+        val customerContactError: String? = null,
+        val tripPriceError: String? = null,
 
         // Form state
         val isLoading: Boolean = false,
@@ -115,19 +122,73 @@ object CreateTripContract {
                 return role == "owner" || role == "generalmanager"
             }
 
+        /**
+         * Form completion percentage for progress indicator.
+         * Includes: Vehicle, Driver, Route (2), Schedule, Cargo (3), Customer (2), Pricing = 11 fields
+         */
+        val formCompletionPercentage: Int
+            get() {
+                var completed = 0
+                val total = if (canViewTripPrice) 11 else 10
+
+                if (selectedVehicle != null) completed++
+                if (selectedDriver != null) completed++
+                if (startLocation.isNotBlank()) completed++
+                if (endLocation.isNotBlank()) completed++
+                if (departureDate.isNotBlank() && departureTime.isNotBlank()) completed++
+                if (cargoType.isNotBlank()) completed++
+                if (cargoWeight.isNotBlank()) completed++
+                if (weightUnit.isNotBlank()) completed++
+                if (customerName.isNotBlank()) completed++
+                if (customerContact.isNotBlank()) completed++
+                if (canViewTripPrice && tripPrice.isNotBlank()) completed++
+
+                return (completed * 100) / total
+            }
+
+        /**
+         * Checks if all required fields are filled without errors.
+         */
         val isFormValid: Boolean
-            get() = selectedVehicle != null &&
-                    selectedDriver != null &&
-                    startLocation.isNotBlank() &&
-                    endLocation.isNotBlank() &&
-                    departureDate.isNotBlank() &&
-                    departureTime.isNotBlank() &&
-                    vehicleError == null &&
-                    driverError == null &&
-                    startLocationError == null &&
-                    endLocationError == null &&
-                    departureDateError == null &&
-                    departureTimeError == null
+            get() {
+                val baseValid = selectedVehicle != null &&
+                        selectedDriver != null &&
+                        startLocation.isNotBlank() &&
+                        endLocation.isNotBlank() &&
+                        departureDate.isNotBlank() &&
+                        departureTime.isNotBlank() &&
+                        cargoType.isNotBlank() &&
+                        cargoWeight.isNotBlank() &&
+                        weightUnit.isNotBlank() &&
+                        customerName.isNotBlank() &&
+                        customerContact.isNotBlank() &&
+                        vehicleError == null &&
+                        driverError == null &&
+                        startLocationError == null &&
+                        endLocationError == null &&
+                        departureDateError == null &&
+                        departureTimeError == null &&
+                        arrivalDateError == null &&
+                        cargoTypeError == null &&
+                        cargoWeightError == null &&
+                        weightUnitError == null &&
+                        customerNameError == null &&
+                        customerContactError == null &&
+                        tripPriceError == null
+
+                return if (canViewTripPrice) {
+                    baseValid && tripPrice.isNotBlank()
+                } else {
+                    baseValid
+                }
+            }
+
+        /**
+         * Checks if arrival date/time is provided but incomplete.
+         */
+        val hasIncompleteArrival: Boolean
+            get() = (arrivalDate.isNotBlank() && arrivalTime.isBlank()) ||
+                    (arrivalDate.isBlank() && arrivalTime.isNotBlank())
 
         val canSave: Boolean
             get() = isFormValid && !isSaving

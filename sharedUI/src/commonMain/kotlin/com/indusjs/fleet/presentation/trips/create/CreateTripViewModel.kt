@@ -107,21 +107,39 @@ class CreateTripViewModel(
             is Intent.UpdateDepartureDate -> updateDepartureDate(intent.value)
             is Intent.UpdateDepartureTime -> updateDepartureTime(intent.value)
             // Schedule updates - Arrival (optional)
-            is Intent.UpdateArrivalDate -> updateState { copy(arrivalDate = intent.value) }
-            is Intent.UpdateArrivalTime -> updateState { copy(arrivalTime = intent.value) }
+            is Intent.UpdateArrivalDate -> {
+                updateState { copy(arrivalDate = intent.value) }
+                validateArrivalDateTime(intent.value, currentState.arrivalTime)
+            }
+            is Intent.UpdateArrivalTime -> {
+                updateState { copy(arrivalTime = intent.value) }
+                validateArrivalDateTime(currentState.arrivalDate, intent.value)
+            }
 
             // Cargo & Customer updates
-            is Intent.UpdateCargoType -> updateState { copy(cargoType = intent.value) }
+            is Intent.UpdateCargoType -> updateState { copy(cargoType = intent.value, cargoTypeError = null) }
             is Intent.UpdateCargoDescription -> updateState { copy(cargoDescription = intent.value) }
-            is Intent.UpdateCargoWeight -> updateState { copy(cargoWeight = intent.value) }
-            is Intent.UpdateWeightUnit -> updateState { copy(weightUnit = intent.value) }
-            is Intent.UpdateCustomerName -> updateState { copy(customerName = intent.value) }
-            is Intent.UpdateCustomerContact -> updateState { copy(customerContact = intent.value) }
+            is Intent.UpdateCargoWeight -> {
+                updateState { copy(cargoWeight = intent.value) }
+                validateCargoWeight(intent.value)
+            }
+            is Intent.UpdateWeightUnit -> updateState { copy(weightUnit = intent.value, weightUnitError = null) }
+            is Intent.UpdateCustomerName -> {
+                updateState { copy(customerName = intent.value) }
+                validateCustomerName(intent.value)
+            }
+            is Intent.UpdateCustomerContact -> {
+                updateState { copy(customerContact = intent.value) }
+                validateCustomerContact(intent.value)
+            }
             is Intent.UpdatePriority -> updateState { copy(priority = intent.value) }
             is Intent.UpdateNotes -> updateState { copy(notes = intent.value) }
 
             // Pricing updates
-            is Intent.UpdateTripPrice -> updateState { copy(tripPrice = intent.value) }
+            is Intent.UpdateTripPrice -> {
+                updateState { copy(tripPrice = intent.value) }
+                validateTripPrice(intent.value)
+            }
 
             // Actions
             is Intent.CreateTrip -> createTrip()
@@ -131,6 +149,156 @@ class CreateTripViewModel(
             is Intent.ClearError -> updateState { copy(error = null) }
         }
     }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // VALIDATION METHODS
+    // ══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Validates arrival date/time - must be after departure date/time.
+     */
+    private fun validateArrivalDateTime(arrivalDate: String, arrivalTime: String) {
+        // If both arrival fields are empty, no validation needed (optional)
+        if (arrivalDate.isBlank() && arrivalTime.isBlank()) {
+            updateState { copy(arrivalDateError = null) }
+            return
+        }
+
+        // If one is filled but not the other
+        if (arrivalDate.isNotBlank() && arrivalTime.isBlank()) {
+            updateState { copy(arrivalDateError = "Please enter arrival time") }
+            return
+        }
+        if (arrivalDate.isBlank() && arrivalTime.isNotBlank()) {
+            updateState { copy(arrivalDateError = "Please enter arrival date") }
+            return
+        }
+
+        // Both are filled - check if arrival is after departure
+        val state = currentState
+        if (state.departureDate.isBlank() || state.departureTime.isBlank()) {
+            updateState { copy(arrivalDateError = null) }
+            return
+        }
+
+        // Compare dates: format is DD-MM-YYYY HH:mm
+        val isArrivalBeforeDeparture = compareDateTimes(
+            state.departureDate, state.departureTime,
+            arrivalDate, arrivalTime
+        )
+
+        if (isArrivalBeforeDeparture) {
+            updateState { copy(arrivalDateError = "Arrival must be after departure") }
+        } else {
+            updateState { copy(arrivalDateError = null) }
+        }
+    }
+
+    /**
+     * Compares two date-times. Returns true if second is before or equal to first.
+     * Format: DD-MM-YYYY for date, HH:mm for time
+     */
+    private fun compareDateTimes(
+        date1: String, time1: String,
+        date2: String, time2: String
+    ): Boolean {
+        try {
+            // Parse date1 (DD-MM-YYYY)
+            val dateParts1 = date1.split("-")
+            val timeParts1 = time1.split(":")
+            if (dateParts1.size != 3 || timeParts1.size != 2) return false
+
+            val day1 = dateParts1[0].toIntOrNull() ?: return false
+            val month1 = dateParts1[1].toIntOrNull() ?: return false
+            val year1 = dateParts1[2].toIntOrNull() ?: return false
+            val hour1 = timeParts1[0].toIntOrNull() ?: return false
+            val min1 = timeParts1[1].toIntOrNull() ?: return false
+
+            // Parse date2 (DD-MM-YYYY)
+            val dateParts2 = date2.split("-")
+            val timeParts2 = time2.split(":")
+            if (dateParts2.size != 3 || timeParts2.size != 2) return false
+
+            val day2 = dateParts2[0].toIntOrNull() ?: return false
+            val month2 = dateParts2[1].toIntOrNull() ?: return false
+            val year2 = dateParts2[2].toIntOrNull() ?: return false
+            val hour2 = timeParts2[0].toIntOrNull() ?: return false
+            val min2 = timeParts2[1].toIntOrNull() ?: return false
+
+            // Compare: return true if date2 <= date1
+            return when {
+                year2 < year1 -> true
+                year2 > year1 -> false
+                month2 < month1 -> true
+                month2 > month1 -> false
+                day2 < day1 -> true
+                day2 > day1 -> false
+                hour2 < hour1 -> true
+                hour2 > hour1 -> false
+                min2 <= min1 -> true
+                else -> false
+            }
+        } catch (e: Exception) {
+            log.e { "Error comparing dates: ${e.message}" }
+            return false
+        }
+    }
+
+    /**
+     * Validates customer contact - must be 10 digits.
+     */
+    private fun validateCustomerContact(contact: String) {
+        val error = when {
+            contact.isBlank() -> null // Optional field
+            contact.length != 10 -> "Enter valid 10-digit mobile"
+            !contact.all { it.isDigit() } -> "Only digits allowed"
+            !contact.startsWith("6") && !contact.startsWith("7") &&
+            !contact.startsWith("8") && !contact.startsWith("9") -> "Invalid mobile number"
+            else -> null
+        }
+        updateState { copy(customerContactError = error) }
+    }
+
+    /**
+     * Validates cargo weight - must be positive number.
+     */
+    private fun validateCargoWeight(weight: String) {
+        val error = when {
+            weight.isBlank() -> null // Optional field
+            weight.toDoubleOrNull() == null -> "Enter valid weight"
+            weight.toDoubleOrNull()!! <= 0 -> "Weight must be positive"
+            else -> null
+        }
+        updateState { copy(cargoWeightError = error) }
+    }
+
+    /**
+     * Validates customer name - must not be blank.
+     */
+    private fun validateCustomerName(name: String) {
+        val error = when {
+            name.isBlank() -> "Customer name is required"
+            else -> null
+        }
+        updateState { copy(customerNameError = error) }
+    }
+
+    /**
+     * Validates trip price - must be positive number if provided.
+     */
+    private fun validateTripPrice(price: String) {
+        val error = when {
+            price.isBlank() -> null // Optional field
+            price.toDoubleOrNull() == null -> "Enter valid trip price"
+            price.toDoubleOrNull()!! <= 0 -> "Trip price must be positive"
+            else -> null
+        }
+        updateState { copy(tripPriceError = error) }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // DATA LOADING
+    // ══════════════════════════════════════════════════════════════════════════════
 
     private suspend fun loadVehiclesAndDrivers() {
         updateState { copy(isLoadingData = true) }
@@ -166,6 +334,10 @@ class CreateTripViewModel(
             }
         }
     }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // LOCATION HANDLING
+    // ══════════════════════════════════════════════════════════════════════════════
 
     private fun updateStartLocation(value: String) {
         val error = if (value.isBlank()) "Start location is required" else null
@@ -339,6 +511,10 @@ class CreateTripViewModel(
         }
     }
 
+    // ══════════════════════════════════════════════════════════════════════════════
+    // DISTANCE CALCULATION
+    // ══════════════════════════════════════════════════════════════════════════════
+
     /**
      * Calculates the road distance between start and end coordinates using Google Distance Matrix API.
      * Falls back to Haversine formula if API is unavailable.
@@ -425,15 +601,31 @@ class CreateTripViewModel(
         return degrees * kotlin.math.PI / 180.0
     }
 
+    // ══════════════════════════════════════════════════════════════════════════════
+    // SCHEDULE HANDLING
+    // ══════════════════════════════════════════════════════════════════════════════
+
     private fun updateDepartureDate(value: String) {
         val error = if (value.isBlank()) "Departure date is required" else null
         updateState { copy(departureDate = value, departureDateError = error) }
+        // Re-validate arrival if set
+        if (currentState.arrivalDate.isNotBlank()) {
+            validateArrivalDateTime(currentState.arrivalDate, currentState.arrivalTime)
+        }
     }
 
     private fun updateDepartureTime(value: String) {
         val error = if (value.isBlank()) "Departure time is required" else null
         updateState { copy(departureTime = value, departureTimeError = error) }
+        // Re-validate arrival if set
+        if (currentState.arrivalTime.isNotBlank()) {
+            validateArrivalDateTime(currentState.arrivalDate, currentState.arrivalTime)
+        }
     }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // TRIP CREATION
+    // ══════════════════════════════════════════════════════════════════════════════
 
     private suspend fun createTrip() {
         if (!validateForm()) {
@@ -449,7 +641,7 @@ class CreateTripViewModel(
             // Convert to ISO 8601 format for v2 API: YYYY-MM-DDTHH:MM:00Z
             // Backend expects planned_start and planned_end in ISO 8601 format
             val plannedStartIso = convertToIsoDateTime(state.departureDate, state.departureTime)
-            val plannedEndIso = if (state.arrivalDate.isNotBlank()) {
+            val plannedEndIso = if (state.arrivalDate.isNotBlank() && state.arrivalTime.isNotBlank()) {
                 convertToIsoDateTime(state.arrivalDate, state.arrivalTime)
             } else {
                 // If no arrival date, use departure date as planned_end
@@ -487,6 +679,7 @@ class CreateTripViewModel(
                 cargoType = state.cargoType.lowercase(),
                 cargoDescription = state.cargoDescription.takeIf { it.isNotBlank() },
                 cargoLoadingWeight = state.cargoWeight.toDoubleOrNull(),
+                weightUnit = state.weightUnit.takeIf { it.isNotBlank() }?.lowercase(),
                 customerName = state.customerName.takeIf { it.isNotBlank() },
                 customerContact = state.customerContact.takeIf { it.isNotBlank() },
                 priority = state.priority.takeIf { it.isNotBlank() }?.lowercase(),
@@ -512,6 +705,9 @@ class CreateTripViewModel(
         }
     }
 
+    /**
+     * Validates all form fields before submission.
+     */
     private fun validateForm(): Boolean {
         val selectedVehicle = currentState.selectedVehicle
         val selectedDriver = currentState.selectedDriver
@@ -534,6 +730,63 @@ class CreateTripViewModel(
         val endLocationError = if (currentState.endLocation.isBlank()) "End location is required" else null
         val departureDateError = if (currentState.departureDate.isBlank()) "Departure date is required" else null
         val departureTimeError = if (currentState.departureTime.isBlank()) "Departure time is required" else null
+        val cargoTypeError = if (currentState.cargoType.isBlank()) "Please select cargo type" else null
+
+        // Cargo weight - now required
+        val cargoWeightError = currentState.cargoWeight.let { weight ->
+            when {
+                weight.isBlank() -> "Cargo weight is required"
+                weight.toDoubleOrNull() == null -> "Enter valid weight"
+                weight.toDoubleOrNull()!! <= 0 -> "Weight must be positive"
+                else -> null
+            }
+        }
+
+        // Weight unit - now required
+        val weightUnitError = if (currentState.weightUnit.isBlank()) "Please select weight unit" else null
+
+        // Customer name - now required
+        val customerNameError = if (currentState.customerName.isBlank()) "Customer name is required" else null
+
+        // Customer contact - now required
+        val customerContactError = currentState.customerContact.let { contact ->
+            when {
+                contact.isBlank() -> "Customer contact is required"
+                contact.length != 10 -> "Enter valid 10-digit mobile"
+                !contact.all { it.isDigit() } -> "Only digits allowed"
+                !contact.startsWith("6") && !contact.startsWith("7") &&
+                !contact.startsWith("8") && !contact.startsWith("9") -> "Invalid mobile number"
+                else -> null
+            }
+        }
+
+        // Trip price - required for owner/manager
+        val tripPriceError = if (currentState.canViewTripPrice) {
+            currentState.tripPrice.let { price ->
+                when {
+                    price.isBlank() -> "Trip price is required"
+                    price.toDoubleOrNull() == null -> "Enter valid amount"
+                    price.toDoubleOrNull()!! <= 0 -> "Price must be positive"
+                    else -> null
+                }
+            }
+        } else null
+
+        // Validate arrival date if provided
+        val arrivalDateError = when {
+            currentState.arrivalDate.isNotBlank() && currentState.arrivalTime.isBlank() -> "Please enter arrival time"
+            currentState.arrivalDate.isBlank() && currentState.arrivalTime.isNotBlank() -> "Please enter arrival date"
+            currentState.arrivalDate.isNotBlank() && currentState.arrivalTime.isNotBlank() -> {
+                // Check if arrival is after departure
+                if (compareDateTimes(
+                        currentState.departureDate, currentState.departureTime,
+                        currentState.arrivalDate, currentState.arrivalTime
+                    )) {
+                    "Arrival must be after departure"
+                } else null
+            }
+            else -> null
+        }
 
         updateState {
             copy(
@@ -542,17 +795,40 @@ class CreateTripViewModel(
                 startLocationError = startLocationError,
                 endLocationError = endLocationError,
                 departureDateError = departureDateError,
-                departureTimeError = departureTimeError
+                departureTimeError = departureTimeError,
+                cargoTypeError = cargoTypeError,
+                cargoWeightError = cargoWeightError,
+                weightUnitError = weightUnitError,
+                customerNameError = customerNameError,
+                customerContactError = customerContactError,
+                tripPriceError = tripPriceError,
+                arrivalDateError = arrivalDateError
             )
         }
 
-        return vehicleError == null &&
+        val baseValid = vehicleError == null &&
                 driverError == null &&
                 startLocationError == null &&
                 endLocationError == null &&
                 departureDateError == null &&
-                departureTimeError == null
+                departureTimeError == null &&
+                cargoTypeError == null &&
+                cargoWeightError == null &&
+                weightUnitError == null &&
+                customerNameError == null &&
+                customerContactError == null &&
+                arrivalDateError == null
+
+        return if (currentState.canViewTripPrice) {
+            baseValid && tripPriceError == null
+        } else {
+            baseValid
+        }
     }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // UTILITY METHODS
+    // ══════════════════════════════════════════════════════════════════════════════
 
     /**
      * Converts raw date digits (DDMMYYYY) and time (HHMM) to ISO 8601 format.
@@ -577,25 +853,5 @@ class CreateTripViewModel(
 
         // Return ISO 8601 format: YYYY-MM-DDTHH:MM:00Z
         return "$year-$month-${day}T$hours:$minutes:00Z"
-    }
-
-    /**
-     * Formats raw time digits (HHMM) to HH:MM format.
-     * If the input is empty or invalid, returns empty string.
-     */
-    private fun formatTimeForApi(rawTime: String): String {
-        if (rawTime.isBlank()) return ""
-
-        // Raw format is HHMM (4 digits)
-        val digitsOnly = rawTime.filter { it.isDigit() }
-        return if (digitsOnly.length == 4) {
-            val hours = digitsOnly.substring(0, 2)
-            val minutes = digitsOnly.substring(2, 4)
-            "$hours:$minutes" // HH:MM
-        } else if (digitsOnly.length == 2) {
-            "${digitsOnly}:00" // Just hours provided
-        } else {
-            rawTime // Return as-is if not in expected format
-        }
     }
 }

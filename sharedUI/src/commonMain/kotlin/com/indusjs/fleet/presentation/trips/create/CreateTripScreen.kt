@@ -59,7 +59,30 @@ fun CreateTripScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Trip") },
+                title = {
+                    Column {
+                        Text("Create Trip")
+                        // Form completion progress indicator
+                        LinearProgressIndicator(
+                            progress = { state.formCompletionPercentage / 100f },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .padding(top = 4.dp),
+                            color = when {
+                                state.formCompletionPercentage == 100 -> MaterialTheme.colorScheme.primary
+                                state.formCompletionPercentage >= 70 -> MaterialTheme.colorScheme.tertiary
+                                else -> MaterialTheme.colorScheme.outline
+                            },
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        Text(
+                            text = "${state.formCompletionPercentage}% complete",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(
                         onClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateBack) }
@@ -84,33 +107,63 @@ fun CreateTripScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shadowElevation = 8.dp
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateBack) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Cancel")
+                Column {
+                    // Show validation summary if there are errors
+                    if (!state.isFormValid && state.formCompletionPercentage > 0) {
+                        val errorCount = listOfNotNull(
+                            state.vehicleError,
+                            state.driverError,
+                            state.startLocationError,
+                            state.endLocationError,
+                            state.departureDateError,
+                            state.departureTimeError,
+                            state.arrivalDateError,
+                            state.cargoTypeError,
+                            state.cargoWeightError,
+                            state.customerContactError
+                        ).size
+
+                        if (errorCount > 0) {
+                            Text(
+                                text = "⚠️ $errorCount field(s) need attention",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f))
+                                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                            )
+                        }
                     }
 
-                    Button(
-                        onClick = { viewModel.sendIntent(CreateTripContract.Intent.CreateTrip) },
-                        modifier = Modifier.weight(1f),
-                        enabled = state.canSave
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        if (state.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
+                        OutlinedButton(
+                            onClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateBack) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Cancel")
                         }
-                        Text(if (state.isSaving) "Creating..." else "Create Trip")
+
+                        Button(
+                            onClick = { viewModel.sendIntent(CreateTripContract.Intent.CreateTrip) },
+                            modifier = Modifier.weight(1f),
+                            enabled = state.canSave
+                        ) {
+                            if (state.isSaving) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text(if (state.isSaving) "Creating..." else "Create Trip")
+                        }
                     }
                 }
             }
@@ -128,7 +181,7 @@ fun CreateTripScreen(
             ) {
                 // Vehicle & Driver Selection
                 item {
-                    SectionCard(title = "🚗 Vehicle & Driver") {
+                    SectionCard(title = "🚚 Vehicle & Driver") {
                         VehicleDriverSelectionSection(
                             state = state,
                             viewModel = viewModel
@@ -174,24 +227,7 @@ fun CreateTripScreen(
                 // Pricing Section - Only visible to Owner and General Manager
                 if (state.canViewTripPrice) {
                     item {
-                        SectionCard(title = "💰 Pricing") {
-                            OutlinedTextField(
-                                value = state.tripPrice,
-                                onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateTripPrice(it)) },
-                                label = { Text("Trip Price (₹)") },
-                                placeholder = { Text("Enter trip price") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth(),
-                                supportingText = {
-                                    Text(
-                                        text = "Expected Cost + Profit",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            )
-                        }
+                        PricingSection(state = state, viewModel = viewModel)
                     }
                 }
 
@@ -661,7 +697,7 @@ private fun CargoSection(
     var showWeightUnitDropdown by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Cargo Type Dropdown
+        // Cargo Type Dropdown with error support
         ExposedDropdownMenuBox(
             expanded = showCargoTypeDropdown,
             onExpandedChange = { showCargoTypeDropdown = it }
@@ -672,6 +708,8 @@ private fun CargoSection(
                 label = { Text("Cargo Type *") },
                 placeholder = { Text("Select cargo type") },
                 readOnly = true,
+                isError = state.cargoTypeError != null,
+                supportingText = state.cargoTypeError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCargoTypeDropdown) },
                 modifier = Modifier.fillMaxWidth().menuAnchor()
             )
@@ -701,13 +739,13 @@ private fun CargoSection(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Cargo Weight with Unit dropdown
+        // Cargo Weight with Unit dropdown and error support
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.Top
         ) {
-            // Weight input - accepts only decimal numbers
+            // Weight input - accepts only decimal numbers - NOW REQUIRED
             OutlinedTextField(
                 value = state.cargoWeight,
                 onValueChange = { newValue ->
@@ -716,14 +754,16 @@ private fun CargoSection(
                         viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoWeight(newValue))
                     }
                 },
-                label = { Text("Cargo Weight") },
+                label = { Text("Cargo Weight *") },
                 placeholder = { Text("e.g., 500") },
+                isError = state.cargoWeightError != null,
+                supportingText = state.cargoWeightError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
                 modifier = Modifier.weight(1f)
             )
 
-            // Weight Unit Dropdown
+            // Weight Unit Dropdown - NOW REQUIRED
             ExposedDropdownMenuBox(
                 expanded = showWeightUnitDropdown,
                 onExpandedChange = { showWeightUnitDropdown = it },
@@ -732,9 +772,10 @@ private fun CargoSection(
                 OutlinedTextField(
                     value = state.weightUnit,
                     onValueChange = {},
-                    label = { Text("Unit") },
+                    label = { Text("Unit *") },
                     placeholder = { Text("Select") },
                     readOnly = true,
+                    isError = state.weightUnitError != null,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showWeightUnitDropdown) },
                     modifier = Modifier.fillMaxWidth().menuAnchor()
                 )
@@ -784,20 +825,130 @@ private fun CustomerSection(
     viewModel: CreateTripViewModel
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Customer Name - NOW REQUIRED
         OutlinedTextField(
             value = state.customerName,
             onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCustomerName(it)) },
-            label = { Text("Customer Name") },
+            label = { Text("Customer Name *") },
             placeholder = { Text("e.g., ABC Corporation") },
             singleLine = true,
+            isError = state.customerNameError != null,
+            supportingText = state.customerNameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
             modifier = Modifier.fillMaxWidth()
         )
 
+        // Customer Contact - NOW REQUIRED
         FleetMobileField(
             rawValue = state.customerContact,
             onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCustomerContact(it)) },
-            label = "Customer Contact",
-            placeholder = "Enter 10-digit mobile"
+            label = "Customer Contact *",
+            placeholder = "Enter 10-digit mobile",
+            isError = state.customerContactError != null,
+            errorMessage = state.customerContactError
         )
+    }
+}
+
+/**
+ * Enhanced Pricing Section with compact UI
+ */
+@Composable
+private fun PricingSection(
+    state: CreateTripContract.State,
+    viewModel: CreateTripViewModel
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            // Compact header with title and info in single row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "💰",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Trip Pricing *",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                ) {
+                    Text(
+                        text = "Cost + Profit",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Info banner - compact
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(6.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📊",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Pricing helps track Profit & Loss in financial reports",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Price input - compact with inline error
+            OutlinedTextField(
+                value = state.tripPrice,
+                onValueChange = { newValue ->
+                    // Only allow digits and decimal point
+                    if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                        viewModel.sendIntent(CreateTripContract.Intent.UpdateTripPrice(newValue))
+                    }
+                },
+                label = { Text("Total Amount (₹) *") },
+                placeholder = { Text("e.g., 25000") },
+                singleLine = true,
+                isError = state.tripPriceError != null,
+                supportingText = if (state.tripPriceError != null) {
+                    { Text(state.tripPriceError!!, color = MaterialTheme.colorScheme.error) }
+                } else null,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                leadingIcon = {
+                    Text(
+                        text = "₹",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 12.dp)
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
