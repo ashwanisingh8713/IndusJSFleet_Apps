@@ -51,6 +51,11 @@ sealed interface FleetRoute : NavKey {
 
     @Serializable data object TripCostEntry : FleetRoute
     @Serializable data object MaintenanceCostEntry : FleetRoute
+    @Serializable data object DriverCostEntry : FleetRoute
+
+    // ==================== Alerts Routes ====================
+
+    @Serializable data object AlertsList : FleetRoute
 
     // ==================== Other Routes ====================
 

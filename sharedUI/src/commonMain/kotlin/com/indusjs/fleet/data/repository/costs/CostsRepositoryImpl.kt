@@ -296,6 +296,26 @@ class CostsRepositoryImpl(
         }
     }
 
+    override suspend fun bulkCreateDriverCosts(
+        driverId: String,
+        request: com.indusjs.fleet.data.model.driver.BulkCreateDriverCostsRequest
+    ): Result<Int> {
+        return try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.bulkCreateDriverCosts(token, driverId, request)
+
+            if (response.success) {
+                Result.Success(response.data?.created ?: request.costs.size)
+            } else {
+                Result.Error(ApiException(response.message ?: "Failed to create driver costs"))
+            }
+        } catch (e: AuthException) {
+            Result.Error(e)
+        } catch (e: Exception) {
+            Result.Error(NetworkException(ApiErrorHandler.extractErrorMessage(e)))
+        }
+    }
+
     private suspend fun requireAuthToken(): String =
         userLocalDataSource.getAuthToken() ?: throw AuthException.unauthenticated()
 }

@@ -97,6 +97,10 @@ class DashboardViewModel(
             is Intent.NavigateToAddVehicle -> sendEffect(Effect.NavigateToAddVehicle)
             is Intent.NavigateToAddDriver -> sendEffect(Effect.NavigateToAddDriver)
             is Intent.NavigateToCreateTrip -> sendEffect(Effect.NavigateToCreateTrip)
+            is Intent.NavigateToAddDriverCost -> sendEffect(Effect.NavigateToAddDriverCost)
+
+            // Navigation to Alerts list
+            is Intent.NavigateToAlertsList -> sendEffect(Effect.NavigateToAlertsList)
         }
     }
 

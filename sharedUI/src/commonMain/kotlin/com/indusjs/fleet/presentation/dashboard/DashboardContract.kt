@@ -128,6 +128,10 @@ object DashboardContract {
         data object NavigateToAddVehicle : Intent
         data object NavigateToAddDriver : Intent
         data object NavigateToCreateTrip : Intent
+        data object NavigateToAddDriverCost : Intent
+
+        // Navigation to Alerts list
+        data object NavigateToAlertsList : Intent
 
         // Notifications
         data object NavigateToNotifications : Intent
@@ -152,5 +156,9 @@ object DashboardContract {
         data object NavigateToAddVehicle : Effect
         data object NavigateToAddDriver : Effect
         data object NavigateToCreateTrip : Effect
+        data object NavigateToAddDriverCost : Effect
+
+        // Navigation to Alerts list
+        data object NavigateToAlertsList : Effect
     }
 }

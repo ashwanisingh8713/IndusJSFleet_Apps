@@ -54,3 +54,28 @@ class GetMaintenanceCostTypesUseCase(
     }
 }
 
+/**
+ * Use case to get driver cost types from local cache.
+ * Returns cached cost types or fallback hardcoded types if not cached.
+ */
+@Inject
+class GetDriverCostTypesUseCase(
+    private val costTypesRepository: CostTypesRepository
+) {
+    /**
+     * Get driver cost types as a flat list of id to name pairs.
+     * Falls back to hardcoded types if cache is empty.
+     */
+    suspend operator fun invoke(): List<Pair<String, String>> {
+        return costTypesRepository.getDriverCostTypesFlat()
+    }
+
+    /**
+     * Get full driver cost types category with groups.
+     * Returns null if not cached.
+     */
+    suspend fun getGrouped(): CostTypeCategoryDto? {
+        return costTypesRepository.getDriverCostTypes()
+    }
+}
+

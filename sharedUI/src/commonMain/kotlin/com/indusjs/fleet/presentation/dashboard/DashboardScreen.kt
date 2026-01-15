@@ -153,7 +153,9 @@ fun DashboardScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToAddVehicle: () -> Unit = {},
     onNavigateToAddDriver: () -> Unit = {},
-    onNavigateToCreateTrip: () -> Unit = {}
+    onNavigateToCreateTrip: () -> Unit = {},
+    onNavigateToAddDriverCost: () -> Unit = {},
+    onNavigateToAlertsList: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -174,6 +176,8 @@ fun DashboardScreen(
                 is DashboardContract.Effect.NavigateToAddVehicle -> onNavigateToAddVehicle()
                 is DashboardContract.Effect.NavigateToAddDriver -> onNavigateToAddDriver()
                 is DashboardContract.Effect.NavigateToCreateTrip -> onNavigateToCreateTrip()
+                is DashboardContract.Effect.NavigateToAddDriverCost -> onNavigateToAddDriverCost()
+                is DashboardContract.Effect.NavigateToAlertsList -> onNavigateToAlertsList()
                 is DashboardContract.Effect.ShowSnackbar -> {
                     snackbarHostState.showSnackbar(effect.message)
                 }
@@ -411,7 +415,9 @@ fun DashboardScreen(
                                 onAddVehicleCostClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddVehicleCost) },
                                 onAddVehicleClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddVehicle) },
                                 onAddDriverClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddDriver) },
-                                onCreateTripClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToCreateTrip) }
+                                onCreateTripClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToCreateTrip) },
+                                onAddDriverCostClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAddDriverCost) },
+                                onAlertsListClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToAlertsList) }
                             )
                         }
                     }
@@ -671,7 +677,9 @@ private fun DashboardContent(
     onAddVehicleCostClick: () -> Unit,
     onAddVehicleClick: () -> Unit,
     onAddDriverClick: () -> Unit,
-    onCreateTripClick: () -> Unit
+    onCreateTripClick: () -> Unit,
+    onAddDriverCostClick: () -> Unit,
+    onAlertsListClick: () -> Unit
     ) {
         // Determine if Cost Overview should be shown
         // Only show for Owner and General Manager (financial access)
@@ -685,7 +693,7 @@ private fun DashboardContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 0. Fleet Overview Hero Card - Always show at top
+        // 1. Fleet Overview Hero Card - Always show at top
         item {
             FleetOverviewHeroCard(
                 vehicleStatus = vehicleStatus,
@@ -697,21 +705,7 @@ private fun DashboardContent(
             )
         }
 
-        // 1. Quick Actions Section - Right after Fleet Overview
-        item {
-            QuickActionsSection(
-                onVehiclesClick = onVehiclesClick,
-                onDriversClick = onDriversClick,
-                onTripsClick = onTripsClick,
-                onMapsClick = onMapsClick,
-                onAddTripCostClick = onAddTripCostClick,
-                onAddVehicleCostClick = onAddVehicleCostClick,
-                hasVehicles = vehicleStatus.total > 0,
-                hasTrips = tripSummary.total > 0
-            )
-        }
-
-        // 2. Cost Overview Section with Filter - only show for onboarding or when has cost data
+        // 2. Financial Overview Section (Cost Overview) - only show for roles with financial access
         if (shouldShowCostOverview) {
             item {
                 CostOverviewSection(
@@ -729,54 +723,46 @@ private fun DashboardContent(
             }
         }
 
-        // 3. Pending Payments Section - Only show for roles with financial access
-        // Don't show during loading to avoid flickering when navigating back
-        if (hasFinancialAccess && hasPendingPaymentsLoaded && tripSummary.total > 0 && (pendingPayments.isNotEmpty() || totalPendingAmount > 0)) {
-            item {
-                PendingPaymentsSection(
-                    payments = pendingPayments,
-                    totalPending = totalPendingAmount,
-                    isLoading = false  // Never show loading state
-                )
-            }
-        }
-
-        // 4. Vehicle Status Section
-        item {
-            VehicleStatusSection(
-                vehicleStatus = vehicleStatus,
-                onClick = onVehiclesClick,
-                onAddVehicleClick = onAddVehicleClick
-            )
-        }
-
-        // 5. Trips Section
+        // 3. Trips Section
         item {
             TripsStatusSection(
                 tripSummary = tripSummary,
                 ongoingTrips = stats.liveStatus.ongoingTrips,
                 onClick = onTripsClick,
-                onCreateTripClick = onCreateTripClick
+                onCreateTripClick = onCreateTripClick,
+                onAddTripCostClick = onAddTripCostClick
             )
         }
 
-        // 6. Alerts Section - Always show to display alert status
+        // 4. Alerts Section - Always show to display alert status
         item {
             AlertsSection(
                 alerts = stats.alerts,
                 documentStats = stats.documentStats,
                 alertsSummary = alertsSummary,
                 vehicleStatus = vehicleStatus,
-                onAlertDismiss = onAlertDismiss
+                onAlertDismiss = onAlertDismiss,
+                onViewAllClick = onAlertsListClick
             )
         }
 
-        // 7. Drivers Section
+        // 5. Vehicle Status Section
+        item {
+            VehicleStatusSection(
+                vehicleStatus = vehicleStatus,
+                onClick = onVehiclesClick,
+                onAddVehicleClick = onAddVehicleClick,
+                onAddMaintenanceCostClick = onAddVehicleCostClick
+            )
+        }
+
+        // 6. Drivers Section
         item {
             DriversStatusSection(
                 driverStatus = driverStatus,
                 onClick = onDriversClick,
-                onAddDriverClick = onAddDriverClick
+                onAddDriverClick = onAddDriverClick,
+                onAddDriverCostClick = onAddDriverCostClick
             )
         }
     }
@@ -2458,10 +2444,11 @@ private fun SectionEmptyState(
 private fun VehicleStatusSection(
     vehicleStatus: VehicleStatusSummary,
     onClick: () -> Unit,
-    onAddVehicleClick: () -> Unit
+    onAddVehicleClick: () -> Unit,
+    onAddMaintenanceCostClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -2470,13 +2457,16 @@ private fun VehicleStatusSection(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Enhanced header with icon container
+            // Enhanced header with icon container and View All button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable(onClick = onClick)
+                ) {
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -2505,12 +2495,22 @@ private fun VehicleStatusSection(
                         )
                     }
                 }
-                Icon(
-                    painter = painterResource(Res.drawable.ic_chevron_right),
-                    contentDescription = "View all",
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // View All text button
+                TextButton(onClick = onClick) {
+                    Text(
+                        text = "View All",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_chevron_right),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
             if (vehicleStatus.total == 0) {
@@ -2546,6 +2546,39 @@ private fun VehicleStatusSection(
                         color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.weight(1f)
                     )
+                }
+
+                // Action buttons row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onAddVehicleClick,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Vehicle", style = MaterialTheme.typography.labelSmall)
+                    }
+                    OutlinedButton(
+                        onClick = onAddMaintenanceCostClick,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Cost", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }
@@ -2595,10 +2628,11 @@ private fun TripsStatusSection(
     tripSummary: TripSummary,
     ongoingTrips: List<OngoingTrip>,
     onClick: () -> Unit,
-    onCreateTripClick: () -> Unit
+    onCreateTripClick: () -> Unit,
+    onAddTripCostClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -2607,13 +2641,16 @@ private fun TripsStatusSection(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Enhanced header with icon container
+            // Enhanced header with icon container and View All button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable(onClick = onClick)
+                ) {
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -2642,12 +2679,22 @@ private fun TripsStatusSection(
                         )
                     }
                 }
-                Icon(
-                    painter = painterResource(Res.drawable.ic_chevron_right),
-                    contentDescription = "View all",
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // View All text button
+                TextButton(onClick = onClick) {
+                    Text(
+                        text = "View All",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_chevron_right),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
             if (tripSummary.total == 0) {
@@ -2701,6 +2748,39 @@ private fun TripsStatusSection(
                         OngoingTripItem(trip = trip)
                     }
                 }
+
+                // Action buttons row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onCreateTripClick,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Create Trip", style = MaterialTheme.typography.labelSmall)
+                    }
+                    OutlinedButton(
+                        onClick = onAddTripCostClick,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Cost", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
             }
         }
     }
@@ -2715,7 +2795,8 @@ private fun AlertsSection(
     documentStats: DocumentStats?,
     alertsSummary: AlertsSummary,
     vehicleStatus: VehicleStatusSummary,
-    onAlertDismiss: (String) -> Unit
+    onAlertDismiss: (String) -> Unit,
+    onViewAllClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -2727,7 +2808,7 @@ private fun AlertsSection(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header
+            // Header with View All button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -2745,14 +2826,44 @@ private fun AlertsSection(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                // Alert count badge - use alertsSummary if available
-                val alertCount = if (alertsSummary.totalAlerts > 0) alertsSummary.totalAlerts else alerts.size
-                Text(
-                    text = "$alertCount",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.error
-                )
+                // View All button and Alert count
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Alert count badge - use alertsSummary if available
+                    val alertCount = if (alertsSummary.totalAlerts > 0) alertsSummary.totalAlerts else alerts.size
+                    if (alertCount > 0) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            Text(
+                                text = "$alertCount",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    // View All text button
+                    TextButton(onClick = onViewAllClick) {
+                        Text(
+                            text = "View All",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_chevron_right),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
 
             // Enhanced Alerts Summary with detailed counts
@@ -3122,10 +3233,11 @@ private fun CleanAlertItem(
 private fun DriversStatusSection(
     driverStatus: DriverStatusSummary,
     onClick: () -> Unit,
-    onAddDriverClick: () -> Unit
+    onAddDriverClick: () -> Unit,
+    onAddDriverCostClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -3134,13 +3246,16 @@ private fun DriversStatusSection(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Enhanced header with icon container
+            // Enhanced header with icon container and View All button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable(onClick = onClick)
+                ) {
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -3169,12 +3284,22 @@ private fun DriversStatusSection(
                         )
                     }
                 }
-                Icon(
-                    painter = painterResource(Res.drawable.ic_chevron_right),
-                    contentDescription = "View all",
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // View All text button
+                TextButton(onClick = onClick) {
+                    Text(
+                        text = "View All",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_chevron_right),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
             if (driverStatus.total == 0) {
@@ -3210,6 +3335,39 @@ private fun DriversStatusSection(
                         color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.weight(1f)
                     )
+                }
+
+                // Action buttons row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onAddDriverClick,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Driver", style = MaterialTheme.typography.labelSmall)
+                    }
+                    OutlinedButton(
+                        onClick = onAddDriverCostClick,
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Cost", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }

@@ -77,6 +77,12 @@ interface CostsRemoteDataSource : RemoteDataSource {
         startDate: String?,
         endDate: String?
     ): com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse
+
+    suspend fun bulkCreateDriverCosts(
+        token: String,
+        driverId: String,
+        request: com.indusjs.fleet.data.model.driver.BulkCreateDriverCostsRequest
+    ): com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse
 }
 
 /**
@@ -609,6 +615,48 @@ class CostsRemoteDataSourceImpl(
         } catch (e: Exception) {
             log.e(e) { "Failed to parse driver costs response: ${e.message}" }
             com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse(
+                success = false,
+                message = "Failed to parse response: ${e.message}"
+            )
+        }
+    }
+
+    override suspend fun bulkCreateDriverCosts(
+        token: String,
+        driverId: String,
+        request: com.indusjs.fleet.data.model.driver.BulkCreateDriverCostsRequest
+    ): com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse {
+        return try {
+            log.d { "Creating bulk driver costs for driver: $driverId" }
+            val response: HttpResponse = httpClient.post("$baseUrl/drivers/$driverId/costs/bulk") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(json.encodeToString(request))
+            }
+            handleBulkDriverCostsResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to create bulk driver costs: ${e.message}" }
+            com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse(
+                success = false,
+                message = e.message ?: "Network error"
+            )
+        }
+    }
+
+    private suspend fun handleBulkDriverCostsResponse(response: HttpResponse): com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse {
+        val responseBody = response.bodyAsText()
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse>(responseBody)
+            } else {
+                com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to parse bulk driver costs response: ${e.message}" }
+            com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse(
                 success = false,
                 message = "Failed to parse response: ${e.message}"
             )

@@ -116,4 +116,16 @@ interface CostsRepository : Repository {
         startDate: String? = null,
         endDate: String? = null
     ): Result<DriverCostsListDto>
+
+    /**
+     * Bulk create driver costs for a specific driver.
+     * POST /drivers/{driver_id}/costs/bulk
+     *
+     * @param driverId Driver ID
+     * @param request Bulk create request containing list of costs
+     */
+    suspend fun bulkCreateDriverCosts(
+        driverId: String,
+        request: com.indusjs.fleet.data.model.driver.BulkCreateDriverCostsRequest
+    ): Result<Int>
 }

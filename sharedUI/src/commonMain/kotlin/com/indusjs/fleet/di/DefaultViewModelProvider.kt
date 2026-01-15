@@ -43,6 +43,7 @@ import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.domain.usecase.costs.GetMaintenanceCostTypesUseCase
+import com.indusjs.fleet.domain.usecase.costs.GetDriverCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.GetTripCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.InitializeCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetAlertsStatusUseCase
@@ -71,6 +72,8 @@ import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
 import com.indusjs.fleet.presentation.auth.LoginViewModel
 import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryViewModel
 import com.indusjs.fleet.presentation.trips.cost.TripCostEntryViewModel
+import com.indusjs.fleet.presentation.drivers.cost.DriverCostEntryViewModel
+import com.indusjs.fleet.presentation.alerts.AlertsListViewModel
 import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
 import com.indusjs.fleet.presentation.drivers.DriversViewModel
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
@@ -258,6 +261,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val initializeCostTypesUseCase by lazy { InitializeCostTypesUseCase(costTypesRepository) }
     private val getTripCostTypesUseCase by lazy { GetTripCostTypesUseCase(costTypesRepository) }
     private val getMaintenanceCostTypesUseCase by lazy { GetMaintenanceCostTypesUseCase(costTypesRepository) }
+    private val getDriverCostTypesUseCase by lazy { GetDriverCostTypesUseCase(costTypesRepository) }
 
     // App Initializer - handles one-time initialization tasks
     val appInitializer: AppInitializer by lazy {
@@ -389,6 +393,19 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         costsRepository,
         costTypesRepository,
         getMaintenanceCostTypesUseCase
+    )
+
+    override fun driverCostEntryViewModel() = DriverCostEntryViewModel(
+        dispatcherProvider,
+        driverRepository,
+        costsRepository,
+        costTypesRepository,
+        getDriverCostTypesUseCase
+    )
+
+    override fun alertsListViewModel() = AlertsListViewModel(
+        dispatcherProvider,
+        getAlertsStatusUseCase
     )
 
     // Reports ViewModels

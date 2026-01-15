@@ -72,6 +72,10 @@ interface ViewModelProvider {
     // Cost Entry ViewModels
     fun tripCostEntryViewModel(): TripCostEntryViewModel
     fun maintenanceCostEntryViewModel(): MaintenanceCostEntryViewModel
+    fun driverCostEntryViewModel(): com.indusjs.fleet.presentation.drivers.cost.DriverCostEntryViewModel
+
+    // Alerts ViewModels
+    fun alertsListViewModel(): com.indusjs.fleet.presentation.alerts.AlertsListViewModel
 
     // Reports ViewModels
     fun reportsViewModel(): ReportsViewModel

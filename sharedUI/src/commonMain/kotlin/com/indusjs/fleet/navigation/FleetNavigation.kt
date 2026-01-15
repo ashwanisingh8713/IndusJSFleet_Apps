@@ -9,6 +9,8 @@ import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.presentation.auth.LoginScreen
 import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryScreen
 import com.indusjs.fleet.presentation.trips.cost.TripCostEntryScreen
+import com.indusjs.fleet.presentation.drivers.cost.DriverCostEntryScreen
+import com.indusjs.fleet.presentation.alerts.AlertsListScreen
 import com.indusjs.fleet.presentation.dashboard.DashboardScreen
 import com.indusjs.fleet.presentation.drivers.DriversScreen
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverScreen
@@ -102,7 +104,9 @@ fun fleetEntryProvider(
                 onNavigateToAddVehicleCost = { backStack.add(FleetRoute.MaintenanceCostEntry) },
                 onNavigateToAddVehicle = { backStack.add(FleetRoute.AddVehicle) },
                 onNavigateToAddDriver = { backStack.add(FleetRoute.CreateDriver) },
-                onNavigateToCreateTrip = { backStack.add(FleetRoute.CreateTrip) }
+                onNavigateToCreateTrip = { backStack.add(FleetRoute.CreateTrip) },
+                onNavigateToAddDriverCost = { backStack.add(FleetRoute.DriverCostEntry) },
+                onNavigateToAlertsList = { backStack.add(FleetRoute.AlertsList) }
             )
         }
 
@@ -255,6 +259,22 @@ fun fleetEntryProvider(
         is FleetRoute.MaintenanceCostEntry -> NavEntry(route) {
             val viewModel = rememberViewModel { maintenanceCostEntryViewModel() }
             MaintenanceCostEntryScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.DriverCostEntry -> NavEntry(route) {
+            val viewModel = rememberViewModel { driverCostEntryViewModel() }
+            DriverCostEntryScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.AlertsList -> NavEntry(route) {
+            val viewModel = rememberViewModel { alertsListViewModel() }
+            AlertsListScreen(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
