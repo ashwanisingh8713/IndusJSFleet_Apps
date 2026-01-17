@@ -1,7 +1,7 @@
 package com.indusjs.fleet.data.repository.vehicle
 
 import com.indusjs.error.exception.ApiException
-import com.indusjs.error.exception.AuthException
+import com.indusjs.fleet.core.auth.AuthTokenHelper
 import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
@@ -439,11 +439,12 @@ class VehicleRepositoryImpl(
     }
 
     /**
-     * Retrieves auth token or throws AuthException.
+     * Retrieves auth token or emits session expired event and throws AuthException.
      */
     private suspend fun requireAuthToken(): String {
-        return userLocalDataSource.getAuthToken()
-            ?: throw AuthException.unauthenticated()
+        return AuthTokenHelper.requireAuthTokenOrRedirect {
+            userLocalDataSource.getAuthToken()
+        }
     }
 }
 

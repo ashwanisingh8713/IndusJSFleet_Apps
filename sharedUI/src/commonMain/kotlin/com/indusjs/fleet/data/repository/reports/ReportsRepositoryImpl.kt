@@ -1,8 +1,8 @@
 package com.indusjs.fleet.data.repository.reports
 
 import co.touchlab.kermit.Logger
-import com.indusjs.error.exception.AuthException
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.core.auth.AuthTokenHelper
 import com.indusjs.fleet.data.datasource.reports.ReportsRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.model.reports.*
@@ -23,11 +23,12 @@ class ReportsRepositoryImpl(
     private val log = Logger.withTag("ReportsRepositoryImpl")
 
     /**
-     * Retrieves auth token or throws AuthException.
+     * Retrieves auth token or emits session expired event and throws AuthException.
      */
     private suspend fun requireAuthToken(): String {
-        return userLocalDataSource.getAuthToken()
-            ?: throw AuthException.unauthenticated()
+        return AuthTokenHelper.requireAuthTokenOrRedirect {
+            userLocalDataSource.getAuthToken()
+        }
     }
 
     override suspend fun getTripProfitLoss(tripId: Int): Result<TripProfitLoss> {

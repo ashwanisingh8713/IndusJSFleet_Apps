@@ -2,7 +2,7 @@ package com.indusjs.fleet.data.repository.team
 
 import co.touchlab.kermit.Logger
 import com.indusjs.error.exception.ApiException
-import com.indusjs.error.exception.AuthException
+import com.indusjs.fleet.core.auth.AuthTokenHelper
 import com.indusjs.fleet.data.database.entity.TeamMemberEntity
 import com.indusjs.fleet.data.datasource.team.TeamLocalDataSource
 import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSource
@@ -213,11 +213,12 @@ class TeamRepositoryImpl(
     }
 
     /**
-     * Retrieves auth token or throws AuthException.
+     * Retrieves auth token or emits session expired event and throws AuthException.
      */
     private suspend fun requireAuthToken(): String {
-        return userLocalDataSource.getAuthToken()
-            ?: throw AuthException.unauthenticated()
+        return AuthTokenHelper.requireAuthTokenOrRedirect {
+            userLocalDataSource.getAuthToken()
+        }
     }
 
     // ==================== Extension Functions ====================

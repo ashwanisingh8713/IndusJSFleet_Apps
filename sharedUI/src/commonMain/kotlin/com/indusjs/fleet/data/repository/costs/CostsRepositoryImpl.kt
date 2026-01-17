@@ -1,8 +1,9 @@
 package com.indusjs.fleet.data.repository.costs
 
 import com.indusjs.error.exception.ApiException
-import com.indusjs.error.exception.NetworkException
 import com.indusjs.error.exception.AuthException
+import com.indusjs.error.exception.NetworkException
+import com.indusjs.fleet.core.auth.AuthTokenHelper
 import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.costs.CostsRemoteDataSource
@@ -317,5 +318,5 @@ class CostsRepositoryImpl(
     }
 
     private suspend fun requireAuthToken(): String =
-        userLocalDataSource.getAuthToken() ?: throw AuthException.unauthenticated()
+        AuthTokenHelper.requireAuthTokenOrRedirect { userLocalDataSource.getAuthToken() }
 }

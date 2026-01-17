@@ -2,8 +2,8 @@ package com.indusjs.fleet.data.repository.customer
 
 import co.touchlab.kermit.Logger
 import com.indusjs.error.exception.ApiException
-import com.indusjs.error.exception.AuthException
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.core.auth.AuthTokenHelper
 import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.customer.CustomerLocalDataSource
 import com.indusjs.fleet.data.datasource.customer.CustomerRemoteDataSource
@@ -452,7 +452,8 @@ class CustomerRepositoryImpl(
     }
 
     private suspend fun requireAuthToken(): String {
-        return userLocalDataSource.getAuthToken()
-            ?: throw AuthException.unauthenticated()
+        return AuthTokenHelper.requireAuthTokenOrRedirect {
+            userLocalDataSource.getAuthToken()
+        }
     }
 }
