@@ -137,8 +137,8 @@ class DriverMapper {
     }
 
     /**
-     * Format Long timestamp to ISO date string.
-     * Returns format: YYYY-MM-DDTHH:MM:SSZ
+     * Format Long timestamp to ISO 8601 date string for API.
+     * API expects format: YYYY-MM-DDTHH:MM:SSZ (e.g., "2026-12-31T00:00:00Z")
      */
     private fun formatTimestamp(timestamp: Long): String? {
         if (timestamp <= 0) return null
@@ -151,10 +151,9 @@ class DriverMapper {
             val dayOfMonth = (remainingDays % 30) + 1
             val monthStr = months.coerceIn(1, 12).toString().padStart(2, '0')
             val dayStr = dayOfMonth.coerceIn(1, 28).toString().padStart(2, '0')
-            "$years-$monthStr-${dayStr}T00:00:00Z"
+            "$years-$monthStr-${dayStr}T00:00:00Z"  // ISO 8601 format for API
         } catch (_: Exception) {
             null
         }
     }
 }
-

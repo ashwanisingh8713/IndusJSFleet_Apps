@@ -20,7 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.ui.FleetDateFieldCompact
+import com.indusjs.datetimepicker.FleetDateTimePicker
+import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.domain.entity.reports.TripProfitLoss
 import com.indusjs.fleet.domain.entity.trip.Trip
@@ -341,21 +342,26 @@ private fun DateRangeCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                FleetDateFieldCompact(
-                    rawValue = startDate,
-                    onRawValueChange = onStartDateChange,
+                FleetDateTimePicker(
+                    date = startDate,
+                    time = "",
+                    onDateTimeChange = { newDate, _ -> onStartDateChange(newDate) },
                     label = "From Date",
-                    modifier = Modifier.weight(1f)
+                    mode = PickerMode.DATE_ONLY,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                FleetDateFieldCompact(
-                    rawValue = endDate,
-                    onRawValueChange = onEndDateChange,
+                FleetDateTimePicker(
+                    date = endDate,
+                    time = "",
+                    onDateTimeChange = { newDate, _ -> onEndDateChange(newDate) },
                     label = "To Date",
-                    modifier = Modifier.weight(1f)
+                    mode = PickerMode.DATE_ONLY,
+                    minDate = startDate.ifBlank { null },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -743,4 +749,3 @@ private fun MiniKPI(
         )
     }
 }
-

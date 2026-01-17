@@ -31,6 +31,7 @@ import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.DateInputField
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.ui.ClickablePhoneRow
 import com.indusjs.fleet.core.ui.caretaker.CaretakerInfoCard
 import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
 import com.indusjs.fleet.core.ui.history.HistoryTabContent
@@ -655,6 +656,8 @@ private fun AssignedDriverSection(vehicle: Vehicle) {
         ?: vehicle.assignedDriverName?.takeIf { it.isNotBlank() }
         ?: "Driver #${vehicle.assignedDriverId}"
 
+    val driverMobile = vehicle.assignedDriver?.mobile
+
     EnhancedSectionCard(
         title = "Assigned Driver",
         icon = "👤"
@@ -673,12 +676,22 @@ private fun AssignedDriverSection(vehicle: Vehicle) {
                 }
             }
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = driverName,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = driverName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                // Show driver mobile with call icon if available
+                driverMobile?.takeIf { it.isNotBlank() }?.let { mobile ->
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ClickablePhoneRow(
+                        phoneNumber = mobile,
+                        label = null,
+                        icon = "📱"
+                    )
+                }
+            }
             FilledTonalButton(
                 onClick = { /* TODO: View driver */ },
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)

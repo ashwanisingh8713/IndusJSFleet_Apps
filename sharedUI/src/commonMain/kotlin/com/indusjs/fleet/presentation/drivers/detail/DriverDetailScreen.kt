@@ -26,6 +26,7 @@ import com.indusjs.fleet.core.ui.FleetEmailField
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.FleetStatusBadge
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.ui.ClickablePhoneRow
 import com.indusjs.fleet.core.ui.caretaker.CaretakerInfoCard
 import com.indusjs.fleet.core.ui.caretaker.CaretakerSectionCard
 import com.indusjs.fleet.core.ui.convertDdMmYyyyToIso
@@ -295,7 +296,12 @@ private fun DriverDetailTabs(
     viewModel: DriverDetailViewModel,
     onStatusClick: () -> Unit = {}
 ) {
-    val tabs = DriverDetailTab.entries
+    // Filter out Costs tab if user doesn't have permission
+    val tabs = if (state.canViewCosts) {
+        DriverDetailTab.entries
+    } else {
+        DriverDetailTab.entries.filter { it != DriverDetailTab.COSTS }
+    }
     var selectedTab by remember { mutableStateOf(0) }
 
     // Load history when switching to history tab
@@ -331,7 +337,7 @@ private fun DriverDetailTabs(
         }
 
         // Tab Content
-        when (tabs[selectedTab]) {
+        when (tabs.getOrNull(selectedTab) ?: DriverDetailTab.OVERVIEW) {
             DriverDetailTab.OVERVIEW -> DriverOverviewContent(
                 state = state,
                 viewModel = viewModel,
@@ -1092,11 +1098,23 @@ private fun QuickStatItem(
 @Composable
 private fun ContactSection(driver: Driver) {
     SectionCard(title = "📞 Contact Information") {
-        InfoRow(label = "Mobile", value = driver.mobile)
+        // Mobile with call icon
+        ClickablePhoneRow(
+            phoneNumber = driver.mobile,
+            label = "Mobile",
+            icon = "📱"
+        )
         if (driver.email.isNotBlank()) {
             InfoRow(label = "Email", value = driver.email)
         }
-        driver.emergencyContact?.let { InfoRow(label = "Emergency Contact", value = it) }
+        // Emergency Contact with call icon
+        driver.emergencyContact?.let {
+            ClickablePhoneRow(
+                phoneNumber = it,
+                label = "Emergency Contact",
+                icon = "🆘"
+            )
+        }
         driver.address?.let { InfoRow(label = "Address", value = it) }
     }
 }

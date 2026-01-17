@@ -133,6 +133,9 @@ object DashboardContract {
         // Navigation to Alerts list
         data object NavigateToAlertsList : Intent
 
+        // Navigation to Customers
+        data object NavigateToCustomers : Intent
+
         // Notifications
         data object NavigateToNotifications : Intent
     }
@@ -160,5 +163,8 @@ object DashboardContract {
 
         // Navigation to Alerts list
         data object NavigateToAlertsList : Effect
+
+        // Navigation to Customers
+        data object NavigateToCustomers : Effect
     }
 }

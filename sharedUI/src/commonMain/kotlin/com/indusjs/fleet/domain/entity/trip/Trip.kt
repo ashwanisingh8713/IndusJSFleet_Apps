@@ -4,11 +4,13 @@ import com.indusjs.fleet.core.constants.StatusConstants
 
 /**
  * Trip status enumeration.
- * Matches API values: planned, assigned, on_route, completed, cancelled, failed, delayed
+ * Matches API values: planned, on_route, completed, cancelled, failed, delayed
+ *
+ * Note: 'assigned' state has been removed. Trips now transition directly from planned → on_route.
+ * Legacy 'assigned' values from API are mapped to PLANNED for backward compatibility.
  */
 enum class TripStatus {
     PLANNED,
-    ASSIGNED,
     ON_ROUTE,
     COMPLETED,
     CANCELLED,
@@ -18,10 +20,10 @@ enum class TripStatus {
     companion object {
         /**
          * Convert API string to TripStatus enum.
+         * Maps legacy 'assigned' to PLANNED for backward compatibility.
          */
         fun fromApiString(value: String): TripStatus = when (value.lowercase()) {
-            StatusConstants.TripState.PLANNED -> PLANNED
-            StatusConstants.TripState.ASSIGNED -> ASSIGNED
+            StatusConstants.TripState.PLANNED, "assigned" -> PLANNED // 'assigned' is legacy, map to PLANNED
             StatusConstants.TripState.ON_ROUTE, "in_progress" -> ON_ROUTE
             StatusConstants.TripState.COMPLETED -> COMPLETED
             StatusConstants.TripState.CANCELLED -> CANCELLED
@@ -35,7 +37,6 @@ enum class TripStatus {
          */
         fun toApiString(status: TripStatus): String = when (status) {
             PLANNED -> StatusConstants.TripState.PLANNED
-            ASSIGNED -> StatusConstants.TripState.ASSIGNED
             ON_ROUTE -> StatusConstants.TripState.ON_ROUTE
             COMPLETED -> StatusConstants.TripState.COMPLETED
             CANCELLED -> StatusConstants.TripState.CANCELLED
@@ -177,7 +178,10 @@ data class Trip(
     val actualEndTime: String? = null,
     val cargoType: String? = null,
     val cargoDescription: String? = null,
+    val cargoLoadingWeight: Double? = null,
+    val weightUnit: String? = null,
     val customerName: String? = null,
+    val customerContact: String? = null,
     val priority: String? = null,
     val notes: String? = null,
     val createdAt: String? = null,
@@ -233,7 +237,9 @@ data class CreateTripData(
     val paymentStatus: String? = null,
     val pendingAmount: Double? = null,
     val paymentMode: String? = null,
-    // Customer
+    // Customer - New API supports customer_id for Customer entity association
+    val customerId: Int? = null,
+    // Customer - Legacy fields (fallback when customerId not provided)
     val customerName: String? = null,
     val customerContact: String? = null,
     val priority: String? = null,

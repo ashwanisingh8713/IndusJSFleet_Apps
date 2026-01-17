@@ -46,6 +46,8 @@ object CreateTeamMemberContract {
         data object ToggleConfirmPasswordVisibility : Intent
         data object CreateTeamMember : Intent
         data object ClearError : Intent
+        // When coming from Caretaker assignment, exclude General Manager
+        data class SetExcludeGeneralManager(val exclude: Boolean) : Intent
     }
 
     /**

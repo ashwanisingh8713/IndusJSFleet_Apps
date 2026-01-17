@@ -245,6 +245,55 @@ object ValidationUtils {
         getAmountError(amount)?.let { return it }
         return null
     }
+
+    // ============ EMAIL VALIDATION ============
+
+    /**
+     * Validates an email address.
+     *
+     * @param email The email string to validate
+     * @return true if the email is valid
+     */
+    fun isValidEmail(email: String): Boolean {
+        if (email.isBlank()) return false
+        val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+        return emailRegex.matches(email)
+    }
+
+    /**
+     * Returns error message for invalid email, or null if valid.
+     */
+    fun getEmailError(email: String, required: Boolean = false): String? {
+        return when {
+            email.isBlank() && required -> "Email is required"
+            email.isNotBlank() && !isValidEmail(email) -> "Invalid email address"
+            else -> null
+        }
+    }
+
+    // ============ MOBILE VALIDATION ============
+
+    /**
+     * Validates a mobile number (10 digits).
+     *
+     * @param mobile The mobile number to validate
+     * @return true if the mobile is valid
+     */
+    fun isValidMobile(mobile: String): Boolean {
+        val digitsOnly = mobile.filter { it.isDigit() }
+        return digitsOnly.length >= 10
+    }
+
+    /**
+     * Returns error message for invalid mobile, or null if valid.
+     */
+    fun getMobileError(mobile: String, required: Boolean = true): String? {
+        return when {
+            mobile.isBlank() && required -> "Mobile number is required"
+            mobile.isNotBlank() && !isValidMobile(mobile) -> "Invalid mobile number"
+            else -> null
+        }
+    }
 }
 
 /**

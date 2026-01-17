@@ -101,6 +101,9 @@ class DashboardViewModel(
 
             // Navigation to Alerts list
             is Intent.NavigateToAlertsList -> sendEffect(Effect.NavigateToAlertsList)
+
+            // Navigation to Customers
+            is Intent.NavigateToCustomers -> sendEffect(Effect.NavigateToCustomers)
         }
     }
 

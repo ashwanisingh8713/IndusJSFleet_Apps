@@ -37,6 +37,7 @@ fun AddVehicleScreen(
     viewModel: AddVehicleViewModel,
     onNavigateBack: () -> Unit,
     onVehicleRegistered: (String) -> Unit = {},
+    onNavigateToCreateTeamMember: () -> Unit = {},
     onRequestFilePicker: (DocumentType, (String, ByteArray, String) -> Unit) -> Unit = { _, _ -> }
 ) {
     val state by viewModel.state.collectAsState()
@@ -75,6 +76,9 @@ fun AddVehicleScreen(
                 is AddVehicleContract.Effect.ShowDocumentPicker -> {
                     // Show the upload info dialog first
                     documentToUpload = effect.type
+                }
+                is AddVehicleContract.Effect.NavigateToCreateTeamMember -> {
+                    onNavigateToCreateTeamMember()
                 }
             }
         }
@@ -387,6 +391,7 @@ private fun BasicInfoStep(
                 caretakers = state.caretakers,
                 onCaretakerSelected = { onIntent(AddVehicleContract.Intent.SelectCaretaker(it)) },
                 onRefresh = { onIntent(AddVehicleContract.Intent.RefreshCaretakers) },
+                onCreateTeamMember = { onIntent(AddVehicleContract.Intent.NavigateToCreateTeamMember) },
                 isLoading = state.isLoadingCaretakers
             )
         }
@@ -511,23 +516,23 @@ private fun DocumentUploadCard(
             color = when {
                 uploadedDocument != null -> MaterialTheme.colorScheme.primary
                 isRequired -> MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
-                else -> MaterialTheme.colorScheme.outline
+                else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
             }
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Document icon (emoji)
+                // Document icon (emoji) - smaller size
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(40.dp)
                         .background(
                             color = if (uploadedDocument != null)
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
@@ -539,75 +544,65 @@ private fun DocumentUploadCard(
                 ) {
                     Text(
                         text = getDocumentEmoji(documentType),
-                        style = MaterialTheme.typography.headlineSmall
+                        style = MaterialTheme.typography.titleLarge
                     )
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(10.dp))
 
-                // Document info
+                // Document info - compact layout
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = getDocumentTypeName(documentType),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Medium
-                        )
-                        if (isRequired) {
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "*",
-                                color = MaterialTheme.colorScheme.error,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                    Text(
+                        text = getDocumentTypeName(documentType),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
 
                     if (uploadedDocument != null) {
                         Text(
-                            text = uploadedDocument.fileName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = formatFileSize(uploadedDocument.fileSize),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "${uploadedDocument.fileName} • ${formatFileSize(uploadedDocument.fileSize)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
                         )
                     } else if (isUploading) {
-                        Spacer(modifier = Modifier.height(4.dp))
                         LinearProgressIndicator(
                             progress = { uploadProgress },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Text(
-                            text = "Uploading... ${(uploadProgress * 100).toInt()}%",
-                            style = MaterialTheme.typography.bodySmall
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp)
                         )
                     } else {
                         Text(
                             text = "Tap to upload",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                // Action button
+                // Compact action button
                 if (uploadedDocument != null) {
-                    TextButton(onClick = onRemoveClick) {
-                        Text("✕ Remove", color = MaterialTheme.colorScheme.error)
+                    IconButton(
+                        onClick = onRemoveClick,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Text("✕", color = MaterialTheme.colorScheme.error)
                     }
                 } else if (!isUploading) {
-                    FilledTonalButton(onClick = onUploadClick) {
-                        Text("+ Upload")
+                    FilledTonalButton(
+                        onClick = onUploadClick,
+                        modifier = Modifier.height(32.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                    ) {
+                        Text("Upload", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
 
-            // Expiry Date Field (for documents that require expiry)
+            // Expiry Date Field - compact inline layout (for documents that require expiry)
             if (documentType != DocumentType.REGISTRATION_CERTIFICATE && documentType != DocumentType.OTHER) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 FleetDatePicker(
                     date = expiryDateRaw,
                     onDateChange = onExpiryDateChange,

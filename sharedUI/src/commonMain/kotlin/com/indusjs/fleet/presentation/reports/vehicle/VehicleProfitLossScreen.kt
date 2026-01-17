@@ -34,7 +34,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.ui.FleetDateFieldCompact
+import com.indusjs.datetimepicker.FleetDateTimePicker
+import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.fleet.core.ui.FleetSearchField
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
@@ -890,25 +891,30 @@ private fun PeriodSelectionRow(
             }
         }
 
-        // Custom date range inputs
+        // Custom date range using ijs-datetime-picker
         AnimatedVisibility(visible = useCustomDateRange) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(top = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                FleetDateFieldCompact(
-                    rawValue = startDate,
-                    onRawValueChange = onStartDateChange,
-                    label = "From",
-                    modifier = Modifier.weight(1f)
+                FleetDateTimePicker(
+                    date = startDate,
+                    time = "",
+                    onDateTimeChange = { newDate, _ -> onStartDateChange(newDate) },
+                    label = "From Date",
+                    mode = PickerMode.DATE_ONLY,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                FleetDateFieldCompact(
-                    rawValue = endDate,
-                    onRawValueChange = onEndDateChange,
-                    label = "To",
-                    modifier = Modifier.weight(1f)
+                FleetDateTimePicker(
+                    date = endDate,
+                    time = "",
+                    onDateTimeChange = { newDate, _ -> onEndDateChange(newDate) },
+                    label = "To Date",
+                    mode = PickerMode.DATE_ONLY,
+                    minDate = startDate.ifBlank { null },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -1923,23 +1929,28 @@ private fun PeriodSelectionChipsCard(
                 }
             }
 
-            // Custom date range
+            // Custom date range using ijs-datetime-picker
             AnimatedVisibility(visible = useCustomDateRange) {
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    FleetDateFieldCompact(
-                        rawValue = startDate,
-                        onRawValueChange = onStartDateChange,
-                        label = "From",
-                        modifier = Modifier.weight(1f)
+                    FleetDateTimePicker(
+                        date = startDate,
+                        time = "",
+                        onDateTimeChange = { newDate, _ -> onStartDateChange(newDate) },
+                        label = "From Date",
+                        mode = PickerMode.DATE_ONLY,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    FleetDateFieldCompact(
-                        rawValue = endDate,
-                        onRawValueChange = onEndDateChange,
-                        label = "To",
-                        modifier = Modifier.weight(1f)
+                    FleetDateTimePicker(
+                        date = endDate,
+                        time = "",
+                        onDateTimeChange = { newDate, _ -> onEndDateChange(newDate) },
+                        label = "To Date",
+                        mode = PickerMode.DATE_ONLY,
+                        minDate = startDate.ifBlank { null },
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }

@@ -106,6 +106,7 @@ class CreateDriverViewModel(
         val lastNameError = if (currentState.lastName.isBlank()) "Last name is required" else null
         val mobileError = validateMobile(currentState.mobile)
         val licenseNumberError = if (currentState.licenseNumber.isBlank()) "License number is required" else null
+        val licenseExpiryError = if (currentState.licenseExpiry.isBlank()) "License expiry date is required" else null
         val emailError = if (currentState.email.isNotBlank() && !isValidEmail(currentState.email)) "Invalid email format" else null
 
         updateState {
@@ -114,12 +115,14 @@ class CreateDriverViewModel(
                 lastNameError = lastNameError,
                 mobileError = mobileError,
                 licenseNumberError = licenseNumberError,
+                licenseExpiryError = licenseExpiryError,
                 emailError = emailError
             )
         }
 
         return firstNameError == null && lastNameError == null &&
-                mobileError == null && licenseNumberError == null && emailError == null
+                mobileError == null && licenseNumberError == null &&
+                licenseExpiryError == null && emailError == null
     }
 
     private suspend fun submitDriver() {
@@ -181,16 +184,17 @@ class CreateDriverViewModel(
     }
 
     /**
-     * Parse date string (YYYY-MM-DD) to timestamp.
+     * Parse date string (DD-MM-YYYY format from DatePicker) to timestamp.
      */
     private fun parseDateToTimestamp(dateString: String): Long {
         if (dateString.isBlank()) return 0L
         return try {
             val parts = dateString.split("-")
             if (parts.size == 3) {
-                val year = parts[0].toInt()
+                // DatePicker returns DD-MM-YYYY format
+                val day = parts[0].toInt()
                 val month = parts[1].toInt()
-                val day = parts[2].toInt()
+                val year = parts[2].toInt()
                 // Approximate conversion to epoch milliseconds
                 val baseYear = 1970
                 val daysFromBase = ((year - baseYear) * 365.25).toLong() +

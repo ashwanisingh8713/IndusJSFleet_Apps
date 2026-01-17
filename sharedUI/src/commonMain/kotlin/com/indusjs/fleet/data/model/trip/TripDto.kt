@@ -84,14 +84,14 @@ data class TripDto(
     val fuelRate: Double? = null,
     @SerialName("km_per_liter")
     val kmPerLiter: Double? = null,
-    // Pricing
+    // Pricing - API returns expected_trip_price
     @SerialName("purchase_price")
     val purchasePrice: Double? = null,
     @SerialName("selling_value")
     val sellingValue: Double? = null,
     @SerialName("estimated_expense")
     val estimatedExpense: Double? = null,
-    @SerialName("trip_price")
+    @SerialName("expected_trip_price")
     val tripPrice: Double? = null,
     // Payment
     @SerialName("payment_status")
@@ -100,7 +100,12 @@ data class TripDto(
     val pendingAmount: Double? = null,
     @SerialName("payment_mode")
     val paymentMode: String? = null,
-    // Customer
+    // Customer - New API supports customer_id for Customer entity association
+    @SerialName("customer_id")
+    val customerId: Int? = null,
+    @SerialName("customer")
+    val customer: TripCustomerDto? = null,
+    // Legacy customer fields (still supported for backward compatibility)
     @SerialName("customer_name")
     val customerName: String? = null,
     @SerialName("customer_contact")
@@ -318,6 +323,19 @@ data class TripDriverDto(
 )
 
 /**
+ * Embedded customer info in trip response.
+ */
+@Serializable
+data class TripCustomerDto(
+    @SerialName("id")
+    val id: Int,
+    @SerialName("name")
+    val name: String? = null,
+    @SerialName("contact")
+    val contact: String? = null
+)
+
+/**
  * API response wrapper for trip operations.
  */
 @Serializable
@@ -408,7 +426,12 @@ data class CreateTripRequest(
     val pendingAmount: Double? = null,
     @SerialName("payment_mode")
     val paymentMode: String? = null,
-    // Customer
+    // Customer - New API supports customer_id for Customer entity association
+    @SerialName("customer_id")
+    val customerId: Int? = null,
+    @SerialName("customer")
+    val customer: TripCustomerDto? = null,
+    // Legacy customer fields (still supported for backward compatibility)
     @SerialName("customer_name")
     val customerName: String? = null,
     @SerialName("customer_contact")
@@ -422,7 +445,11 @@ data class CreateTripRequest(
 /**
  * Request body for updating a trip.
  * Updated to match API v2 - supports Vehicle, Driver, Schedule, Location, Cargo, Customer updates.
- * Note: Only trips in 'planned' state can be updated.
+ *
+ * Role-Based Permissions:
+ * - Owner & General Manager: Can edit trips in ANY state
+ * - Manager: Can only edit trips in PLANNED state
+ * - Supervisor: Cannot edit trips
  */
 @Serializable
 data class UpdateTripRequest(
@@ -482,8 +509,8 @@ data class UpdateTripRequest(
     @SerialName("customer_contact")
     val customerContact: String? = null,
 
-    // Pricing
-    @SerialName("trip_price")
+    // Pricing - API expects expected_trip_price for update
+    @SerialName("expected_trip_price")
     val tripPrice: Double? = null,
 
     // Other

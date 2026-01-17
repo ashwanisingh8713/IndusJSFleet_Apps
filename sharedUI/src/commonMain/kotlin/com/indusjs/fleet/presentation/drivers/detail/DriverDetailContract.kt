@@ -94,8 +94,21 @@ object DriverDetailContract {
         val isUpdatingState: Boolean = false,
 
         // Current selected tab (0 = Overview, 1 = Costs, 2 = History)
-        val selectedTab: Int = 0
+        val selectedTab: Int = 0,
+
+        // User role for permission checks
+        val currentUserRole: String = ""
     ) : UiState {
+
+        /**
+         * Determines if the user can view driver costs.
+         * Only Owner and General Manager can view driver costs.
+         */
+        val canViewCosts: Boolean
+            get() {
+                val role = currentUserRole.lowercase().replace("_", "")
+                return role == "owner" || role == "generalmanager"
+            }
 
         val isFormValid: Boolean
             get() = firstName.isNotBlank() &&

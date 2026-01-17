@@ -26,6 +26,11 @@ object TripDetailContract {
     val cargoTypes = listOf("gitti", "balu", "bhakshi", "enta", "hazardous", "valuable", "others")
 
     /**
+     * Weight unit options.
+     */
+    val weightUnits = listOf("KG", "M.Ton", "Quintal", "Liter", "ft3")
+
+    /**
      * UI State for the Trip Detail screen.
      */
     data class State(
@@ -77,6 +82,8 @@ object TripDetailContract {
         val cargoType: String = "",
         val cargoDescription: String = "",
         val cargoWeight: String = "",
+        val weightUnit: String = "",
+        val weightUnitOptions: List<String> = weightUnits,
 
         // Editable fields - Customer
         val customerName: String = "",
@@ -229,6 +236,7 @@ object TripDetailContract {
         data class UpdateCargoType(val value: String) : Intent
         data class UpdateCargoDescription(val value: String) : Intent
         data class UpdateCargoWeight(val value: String) : Intent
+        data class UpdateWeightUnit(val value: String) : Intent
 
         // Customer updates
         data class UpdateCustomerName(val value: String) : Intent

@@ -20,6 +20,7 @@ import com.indusjs.fleet.presentation.drivers.detail.DriverDetailContract.Effect
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailContract.Intent
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailContract.State
 import dev.zacsweers.metro.Inject
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,8 +43,21 @@ class DriverDetailViewModel(
     private val deleteDriverUseCase: DeleteDriverUseCase,
     private val driverRepository: DriverRepository,
     private val teamRepository: TeamRepository,
-    private val costsRepository: CostsRepository
+    private val costsRepository: CostsRepository,
+    private val userLocalDataSource: com.indusjs.fleet.data.datasource.user.UserLocalDataSource? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
+
+    init {
+        // Load user role on init
+        viewModelScope.launch(dispatcherProvider.io) {
+            val userRole = try {
+                userLocalDataSource?.getUserRole() ?: ""
+            } catch (e: Exception) {
+                ""
+            }
+            updateState { copy(currentUserRole = userRole) }
+        }
+    }
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {

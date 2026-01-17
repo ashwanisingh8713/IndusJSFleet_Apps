@@ -97,6 +97,13 @@ import com.indusjs.fleet.presentation.user.signup.SignUpViewModel
 import com.indusjs.fleet.presentation.vehicles.AddVehicleViewModel
 import com.indusjs.fleet.presentation.vehicles.VehiclesViewModel
 import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailViewModel
+import com.indusjs.fleet.presentation.customers.list.CustomersListViewModel
+import com.indusjs.fleet.presentation.customers.detail.CustomerDetailViewModel
+import com.indusjs.fleet.presentation.customers.create.CreateCustomerViewModel
+import com.indusjs.fleet.data.datasource.customer.CustomerRemoteDataSource
+import com.indusjs.fleet.data.datasource.customer.CustomerLocalDataSourceImpl
+import com.indusjs.fleet.data.repository.customer.CustomerRepositoryImpl
+import com.indusjs.fleet.domain.usecase.customer.*
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
@@ -274,6 +281,21 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         ReportsRepositoryImpl(reportsRemoteDataSource, userLocalDataSource)
     }
 
+    // Lazy-initialized Customer feature dependencies
+    private val customerRemoteDataSource by lazy { CustomerRemoteDataSource(httpClient, json) }
+    private val customerLocalDataSource by lazy { CustomerLocalDataSourceImpl(database.customerDao()) }
+    private val customerRepository by lazy {
+        CustomerRepositoryImpl(customerRemoteDataSource, customerLocalDataSource, userLocalDataSource)
+    }
+    private val getCustomersUseCase by lazy { GetCustomersUseCase(customerRepository) }
+    private val getCustomerUseCase by lazy { GetCustomerUseCase(customerRepository) }
+    private val getLocalCustomersUseCase by lazy { GetLocalCustomersUseCase(customerRepository) }
+    private val createCustomerUseCase by lazy { CreateCustomerUseCase(customerRepository) }
+    private val updateCustomerUseCase by lazy { UpdateCustomerUseCase(customerRepository) }
+    private val toggleCustomerStatusUseCase by lazy { ToggleCustomerStatusUseCase(customerRepository) }
+    private val getCustomerStatisticsUseCase by lazy { GetCustomerStatisticsUseCase(customerRepository) }
+    private val refreshCustomersUseCase by lazy { RefreshCustomersUseCase(customerRepository) }
+
     // Auth ViewModels
     override fun loginViewModel() = LoginViewModel(dispatcherProvider, userRepository)
     override fun signUpViewModel() = SignUpViewModel(dispatcherProvider, userRepository)
@@ -340,7 +362,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         deleteDriverUseCase,
         driverRepository,
         teamRepository,
-        costsRepository
+        costsRepository,
+        userLocalDataSource
     )
 
     override fun tripsViewModel() = TripsViewModel(
@@ -355,7 +378,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         getDriversUseCase,
         createTripWithDataUseCase,
         userLocalDataSource,
-        googlePlacesService
+        googlePlacesService,
+        customerRepository
     )
 
     override fun tripDetailViewModel() = TripDetailViewModel(
@@ -418,4 +442,15 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     override fun costAnalysisViewModel() = CostAnalysisViewModel(reportsRepository)
 
     override fun consolidatedPLViewModel() = ConsolidatedPLViewModel(reportsRepository, vehicleRepository)
+
+    // Customer ViewModels
+    override fun customersListViewModel() = CustomersListViewModel(
+        getCustomersUseCase,
+        refreshCustomersUseCase,
+        getLocalCustomersUseCase
+    )
+
+    override fun customerDetailViewModel() = CustomerDetailViewModel(customerRepository)
+
+    override fun createCustomerViewModel() = CreateCustomerViewModel(createCustomerUseCase)
 }

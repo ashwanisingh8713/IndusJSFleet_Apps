@@ -155,7 +155,8 @@ fun DashboardScreen(
     onNavigateToAddDriver: () -> Unit = {},
     onNavigateToCreateTrip: () -> Unit = {},
     onNavigateToAddDriverCost: () -> Unit = {},
-    onNavigateToAlertsList: () -> Unit = {}
+    onNavigateToAlertsList: () -> Unit = {},
+    onNavigateToCustomers: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -178,6 +179,7 @@ fun DashboardScreen(
                 is DashboardContract.Effect.NavigateToCreateTrip -> onNavigateToCreateTrip()
                 is DashboardContract.Effect.NavigateToAddDriverCost -> onNavigateToAddDriverCost()
                 is DashboardContract.Effect.NavigateToAlertsList -> onNavigateToAlertsList()
+                is DashboardContract.Effect.NavigateToCustomers -> onNavigateToCustomers()
                 is DashboardContract.Effect.ShowSnackbar -> {
                     snackbarHostState.showSnackbar(effect.message)
                 }
@@ -222,6 +224,10 @@ fun DashboardScreen(
                     onNavigateToProfile = {
                         scope.launch { drawerState.close() }
                         onNavigateToProfile()
+                    },
+                    onNavigateToCustomers = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToCustomers()
                     }
                 )
             }
@@ -441,7 +447,8 @@ private fun NavigationDrawerContent(
     onNavigateToMaps: () -> Unit,
     onNavigateToTeam: () -> Unit,
     onNavigateToReports: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onNavigateToCustomers: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxHeight()
@@ -550,6 +557,19 @@ private fun NavigationDrawerContent(
             label = { Text("Trips") },
             selected = false,
             onClick = onNavigateToTrips,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+
+        NavigationDrawerItem(
+            icon = {
+                Text(
+                    text = "👤",
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            label = { Text("Customers") },
+            selected = false,
+            onClick = onNavigateToCustomers,
             modifier = Modifier.padding(horizontal = 12.dp)
         )
 

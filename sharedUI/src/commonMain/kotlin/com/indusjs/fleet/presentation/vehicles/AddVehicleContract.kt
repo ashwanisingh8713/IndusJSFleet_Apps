@@ -116,6 +116,7 @@ object AddVehicleContract {
         data object RefreshCaretakers : Intent
         data object ToggleCaretakerDropdown : Intent
         data class SelectCaretaker(val caretaker: TeamMemberDto?) : Intent
+        data object NavigateToCreateTeamMember : Intent
 
         // Form actions
         data object ValidateBasicInfo : Intent
@@ -132,6 +133,6 @@ object AddVehicleContract {
         data object NavigateBack : Effect
         data class ShowDocumentPicker(val type: DocumentType) : Effect
         data class VehicleRegistered(val vehicleId: String) : Effect
+        data object NavigateToCreateTeamMember : Effect
     }
 }
-

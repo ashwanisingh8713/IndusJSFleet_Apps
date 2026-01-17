@@ -72,6 +72,23 @@ class CreateTeamMemberViewModel(
             is CreateTeamMemberContract.Intent.ToggleConfirmPasswordVisibility -> updateState { copy(isConfirmPasswordVisible = !isConfirmPasswordVisible) }
             is CreateTeamMemberContract.Intent.CreateTeamMember -> createTeamMember()
             is CreateTeamMemberContract.Intent.ClearError -> updateState { copy(error = null) }
+            is CreateTeamMemberContract.Intent.SetExcludeGeneralManager -> {
+                if (intent.exclude) {
+                    // Filter out General Manager from available roles
+                    val filteredRoles = currentState.availableRoles.filter { it != TeamMemberRole.GENERAL_MANAGER }
+                    val newSelectedRole = if (currentState.selectedRole == TeamMemberRole.GENERAL_MANAGER) {
+                        filteredRoles.firstOrNull() ?: TeamMemberRole.MANAGER
+                    } else {
+                        currentState.selectedRole
+                    }
+                    updateState {
+                        copy(
+                            availableRoles = filteredRoles.ifEmpty { listOf(TeamMemberRole.MANAGER, TeamMemberRole.SUPERVISOR) },
+                            selectedRole = newSelectedRole
+                        )
+                    }
+                }
+            }
         }
     }
 

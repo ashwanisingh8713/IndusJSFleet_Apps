@@ -156,6 +156,7 @@ class TripRemoteDataSourceImpl(
     override suspend fun updateTrip(token: String, id: String, request: UpdateTripRequest): TripApiResponse<TripDto> {
         return try {
             log.d { "Updating trip: $id" }
+            log.d { "Update request - tripPrice: ${request.tripPrice}, weightUnit: ${request.weightUnit}, cargoWeight: ${request.cargoLoadingWeight}" }
             val response: HttpResponse = httpClient.put("$baseUrl/$id") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)

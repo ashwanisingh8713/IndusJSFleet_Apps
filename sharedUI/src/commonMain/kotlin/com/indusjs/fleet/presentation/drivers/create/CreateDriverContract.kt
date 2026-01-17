@@ -41,6 +41,7 @@ object CreateDriverContract {
         val lastNameError: String? = null,
         val mobileError: String? = null,
         val licenseNumberError: String? = null,
+        val licenseExpiryError: String? = null,
         val emailError: String? = null,
 
         // Form state
@@ -64,10 +65,12 @@ object CreateDriverContract {
                     lastName.isNotBlank() &&
                     mobile.isNotBlank() &&
                     licenseNumber.isNotBlank() &&
+                    licenseExpiry.isNotBlank() &&
                     firstNameError == null &&
                     lastNameError == null &&
                     mobileError == null &&
                     licenseNumberError == null &&
+                    licenseExpiryError == null &&
                     emailError == null
 
         val canSubmit: Boolean
@@ -117,4 +120,3 @@ object CreateDriverContract {
         data class ShowError(val message: String) : Effect
     }
 }
-

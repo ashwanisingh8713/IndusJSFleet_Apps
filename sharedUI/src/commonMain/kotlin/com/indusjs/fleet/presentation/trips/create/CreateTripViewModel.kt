@@ -8,7 +8,9 @@ import com.indusjs.fleet.core.util.convertToIsoDateTime
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
+import com.indusjs.fleet.domain.entity.customer.Customer
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
+import com.indusjs.fleet.domain.repository.customer.CustomerRepository
 import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
 import com.indusjs.fleet.domain.usecase.trip.CreateTripWithDataUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
@@ -34,7 +36,8 @@ class CreateTripViewModel(
     private val getDriversUseCase: GetDriversUseCase,
     private val createTripWithDataUseCase: CreateTripWithDataUseCase,
     private val userLocalDataSource: UserLocalDataSource,
-    private val googlePlacesService: GooglePlacesService? = null
+    private val googlePlacesService: GooglePlacesService? = null,
+    private val customerRepository: CustomerRepository? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     private val log = Logger.withTag("CreateTripViewModel")
@@ -53,6 +56,89 @@ class CreateTripViewModel(
             val normalizedRole = userRole.lowercase().replace("_", "")
             log.d { "CreateTripViewModel - userRole: '$userRole', normalized: '$normalizedRole', canViewTripPrice: ${normalizedRole == "owner" || normalizedRole == "generalmanager"}" }
             updateState { copy(userRole = userRole) }
+
+            // Load customers for autocomplete
+            loadCustomersFromRepository()
+        }
+    }
+
+    /**
+     * Load customers from repository for autocomplete.
+     * First loads from local DB for fast display, then syncs from API in background.
+     */
+    private suspend fun loadCustomersFromRepository() {
+        customerRepository?.let { repo ->
+            try {
+                // First: Load from local cache for fast initial display
+                val localCustomers = repo.getLocalCustomers()
+                if (localCustomers.isNotEmpty()) {
+                    val activeLocal = localCustomers.filter { it.isActive }
+                        .map { summary ->
+                            Customer(
+                                id = summary.id,
+                                companyName = summary.companyName,
+                                personName = summary.personName,
+                                primaryContact = summary.primaryContact,
+                                secondaryContact = null,
+                                companyAddress = null,
+                                email = null,
+                                gstNumber = null,
+                                notes = null,
+                                isActive = summary.isActive,
+                                createdAt = null,
+                                updatedAt = null
+                            )
+                        }
+                    updateState { copy(allCustomers = activeLocal) }
+                    log.d { "Loaded ${activeLocal.size} customers from local cache" }
+                }
+
+                // Then: Sync from API in background
+                when (val result = repo.refreshCustomers()) {
+                    is Result.Success -> {
+                        val activeCustomers = result.data.filter { it.isActive }
+                        updateState { copy(allCustomers = activeCustomers) }
+                        log.d { "Synced ${activeCustomers.size} customers from API" }
+                    }
+                    is Result.Error -> {
+                        log.e { "Failed to sync customers: ${result.message}" }
+                    }
+                    is Result.Loading -> { }
+                }
+            } catch (e: Exception) {
+                log.e { "Error loading customers: ${e.message}" }
+            }
+        }
+    }
+
+    /**
+     * Refresh customers from API and update local cache.
+     */
+    private suspend fun refreshCustomersFromApi() {
+        updateState { copy(isRefreshingCustomers = true) }
+        customerRepository?.let { repo ->
+            try {
+                when (val result = repo.refreshCustomers()) {
+                    is Result.Success -> {
+                        val activeCustomers = result.data.filter { it.isActive }
+                        updateState { copy(allCustomers = activeCustomers, isRefreshingCustomers = false) }
+                        sendEffect(Effect.ShowSnackbar("Customers refreshed (${activeCustomers.size} found)"))
+                        log.d { "Refreshed ${activeCustomers.size} customers from API" }
+                    }
+                    is Result.Error -> {
+                        updateState { copy(isRefreshingCustomers = false) }
+                        sendEffect(Effect.ShowError("Failed to refresh customers: ${result.message}"))
+                        log.e { "Failed to refresh customers: ${result.message}" }
+                    }
+                    is Result.Loading -> { }
+                }
+            } catch (e: Exception) {
+                updateState { copy(isRefreshingCustomers = false) }
+                sendEffect(Effect.ShowError("Failed to refresh customers"))
+                log.e { "Error refreshing customers: ${e.message}" }
+            }
+        } ?: run {
+            updateState { copy(isRefreshingCustomers = false) }
         }
     }
 
@@ -125,15 +211,23 @@ class CreateTripViewModel(
             }
             is Intent.UpdateWeightUnit -> updateState { copy(weightUnit = intent.value, weightUnitError = null) }
             is Intent.UpdateCustomerName -> {
-                updateState { copy(customerName = intent.value) }
+                updateState { copy(customerName = intent.value, selectedCustomer = null) }
                 validateCustomerName(intent.value)
             }
             is Intent.UpdateCustomerContact -> {
-                updateState { copy(customerContact = intent.value) }
+                updateState { copy(customerContact = intent.value, selectedCustomer = null) }
                 validateCustomerContact(intent.value)
             }
             is Intent.UpdatePriority -> updateState { copy(priority = intent.value) }
             is Intent.UpdateNotes -> updateState { copy(notes = intent.value) }
+
+            // Customer selection from local DB
+            is Intent.SelectCustomer -> selectCustomer(intent.customer)
+            is Intent.SearchCustomers -> searchCustomers(intent.query)
+            is Intent.ClearCustomerSelection -> clearCustomerSelection()
+            is Intent.DismissCustomerDropdown -> updateState { copy(showCustomerDropdown = false) }
+            is Intent.NavigateToAddCustomer -> sendEffect(Effect.NavigateToAddCustomer)
+            is Intent.RefreshCustomers -> refreshCustomersFromApi()
 
             // Pricing updates
             is Intent.UpdateTripPrice -> {
@@ -680,8 +774,18 @@ class CreateTripViewModel(
                 cargoDescription = state.cargoDescription.takeIf { it.isNotBlank() },
                 cargoLoadingWeight = state.cargoWeight.toDoubleOrNull(),
                 weightUnit = state.weightUnit.takeIf { it.isNotBlank() }?.lowercase(),
-                customerName = state.customerName.takeIf { it.isNotBlank() },
-                customerContact = state.customerContact.takeIf { it.isNotBlank() },
+                // Customer - prefer customerId if selected, fallback to legacy fields
+                customerId = state.selectedCustomer?.id?.toIntOrNull(),
+                customerName = if (state.selectedCustomer != null) {
+                    state.selectedCustomer.companyName
+                } else {
+                    state.customerName.takeIf { it.isNotBlank() }
+                },
+                customerContact = if (state.selectedCustomer != null) {
+                    state.selectedCustomer.primaryContact
+                } else {
+                    state.customerContact.takeIf { it.isNotBlank() }
+                },
                 priority = state.priority.takeIf { it.isNotBlank() }?.lowercase(),
                 notes = state.notes.takeIf { it.isNotBlank() },
                 tripPrice = state.tripPrice.toDoubleOrNull()
@@ -853,5 +957,84 @@ class CreateTripViewModel(
 
         // Return ISO 8601 format: YYYY-MM-DDTHH:MM:00Z
         return "$year-$month-${day}T$hours:$minutes:00Z"
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // CUSTOMER SELECTION METHODS
+    // ══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Select a customer from the local database.
+     * Auto-populates customerName and customerContact.
+     */
+    private fun selectCustomer(customer: com.indusjs.fleet.domain.entity.customer.Customer) {
+        updateState {
+            copy(
+                selectedCustomer = customer,
+                customerName = customer.companyName,
+                customerContact = customer.primaryContact,
+                customerSearchQuery = customer.companyName,
+                showCustomerDropdown = false,
+                customerNameError = null,
+                customerContactError = null
+            )
+        }
+        log.d { "Selected customer: ${customer.companyName} (ID: ${customer.id})" }
+    }
+
+    /**
+     * Search customers from the local database based on query.
+     */
+    private fun searchCustomers(query: String) {
+        updateState {
+            copy(
+                customerSearchQuery = query,
+                showCustomerDropdown = query.isNotBlank()
+            )
+        }
+
+        if (query.isBlank()) {
+            updateState { copy(customerSuggestions = emptyList(), showCustomerDropdown = false) }
+            return
+        }
+
+        // Filter customers from allCustomers list
+        val filteredCustomers = currentState.allCustomers.filter { customer ->
+            customer.companyName.contains(query, ignoreCase = true) ||
+            customer.personName.contains(query, ignoreCase = true) ||
+            customer.primaryContact.contains(query, ignoreCase = true)
+        }.take(5) // Limit to 5 suggestions
+
+        updateState {
+            copy(
+                customerSuggestions = filteredCustomers,
+                showCustomerDropdown = filteredCustomers.isNotEmpty()
+            )
+        }
+    }
+
+    /**
+     * Clear customer selection and allow manual entry.
+     */
+    private fun clearCustomerSelection() {
+        updateState {
+            copy(
+                selectedCustomer = null,
+                customerName = "",
+                customerContact = "",
+                customerSearchQuery = "",
+                customerSuggestions = emptyList(),
+                showCustomerDropdown = false
+            )
+        }
+    }
+
+    /**
+     * Load customers from local database for autocomplete.
+     * Should be called during initialization or when customers list needs refresh.
+     */
+    fun loadCustomers(customers: List<com.indusjs.fleet.domain.entity.customer.Customer>) {
+        updateState { copy(allCustomers = customers) }
+        log.d { "Loaded ${customers.size} customers for autocomplete" }
     }
 }

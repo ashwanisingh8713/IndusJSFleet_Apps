@@ -130,25 +130,27 @@ fun CaretakerDropdownField(
             onDismissRequest = { expanded = false },
             modifier = Modifier.fillMaxWidth(0.9f)
         ) {
-            // No caretaker option
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        text = "No Caretaker",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                onClick = {
-                    onCaretakerSelected(null)
-                    expanded = false
-                },
-                leadingIcon = {
-                    Text(text = "❌", style = MaterialTheme.typography.bodyMedium)
-                }
-            )
+            // Only show "No Caretaker" option if a caretaker is currently selected
+            if (selectedCaretaker != null) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = "Clear Selection",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    onClick = {
+                        onCaretakerSelected(null)
+                        expanded = false
+                    },
+                    leadingIcon = {
+                        Text(text = "✕", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                    }
+                )
 
-            HorizontalDivider()
+                HorizontalDivider()
+            }
 
             if (caretakers.isEmpty()) {
                 DropdownMenuItem(
@@ -208,12 +210,13 @@ fun CaretakerDropdownField(
 }
 
 /**
- * Caretaker section card for forms.
+ * Caretaker section card for forms - compact and cohesive layout.
  *
  * @param selectedCaretaker Currently selected caretaker
  * @param caretakers List of available caretakers
  * @param onCaretakerSelected Callback when caretaker is selected
  * @param onRefresh Optional callback to refresh caretakers from API
+ * @param onCreateTeamMember Optional callback to navigate to create team member screen
  * @param isLoading Whether caretakers are being loaded
  * @param modifier Modifier for the card
  */
@@ -223,80 +226,106 @@ fun CaretakerSectionCard(
     caretakers: List<TeamMemberDto>,
     onCaretakerSelected: (TeamMemberDto?) -> Unit,
     onRefresh: (() -> Unit)? = null,
+    onCreateTeamMember: (() -> Unit)? = null,
     isLoading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
-            // Header with refresh button
+            // Header row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "👥",
-                        style = MaterialTheme.typography.titleMedium
+                        text = "Caretaker Assignment",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
                     )
-                    Column {
-                        Text(
-                            text = "Caretaker Assignment",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Optional - Assign a team member to oversee",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(
+                        text = "Optional • Assign a Manager or Supervisor",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
-                // Refresh button
-                if (onRefresh != null) {
-                    IconButton(
+                if (onRefresh != null && caretakers.isNotEmpty() && !isLoading) {
+                    TextButton(
                         onClick = onRefresh,
-                        enabled = !isLoading
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = "🔄",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
+                        Text("Refresh", style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Dropdown
-            CaretakerDropdownField(
-                selectedCaretaker = selectedCaretaker,
-                caretakers = caretakers,
-                onCaretakerSelected = onCaretakerSelected,
-                isLoading = isLoading
-            )
+            // Content based on state
+            when {
+                isLoading -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Loading...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                caretakers.isEmpty() -> {
+                    // Compact inline empty state
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "No team members available",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (onCreateTeamMember != null) {
+                            TextButton(
+                                onClick = onCreateTeamMember,
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text("+ Add", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    CaretakerDropdownField(
+                        selectedCaretaker = selectedCaretaker,
+                        caretakers = caretakers,
+                        onCaretakerSelected = onCaretakerSelected,
+                        isLoading = isLoading
+                    )
+                }
+            }
         }
     }
 }

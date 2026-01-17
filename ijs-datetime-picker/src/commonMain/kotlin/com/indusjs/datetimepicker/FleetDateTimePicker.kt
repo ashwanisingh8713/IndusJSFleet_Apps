@@ -45,7 +45,8 @@ fun FleetDateTimePicker(
     isError: Boolean = false,
     errorMessage: String? = null,
     minDate: String? = null,
-    maxDate: String? = null
+    maxDate: String? = null,
+    initialDisplayDate: String? = null  // Date to show in calendar when picker opens with empty date
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -97,6 +98,7 @@ fun FleetDateTimePicker(
             mode = mode,
             initialDate = date,
             initialTime = time,
+            initialDisplayDate = initialDisplayDate,
             onConfirm = { newDate, newTime ->
                 onDateTimeChange(newDate, newTime)
                 showDialog = false
@@ -110,6 +112,9 @@ fun FleetDateTimePicker(
 
 /**
  * Convenience composable for Date only picker.
+ *
+ * @param initialDisplayDate The date to show in calendar when picker opens with empty date.
+ *                           Useful for DOB fields to show 18 years ago, etc.
  */
 @Composable
 fun FleetDatePicker(
@@ -121,7 +126,8 @@ fun FleetDatePicker(
     isError: Boolean = false,
     errorMessage: String? = null,
     minDate: String? = null,
-    maxDate: String? = null
+    maxDate: String? = null,
+    initialDisplayDate: String? = null
 ) {
     FleetDateTimePicker(
         date = date,
@@ -134,7 +140,8 @@ fun FleetDatePicker(
         isError = isError,
         errorMessage = errorMessage,
         minDate = minDate,
-        maxDate = maxDate
+        maxDate = maxDate,
+        initialDisplayDate = initialDisplayDate
     )
 }
 
@@ -169,22 +176,27 @@ private fun PickerDialog(
     mode: PickerMode,
     initialDate: String,
     initialTime: String,
+    initialDisplayDate: String? = null,
     onConfirm: (date: String, time: String) -> Unit,
     onDismiss: () -> Unit,
     minDate: String?,
     maxDate: String?
 ) {
-    var selectedDate by remember { mutableStateOf(initialDate.ifBlank { DateTimeUtils.getCurrentDate() }) }
+    // Use initialDisplayDate when date is blank (e.g., for DOB show 18 years ago)
+    val effectiveDisplayDate = initialDate.ifBlank {
+        initialDisplayDate ?: DateTimeUtils.getCurrentDate()
+    }
+    var selectedDate by remember { mutableStateOf(effectiveDisplayDate) }
     var selectedTime by remember { mutableStateOf(initialTime.ifBlank { DateTimeUtils.getCurrentTime() }) }
 
     var calendarMonth by remember {
-        val parts = try { selectedDate.split("-").map { it.toInt() } } catch (e: Exception) {
+        val parts = try { effectiveDisplayDate.split("-").map { it.toInt() } } catch (e: Exception) {
             val now = DateTimeUtils.getCurrentDateParts(); listOf(now.first, now.second, now.third)
         }
         mutableStateOf(parts[1])
     }
     var calendarYear by remember {
-        val parts = try { selectedDate.split("-").map { it.toInt() } } catch (e: Exception) {
+        val parts = try { effectiveDisplayDate.split("-").map { it.toInt() } } catch (e: Exception) {
             val now = DateTimeUtils.getCurrentDateParts(); listOf(now.first, now.second, now.third)
         }
         mutableStateOf(parts[2])

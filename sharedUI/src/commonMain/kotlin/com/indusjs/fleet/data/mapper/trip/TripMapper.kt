@@ -99,7 +99,10 @@ class TripMapper {
             actualEndTime = dto.actualEnd,
             cargoType = dto.cargoType,
             cargoDescription = dto.cargoDescription,
+            cargoLoadingWeight = dto.cargoLoadingWeight,
+            weightUnit = dto.weightUnit,
             customerName = dto.customerName,
+            customerContact = dto.customerContact,
             priority = dto.priority,
             notes = dto.notes,
             createdAt = dto.createdAt,
@@ -133,8 +136,8 @@ class TripMapper {
 
         // Build distance display based on state (fallback when API display not available)
         val (distanceValue, distanceLabel, estimatedDist, coveredDist, totalDist) = when (status) {
-            TripStatus.PLANNED, TripStatus.ASSIGNED -> {
-                // Planned/Assigned: Show estimated distance (prefer API label, then compute)
+            TripStatus.PLANNED -> {
+                // Planned: Show estimated distance (prefer API label, then compute)
                 val estDist = distanceInfo?.estimatedDistance ?: dto.estimatedDistance
                 // Use API-provided label first, then compute from raw value
                 val value = apiEstimatedDistanceLabel
@@ -173,8 +176,8 @@ class TripMapper {
 
         // Build duration display based on state (fallback when API display not available)
         val (durationValue, durationLabel, plannedMins, actualMins) = when (status) {
-            TripStatus.PLANNED, TripStatus.ASSIGNED -> {
-                // Planned/Assigned: Show estimated/planned duration (prefer API label, then compute)
+            TripStatus.PLANNED -> {
+                // Planned: Show estimated/planned duration (prefer API label, then compute)
                 val plannedMinutes = durationInfo?.plannedDurationMinutes ?: dto.estimatedDurationMinutes
                 // Use API-provided label first, then compute from raw value
                 val value = apiEstimatedDurationLabel

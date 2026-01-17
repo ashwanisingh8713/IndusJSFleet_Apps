@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
+import com.indusjs.fleet.domain.entity.customer.Customer
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 
@@ -66,6 +67,15 @@ object CreateTripContract {
         val priority: String = "normal",
         val notes: String = "",
 
+        // Customer Selection (from local DB)
+        val selectedCustomer: Customer? = null,
+        val customerSearchQuery: String = "",
+        val customerSuggestions: List<Customer> = emptyList(),
+        val showCustomerDropdown: Boolean = false,
+        val isSearchingCustomers: Boolean = false,
+        val isRefreshingCustomers: Boolean = false,
+        val allCustomers: List<Customer> = emptyList(),
+
         // Pricing
         val tripPrice: String = "",
 
@@ -124,12 +134,12 @@ object CreateTripContract {
 
         /**
          * Form completion percentage for progress indicator.
-         * Includes: Vehicle, Driver, Route (2), Schedule, Cargo (3), Customer (2), Pricing = 11 fields
+         * Includes: Vehicle, Driver, Route (2), Schedule, Cargo (3), Customer (1), Pricing = 10 fields
          */
         val formCompletionPercentage: Int
             get() {
                 var completed = 0
-                val total = if (canViewTripPrice) 11 else 10
+                val total = if (canViewTripPrice) 10 else 9
 
                 if (selectedVehicle != null) completed++
                 if (selectedDriver != null) completed++
@@ -139,12 +149,18 @@ object CreateTripContract {
                 if (cargoType.isNotBlank()) completed++
                 if (cargoWeight.isNotBlank()) completed++
                 if (weightUnit.isNotBlank()) completed++
-                if (customerName.isNotBlank()) completed++
-                if (customerContact.isNotBlank()) completed++
+                // Customer is valid only if selected from DB
+                if (selectedCustomer != null) completed++
                 if (canViewTripPrice && tripPrice.isNotBlank()) completed++
 
                 return (completed * 100) / total
             }
+
+        /**
+         * Checks if customer is valid - must be selected from DB.
+         */
+        val isCustomerValid: Boolean
+            get() = selectedCustomer != null
 
         /**
          * Checks if all required fields are filled without errors.
@@ -160,8 +176,7 @@ object CreateTripContract {
                         cargoType.isNotBlank() &&
                         cargoWeight.isNotBlank() &&
                         weightUnit.isNotBlank() &&
-                        customerName.isNotBlank() &&
-                        customerContact.isNotBlank() &&
+                        isCustomerValid &&
                         vehicleError == null &&
                         driverError == null &&
                         startLocationError == null &&
@@ -241,6 +256,14 @@ object CreateTripContract {
         data class UpdatePriority(val value: String) : Intent
         data class UpdateNotes(val value: String) : Intent
 
+        // Customer selection from local DB
+        data class SelectCustomer(val customer: Customer) : Intent
+        data class SearchCustomers(val query: String) : Intent
+        data object ClearCustomerSelection : Intent
+        data object DismissCustomerDropdown : Intent
+        data object NavigateToAddCustomer : Intent
+        data object RefreshCustomers : Intent
+
         // Pricing updates
         data class UpdateTripPrice(val value: String) : Intent
 
@@ -262,5 +285,6 @@ object CreateTripContract {
         data class ShowError(val message: String) : Effect
         data object NavigateBack : Effect
         data class TripCreated(val tripId: String) : Effect
+        data object NavigateToAddCustomer : Effect
     }
 }

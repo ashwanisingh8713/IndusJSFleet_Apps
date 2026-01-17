@@ -102,6 +102,7 @@ class TripDetailViewModel(
             is Intent.UpdateCargoType -> updateState { copy(cargoType = intent.value) }
             is Intent.UpdateCargoDescription -> updateState { copy(cargoDescription = intent.value) }
             is Intent.UpdateCargoWeight -> updateState { copy(cargoWeight = intent.value) }
+            is Intent.UpdateWeightUnit -> updateState { copy(weightUnit = intent.value) }
 
             // Customer updates
             is Intent.UpdateCustomerName -> updateState { copy(customerName = intent.value) }
@@ -187,6 +188,8 @@ class TripDetailViewModel(
                             arrivalTime = arrTime,
                             cargoType = trip.cargoType ?: "",
                             cargoDescription = trip.cargoDescription ?: "",
+                            cargoWeight = trip.cargoLoadingWeight?.toString() ?: "",
+                            weightUnit = trip.weightUnit ?: "KG",
                             customerName = trip.customerName ?: "",
                             priority = trip.priority ?: "",
                             notes = trip.notes ?: "",
@@ -237,8 +240,20 @@ class TripDetailViewModel(
 
     private suspend fun enterEditMode() {
         val trip = currentState.trip
-        if (trip != null && trip.status != TripStatus.PLANNED) {
-            sendEffect(Effect.ShowSnackbar("Only planned trips can be edited"))
+        if (trip == null) {
+            sendEffect(Effect.ShowSnackbar("Trip not loaded"))
+            return
+        }
+
+        // Use the canEdit property which checks user role
+        // Owner and GM can edit any state, Manager only planned
+        if (!currentState.canEdit) {
+            val message = if (currentState.userRole.lowercase().replace("_", "") == "supervisor") {
+                "Supervisors cannot edit trips"
+            } else {
+                "Only planned trips can be edited"
+            }
+            sendEffect(Effect.ShowSnackbar(message))
             return
         }
 
@@ -336,11 +351,14 @@ class TripDetailViewModel(
                     arrivalTime = arrTime,
                     cargoType = trip.cargoType ?: "",
                     cargoDescription = trip.cargoDescription ?: "",
-                    cargoWeight = "",
+                    cargoWeight = trip.cargoLoadingWeight?.toString() ?: "",
+                    weightUnit = trip.weightUnit ?: "KG",
                     customerName = trip.customerName ?: "",
                     customerContact = "",
                     priority = trip.priority ?: "",
                     notes = trip.notes ?: "",
+                    // Restore pricing
+                    tripPrice = trip.tripPrice?.toString() ?: "",
                     // Clear errors
                     vehicleError = null,
                     driverError = null,
@@ -668,6 +686,7 @@ class TripDetailViewModel(
                 cargoType = state.cargoType.lowercase().takeIf { it.isNotBlank() },
                 cargoDescription = state.cargoDescription.takeIf { it.isNotBlank() },
                 cargoLoadingWeight = state.cargoWeight.toDoubleOrNull(),
+                weightUnit = state.weightUnit.takeIf { it.isNotBlank() },
                 customerName = state.customerName.takeIf { it.isNotBlank() },
                 customerContact = state.customerContact.takeIf { it.isNotBlank() },
                 tripPrice = state.tripPrice.toDoubleOrNull(),
@@ -675,18 +694,33 @@ class TripDetailViewModel(
                 notes = state.notes.takeIf { it.isNotBlank() }
             )
 
-            log.d { "Updating trip ${currentTrip.id} with request: $request" }
+            log.d { "=== UPDATE TRIP REQUEST ===" }
+            log.d { "TripPrice state: '${state.tripPrice}' -> parsed: ${state.tripPrice.toDoubleOrNull()}" }
+            log.d { "WeightUnit state: '${state.weightUnit}' -> sent: ${state.weightUnit.takeIf { it.isNotBlank() }}" }
+            log.d { "CargoWeight state: '${state.cargoWeight}' -> parsed: ${state.cargoWeight.toDoubleOrNull()}" }
+            log.d { "Full request: $request" }
 
             when (val result = tripRepository.updateTripWithRequest(currentTrip.id, request)) {
                 is Result.Success -> {
                     val trip = result.data
+                    log.d { "Trip updated successfully. Response tripPrice: ${trip.tripPrice}, weightUnit: ${trip.weightUnit}" }
                     updateState {
                         copy(
                             isSaving = false,
                             isEditMode = false,
                             trip = trip,
+                            // Restore all fields from the updated trip
                             startLocationAddress = trip.startLocation?.address ?: "",
                             endLocationAddress = trip.endLocation?.address ?: "",
+                            cargoType = trip.cargoType ?: "",
+                            cargoDescription = trip.cargoDescription ?: "",
+                            cargoWeight = trip.cargoLoadingWeight?.toString() ?: "",
+                            weightUnit = trip.weightUnit ?: "KG",
+                            customerName = trip.customerName ?: "",
+                            priority = trip.priority ?: "",
+                            notes = trip.notes ?: "",
+                            tripPrice = trip.tripPrice?.toString() ?: "",
+                            // Clear selection state
                             vehicles = emptyList(),
                             drivers = emptyList(),
                             selectedVehicle = null,

@@ -225,8 +225,10 @@ fun CreateDriverScreen(
                 FleetDatePicker(
                     date = state.licenseExpiry,
                     onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseExpiry(it)) },
-                    label = "License Expiry Date",
-                    minDate = DateTimeUtils.getCurrentDate()  // License expiry must be in future
+                    label = "License Expiry Date *",
+                    minDate = DateTimeUtils.getCurrentDate(),  // License expiry must be in future
+                    isError = state.licenseExpiryError != null,
+                    errorMessage = state.licenseExpiryError
                 )
             }
 
@@ -247,7 +249,8 @@ fun CreateDriverScreen(
                     date = state.dateOfBirth,
                     onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateDateOfBirth(it)) },
                     label = "Date of Birth",
-                    maxDate = maxDobDate  // Driver must be at least 18 years old
+                    maxDate = maxDobDate,  // Driver must be at least 18 years old
+                    initialDisplayDate = maxDobDate  // Show 18 years ago when picker opens
                 )
             }
 

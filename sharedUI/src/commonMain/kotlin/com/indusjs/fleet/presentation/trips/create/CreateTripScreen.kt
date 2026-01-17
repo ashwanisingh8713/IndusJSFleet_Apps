@@ -18,6 +18,7 @@ import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
+import com.indusjs.fleet.domain.entity.customer.Customer
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -30,7 +31,8 @@ import org.jetbrains.compose.resources.painterResource
 fun CreateTripScreen(
     viewModel: CreateTripViewModel,
     onNavigateBack: () -> Unit = {},
-    onTripCreated: (String) -> Unit = {}
+    onTripCreated: (String) -> Unit = {},
+    onNavigateToAddCustomer: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -52,6 +54,7 @@ fun CreateTripScreen(
                 }
                 is CreateTripContract.Effect.NavigateBack -> onNavigateBack()
                 is CreateTripContract.Effect.TripCreated -> onTripCreated(effect.tripId)
+                is CreateTripContract.Effect.NavigateToAddCustomer -> onNavigateToAddCustomer()
             }
         }
     }
@@ -179,6 +182,13 @@ fun CreateTripScreen(
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Schedule Section - First (when is the trip?)
+                item {
+                    SectionCard(title = "📅 Schedule") {
+                        ScheduleSection(state = state, viewModel = viewModel)
+                    }
+                }
+
                 // Vehicle & Driver Selection
                 item {
                     SectionCard(title = "🚚 Vehicle & Driver") {
@@ -196,13 +206,6 @@ fun CreateTripScreen(
                     }
                 }
 
-                // Schedule Section
-                item {
-                    SectionCard(title = "📅 Schedule") {
-                        ScheduleSection(state = state, viewModel = viewModel)
-                    }
-                }
-
                 // Cargo Section
                 item {
                     SectionCard(title = "📦 Cargo Details") {
@@ -217,11 +220,9 @@ fun CreateTripScreen(
                     }
                 }
 
-                // Customer Section
+                // Customer Section with refresh capability
                 item {
-                    SectionCard(title = "👤 Customer Details") {
-                        CustomerSection(state = state, viewModel = viewModel)
-                    }
+                    CustomerSectionCard(state = state, viewModel = viewModel)
                 }
 
                 // Pricing Section - Only visible to Owner and General Manager
@@ -682,6 +683,8 @@ private fun ScheduleSection(
                 viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalTime(newTime))
             },
             label = "Expected Arrival Date & Time",
+            isError = state.arrivalDateError != null,
+            errorMessage = state.arrivalDateError,
             minDate = state.departureDate.ifBlank { FleetDateTime.today() }
         )
     }
@@ -819,33 +822,306 @@ private fun PrioritySection(
     }
 }
 
+/**
+ * Customer Section Card with header containing refresh button.
+ */
+@Composable
+private fun CustomerSectionCard(
+    state: CreateTripContract.State,
+    viewModel: CreateTripViewModel
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Header with title and refresh button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "👤 Customer Details",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                // Refresh button
+                IconButton(
+                    onClick = { viewModel.sendIntent(CreateTripContract.Intent.RefreshCustomers) },
+                    enabled = !state.isRefreshingCustomers,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    if (state.isRefreshingCustomers) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_refresh),
+                            contentDescription = "Refresh customers",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                thickness = 1.dp
+            )
+
+            CustomerSection(state = state, viewModel = viewModel)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CustomerSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Customer Name - NOW REQUIRED
+        // Empty state when no customers exist
+        if (state.allCustomers.isEmpty() && state.selectedCustomer == null && !state.isRefreshingCustomers) {
+            // Empty state with prominent Add New Customer button
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "👤",
+                    style = MaterialTheme.typography.displaySmall
+                )
+                Text(
+                    text = "No customers found",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Add a customer to associate with this trip.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateToAddCustomer) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text("➕ Add New Customer")
+                }
+            }
+        } else if (state.selectedCustomer != null) {
+            // Show selected customer card
+            SelectedCustomerCard(
+                customer = state.selectedCustomer,
+                onClear = { viewModel.sendIntent(CreateTripContract.Intent.ClearCustomerSelection) }
+            )
+
+            // Add New Customer text button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateToAddCustomer) }
+                ) {
+                    Text("+ Add New Customer")
+                }
+            }
+        } else {
+            // Customer Search/Selection from local DB - Required
+            CustomerSearchField(
+                state = state,
+                viewModel = viewModel
+            )
+
+            // Validation error if no customer selected
+            if (state.customerNameError != null) {
+                Text(
+                    text = state.customerNameError,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(start = 16.dp)
+                )
+            }
+
+            // Add New Customer button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateToAddCustomer) }
+                ) {
+                    Text("+ Add New Customer")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Customer Search Field with autocomplete dropdown
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CustomerSearchField(
+    state: CreateTripContract.State,
+    viewModel: CreateTripViewModel
+) {
+    ExposedDropdownMenuBox(
+        expanded = state.showCustomerDropdown && state.customerSuggestions.isNotEmpty(),
+        onExpandedChange = { }
+    ) {
         OutlinedTextField(
-            value = state.customerName,
-            onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCustomerName(it)) },
-            label = { Text("Customer Name *") },
-            placeholder = { Text("e.g., ABC Corporation") },
+            value = state.customerSearchQuery,
+            onValueChange = { query ->
+                viewModel.sendIntent(CreateTripContract.Intent.SearchCustomers(query))
+            },
+            label = { Text("Search Customer") },
+            placeholder = { Text("Customer Name") },
+            leadingIcon = { Text("🔍", modifier = Modifier.padding(start = 12.dp)) },
+            trailingIcon = {
+                if (state.isSearchingCustomers) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
+            },
             singleLine = true,
-            isError = state.customerNameError != null,
-            supportingText = state.customerNameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            supportingText = {
+                if (state.allCustomers.isEmpty()) {
+                    Text("No customers saved. Add a new customer or enter details below.",
+                         color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    Text("${state.allCustomers.size} customers available",
+                         color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         )
 
-        // Customer Contact - NOW REQUIRED
-        FleetMobileField(
-            rawValue = state.customerContact,
-            onRawValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCustomerContact(it)) },
-            label = "Customer Contact *",
-            placeholder = "Enter 10-digit mobile",
-            isError = state.customerContactError != null,
-            errorMessage = state.customerContactError
-        )
+        ExposedDropdownMenu(
+            expanded = state.showCustomerDropdown && state.customerSuggestions.isNotEmpty(),
+            onDismissRequest = { viewModel.sendIntent(CreateTripContract.Intent.DismissCustomerDropdown) },
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surface)
+                .heightIn(max = 250.dp)
+        ) {
+            state.customerSuggestions.forEach { customer ->
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(
+                                text = customer.companyName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${customer.personName} • ${customer.primaryContact}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    leadingIcon = {
+                        Text("👤", style = MaterialTheme.typography.bodyMedium)
+                    },
+                    onClick = {
+                        viewModel.sendIntent(CreateTripContract.Intent.SelectCustomer(customer))
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Card showing selected customer with option to clear
+ */
+@Composable
+private fun SelectedCustomerCard(
+    customer: Customer,
+    onClear: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                ) {
+                    Text(
+                        text = "👤",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+                Column {
+                    Text(
+                        text = customer.companyName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = customer.personName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = customer.primaryContact,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            IconButton(onClick = onClear) {
+                Text("✕", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+            }
+        }
     }
 }
 

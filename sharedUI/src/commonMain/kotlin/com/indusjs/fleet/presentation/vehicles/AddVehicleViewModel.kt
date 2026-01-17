@@ -72,6 +72,7 @@ class AddVehicleViewModel(
             is Intent.RefreshCaretakers -> refreshCaretakers()
             is Intent.ToggleCaretakerDropdown -> updateState { copy(showCaretakerDropdown = !showCaretakerDropdown) }
             is Intent.SelectCaretaker -> updateState { copy(selectedCaretaker = intent.caretaker, showCaretakerDropdown = false) }
+            is Intent.NavigateToCreateTeamMember -> sendEffect(Effect.NavigateToCreateTeamMember)
 
             // Form actions
             is Intent.ValidateBasicInfo -> validateBasicInfo()

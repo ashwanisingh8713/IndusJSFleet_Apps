@@ -83,6 +83,11 @@ interface ViewModelProvider {
     fun tripPLViewModel(): TripPLViewModel
     fun costAnalysisViewModel(): CostAnalysisViewModel
     fun consolidatedPLViewModel(): ConsolidatedPLViewModel
+
+    // Customer ViewModels
+    fun customersListViewModel(): com.indusjs.fleet.presentation.customers.list.CustomersListViewModel
+    fun customerDetailViewModel(): com.indusjs.fleet.presentation.customers.detail.CustomerDetailViewModel
+    fun createCustomerViewModel(): com.indusjs.fleet.presentation.customers.create.CreateCustomerViewModel
 }
 
 /**

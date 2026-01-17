@@ -195,36 +195,40 @@ object StatusConstants {
      *
      * States:
      * - planned: Trip created but not started
-     * - assigned: Vehicle and driver confirmed
      * - on_route: Trip is in progress
      * - completed: Trip finished successfully
      * - cancelled: Trip cancelled before completion
      * - failed: Trip could not be completed (optional)
      * - delayed: Trip is behind schedule (optional)
+     *
+     * Note: 'assigned' state has been removed. Trips now transition directly from planned → on_route.
      */
     object TripState {
         const val PLANNED = "planned"
-        const val ASSIGNED = "assigned"
         const val ON_ROUTE = "on_route"
         const val COMPLETED = "completed"
         const val CANCELLED = "cancelled"
         const val FAILED = "failed"
         const val DELAYED = "delayed"
 
+        // Legacy constant for backward compatibility (maps to PLANNED)
+        @Deprecated("Use PLANNED instead. Assigned state has been removed from backend.", ReplaceWith("PLANNED"))
+        const val ASSIGNED = "assigned"
+
         /**
          * All valid trip states.
          */
-        val ALL = listOf(PLANNED, ASSIGNED, ON_ROUTE, COMPLETED, CANCELLED, FAILED, DELAYED)
+        val ALL = listOf(PLANNED, ON_ROUTE, COMPLETED, CANCELLED, FAILED, DELAYED)
 
         /**
          * Core trip states (excluding optional).
          */
-        val CORE = listOf(PLANNED, ASSIGNED, ON_ROUTE, COMPLETED, CANCELLED)
+        val CORE = listOf(PLANNED, ON_ROUTE, COMPLETED, CANCELLED)
 
         /**
          * States where trip is active/ongoing.
          */
-        val ACTIVE = listOf(PLANNED, ASSIGNED, ON_ROUTE, DELAYED)
+        val ACTIVE = listOf(PLANNED, ON_ROUTE, DELAYED)
 
         /**
          * States where trip is finished (success or failure).
@@ -234,19 +238,18 @@ object StatusConstants {
         /**
          * States where trip can be modified.
          */
-        val EDITABLE = listOf(PLANNED, ASSIGNED)
+        val EDITABLE = listOf(PLANNED)
 
         /**
          * States where trip can be cancelled.
          */
-        val CANCELLABLE = listOf(PLANNED, ASSIGNED, DELAYED, ON_ROUTE)
+        val CANCELLABLE = listOf(PLANNED, DELAYED, ON_ROUTE)
 
         /**
          * Display labels for each state.
          */
         fun getDisplayLabel(state: String): String = when (state.lowercase()) {
-            PLANNED -> "Planned"
-            ASSIGNED -> "Assigned"
+            PLANNED, "assigned" -> "Planned" // 'assigned' is legacy, map to Planned
             ON_ROUTE -> "On Route"
             COMPLETED -> "Completed"
             CANCELLED -> "Cancelled"
@@ -261,8 +264,7 @@ object StatusConstants {
          * Emoji icons for each state.
          */
         fun getIcon(state: String): String = when (state.lowercase()) {
-            PLANNED -> "📋"
-            ASSIGNED -> "✅"
+            PLANNED, "assigned" -> "📋" // 'assigned' is legacy, map to planned icon
             ON_ROUTE -> "🚗"
             COMPLETED -> "🏁"
             CANCELLED -> "❌"
@@ -276,8 +278,7 @@ object StatusConstants {
          * Color scheme for each state.
          */
         fun getColorScheme(state: String): StateColorScheme = when (state.lowercase()) {
-            PLANNED -> StateColorScheme.INFO
-            ASSIGNED -> StateColorScheme.INFO
+            PLANNED, "assigned" -> StateColorScheme.INFO // 'assigned' is legacy, map to planned color
             ON_ROUTE -> StateColorScheme.WARNING
             COMPLETED -> StateColorScheme.SUCCESS
             CANCELLED -> StateColorScheme.NEUTRAL
@@ -289,8 +290,11 @@ object StatusConstants {
 
         /**
          * Check if state is valid.
+         * Accepts legacy 'assigned' and 'in_progress' for backward compatibility.
          */
-        fun isValid(state: String): Boolean = state.lowercase() in ALL || state.lowercase() == "in_progress"
+        fun isValid(state: String): Boolean = state.lowercase() in ALL ||
+            state.lowercase() == "in_progress" ||
+            state.lowercase() == "assigned" // Legacy support
 
         /**
          * Check if trip is in progress.
@@ -299,13 +303,17 @@ object StatusConstants {
 
         /**
          * Check if trip is editable.
+         * Note: Legacy 'assigned' maps to PLANNED which is editable.
          */
-        fun isEditable(state: String): Boolean = state.lowercase() in EDITABLE
+        fun isEditable(state: String): Boolean =
+            state.lowercase() in EDITABLE || state.lowercase() == "assigned"
 
         /**
          * Check if trip can be cancelled.
+         * Note: Legacy 'assigned' maps to PLANNED which is cancellable.
          */
-        fun isCancellable(state: String): Boolean = state.lowercase() in CANCELLABLE
+        fun isCancellable(state: String): Boolean =
+            state.lowercase() in CANCELLABLE || state.lowercase() == "assigned"
 
         /**
          * Check if trip is finished.
@@ -452,11 +460,9 @@ object StatusConstants {
     /**
      * Valid state transitions for trips.
      *
-     * Transitions:
-     * - Planned → Assigned (Vehicle/Driver assigned)
+     * Transitions (Updated - 'assigned' state removed):
+     * - Planned → On Route (Trip started)
      * - Planned → Cancelled (Cancel before start)
-     * - Assigned → On Route (Trip started)
-     * - Assigned → Cancelled (Cancel before start)
      * - On Route → Completed (Trip finished)
      * - On Route → Delayed (Behind schedule)
      * - On Route → Failed (Cannot complete)
@@ -468,8 +474,7 @@ object StatusConstants {
      */
     object TripTransitions {
         private val transitions = mapOf(
-            TripState.PLANNED to listOf(TripState.ASSIGNED, TripState.CANCELLED),
-            TripState.ASSIGNED to listOf(TripState.ON_ROUTE, TripState.CANCELLED),
+            TripState.PLANNED to listOf(TripState.ON_ROUTE, TripState.CANCELLED),
             TripState.ON_ROUTE to listOf(TripState.COMPLETED, TripState.DELAYED, TripState.FAILED, TripState.CANCELLED),
             TripState.DELAYED to listOf(TripState.ON_ROUTE, TripState.COMPLETED, TripState.FAILED, TripState.CANCELLED),
             TripState.COMPLETED to emptyList<String>(),
@@ -481,9 +486,17 @@ object StatusConstants {
          * Check if transition from one state to another is valid.
          */
         fun canTransition(from: String, to: String): Boolean {
-            // Handle legacy "in_progress" as "on_route"
-            val normalizedFrom = if (from.lowercase() == "in_progress") TripState.ON_ROUTE else from.lowercase()
-            val normalizedTo = if (to.lowercase() == "in_progress") TripState.ON_ROUTE else to.lowercase()
+            // Handle legacy states: "in_progress" → "on_route", "assigned" → "planned"
+            val normalizedFrom = when (from.lowercase()) {
+                "in_progress" -> TripState.ON_ROUTE
+                "assigned" -> TripState.PLANNED // Legacy: treat assigned as planned
+                else -> from.lowercase()
+            }
+            val normalizedTo = when (to.lowercase()) {
+                "in_progress" -> TripState.ON_ROUTE
+                "assigned" -> TripState.PLANNED // Legacy: treat assigned as planned
+                else -> to.lowercase()
+            }
             return transitions[normalizedFrom]?.contains(normalizedTo) == true
         }
 
@@ -491,7 +504,12 @@ object StatusConstants {
          * Get list of valid states to transition to from current state.
          */
         fun getValidTransitions(from: String): List<String> {
-            val normalizedFrom = if (from.lowercase() == "in_progress") TripState.ON_ROUTE else from.lowercase()
+            // Handle legacy states: "in_progress" → "on_route", "assigned" → "planned"
+            val normalizedFrom = when (from.lowercase()) {
+                "in_progress" -> TripState.ON_ROUTE
+                "assigned" -> TripState.PLANNED // Legacy: treat assigned as planned
+                else -> from.lowercase()
+            }
             return transitions[normalizedFrom] ?: emptyList()
         }
 

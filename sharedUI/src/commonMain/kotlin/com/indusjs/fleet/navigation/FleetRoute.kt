@@ -61,7 +61,7 @@ sealed interface FleetRoute : NavKey {
 
     @Serializable data object Maps : FleetRoute
     @Serializable data object TeamList : FleetRoute
-    @Serializable data object CreateTeamMember : FleetRoute
+    @Serializable data class CreateTeamMember(val excludeGeneralManager: Boolean = false) : FleetRoute
     @Serializable data class TeamMemberDetail(val memberId: String) : FleetRoute
 
     // ==================== Reports Routes ====================
@@ -71,5 +71,11 @@ sealed interface FleetRoute : NavKey {
     @Serializable data object TripProfitLoss : FleetRoute
     @Serializable data object CostAnalysis : FleetRoute
     @Serializable data object ConsolidatedPL : FleetRoute
+
+    // ==================== Customer Routes ====================
+
+    @Serializable data object Customers : FleetRoute
+    @Serializable data class CustomerDetail(val customerId: String) : FleetRoute
+    @Serializable data object CreateCustomer : FleetRoute
 }
 

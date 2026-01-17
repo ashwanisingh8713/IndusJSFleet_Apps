@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "fleet-management-api-v2",
 		"name": "Fleet Management API v2",
-		"description": "Complete API collection for Fleet Management System with 50K+ vehicle support.\n\n## Base URL\n**Production**: `https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2`\n**Local**: `http://localhost:8080/api/v2`\n\n## API Versioning (Hybrid)\n- **URL Path**: `/api/v2/...` (primary)\n- **Header**: `X-API-Version: v2`\n- **Query**: `?api_version=v2`\n\n## Supported Versions\n- **v1**: Legacy (backward compatible)\n- **v2**: Current (recommended)\n\n## Date & Time Formats (IMPORTANT)\n- **Date**: `DD-MM-YYYY` format ONLY (e.g., 31-12-2025, 01-01-2024)\n- **Time**: `HH:MM` 24-hour format (e.g., 14:30, 09:00)\n- **Note**: All date fields must use DD-MM-YYYY format. ISO 8601 format is NOT accepted for date fields.\n\n## Trip Response - State-Based Display Info\nTrip APIs return `display_info` object with state-appropriate fields:\n\n**Planned State**: estimated_distance, cargo_type, cost_summary. Distance/Duration = 'NA'\n**In Progress State**: covered_distance, duration, total_distance, cargo_type, cost_summary, progress_info\n**Completed State**: total_distance, duration, cargo_type, cost_summary\n\nKey fields: `display_value` (primary UI value), `display_label` (context label), values show 'NA' when unavailable.\n\n## Tech Stack\n- Go 1.21+ with Gin Framework\n- PostgreSQL 14+ with GORM\n- JWT Authentication\n- MQTT (EMQX) for GPS\n- WebSocket for real-time\n\n## User Roles\n- **Owner**: Full access\n- **Manager**: Operational access\n- **Supervisor**: View & track only\n\n## Rate Limits\n- Standard: 100 req/min\n- Location: 1000 req/min\n- Auth: 10 req/min",
+		"description": "Complete API collection for Fleet Management System with 50K+ vehicle support.\n\n## Base URL\n**Production**: `https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2`\n**Local**: `http://localhost:8080/api/v2`\n\n## API Version\n- **Current Version**: v2 (only supported version)\n- **URL Path**: `/api/v2/...`\n\n## Date & Time Formats (IMPORTANT)\n- **Date**: `DD-MM-YYYY` format ONLY (e.g., 31-12-2025, 01-01-2024)\n- **Time**: `HH:MM` 24-hour format (e.g., 14:30, 09:00)\n- **DateTime (ISO 8601)**: For payment_date and timestamps use `2026-01-15T14:30:00Z`\n\n## Trip Response - State-Based Display Info\nTrip APIs return `display_info` object with state-appropriate fields:\n\n**Planned State**: estimated_distance, cargo_type, cost_summary. Distance/Duration = 'NA'\n**In Progress State**: covered_distance, duration, total_distance, cargo_type, cost_summary, progress_info\n**Completed State**: total_distance, duration, cargo_type, cost_summary\n\nKey fields: `display_value` (primary UI value), `display_label` (context label), values show 'NA' when unavailable.\n\n## Tech Stack\n- Go 1.21+ with Gin Framework\n- PostgreSQL 14+ with GORM\n- JWT Authentication\n- MQTT (EMQX) for GPS\n- WebSocket for real-time\n\n## User Roles\n- **Owner**: Full access\n- **General Manager**: Financial & operational access\n- **Manager**: Operational access\n- **Supervisor**: View & track only\n\n## Rate Limits\n- Standard: 100 req/min\n- Location: 1000 req/min\n- Auth: 10 req/min",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -470,7 +470,7 @@
 		},
 		{
 			"name": "03b. Entity States",
-			"description": "Entity state management. Get available states, valid transitions, and state change history.\n\n**Vehicle States:** inactive, active, on_route, maintenance, damaged, decommissioned\n**Driver Statuses:** inactive, active, on_route, on_leave, suspended, terminated\n**Trip States:** planned, assigned, on_route, completed, cancelled, failed, delayed",
+			"description": "Entity state management. Get available states, valid transitions, and state change history.\n\n**Vehicle States:** inactive, active, on_route, maintenance, damaged, decommissioned\n**Driver Statuses:** inactive, active, on_route, on_leave, suspended, terminated\n**Trip States:** planned, on_route, completed, cancelled, failed, delayed",
 			"item": [
 				{
 					"name": "Get All States",
@@ -1110,11 +1110,11 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"vehicle_id\": 1,\n    \"driver_id\": 1,\n    \"scheduled_date\": \"2026-01-20T00:00:00Z\",\n    \"start_time\": \"2026-01-20T09:00:00Z\",\n    \"delivery_date\": \"2026-01-20T00:00:00Z\",\n    \"delivery_time\": \"2026-01-20T17:00:00Z\",\n    \"planned_start\": \"2026-01-20T09:00:00Z\",\n    \"planned_end\": \"2026-01-20T17:00:00Z\",\n    \"start_location\": \"Warehouse A, Mumbai\",\n    \"start_lat\": 19.0760,\n    \"start_lng\": 72.8777,\n    \"end_location\": \"Customer Site B, Pune\",\n    \"end_lat\": 18.5204,\n    \"end_lng\": 73.8567,\n    \"estimated_distance\": 150.5,\n    \"cargo_type\": \"gitti\",\n    \"cargo_description\": \"Gravel for construction\",\n    \"cargo_loading_weight\": 16.5,\n    \"cargo_unloading_weight\": 16.2,\n    \"vehicle_weight\": 8.5,\n    \"weight_unit\": \"ft3\",\n    \"fuel_type\": \"diesel\",\n    \"filled_fuel_quantity\": 150.5,\n    \"used_fuel_quantity\": 0,\n    \"fuel_rate\": 89.50,\n    \"km_per_liter\": 4.5,\n    \"purchase_price\": 50000.00,\n    \"selling_value\": 75000.00,\n    \"estimated_expense\": 15000.00,\n    \"trip_price\": 90000.00,\n    \"payment_status\": \"pending\",\n    \"pending_amount\": 75000.00,\n    \"payment_mode\": \"upi\",\n    \"customer_name\": \"ABC Construction\",\n    \"customer_contact\": \"+919876543210\",\n    \"priority\": \"high\"\n}"
+							"raw": "{\n    \"vehicle_id\": 1,\n    \"driver_id\": 1,\n    \"customer_id\": 1,\n    \"scheduled_date\": \"2026-01-20T00:00:00Z\",\n    \"start_time\": \"2026-01-20T09:00:00Z\",\n    \"delivery_date\": \"2026-01-20T00:00:00Z\",\n    \"delivery_time\": \"2026-01-20T17:00:00Z\",\n    \"planned_start\": \"2026-01-20T09:00:00Z\",\n    \"planned_end\": \"2026-01-20T17:00:00Z\",\n    \"start_location\": \"Warehouse A, Mumbai\",\n    \"start_lat\": 19.0760,\n    \"start_lng\": 72.8777,\n    \"end_location\": \"Customer Site B, Pune\",\n    \"end_lat\": 18.5204,\n    \"end_lng\": 73.8567,\n    \"estimated_distance\": 150.5,\n    \"cargo_type\": \"gitti\",\n    \"cargo_description\": \"Gravel for construction\",\n    \"cargo_loading_weight\": 16.5,\n    \"cargo_unloading_weight\": 16.2,\n    \"vehicle_weight\": 8.5,\n    \"weight_unit\": \"ft3\",\n    \"fuel_type\": \"diesel\",\n    \"filled_fuel_quantity\": 150.5,\n    \"used_fuel_quantity\": 0,\n    \"fuel_rate\": 89.50,\n    \"km_per_liter\": 4.5,\n    \"purchase_price\": 50000.00,\n    \"selling_value\": 75000.00,\n    \"estimated_expense\": 15000.00,\n    \"expected_trip_price\": 90000.00,\n    \"paid_trip_price\": 0,\n    \"paid_amount\": 0,\n    \"is_full_payment_done\": false,\n    \"is_payment_pending\": true,\n    \"payment_status\": \"pending\",\n    \"payment_mode\": \"upi\",\n    \"trip_comment\": \"\",\n    \"trip_review\": \"\",\n    \"priority\": \"high\"\n}"
 						},
 						"url": {"raw": "{{base_url}}/trips", "host": ["{{base_url}}"], "path": ["trips"]}
 					},
-					"description": "Create a new trip.\n\n**Required Fields:**\n- `vehicle_id`, `driver_id`: Assignment\n- `scheduled_date`, `start_time`: Schedule (ISO 8601 format, e.g., 2026-01-20T09:00:00Z)\n- `planned_start`, `planned_end`: Duration calculation (ISO 8601 format) - REQUIRED for duration display\n- `start_location`, `start_lat`, `start_lng`: Source location\n- `end_location`, `end_lat`, `end_lng`: Destination location\n- `cargo_type`: Type of cargo\n\n**Pricing Fields:**\n- `purchase_price`: Purchase cost of cargo (INR)\n- `selling_value`: Selling price of cargo (INR)\n- `estimated_expense`: Estimated trip expense (INR)\n- `trip_price`: Trip price = Expected Cost + Profit (INR)\n\n**Important Fields for Display:**\n- `estimated_distance`: Distance in km - REQUIRED for distance display\n- `planned_start`, `planned_end`: Used to calculate duration_display\n\n**Date/Time Format:** All date/time fields must be in ISO 8601 format (e.g., 2026-01-20T09:00:00Z)"
+					"description": "Create a new trip.\n\n**Required Fields:**\n- `vehicle_id`, `driver_id`: Assignment\n- `scheduled_date`, `start_time`: Schedule (ISO 8601 format, e.g., 2026-01-20T09:00:00Z)\n- `planned_start`, `planned_end`: Duration calculation (ISO 8601 format) - REQUIRED for duration display\n- `start_location`, `start_lat`, `start_lng`: Source location\n- `end_location`, `end_lat`, `end_lng`: Destination location\n- `cargo_type`: Type of cargo\n\n**Customer (Optional):**\n- `customer_id`: Reference to Customer entity (preferred)\n- Legacy: `customer_name`, `customer_contact` still supported\n\n**Pricing & Payment Fields:**\n- `purchase_price`: Purchase cost of cargo (INR)\n- `selling_value`: Selling price of cargo (INR)\n- `estimated_expense`: Estimated trip expense (INR)\n- `expected_trip_price`: Trip price quoted to customer (INR) - Used for revenue calculation\n- `paid_trip_price`: Total amount paid so far (INR)\n- `paid_amount`: Latest payment amount (INR)\n- `is_full_payment_done`: Boolean - true if full payment received\n- `is_payment_pending`: Boolean - true if payment pending\n- `payment_status`: pending | partial | full\n- `trip_comment`: Customer/trip comment\n- `trip_review`: Trip review/feedback\n\n**Important Fields for Display:**\n- `estimated_distance`: Distance in km - REQUIRED for distance display\n- `planned_start`, `planned_end`: Used to calculate duration_display\n\n**Date/Time Format:** All date/time fields must be in ISO 8601 format (e.g., 2026-01-20T09:00:00Z)"
 				},
 				{
 					"name": "List Trips",
@@ -1145,7 +1145,7 @@
 						},
 						"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]}
 					},
-					"description": "Update a trip (only in 'planned' state). Supports updating:\n\n**Vehicle & Driver:**\n- `vehicle_id`: Change to another available vehicle\n- `driver_id`: Change to another available driver\n\n**Schedule:**\n- `scheduled_date`, `start_time`, `delivery_date`, `delivery_time`\n- `planned_start`, `planned_end`\n\n**Location:**\n- `start_location`, `start_lat`, `start_lng`\n- `end_location`, `end_lat`, `end_lng`\n\n**Cargo:**\n- `cargo_type`, `cargo_description`\n- `cargo_loading_weight`, `cargo_unloading_weight`\n\n**Customer:**\n- `customer_name`, `customer_contact`, `customer_email`, `customer_address`\n\n**Other:**\n- `priority`, `notes`, `special_instructions`\n\n**Note:** Vehicle/Driver changes are validated for:\n- Ownership (must belong to same owner)\n- Availability (active state, not on leave/suspended)\n- No conflicting trips (not assigned to other planned/in_progress trips)"
+					"description": "Update a trip.\n\n**Role-Based Permissions:**\n- **Owner & General Manager**: Can edit trips in ANY state\n- **Manager**: Can only edit trips in PLANNED state\n- **Supervisor**: Cannot edit trips\n\n**Vehicle & Driver:**\n- `vehicle_id`: Change to another available vehicle\n- `driver_id`: Change to another available driver\n\n**Schedule:**\n- `scheduled_date`, `start_time`, `delivery_date`, `delivery_time`\n- `planned_start`, `planned_end`\n\n**Location:**\n- `start_location`, `start_lat`, `start_lng`\n- `end_location`, `end_lat`, `end_lng`\n\n**Cargo:**\n- `cargo_type`, `cargo_description`\n- `cargo_loading_weight`, `cargo_unloading_weight`\n\n**Customer:**\n- `customer_name`, `customer_contact`, `customer_email`, `customer_address`\n\n**Other:**\n- `priority`, `notes`, `special_instructions`\n\n**Note:** Vehicle/Driver changes are validated for:\n- Ownership (must belong to same owner)\n- Availability (active state, not on leave/suspended)\n- No conflicting trips (not in other planned/on_route trips)"
 				},
 				{
 					"name": "Update Trip State",
@@ -1211,6 +1211,19 @@
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 						"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]}
 					}
+				},
+				{
+					"name": "Record Payment",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"paid_amount\": 25000.00,\n    \"payment_mode\": \"bank_transfer\",\n    \"payment_received_date\": \"2026-01-15T14:00:00Z\",\n    \"trip_comment\": \"First payment received\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/payment", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "payment"]}
+					},
+					"description": "Record a payment for a trip. Automatically updates payment status.\n\n**Request Fields:**\n- `paid_amount`: Amount received in this payment (INR)\n- `payment_mode`: Method of payment (cash, upi, bank_transfer, cheque, etc.)\n- `payment_received_date`: Date/time of payment (ISO 8601)\n- `trip_comment`: Optional comment\n\n**Auto-calculated Fields:**\n- `paid_trip_price`: Accumulated total (previous + paid_amount)\n- `is_full_payment_done`: true if paid_trip_price >= expected_trip_price\n- `is_payment_pending`: true if paid_trip_price < expected_trip_price\n- `payment_status`: 'pending' | 'partial' | 'full'\n\n**Business Rules:**\n- Payment is added to existing paid_trip_price\n- If paid_trip_price >= expected_trip_price → payment_status = 'full'\n- If paid_trip_price > 0 && < expected_trip_price → payment_status = 'partial'\n- Restricted to Owner and General Manager roles"
 				},
 				{
 					"name": "Get Trip Stops",
@@ -1649,7 +1662,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/dashboard/trips-status", "host": ["{{base_url}}"], "path": ["dashboard", "trips-status"]}
 			},
-			"description": "Trip counts by state. Response: planned, assigned, on_route, delayed, completed, cancelled, failed, completed_today, total, recent_trips[]."
+			"description": "Trip counts by state. Response: planned, on_route, delayed, completed, cancelled, failed, completed_today, total, recent_trips[]."
 		},
 		{
 			"name": "Drivers Status",
@@ -1852,7 +1865,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"locations\": [\n        {\n            \"vehicle_id\": 1,\n            \"latitude\": 19.0760,\n            \"longitude\": 72.8777,\n            \"speed\": 45.5\n        },\n        {\n            \"vehicle_id\": 2,\n            \"latitude\": 18.5204,\n            \"longitude\": 73.8567,\n            \"speed\": 60.0\n        }\n    ]\n}"
+					"raw": "{\n    \"locations\": [\n        {\n            \"vehicle_id\": 1,\n            \"latitude\": 19.0760,\n            \"longitude\": 72.8777,\n            \"speed\": 45.5\n        },\n        {\n            \"vehicle_id\": 2,\n            \"latitude\": 18.5204,\n            \"longitude\": 73.8567,\n            \"speed": 60.0\n        }\n    ]\n}"
 				},
 				"url": {"raw": "{{base_url}}/locations/track/bulk", "host": ["{{base_url}}"], "path": ["locations", "track", "bulk"]}
 			}
@@ -1864,6 +1877,115 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/locations/current", "host": ["{{base_url}}"], "path": ["locations", "current"]}
 			}
+		}
+	]
+},
+{
+	"name": "14. Customers",
+	"description": "Customer management.\n\n## Permissions\n- Create/Edit: Owner, GM, Manager\n- View: All roles\n- Statistics: Owner, GM only\n\n## Customer Fields\n- company_name: Company name (required)\n- person_name: Contact person name (required)\n- primary_contact: Primary phone number (required)\n- secondary_contact: Secondary phone number\n- company_address: Full address\n- email: Email address\n- gst_number: GST registration number\n- notes: Additional notes\n- is_active: Active status (default: true)\n\n## Financial APIs (Owner/GM Only)\n- Statistics: Comprehensive customer stats\n- Pending Payments: Trips with pending payments\n- Payments: All payments received\n- Payment Summary: Breakdown by mode/type\n- Financial Report: P&L report with period filter",
+	"item": [
+		{
+			"name": "Create Customer",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"company_name\": \"ABC Logistics Pvt Ltd\",\n    \"person_name\": \"Rajesh Sharma\",\n    \"primary_contact\": \"+919876543210\",\n    \"secondary_contact\": \"+919876543211\",\n    \"company_address\": \"123, Industrial Area, Mumbai 400001\",\n    \"email\": \"rajesh@abclogistics.com\",\n    \"gst_number\": \"27AABCU9603R1ZM\",\n    \"notes\": \"Premium customer\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/customers", "host": ["{{base_url}}"], "path": ["customers"]}
+			}
+		},
+		{
+			"name": "List Customers",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/customers?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["customers"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
+			}
+		},
+		{
+			"name": "Get Customer",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/customers/1", "host": ["{{base_url}}"], "path": ["customers", "1"]}
+			}
+		},
+		{
+			"name": "Update Customer",
+			"request": {
+				"method": "PUT",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"company_name\": \"ABC Logistics Pvt Ltd - Updated\",\n    \"person_name\": \"Rajesh Kumar Sharma\",\n    \"primary_contact\": \"+919876543210\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/customers/1", "host": ["{{base_url}}"], "path": ["customers", "1"]}
+			}
+		},
+		{
+			"name": "Toggle Customer Status",
+			"request": {
+				"method": "PATCH",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/customers/1/toggle-active", "host": ["{{base_url}}"], "path": ["customers", "1", "toggle-active"]}
+			},
+			"description": "Toggle customer active/inactive status"
+		},
+		{
+			"name": "Get Customer Trips",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/customers/1/trips?page=1&per_page=20&state=completed", "host": ["{{base_url}}"], "path": ["customers", "1", "trips"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "state", "value": "completed"}]}
+			},
+			"description": "Get all trips for a customer. All roles can access."
+		},
+		{
+			"name": "Get Customer Statistics",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/customers/1/statistics?start_date=2026-01-01&end_date=2026-12-31", "host": ["{{base_url}}"], "path": ["customers", "1", "statistics"], "query": [{"key": "start_date", "value": "2026-01-01"}, {"key": "end_date", "value": "2026-12-31"}]}
+			},
+			"description": "Get comprehensive customer statistics including total trips, revenue, costs, profit, payment breakdown by mode, monthly revenue. Owner/GM only."
+		},
+		{
+			"name": "Get Customer Pending Payments",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/customers/1/pending-payments?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["customers", "1", "pending-payments"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
+			},
+			"description": "Get trips with pending payments for a customer, including days overdue. Owner/GM only."
+		},
+		{
+			"name": "Get Customer Payments",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/customers/1/payments?page=1&per_page=20&status=received&mode=upi", "host": ["{{base_url}}"], "path": ["customers", "1", "payments"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "status", "value": "received"}, {"key": "mode", "value": "upi"}]}
+			},
+			"description": "Get all payments received from a customer. Filter by status (received/pending) and mode (cash/upi/bank_transfer/card). Owner/GM only."
+		},
+		{
+			"name": "Get Customer Payment Summary",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/customers/1/payment-summary?start_date=2026-01-01&end_date=2026-12-31", "host": ["{{base_url}}"], "path": ["customers", "1", "payment-summary"], "query": [{"key": "start_date", "value": "2026-01-01"}, {"key": "end_date", "value": "2026-12-31"}]}
+			},
+			"description": "Get payment summary breakdown by mode, type, and month. Includes TDS summary and totals. Owner/GM only."
+		},
+		{
+			"name": "Get Customer Financial Report",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/customers/1/financial-report?period=monthly&start_date=2026-01-01&end_date=2026-12-31", "host": ["{{base_url}}"], "path": ["customers", "1", "financial-report"], "query": [{"key": "period", "value": "monthly"}, {"key": "start_date", "value": "2026-01-01"}, {"key": "end_date", "value": "2026-12-31"}]}
+			},
+			"description": "Get comprehensive P&L report for a customer. Period options: monthly, quarterly, yearly. Includes revenue, costs, profit/loss, trip summary, period breakdown, and top vehicles. Owner/GM only."
 		}
 	]
 },

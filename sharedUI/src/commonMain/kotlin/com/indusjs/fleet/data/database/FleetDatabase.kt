@@ -1,8 +1,10 @@
 package com.indusjs.fleet.data.database
 
 import com.indusjs.fleet.data.database.dao.CostTypesDao
+import com.indusjs.fleet.data.database.dao.CustomerDao
 import com.indusjs.fleet.data.database.dao.DashboardDao
 import com.indusjs.fleet.data.database.dao.SettingsCostTypesDao
+import com.indusjs.fleet.data.database.dao.SettingsCustomerDao
 import com.indusjs.fleet.data.database.dao.SettingsDashboardDao
 import com.indusjs.fleet.data.database.dao.SettingsTeamMembersDao
 import com.indusjs.fleet.data.database.dao.TeamMembersDao
@@ -26,6 +28,7 @@ class FleetDatabase(
     private val dashboardDaoImpl = SettingsDashboardDao(settings, json)
     private val costTypesDaoImpl = SettingsCostTypesDao(settings, json)
     private val teamMembersDaoImpl = SettingsTeamMembersDao(settings, json)
+    private val customerDaoImpl = SettingsCustomerDao(settings, json)
 
     /**
      * Dashboard DAO for caching dashboard data.
@@ -43,6 +46,12 @@ class FleetDatabase(
      * Team members are synced from API and stored locally for offline access.
      */
     fun teamMembersDao(): TeamMembersDao = teamMembersDaoImpl
+
+    /**
+     * Customer DAO for caching customer data.
+     * Customers are synced from API and stored locally for offline access.
+     */
+    fun customerDao(): CustomerDao = customerDaoImpl
 
     companion object {
         const val DATABASE_NAME = "fleet_database"

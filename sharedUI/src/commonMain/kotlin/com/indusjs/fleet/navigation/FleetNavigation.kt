@@ -34,6 +34,9 @@ import com.indusjs.fleet.presentation.user.signup.SignUpScreen
 import com.indusjs.fleet.presentation.vehicles.AddVehicleScreen
 import com.indusjs.fleet.presentation.vehicles.VehiclesScreen
 import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailScreen
+import com.indusjs.fleet.presentation.customers.list.CustomersListScreen
+import com.indusjs.fleet.presentation.customers.detail.CustomerDetailScreen
+import com.indusjs.fleet.presentation.customers.create.CreateCustomerScreen
 
 /**
  * Navigation 3 entry provider for the Fleet Management app.
@@ -106,7 +109,8 @@ fun fleetEntryProvider(
                 onNavigateToAddDriver = { backStack.add(FleetRoute.CreateDriver) },
                 onNavigateToCreateTrip = { backStack.add(FleetRoute.CreateTrip) },
                 onNavigateToAddDriverCost = { backStack.add(FleetRoute.DriverCostEntry) },
-                onNavigateToAlertsList = { backStack.add(FleetRoute.AlertsList) }
+                onNavigateToAlertsList = { backStack.add(FleetRoute.AlertsList) },
+                onNavigateToCustomers = { backStack.add(FleetRoute.Customers) }
             )
         }
 
@@ -176,6 +180,10 @@ fun fleetEntryProvider(
                 onVehicleRegistered = { vehicleId ->
                     backStack.popAndNavigate(FleetRoute.VehicleDetail(vehicleId))
                 },
+                onNavigateToCreateTeamMember = {
+                    // Exclude General Manager as only Manager/Supervisor can be caretakers
+                    backStack.add(FleetRoute.CreateTeamMember(excludeGeneralManager = true))
+                },
                 onRequestFilePicker = { documentType, callback ->
                     onPickFile?.invoke(FilePickerRequest(documentType, callback))
                 }
@@ -242,6 +250,9 @@ fun fleetEntryProvider(
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onTripCreated = { tripId ->
                     backStack.popAndNavigate(FleetRoute.TripDetail(tripId))
+                },
+                onNavigateToAddCustomer = {
+                    backStack.add(FleetRoute.CreateCustomer)
                 }
             )
         }
@@ -296,7 +307,7 @@ fun fleetEntryProvider(
             TeamListScreen(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
-                onNavigateToCreateMember = { backStack.add(FleetRoute.CreateTeamMember) },
+                onNavigateToCreateMember = { backStack.add(FleetRoute.CreateTeamMember()) },
                 onNavigateToMemberDetail = { memberId -> backStack.add(FleetRoute.TeamMemberDetail(memberId)) }
             )
         }
@@ -305,6 +316,7 @@ fun fleetEntryProvider(
             val viewModel = rememberViewModel { createTeamMemberViewModel() }
             CreateTeamMemberScreen(
                 viewModel = viewModel,
+                excludeGeneralManager = route.excludeGeneralManager,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
         }
@@ -361,6 +373,46 @@ fun fleetEntryProvider(
             ConsolidatedPLScreen(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        // ==================== Customers ====================
+
+        is FleetRoute.Customers -> NavEntry(route) {
+            val viewModel = rememberViewModel { customersListViewModel() }
+            CustomersListScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigate = { route ->
+                    when (route) {
+                        is FleetRoute.CustomerDetail -> backStack.add(route)
+                        is FleetRoute.CreateCustomer -> backStack.add(route)
+                        else -> {}
+                    }
+                }
+            )
+        }
+
+        is FleetRoute.CustomerDetail -> NavEntry(route) {
+            val viewModel = rememberViewModel { customerDetailViewModel() }
+            CustomerDetailScreen(
+                viewModel = viewModel,
+                customerId = route.customerId,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.CreateCustomer -> NavEntry(route) {
+            val viewModel = rememberViewModel { createCustomerViewModel() }
+            CreateCustomerScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigate = { navRoute ->
+                    when (navRoute) {
+                        is FleetRoute.CustomerDetail -> backStack.popAndNavigate(navRoute)
+                        else -> {}
+                    }
+                }
             )
         }
     }

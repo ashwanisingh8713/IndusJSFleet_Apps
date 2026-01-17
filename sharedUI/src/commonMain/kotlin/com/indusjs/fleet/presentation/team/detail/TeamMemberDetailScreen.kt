@@ -22,6 +22,7 @@ import com.indusjs.fleet.core.ui.FleetEmailField
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.FleetTextField
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.ui.ClickablePhoneRow
 import com.indusjs.fleet.domain.entity.team.TeamMember
 import com.indusjs.fleet.domain.entity.team.TeamMemberRole
 import indusjsfleet.sharedui.generated.resources.*
@@ -307,7 +308,13 @@ private fun ViewMemberContent(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 DetailRow(icon = "✉️", label = "Email", value = member.email)
-                DetailRow(icon = "📱", label = "Mobile", value = member.mobile)
+
+                // Mobile with call icon
+                ClickablePhoneRow(
+                    phoneNumber = member.mobile,
+                    label = "Mobile",
+                    icon = "📱"
+                )
             }
         }
 

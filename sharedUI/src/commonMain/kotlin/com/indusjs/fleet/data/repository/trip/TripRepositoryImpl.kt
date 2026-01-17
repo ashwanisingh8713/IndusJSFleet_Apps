@@ -112,6 +112,8 @@ class TripRepositoryImpl(
                 paymentStatus = data.paymentStatus,
                 pendingAmount = data.pendingAmount,
                 paymentMode = data.paymentMode,
+                // Customer - prefer customerId for entity association
+                customerId = data.customerId,
                 customerName = data.customerName,
                 customerContact = data.customerContact,
                 priority = data.priority,
