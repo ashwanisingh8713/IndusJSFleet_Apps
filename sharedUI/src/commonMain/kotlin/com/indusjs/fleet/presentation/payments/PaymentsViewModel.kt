@@ -54,6 +54,13 @@ class PaymentsViewModel(
                 copy(showDeleteConfirmation = false, paymentToDelete = null)
             }
             is PaymentsContract.Intent.ConfirmDelete -> deletePayment()
+
+            // PDF Export
+            is PaymentsContract.Intent.ExportPaymentsToPdf -> {
+                // PDF export is handled in the Screen composable
+                // Just send effect to signal export started
+                sendEffect(PaymentsContract.Effect.PdfExportStarted)
+            }
         }
     }
 

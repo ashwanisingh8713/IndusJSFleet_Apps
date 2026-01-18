@@ -23,10 +23,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.fleet.core.pdf.PaymentsListPdfExportHandler
 import com.indusjs.fleet.core.ui.EmptyContent
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.payment.*
 import indusjsfleet.sharedui.generated.resources.*
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
 /**
@@ -44,6 +46,11 @@ fun PaymentsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+
+    // PDF Export state
+    var pdfExportData by remember { mutableStateOf<PaymentsListPdfData?>(null) }
+    var isExportingPdf by remember { mutableStateOf(false) }
 
     // Handle effects
     LaunchedEffect(Unit) {
@@ -55,9 +62,34 @@ fun PaymentsScreen(
                 is PaymentsContract.Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
                 is PaymentsContract.Effect.ShowError -> snackbarHostState.showSnackbar(effect.message)
                 is PaymentsContract.Effect.PaymentDeleted -> { /* Handled in list update */ }
+                is PaymentsContract.Effect.PdfExportStarted -> {
+                    isExportingPdf = true
+                }
+                is PaymentsContract.Effect.PdfExportCompleted -> {
+                    isExportingPdf = false
+                }
             }
         }
     }
+
+    // PDF Export Handler
+    PaymentsListPdfExportHandler(
+        pdfData = pdfExportData,
+        onExportComplete = {
+            isExportingPdf = false
+            pdfExportData = null
+            scope.launch {
+                snackbarHostState.showSnackbar("PDF exported successfully!")
+            }
+        },
+        onExportError = { error ->
+            isExportingPdf = false
+            pdfExportData = null
+            scope.launch {
+                snackbarHostState.showSnackbar(error)
+            }
+        }
+    )
 
     // Load more when reaching end of list
     LaunchedEffect(listState) {
@@ -86,6 +118,56 @@ fun PaymentsScreen(
                     }
                 },
                 actions = {
+                    // PDF Export button - only show when there's data
+                    if (state.payments.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                // Generate PDF data from current state
+                                val nowValue = FleetDateTime.now()
+                                pdfExportData = PaymentsListPdfData(
+                                    generatedDate = FleetDateTime.today(),
+                                    generatedTime = FleetDateTime.currentTime(),
+                                    fromDate = state.filter.startDate,
+                                    toDate = state.filter.endDate,
+                                    paymentType = state.filter.paymentType?.displayName,
+                                    paymentMode = state.filter.paymentMode?.displayName,
+                                    paymentStatus = state.filter.paymentStatus?.displayName,
+                                    totalReceived = state.payments.filter { it.paymentStatus == PaymentStatus.RECEIVED }.sumOf { it.amount },
+                                    totalPending = state.pendingSummary?.totalPending ?: 0.0,
+                                    thisMonthTotal = state.summary?.thisMonthTotal ?: state.payments.filter { it.paymentStatus == PaymentStatus.RECEIVED }.sumOf { it.amount },
+                                    totalPaymentsCount = state.payments.size,
+                                    payments = state.payments.map { payment ->
+                                        PaymentPdfItem(
+                                            id = payment.id,
+                                            paymentDate = payment.paymentDate?.take(10) ?: "",
+                                            amount = payment.amount,
+                                            paymentType = payment.typeDisplay,
+                                            paymentMode = payment.modeDisplay,
+                                            paymentStatus = payment.paymentStatus.displayName,
+                                            vehicleNumber = payment.tripInfo?.vehicleRegistration,
+                                            route = payment.tripInfo?.routeDisplay,
+                                            customerName = payment.customerName,
+                                            receiptNumber = payment.receiptNumber,
+                                            notes = payment.notes
+                                        )
+                                    }
+                                )
+                            },
+                            enabled = !isExportingPdf
+                        ) {
+                            if (isExportingPdf) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_download),
+                                    contentDescription = "Export PDF"
+                                )
+                            }
+                        }
+                    }
                     // Filter button
                     IconButton(onClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowFilterSheet) }) {
                         Icon(

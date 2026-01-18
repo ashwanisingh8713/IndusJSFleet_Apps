@@ -15,11 +15,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.fleet.core.pdf.PaymentReceiptPdfExportHandler
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.payment.PaymentStatus
 import com.indusjs.fleet.domain.entity.payment.TripPayment
 import indusjsfleet.sharedui.generated.resources.*
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
 /**
@@ -37,6 +40,11 @@ fun PaymentDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var showMenu by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // PDF Export state
+    var pdfExportData by remember { mutableStateOf<PaymentReceiptPdfData?>(null) }
+    var isExportingPdf by remember { mutableStateOf(false) }
 
     // Initialize
     LaunchedEffect(paymentId) {
@@ -56,6 +64,61 @@ fun PaymentDetailScreen(
         }
     }
 
+    // PDF Export Handler
+    PaymentReceiptPdfExportHandler(
+        pdfData = pdfExportData,
+        onExportComplete = {
+            isExportingPdf = false
+            pdfExportData = null
+            scope.launch {
+                snackbarHostState.showSnackbar("Receipt exported successfully!")
+            }
+        },
+        onExportError = { error ->
+            isExportingPdf = false
+            pdfExportData = null
+            scope.launch {
+                snackbarHostState.showSnackbar(error)
+            }
+        }
+    )
+
+    // Helper function to generate PDF data
+    fun generatePdfData(payment: TripPayment): PaymentReceiptPdfData {
+        return PaymentReceiptPdfData(
+            generatedDate = FleetDateTime.today(),
+            generatedTime = FleetDateTime.currentTime(),
+            paymentId = payment.id,
+            receiptNumber = payment.receiptNumber,
+            paymentDate = payment.paymentDate?.take(10) ?: "",
+            paymentTime = payment.paymentDate?.let {
+                if (it.length > 11) it.substring(11, 16) else null
+            },
+            amount = payment.amount,
+            tdsAmount = payment.tdsAmount,
+            discountAmount = payment.discountAmount,
+            netAmount = payment.netAmount,
+            paymentType = payment.typeDisplay,
+            paymentMode = payment.modeDisplay,
+            paymentStatus = payment.paymentStatus.displayName,
+            transactionId = payment.transactionId,
+            bankName = payment.bankName,
+            tripId = payment.tripId,
+            vehicleNumber = payment.tripInfo?.vehicleRegistration,
+            driverName = payment.tripInfo?.driverName,
+            startLocation = payment.tripInfo?.startLocation,
+            endLocation = payment.tripInfo?.endLocation,
+            tripPrice = payment.tripInfo?.tripPrice,
+            customerName = payment.customerName,
+            customerContact = payment.customerContact,
+            customerCompany = payment.customerCompany,
+            customerGst = payment.customerGst,
+            notes = payment.notes,
+            receivedBy = payment.receivedBy,
+            createdBy = payment.createdByName
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -69,6 +132,29 @@ fun PaymentDetailScreen(
                     }
                 },
                 actions = {
+                    // Download Receipt button
+                    state.payment?.let { payment ->
+                        IconButton(
+                            onClick = {
+                                isExportingPdf = true
+                                pdfExportData = generatePdfData(payment)
+                            },
+                            enabled = !isExportingPdf
+                        ) {
+                            if (isExportingPdf) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_download),
+                                    contentDescription = "Download Receipt"
+                                )
+                            }
+                        }
+                    }
+
                     if (state.canEdit || state.canDelete) {
                         Box {
                             IconButton(onClick = { showMenu = true }) {
@@ -81,6 +167,24 @@ fun PaymentDetailScreen(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false }
                             ) {
+                                // Download Receipt option in menu
+                                state.payment?.let { payment ->
+                                    DropdownMenuItem(
+                                        text = { Text("Download Receipt") },
+                                        leadingIcon = {
+                                            Icon(
+                                                painter = painterResource(Res.drawable.ic_download),
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            showMenu = false
+                                            isExportingPdf = true
+                                            pdfExportData = generatePdfData(payment)
+                                        }
+                                    )
+                                }
+
                                 if (state.canEdit) {
                                     DropdownMenuItem(
                                         text = { Text("Edit") },

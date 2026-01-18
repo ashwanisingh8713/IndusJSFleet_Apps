@@ -32,7 +32,10 @@ object PaymentsContract {
         // Delete confirmation
         val showDeleteConfirmation: Boolean = false,
         val paymentToDelete: TripPayment? = null,
-        val isDeleting: Boolean = false
+        val isDeleting: Boolean = false,
+
+        // PDF Export
+        val isExportingPdf: Boolean = false
     ) : UiState {
         val hasFilters: Boolean get() = filter.hasFilters
         val isEmpty: Boolean get() = payments.isEmpty() && !isLoading
@@ -130,6 +133,9 @@ object PaymentsContract {
         data class ShowDeleteConfirmation(val payment: TripPayment) : Intent
         data object HideDeleteConfirmation : Intent
         data object ConfirmDelete : Intent
+
+        // PDF Export
+        data object ExportPaymentsToPdf : Intent
     }
 
     sealed interface Effect : UiEffect {
@@ -139,6 +145,8 @@ object PaymentsContract {
         data class ShowSnackbar(val message: String) : Effect
         data class ShowError(val message: String) : Effect
         data object PaymentDeleted : Effect
+        data object PdfExportStarted : Effect
+        data object PdfExportCompleted : Effect
     }
 }
 
@@ -364,3 +372,95 @@ data class TripSummaryForPayment(
     val hasPendingAmount: Boolean
         get() = pendingAmount > 0
 }
+
+/**
+ * Data class for Payments List PDF export.
+ */
+data class PaymentsListPdfData(
+    // Report metadata
+    val reportTitle: String = "Payments Report",
+    val generatedDate: String,
+    val generatedTime: String,
+
+    // Date range
+    val fromDate: String?,
+    val toDate: String?,
+
+    // Filter info
+    val paymentType: String?,
+    val paymentMode: String?,
+    val paymentStatus: String?,
+
+    // Summary
+    val totalReceived: Double,
+    val totalPending: Double,
+    val thisMonthTotal: Double,
+    val totalPaymentsCount: Int,
+
+    // Payment records
+    val payments: List<PaymentPdfItem>
+)
+
+/**
+ * Individual payment item for PDF.
+ */
+data class PaymentPdfItem(
+    val id: String,
+    val paymentDate: String,
+    val amount: Double,
+    val paymentType: String,
+    val paymentMode: String,
+    val paymentStatus: String,
+    val vehicleNumber: String?,
+    val route: String?,
+    val customerName: String?,
+    val receiptNumber: String?,
+    val notes: String?
+)
+
+/**
+ * Data class for single Payment Receipt PDF export.
+ */
+data class PaymentReceiptPdfData(
+    // Receipt metadata
+    val receiptTitle: String = "Payment Receipt",
+    val generatedDate: String,
+    val generatedTime: String,
+
+    // Payment info
+    val paymentId: String,
+    val receiptNumber: String?,
+    val paymentDate: String,
+    val paymentTime: String?,
+    val amount: Double,
+    val tdsAmount: Double,
+    val discountAmount: Double,
+    val netAmount: Double,
+    val paymentType: String,
+    val paymentMode: String,
+    val paymentStatus: String,
+
+    // Transaction details
+    val transactionId: String?,
+    val bankName: String?,
+
+    // Trip info
+    val tripId: String?,
+    val vehicleNumber: String?,
+    val driverName: String?,
+    val startLocation: String?,
+    val endLocation: String?,
+    val tripPrice: Double?,
+
+    // Customer info
+    val customerName: String?,
+    val customerContact: String?,
+    val customerCompany: String?,
+    val customerGst: String?,
+
+    // Additional
+    val notes: String?,
+    val receivedBy: String?,
+    val createdBy: String?
+)
+
