@@ -101,6 +101,8 @@ class TripMapper {
             cargoDescription = dto.cargoDescription,
             cargoLoadingWeight = dto.cargoLoadingWeight,
             weightUnit = dto.weightUnit,
+            // Customer info
+            customerId = dto.customerId?.toString(),
             customerName = dto.customerName,
             customerContact = dto.customerContact,
             priority = dto.priority,

@@ -1,0 +1,207 @@
+package com.indusjs.fleet.presentation.payments
+
+import co.touchlab.kermit.Logger
+import com.indusjs.error.result.Result
+import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.domain.entity.payment.*
+import com.indusjs.fleet.domain.repository.payment.TripPaymentRepository
+import dev.zacsweers.metro.Inject
+
+/**
+ * ViewModel for Payments List Screen.
+ */
+@Inject
+class PaymentsViewModel(
+    private val repository: TripPaymentRepository
+) : MviViewModel<PaymentsContract.State, PaymentsContract.Intent, PaymentsContract.Effect>(PaymentsContract.State()) {
+
+    private val log = Logger.withTag("PaymentsViewModel")
+
+    init {
+        sendIntent(PaymentsContract.Intent.LoadPayments)
+    }
+
+    override suspend fun handleIntent(intent: PaymentsContract.Intent) {
+        when (intent) {
+            is PaymentsContract.Intent.LoadPayments -> loadPayments()
+            is PaymentsContract.Intent.Refresh -> refresh()
+            is PaymentsContract.Intent.LoadMore -> loadMore()
+
+            // Filter
+            is PaymentsContract.Intent.ShowFilterSheet -> updateState { copy(showFilterSheet = true, tempFilter = filter) }
+            is PaymentsContract.Intent.HideFilterSheet -> updateState { copy(showFilterSheet = false) }
+            is PaymentsContract.Intent.UpdateTempFilterTrip -> updateState { copy(tempFilter = tempFilter.copy(tripId = intent.tripId)) }
+            is PaymentsContract.Intent.UpdateTempFilterCustomer -> updateState { copy(tempFilter = tempFilter.copy(customerId = intent.customerId)) }
+            is PaymentsContract.Intent.UpdateTempFilterType -> updateState { copy(tempFilter = tempFilter.copy(paymentType = intent.type)) }
+            is PaymentsContract.Intent.UpdateTempFilterMode -> updateState { copy(tempFilter = tempFilter.copy(paymentMode = intent.mode)) }
+            is PaymentsContract.Intent.UpdateTempFilterStatus -> updateState { copy(tempFilter = tempFilter.copy(paymentStatus = intent.status)) }
+            is PaymentsContract.Intent.UpdateTempFilterDateRange -> updateState {
+                copy(tempFilter = tempFilter.copy(startDate = intent.startDate, endDate = intent.endDate))
+            }
+            is PaymentsContract.Intent.ApplyFilter -> applyFilter()
+            is PaymentsContract.Intent.ResetFilter -> resetFilter()
+
+            // Navigation
+            is PaymentsContract.Intent.NavigateToPaymentDetail -> sendEffect(PaymentsContract.Effect.NavigateToDetail(intent.paymentId))
+            is PaymentsContract.Intent.NavigateToAddPayment -> sendEffect(PaymentsContract.Effect.NavigateToAddPayment)
+            is PaymentsContract.Intent.NavigateToAddPaymentForTrip -> sendEffect(PaymentsContract.Effect.NavigateToAddPaymentForTrip(intent.tripId))
+
+            // Delete
+            is PaymentsContract.Intent.ShowDeleteConfirmation -> updateState {
+                copy(showDeleteConfirmation = true, paymentToDelete = intent.payment)
+            }
+            is PaymentsContract.Intent.HideDeleteConfirmation -> updateState {
+                copy(showDeleteConfirmation = false, paymentToDelete = null)
+            }
+            is PaymentsContract.Intent.ConfirmDelete -> deletePayment()
+        }
+    }
+
+    private suspend fun loadPayments() {
+        updateState { copy(isLoading = true, error = null) }
+
+        // Load payments list
+        when (val result = repository.listPayments(state.value.filter)) {
+            is Result.Success -> {
+                updateState {
+                    copy(
+                        isLoading = false,
+                        payments = result.data.payments,
+                        summary = result.data.summary,
+                        page = result.data.page,
+                        hasMore = result.data.hasMore
+                    )
+                }
+                // Also load pending payments summary for accurate pending amount display
+                loadPendingSummary()
+            }
+            is Result.Error -> {
+                log.e(result.exception) { "Failed to load payments" }
+                updateState { copy(isLoading = false, error = result.message) }
+            }
+            is Result.Loading -> { /* Already handled */ }
+        }
+    }
+
+    /**
+     * Load pending payments summary from dashboard API.
+     * This provides the total pending amount across all trips.
+     */
+    private suspend fun loadPendingSummary() {
+        when (val result = repository.getPendingPaymentsSummary()) {
+            is Result.Success -> {
+                log.d { "Loaded pending summary: ${result.data.totalPending}" }
+                updateState { copy(pendingSummary = result.data) }
+            }
+            is Result.Error -> {
+                // Don't fail the whole screen, just log the error
+                log.w { "Failed to load pending summary: ${result.message}" }
+            }
+            is Result.Loading -> { /* Ignored */ }
+        }
+    }
+
+    private suspend fun refresh() {
+        updateState { copy(isRefreshing = true, error = null, page = 1) }
+
+        val newFilter = state.value.filter.copy(page = 1)
+        when (val result = repository.listPayments(newFilter)) {
+            is Result.Success -> {
+                updateState {
+                    copy(
+                        isRefreshing = false,
+                        payments = result.data.payments,
+                        summary = result.data.summary,
+                        page = result.data.page,
+                        hasMore = result.data.hasMore
+                    )
+                }
+                // Also reload pending summary on refresh
+                loadPendingSummary()
+            }
+            is Result.Error -> {
+                log.e(result.exception) { "Failed to refresh payments" }
+                updateState { copy(isRefreshing = false) }
+                sendEffect(PaymentsContract.Effect.ShowError(result.message ?: "Failed to refresh"))
+            }
+            is Result.Loading -> { /* Already handled */ }
+        }
+    }
+
+    private suspend fun loadMore() {
+        if (state.value.isLoadingMore || !state.value.hasMore) return
+
+        updateState { copy(isLoadingMore = true) }
+
+        val nextPage = state.value.page + 1
+        val newFilter = state.value.filter.copy(page = nextPage)
+
+        when (val result = repository.listPayments(newFilter)) {
+            is Result.Success -> {
+                updateState {
+                    copy(
+                        isLoadingMore = false,
+                        payments = payments + result.data.payments,
+                        page = result.data.page,
+                        hasMore = result.data.hasMore
+                    )
+                }
+            }
+            is Result.Error -> {
+                log.e(result.exception) { "Failed to load more payments" }
+                updateState { copy(isLoadingMore = false) }
+            }
+            is Result.Loading -> { /* Already handled */ }
+        }
+    }
+
+    private suspend fun applyFilter() {
+        updateState {
+            copy(
+                showFilterSheet = false,
+                filter = tempFilter.copy(page = 1),
+                page = 1
+            )
+        }
+        loadPayments()
+    }
+
+    private suspend fun resetFilter() {
+        updateState {
+            copy(
+                showFilterSheet = false,
+                filter = TripPaymentFilter(),
+                tempFilter = TripPaymentFilter(),
+                page = 1
+            )
+        }
+        loadPayments()
+    }
+
+    private suspend fun deletePayment() {
+        val payment = state.value.paymentToDelete ?: return
+
+        updateState { copy(isDeleting = true) }
+
+        when (val result = repository.deletePayment(payment.id)) {
+            is Result.Success -> {
+                updateState {
+                    copy(
+                        isDeleting = false,
+                        showDeleteConfirmation = false,
+                        paymentToDelete = null,
+                        payments = payments.filter { it.id != payment.id }
+                    )
+                }
+                sendEffect(PaymentsContract.Effect.ShowSnackbar("Payment deleted successfully"))
+                sendEffect(PaymentsContract.Effect.PaymentDeleted)
+            }
+            is Result.Error -> {
+                log.e(result.exception) { "Failed to delete payment" }
+                updateState { copy(isDeleting = false) }
+                sendEffect(PaymentsContract.Effect.ShowError(result.message ?: "Failed to delete payment"))
+            }
+            is Result.Loading -> { /* Already handled */ }
+        }
+    }
+}

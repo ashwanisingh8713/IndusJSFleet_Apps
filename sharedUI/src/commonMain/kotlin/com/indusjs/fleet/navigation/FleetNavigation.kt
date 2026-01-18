@@ -37,6 +37,9 @@ import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailScreen
 import com.indusjs.fleet.presentation.customers.list.CustomersListScreen
 import com.indusjs.fleet.presentation.customers.detail.CustomerDetailScreen
 import com.indusjs.fleet.presentation.customers.create.CreateCustomerScreen
+import com.indusjs.fleet.presentation.payments.PaymentsScreen
+import com.indusjs.fleet.presentation.payments.PaymentDetailScreen
+import com.indusjs.fleet.presentation.payments.AddPaymentScreen
 
 /**
  * Navigation 3 entry provider for the Fleet Management app.
@@ -110,7 +113,8 @@ fun fleetEntryProvider(
                 onNavigateToCreateTrip = { backStack.add(FleetRoute.CreateTrip) },
                 onNavigateToAddDriverCost = { backStack.add(FleetRoute.DriverCostEntry) },
                 onNavigateToAlertsList = { backStack.add(FleetRoute.AlertsList) },
-                onNavigateToCustomers = { backStack.add(FleetRoute.Customers) }
+                onNavigateToCustomers = { backStack.add(FleetRoute.Customers) },
+                onNavigateToPayments = { backStack.add(FleetRoute.Payments) }
             )
         }
 
@@ -413,6 +417,54 @@ fun fleetEntryProvider(
                         else -> {}
                     }
                 }
+            )
+        }
+
+        // ==================== Payments ====================
+
+        is FleetRoute.Payments -> NavEntry(route) {
+            val viewModel = rememberViewModel { paymentsViewModel() }
+            PaymentsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateToDetail = { paymentId ->
+                    backStack.add(FleetRoute.PaymentDetail(paymentId))
+                },
+                onNavigateToAddPayment = { tripId ->
+                    backStack.add(FleetRoute.AddPayment(tripId))
+                }
+            )
+        }
+
+        is FleetRoute.PaymentDetail -> NavEntry(route) {
+            val viewModel = rememberViewModel { paymentDetailViewModel() }
+            PaymentDetailScreen(
+                viewModel = viewModel,
+                paymentId = route.paymentId,
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateToEdit = { paymentId ->
+                    backStack.add(FleetRoute.EditPayment(paymentId))
+                }
+            )
+        }
+
+        is FleetRoute.AddPayment -> NavEntry(route) {
+            val viewModel = rememberViewModel { addPaymentViewModel() }
+            AddPaymentScreen(
+                viewModel = viewModel,
+                tripId = route.tripId,
+                paymentId = null,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.EditPayment -> NavEntry(route) {
+            val viewModel = rememberViewModel { addPaymentViewModel() }
+            AddPaymentScreen(
+                viewModel = viewModel,
+                tripId = null,
+                paymentId = route.paymentId,
+                onNavigateBack = { backStack.removeLastOrNull() }
             )
         }
     }

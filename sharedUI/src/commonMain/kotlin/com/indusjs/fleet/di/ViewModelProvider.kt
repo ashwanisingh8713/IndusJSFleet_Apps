@@ -88,6 +88,11 @@ interface ViewModelProvider {
     fun customersListViewModel(): com.indusjs.fleet.presentation.customers.list.CustomersListViewModel
     fun customerDetailViewModel(): com.indusjs.fleet.presentation.customers.detail.CustomerDetailViewModel
     fun createCustomerViewModel(): com.indusjs.fleet.presentation.customers.create.CreateCustomerViewModel
+
+    // Payment ViewModels
+    fun paymentsViewModel(): com.indusjs.fleet.presentation.payments.PaymentsViewModel
+    fun addPaymentViewModel(): com.indusjs.fleet.presentation.payments.AddPaymentViewModel
+    fun paymentDetailViewModel(): com.indusjs.fleet.presentation.payments.PaymentDetailViewModel
 }
 
 /**

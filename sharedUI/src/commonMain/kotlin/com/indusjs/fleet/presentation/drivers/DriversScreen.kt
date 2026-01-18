@@ -89,14 +89,17 @@ fun DriversScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.sendIntent(DriversContract.Intent.AddDriver) }
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_add),
-                    contentDescription = "Add Driver",
-                    modifier = Modifier.size(24.dp)
-                )
+            // Only show FAB when there's content (not empty and not loading)
+            if (!state.isLoading && state.filteredDrivers.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = { viewModel.sendIntent(DriversContract.Intent.AddDriver) }
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = "Add Driver",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     ) { paddingValues ->

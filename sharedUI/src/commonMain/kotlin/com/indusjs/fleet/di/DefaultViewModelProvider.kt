@@ -104,6 +104,12 @@ import com.indusjs.fleet.data.datasource.customer.CustomerRemoteDataSource
 import com.indusjs.fleet.data.datasource.customer.CustomerLocalDataSourceImpl
 import com.indusjs.fleet.data.repository.customer.CustomerRepositoryImpl
 import com.indusjs.fleet.domain.usecase.customer.*
+import com.indusjs.fleet.data.datasource.payment.TripPaymentRemoteDataSource
+import com.indusjs.fleet.data.repository.payment.TripPaymentRepositoryImpl
+import com.indusjs.fleet.domain.repository.payment.TripPaymentRepository
+import com.indusjs.fleet.presentation.payments.PaymentsViewModel
+import com.indusjs.fleet.presentation.payments.AddPaymentViewModel
+import com.indusjs.fleet.presentation.payments.PaymentDetailViewModel
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
@@ -296,6 +302,12 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val getCustomerStatisticsUseCase by lazy { GetCustomerStatisticsUseCase(customerRepository) }
     private val refreshCustomersUseCase by lazy { RefreshCustomersUseCase(customerRepository) }
 
+    // Lazy-initialized Payment feature dependencies
+    private val tripPaymentRemoteDataSource by lazy { TripPaymentRemoteDataSource(httpClient, json) }
+    private val tripPaymentRepository: TripPaymentRepository by lazy {
+        TripPaymentRepositoryImpl(tripPaymentRemoteDataSource, dashboardRemoteDataSource, userLocalDataSource)
+    }
+
     // Auth ViewModels
     override fun loginViewModel() = LoginViewModel(dispatcherProvider, userRepository)
     override fun signUpViewModel() = SignUpViewModel(dispatcherProvider, userRepository)
@@ -453,4 +465,11 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     override fun customerDetailViewModel() = CustomerDetailViewModel(customerRepository)
 
     override fun createCustomerViewModel() = CreateCustomerViewModel(createCustomerUseCase)
+
+    // Payment ViewModels
+    override fun paymentsViewModel() = PaymentsViewModel(tripPaymentRepository)
+
+    override fun addPaymentViewModel() = AddPaymentViewModel(tripPaymentRepository, tripRepository)
+
+    override fun paymentDetailViewModel() = PaymentDetailViewModel(tripPaymentRepository, userRepository)
 }

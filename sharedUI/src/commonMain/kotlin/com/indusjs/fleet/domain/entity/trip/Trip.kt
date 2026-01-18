@@ -180,6 +180,8 @@ data class Trip(
     val cargoDescription: String? = null,
     val cargoLoadingWeight: Double? = null,
     val weightUnit: String? = null,
+    // Customer info
+    val customerId: String? = null,
     val customerName: String? = null,
     val customerContact: String? = null,
     val priority: String? = null,

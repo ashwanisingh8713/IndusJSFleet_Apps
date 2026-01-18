@@ -87,14 +87,17 @@ fun TripsScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.sendIntent(TripsContract.Intent.CreateTrip) }
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_add),
-                    contentDescription = "Create Trip",
-                    modifier = Modifier.size(24.dp)
-                )
+            // Only show FAB when there's content (not empty and not loading)
+            if (!state.isLoading && state.filteredTrips.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = { viewModel.sendIntent(TripsContract.Intent.CreateTrip) }
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = "Create Trip",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     ) { paddingValues ->

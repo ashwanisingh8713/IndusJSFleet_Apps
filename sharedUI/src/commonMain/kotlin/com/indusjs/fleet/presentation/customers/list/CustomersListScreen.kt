@@ -98,14 +98,17 @@ fun CustomersListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.sendIntent(Intent.OnAddCustomerClick) },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_add),
-                    contentDescription = "Add Customer"
-                )
+            // Only show FAB when there's content (not empty and not loading)
+            if (!state.isLoading && state.customers.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = { viewModel.sendIntent(Intent.OnAddCustomerClick) },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = "Add Customer"
+                    )
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

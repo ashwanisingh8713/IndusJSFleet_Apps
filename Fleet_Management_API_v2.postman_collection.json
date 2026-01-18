@@ -1613,6 +1613,15 @@
 			"description": "Supervisor-specific dashboard with tracking focus."
 		},
 		{
+			"name": "Financial Summary",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/dashboard/financial-summary?period=monthly&start_date=2026-01-01&end_date=2026-12-31", "host": ["{{base_url}}"], "path": ["dashboard", "financial-summary"], "query": [{"key": "period", "value": "monthly"}, {"key": "start_date", "value": "2026-01-01"}, {"key": "end_date", "value": "2026-12-31"}]}
+			},
+			"description": "Financial summary with revenue, expenses, profit/loss. **Owner/GM only.**\n\n**Query Parameters:**\n- `period`: monthly, quarterly, yearly (default: monthly)\n- `start_date`: Start date (YYYY-MM-DD)\n- `end_date`: End date (YYYY-MM-DD)\n\n**Response includes:**\n- Total revenue, expenses, profit/loss\n- Revenue breakdown by source\n- Expense breakdown by category\n- Period-wise trends"
+		},
+		{
 			"name": "Cost Overview - Today",
 			"request": {
 				"method": "GET",
@@ -1865,7 +1874,7 @@
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"locations\": [\n        {\n            \"vehicle_id\": 1,\n            \"latitude\": 19.0760,\n            \"longitude\": 72.8777,\n            \"speed\": 45.5\n        },\n        {\n            \"vehicle_id\": 2,\n            \"latitude\": 18.5204,\n            \"longitude\": 73.8567,\n            \"speed": 60.0\n        }\n    ]\n}"
+					"raw": "{\n    \"locations\": [\n        {\n            \"vehicle_id\": 1,\n            \"latitude\": 19.0760,\n            \"longitude\": 72.8777,\n            \"speed\": 45.5\n        },\n        {\n            \"vehicle_id\": 2,\n            \"latitude\": 18.5204,\n            \"longitude\": 73.8567,\n            \"speed\": 60.0\n        }\n    ]\n}"
 				},
 				"url": {"raw": "{{base_url}}/locations/track/bulk", "host": ["{{base_url}}"], "path": ["locations", "track", "bulk"]}
 			}
@@ -1881,7 +1890,106 @@
 	]
 },
 {
-	"name": "14. Customers",
+	"name": "14. Trip Payments",
+	"description": "Trip payment management for tracking customer payments.\n\n## Permissions\n- All Operations: Owner, General Manager only\n- Delete: Owner only\n\n## Payment Types\n- `advance`: Advance/booking payment before trip\n- `partial`: Partial payment during/after trip\n- `final`: Final settlement payment\n- `refund`: Refund to customer\n\n## Payment Modes\n- `cash`: Cash payment\n- `upi`: UPI transaction (include payment_source with UPI ID)\n- `bank_transfer`: NEFT/RTGS/IMPS (include transaction_id)\n- `card`: Credit/Debit card payment\n- `credit`: On credit/account\n\n## Payment Status\n- `received`: Payment confirmed\n- `pending`: Awaiting confirmation\n- `cancelled`: Payment cancelled\n\n## Auto-calculated Fields\n- `net_amount`: amount - tds_amount - discount_amount\n- `financial_year`: e.g., '2025-26' (Indian FY)\n- `financial_month`: e.g., '2026-01'\n- `receipt_number`: Auto-generated unique receipt",
+	"item": [
+		{
+			"name": "Create Trip Payment",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"driver_id\": 1,\n    \"customer_id\": 1,\n    \"customer_name\": \"ABC Construction\",\n    \"customer_contact\": \"9876543210\",\n    \"customer_company\": \"ABC Construction Pvt Ltd\",\n    \"customer_gst\": \"27AABCU9603R1ZM\",\n    \"amount\": 30000.00,\n    \"tds_amount\": 0,\n    \"discount_amount\": 0,\n    \"payment_type\": \"advance\",\n    \"payment_mode\": \"cash\",\n    \"payment_source\": \"Received by: Driver Ramesh\",\n    \"payment_date\": \"2026-01-18T10:00:00Z\",\n    \"notes\": \"Advance payment for trip\",\n    \"received_by\": \"Ramesh Singh\",\n    \"received_at_location\": \"Customer Office, Pune\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trip-payments", "host": ["{{base_url}}"], "path": ["trip-payments"]}
+			},
+			"description": "Create a new payment record. Owner/GM only."
+		},
+		{
+			"name": "List All Trip Payments",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-payments?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["trip-payments"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}, {"key": "trip_id", "value": "", "disabled": true}, {"key": "customer_id", "value": "", "disabled": true}, {"key": "payment_type", "value": "", "disabled": true}, {"key": "payment_mode", "value": "", "disabled": true}, {"key": "payment_status", "value": "", "disabled": true}, {"key": "start_date", "value": "", "disabled": true}, {"key": "end_date", "value": "", "disabled": true}]}
+			},
+			"description": "List all payments with optional filters. Owner/GM only."
+		},
+		{
+			"name": "Get Trip Payment",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-payments/1", "host": ["{{base_url}}"], "path": ["trip-payments", "1"]}
+			},
+			"description": "Get payment details by ID. Owner/GM only."
+		},
+		{
+			"name": "Update Trip Payment",
+			"request": {
+				"method": "PUT",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 32000.00,\n    \"payment_status\": \"received\",\n    \"notes\": \"Updated payment amount\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trip-payments/1", "host": ["{{base_url}}"], "path": ["trip-payments", "1"]}
+			},
+			"description": "Update payment details. Owner/GM only."
+		},
+		{
+			"name": "Delete Trip Payment",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-payments/1", "host": ["{{base_url}}"], "path": ["trip-payments", "1"]}
+			},
+			"description": "Delete/cancel a payment. Owner only."
+		},
+		{
+			"name": "Get Trip's Payments (History)",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/1/payments", "host": ["{{base_url}}"], "path": ["trips", "1", "payments"]}
+			},
+			"description": "Get all payments for a specific trip with summary. Owner/GM only."
+		},
+		{
+			"name": "Add Payment to Trip",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 40000.00,\n    \"tds_amount\": 400.00,\n    \"discount_amount\": 0,\n    \"payment_type\": \"partial\",\n    \"payment_mode\": \"bank_transfer\",\n    \"payment_source\": \"XXXX1234 - Union Bank\",\n    \"payment_date\": \"2026-01-18T14:30:00Z\",\n    \"transaction_id\": \"UBIN202601180012345\",\n    \"bank_name\": \"Union Bank of India\",\n    \"notes\": \"Second payment - 1% TDS deducted\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips/1/payments", "host": ["{{base_url}}"], "path": ["trips", "1", "payments"]}
+			},
+			"description": "Add a payment to a specific trip. Auto-fills customer info from trip. Owner/GM only."
+		},
+		{
+			"name": "Payment Summary Report",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-payments/summary?start_date=2026-01-01&end_date=2026-12-31", "host": ["{{base_url}}"], "path": ["trip-payments", "summary"], "query": [{"key": "start_date", "value": "2026-01-01"}, {"key": "end_date", "value": "2026-12-31"}]}
+			},
+			"description": "Get payment summary with totals, breakdown by mode/type, and monthly trend. Owner/GM only."
+		},
+		{
+			"name": "TDS Report",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-payments/tds-report?financial_year=2025-26", "host": ["{{base_url}}"], "path": ["trip-payments", "tds-report"], "query": [{"key": "financial_year", "value": "2025-26"}]}
+			},
+			"description": "Get TDS report for a financial year with customer-wise and quarterly breakdown. Owner/GM only."
+		}
+	]
+},
+{
+	"name": "15. Customers",
 	"description": "Customer management.\n\n## Permissions\n- Create/Edit: Owner, GM, Manager\n- View: All roles\n- Statistics: Owner, GM only\n\n## Customer Fields\n- company_name: Company name (required)\n- person_name: Contact person name (required)\n- primary_contact: Primary phone number (required)\n- secondary_contact: Secondary phone number\n- company_address: Full address\n- email: Email address\n- gst_number: GST registration number\n- notes: Additional notes\n- is_active: Active status (default: true)\n\n## Financial APIs (Owner/GM Only)\n- Statistics: Comprehensive customer stats\n- Pending Payments: Trips with pending payments\n- Payments: All payments received\n- Payment Summary: Breakdown by mode/type\n- Financial Report: P&L report with period filter",
 	"item": [
 		{

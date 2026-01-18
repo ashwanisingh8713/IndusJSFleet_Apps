@@ -156,7 +156,8 @@ fun DashboardScreen(
     onNavigateToCreateTrip: () -> Unit = {},
     onNavigateToAddDriverCost: () -> Unit = {},
     onNavigateToAlertsList: () -> Unit = {},
-    onNavigateToCustomers: () -> Unit = {}
+    onNavigateToCustomers: () -> Unit = {},
+    onNavigateToPayments: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -228,6 +229,10 @@ fun DashboardScreen(
                     onNavigateToCustomers = {
                         scope.launch { drawerState.close() }
                         onNavigateToCustomers()
+                    },
+                    onNavigateToPayments = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToPayments()
                     }
                 )
             }
@@ -448,7 +453,8 @@ private fun NavigationDrawerContent(
     onNavigateToTeam: () -> Unit,
     onNavigateToReports: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToCustomers: () -> Unit
+    onNavigateToCustomers: () -> Unit,
+    onNavigateToPayments: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxHeight()
@@ -570,6 +576,19 @@ private fun NavigationDrawerContent(
             label = { Text("Customers") },
             selected = false,
             onClick = onNavigateToCustomers,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        )
+
+        NavigationDrawerItem(
+            icon = {
+                Text(
+                    text = "💰",
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            label = { Text("Payments") },
+            selected = false,
+            onClick = onNavigateToPayments,
             modifier = Modifier.padding(horizontal = 12.dp)
         )
 

@@ -1,0 +1,1046 @@
+Reusing configuration cache.
+> Task :ijs-datetime-picker:generateComposeResClass SKIPPED
+> Task :ijs-datetime-picker:generateExpectResourceCollectorsForCommonMain SKIPPED
+> Task :ijs-datetime-picker:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :ijs-datetime-utils:metadataWebMainProcessResources NO-SOURCE
+> Task :ijs-datetime-utils:metadataNativeMainProcessResources NO-SOURCE
+> Task :ijs-datetime-utils:metadataAppleMainProcessResources NO-SOURCE
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForCommonMain NO-SOURCE
+> Task :ijs-datetime-utils:metadataCommonMainProcessResources NO-SOURCE
+> Task :ijs-datetime-utils:metadataIosMainProcessResources NO-SOURCE
+> Task :ijs-datetime-picker:metadataCommonMainProcessResources NO-SOURCE
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForWebMain NO-SOURCE
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForCommonMain NO-SOURCE
+> Task :ijs-datetime-picker:metadataWebMainProcessResources NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForCommonMain SKIPPED
+> Task :ijs-datetime-picker:kmpPartiallyResolvedDependenciesChecker
+> Task :ijs-datetime-picker:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ijs-datetime-picker:convertXmlValueResourcesForWebMain NO-SOURCE
+> Task :ijs-datetime-utils:kmpPartiallyResolvedDependenciesChecker
+> Task :ijs-dispatcher-lib:kmpPartiallyResolvedDependenciesChecker
+> Task :ijs-dispatcher-lib:metadataCommonMainProcessResources NO-SOURCE
+> Task :ijs-datetime-utils:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ijs-dispatcher-lib:metadataWebMainProcessResources NO-SOURCE
+> Task :ijs-dispatcher-lib:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ijs-error-lib:kmpPartiallyResolvedDependenciesChecker
+> Task :ijs-error-lib:metadataCommonMainProcessResources NO-SOURCE
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForWebMain NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForWebMain SKIPPED
+> Task :ijs-error-lib:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sharedUI:kmpPartiallyResolvedDependenciesChecker
+> Task :sharedUI:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :ijs-error-lib:metadataWebMainProcessResources NO-SOURCE
+> Task :sharedUI:generateBuildConfig SKIPPED
+> Task :ijs-dispatcher-lib:generateProjectStructureMetadata
+> Task :ijs-error-lib:generateProjectStructureMetadata
+> Task :ijs-datetime-utils:exportRootPublicationCoordinatesForMetadataApiElements
+> Task :ijs-datetime-utils:generateProjectStructureMetadata
+> Task :ijs-datetime-utils:commonizeNativeDistribution
+> Task :ijs-datetime-picker:convertXmlValueResourcesForNativeMain NO-SOURCE
+> Task :ijs-datetime-picker:convertXmlValueResourcesForAppleMain NO-SOURCE
+> Task :ijs-datetime-picker:commonizeNativeDistribution
+> Task :sharedUI:generateExpectResourceCollectorsForCommonMain
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForNativeMain NO-SOURCE
+> Task :sharedUI:generateComposeResClass
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForAppleMain NO-SOURCE
+> Task :ijs-datetime-picker:metadataNativeMainProcessResources NO-SOURCE
+> Task :ijs-datetime-picker:metadataAppleMainProcessResources NO-SOURCE
+> Task :ijs-datetime-picker:convertXmlValueResourcesForIosMain NO-SOURCE
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForAppleMain NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForAppleMain SKIPPED
+> Task :ijs-datetime-picker:metadataIosMainProcessResources NO-SOURCE
+> Task :ijs-datetime-picker:generateProjectStructureMetadata
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForNativeMain NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForNativeMain SKIPPED
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForIosMain NO-SOURCE
+> Task :ijs-dispatcher-lib:metadataNativeMainProcessResources NO-SOURCE
+> Task :ijs-dispatcher-lib:metadataAppleMainProcessResources NO-SOURCE
+> Task :ijs-dispatcher-lib:metadataIosMainProcessResources NO-SOURCE
+> Task :ijs-error-lib:metadataNativeMainProcessResources NO-SOURCE
+> Task :ijs-error-lib:metadataAppleMainProcessResources NO-SOURCE
+> Task :ijs-dispatcher-lib:commonizeNativeDistribution
+> Task :ijs-error-lib:metadataIosMainProcessResources NO-SOURCE
+> Task :ijs-error-lib:commonizeNativeDistribution
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForIosMain NO-SOURCE
+> Task :ijs-datetime-utils:androidPreBuild UP-TO-DATE
+> Task :ijs-datetime-picker:generateResourceAccessorsForIosMain SKIPPED
+> Task :ijs-datetime-picker:androidPreBuild UP-TO-DATE
+> Task :ijs-datetime-utils:preAndroidMainBuild UP-TO-DATE
+> Task :ijs-datetime-picker:preAndroidMainBuild UP-TO-DATE
+> Task :ijs-dispatcher-lib:androidPreBuild UP-TO-DATE
+> Task :ijs-dispatcher-lib:preAndroidMainBuild UP-TO-DATE
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :ijs-error-lib:androidPreBuild UP-TO-DATE
+> Task :ijs-datetime-picker:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :ijs-error-lib:preAndroidMainBuild UP-TO-DATE
+> Task :sharedUI:convertXmlValueResourcesForCommonMain
+> Task :sharedUI:generateAndroidMainBuildConfig SKIPPED
+> Task :sharedUI:androidPreBuild UP-TO-DATE
+> Task :sharedUI:preAndroidMainBuild UP-TO-DATE
+> Task :sharedUI:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForAndroidMain SKIPPED
+> Task :ijs-datetime-picker:generateActualResourceCollectorsForAndroidMain SKIPPED
+> Task :ijs-datetime-picker:convertXmlValueResourcesForIosArm64Main NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForIosArm64Main NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForIosArm64Main NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForAndroidMain NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForIosArm64Main SKIPPED
+> Task :ijs-datetime-picker:generateActualResourceCollectorsForIosArm64Main SKIPPED
+> Task :ijs-datetime-picker:downloadKotlinNativeDistribution
+> Task :ijs-dispatcher-lib:downloadKotlinNativeDistribution
+> Task :ijs-error-lib:downloadKotlinNativeDistribution
+> Task :ijs-datetime-utils:downloadKotlinNativeDistribution
+> Task :sharedUI:downloadKotlinNativeDistribution
+> Task :sharedUI:convertXmlValueResourcesForAppleMain NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForAppleMain NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForAppleMain NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForAppleMain NO-SOURCE
+> Task :sharedUI:convertXmlValueResourcesForIosArm64Main NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForIosArm64Main NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForIosArm64Main NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForIosArm64Main NO-SOURCE
+> Task :sharedUI:convertXmlValueResourcesForIosMain NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForIosMain NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForIosMain NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForIosMain NO-SOURCE
+> Task :sharedUI:convertXmlValueResourcesForNativeMain NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForNativeMain NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForNativeMain NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForNativeMain NO-SOURCE
+> Task :sharedUI:generateAppleMainBuildConfig SKIPPED
+> Task :sharedUI:generateIosArm64MainBuildConfig SKIPPED
+> Task :sharedUI:generateIosMainBuildConfig SKIPPED
+> Task :sharedUI:generateNativeMainBuildConfig SKIPPED
+> Task :ijs-datetime-picker:convertXmlValueResourcesForIosSimulatorArm64Main NO-SOURCE
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForIosSimulatorArm64Main NO-SOURCE
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForIosSimulatorArm64Main NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForIosSimulatorArm64Main SKIPPED
+> Task :ijs-datetime-picker:generateActualResourceCollectorsForIosSimulatorArm64Main SKIPPED
+> Task :sharedUI:copyNonXmlValueResourcesForCommonMain
+> Task :sharedUI:prepareComposeResourcesTaskForCommonMain
+> Task :sharedUI:generateResourceAccessorsForCommonMain
+> Task :sharedUI:generateActualResourceCollectorsForAndroidMain
+> Task :ijs-datetime-utils:transformCommonMainDependenciesMetadata
+> Task :ijs-dispatcher-lib:transformCommonMainDependenciesMetadata
+> Task :sharedUI:copyAndroidMainComposeResourcesToAndroidAssets
+> Task :ijs-error-lib:transformCommonMainDependenciesMetadata
+> Task :ijs-datetime-utils:transformNativeMainDependenciesMetadata
+> Task :ijs-datetime-utils:transformAppleMainDependenciesMetadata
+> Task :ijs-datetime-utils:transformWebMainDependenciesMetadata
+> Task :ijs-datetime-utils:transformIosMainDependenciesMetadata
+> Task :ijs-dispatcher-lib:transformWebMainDependenciesMetadata
+> Task :ijs-error-lib:transformWebMainDependenciesMetadata
+> Task :ijs-dispatcher-lib:transformNativeMainDependenciesMetadata
+> Task :ijs-dispatcher-lib:transformAppleMainDependenciesMetadata
+> Task :ijs-dispatcher-lib:transformIosMainDependenciesMetadata
+> Task :ijs-error-lib:transformNativeMainDependenciesMetadata
+> Task :ijs-error-lib:transformAppleMainDependenciesMetadata
+> Task :ijs-error-lib:transformIosMainDependenciesMetadata
+> Task :ijs-dispatcher-lib:compileCommonMainKotlinMetadata
+> Task :ijs-dispatcher-lib:metadataCommonMainClasses
+> Task :ijs-dispatcher-lib:compileWebMainKotlinMetadata NO-SOURCE
+> Task :ijs-dispatcher-lib:metadataWebMainClasses UP-TO-DATE
+> Task :ijs-dispatcher-lib:allMetadataJar
+> Task :ijs-dispatcher-lib:compileNativeMainKotlinMetadata NO-SOURCE
+> Task :ijs-dispatcher-lib:metadataNativeMainClasses UP-TO-DATE
+> Task :ijs-dispatcher-lib:compileAppleMainKotlinMetadata NO-SOURCE
+> Task :ijs-dispatcher-lib:metadataAppleMainClasses UP-TO-DATE
+> Task :sharedUI:packageAndroidMainResources
+> Task :sharedUI:parseAndroidMainLocalResources
+> Task :sharedUI:generateAndroidMainRFile
+> Task :sharedUI:generateActualResourceCollectorsForIosArm64Main
+
+> Task :ijs-datetime-utils:compileCommonMainKotlinMetadata
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:56:35 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:57:33 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:38 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:56 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:39 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:55 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:554:39 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:555:37 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:565:42 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:566:40 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:576:43 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:577:41 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:628:67 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:637:35 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:640:36 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:40 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:60 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:40 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:60 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:40 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:60 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:742:37 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:743:35 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:762:37 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:763:35 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:39 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:58 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:39 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:58 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:914:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:43 'expect val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:66 'expect val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:1096:31 'typealias Instant = Instant' is deprecated. This type is deprecated in favor of `kotlin.time.Instant`.
+
+> Task :ijs-datetime-utils:metadataCommonMainClasses
+> Task :ijs-datetime-utils:compileWebMainKotlinMetadata NO-SOURCE
+> Task :ijs-datetime-utils:metadataWebMainClasses UP-TO-DATE
+> Task :ijs-error-lib:compileCommonMainKotlinMetadata
+> Task :ijs-datetime-utils:compileNativeMainKotlinMetadata NO-SOURCE
+> Task :ijs-datetime-utils:metadataNativeMainClasses UP-TO-DATE
+> Task :ijs-datetime-utils:compileAppleMainKotlinMetadata NO-SOURCE
+> Task :ijs-datetime-utils:allMetadataJar
+> Task :ijs-error-lib:metadataCommonMainClasses
+> Task :ijs-datetime-utils:metadataAppleMainClasses UP-TO-DATE
+> Task :ijs-datetime-utils:compileIosMainKotlinMetadata NO-SOURCE
+> Task :ijs-datetime-utils:metadataIosMainClasses UP-TO-DATE
+> Task :ijs-error-lib:compileWebMainKotlinMetadata NO-SOURCE
+> Task :ijs-datetime-utils:exportCommonSourceSetsMetadataLocationsForMetadataApiElements
+> Task :ijs-datetime-utils:iosArm64MetadataElements
+> Task :ijs-datetime-utils:iosSimulatorArm64MetadataElements
+> Task :ijs-error-lib:metadataWebMainClasses UP-TO-DATE
+> Task :ijs-datetime-utils:iosX64MetadataElements
+> Task :ijs-error-lib:allMetadataJar
+> Task :ijs-error-lib:compileNativeMainKotlinMetadata NO-SOURCE
+> Task :ijs-error-lib:metadataNativeMainClasses UP-TO-DATE
+> Task :ijs-error-lib:compileAppleMainKotlinMetadata NO-SOURCE
+> Task :ijs-error-lib:metadataAppleMainClasses UP-TO-DATE
+> Task :ijs-error-lib:compileIosMainKotlinMetadata NO-SOURCE
+> Task :ijs-error-lib:metadataIosMainClasses UP-TO-DATE
+> Task :ijs-error-lib:exportCommonSourceSetsMetadataLocationsForMetadataApiElements
+> Task :ijs-error-lib:iosArm64MetadataElements
+> Task :ijs-error-lib:iosSimulatorArm64MetadataElements
+> Task :ijs-error-lib:iosX64MetadataElements
+> Task :ijs-dispatcher-lib:compileAndroidMain
+> Task :ijs-dispatcher-lib:bundleAndroidMainClassesToCompileJar
+> Task :sharedUI:convertXmlValueResourcesForIosSimulatorArm64Main NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForIosSimulatorArm64Main NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForIosSimulatorArm64Main NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForIosSimulatorArm64Main NO-SOURCE
+> Task :sharedUI:generateActualResourceCollectorsForIosSimulatorArm64Main
+> Task :sharedUI:generateIosSimulatorArm64MainBuildConfig SKIPPED
+> Task :ijs-datetime-picker:convertXmlValueResourcesForIosX64Main NO-SOURCE
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForIosX64Main NO-SOURCE
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForIosX64Main NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForIosX64Main SKIPPED
+> Task :ijs-datetime-picker:generateActualResourceCollectorsForIosX64Main SKIPPED
+
+> Task :ijs-datetime-utils:compileAndroidMain
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:56:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:57:33 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:38 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:56 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:55 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:554:39 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:555:37 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:565:42 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:566:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:576:43 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:577:41 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:628:67 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:637:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:640:36 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:742:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:743:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:762:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:763:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:914:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:43 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:66 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:1096:31 'typealias Instant = Instant' is deprecated. This type is deprecated in favor of `kotlin.time.Instant`.
+
+> Task :ijs-datetime-utils:bundleAndroidMainClassesToCompileJar
+> Task :ijs-error-lib:compileAndroidMain
+> Task :ijs-error-lib:bundleAndroidMainClassesToCompileJar
+> Task :ijs-dispatcher-lib:compileIosMainKotlinMetadata
+> Task :ijs-dispatcher-lib:metadataIosMainClasses
+> Task :ijs-dispatcher-lib:exportCommonSourceSetsMetadataLocationsForMetadataApiElements
+> Task :ijs-dispatcher-lib:iosArm64MetadataElements
+> Task :ijs-dispatcher-lib:iosSimulatorArm64MetadataElements
+> Task :ijs-dispatcher-lib:iosX64MetadataElements
+> Task :ijs-datetime-picker:transformCommonMainDependenciesMetadata
+> Task :ijs-dispatcher-lib:compileKotlinIosArm64
+> Task :ijs-dispatcher-lib:compileKotlinIosX64
+> Task :ijs-dispatcher-lib:compileKotlinIosSimulatorArm64
+> Task :sharedUI:convertXmlValueResourcesForIosX64Main NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForIosX64Main NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForIosX64Main NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForIosX64Main NO-SOURCE
+> Task :sharedUI:generateActualResourceCollectorsForIosX64Main
+> Task :sharedUI:generateIosX64MainBuildConfig SKIPPED
+> Task :ijs-datetime-picker:convertXmlValueResourcesForJsMain NO-SOURCE
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForJsMain NO-SOURCE
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForJsMain NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForJsMain SKIPPED
+> Task :ijs-datetime-picker:generateActualResourceCollectorsForJsMain SKIPPED
+> Task :ijs-datetime-picker:compileCommonMainKotlinMetadata
+> Task :ijs-datetime-picker:metadataCommonMainClasses
+
+> Task :ijs-datetime-utils:compileKotlinIosArm64
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:56:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:57:33 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:38 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:56 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:55 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:554:39 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:555:37 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:565:42 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:566:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:576:43 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:577:41 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:628:67 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:637:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:640:36 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:742:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:743:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:762:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:763:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:914:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:43 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:66 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:1096:31 'typealias Instant = Instant' is deprecated. This type is deprecated in favor of `kotlin.time.Instant`.
+
+> Task :ijs-datetime-utils:compileKotlinIosSimulatorArm64
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:56:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:57:33 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:38 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:56 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:55 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:554:39 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:555:37 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:565:42 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:566:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:576:43 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:577:41 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:628:67 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:637:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:640:36 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:742:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:743:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:762:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:763:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:914:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:43 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:66 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:1096:31 'typealias Instant = Instant' is deprecated. This type is deprecated in favor of `kotlin.time.Instant`.
+
+> Task :ijs-error-lib:compileKotlinIosArm64
+
+> Task :ijs-datetime-utils:compileKotlinIosX64
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:56:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:57:33 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:38 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:56 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:55 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:554:39 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:555:37 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:565:42 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:566:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:576:43 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:577:41 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:628:67 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:637:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:640:36 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:742:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:743:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:762:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:763:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:914:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:43 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:66 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:1096:31 'typealias Instant = Instant' is deprecated. This type is deprecated in favor of `kotlin.time.Instant`.
+
+> Task :ijs-error-lib:compileKotlinIosSimulatorArm64
+> Task :sharedUI:convertXmlValueResourcesForJsMain NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForJsMain NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForJsMain NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForJsMain NO-SOURCE
+> Task :sharedUI:convertXmlValueResourcesForWebMain NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForWebMain NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForWebMain NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForWebMain NO-SOURCE
+> Task :sharedUI:generateActualResourceCollectorsForJsMain
+> Task :sharedUI:generateJsMainBuildConfig SKIPPED
+> Task :sharedUI:generateWebMainBuildConfig SKIPPED
+> Task :ijs-datetime-picker:convertXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :ijs-datetime-picker:copyNonXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :ijs-datetime-picker:prepareComposeResourcesTaskForWasmJsMain NO-SOURCE
+> Task :ijs-datetime-picker:generateResourceAccessorsForWasmJsMain SKIPPED
+> Task :ijs-datetime-picker:generateActualResourceCollectorsForWasmJsMain SKIPPED
+> Task :ijs-datetime-picker:compileAndroidMain
+> Task :ijs-datetime-picker:bundleAndroidMainClassesToCompileJar
+
+> Task :ijs-datetime-utils:compileKotlinJs
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:56:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:57:33 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:38 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:56 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:55 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:554:39 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:555:37 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:565:42 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:566:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:576:43 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:577:41 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:628:67 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:637:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:640:36 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:742:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:743:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:762:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:763:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:914:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:43 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:66 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:1096:31 'typealias Instant = Instant' is deprecated. This type is deprecated in favor of `kotlin.time.Instant`.
+
+> Task :ijs-dispatcher-lib:compileKotlinJs
+> Task :ijs-datetime-picker:transformWebMainDependenciesMetadata
+> Task :ijs-datetime-picker:compileWebMainKotlinMetadata NO-SOURCE
+> Task :ijs-datetime-picker:metadataWebMainClasses UP-TO-DATE
+> Task :ijs-datetime-picker:allMetadataJar
+> Task :ijs-datetime-picker:transformNativeMainDependenciesMetadata
+> Task :ijs-datetime-picker:compileNativeMainKotlinMetadata NO-SOURCE
+> Task :ijs-datetime-picker:metadataNativeMainClasses UP-TO-DATE
+> Task :ijs-datetime-picker:transformAppleMainDependenciesMetadata
+> Task :ijs-datetime-picker:compileAppleMainKotlinMetadata NO-SOURCE
+> Task :ijs-datetime-picker:metadataAppleMainClasses UP-TO-DATE
+> Task :ijs-datetime-picker:transformIosMainDependenciesMetadata
+> Task :ijs-datetime-picker:compileIosMainKotlinMetadata NO-SOURCE
+> Task :ijs-datetime-picker:metadataIosMainClasses UP-TO-DATE
+> Task :ijs-datetime-picker:exportCommonSourceSetsMetadataLocationsForMetadataApiElements
+> Task :ijs-datetime-picker:iosArm64MetadataElements
+> Task :ijs-datetime-picker:iosSimulatorArm64MetadataElements
+> Task :ijs-datetime-picker:iosX64MetadataElements
+> Task :ijs-error-lib:compileKotlinIosX64
+> Task :sharedUI:convertXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForWasmJsMain NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForWasmJsMain NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForWasmJsMain NO-SOURCE
+> Task :sharedUI:generateActualResourceCollectorsForWasmJsMain
+> Task :sharedUI:generateWasmJsMainBuildConfig SKIPPED
+> Task :sharedUI:generateAppleTestBuildConfig SKIPPED
+> Task :sharedUI:generateIosArm64TestBuildConfig SKIPPED
+> Task :sharedUI:generateIosTestBuildConfig SKIPPED
+> Task :sharedUI:generateNativeTestBuildConfig SKIPPED
+> Task :sharedUI:convertXmlValueResourcesForAppleTest NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForAppleTest NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForAppleTest NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForAppleTest NO-SOURCE
+> Task :sharedUI:convertXmlValueResourcesForCommonTest NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForCommonTest NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForCommonTest NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForCommonTest NO-SOURCE
+> Task :sharedUI:convertXmlValueResourcesForIosArm64Test NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForIosArm64Test NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForIosArm64Test NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForIosArm64Test NO-SOURCE
+> Task :sharedUI:convertXmlValueResourcesForIosTest NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForIosTest NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForIosTest NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForIosTest NO-SOURCE
+> Task :sharedUI:convertXmlValueResourcesForNativeTest NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForNativeTest NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForNativeTest NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForNativeTest NO-SOURCE
+> Task :sharedUI:generateTestBuildConfig SKIPPED
+> Task :ijs-datetime-picker:assembleIosArm64MainResources
+> Task :ijs-datetime-picker:iosArm64CopyHierarchicalMultiplatformResources
+> Task :ijs-datetime-picker:iosArm64ZipMultiplatformResourcesForPublication
+> Task :sharedUI:iosArm64ResolveResourcesFromDependencies
+> Task :sharedUI:assembleIosArm64MainResources
+> Task :ijs-dispatcher-lib:compileKotlinWasmJs
+> Task :sharedUI:generateIosSimulatorArm64TestBuildConfig SKIPPED
+> Task :sharedUI:convertXmlValueResourcesForIosSimulatorArm64Test NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForIosSimulatorArm64Test NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForIosSimulatorArm64Test NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForIosSimulatorArm64Test NO-SOURCE
+> Task :ijs-datetime-picker:assembleIosSimulatorArm64MainResources
+> Task :ijs-datetime-picker:iosSimulatorArm64CopyHierarchicalMultiplatformResources
+> Task :ijs-datetime-picker:iosSimulatorArm64ZipMultiplatformResourcesForPublication
+
+> Task :ijs-datetime-utils:compileKotlinWasmJs
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:56:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:57:33 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:38 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:69:56 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:85:55 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:554:39 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:555:37 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:565:42 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:566:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:576:43 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:577:41 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:628:67 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:637:35 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:640:36 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:699:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:716:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:40 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:726:60 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:742:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:743:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:762:37 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:763:35 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:794:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:39 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:804:58 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:914:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:43 'val dayOfMonth: Int' is deprecated. Use the 'day' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:927:66 'val monthNumber: Int' is deprecated. Use the 'month' property instead.
+w: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/ijs-datetime-utils/src/commonMain/kotlin/com/indusjs/datetimeutils/FleetDateTime.kt:1096:31 'typealias Instant = Instant' is deprecated. This type is deprecated in favor of `kotlin.time.Instant`.
+
+> Task :sharedUI:iosSimulatorArm64ResolveResourcesFromDependencies
+> Task :sharedUI:iosArm64ResolveSelfResourcesCopyHierarchicalMultiplatformResources
+> Task :ijs-error-lib:compileKotlinJs
+> Task :sharedUI:generateIosX64TestBuildConfig SKIPPED
+> Task :sharedUI:convertXmlValueResourcesForIosX64Test NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForIosX64Test NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForIosX64Test NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForIosX64Test NO-SOURCE
+> Task :ijs-datetime-picker:assembleIosX64MainResources
+> Task :ijs-datetime-picker:iosX64CopyHierarchicalMultiplatformResources
+> Task :sharedUI:assembleIosSimulatorArm64MainResources
+> Task :ijs-datetime-picker:iosX64ZipMultiplatformResourcesForPublication
+> Task :sharedUI:iosX64ResolveResourcesFromDependencies
+> Task :sharedUI:iosSimulatorArm64ResolveSelfResourcesCopyHierarchicalMultiplatformResources
+> Task :sharedUI:iosArm64AggregateResources
+> Task :sharedUI:assembleIosX64MainResources
+> Task :sharedUI:iosSimulatorArm64AggregateResources
+> Task :sharedUI:iosArm64ProcessResources
+> Task :sharedUI:generateJsTestBuildConfig SKIPPED
+> Task :sharedUI:convertXmlValueResourcesForJsTest NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForJsTest NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForJsTest NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForJsTest NO-SOURCE
+> Task :sharedUI:convertXmlValueResourcesForWebTest NO-SOURCE
+> Task :sharedUI:copyNonXmlValueResourcesForWebTest NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForWebTest NO-SOURCE
+> Task :sharedUI:iosX64ResolveSelfResourcesCopyHierarchicalMultiplatformResources
+> Task :sharedUI:generateResourceAccessorsForWebTest NO-SOURCE
+> Task :sharedUI:generateWebTestBuildConfig SKIPPED
+> Task :ijs-datetime-picker:assembleJsMainResources
+> Task :sharedUI:iosX64AggregateResources
+> Task :sharedUI:iosSimulatorArm64ProcessResources
+> Task :ijs-error-lib:compileKotlinWasmJs
+> Task :ijs-datetime-picker:jsCopyHierarchicalMultiplatformResources
+> Task :ijs-datetime-picker:jsZipMultiplatformResourcesForPublication
+> Task :sharedUI:jsResolveResourcesFromDependencies
+> Task :sharedUI:convertXmlValueResourcesForWasmJsTest NO-SOURCE
+> Task :sharedUI:iosX64ProcessResources
+> Task :sharedUI:generateWasmJsTestBuildConfig SKIPPED
+> Task :sharedUI:copyNonXmlValueResourcesForWasmJsTest NO-SOURCE
+> Task :sharedUI:prepareComposeResourcesTaskForWasmJsTest NO-SOURCE
+> Task :sharedUI:generateResourceAccessorsForWasmJsTest NO-SOURCE
+> Task :sharedUI:assembleJsMainResources
+> Task :ijs-datetime-picker:assembleWasmJsMainResources
+> Task :ijs-datetime-picker:wasmJsCopyHierarchicalMultiplatformResources
+> Task :ijs-datetime-picker:wasmJsZipMultiplatformResourcesForPublication
+> Task :sharedUI:wasmJsResolveResourcesFromDependencies
+> Task :sharedUI:metadataCommonMainProcessResources NO-SOURCE
+> Task :ijs-datetime-picker:exportRootPublicationCoordinatesForMetadataApiElements
+> Task :ijs-dispatcher-lib:exportRootPublicationCoordinatesForMetadataApiElements
+> Task :ijs-error-lib:exportRootPublicationCoordinatesForMetadataApiElements
+> Task :sharedUI:generateProjectStructureMetadata
+> Task :sharedUI:metadataWebMainProcessResources NO-SOURCE
+> Task :sharedUI:jsResolveSelfResourcesCopyHierarchicalMultiplatformResources
+> Task :sharedUI:mergeAndroidMainJniLibFolders
+> Task :sharedUI:mergeAndroidMainNativeLibs NO-SOURCE
+> Task :sharedUI:assembleWasmJsMainResources
+> Task :sharedUI:copyAndroidMainJniLibsProjectOnly
+> Task :sharedUI:jsAggregateResources
+> Task :sharedUI:generateAndroidMainAssets UP-TO-DATE
+> Task :sharedUI:extractAndroidMainAnnotations
+> Task :sharedUI:prepareAndroidMainArtProfile
+> Task :sharedUI:unpackSkikoWasmRuntime
+> Task :sharedUI:wasmJsResolveSelfResourcesCopyHierarchicalMultiplatformResources
+> Task :sharedUI:prepareLintJarForPublish
+> Task :sharedUI:mergeAndroidMainAssets
+> Task :sharedUI:processAndroidMainManifest
+> Task :sharedUI:writeAndroidMainAarMetadata
+> Task :sharedUI:metadataNativeMainProcessResources NO-SOURCE
+> Task :sharedUI:metadataAppleMainProcessResources NO-SOURCE
+> Task :sharedUI:commonizeNativeDistribution
+> Task :sharedUI:metadataIosMainProcessResources NO-SOURCE
+> Task :kotlinWasmKotlinNpmCachesSetup
+> Task :kotlinKotlinNpmCachesSetup
+> Task :ijs-datetime-utils:wasmJsPackageJson
+> Task :sharedUI:wasmJsAggregateResources
+> Task :ijs-datetime-utils:jsPackageJson
+> Task :ijs-dispatcher-lib:jsPackageJson
+> Task :ijs-error-lib:jsPackageJson
+> Task :ijs-datetime-picker:jsPackageJson
+> Task :ijs-datetime-picker:wasmJsPackageJson
+> Task :ijs-dispatcher-lib:wasmJsPackageJson
+> Task :ijs-error-lib:wasmJsPackageJson
+> Task :sharedUI:wasmJsPackageJson
+> Task :sharedUI:jsPackageJson
+> Task :sharedUI:jsPublicPackageJson
+> Task :sharedUI:assembleIosSimulatorArm64TestResources
+> Task :sharedUI:wasmJsProcessResources
+> Task :sharedUI:assembleIosX64TestResources
+> Task :sharedUI:wasmJsPublicPackageJson
+> Task :sharedUI:copyTestComposeResourcesForIosSimulatorArm64
+> Task :kotlinRestoreYarnLock
+> Task :sharedUI:jsProcessResources
+> Task :ijs-datetime-utils:jsTestPackageJson
+> Task :ijs-datetime-picker:jsTestPackageJson
+> Task :ijs-error-lib:jsTestPackageJson
+> Task :ijs-dispatcher-lib:jsTestPackageJson
+> Task :webApp:jsPackageJson
+> Task :webApp:jsTestPackageJson
+> Task :sharedUI:jsTestPackageJson
+> Task :ijs-datetime-picker:jsPublicPackageJson
+> Task :ijs-datetime-picker:jsTestPublicPackageJson
+> Task :ijs-datetime-utils:jsPublicPackageJson
+> Task :ijs-dispatcher-lib:jsPublicPackageJson
+> Task :ijs-datetime-utils:jsTestPublicPackageJson
+> Task :ijs-error-lib:jsPublicPackageJson
+> Task :ijs-dispatcher-lib:jsTestPublicPackageJson
+> Task :ijs-error-lib:jsTestPublicPackageJson
+> Task :webApp:jsPublicPackageJson
+> Task :sharedUI:jsTestPublicPackageJson
+> Task :webApp:jsTestPublicPackageJson
+> Task :kotlinPackageJsonUmbrella
+> Task :sharedUI:assembleJsTestResources
+> Task :rootPackageJson
+> Task :sharedUI:copyTestComposeResourcesForIosX64
+> Task :kotlinWasmRestoreYarnLock
+> Task :ijs-datetime-picker:wasmJsTestPackageJson
+> Task :ijs-datetime-utils:wasmJsTestPackageJson
+> Task :ijs-dispatcher-lib:wasmJsTestPackageJson
+> Task :ijs-error-lib:wasmJsTestPackageJson
+> Task :sharedUI:wasmJsTestPackageJson
+> Task :webApp:wasmJsPackageJson
+> Task :webApp:wasmJsTestPackageJson
+> Task :ijs-datetime-picker:wasmJsPublicPackageJson
+> Task :ijs-datetime-picker:wasmJsTestPublicPackageJson
+> Task :ijs-datetime-utils:wasmJsPublicPackageJson
+> Task :ijs-datetime-utils:wasmJsTestPublicPackageJson
+> Task :sharedUI:jsTestProcessResources
+> Task :ijs-dispatcher-lib:wasmJsTestPublicPackageJson
+> Task :ijs-error-lib:wasmJsPublicPackageJson
+> Task :ijs-dispatcher-lib:wasmJsPublicPackageJson
+> Task :sharedUI:wasmJsTestPublicPackageJson
+> Task :ijs-error-lib:wasmJsTestPublicPackageJson
+> Task :webApp:wasmJsTestPublicPackageJson
+> Task :webApp:wasmJsPublicPackageJson
+> Task :kotlinWasmPackageJsonUmbrella
+> Task :sharedUI:assembleWasmJsTestResources
+> Task :sharedUI:wasmJsTestProcessResources
+> Task :wasmRootPackageJson
+> Task :sharedUI:processSkikoRuntimeForKWasm
+> Task :ijs-datetime-picker:compileKotlinJs
+> Task :sharedUI:kspKotlinJs SKIPPED
+> Task :kotlinNodeJsSetup
+> Task :kotlinYarnSetup
+> Task :kotlinWasmNodeJsSetup
+> Task :kotlinWasmYarnSetup
+> Task :sharedUI:kotlinNodeJsSetup
+> Task :ijs-datetime-picker:compileKotlinWasmJs
+> Task :sharedUI:kspKotlinWasmJs SKIPPED
+> Task :kotlinWasmToolingSetup
+> Task :sharedUI:kotlinWasmNodeJsSetup
+> Task :sharedUI:transformCommonMainDependenciesMetadata
+> Task :sharedUI:kspCommonMainKotlinMetadata SKIPPED
+
+> Task :kotlinNpmInstall
+(node:42052) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+> Task :kotlinStoreYarnLock
+
+> Task :kotlinWasmNpmInstall
+warning Waiting for the other yarn instance to finish (42052)
+(node:42053) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+> Task :kotlinWasmStoreYarnLock
+> Task :sharedUI:transformWebMainDependenciesMetadata
+> Task :sharedUI:transformNativeMainDependenciesMetadata
+> Task :sharedUI:transformAppleMainDependenciesMetadata
+> Task :sharedUI:transformIosMainDependenciesMetadata
+> Task :ijs-datetime-picker:compileKotlinIosArm64
+> Task :ijs-datetime-picker:compileKotlinIosX64
+> Task :ijs-datetime-picker:compileKotlinIosSimulatorArm64
+> Task :sharedUI:kspAndroidMain
+> Task :sharedUI:kspKotlinIosX64
+> Task :sharedUI:kspKotlinIosSimulatorArm64
+> Task :sharedUI:kspKotlinIosArm64
+
+> Task :sharedUI:compileCommonMainKotlinMetadata
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:23:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:65:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:82:59 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:295:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:723:64 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:78:25 Unresolved reference 'System'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:79:40 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:80:35 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:150:65 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:151:61 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:180:57 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:181:53 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:22:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:66:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:76:63 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:89:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:104:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:64:16 One type argument expected. Use 'Result.Success<*>' if you do not intend to pass type arguments.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:65:35 Unresolved reference 'data'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:9 Unresolved reference 'sendEffect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:20 Unresolved reference 'Effect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:107:1 Syntax error: Expecting a top level declaration.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:25:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:79:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:88:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:94:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:106:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsViewModel.kt:102:28 Unresolved reference 'Effect'.
+
+> Task :sharedUI:compileCommonMainKotlinMetadata FAILED
+> Task :sharedUI:copyRoomSchemas NO-SOURCE
+
+> Task :sharedUI:compileKotlinWasmJs FAILED
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:23:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:65:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:82:59 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:295:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:723:64 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:78:25 Unresolved reference 'System'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:79:40 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:80:35 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:150:65 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:151:61 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:180:57 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:181:53 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:22:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:66:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:76:63 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:89:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:104:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:64:16 One type argument expected. Use 'Result.Success<*>' if you do not intend to pass type arguments.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:65:35 Unresolved reference 'data'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:9 Unresolved reference 'sendEffect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:20 Unresolved reference 'Effect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:107:1 Syntax error: Expecting a top level declaration.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:25:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:79:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:88:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:94:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:106:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsViewModel.kt:102:28 Unresolved reference 'Effect'.
+
+> Task :sharedUI:compileKotlinJs FAILED
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:23:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:65:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:82:59 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:295:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:723:64 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:78:25 Unresolved reference 'System'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:79:40 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:80:35 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:150:65 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:151:61 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:180:57 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:181:53 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:22:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:66:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:76:63 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:89:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:104:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:64:16 One type argument expected. Use 'Result.Success<*>' if you do not intend to pass type arguments.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:65:35 Unresolved reference 'data'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:9 Unresolved reference 'sendEffect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:20 Unresolved reference 'Effect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:107:1 Syntax error: Expecting a top level declaration.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:25:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:79:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:88:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:94:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:106:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsViewModel.kt:102:28 Unresolved reference 'Effect'.
+
+> Task :sharedUI:compileAndroidMain FAILED
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:23:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:65:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:82:59 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:295:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:723:64 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:78:25 Unresolved reference 'System'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:150:65 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:151:61 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:180:57 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:181:53 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:22:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:66:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:76:63 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:89:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:104:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:64:16 One type argument expected. Use 'Result.Success<*>' if you do not intend to pass type arguments.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:65:35 Unresolved reference 'data'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:9 Unresolved reference 'sendEffect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:20 Unresolved reference 'Effect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:107:1 Syntax error: Expecting a top level declaration.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:25:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:79:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:88:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:94:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:106:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsViewModel.kt:102:28 Unresolved reference 'Effect'.
+
+> Task :sharedUI:compileKotlinIosSimulatorArm64 FAILED
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:23:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:65:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:82:59 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:295:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:723:64 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:78:25 Unresolved reference 'System'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:79:40 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:80:35 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:150:65 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:151:61 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:180:57 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:181:53 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:22:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:66:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:76:63 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:89:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:104:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:64:16 One type argument expected. Use 'Result.Success<*>' if you do not intend to pass type arguments.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:65:35 Unresolved reference 'data'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:9 Unresolved reference 'sendEffect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:20 Unresolved reference 'Effect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:107:1 Syntax error: Expecting a top level declaration.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:25:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:79:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:88:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:94:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:106:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsViewModel.kt:102:28 Unresolved reference 'Effect'.
+
+> Task :sharedUI:compileKotlinIosArm64 FAILED
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:23:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:65:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:82:59 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:295:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:723:64 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:78:25 Unresolved reference 'System'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:79:40 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:80:35 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:150:65 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:151:61 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:180:57 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:181:53 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:22:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:66:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:76:63 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:89:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:104:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:64:16 One type argument expected. Use 'Result.Success<*>' if you do not intend to pass type arguments.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:65:35 Unresolved reference 'data'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:9 Unresolved reference 'sendEffect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:20 Unresolved reference 'Effect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:107:1 Syntax error: Expecting a top level declaration.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:25:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:79:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:88:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:94:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:106:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsViewModel.kt:102:28 Unresolved reference 'Effect'.
+
+> Task :sharedUI:compileKotlinIosX64 FAILED
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:23:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:65:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:82:59 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:295:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentScreen.kt:723:64 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:78:25 Unresolved reference 'System'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:79:40 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:80:35 Unresolved reference 'format'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:150:65 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:151:61 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:180:57 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/AddPaymentViewModel.kt:181:53 Unresolved reference 'name'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:22:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:66:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:76:63 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:89:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailScreen.kt:104:75 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:64:16 One type argument expected. Use 'Result.Success<*>' if you do not intend to pass type arguments.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:65:35 Unresolved reference 'data'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:9 Unresolved reference 'sendEffect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:105:20 Unresolved reference 'Effect'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentDetailViewModel.kt:107:1 Syntax error: Expecting a top level declaration.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:25:8 Unresolved reference 'indusjs_fleet'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:79:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:88:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:94:55 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsScreen.kt:106:47 Unresolved reference 'Res'.
+e: file:///Users/ashwani/KotlinMultiplateform/IndusJSFleet/sharedUI/src/commonMain/kotlin/com/indusjs/fleet/presentation/payments/PaymentsViewModel.kt:102:28 Unresolved reference 'Effect'.
+
+FAILURE: Build completed with 7 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':sharedUI:compileCommonMainKotlinMetadata'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':sharedUI:compileKotlinWasmJs'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+3: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':sharedUI:compileKotlinJs'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+4: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':sharedUI:compileAndroidMain'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+5: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':sharedUI:compileKotlinIosSimulatorArm64'.
+> Compilation finished with errors
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+6: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':sharedUI:compileKotlinIosArm64'.
+> Compilation finished with errors
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+7: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':sharedUI:compileKotlinIosX64'.
+> Compilation finished with errors
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 31s
+252 actionable tasks: 252 executed
+Configuration cache entry reused.

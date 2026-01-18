@@ -86,14 +86,17 @@ fun VehiclesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.sendIntent(VehiclesContract.Intent.AddVehicle) }
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_add),
-                    contentDescription = "Add Vehicle",
-                    modifier = Modifier.size(24.dp)
-                )
+            // Only show FAB when there's content (not empty and not loading)
+            if (!state.isLoading && state.filteredVehicles.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = { viewModel.sendIntent(VehiclesContract.Intent.AddVehicle) }
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = "Add Vehicle",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     ) { paddingValues ->
