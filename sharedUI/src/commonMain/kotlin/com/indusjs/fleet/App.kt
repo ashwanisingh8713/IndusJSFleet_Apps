@@ -85,21 +85,31 @@ fun App(
 
     // Handle authentication events (session expiry, logout)
     LaunchedEffect(Unit) {
+        co.touchlab.kermit.Logger.d("App") { "Starting auth event collector..." }
         AuthenticationManager.authEvents.collect { event ->
-            when (event) {
-                is AuthenticationEvent.Unauthorized,
-                is AuthenticationEvent.SessionExpired -> {
-                    backStack.navigateAndClear(FleetRoute.Login)
-                    snackbarHostState.showSnackbar(
-                        when (event) {
+            co.touchlab.kermit.Logger.w("App") { "Auth event received: $event" }
+            try {
+                when (event) {
+                    is AuthenticationEvent.Unauthorized,
+                    is AuthenticationEvent.SessionExpired -> {
+                        co.touchlab.kermit.Logger.w("App") { "Session expired/unauthorized - navigating to Login" }
+                        backStack.navigateAndClear(FleetRoute.Login)
+                        co.touchlab.kermit.Logger.d("App") { "Navigation to Login completed" }
+                        val message = when (event) {
                             is AuthenticationEvent.SessionExpired -> event.message
                             else -> "Your session has expired. Please log in again."
                         }
-                    )
+                        snackbarHostState.showSnackbar(message)
+                        co.touchlab.kermit.Logger.d("App") { "Snackbar shown: $message" }
+                    }
+                    is AuthenticationEvent.LoggedOut -> {
+                        co.touchlab.kermit.Logger.d("App") { "User logged out - navigating to Login" }
+                        backStack.navigateAndClear(FleetRoute.Login)
+                        co.touchlab.kermit.Logger.d("App") { "Navigation to Login completed (logout)" }
+                    }
                 }
-                is AuthenticationEvent.LoggedOut -> {
-                    backStack.navigateAndClear(FleetRoute.Login)
-                }
+            } catch (e: Exception) {
+                co.touchlab.kermit.Logger.e("App", e) { "Error handling auth event: ${e.message}" }
             }
         }
     }

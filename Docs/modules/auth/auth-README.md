@@ -122,6 +122,91 @@ The Auth module handles user authentication, session management, and password op
 
 ---
 
+## Session Handling
+
+### Architecture
+
+The auth session handling follows a centralized approach with single point of handling:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Auth Session Handling Flow                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐     ┌──────────────────┐     ┌─────────────┐  │
+│  │ API Request │────▶│ HttpClient       │────▶│ 401 Response│  │
+│  │ (Repository)│     │ (with Auth token)│     │ from Server │  │
+│  └─────────────┘     └──────────────────┘     └──────┬──────┘  │
+│                                                      │          │
+│                                                      ▼          │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │ HttpResponseValidator (check if had Authorization header)│  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                              │                                  │
+│                              ▼                                  │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │ AuthenticationManager.emitSessionExpired()                │  │
+│  │   1. Set isHandlingUnauthorized = true (prevent race)     │  │
+│  │   2. Clear session via callback                           │  │
+│  │   3. Emit SessionExpired event                            │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                              │                                  │
+│                              ▼                                  │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │ App.kt - LaunchedEffect collecting authEvents             │  │
+│  │   1. Navigate to Login (clear back stack)                 │  │
+│  │   2. Show snackbar with message                           │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Components
+
+| Component | File | Responsibility |
+|-----------|------|----------------|
+| `AuthenticationManager` | `core/auth/AuthenticationManager.kt` | Singleton that emits auth events |
+| `AuthTokenHelper` | `core/auth/AuthTokenHelper.kt` | Validates token in repositories |
+| `HttpClientProvider` | `core/network/HttpClientProvider.kt` | HTTP interceptor for 401 |
+| `App.kt` | Root composable | Collects events, navigates to Login |
+
+### Scenario Handling
+
+| Scenario | Trigger | Action | Message |
+|----------|---------|--------|---------|
+| 401 from API (with Auth header) | `HttpResponseValidator` | Clear token → Navigate to Login → Show snackbar | "Your session has expired. Please log in again." |
+| 401 from API (no Auth header) | `HttpResponseValidator` | Ignore (login/public API) | None |
+| Token is null | `AuthTokenHelper.requireAuthTokenOrRedirect()` | Emit SessionExpired → Navigate to Login | "Please log in to continue." |
+| Manual logout | User action | Clear token → Navigate to Login | None |
+
+### Key Benefits
+
+- **Single point of handling** - No duplicate logic in every ViewModel
+- **Consistent UX** - User always redirected to Login on auth failure
+- **Clean navigation** - Back stack cleared to prevent returning to protected screens
+- **Proper messaging** - Snackbar instead of toast for better visibility
+- **Race condition prevention** - `isHandlingUnauthorized` flag prevents duplicate events
+
+### Troubleshooting
+
+| Issue | Possible Cause | Solution |
+|-------|---------------|----------|
+| User not redirected to Login | Auth event collector not started | Check `LaunchedEffect(Unit)` in App.kt |
+| Session clear callback not working | Callback not registered | Verify `registerSessionClearCallback` in DefaultViewModelProvider init |
+| Multiple login redirects | Race condition | Ensure `isHandlingUnauthorized` flag is working |
+| Toast instead of snackbar | Wrong handler | Use `snackbarHostState.showSnackbar()` |
+
+### Logging Tags
+
+Use these log tags to trace auth flow:
+
+- `App` - Auth event collection and navigation
+- `HTTP` - 401 response detection
+- `UserLocalDataSource` - Token storage operations
+- `AuthenticationManager` - Event emission
+
+---
+
 ## Validation Rules
 
 | Field | Rules |

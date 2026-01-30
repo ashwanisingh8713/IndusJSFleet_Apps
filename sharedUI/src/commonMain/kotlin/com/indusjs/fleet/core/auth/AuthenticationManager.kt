@@ -61,7 +61,7 @@ sealed interface AuthenticationEvent {
 object AuthenticationManager {
 
     private val _authEvents = MutableSharedFlow<AuthenticationEvent>(
-        replay = 0,
+        replay = 1, // Ensures late collectors receive the last event
         extraBufferCapacity = 1
     )
 
