@@ -1,13 +1,11 @@
 package com.indusjs.fleet.presentation.finance
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,12 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.ui.EmptyContent
 import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.FinanceColors
+import com.indusjs.fleet.core.ui.FinanceFilterChip
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.domain.entity.finance.*
@@ -30,12 +29,12 @@ import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.Intent
 import indusjsfleet.sharedui.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 
-// Colors
-private val LoanBlue = Color(0xFF3B82F6)
-private val CashGreen = Color(0xFF10B981)
-private val NoInfoGray = Color(0xFF9CA3AF)
-private val WarningOrange = Color(0xFFF59E0B)
-private val CriticalRed = Color(0xFFEF4444)
+// Use FinanceColors from core.ui
+private val LoanBlue = FinanceColors.LoanBlue
+private val CashGreen = FinanceColors.CashGreen
+private val NoInfoGray = FinanceColors.NeutralGray
+private val WarningOrange = FinanceColors.WarningOrange
+private val CriticalRed = FinanceColors.CriticalRed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -167,10 +166,13 @@ private fun VehicleFinanceContent(
             }
         }
 
-        // Filter Chips
+        // Filter Chips with counts
         item {
             FilterChipsRow(
                 selectedFilter = state.selectedFilter,
+                financedCount = state.financedVehicles,
+                cashCount = state.cashVehicles,
+                pendingCount = state.pendingVehicles,
                 onFilterSelect = onFilterSelect
             )
         }
@@ -182,11 +184,30 @@ private fun VehicleFinanceContent(
                 onValueChange = onSearchChange,
                 placeholder = { Text("Search vehicles...") },
                 leadingIcon = {
-                    Text("🔍", style = MaterialTheme.typography.bodyMedium)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_search),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                trailingIcon = {
+                    if (state.searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { onSearchChange("") }) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_close),
+                                contentDescription = "Clear",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = LoanBlue,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                )
             )
         }
 
@@ -228,71 +249,132 @@ private fun FinanceSummaryCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "📊 Fleet Finance Summary",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Fleet Finance",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "$totalVehicles vehicles in fleet",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-            // Top row - Vehicle counts
+                // Monthly EMI Badge
+                if (monthlyEmiTotal > 0) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = WarningOrange.copy(alpha = 0.12f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = formatCurrency(monthlyEmiTotal),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = WarningOrange
+                            )
+                            Text(
+                                text = "Monthly EMI",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WarningOrange.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Stats Row - Compact
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                SummaryItem(
-                    value = totalVehicles.toString(),
-                    label = "Total\nVehicles",
-                    color = MaterialTheme.colorScheme.primary
-                )
-                SummaryItem(
+                CompactStatItem(
                     value = financedVehicles.toString(),
-                    label = "Active\nLoans",
+                    label = "Loans",
                     color = LoanBlue
                 )
-                SummaryItem(
-                    value = formatCurrency(monthlyEmiTotal),
-                    label = "Monthly\nEMI",
-                    color = WarningOrange
+                CompactStatItem(
+                    value = cashVehicles.toString(),
+                    label = "Cash",
+                    color = CashGreen
+                )
+                CompactStatItem(
+                    value = pendingVehicles.toString(),
+                    label = "Pending",
+                    color = NoInfoGray
                 )
             }
 
-            HorizontalDivider()
+            // Financial Summary
+            if (totalOutstanding > 0 || totalPaid > 0) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-            // Bottom row - Financial summary
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                SummaryItem(
-                    value = formatCurrency(totalPaid),
-                    label = "Total\nPaid",
-                    color = CashGreen
-                )
-                SummaryItem(
-                    value = formatCurrency(totalOutstanding),
-                    label = "Outstanding\nBalance",
-                    color = CriticalRed
-                )
-                SummaryItem(
-                    value = cashVehicles.toString(),
-                    label = "Cash\nPurchase",
-                    color = CashGreen
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = formatCurrency(totalPaid),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = CashGreen
+                        )
+                        Text(
+                            text = "Total Paid",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(36.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant)
+                    )
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = formatCurrency(totalOutstanding),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = CriticalRed
+                        )
+                        Text(
+                            text = "Outstanding",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun SummaryItem(
+private fun CompactStatItem(
     value: String,
     label: String,
     color: Color
@@ -302,18 +384,18 @@ private fun SummaryItem(
     ) {
         Text(
             text = value,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = color
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
+
 
 @Composable
 private fun EmiAlertsCard(
@@ -412,25 +494,48 @@ private fun EmiAlertItem(
 @Composable
 private fun FilterChipsRow(
     selectedFilter: FinanceFilter,
+    financedCount: Int,
+    cashCount: Int,
+    pendingCount: Int,
     onFilterSelect: (FinanceFilter) -> Unit
 ) {
-    Row(
+    LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        FinanceFilter.entries.forEach { filter ->
-            FilterChip(
-                selected = selectedFilter == filter,
-                onClick = { onFilterSelect(filter) },
-                label = {
-                    Text(filter.label)
-                },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = when (filter) {
-                        FinanceFilter.LOAN -> LoanBlue.copy(alpha = 0.2f)
-                        FinanceFilter.CASH -> CashGreen.copy(alpha = 0.2f)
-                        FinanceFilter.PENDING -> NoInfoGray.copy(alpha = 0.2f)
-                    }
-                )
+        item {
+            FinanceFilterChip(
+                label = "All",
+                count = financedCount + cashCount + pendingCount,
+                selected = selectedFilter == FinanceFilter.ALL,
+                color = MaterialTheme.colorScheme.primary,
+                onClick = { onFilterSelect(FinanceFilter.ALL) }
+            )
+        }
+        item {
+            FinanceFilterChip(
+                label = "Financed",
+                count = financedCount,
+                selected = selectedFilter == FinanceFilter.LOAN,
+                color = LoanBlue,
+                onClick = { onFilterSelect(FinanceFilter.LOAN) }
+            )
+        }
+        item {
+            FinanceFilterChip(
+                label = "Cash",
+                count = cashCount,
+                selected = selectedFilter == FinanceFilter.CASH,
+                color = CashGreen,
+                onClick = { onFilterSelect(FinanceFilter.CASH) }
+            )
+        }
+        item {
+            FinanceFilterChip(
+                label = "Not Recorded",
+                count = pendingCount,
+                selected = selectedFilter == FinanceFilter.PENDING,
+                color = NoInfoGray,
+                onClick = { onFilterSelect(FinanceFilter.PENDING) }
             )
         }
     }
@@ -443,54 +548,56 @@ private fun VehicleFinanceCard(
     onRecordEmiClick: () -> Unit,
     onAddPurchaseClick: () -> Unit
 ) {
+    // Only make the card clickable if it's not a pending (not recorded) item
+    val isClickable = item.status != FinanceStatus.PENDING
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .then(
+                if (isClickable) Modifier.clickable(onClick = onClick) else Modifier
+            ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header
+            // Header with vehicle info and status - without icon
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🚛", style = MaterialTheme.typography.titleLarge)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = item.vehicle.registrationNumber,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "${item.vehicle.make} ${item.vehicle.model}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.vehicle.registrationNumber,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${item.vehicle.make} ${item.vehicle.model} (${item.vehicle.year})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
 
                 // Status chip
                 StatusChip(status = item.status)
             }
 
-            HorizontalDivider()
-
             // Content based on status
             when (item.status) {
-                FinanceStatus.LOAN -> LoanContent(
+                FinanceStatus.LOAN -> LoanCardContent(
                     purchase = item.purchase!!,
                     onRecordEmiClick = onRecordEmiClick
                 )
-                FinanceStatus.CASH -> CashContent(purchase = item.purchase!!)
-                FinanceStatus.PENDING -> NoInfoContent(onAddClick = onAddPurchaseClick)
+                FinanceStatus.CASH -> CashCardContent(purchase = item.purchase!!)
+                FinanceStatus.PENDING -> NoInfoCardContent(onAddClick = onAddPurchaseClick)
             }
         }
     }
@@ -519,46 +626,65 @@ private fun StatusChip(status: FinanceStatus) {
 }
 
 @Composable
-private fun LoanContent(
+private fun LoanCardContent(
     purchase: VehiclePurchase,
     onRecordEmiClick: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Lender and EMI info
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Divider
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+        // Key metrics row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Lender: ${purchase.financierName ?: "N/A"}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = "EMI: ${formatCurrency(purchase.emiAmount)}/month",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = LoanBlue
-            )
-        }
-
-        // Progress bar
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            Column {
                 Text(
-                    text = "Progress",
+                    text = "Lender",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "${purchase.emisPaid}/${purchase.tenureMonths} EMIs",
+                    text = purchase.financierName ?: "N/A",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "Monthly EMI",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatCurrency(purchase.emiAmount),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = LoanBlue
+                )
+            }
+        }
+
+        // Progress section
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${purchase.loanProgressPercent.toInt()}% Complete",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = LoanBlue,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "${purchase.emisPaid}/${purchase.tenureMonths} EMIs paid",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(modifier = Modifier.height(4.dp))
             LinearProgressIndicator(
                 progress = { purchase.loanProgressPercent / 100f },
                 modifier = Modifier
@@ -566,32 +692,40 @@ private fun LoanContent(
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp)),
                 color = LoanBlue,
-                trackColor = LoanBlue.copy(alpha = 0.2f)
+                trackColor = LoanBlue.copy(alpha = 0.15f)
             )
         }
 
-        // Next EMI and Outstanding
+        // Outstanding and Next EMI with action
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(WarningOrange.copy(alpha = 0.08f))
+                .padding(12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "Next EMI: ${purchase.nextEmiDueDate ?: "N/A"}",
+                    text = "Next EMI: ${getNextEmiDueDate(purchase)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = "Outstanding: ${formatCurrency(purchase.outstandingBalance)}",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelSmall,
                     color = CriticalRed
                 )
             }
 
             FilledTonalButton(
                 onClick = onRecordEmiClick,
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = LoanBlue.copy(alpha = 0.15f),
+                    contentColor = LoanBlue
+                )
             ) {
                 Text("Record EMI", style = MaterialTheme.typography.labelMedium)
             }
@@ -600,57 +734,160 @@ private fun LoanContent(
 }
 
 @Composable
-private fun CashContent(purchase: VehiclePurchase) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column {
-            Text(
-                text = "Purchase: ${formatCurrency(purchase.purchasePrice)}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = "Date: ${purchase.purchaseDate}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+private fun CashCardContent(purchase: VehiclePurchase) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("✅", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = "Fully Paid",
-                style = MaterialTheme.typography.bodyMedium,
-                color = CashGreen,
-                fontWeight = FontWeight.Medium
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(CashGreen.copy(alpha = 0.08f))
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = "Purchase Price",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatCurrency(purchase.purchasePrice),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = CashGreen
+                )
+                Text(
+                    text = "Purchased on ${purchase.purchaseDate}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = CashGreen.copy(alpha = 0.15f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text("✓", style = MaterialTheme.typography.labelMedium, color = CashGreen)
+                    Text(
+                        text = "Fully Paid",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = CashGreen,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun NoInfoContent(onAddClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("⚪", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "No purchase information added",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+private fun NoInfoCardContent(onAddClick: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-        TextButton(onClick = onAddClick) {
-            Text("Add Info →")
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(NoInfoGray.copy(alpha = 0.08f))
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = "No purchase information",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "Add details to track finance",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            FilledTonalButton(
+                onClick = onAddClick,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text("Add Info", style = MaterialTheme.typography.labelMedium)
+            }
         }
     }
+}
+
+/**
+ * Get the next EMI due date for display.
+ * Calculates from loanStartDate + emisPaid months to ensure accuracy.
+ */
+private fun getNextEmiDueDate(purchase: VehiclePurchase): String {
+    // Calculate from loanStartDate + emisPaid months
+    val loanStartDate = purchase.loanStartDate
+    if (!loanStartDate.isNullOrBlank()) {
+        val startParsed = FleetDateTime.fromIso8601(loanStartDate)
+        if (startParsed != null) {
+            val startDateStr = FleetDateTime.formatDate(startParsed)
+            val nextDueDateStr = FleetDateTime.addMonths(startDateStr, purchase.emisPaid)
+            if (nextDueDateStr != null) {
+                return formatDueDateDisplay(nextDueDateStr)
+            }
+        }
+    }
+
+    // Fallback to API-provided nextEmiDueDate
+    if (!purchase.nextEmiDueDate.isNullOrBlank()) {
+        return formatDueDateDisplay(purchase.nextEmiDueDate)
+    }
+
+    return "N/A"
+}
+
+/**
+ * Format date for display.
+ * Converts ISO 8601, YYYY-MM-DD, or DD-MM-YYYY format to "07 Apr 2024" format.
+ */
+private fun formatDueDateDisplay(dateString: String?): String {
+    if (dateString.isNullOrBlank()) return "N/A"
+
+    // Try to parse ISO format first (e.g., "2026-01-15T00:00:00Z")
+    val parsed = FleetDateTime.fromIso8601(dateString)
+    if (parsed != null) {
+        val day = parsed.day.toString().padStart(2, '0')
+        val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[parsed.month - 1]
+        return "$day $monthName ${parsed.year}"
+    }
+
+    val parts = dateString.split("-")
+    if (parts.size == 3) {
+        return try {
+            // Check if YYYY-MM-DD format (year first, 4 digits)
+            if (parts[0].length == 4) {
+                val year = parts[0].toInt()
+                val month = parts[1].toInt()
+                val day = parts[2].toInt()
+                val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month - 1]
+                "${day.toString().padStart(2, '0')} $monthName $year"
+            } else {
+                // DD-MM-YYYY format
+                val day = parts[0].toInt()
+                val month = parts[1].toInt()
+                val year = parts[2].toInt()
+                val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month - 1]
+                "${day.toString().padStart(2, '0')} $monthName $year"
+            }
+        } catch (e: Exception) {
+            dateString
+        }
+    }
+
+    return dateString
 }

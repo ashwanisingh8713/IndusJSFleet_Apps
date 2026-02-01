@@ -1,7 +1,6 @@
 package com.indusjs.fleet.presentation.finance
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,18 +19,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.fleet.core.ui.FinanceColors
 import com.indusjs.fleet.core.ui.FleetSectionCard
 import com.indusjs.fleet.core.ui.FleetTextField
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.domain.entity.finance.PaymentType
 import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.Effect
 import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.Intent
-import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.State
 import indusjsfleet.sharedui.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 
-private val LoanBlue = Color(0xFF3B82F6)
-private val CashGreen = Color(0xFF10B981)
+// Use FinanceColors from core.ui
+private val LoanBlue = FinanceColors.LoanBlue
+private val CashGreen = FinanceColors.CashGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -297,12 +297,13 @@ fun AddPurchaseInfoScreen(
                                 FleetTextField(
                                     value = state.formInterestRate,
                                     onValueChange = { viewModel.sendIntent(Intent.UpdateInterestRate(it)) },
-                                    label = "Interest Rate *",
+                                    label = "Rate *",
                                     placeholder = "9.5",
-                                    trailingIcon = { Text("% p.a.") },
+                                    trailingIcon = { Text("%", style = MaterialTheme.typography.bodySmall) },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     isError = state.interestRateError != null,
                                     errorMessage = state.interestRateError,
+                                    singleLine = true,
                                     modifier = Modifier.weight(1f)
                                 )
 
@@ -311,10 +312,11 @@ fun AddPurchaseInfoScreen(
                                     onValueChange = { viewModel.sendIntent(Intent.UpdateTenureMonths(it)) },
                                     label = "Tenure *",
                                     placeholder = "48",
-                                    trailingIcon = { Text("months") },
+                                    trailingIcon = { Text("mo", style = MaterialTheme.typography.bodySmall) },
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     isError = state.tenureError != null,
                                     errorMessage = state.tenureError,
+                                    singleLine = true,
                                     modifier = Modifier.weight(1f)
                                 )
                             }

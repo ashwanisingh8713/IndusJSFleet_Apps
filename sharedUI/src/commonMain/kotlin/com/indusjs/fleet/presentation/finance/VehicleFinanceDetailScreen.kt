@@ -20,6 +20,7 @@ import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.FinanceColors
 import com.indusjs.fleet.core.ui.FleetSectionCard
 import com.indusjs.fleet.core.ui.FleetTextField
 import com.indusjs.fleet.core.ui.LoadingContent
@@ -27,14 +28,14 @@ import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.domain.entity.finance.*
 import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.Effect
 import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.Intent
-import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.State
 import indusjsfleet.sharedui.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 
-private val LoanBlue = Color(0xFF3B82F6)
-private val CashGreen = Color(0xFF10B981)
-private val WarningOrange = Color(0xFFF59E0B)
-private val CriticalRed = Color(0xFFEF4444)
+// Use FinanceColors from core.ui
+private val LoanBlue = FinanceColors.LoanBlue
+private val CashGreen = FinanceColors.CashGreen
+private val WarningOrange = FinanceColors.WarningOrange
+private val CriticalRed = FinanceColors.CriticalRed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -300,7 +301,7 @@ private fun FinanceDetailContent(
                         // Loan Status
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.Start
                         ) {
                             val (statusColor, statusLabel) = when (purchase.loanStatus) {
                                 LoanStatus.ACTIVE -> CashGreen to "🟢 Active"
@@ -321,29 +322,79 @@ private fun FinanceDetailContent(
             // Next EMI
             if (purchase.loanStatus == LoanStatus.ACTIVE) {
                 item {
-                    FleetSectionCard(title = "Next EMI #${purchase.emisPaid + 1}") {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Column {
-                                Text(
-                                    text = "Due: ${getNextEmiDueDate(purchase)}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = formatCurrency(purchase.emiAmount),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = LoanBlue,
-                                    fontWeight = FontWeight.Bold
-                                )
+                            // Single row with Next EMI, Due Date, Amount - equal spacing
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = "Next EMI",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = "#${purchase.emisPaid + 1}",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = "Due Date",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = getNextEmiDueDate(purchase),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = "Amount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = formatCurrency(purchase.emiAmount),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = LoanBlue
+                                    )
+                                }
                             }
 
+                            // Record Payment button - full width
                             Button(
                                 onClick = onRecordPaymentClick,
-                                shape = RoundedCornerShape(12.dp)
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text("Record Payment")
                             }
@@ -359,7 +410,7 @@ private fun FinanceDetailContent(
                 FleetSectionCard(
                     title = "Payment History",
                     trailingAction = if (paidPayments.isNotEmpty()) {
-                        { TextButton(onClick = onViewHistoryClick) { Text("View All (${paidPayments.size}) →") } }
+                        { TextButton(onClick = onViewHistoryClick) { Text("View All (${paidPayments.size})") } }
                     } else null
                 ) {
                     if (paidPayments.isEmpty()) {
@@ -585,7 +636,7 @@ private fun RecordPaymentBottomSheet(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "EMI #${purchase.emisPaid + 1}  |  Due: ${purchase.nextEmiDueDate ?: "N/A"}  |  Amount: ${formatCurrency(purchase.emiAmount)}",
+                        text = "EMI #${purchase.emisPaid + 1}  |  Due: ${formatDueDateDisplay(purchase.nextEmiDueDate)}  |  Amount: ${formatCurrency(purchase.emiAmount)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -760,7 +811,7 @@ private fun getNextEmiDueDate(purchase: VehiclePurchase): String {
 
 /**
  * Format date for display using ijs-datetime-utils.
- * Converts ISO 8601 or DD-MM-YYYY format to "15 Jan 2026" format.
+ * Converts ISO 8601, YYYY-MM-DD, or DD-MM-YYYY format to "07 Apr 2024" format.
  */
 private fun formatDueDateDisplay(dateString: String?): String {
     if (dateString.isNullOrBlank()) return "N/A"
@@ -768,20 +819,29 @@ private fun formatDueDateDisplay(dateString: String?): String {
     // Try to parse ISO format first (e.g., "2026-01-15T00:00:00Z")
     val parsed = FleetDateTime.fromIso8601(dateString)
     if (parsed != null) {
-        val day = parsed.day
+        val day = parsed.day.toString().padStart(2, '0')
         val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[parsed.month - 1]
         return "$day $monthName ${parsed.year}"
     }
 
-    // If already in DD-MM-YYYY format, convert to readable
     val parts = dateString.split("-")
-    if (parts.size == 3 && parts[0].length <= 2) {
+    if (parts.size == 3) {
         return try {
-            val day = parts[0].toInt()
-            val month = parts[1].toInt()
-            val year = parts[2].toInt()
-            val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month - 1]
-            "$day $monthName $year"
+            // Check if YYYY-MM-DD format (year first, 4 digits)
+            if (parts[0].length == 4) {
+                val year = parts[0].toInt()
+                val month = parts[1].toInt()
+                val day = parts[2].toInt()
+                val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month - 1]
+                "${day.toString().padStart(2, '0')} $monthName $year"
+            } else {
+                // DD-MM-YYYY format
+                val day = parts[0].toInt()
+                val month = parts[1].toInt()
+                val year = parts[2].toInt()
+                val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month - 1]
+                "${day.toString().padStart(2, '0')} $monthName $year"
+            }
         } catch (e: Exception) {
             dateString
         }

@@ -3,7 +3,9 @@ package com.indusjs.fleet.data.repository.finance
 import co.touchlab.kermit.Logger
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.error.exception.ApiException
+import com.indusjs.error.exception.AuthException
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.core.auth.AuthTokenHelper
 import com.indusjs.fleet.data.datasource.finance.VehicleFinanceRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.mapper.finance.toDomain
@@ -24,17 +26,19 @@ class VehicleFinanceRepositoryImpl(
 
     private val log = Logger.withTag("VehicleFinanceRepository")
 
-    private suspend fun getToken(): String? = userLocalDataSource.getAuthToken()
+    /**
+     * Get auth token or emit session expired event and throw AuthException.
+     * This ensures redirect to login when token is null.
+     */
+    private suspend fun requireAuthToken(): String =
+        AuthTokenHelper.requireAuthTokenOrRedirect { userLocalDataSource.getAuthToken() }
 
     // ==================== Purchase APIs ====================
 
     override suspend fun getPurchase(vehicleId: Int): Result<VehiclePurchase?> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val response = remoteDataSource.getPurchase(token, vehicleId)
                 if (response.success) {
@@ -47,6 +51,8 @@ class VehicleFinanceRepositoryImpl(
                         Result.Error(ApiException(response.message), response.message)
                     }
                 }
+            } catch (e: AuthException) {
+                Result.Error(e, e.message)
             } catch (e: Exception) {
                 log.e(e) { "Error getting purchase: ${e.message}" }
                 Result.Error(e, e.message ?: "Failed to get purchase info")
@@ -77,10 +83,7 @@ class VehicleFinanceRepositoryImpl(
     ): Result<VehiclePurchase> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val request = CreatePurchaseRequest(
                     purchaseDate = purchaseDate,
@@ -128,10 +131,7 @@ class VehicleFinanceRepositoryImpl(
     ): Result<VehiclePurchase> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val request = UpdatePurchaseRequest(
                     vendorName = vendorName,
@@ -161,10 +161,7 @@ class VehicleFinanceRepositoryImpl(
     override suspend fun getLoanSummary(vehicleId: Int): Result<LoanSummary> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val response = remoteDataSource.getLoanSummary(token, vehicleId)
                 if (response.success && response.data != null) {
@@ -189,10 +186,7 @@ class VehicleFinanceRepositoryImpl(
     ): Result<List<LoanPayment>> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val response = remoteDataSource.getLoanPayments(token, vehicleId, page, perPage, status)
                 if (response.success && response.data != null) {
@@ -215,10 +209,7 @@ class VehicleFinanceRepositoryImpl(
     ): Result<List<LoanPayment>> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val response = remoteDataSource.getAllLoanPayments(token, page, perPage, vehicleId, status)
                 if (response.success && response.data != null) {
@@ -236,10 +227,7 @@ class VehicleFinanceRepositoryImpl(
     override suspend fun getPaymentById(paymentId: Int): Result<LoanPayment> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val response = remoteDataSource.getPaymentById(token, paymentId)
                 if (response.success && response.data != null) {
@@ -263,10 +251,7 @@ class VehicleFinanceRepositoryImpl(
     ): Result<LoanPayment> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val request = UpdatePaymentRequest(
                     paymentMode = paymentMode?.value,
@@ -301,10 +286,7 @@ class VehicleFinanceRepositoryImpl(
     ): Result<LoanPayment> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val request = RecordPaymentRequest(
                     vehiclePurchaseId = vehiclePurchaseId,
@@ -340,10 +322,7 @@ class VehicleFinanceRepositoryImpl(
     ): Result<LoanPayment> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val request = MarkEmiPaidRequest(
                     paymentDate = paymentDate,
@@ -368,10 +347,7 @@ class VehicleFinanceRepositoryImpl(
     override suspend fun deletePayment(paymentId: Int): Result<Unit> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val response = remoteDataSource.deletePayment(token, paymentId)
                 if (response.success) {
@@ -391,10 +367,7 @@ class VehicleFinanceRepositoryImpl(
     override suspend fun getUpcomingEmis(days: Int): Result<List<EmiAlert>> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val response = remoteDataSource.getUpcomingEmis(token, days)
                 if (response.success && response.data != null) {
@@ -412,10 +385,7 @@ class VehicleFinanceRepositoryImpl(
     override suspend fun getOverdueEmis(): Result<List<EmiAlert>> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 val response = remoteDataSource.getOverdueEmis(token)
                 if (response.success && response.data != null) {
@@ -433,10 +403,7 @@ class VehicleFinanceRepositoryImpl(
     override suspend fun getEmiAlerts(): Result<Pair<List<EmiAlert>, List<EmiAlert>>> {
         return withContext(dispatcherProvider.io) {
             try {
-                val token = getToken() ?: return@withContext Result.Error(
-                    ApiException("Not authenticated"),
-                    "Please log in to continue"
-                )
+                val token = requireAuthToken()
 
                 // Fetch both upcoming and overdue
                 val upcomingResponse = remoteDataSource.getUpcomingEmis(token, 30)

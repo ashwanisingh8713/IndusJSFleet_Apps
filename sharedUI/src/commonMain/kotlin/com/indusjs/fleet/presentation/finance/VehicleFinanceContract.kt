@@ -28,7 +28,7 @@ object VehicleFinanceContract {
         val vehiclePurchases: Map<Int, VehiclePurchase?> = emptyMap(), // vehicleId -> purchase
 
         // Filter
-        val selectedFilter: FinanceFilter = FinanceFilter.LOAN,
+        val selectedFilter: FinanceFilter = FinanceFilter.ALL,
         val searchQuery: String = "",
 
         // Summary
@@ -117,6 +117,7 @@ object VehicleFinanceContract {
             return items
                 .filter { item ->
                     when (selectedFilter) {
+                        FinanceFilter.ALL -> true
                         FinanceFilter.LOAN -> item.status == FinanceStatus.LOAN
                         FinanceFilter.CASH -> item.status == FinanceStatus.CASH
                         FinanceFilter.PENDING -> item.status == FinanceStatus.PENDING
@@ -271,6 +272,7 @@ data class VehicleFinanceItem(
 )
 
 enum class FinanceFilter(val label: String) {
+    ALL("All"),
     LOAN("Financed"),
     CASH("Cash Purchase"),
     PENDING("Not Recorded")

@@ -84,8 +84,10 @@ fun App(
     }
 
     // Handle authentication events (session expiry, logout)
-    LaunchedEffect(Unit) {
-        co.touchlab.kermit.Logger.d("App") { "Starting auth event collector..." }
+    // IMPORTANT: Use backStack as key so collector restarts when backStack is recreated
+    // This fixes the issue where auth events were collected with stale backStack reference
+    LaunchedEffect(backStack) {
+        co.touchlab.kermit.Logger.d("App") { "Starting auth event collector with backStack hash: ${backStack.hashCode()}" }
         AuthenticationManager.authEvents.collect { event ->
             co.touchlab.kermit.Logger.w("App") { "Auth event received: $event" }
             try {

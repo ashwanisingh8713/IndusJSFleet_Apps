@@ -18,17 +18,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.ui.EmptyContent
 import com.indusjs.fleet.core.ui.ErrorContent
+import com.indusjs.fleet.core.ui.FinanceColors
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.domain.entity.finance.*
 import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.Intent
 import indusjsfleet.sharedui.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
-private val LoanBlue = Color(0xFF3B82F6)
-private val LoanBlueDark = Color(0xFF1D4ED8)
-private val CashGreen = Color(0xFF10B981)
-private val WarningOrange = Color(0xFFF59E0B)
-private val CriticalRed = Color(0xFFEF4444)
+
+// Use FinanceColors from core.ui
+private val LoanBlue = FinanceColors.LoanBlue
+private val LoanBlueDark = FinanceColors.LoanBlueDark
+private val CashGreen = FinanceColors.CashGreen
+private val WarningOrange = FinanceColors.WarningOrange
+private val CriticalRed = FinanceColors.CriticalRed
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmiPaymentHistoryScreen(
