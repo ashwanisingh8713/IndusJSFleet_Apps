@@ -5,6 +5,8 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import com.indusjs.fleet.FilePickerRequest
 import com.indusjs.fleet.di.rememberViewModel
+import com.indusjs.fleet.di.rememberSharedViewModel
+import com.indusjs.fleet.di.clearSharedViewModel
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.presentation.auth.LoginScreen
 import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryScreen
@@ -40,6 +42,10 @@ import com.indusjs.fleet.presentation.customers.create.CreateCustomerScreen
 import com.indusjs.fleet.presentation.payments.PaymentsScreen
 import com.indusjs.fleet.presentation.payments.PaymentDetailScreen
 import com.indusjs.fleet.presentation.payments.AddPaymentScreen
+import com.indusjs.fleet.presentation.finance.VehicleFinanceScreen
+import com.indusjs.fleet.presentation.finance.VehicleFinanceDetailScreen
+import com.indusjs.fleet.presentation.finance.AddPurchaseInfoScreen
+import com.indusjs.fleet.presentation.finance.EmiPaymentHistoryScreen
 
 /**
  * Navigation 3 entry provider for the Fleet Management app.
@@ -114,7 +120,8 @@ fun fleetEntryProvider(
                 onNavigateToAddDriverCost = { backStack.add(FleetRoute.DriverCostEntry) },
                 onNavigateToAlertsList = { backStack.add(FleetRoute.AlertsList) },
                 onNavigateToCustomers = { backStack.add(FleetRoute.Customers) },
-                onNavigateToPayments = { backStack.add(FleetRoute.Payments) }
+                onNavigateToPayments = { backStack.add(FleetRoute.Payments) },
+                onNavigateToVehicleFinance = { backStack.add(FleetRoute.VehicleFinance) }
             )
         }
 
@@ -464,6 +471,71 @@ fun fleetEntryProvider(
                 viewModel = viewModel,
                 tripId = null,
                 paymentId = route.paymentId,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        // ==================== Vehicle Finance ====================
+        // All finance screens share the same ViewModel instance using "vehicle_finance_flow" key
+        // This prevents reloading when navigating back from Detail to List
+
+        is FleetRoute.VehicleFinance -> NavEntry(route) {
+            val financeFlowKey = "vehicle_finance_flow"
+            val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
+            VehicleFinanceScreen(
+                viewModel = viewModel,
+                onNavigateBack = {
+                    // Clear shared ViewModel when leaving the finance flow completely
+                    clearSharedViewModel(financeFlowKey)
+                    backStack.removeLastOrNull()
+                },
+                onNavigateToDetail = { vehicleId ->
+                    backStack.add(FleetRoute.VehicleFinanceDetail(vehicleId.toString()))
+                },
+                onNavigateToAddPurchase = { backStack.add(FleetRoute.AddPurchaseInfo) }
+            )
+        }
+
+        is FleetRoute.VehicleFinanceDetail -> NavEntry(route) {
+            // Use same shared ViewModel key as VehicleFinance list
+            val financeFlowKey = "vehicle_finance_flow"
+            val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
+            VehicleFinanceDetailScreen(
+                vehicleId = route.vehicleId.toIntOrNull() ?: 0,
+                viewModel = viewModel,
+                onNavigateBack = {
+                    // Don't clear - let VehicleFinance list screen clear it when leaving
+                    backStack.removeLastOrNull()
+                },
+                onNavigateToEdit = { backStack.add(FleetRoute.EditPurchaseInfo(route.vehicleId)) },
+                onNavigateToHistory = { backStack.add(FleetRoute.EmiPaymentHistory(route.vehicleId)) }
+            )
+        }
+
+        is FleetRoute.AddPurchaseInfo -> NavEntry(route) {
+            val financeFlowKey = "vehicle_finance_flow"
+            val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
+            AddPurchaseInfoScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.EditPurchaseInfo -> NavEntry(route) {
+            val financeFlowKey = "vehicle_finance_flow"
+            val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
+            AddPurchaseInfoScreen(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.EmiPaymentHistory -> NavEntry(route) {
+            val financeFlowKey = "vehicle_finance_flow"
+            val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
+            EmiPaymentHistoryScreen(
+                vehicleId = route.vehicleId.toIntOrNull() ?: 0,
+                viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
         }

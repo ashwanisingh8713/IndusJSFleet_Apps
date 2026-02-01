@@ -314,4 +314,4 @@ Used for platform-specific implementations:
 
 - [User Roles & Permissions](../user-roles/README.md)
 - [Modules Overview](../modules/README.md)
-- [API Reference](../../Fleet_Management_API_v2.postman_collection.json)
+- [API Reference](../postman_collections/Fleet_Management_API_v2.postman_collection.json)

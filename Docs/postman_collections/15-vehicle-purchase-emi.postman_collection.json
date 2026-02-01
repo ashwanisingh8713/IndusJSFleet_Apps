@@ -1,0 +1,265 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-15-vehicle-purchase-emi",
+		"name": "15. Vehicle Purchase & EMI",
+		"description": "Vehicle purchase and EMI/loan payment tracking endpoints.\n\n## Access Control\n- **Owner** and **General Manager** only\n\n## Features\n- Record cash/loan purchases\n- Auto-generate EMI schedule\n- Track EMI payments\n- Minimal manual entry (only amount + date required)\n\n## Payment Types\n- `cash`: Full payment at purchase\n- `loan`: Financed with EMI\n\n## EMI Entry Types\n- `scheduled`: Auto-generated from loan\n- `manual`: User recorded after paying\n- `app_payment`: Paid via app (future)\n- `auto_debit`: Bank auto-debit",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"},
+		{"key": "purchase_id", "value": "1", "type": "string"},
+		{"key": "payment_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Vehicle Purchase",
+			"description": "Vehicle purchase management endpoints",
+			"item": [
+				{
+					"name": "Create Purchase (Cash)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"purchase_date\": \"15-06-2025\",\n    \"purchase_price\": 1500000,\n    \"payment_type\": \"cash\",\n    \"vendor_name\": \"Tata Motors Dealership\",\n    \"invoice_number\": \"INV-2025-001\",\n    \"down_payment\": 1500000,\n    \"notes\": \"Full payment at purchase\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/purchase", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "purchase"]}
+					},
+					"description": "Record a cash purchase for a vehicle.\n\n**Required fields:**\n- purchase_date (DD-MM-YYYY or ISO)\n- purchase_price\n- payment_type: `cash`"
+				},
+				{
+					"name": "Create Purchase (Loan)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"purchase_date\": \"10-01-2025\",\n    \"purchase_price\": 2500000,\n    \"payment_type\": \"loan\",\n    \"vendor_name\": \"Mahindra Showroom\",\n    \"invoice_number\": \"INV-2025-002\",\n    \"down_payment\": 500000,\n    \"loan_amount\": 2000000,\n    \"interest_rate\": 9.5,\n    \"tenure_months\": 60,\n    \"emi_amount\": 42000,\n    \"loan_start_date\": \"10-02-2025\",\n    \"financier_name\": \"HDFC Bank\",\n    \"loan_account_number\": \"LOAN123456789\",\n    \"bank_name\": \"HDFC Bank\",\n    \"bank_account_number\": \"XXXX1234\",\n    \"bank_ifsc\": \"HDFC0001234\",\n    \"auto_debit_enabled\": true,\n    \"notes\": \"60 month EMI plan\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/purchase", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "purchase"]}
+					},
+					"description": "Record a loan purchase for a vehicle. Auto-generates EMI schedule when loan_start_date is provided.\n\n**Required for loan:**\n- purchase_date, purchase_price, payment_type=loan\n- loan_amount, tenure_months, emi_amount\n\n**When loan_start_date is provided:**\nSystem auto-generates pending EMI records with due dates."
+				},
+				{
+					"name": "Get Purchase",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/purchase", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "purchase"]}
+					},
+					"description": "Get purchase details for a vehicle including loan information and payment summary."
+				},
+				{
+					"name": "Update Purchase",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vendor_name\": \"Updated Vendor Name\",\n    \"financier_name\": \"ICICI Bank\",\n    \"notes\": \"Updated loan details\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/purchase", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "purchase"]}
+					},
+					"description": "Update vehicle purchase details."
+				},
+				{
+					"name": "Get Loan Summary",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/loan-summary", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "loan-summary"]}
+					},
+					"description": "Get comprehensive loan summary for a vehicle including EMIs paid, remaining, overdue, outstanding balance."
+				},
+				{
+					"name": "Get Vehicle EMI History",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {
+							"raw": "{{base_url}}/vehicles/{{vehicle_id}}/loan-payments?page=1&per_page=20",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "{{vehicle_id}}", "loan-payments"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "per_page", "value": "20"},
+								{"key": "status", "value": "paid", "disabled": true}
+							]
+						}
+					},
+					"description": "Get EMI payment history for a specific vehicle.\n\n**Filters:**\n- status: pending, paid, overdue"
+				}
+			]
+		},
+		{
+			"name": "EMI Payments",
+			"description": "EMI payment recording and management",
+			"item": [
+				{
+					"name": "Record EMI (Minimal)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_purchase_id\": 1,\n    \"amount\": 42000,\n    \"payment_date\": \"10-02-2026\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments"]}
+					},
+					"description": "Record EMI payment with minimal fields.\n\n**Required fields (only 2!):**\n- vehicle_purchase_id\n- amount\n- payment_date (DD-MM-YYYY or ISO 8601)\n\nUse this when user pays EMI via netbanking/bank and records in app."
+				},
+				{
+					"name": "Record EMI (Full Details)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_purchase_id\": 1,\n    \"amount\": 42500,\n    \"payment_date\": \"10-02-2026\",\n    \"emi_number\": 1,\n    \"principal_amount\": 28000,\n    \"interest_amount\": 14000,\n    \"late_fee\": 500,\n    \"payment_mode\": \"netbanking\",\n    \"payment_source\": \"HDFC NetBanking - Savings Account\",\n    \"transaction_ref\": \"UTR123456789\",\n    \"notes\": \"Paid with late fee\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments"]}
+					},
+					"description": "Record EMI payment with all details.\n\n**Payment modes:** cash, netbanking, upi, auto_debit, cheque, other"
+				},
+				{
+					"name": "Record Prepayment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicle_purchase_id\": 1,\n    \"amount\": 100000,\n    \"payment_date\": \"15-03-2026\",\n    \"prepayment_amount\": 100000,\n    \"payment_mode\": \"netbanking\",\n    \"notes\": \"Extra payment to reduce principal\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments"]}
+					},
+					"description": "Record extra payment towards loan principal."
+				},
+				{
+					"name": "List All Payments",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {
+							"raw": "{{base_url}}/vehicle-loan-payments?page=1&per_page=20",
+							"host": ["{{base_url}}"],
+							"path": ["vehicle-loan-payments"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "per_page", "value": "20"},
+								{"key": "vehicle_id", "value": "1", "disabled": true},
+								{"key": "status", "value": "paid", "disabled": true}
+							]
+						}
+					},
+					"description": "List all loan payments across all vehicles.\n\n**Filters:**\n- vehicle_id\n- vehicle_purchase_id\n- status: pending, paid, overdue"
+				},
+				{
+					"name": "Get Payment",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments/{{payment_id}}", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments", "{{payment_id}}"]}
+					},
+					"description": "Get details of a specific loan payment."
+				},
+				{
+					"name": "Update Payment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"payment_mode\": \"upi\",\n    \"transaction_ref\": \"UTR987654321\",\n    \"notes\": \"Updated payment details\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments/{{payment_id}}", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments", "{{payment_id}}"]}
+					},
+					"description": "Update an existing loan payment record."
+				},
+				{
+					"name": "Delete Payment",
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments/{{payment_id}}", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments", "{{payment_id}}"]}
+					},
+					"description": "Delete a loan payment. Only Owner can delete."
+				}
+			]
+		},
+		{
+			"name": "EMI Alerts",
+			"description": "Upcoming and overdue EMI tracking",
+			"item": [
+				{
+					"name": "Get Upcoming EMIs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {
+							"raw": "{{base_url}}/vehicle-loan-payments/upcoming?days=30",
+							"host": ["{{base_url}}"],
+							"path": ["vehicle-loan-payments", "upcoming"],
+							"query": [
+								{"key": "days", "value": "30"}
+							]
+						}
+					},
+					"description": "Get EMIs due in the next N days (default 30).\n\nReturns total amount due across all vehicles."
+				},
+				{
+					"name": "Get Overdue EMIs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments/overdue", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments", "overdue"]}
+					},
+					"description": "Get all overdue EMIs. Automatically marks pending EMIs past due date as overdue."
+				},
+				{
+					"name": "Mark Scheduled EMI as Paid",
+					"request": {
+						"method": "POST",
+						"header": [
+							{"key": "Authorization", "value": "Bearer {{token}}"},
+							{"key": "Content-Type", "value": "application/json"}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"payment_date\": \"10-02-2026\",\n    \"payment_mode\": \"auto_debit\",\n    \"transaction_ref\": \"AUTODRFT123456\",\n    \"notes\": \"Bank auto-debited\"\n}"
+						},
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments/{{payment_id}}/pay", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments", "{{payment_id}}", "pay"]}
+					},
+					"description": "Mark a scheduled (auto-generated) EMI as paid.\n\n**Required:**\n- payment_date\n\nUse when user wants to update a pending scheduled EMI to paid status."
+				}
+			]
+		}
+	]
+}

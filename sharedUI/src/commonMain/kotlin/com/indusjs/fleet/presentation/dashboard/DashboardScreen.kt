@@ -157,7 +157,8 @@ fun DashboardScreen(
     onNavigateToAddDriverCost: () -> Unit = {},
     onNavigateToAlertsList: () -> Unit = {},
     onNavigateToCustomers: () -> Unit = {},
-    onNavigateToPayments: () -> Unit = {}
+    onNavigateToPayments: () -> Unit = {},
+    onNavigateToVehicleFinance: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -233,6 +234,10 @@ fun DashboardScreen(
                     onNavigateToPayments = {
                         scope.launch { drawerState.close() }
                         onNavigateToPayments()
+                    },
+                    onNavigateToVehicleFinance = {
+                        scope.launch { drawerState.close() }
+                        onNavigateToVehicleFinance()
                     }
                 )
             }
@@ -454,7 +459,8 @@ private fun NavigationDrawerContent(
     onNavigateToReports: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToCustomers: () -> Unit,
-    onNavigateToPayments: () -> Unit
+    onNavigateToPayments: () -> Unit,
+    onNavigateToVehicleFinance: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxHeight()
@@ -626,6 +632,19 @@ private fun NavigationDrawerContent(
 
         // Reports & P/L - Only visible to Owner and General Manager
         if (hasFinancialAccess) {
+            NavigationDrawerItem(
+                icon = {
+                    Text(
+                        text = "🏦",
+                        modifier = Modifier.size(24.dp)
+                    )
+                },
+                label = { Text("Vehicle Finance") },
+                selected = false,
+                onClick = onNavigateToVehicleFinance,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+
             NavigationDrawerItem(
                 icon = {
                     Text(

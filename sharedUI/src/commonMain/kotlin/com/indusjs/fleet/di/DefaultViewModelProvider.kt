@@ -110,6 +110,10 @@ import com.indusjs.fleet.domain.repository.payment.TripPaymentRepository
 import com.indusjs.fleet.presentation.payments.PaymentsViewModel
 import com.indusjs.fleet.presentation.payments.AddPaymentViewModel
 import com.indusjs.fleet.presentation.payments.PaymentDetailViewModel
+import com.indusjs.fleet.data.datasource.finance.VehicleFinanceRemoteDataSourceImpl
+import com.indusjs.fleet.data.repository.finance.VehicleFinanceRepositoryImpl
+import com.indusjs.fleet.domain.repository.finance.VehicleFinanceRepository
+import com.indusjs.fleet.presentation.finance.VehicleFinanceViewModel
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
@@ -308,6 +312,12 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         TripPaymentRepositoryImpl(tripPaymentRemoteDataSource, dashboardRemoteDataSource, userLocalDataSource)
     }
 
+    // Lazy-initialized Vehicle Finance feature dependencies
+    private val vehicleFinanceRemoteDataSource by lazy { VehicleFinanceRemoteDataSourceImpl(httpClient, json) }
+    private val vehicleFinanceRepository: VehicleFinanceRepository by lazy {
+        VehicleFinanceRepositoryImpl(vehicleFinanceRemoteDataSource, userLocalDataSource, dispatcherProvider)
+    }
+
     // Auth ViewModels
     override fun loginViewModel() = LoginViewModel(dispatcherProvider, userRepository)
     override fun signUpViewModel() = SignUpViewModel(dispatcherProvider, userRepository)
@@ -472,4 +482,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     override fun addPaymentViewModel() = AddPaymentViewModel(tripPaymentRepository, tripRepository)
 
     override fun paymentDetailViewModel() = PaymentDetailViewModel(tripPaymentRepository, userRepository)
+
+    // Vehicle Finance ViewModels
+    override fun vehicleFinanceViewModel() = VehicleFinanceViewModel(vehicleRepository, vehicleFinanceRepository, dispatcherProvider)
 }

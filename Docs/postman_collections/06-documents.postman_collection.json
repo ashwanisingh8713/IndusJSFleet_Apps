@@ -1,0 +1,156 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-06-documents",
+		"name": "06. Documents",
+		"description": "Document management for vehicles.\n\n## Document Types\nrc, insurance, puc, fitness, permit, tax, other",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"},
+		{"key": "document_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Get All Document Types",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/documents/types", "host": ["{{base_url}}"], "path": ["documents", "types"]}
+			}
+		},
+		{
+			"name": "Upload Document",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{"key": "document", "type": "file", "src": ""},
+						{"key": "type", "value": "insurance", "type": "text"},
+						{"key": "expiry_date", "value": "31-12-2026", "type": "text"},
+						{"key": "document_number", "value": "INS123456", "type": "text"}
+					]
+				},
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/documents", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "documents"]}
+			}
+		},
+		{
+			"name": "Bulk Upload Documents",
+			"request": {
+				"method": "POST",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{"key": "rc_document", "type": "file", "src": ""},
+						{"key": "rc_expiry", "value": "31-12-2028", "type": "text"},
+						{"key": "insurance_document", "type": "file", "src": ""},
+						{"key": "insurance_expiry", "value": "31-12-2026", "type": "text"},
+						{"key": "puc_document", "type": "file", "src": ""},
+						{"key": "puc_expiry", "value": "31-06-2026", "type": "text"}
+					]
+				},
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/documents/bulk", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "documents", "bulk"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Documents",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/documents", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "documents"]}
+			}
+		},
+		{
+			"name": "Get Expiring Documents",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/documents/expiring?days=30",
+					"host": ["{{base_url}}"],
+					"path": ["documents", "expiring"],
+					"query": [{"key": "days", "value": "30"}]
+				}
+			}
+		},
+		{
+			"name": "Get Expired Documents",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/documents/expired", "host": ["{{base_url}}"], "path": ["documents", "expired"]}
+			}
+		},
+		{
+			"name": "Get Documents by Status",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/documents/status/expiring", "host": ["{{base_url}}"], "path": ["documents", "status", "expiring"]}
+			}
+		},
+		{
+			"name": "Get Document",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/documents/{{document_id}}", "host": ["{{base_url}}"], "path": ["documents", "{{document_id}}"]}
+			}
+		},
+		{
+			"name": "Download Document",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/documents/{{document_id}}/download", "host": ["{{base_url}}"], "path": ["documents", "{{document_id}}", "download"]}
+			}
+		},
+		{
+			"name": "Update Document",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"document_number\": \"INS123457\",\n    \"expiry_date\": \"31-12-2027\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/documents/{{document_id}}", "host": ["{{base_url}}"], "path": ["documents", "{{document_id}}"]}
+			}
+		},
+		{
+			"name": "Verify Document",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"status\": \"verified\",\n    \"notes\": \"Document verified successfully\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/documents/{{document_id}}/verify", "host": ["{{base_url}}"], "path": ["documents", "{{document_id}}", "verify"]}
+			}
+		},
+		{
+			"name": "Delete Document",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/documents/{{document_id}}", "host": ["{{base_url}}"], "path": ["documents", "{{document_id}}"]}
+			}
+		}
+	]
+}
+

@@ -1,0 +1,171 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-11-reports",
+		"name": "11. Reports & P/L",
+		"description": "Financial reports and profit/loss analysis.\n\n## Access\n- ALL P&L Reports: Owner and General Manager ONLY\n- Manager and Supervisor cannot access these endpoints\n\n## Response Format\nAll cost breakdowns include:\n- `cost_id`: Unique identifier (e.g., TC-001-002)\n- `cost_label`: Human-readable name (e.g., Diesel)\n- `group_id`: Group identifier (e.g., TC-G-001)\n- `amount`: Total amount\n- `count`: Number of entries",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "trip_id", "value": "1", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Get Report Types",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/reports/types", "host": ["{{base_url}}"], "path": ["reports", "types"]}
+			}
+		},
+		{
+			"name": "Get Report Periods",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/reports/periods", "host": ["{{base_url}}"], "path": ["reports", "periods"]}
+			}
+		},
+		{
+			"name": "Get Fleet Profit/Loss",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/reports/profit-loss?period=monthly",
+					"host": ["{{base_url}}"],
+					"path": ["reports", "profit-loss"],
+					"query": [
+						{"key": "period", "value": "monthly"},
+						{"key": "start_date", "value": "01-01-2026", "disabled": true},
+						{"key": "end_date", "value": "31-01-2026", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get P&L Summary",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/reports/profit-loss/summary?start_date=01-01-2026&end_date=31-01-2026",
+					"host": ["{{base_url}}"],
+					"path": ["reports", "profit-loss", "summary"],
+					"query": [
+						{"key": "start_date", "value": "01-01-2026"},
+						{"key": "end_date", "value": "31-01-2026"}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Trip Profit/Loss",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/profit-loss", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "profit-loss"]}
+			}
+		},
+		{
+			"name": "Get Multi-Trip Profit/Loss",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trip_ids\": [1, 2, 3, 4, 5],\n    \"start_date\": \"01-01-2026\",\n    \"end_date\": \"31-01-2026\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/reports/profit-loss/trips", "host": ["{{base_url}}"], "path": ["reports", "profit-loss", "trips"]}
+			}
+		},
+		{
+			"name": "Get Vehicle Profit/Loss",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/vehicles/{{vehicle_id}}/profit-loss?period=monthly",
+					"host": ["{{base_url}}"],
+					"path": ["vehicles", "{{vehicle_id}}", "profit-loss"],
+					"query": [
+						{"key": "period", "value": "monthly"},
+						{"key": "start_date", "value": "01-01-2026", "disabled": true},
+						{"key": "end_date", "value": "31-01-2026", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Multi-Vehicle Profit/Loss",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"vehicle_ids\": [1, 2, 3],\n    \"start_date\": \"01-01-2026\",\n    \"end_date\": \"31-01-2026\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/reports/profit-loss/vehicles", "host": ["{{base_url}}"], "path": ["reports", "profit-loss", "vehicles"]}
+			}
+		},
+		{
+			"name": "Get Cost Type Analysis",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/reports/profit-loss/cost-type/TC-001-002?start_date=01-01-2026&end_date=31-01-2026",
+					"host": ["{{base_url}}"],
+					"path": ["reports", "profit-loss", "cost-type", "fuel"],
+					"query": [
+						{"key": "start_date", "value": "01-01-2026"},
+						{"key": "end_date", "value": "31-01-2026"}
+					]
+				}
+			}
+		},
+		{
+			"name": "Get Multi Cost Type Analysis",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"cost_ids\": [\"TC-001-002\", \"TC-002-001\", \"VMC-001-001\"],\n    \"vehicle_ids\": [1, 2, 3],\n    \"start_date\": \"01-01-2026\",\n    \"end_date\": \"31-01-2026\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/reports/profit-loss/cost-types", "host": ["{{base_url}}"], "path": ["reports", "profit-loss", "cost-types"]}
+			}
+		},
+		{
+			"name": "Get Consolidated Profit/Loss",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"vehicle_ids\": [1, 2, 3],\n    \"trip_ids\": [1, 2, 3, 4, 5],\n    \"cost_ids\": [\"TC-001-002\", \"TC-002-001\", \"VMC-001-001\"],\n    \"start_date\": \"01-01-2026\",\n    \"end_date\": \"31-01-2026\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/reports/profit-loss/consolidated", "host": ["{{base_url}}"], "path": ["reports", "profit-loss", "consolidated"]}
+			}
+		}
+	]
+}
+

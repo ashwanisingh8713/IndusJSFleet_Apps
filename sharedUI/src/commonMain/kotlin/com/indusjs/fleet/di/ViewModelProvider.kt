@@ -93,6 +93,9 @@ interface ViewModelProvider {
     fun paymentsViewModel(): com.indusjs.fleet.presentation.payments.PaymentsViewModel
     fun addPaymentViewModel(): com.indusjs.fleet.presentation.payments.AddPaymentViewModel
     fun paymentDetailViewModel(): com.indusjs.fleet.presentation.payments.PaymentDetailViewModel
+
+    // Vehicle Finance ViewModels
+    fun vehicleFinanceViewModel(): com.indusjs.fleet.presentation.finance.VehicleFinanceViewModel
 }
 
 /**
@@ -137,3 +140,54 @@ inline fun <T> rememberViewModel(crossinline factory: ViewModelProvider.() -> T)
     return remember { provider.factory() }
 }
 
+/**
+ * Object to manage shared ViewModel instances across navigation.
+ * This allows ViewModels to be shared across different NavEntry compositions.
+ */
+object SharedViewModelStore {
+    private val cache = mutableMapOf<String, Any>()
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getOrCreate(key: String, factory: () -> T): T {
+        return cache.getOrPut(key) { factory() as Any } as T
+    }
+
+    fun clear(key: String) {
+        cache.remove(key)
+    }
+
+    fun clearAll() {
+        cache.clear()
+    }
+}
+
+/**
+ * Remembers a ViewModel instance with a key, allowing sharing across related screens.
+ * ViewModels with the same key will return the same instance.
+ *
+ * This is useful for related screens in a flow (e.g., Finance Detail and Payment History)
+ * that need to share the same ViewModel state.
+ *
+ * Usage:
+ * ```kotlin
+ * val financeViewModel = rememberSharedViewModel("finance_$vehicleId") { vehicleFinanceViewModel() }
+ * ```
+ */
+@Composable
+fun <T> rememberSharedViewModel(
+    key: String,
+    factory: ViewModelProvider.() -> T
+): T {
+    val provider = LocalViewModelProvider.current
+    return remember(key) {
+        SharedViewModelStore.getOrCreate(key) { provider.factory() }
+    }
+}
+
+/**
+ * Clears a shared ViewModel from cache when no longer needed.
+ * Call this when leaving the flow completely (not when navigating between related screens).
+ */
+fun clearSharedViewModel(key: String) {
+    SharedViewModelStore.clear(key)
+}

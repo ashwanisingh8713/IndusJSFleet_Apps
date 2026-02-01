@@ -1,0 +1,684 @@
+{
+	"info": {
+		"_postman_id": "fleet-management-api-v2",
+		"name": "Fleet Management API v2",
+		"description": "Complete API collection for Fleet Management System.\n\nBase URL: https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2\n\nFor modular collections, see .github/postman_collections/ folder.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "api_base", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"},
+		{"key": "driver_id", "value": "1", "type": "string"},
+		{"key": "trip_id", "value": "1", "type": "string"},
+		{"key": "customer_id", "value": "1", "type": "string"},
+		{"key": "purchase_id", "value": "1", "type": "string"},
+		{"key": "payment_id", "value": "1", "type": "string"}
+	],
+	"item": [
+		{
+			"name": "00. API Info",
+			"item": [
+				{
+					"name": "Get API Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{api_base}}", "host": ["{{api_base}}"]}
+					}
+				},
+				{
+					"name": "Get API Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{api_base}}/health", "host": ["{{api_base}}"], "path": ["health"]}
+					}
+				},
+				{
+					"name": "Get API Versions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{api_base}}/versions", "host": ["{{api_base}}"], "path": ["versions"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "01. Authentication",
+			"item": [
+				{
+					"name": "Sign Up (Owner)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"email\": \"owner@example.com\",\n  \"mobile\": \"+919876543210\",\n  \"password\": \"password123\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\"\n}"},
+						"url": {"raw": "{{base_url}}/auth/signup", "host": ["{{base_url}}"], "path": ["auth", "signup"]}
+					}
+				},
+				{
+					"name": "Login",
+					"event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.data && jsonData.data.token) {", "    pm.collectionVariables.set('token', jsonData.data.token);", "}"], "type": "text/javascript"}}],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"identifier\": \"owner@example.com\",\n  \"password\": \"password123\"\n}"},
+						"url": {"raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"]}
+					}
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"email\": \"owner@example.com\"\n}"},
+						"url": {"raw": "{{base_url}}/auth/forgot-password", "host": ["{{base_url}}"], "path": ["auth", "forgot-password"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "02. Profile",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/profile", "host": ["{{base_url}}"], "path": ["profile"]}
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Smith\"\n}"},
+						"url": {"raw": "{{base_url}}/profile", "host": ["{{base_url}}"], "path": ["profile"]}
+					}
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"current_password\": \"password123\",\n  \"new_password\": \"newpassword123\"\n}"},
+						"url": {"raw": "{{base_url}}/profile/change-password", "host": ["{{base_url}}"], "path": ["profile", "change-password"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "03. Team Management",
+			"item": [
+				{
+					"name": "Create Team Member",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"email\": \"manager@example.com\",\n  \"mobile\": \"+919876543211\",\n  \"password\": \"password123\",\n  \"first_name\": \"Jane\",\n  \"last_name\": \"Manager\",\n  \"role\": \"manager\"\n}"},
+						"url": {"raw": "{{base_url}}/team/members", "host": ["{{base_url}}"], "path": ["team", "members"]}
+					}
+				},
+				{
+					"name": "List Team Members",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/team/members", "host": ["{{base_url}}"], "path": ["team", "members"]}
+					}
+				},
+				{
+					"name": "Get Team Member",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/team/members/1", "host": ["{{base_url}}"], "path": ["team", "members", "1"]}
+					}
+				},
+				{
+					"name": "Update Team Member",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"first_name\": \"Jane\",\n  \"last_name\": \"Updated\"\n}"},
+						"url": {"raw": "{{base_url}}/team/members/1", "host": ["{{base_url}}"], "path": ["team", "members", "1"]}
+					}
+				},
+				{
+					"name": "Disable Team Member",
+					"request": {
+						"method": "DELETE",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/team/members/1", "host": ["{{base_url}}"], "path": ["team", "members", "1"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "04. Drivers",
+			"item": [
+				{
+					"name": "Create Driver",
+					"event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.data && jsonData.data.id) {", "    pm.collectionVariables.set('driver_id', jsonData.data.id);", "}"], "type": "text/javascript"}}],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"first_name\": \"Ramesh\",\n  \"last_name\": \"Kumar\",\n  \"mobile\": \"+919876543212\",\n  \"license_number\": \"DL12345678\",\n  \"license_expiry\": \"31-12-2027\"\n}"},
+						"url": {"raw": "{{base_url}}/drivers", "host": ["{{base_url}}"], "path": ["drivers"]}
+					}
+				},
+				{
+					"name": "List Drivers",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/drivers", "host": ["{{base_url}}"], "path": ["drivers"]}
+					}
+				},
+				{
+					"name": "Get Driver",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}"]}
+					}
+				},
+				{
+					"name": "Update Driver",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"first_name\": \"Ramesh\",\n  \"last_name\": \"Singh\"\n}"},
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}"]}
+					}
+				},
+				{
+					"name": "Update Driver Status",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"status\": \"on_leave\",\n  \"notes\": \"Personal leave\"\n}"},
+						"url": {"raw": "{{base_url}}/drivers/{{driver_id}}/status", "host": ["{{base_url}}"], "path": ["drivers", "{{driver_id}}", "status"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "05. Vehicles",
+			"item": [
+				{
+					"name": "Register Vehicle",
+					"event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.data && jsonData.data.id) {", "    pm.collectionVariables.set('vehicle_id', jsonData.data.id);", "}"], "type": "text/javascript"}}],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"registration_number\": \"MH12AB1234\",\n  \"make\": \"Tata\",\n  \"model\": \"Prima\",\n  \"year\": 2023,\n  \"vehicle_type\": \"truck\",\n  \"fuel_type\": \"diesel\",\n  \"capacity\": 25,\n  \"color\": \"white\"\n}"},
+						"url": {"raw": "{{base_url}}/vehicles", "host": ["{{base_url}}"], "path": ["vehicles"]}
+					}
+				},
+				{
+					"name": "List Vehicles",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles", "host": ["{{base_url}}"], "path": ["vehicles"]}
+					}
+				},
+				{
+					"name": "Get Vehicle",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}"]}
+					}
+				},
+				{
+					"name": "Update Vehicle",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"color\": \"blue\",\n  \"mileage\": 50000\n}"},
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}"]}
+					}
+				},
+				{
+					"name": "Update Vehicle State",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"state\": \"maintenance\",\n  \"notes\": \"Scheduled maintenance\"\n}"},
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/state", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "state"]}
+					}
+				},
+				{
+					"name": "Get Vehicle Maintenance Costs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/maintenance-costs", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "maintenance-costs"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "05a. Vehicle Purchase & EMI",
+			"item": [
+				{
+					"name": "Create Purchase (Cash)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"purchase_date\": \"15-06-2025\",\n  \"purchase_price\": 1500000,\n  \"payment_type\": \"cash\",\n  \"vendor_name\": \"Tata Motors\",\n  \"down_payment\": 1500000\n}"},
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/purchase", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "purchase"]}
+					}
+				},
+				{
+					"name": "Create Purchase (Loan)",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"purchase_date\": \"10-01-2025\",\n  \"purchase_price\": 2500000,\n  \"payment_type\": \"loan\",\n  \"vendor_name\": \"Mahindra\",\n  \"down_payment\": 500000,\n  \"loan_amount\": 2000000,\n  \"interest_rate\": 9.5,\n  \"tenure_months\": 60,\n  \"emi_amount\": 42000,\n  \"loan_start_date\": \"10-02-2025\",\n  \"financier_name\": \"HDFC Bank\"\n}"},
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/purchase", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "purchase"]}
+					}
+				},
+				{
+					"name": "Get Vehicle Purchase",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/purchase", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "purchase"]}
+					}
+				},
+				{
+					"name": "Get Loan Summary",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/loan-summary", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "loan-summary"]}
+					}
+				},
+				{
+					"name": "Get Vehicle EMI History",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/loan-payments", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "loan-payments"]}
+					}
+				},
+				{
+					"name": "Record EMI Payment",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"vehicle_purchase_id\": 1,\n  \"amount\": 42000,\n  \"payment_date\": \"10-02-2026\"\n}"},
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments"]}
+					}
+				},
+				{
+					"name": "Get Upcoming EMIs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments/upcoming", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments", "upcoming"]}
+					}
+				},
+				{
+					"name": "Get Overdue EMIs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments/overdue", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments", "overdue"]}
+					}
+				},
+				{
+					"name": "Mark EMI as Paid",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"payment_date\": \"10-02-2026\",\n  \"payment_mode\": \"netbanking\",\n  \"transaction_ref\": \"UTR123456\"\n}"},
+						"url": {"raw": "{{base_url}}/vehicle-loan-payments/{{payment_id}}/pay", "host": ["{{base_url}}"], "path": ["vehicle-loan-payments", "{{payment_id}}", "pay"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "06. Trips",
+			"item": [
+				{
+					"name": "Create Trip",
+					"event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.data && jsonData.data.id) {", "    pm.collectionVariables.set('trip_id', jsonData.data.id);", "}"], "type": "text/javascript"}}],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"vehicle_id\": 1,\n  \"driver_id\": 1,\n  \"start_location\": \"Mumbai\",\n  \"end_location\": \"Delhi\",\n  \"scheduled_date\": \"15-02-2026\",\n  \"start_time\": \"08:00\",\n  \"cargo_type\": \"General\",\n  \"expected_trip_price\": 50000\n}"},
+						"url": {"raw": "{{base_url}}/trips", "host": ["{{base_url}}"], "path": ["trips"]}
+					}
+				},
+				{
+					"name": "List Trips",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trips", "host": ["{{base_url}}"], "path": ["trips"]}
+					}
+				},
+				{
+					"name": "Get Trip",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]}
+					}
+				},
+				{
+					"name": "Update Trip",
+					"request": {
+						"method": "PUT",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"notes\": \"Updated trip notes\"\n}"},
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}"]}
+					}
+				},
+				{
+					"name": "Update Trip State",
+					"request": {
+						"method": "PATCH",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"state\": \"on_route\",\n  \"notes\": \"Trip started\"\n}"},
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/state", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "state"]}
+					}
+				},
+				{
+					"name": "Get Trip Costs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/costs", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "costs"]}
+					}
+				},
+				{
+					"name": "Get Trip Payments",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trips/{{trip_id}}/payments", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "payments"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "07. Trip Costs",
+			"item": [
+				{
+					"name": "Create Trip Cost",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"trip_id\": 1,\n  \"cost_id\": \"TC-001-001\",\n  \"cost_label\": \"Diesel\",\n  \"group_id\": \"TC-G-001\",\n  \"amount\": 5000,\n  \"date\": \"2026-01-15T10:00:00Z\",\n  \"fuel_quantity\": 50,\n  \"fuel_rate\": 100\n}"},
+						"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
+					}
+				},
+				{
+					"name": "List Trip Costs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trip-costs", "host": ["{{base_url}}"], "path": ["trip-costs"]}
+					}
+				},
+				{
+					"name": "Get Cost Types (Trip)",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/cost-types/trip", "host": ["{{base_url}}"], "path": ["cost-types", "trip"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "08. Maintenance Costs",
+			"item": [
+				{
+					"name": "Create Maintenance Cost",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"vehicle_id\": 1,\n  \"cost_id\": \"VMC-001-001\",\n  \"cost_label\": \"Oil Change\",\n  \"group_id\": \"VMC-G-001\",\n  \"amount\": 2500,\n  \"date\": \"2026-01-15T10:00:00Z\"\n}"},
+						"url": {"raw": "{{base_url}}/maintenance-costs", "host": ["{{base_url}}"], "path": ["maintenance-costs"]}
+					}
+				},
+				{
+					"name": "List Maintenance Costs",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/maintenance-costs", "host": ["{{base_url}}"], "path": ["maintenance-costs"]}
+					}
+				},
+				{
+					"name": "Get Cost Types (Maintenance)",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/cost-types/maintenance", "host": ["{{base_url}}"], "path": ["cost-types", "maintenance"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "09. Customers",
+			"item": [
+				{
+					"name": "Create Customer",
+					"event": [{"listen": "test", "script": {"exec": ["var jsonData = pm.response.json();", "if (jsonData.data && jsonData.data.id) {", "    pm.collectionVariables.set('customer_id', jsonData.data.id);", "}"], "type": "text/javascript"}}],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"company_name\": \"ABC Transport\",\n  \"person_name\": \"Rajesh Kumar\",\n  \"primary_contact\": \"+919876543210\",\n  \"email\": \"rajesh@abctransport.com\",\n  \"company_address\": \"Mumbai\"\n}"},
+						"url": {"raw": "{{base_url}}/customers", "host": ["{{base_url}}"], "path": ["customers"]}
+					}
+				},
+				{
+					"name": "List Customers",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/customers", "host": ["{{base_url}}"], "path": ["customers"]}
+					}
+				},
+				{
+					"name": "Get Customer",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/customers/{{customer_id}}", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}"]}
+					}
+				},
+				{
+					"name": "Get Customer Trips",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/customers/{{customer_id}}/trips", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}", "trips"]}
+					}
+				},
+				{
+					"name": "Get Customer Financial Summary",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/customers/{{customer_id}}/financial-summary", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}", "financial-summary"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "10. Trip Payments",
+			"item": [
+				{
+					"name": "Create Trip Payment",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"trip_id\": 1,\n  \"amount\": 25000,\n  \"payment_type\": \"advance\",\n  \"payment_mode\": \"upi\",\n  \"payment_source\": \"user@upi\",\n  \"payment_date\": \"2026-01-15T10:00:00Z\"\n}"},
+						"url": {"raw": "{{base_url}}/trip-payments", "host": ["{{base_url}}"], "path": ["trip-payments"]}
+					}
+				},
+				{
+					"name": "List Trip Payments",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/trip-payments", "host": ["{{base_url}}"], "path": ["trip-payments"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "11. Dashboard",
+			"item": [
+				{
+					"name": "Unified Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard", "host": ["{{base_url}}"], "path": ["dashboard"]}
+					}
+				},
+				{
+					"name": "Fleet Overview",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/fleet-overview", "host": ["{{base_url}}"], "path": ["dashboard", "fleet-overview"]}
+					}
+				},
+				{
+					"name": "Financial Summary",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/financial-summary", "host": ["{{base_url}}"], "path": ["dashboard", "financial-summary"]}
+					}
+				},
+				{
+					"name": "Alerts Status",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/alerts-status", "host": ["{{base_url}}"], "path": ["dashboard", "alerts-status"]}
+					}
+				},
+				{
+					"name": "Pending Payments",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/dashboard/pending-payments", "host": ["{{base_url}}"], "path": ["dashboard", "pending-payments"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "12. Reports (Owner/GM)",
+			"item": [
+				{
+					"name": "Fleet Profit/Loss",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/reports/profit-loss?period=monthly", "host": ["{{base_url}}"], "path": ["reports", "profit-loss"], "query": [{"key": "period", "value": "monthly"}]}
+					}
+				},
+				{
+					"name": "P&L Summary",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/reports/profit-loss/summary", "host": ["{{base_url}}"], "path": ["reports", "profit-loss", "summary"]}
+					}
+				},
+				{
+					"name": "Vehicle P&L",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/reports/vehicles/{{vehicle_id}}/profit-loss", "host": ["{{base_url}}"], "path": ["reports", "vehicles", "{{vehicle_id}}", "profit-loss"]}
+					}
+				},
+				{
+					"name": "Trip P&L",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/reports/trips/{{trip_id}}/profit-loss", "host": ["{{base_url}}"], "path": ["reports", "trips", "{{trip_id}}", "profit-loss"]}
+					}
+				},
+				{
+					"name": "Cost Breakdown",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/reports/cost-breakdown", "host": ["{{base_url}}"], "path": ["reports", "cost-breakdown"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "13. Documents",
+			"item": [
+				{
+					"name": "Upload Vehicle Document",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"body": {"mode": "formdata", "formdata": [{"key": "file", "type": "file", "src": ""}, {"key": "document_type", "value": "rc", "type": "text"}, {"key": "expiry_date", "value": "31-12-2027", "type": "text"}]},
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/documents", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "documents"]}
+					}
+				},
+				{
+					"name": "Get Vehicle Documents",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/documents", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "documents"]}
+					}
+				},
+				{
+					"name": "Get Expiring Documents",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/documents/expiring", "host": ["{{base_url}}"], "path": ["documents", "expiring"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "14. Location",
+			"item": [
+				{
+					"name": "Update Vehicle Location",
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+						"body": {"mode": "raw", "raw": "{\n  \"latitude\": 19.0760,\n  \"longitude\": 72.8777,\n  \"speed\": 45.5,\n  \"heading\": 180\n}"},
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/location", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "location"]}
+					}
+				},
+				{
+					"name": "Get Vehicle Location History",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/vehicles/{{vehicle_id}}/locations", "host": ["{{base_url}}"], "path": ["vehicles", "{{vehicle_id}}", "locations"]}
+					}
+				}
+			]
+		}
+	]
+}

@@ -240,4 +240,4 @@ All API endpoints validate user role server-side. Unauthorized access returns:
 
 - [Modules Overview](../modules/README.md)
 - [Architecture Guide](../architecture/architecture-README.md)
-- [API Reference](../../Fleet_Management_API_v2.postman_collection.json)
+- [API Reference](../postman_collections/Fleet_Management_API_v2.postman_collection.json)

@@ -1,0 +1,455 @@
+package com.indusjs.fleet.data.repository.finance
+
+import co.touchlab.kermit.Logger
+import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.error.exception.ApiException
+import com.indusjs.error.result.Result
+import com.indusjs.fleet.data.datasource.finance.VehicleFinanceRemoteDataSource
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
+import com.indusjs.fleet.data.mapper.finance.toDomain
+import com.indusjs.fleet.data.mapper.finance.toDomainAlerts
+import com.indusjs.fleet.data.mapper.finance.toDomainPayments
+import com.indusjs.fleet.data.model.finance.*
+import com.indusjs.fleet.domain.entity.finance.*
+import com.indusjs.fleet.domain.repository.finance.VehicleFinanceRepository
+import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.withContext
+
+@Inject
+class VehicleFinanceRepositoryImpl(
+    private val remoteDataSource: VehicleFinanceRemoteDataSource,
+    private val userLocalDataSource: UserLocalDataSource,
+    private val dispatcherProvider: DispatcherProvider
+) : VehicleFinanceRepository {
+
+    private val log = Logger.withTag("VehicleFinanceRepository")
+
+    private suspend fun getToken(): String? = userLocalDataSource.getAuthToken()
+
+    // ==================== Purchase APIs ====================
+
+    override suspend fun getPurchase(vehicleId: Int): Result<VehiclePurchase?> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val response = remoteDataSource.getPurchase(token, vehicleId)
+                if (response.success) {
+                    Result.Success(response.data?.toDomain())
+                } else {
+                    // No purchase info is not an error
+                    if (response.data == null) {
+                        Result.Success(null)
+                    } else {
+                        Result.Error(ApiException(response.message), response.message)
+                    }
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error getting purchase: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to get purchase info")
+            }
+        }
+    }
+
+    override suspend fun createPurchase(
+        vehicleId: Int,
+        purchaseDate: String,
+        purchasePrice: Double,
+        vendorName: String?,
+        invoiceNumber: String?,
+        paymentType: PaymentType,
+        downPayment: Double?,
+        loanAmount: Double?,
+        interestRate: Double?,
+        tenureMonths: Int?,
+        emiAmount: Double?,
+        loanStartDate: String?,
+        financierName: String?,
+        loanAccountNumber: String?,
+        bankName: String?,
+        bankAccountNumber: String?,
+        bankIfsc: String?,
+        autoDebitEnabled: Boolean?,
+        notes: String?
+    ): Result<VehiclePurchase> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val request = CreatePurchaseRequest(
+                    purchaseDate = purchaseDate,
+                    purchasePrice = purchasePrice,
+                    vendorName = vendorName,
+                    invoiceNumber = invoiceNumber,
+                    paymentType = paymentType.value,
+                    downPayment = downPayment,
+                    loanAmount = loanAmount,
+                    interestRate = interestRate,
+                    tenureMonths = tenureMonths,
+                    emiAmount = emiAmount,
+                    loanStartDate = loanStartDate,
+                    financierName = financierName,
+                    loanAccountNumber = loanAccountNumber,
+                    bankName = bankName,
+                    bankAccountNumber = bankAccountNumber,
+                    bankIfsc = bankIfsc,
+                    autoDebitEnabled = autoDebitEnabled,
+                    notes = notes
+                )
+
+                val response = remoteDataSource.createPurchase(token, vehicleId, request)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.toDomain())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error creating purchase: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to create purchase info")
+            }
+        }
+    }
+
+    override suspend fun updatePurchase(
+        vehicleId: Int,
+        vendorName: String?,
+        invoiceNumber: String?,
+        bankName: String?,
+        bankAccountNumber: String?,
+        bankIfsc: String?,
+        autoDebitEnabled: Boolean?,
+        notes: String?
+    ): Result<VehiclePurchase> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val request = UpdatePurchaseRequest(
+                    vendorName = vendorName,
+                    invoiceNumber = invoiceNumber,
+                    bankName = bankName,
+                    bankAccountNumber = bankAccountNumber,
+                    bankIfsc = bankIfsc,
+                    autoDebitEnabled = autoDebitEnabled,
+                    notes = notes
+                )
+
+                val response = remoteDataSource.updatePurchase(token, vehicleId, request)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.toDomain())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error updating purchase: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to update purchase info")
+            }
+        }
+    }
+
+    // ==================== Loan Summary ====================
+
+    override suspend fun getLoanSummary(vehicleId: Int): Result<LoanSummary> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val response = remoteDataSource.getLoanSummary(token, vehicleId)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.toDomain())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error getting loan summary: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to get loan summary")
+            }
+        }
+    }
+
+    // ==================== Loan Payments ====================
+
+    override suspend fun getLoanPayments(
+        vehicleId: Int,
+        page: Int,
+        perPage: Int,
+        status: String?
+    ): Result<List<LoanPayment>> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val response = remoteDataSource.getLoanPayments(token, vehicleId, page, perPage, status)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.items.toDomainPayments())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error getting loan payments: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to get loan payments")
+            }
+        }
+    }
+
+    override suspend fun getAllLoanPayments(
+        page: Int,
+        perPage: Int,
+        vehicleId: Int?,
+        status: String?
+    ): Result<List<LoanPayment>> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val response = remoteDataSource.getAllLoanPayments(token, page, perPage, vehicleId, status)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.items.toDomainPayments())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error getting all loan payments: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to get all loan payments")
+            }
+        }
+    }
+
+    override suspend fun getPaymentById(paymentId: Int): Result<LoanPayment> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val response = remoteDataSource.getPaymentById(token, paymentId)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.toDomain())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error getting payment by ID: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to get payment details")
+            }
+        }
+    }
+
+    override suspend fun updatePayment(
+        paymentId: Int,
+        paymentMode: PaymentMode?,
+        paymentSource: String?,
+        transactionRef: String?,
+        notes: String?
+    ): Result<LoanPayment> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val request = UpdatePaymentRequest(
+                    paymentMode = paymentMode?.value,
+                    paymentSource = paymentSource,
+                    transactionRef = transactionRef,
+                    notes = notes
+                )
+
+                val response = remoteDataSource.updatePayment(token, paymentId, request)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.toDomain())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error updating payment: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to update payment")
+            }
+        }
+    }
+
+    override suspend fun recordPayment(
+        vehiclePurchaseId: Int,
+        amount: Double,
+        paymentDate: String,
+        paymentMode: PaymentMode?,
+        paymentSource: String?,
+        transactionRef: String?,
+        lateFee: Double?,
+        prepaymentAmount: Double?,
+        notes: String?
+    ): Result<LoanPayment> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val request = RecordPaymentRequest(
+                    vehiclePurchaseId = vehiclePurchaseId,
+                    amount = amount,
+                    paymentDate = paymentDate,
+                    paymentMode = paymentMode?.value,
+                    paymentSource = paymentSource,
+                    transactionRef = transactionRef,
+                    lateFee = lateFee,
+                    prepaymentAmount = prepaymentAmount,
+                    notes = notes
+                )
+
+                val response = remoteDataSource.recordPayment(token, request)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.toDomain())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error recording payment: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to record payment")
+            }
+        }
+    }
+
+    override suspend fun markEmiPaid(
+        paymentId: Int,
+        paymentDate: String,
+        paymentMode: PaymentMode?,
+        transactionRef: String?,
+        notes: String?
+    ): Result<LoanPayment> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val request = MarkEmiPaidRequest(
+                    paymentDate = paymentDate,
+                    paymentMode = paymentMode?.value,
+                    transactionRef = transactionRef,
+                    notes = notes
+                )
+
+                val response = remoteDataSource.markEmiPaid(token, paymentId, request)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.toDomain())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error marking EMI paid: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to mark EMI paid")
+            }
+        }
+    }
+
+    override suspend fun deletePayment(paymentId: Int): Result<Unit> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val response = remoteDataSource.deletePayment(token, paymentId)
+                if (response.success) {
+                    Result.Success(Unit)
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error deleting payment: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to delete payment")
+            }
+        }
+    }
+
+    // ==================== Alerts ====================
+
+    override suspend fun getUpcomingEmis(days: Int): Result<List<EmiAlert>> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val response = remoteDataSource.getUpcomingEmis(token, days)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.upcoming.toDomainAlerts())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error getting upcoming EMIs: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to get upcoming EMIs")
+            }
+        }
+    }
+
+    override suspend fun getOverdueEmis(): Result<List<EmiAlert>> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                val response = remoteDataSource.getOverdueEmis(token)
+                if (response.success && response.data != null) {
+                    Result.Success(response.data.overdue.toDomainAlerts())
+                } else {
+                    Result.Error(ApiException(response.message), response.message)
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Error getting overdue EMIs: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to get overdue EMIs")
+            }
+        }
+    }
+
+    override suspend fun getEmiAlerts(): Result<Pair<List<EmiAlert>, List<EmiAlert>>> {
+        return withContext(dispatcherProvider.io) {
+            try {
+                val token = getToken() ?: return@withContext Result.Error(
+                    ApiException("Not authenticated"),
+                    "Please log in to continue"
+                )
+
+                // Fetch both upcoming and overdue
+                val upcomingResponse = remoteDataSource.getUpcomingEmis(token, 30)
+                val overdueResponse = remoteDataSource.getOverdueEmis(token)
+
+                val upcoming = upcomingResponse.data?.upcoming?.toDomainAlerts() ?: emptyList()
+                val overdue = overdueResponse.data?.overdue?.toDomainAlerts() ?: emptyList()
+
+                Result.Success(Pair(upcoming, overdue))
+            } catch (e: Exception) {
+                log.e(e) { "Error getting EMI alerts: ${e.message}" }
+                Result.Error(e, e.message ?: "Failed to get EMI alerts")
+            }
+        }
+    }
+}
