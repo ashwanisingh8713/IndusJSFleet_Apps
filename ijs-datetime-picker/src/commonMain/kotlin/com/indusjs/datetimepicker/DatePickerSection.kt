@@ -45,6 +45,10 @@ internal fun DatePickerSection(
     } else { null }
 
     Column(modifier = modifier) {
+        // Check navigation boundaries
+        val canGoPrevious = DateTimeUtils.canNavigateToPreviousMonth(calendarMonth, calendarYear, minDate)
+        val canGoNext = DateTimeUtils.canNavigateToNextMonth(calendarMonth, calendarYear, maxDate)
+
         // Month/Year Navigation - 32dp buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -53,16 +57,19 @@ internal fun DatePickerSection(
         ) {
             FilledTonalIconButton(
                 onClick = {
-                    if (calendarMonth == 1) {
-                        onCalendarMonthYearChange(12, calendarYear - 1)
-                    } else {
-                        onCalendarMonthYearChange(calendarMonth - 1, calendarYear)
+                    if (canGoPrevious) {
+                        if (calendarMonth == 1) {
+                            onCalendarMonthYearChange(12, calendarYear - 1)
+                        } else {
+                            onCalendarMonthYearChange(calendarMonth - 1, calendarYear)
+                        }
                     }
                 },
+                enabled = canGoPrevious,
                 modifier = Modifier.size(32.dp),
                 colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = if (canGoPrevious) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (canGoPrevious) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 )
             ) {
                 Text(text = "◀", fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -94,16 +101,19 @@ internal fun DatePickerSection(
 
             FilledTonalIconButton(
                 onClick = {
-                    if (calendarMonth == 12) {
-                        onCalendarMonthYearChange(1, calendarYear + 1)
-                    } else {
-                        onCalendarMonthYearChange(calendarMonth + 1, calendarYear)
+                    if (canGoNext) {
+                        if (calendarMonth == 12) {
+                            onCalendarMonthYearChange(1, calendarYear + 1)
+                        } else {
+                            onCalendarMonthYearChange(calendarMonth + 1, calendarYear)
+                        }
                     }
                 },
+                enabled = canGoNext,
                 modifier = Modifier.size(32.dp),
                 colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = if (canGoNext) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = if (canGoNext) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 )
             ) {
                 Text(text = "▶", fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -117,6 +127,8 @@ internal fun DatePickerSection(
             MonthYearPicker(
                 currentMonth = calendarMonth,
                 currentYear = calendarYear,
+                minDate = minDate,
+                maxDate = maxDate,
                 onMonthYearSelected = { month, year ->
                     onCalendarMonthYearChange(month, year)
                     showMonthYearPicker = false
@@ -143,21 +155,30 @@ internal fun DatePickerSection(
 
 /**
  * Month and Year picker for quick navigation to any date.
+ * Respects minDate and maxDate constraints.
  */
 @Composable
 private fun MonthYearPicker(
     currentMonth: Int,
     currentYear: Int,
+    minDate: String?,
+    maxDate: String?,
     onMonthYearSelected: (month: Int, year: Int) -> Unit,
     onDismiss: () -> Unit
 ) {
     var selectedMonth by remember { mutableStateOf(currentMonth) }
     var selectedYear by remember { mutableStateOf(currentYear) }
 
-    // Year range: current year -50 to +50
-    val currentYearNow = DateTimeUtils.getCurrentDateParts().third
-    val yearRange = (currentYearNow - 50)..(currentYearNow + 50)
+    // Get valid year range based on minDate/maxDate
+    val yearRange = DateTimeUtils.getValidYearRange(minDate, maxDate)
     val years = yearRange.toList()
+
+    // Ensure selected year is within valid range
+    LaunchedEffect(years) {
+        if (selectedYear !in yearRange) {
+            selectedYear = selectedYear.coerceIn(yearRange)
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -200,14 +221,17 @@ private fun MonthYearPicker(
                         ) {
                             items((1..12).toList()) { month ->
                                 val isSelected = month == selectedMonth
+                                val isEnabled = DateTimeUtils.isMonthSelectable(month, selectedYear, minDate, maxDate)
+
                                 Surface(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { selectedMonth = month },
-                                    color = if (isSelected)
-                                        MaterialTheme.colorScheme.primaryContainer
-                                    else
-                                        Color.Transparent,
+                                        .clickable(enabled = isEnabled) { selectedMonth = month },
+                                    color = when {
+                                        isSelected -> MaterialTheme.colorScheme.primaryContainer
+                                        !isEnabled -> Color.Transparent
+                                        else -> Color.Transparent
+                                    },
                                     shape = RoundedCornerShape(6.dp)
                                 ) {
                                     Text(
@@ -215,10 +239,11 @@ private fun MonthYearPicker(
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected)
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.onSurface
+                                        color = when {
+                                            isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
+                                            !isEnabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                            else -> MaterialTheme.colorScheme.onSurface
+                                        }
                                     )
                                 }
                             }
@@ -251,7 +276,19 @@ private fun MonthYearPicker(
                                 Surface(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { selectedYear = year },
+                                        .clickable {
+                                            selectedYear = year
+                                            // If selected month is not valid for new year, adjust it
+                                            if (!DateTimeUtils.isMonthSelectable(selectedMonth, year, minDate, maxDate)) {
+                                                // Find the first valid month
+                                                val firstValidMonth = (1..12).firstOrNull {
+                                                    DateTimeUtils.isMonthSelectable(it, year, minDate, maxDate)
+                                                }
+                                                if (firstValidMonth != null) {
+                                                    selectedMonth = firstValidMonth
+                                                }
+                                            }
+                                        },
                                     color = if (isSelected)
                                         MaterialTheme.colorScheme.primaryContainer
                                     else
@@ -286,7 +323,12 @@ private fun MonthYearPicker(
                     Text("Cancel")
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { onMonthYearSelected(selectedMonth, selectedYear) }) {
+                // Only enable Select button if the selected month/year combination is valid
+                val isSelectionValid = DateTimeUtils.isMonthSelectable(selectedMonth, selectedYear, minDate, maxDate)
+                Button(
+                    onClick = { onMonthYearSelected(selectedMonth, selectedYear) },
+                    enabled = isSelectionValid
+                ) {
                     Text("Select")
                 }
             }

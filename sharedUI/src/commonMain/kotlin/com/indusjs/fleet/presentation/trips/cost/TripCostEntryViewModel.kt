@@ -93,6 +93,7 @@ class TripCostEntryViewModel(
             is TripCostEntryContract.Intent.LoadTrips -> loadTrips()
             is TripCostEntryContract.Intent.RefreshCostTypes -> refreshCostTypes()
             is TripCostEntryContract.Intent.SelectTrip -> selectTrip(intent.trip)
+            is TripCostEntryContract.Intent.PreSelectTripById -> preSelectTripById(intent.tripId)
             is TripCostEntryContract.Intent.ToggleTripDropdown -> updateState { copy(showTripDropdown = !showTripDropdown) }
 
             // Row management
@@ -203,6 +204,31 @@ class TripCostEntryViewModel(
                 showTripDropdown = false,
                 tripError = null
             )
+        }
+    }
+
+    /**
+     * Pre-select a trip by its ID. Used when navigating from Trip Detail screen.
+     * Waits for trips to be loaded if needed.
+     */
+    private fun preSelectTripById(tripId: String) {
+        viewModelScope.launch(dispatcherProvider.io) {
+            // If trips are already loaded, find and select
+            val existingTrip = currentState.trips.find { it.id == tripId }
+            if (existingTrip != null) {
+                selectTrip(existingTrip)
+                return@launch
+            }
+
+            // If trips are loading, wait and try again
+            if (currentState.isLoadingData) {
+                // Wait a bit for trips to load
+                kotlinx.coroutines.delay(500)
+                val trip = currentState.trips.find { it.id == tripId }
+                if (trip != null) {
+                    selectTrip(trip)
+                }
+            }
         }
     }
 

@@ -100,6 +100,8 @@ data class TripDto(
     val pendingAmount: Double? = null,
     @SerialName("payment_mode")
     val paymentMode: String? = null,
+    @SerialName("paid_trip_price")
+    val paidTripPrice: Double? = null,
     // Customer - New API supports customer_id for Customer entity association
     @SerialName("customer_id")
     val customerId: Int? = null,

@@ -6,14 +6,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -163,22 +161,36 @@ fun PaymentsScreen(
                             } else {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_download),
-                                    contentDescription = "Export PDF"
+                                    contentDescription = "Export PDF",
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
                         }
                     }
-                    // Filter button
-                    IconButton(onClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowFilterSheet) }) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_filter),
-                            contentDescription = "Filter"
-                        )
+                    // Filter button with badge indicator when filters are applied
+                    BadgedBox(
+                        badge = {
+                            if (state.hasFilters) {
+                                Badge(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(8.dp)
+                                )
+                            }
+                        }
+                    ) {
+                        IconButton(onClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowFilterSheet) }) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_filter),
+                                contentDescription = "Filter",
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
                     }
                     IconButton(onClick = { viewModel.sendIntent(PaymentsContract.Intent.Refresh) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh"
+                            contentDescription = "Refresh",
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
@@ -209,13 +221,21 @@ fun PaymentsScreen(
                     LoadingContent()
                 }
                 state.isEmpty && state.error == null -> {
-                    // No payments exist - show empty state
-                    EmptyContent(
-                        title = "No Payments Yet",
-                        message = if (state.hasFilters) "No payments match your filters" else "Record your first payment to get started",
-                        actionLabel = "Add Payment",
-                        onAction = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToAddPayment) }
-                    )
+                    // No payments - differentiate between filtered empty and actual empty
+                    if (state.hasFilters) {
+                        // Filtered results are empty - show Clear Filters instead of Add Payment
+                        EmptyFilteredContent(
+                            onClearFilters = { viewModel.sendIntent(PaymentsContract.Intent.ResetFilter) }
+                        )
+                    } else {
+                        // No payments exist - show empty state with Add Payment
+                        EmptyContent(
+                            title = "No Payments Yet",
+                            message = "Record your first payment to get started",
+                            actionLabel = "Add Payment",
+                            onAction = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToAddPayment) }
+                        )
+                    }
                 }
                 state.error != null && state.payments.isEmpty() -> {
                     // Actual error occurred - show error content
@@ -228,7 +248,12 @@ fun PaymentsScreen(
                 else -> {
                     LazyColumn(
                         state = listState,
-                        contentPadding = PaddingValues(16.dp),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 16.dp,
+                            bottom = 88.dp  // Extra padding to prevent FAB overlap
+                        ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         // Summary Card
@@ -236,7 +261,8 @@ fun PaymentsScreen(
                             PaymentSummaryCard(
                                 totalReceived = state.totalReceived,
                                 totalPending = state.totalPending,
-                                thisMonth = state.thisMonth
+                                thisMonth = state.thisMonth,
+                                paymentCount = state.payments.size
                             )
                         }
 
@@ -408,41 +434,56 @@ private fun FilterChipRow(
 
 /**
  * Summary card showing payment totals at the top of the list.
- * Enhanced UI with gradient background and better visual design.
+ * Clean UI with white background in day mode.
  */
 @Composable
 private fun PaymentSummaryCard(
     totalReceived: String,
     totalPending: String,
     thisMonth: String,
+    paymentCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer,
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f),
-                            MaterialTheme.colorScheme.surfaceContainerLow
-                        )
-                    )
-                )
                 .padding(16.dp)
         ) {
-            // Header
-            Text(
-                text = "💳 Payment Summary",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            // Header with payment count
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Payment Summary",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (paymentCount > 0) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = "$paymentCount payments",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -452,11 +493,10 @@ private fun PaymentSummaryCard(
             ) {
                 // Received Card
                 SummaryItemCard(
-                    emoji = "💰",
                     value = totalReceived,
                     label = "Received",
                     valueColor = Color(0xFF2E7D32),
-                    backgroundColor = Color(0xFF2E7D32).copy(alpha = 0.12f),
+                    backgroundColor = Color(0xFF2E7D32).copy(alpha = 0.1f),
                     modifier = Modifier.weight(1f)
                 )
 
@@ -464,11 +504,10 @@ private fun PaymentSummaryCard(
 
                 // Pending Card
                 SummaryItemCard(
-                    emoji = "⏳",
                     value = totalPending,
                     label = "Pending",
                     valueColor = Color(0xFFE65100),
-                    backgroundColor = Color(0xFFE65100).copy(alpha = 0.12f),
+                    backgroundColor = Color(0xFFE65100).copy(alpha = 0.1f),
                     modifier = Modifier.weight(1f)
                 )
 
@@ -476,11 +515,10 @@ private fun PaymentSummaryCard(
 
                 // This Month Card
                 SummaryItemCard(
-                    emoji = "📅",
                     value = thisMonth,
                     label = "This Month",
                     valueColor = MaterialTheme.colorScheme.primary,
-                    backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -489,11 +527,10 @@ private fun PaymentSummaryCard(
 }
 
 /**
- * Individual summary item with background.
+ * Individual summary item with background (no icon).
  */
 @Composable
 private fun SummaryItemCard(
-    emoji: String,
     value: String,
     label: String,
     valueColor: Color,
@@ -503,25 +540,20 @@ private fun SummaryItemCard(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(backgroundColor)
             .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
         Text(
-            text = emoji,
-            style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = valueColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
@@ -533,6 +565,7 @@ private fun SummaryItemCard(
 
 /**
  * Card displaying a single payment item in the list.
+ * Enhanced compact layout with Trip info grouped visually.
  */
 @Composable
 private fun PaymentCard(
@@ -545,14 +578,17 @@ private fun PaymentCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
-            // Header Row: Mode icon, Amount, Status
+            // Row 1: Trip ID + Payment Type | Amount + Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -560,127 +596,174 @@ private fun PaymentCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Mode icon
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(getModeColor(payment.paymentMode).copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center
+                    // Trip ID badge
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = payment.modeIcon,
-                            style = MaterialTheme.typography.titleMedium
+                            text = "Trip #${payment.tripId}",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
-
-                    Column {
+                    // Payment Type badge
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
+                    ) {
                         Text(
-                            text = payment.modeDisplay,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = payment.typeDisplay,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "${payment.paymentType.icon} ${payment.typeDisplay}",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = getPaymentTypeColor(payment.paymentType)
                         )
                     }
                 }
 
+                // Amount + Status
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = payment.amountDisplay,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (payment.isReceived) {
-                            Color(0xFF2E7D32)
-                        } else if (payment.isPending) {
-                            Color(0xFFE65100)
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        }
+                        color = if (payment.isReceived) Color(0xFF2E7D32)
+                        else if (payment.isPending) Color(0xFFE65100)
+                        else MaterialTheme.colorScheme.onSurface
                     )
                     PaymentStatusBadge(status = payment.paymentStatus)
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Trip info row - Vehicle and Route
+            // Trip Info Section - grouped in a subtle background
             payment.tripInfo?.let { tripInfo ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Vehicle registration
-                    tripInfo.vehicleRegistration?.let { vehicle ->
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer
+                    // Vehicle + Route
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        tripInfo.vehicleRegistration?.let { vehicle ->
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer
+                            ) {
+                                Text(
+                                    text = vehicle,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        // Route with better visibility
+                        Text(
+                            text = "${tripInfo.startLocation ?: "Unknown"} → ${tripInfo.endLocation ?: "Unknown"}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    // Trip Dates (only show if valid)
+                    val hasValidDates = tripInfo.tripStartDate != null || tripInfo.tripEndDate != null
+                    if (hasValidDates) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "🚛 $vehicle",
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                text = "Depart: ${tripInfo.startDateTimeDisplay}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Arrive: ${tripInfo.endDateTimeDisplay}",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.tertiary
                             )
                         }
                     }
-
-                    // Route
-                    Text(
-                        text = tripInfo.routeDisplay,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // Customer and date row
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Row: Customer + Payment Date
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    payment.customerName?.let { customer ->
-                        Text(
-                            text = customer,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    payment.receiptNumber?.let { receipt ->
-                        Text(
-                            text = "Receipt: $receipt",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                // Customer name - prioritize customerName, fallback to customerCompany
+                val customerDisplayName = payment.customerName?.takeIf { it.isNotBlank() }
+                    ?: payment.customerCompany?.takeIf { it.isNotBlank() }
+                    ?: "No Customer"
+                Text(
+                    text = customerDisplayName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (customerDisplayName != "No Customer")
+                        MaterialTheme.colorScheme.onSurface
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
 
+                // Payment received date with label
                 payment.paymentDate?.let { date ->
-                    Text(
-                        text = formatPaymentDate(date),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer
+                    ) {
+                        Text(
+                            text = "Paid: ${formatPaymentDate(date)}",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+/**
+ * Get color for payment type badge.
+ */
+private fun getPaymentTypeColor(type: PaymentType): Color {
+    return when (type) {
+        PaymentType.ADVANCE -> Color(0xFF1976D2)  // Blue
+        PaymentType.PARTIAL -> Color(0xFFFFA000)  // Orange
+        PaymentType.FINAL -> Color(0xFF2E7D32)    // Green
+        PaymentType.REFUND -> Color(0xFFD32F2F)   // Red
     }
 }
 
@@ -709,16 +792,6 @@ private fun PaymentStatusBadge(
     }
 }
 
-@Composable
-private fun getModeColor(mode: PaymentMode): Color {
-    return when (mode) {
-        PaymentMode.CASH -> Color(0xFF4CAF50)
-        PaymentMode.UPI -> Color(0xFF9C27B0)
-        PaymentMode.BANK_TRANSFER -> Color(0xFF2196F3)
-        PaymentMode.CARD -> Color(0xFFFF9800)
-        PaymentMode.CREDIT -> Color(0xFF607D8B)
-    }
-}
 
 private fun formatPaymentDate(isoDate: String): String {
     return try {
@@ -1015,6 +1088,50 @@ private fun getLastDayOfMonth(year: Int, month: Int): Int {
         4, 6, 9, 11 -> 30
         2 -> if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) 29 else 28
         else -> 30
+    }
+}
+
+/**
+ * Empty content shown when filters are applied but no results found.
+ * Shows "Clear Filters" instead of "Add Payment".
+ */
+@Composable
+private fun EmptyFilteredContent(
+    onClearFilters: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        ) {
+            Text(
+                text = "🔍",
+                style = MaterialTheme.typography.displayMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "No Results Found",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "No payments match your current filters.\nTry adjusting your filters or clear them to see all payments.",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            OutlinedButton(onClick = onClearFilters) {
+                Text("Clear Filters")
+            }
+        }
     }
 }
 

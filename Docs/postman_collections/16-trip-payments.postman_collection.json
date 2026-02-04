@@ -1,0 +1,193 @@
+{
+	"info": {
+		"_postman_id": "fleet-api-16-trip-payments",
+		"name": "16. Trip Payments",
+		"description": "Trip payment management endpoints.\n\n## Access Control\n- Create/Update/Delete: Owner, General Manager only\n- View (List/Get): All roles (financial amounts hidden for Manager/Supervisor)\n\n## Payment Types\n- advance: Advance/booking payment\n- partial: Partial payment\n- final: Final settlement\n- refund: Refund to customer\n\n## Payment Modes\n- cash\n- upi\n- bank_transfer\n- card\n- credit\n- other\n\n## Payment Status\n- received: Payment confirmed\n- pending: Awaiting confirmation\n- cancelled: Payment cancelled\n\n## Enhanced Response Fields\n- vehicle_registration_number\n- customer_contact\n- trip_scheduled_date, trip_start_time\n- trip_delivery_date, trip_delivery_time",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "base_url", "value": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2", "type": "string"},
+		{"key": "token", "value": "", "type": "string"},
+		{"key": "trip_id", "value": "1", "type": "string"},
+		{"key": "payment_id", "value": "1", "type": "string"},
+		{"key": "vehicle_id", "value": "1", "type": "string"},
+		{"key": "customer_id", "value": "1", "type": "string"}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]
+	},
+	"item": [
+		{
+			"name": "Create Trip Payment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"trip_id\": 1,\n    \"vehicle_id\": 1,\n    \"driver_id\": 1,\n    \"customer_id\": 1,\n    \"customer_name\": \"ABC Corp\",\n    \"customer_contact\": \"9876543210\",\n    \"customer_company\": \"ABC Corporation\",\n    \"amount\": 25000,\n    \"tds_amount\": 250,\n    \"discount_amount\": 0,\n    \"payment_type\": \"advance\",\n    \"payment_mode\": \"upi\",\n    \"payment_source\": \"customer@upi\",\n    \"payment_date\": \"2026-01-15T10:00:00Z\",\n    \"transaction_id\": \"TXN123456\",\n    \"reference_number\": \"REF001\",\n    \"received_by\": \"John Doe\",\n    \"received_at_location\": \"Mumbai Office\",\n    \"notes\": \"First advance payment\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trip-payments", "host": ["{{base_url}}"], "path": ["trip-payments"]}
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {},
+					"status": "Created",
+					"code": 201,
+					"body": "{\n    \"success\": true,\n    \"message\": \"Payment created successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"trip_id\": 1,\n        \"vehicle_id\": 1,\n        \"amount\": 25000,\n        \"tds_amount\": 250,\n        \"discount_amount\": 0,\n        \"net_amount\": 24750,\n        \"payment_type\": \"advance\",\n        \"payment_mode\": \"upi\",\n        \"payment_source\": \"customer@upi\",\n        \"payment_status\": \"received\",\n        \"payment_date\": \"2026-01-15T10:00:00Z\",\n        \"receipt_number\": \"RP-202601-001-00001\",\n        \"financial_year\": \"2025-26\",\n        \"financial_month\": \"2026-01\",\n        \"created_by_user\": {\n            \"id\": 1,\n            \"first_name\": \"John\",\n            \"last_name\": \"Doe\",\n            \"role\": \"owner\"\n        }\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "List Trip Payments",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/trip-payments?page=1&per_page=20",
+					"host": ["{{base_url}}"],
+					"path": ["trip-payments"],
+					"query": [
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"},
+						{"key": "trip_id", "value": "1", "disabled": true},
+						{"key": "vehicle_id", "value": "1", "disabled": true},
+						{"key": "customer_id", "value": "1", "disabled": true},
+						{"key": "registration_number", "value": "MH12AB1234", "disabled": true, "description": "Search by vehicle registration number"},
+						{"key": "customer_contact", "value": "9876543210", "disabled": true, "description": "Search by customer contact"},
+						{"key": "payment_type", "value": "advance", "disabled": true},
+						{"key": "payment_mode", "value": "upi", "disabled": true},
+						{"key": "payment_status", "value": "received", "disabled": true},
+						{"key": "financial_year", "value": "2025-26", "disabled": true},
+						{"key": "financial_month", "value": "2026-01", "disabled": true},
+						{"key": "start_date", "value": "2026-01-01", "disabled": true},
+						{"key": "end_date", "value": "2026-01-31", "disabled": true}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Success Response (Enriched)",
+					"originalRequest": {},
+					"status": "OK",
+					"code": 200,
+					"body": "{\n    \"success\": true,\n    \"message\": \"Payments retrieved successfully\",\n    \"data\": {\n        \"items\": [\n            {\n                \"id\": 1,\n                \"trip_id\": 1,\n                \"vehicle_id\": 1,\n                \"vehicle_registration_number\": \"MH12AB1234\",\n                \"customer_id\": 1,\n                \"customer_name\": \"ABC Corp\",\n                \"customer_contact\": \"9876543210\",\n                \"customer_company\": \"ABC Corporation\",\n                \"trip_start_location\": \"Mumbai\",\n                \"trip_end_location\": \"Pune\",\n                \"trip_scheduled_date\": \"2026-01-15T00:00:00Z\",\n                \"trip_start_time\": \"2026-01-15T08:00:00Z\",\n                \"trip_delivery_date\": \"2026-01-15T00:00:00Z\",\n                \"trip_delivery_time\": \"2026-01-15T18:00:00Z\",\n                \"trip_state\": \"on_route\",\n                \"amount\": 25000,\n                \"tds_amount\": 250,\n                \"discount_amount\": 0,\n                \"net_amount\": 24750,\n                \"payment_type\": \"advance\",\n                \"payment_mode\": \"upi\",\n                \"payment_source\": \"customer@upi\",\n                \"payment_status\": \"received\",\n                \"payment_date\": \"2026-01-15T10:00:00Z\",\n                \"receipt_number\": \"RP-202601-001-00001\",\n                \"financial_year\": \"2025-26\",\n                \"financial_month\": \"2026-01\",\n                \"created_by_user\": {\n                    \"id\": 1,\n                    \"first_name\": \"John\",\n                    \"last_name\": \"Doe\",\n                    \"role\": \"owner\"\n                },\n                \"created_at\": \"2026-01-15T10:00:00Z\"\n            }\n        ],\n        \"count\": 1,\n        \"page\": 1,\n        \"per_page\": 20,\n        \"total_pages\": 1,\n        \"has_more\": false\n    }\n}"
+				},
+				{
+					"name": "Response for Manager/Supervisor (Amounts Hidden)",
+					"originalRequest": {},
+					"status": "OK",
+					"code": 200,
+					"body": "{\n    \"success\": true,\n    \"message\": \"Payments retrieved successfully\",\n    \"data\": {\n        \"items\": [\n            {\n                \"id\": 1,\n                \"trip_id\": 1,\n                \"vehicle_id\": 1,\n                \"vehicle_registration_number\": \"MH12AB1234\",\n                \"customer_id\": 1,\n                \"customer_name\": \"ABC Corp\",\n                \"customer_contact\": \"9876543210\",\n                \"trip_start_location\": \"Mumbai\",\n                \"trip_end_location\": \"Pune\",\n                \"trip_scheduled_date\": \"2026-01-15T00:00:00Z\",\n                \"trip_start_time\": \"2026-01-15T08:00:00Z\",\n                \"trip_state\": \"on_route\",\n                \"amount\": 0,\n                \"tds_amount\": 0,\n                \"discount_amount\": 0,\n                \"net_amount\": 0,\n                \"payment_type\": \"advance\",\n                \"payment_mode\": \"upi\",\n                \"payment_status\": \"received\",\n                \"payment_date\": \"2026-01-15T10:00:00Z\",\n                \"receipt_number\": \"RP-202601-001-00001\",\n                \"created_by_user\": {\n                    \"id\": 1,\n                    \"first_name\": \"John\",\n                    \"last_name\": \"Doe\",\n                    \"role\": \"owner\"\n                }\n            }\n        ],\n        \"count\": 1,\n        \"page\": 1,\n        \"per_page\": 20,\n        \"total_pages\": 1,\n        \"has_more\": false\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Trip Payment (Detail)",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-payments/{{payment_id}}", "host": ["{{base_url}}"], "path": ["trip-payments", "{{payment_id}}"]}
+			},
+			"response": [
+				{
+					"name": "Success Response (Full Details)",
+					"originalRequest": {},
+					"status": "OK",
+					"code": 200,
+					"body": "{\n    \"success\": true,\n    \"message\": \"Payment retrieved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"trip\": {\n            \"id\": 1,\n            \"start_location\": \"Mumbai\",\n            \"end_location\": \"Pune\",\n            \"scheduled_date\": \"2026-01-15T00:00:00Z\",\n            \"start_time\": \"2026-01-15T08:00:00Z\",\n            \"delivery_date\": \"2026-01-15T00:00:00Z\",\n            \"delivery_time\": \"2026-01-15T18:00:00Z\",\n            \"state\": \"on_route\",\n            \"expected_trip_price\": 50000,\n            \"paid_trip_price\": 24750,\n            \"payment_status\": \"partial\"\n        },\n        \"vehicle\": {\n            \"id\": 1,\n            \"registration_number\": \"MH12AB1234\",\n            \"make\": \"Tata\",\n            \"model\": \"Prima\",\n            \"vehicle_type\": \"truck\"\n        },\n        \"driver\": {\n            \"id\": 1,\n            \"first_name\": \"Ramesh\",\n            \"last_name\": \"Kumar\",\n            \"mobile\": \"9876543210\",\n            \"license_number\": \"MH1220200001234\"\n        },\n        \"customer\": {\n            \"id\": 1,\n            \"company_name\": \"ABC Corporation\",\n            \"person_name\": \"Suresh Shah\",\n            \"primary_contact\": \"9876543210\",\n            \"secondary_contact\": \"9876543211\",\n            \"company_address\": \"123 Business Park, Mumbai\",\n            \"email\": \"suresh@abccorp.com\",\n            \"gst_number\": \"27AABCU9603R1ZP\"\n        },\n        \"amount\": 25000,\n        \"tds_amount\": 250,\n        \"discount_amount\": 0,\n        \"net_amount\": 24750,\n        \"payment_type\": \"advance\",\n        \"payment_mode\": \"upi\",\n        \"payment_source\": \"customer@upi\",\n        \"payment_status\": \"received\",\n        \"payment_date\": \"2026-01-15T10:00:00Z\",\n        \"transaction_id\": \"TXN123456\",\n        \"reference_number\": \"REF001\",\n        \"receipt_number\": \"RP-202601-001-00001\",\n        \"received_by\": \"John Doe\",\n        \"received_at_location\": \"Mumbai Office\",\n        \"financial_year\": \"2025-26\",\n        \"financial_month\": \"2026-01\",\n        \"financial_quarter\": \"Q4-2025-26\",\n        \"notes\": \"First advance payment\",\n        \"related_payments\": [\n            {\n                \"id\": 2,\n                \"amount\": 15000,\n                \"net_amount\": 14850,\n                \"payment_type\": \"partial\",\n                \"payment_mode\": \"bank_transfer\",\n                \"payment_date\": \"2026-01-16T14:00:00Z\",\n                \"receipt_number\": \"RP-202601-001-00002\"\n            }\n        ],\n        \"created_by_user\": {\n            \"id\": 1,\n            \"first_name\": \"John\",\n            \"last_name\": \"Doe\",\n            \"role\": \"owner\"\n        },\n        \"created_at\": \"2026-01-15T10:00:00Z\",\n        \"updated_at\": \"2026-01-15T10:00:00Z\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Update Trip Payment",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 26000,\n    \"tds_amount\": 260,\n    \"payment_status\": \"received\",\n    \"notes\": \"Updated payment amount\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trip-payments/{{payment_id}}", "host": ["{{base_url}}"], "path": ["trip-payments", "{{payment_id}}"]}
+			}
+		},
+		{
+			"name": "Delete Trip Payment",
+			"request": {
+				"method": "DELETE",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trip-payments/{{payment_id}}", "host": ["{{base_url}}"], "path": ["trip-payments", "{{payment_id}}"]}
+			}
+		},
+		{
+			"name": "Get Trip's Payments",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/payments", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "payments"]}
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {},
+					"status": "OK",
+					"code": 200,
+					"body": "{\n    \"success\": true,\n    \"message\": \"Trip payments retrieved successfully\",\n    \"data\": {\n        \"trip\": {\n            \"id\": 1,\n            \"start_location\": \"Mumbai\",\n            \"end_location\": \"Pune\",\n            \"scheduled_date\": \"2026-01-15T00:00:00Z\",\n            \"start_time\": \"2026-01-15T08:00:00Z\",\n            \"delivery_date\": \"2026-01-15T00:00:00Z\",\n            \"delivery_time\": \"2026-01-15T18:00:00Z\",\n            \"state\": \"on_route\",\n            \"customer_name\": \"ABC Corp\",\n            \"vehicle_registration_number\": \"MH12AB1234\",\n            \"expected_trip_price\": 50000,\n            \"paid_trip_price\": 39600\n        },\n        \"customer\": {\n            \"id\": 1,\n            \"company_name\": \"ABC Corporation\",\n            \"person_name\": \"Suresh Shah\",\n            \"primary_contact\": \"9876543210\",\n            \"secondary_contact\": \"9876543211\",\n            \"gst_number\": \"27AABCU9603R1ZP\"\n        },\n        \"payments\": [\n            {\n                \"id\": 1,\n                \"trip_id\": 1,\n                \"vehicle_id\": 1,\n                \"vehicle_registration_number\": \"MH12AB1234\",\n                \"amount\": 25000,\n                \"net_amount\": 24750,\n                \"payment_type\": \"advance\",\n                \"payment_mode\": \"upi\",\n                \"payment_status\": \"received\",\n                \"payment_date\": \"2026-01-15T10:00:00Z\",\n                \"receipt_number\": \"RP-202601-001-00001\"\n            },\n            {\n                \"id\": 2,\n                \"trip_id\": 1,\n                \"vehicle_id\": 1,\n                \"vehicle_registration_number\": \"MH12AB1234\",\n                \"amount\": 15000,\n                \"net_amount\": 14850,\n                \"payment_type\": \"partial\",\n                \"payment_mode\": \"bank_transfer\",\n                \"payment_status\": \"received\",\n                \"payment_date\": \"2026-01-16T14:00:00Z\",\n                \"receipt_number\": \"RP-202601-001-00002\"\n            }\n        ],\n        \"summary\": {\n            \"total_received\": 40000,\n            \"total_tds\": 400,\n            \"total_discount\": 0,\n            \"net_received\": 39600,\n            \"pending_amount\": 10400,\n            \"payment_count\": 2,\n            \"payment_status\": \"partial\",\n            \"last_payment_date\": \"2026-01-16T14:00:00Z\"\n        }\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Add Payment to Trip",
+			"request": {
+				"method": "POST",
+				"header": [
+					{"key": "Authorization", "value": "Bearer {{token}}"},
+					{"key": "Content-Type", "value": "application/json"}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 15000,\n    \"tds_amount\": 150,\n    \"discount_amount\": 0,\n    \"payment_type\": \"partial\",\n    \"payment_mode\": \"bank_transfer\",\n    \"payment_source\": \"XXXX1234 - HDFC Bank\",\n    \"payment_date\": \"2026-01-16T14:00:00Z\",\n    \"transaction_id\": \"NEFT123456\",\n    \"bank_name\": \"HDFC Bank\",\n    \"notes\": \"Second partial payment\",\n    \"received_by\": \"Finance Dept\"\n}"
+				},
+				"url": {"raw": "{{base_url}}/trips/{{trip_id}}/payments", "host": ["{{base_url}}"], "path": ["trips", "{{trip_id}}", "payments"]}
+			}
+		},
+		{
+			"name": "Payment Summary",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/trip-payments/summary",
+					"host": ["{{base_url}}"],
+					"path": ["trip-payments", "summary"],
+					"query": [
+						{"key": "start_date", "value": "2026-01-01", "disabled": true},
+						{"key": "end_date", "value": "2026-01-31", "disabled": true}
+					]
+				}
+			}
+		},
+		{
+			"name": "TDS Report",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/trip-payments/tds-report",
+					"host": ["{{base_url}}"],
+					"path": ["trip-payments", "tds-report"],
+					"query": [
+						{"key": "financial_year", "value": "2025-26", "disabled": true}
+					]
+				}
+			}
+		}
+	]
+}

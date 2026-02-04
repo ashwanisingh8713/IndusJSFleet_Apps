@@ -190,11 +190,19 @@ fun DriverCostEntryScreen(
                     key = { _, item -> item.id }
                 ) { index, entry ->
                     val actualIndex = state.costEntries.size - index
+                    // Calculate date constraints for driver cost
+                    val minDate = state.selectedDriver?.joiningDate?.let { joiningTimestamp ->
+                        com.indusjs.datetimeutils.FleetDateTime.timestampToDateString(joiningTimestamp)
+                    } ?: "01-01-2000"
+                    val maxDate = com.indusjs.datetimeutils.FleetDateTime.getTomorrowDate()
+
                     DriverCostEntryRowCard(
                         index = actualIndex,
                         entry = entry,
                         costTypeGroups = state.costTypeGroups,
                         canDelete = state.costEntries.size > 1,
+                        minDate = minDate,  // Cost date must be >= Driver joining date
+                        maxDate = maxDate,  // Cost date must be <= Tomorrow
                         onToggleExpanded = { viewModel.sendIntent(DriverCostEntryContract.Intent.ToggleRowExpanded(entry.id)) },
                         onDelete = { viewModel.sendIntent(DriverCostEntryContract.Intent.RemoveCostRow(entry.id)) },
                         onSelectCostType = { selection ->
@@ -402,6 +410,8 @@ private fun DriverCostEntryRowCard(
     entry: DriverCostEntryRow,
     costTypeGroups: List<CostTypeGroup>,
     canDelete: Boolean,
+    minDate: String? = null,  // Driver joining date
+    maxDate: String? = null,  // Tomorrow's date
     onToggleExpanded: () -> Unit,
     onDelete: () -> Unit,
     onSelectCostType: (CostTypeSelection) -> Unit,
@@ -551,7 +561,7 @@ private fun DriverCostEntryRowCard(
                         )
                     }
 
-                    // Date and Time using FleetDateTimePicker
+                    // Date and Time using FleetDateTimePicker with date constraints
                     FleetDateTimePicker(
                         date = entry.date,
                         time = entry.time,
@@ -561,7 +571,9 @@ private fun DriverCostEntryRowCard(
                         },
                         label = "Date & Time *",
                         isError = entry.dateError != null,
-                        errorMessage = entry.dateError
+                        errorMessage = entry.dateError,
+                        minDate = minDate,  // Cost date must be >= Driver joining date
+                        maxDate = maxDate   // Cost date must be <= Tomorrow
                     )
 
                     // Amount

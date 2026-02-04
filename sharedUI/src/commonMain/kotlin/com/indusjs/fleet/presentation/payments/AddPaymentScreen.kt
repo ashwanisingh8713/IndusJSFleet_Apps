@@ -101,6 +101,31 @@ fun AddPaymentScreen(
                 CircularProgressIndicator()
             }
         } else {
+            // Calculate date constraints based on selected trip (similar to TripCostEntryScreen)
+            val minPaymentDate = state.selectedTrip?.let { trip ->
+                // Try tripStartDate first, then scheduledDate
+                val dateSource = trip.tripStartDate ?: trip.scheduledDate
+                if (dateSource != null) {
+                    com.indusjs.datetimeutils.FleetDateTime.getMinDateForTripCost(dateSource)
+                } else null
+            }
+            val maxPaymentDate = com.indusjs.datetimeutils.FleetDateTime.getDateFromToday(1) // Tomorrow
+
+            // Calculate trip start/end date & time for display
+            val tripStartDateTimeDisplay = state.selectedTrip?.let { trip ->
+                val date = trip.tripStartDate ?: trip.scheduledDate?.let {
+                    com.indusjs.datetimeutils.FleetDateTime.getMinDateForTripCost(it)
+                }
+                val time = trip.tripStartTime
+                if (date != null && time != null) "$date $time" else date ?: "N/A"
+            } ?: "N/A"
+
+            val tripEndDateTimeDisplay = state.selectedTrip?.let { trip ->
+                val date = trip.tripEndDate ?: trip.scheduledDate // fallback
+                val time = trip.tripEndTime
+                if (date != null && time != null) "$date $time" else date ?: "N/A"
+            } ?: "N/A"
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -118,7 +143,11 @@ fun AddPaymentScreen(
 
                 // Trip Info Card (if selected)
                 state.selectedTrip?.let { trip ->
-                    SelectedTripInfoCard(trip = trip)
+                    SelectedTripInfoCard(
+                        trip = trip,
+                        startDateTimeDisplay = tripStartDateTimeDisplay,
+                        endDateTimeDisplay = tripEndDateTimeDisplay
+                    )
                 }
 
                 HorizontalDivider()
@@ -153,7 +182,8 @@ fun AddPaymentScreen(
                         },
                         mode = PickerMode.DATE_ONLY,
                         label = "Due Date (Optional)",
-                        isError = false
+                        isError = false,
+                        minDate = minPaymentDate  // Due date must be after trip start date
                     )
                 }
 
@@ -175,6 +205,8 @@ fun AddPaymentScreen(
                     date = state.paymentDate,
                     time = state.paymentTime,
                     error = state.dateError,
+                    minDate = minPaymentDate,
+                    maxDate = maxPaymentDate,
                     onDateTimeChange = { date, time ->
                         viewModel.sendIntent(AddPaymentContract.Intent.UpdatePaymentDateTime(date, time))
                     }
@@ -319,56 +351,96 @@ private fun TripSelectionSection(
 }
 
 @Composable
-private fun SelectedTripInfoCard(trip: TripSummaryForPayment) {
+private fun SelectedTripInfoCard(trip: TripSummaryForPayment, startDateTimeDisplay: String, endDateTimeDisplay: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .padding(12.dp)
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Trip Price",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = trip.tripPriceDisplay,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+            // Row 1: Trip Price, Pending, Customer
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Trip Price",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = trip.tripPriceDisplay,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Pending",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = trip.pendingDisplay,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (trip.hasPendingAmount) Color(0xFFE65100) else Color(0xFF2E7D32)
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Customer",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = trip.customerName?.take(12) ?: "N/A",
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Pending",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = trip.pendingDisplay,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (trip.hasPendingAmount) Color(0xFFE65100) else Color(0xFF2E7D32)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Customer",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = trip.customerName?.take(12) ?: "N/A",
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+
+            // Row 2: Start & End Date/Time
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "🚀 Start",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = startDateTimeDisplay,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "🏁 End",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                    Text(
+                        text = endDateTimeDisplay,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
@@ -557,6 +629,8 @@ private fun DateTimeSection(
     date: String,
     time: String,
     error: String?,
+    minDate: String? = null,
+    maxDate: String? = null,
     onDateTimeChange: (String, String) -> Unit
 ) {
     FleetDateTimePicker(
@@ -566,7 +640,9 @@ private fun DateTimeSection(
         mode = PickerMode.DATE_TIME,
         label = "Payment Date & Time *",
         isError = error != null,
-        errorMessage = error
+        errorMessage = error,
+        minDate = minDate,
+        maxDate = maxDate
     )
 }
 
@@ -706,7 +782,7 @@ private fun AdditionalInfoSection(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun TripSelectorBottomSheet(
     trips: List<TripSummaryForPayment>,
@@ -718,18 +794,31 @@ private fun TripSelectorBottomSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val filteredTrips = remember(trips, searchQuery) {
-        if (searchQuery.isBlank()) {
-            trips
-        } else {
-            trips.filter {
-                it.id.contains(searchQuery, ignoreCase = true) ||
-                it.vehicleRegistration.contains(searchQuery, ignoreCase = true) ||
-                it.startLocation.contains(searchQuery, ignoreCase = true) ||
-                it.endLocation.contains(searchQuery, ignoreCase = true) ||
-                (it.customerName?.contains(searchQuery, ignoreCase = true) == true)
-            }
-        }
+    // Filter state
+    var selectedStatusFilter by remember { mutableStateOf<String?>(null) }
+    var selectedPaymentFilter by remember { mutableStateOf<String?>(null) }
+    var showOnlyWithPending by remember { mutableStateOf(true) }
+
+    // Filter trips based on search and filters
+    val filteredTrips = remember(trips, searchQuery, selectedStatusFilter, selectedPaymentFilter, showOnlyWithPending) {
+        trips.filter { trip ->
+            val matchesSearch = searchQuery.isBlank() ||
+                trip.id.contains(searchQuery, ignoreCase = true) ||
+                trip.vehicleRegistration.contains(searchQuery, ignoreCase = true) ||
+                trip.startLocation.contains(searchQuery, ignoreCase = true) ||
+                trip.endLocation.contains(searchQuery, ignoreCase = true) ||
+                (trip.customerName?.contains(searchQuery, ignoreCase = true) == true)
+
+            val matchesTripStatus = selectedStatusFilter == null ||
+                trip.state?.lowercase() == selectedStatusFilter?.lowercase()
+
+            val matchesPaymentStatus = selectedPaymentFilter == null ||
+                trip.paymentStatus?.lowercase() == selectedPaymentFilter?.lowercase()
+
+            val matchesPending = !showOnlyWithPending || trip.hasPendingAmount
+
+            matchesSearch && matchesTripStatus && matchesPaymentStatus && matchesPending
+        }.sortedByDescending { it.pendingAmount } // Show highest pending first
     }
 
     ModalBottomSheet(
@@ -739,25 +828,95 @@ private fun TripSelectorBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.8f)
+                .fillMaxHeight(0.9f)
                 .padding(horizontal = 16.dp)
         ) {
-            Text(
-                text = "Select Trip",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Select Trip",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${filteredTrips.size} trips",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Search field
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearch,
-                placeholder = { Text("Search by trip ID, vehicle, route...") },
-                leadingIcon = { Icon(painter = painterResource(Res.drawable.ic_search), contentDescription = null) },
+                placeholder = { Text("Search trip, vehicle, customer, route...") },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_search),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Filter chips row
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Show only pending toggle
+                FilterChip(
+                    selected = showOnlyWithPending,
+                    onClick = { showOnlyWithPending = !showOnlyWithPending },
+                    label = { Text("With Pending", style = MaterialTheme.typography.labelSmall) },
+                    leadingIcon = if (showOnlyWithPending) {
+                        { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                    } else null
+                )
+
+                // Trip Status filters
+                listOf("on_route" to "On Route", "completed" to "Completed", "planned" to "Planned").forEach { (value, label) ->
+                    FilterChip(
+                        selected = selectedStatusFilter == value,
+                        onClick = {
+                            selectedStatusFilter = if (selectedStatusFilter == value) null else value
+                        },
+                        label = { Text(label, style = MaterialTheme.typography.labelSmall) }
+                    )
+                }
+
+                // Payment Status filters
+                listOf("pending" to "Unpaid", "partial" to "Partial").forEach { (value, label) ->
+                    FilterChip(
+                        selected = selectedPaymentFilter == value,
+                        onClick = {
+                            selectedPaymentFilter = if (selectedPaymentFilter == value) null else value
+                        },
+                        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = if (value == "pending")
+                                Color(0xFFE65100).copy(alpha = 0.2f)
+                            else
+                                Color(0xFFFFA000).copy(alpha = 0.2f)
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (isLoading) {
                 Box(
@@ -775,66 +934,200 @@ private fun TripSelectorBottomSheet(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (searchQuery.isBlank()) "No trips available" else "No matching trips",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("📋", style = MaterialTheme.typography.displayMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (searchQuery.isBlank()) "No trips available" else "No matching trips",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (showOnlyWithPending) {
+                            TextButton(onClick = { showOnlyWithPending = false }) {
+                                Text("Show all trips")
+                            }
+                        }
+                    }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(filteredTrips) { trip ->
-                        Card(
-                            onClick = { onSelect(trip) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "Trip #${trip.id} • ${trip.vehicleRegistration}",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = trip.routeDisplay,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    trip.customerName?.let { customer ->
-                                        Text(
-                                            text = customer,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text(
-                                        text = trip.pendingDisplay,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = if (trip.hasPendingAmount) Color(0xFFE65100) else Color(0xFF2E7D32)
-                                    )
-                                    Text(
-                                        text = "pending",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
+                    items(filteredTrips, key = { it.id }) { trip ->
+                        EnhancedTripCard(
+                            trip = trip,
+                            onSelect = { onSelect(trip) }
+                        )
+                    }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EnhancedTripCard(
+    trip: TripSummaryForPayment,
+    onSelect: () -> Unit
+) {
+    val paymentStatusColor = when {
+        trip.isFullyPaid -> Color(0xFF2E7D32) // Green
+        trip.paidAmount > 0 -> Color(0xFFFFA000) // Orange - Partial
+        else -> Color(0xFFE65100) // Red-Orange - Pending
+    }
+
+    val tripStateColor = when (trip.state?.lowercase()) {
+        "completed" -> Color(0xFF2E7D32)
+        "on_route" -> Color(0xFF1976D2)
+        "planned" -> Color(0xFF7B1FA2)
+        "cancelled", "failed" -> Color(0xFFD32F2F)
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Card(
+        onClick = onSelect,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            // Row 1: Trip ID, Vehicle, Trip Status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "#${trip.id}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Text(
+                            text = trip.vehicleRegistration,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = tripStateColor.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = trip.tripStateLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = tripStateColor,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Row 2: Route (compact)
+            Text(
+                text = "📍 ${trip.routeDisplay}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // Row 3: Customer & Date (if available)
+            if (trip.customerName != null || trip.scheduledDate != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    trip.customerName?.let { customer ->
+                        Text(
+                            text = "👤 ${customer.take(20)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1
+                        )
+                    }
+                    trip.scheduledDate?.let { date ->
+                        Text(
+                            text = "📅 $date",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Row 4: Financial info (Trip Price, Received, Pending)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Trip Price
+                Column(horizontalAlignment = Alignment.Start) {
+                    Text(
+                        text = "Trip Price",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = trip.tripPriceDisplay,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                // Received
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Received",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = trip.paidAmountDisplay,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF2E7D32)
+                    )
+                }
+                // Pending - highlighted
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "Pending",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = trip.pendingDisplay,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = paymentStatusColor
+                    )
+                }
+            }
         }
     }
 }

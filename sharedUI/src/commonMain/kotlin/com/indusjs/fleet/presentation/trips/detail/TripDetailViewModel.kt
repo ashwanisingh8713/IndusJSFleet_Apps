@@ -124,6 +124,8 @@ class TripDetailViewModel(
 
             // Navigation & errors
             is Intent.NavigateBack -> sendEffect(Effect.NavigateBack)
+            is Intent.NavigateToAddTripCost -> navigateToAddTripCost()
+            is Intent.NavigateToAddPayment -> navigateToAddPayment()
             is Intent.ClearError -> updateState { copy(error = null) }
 
             // State change intents
@@ -965,6 +967,24 @@ class TripDetailViewModel(
         val rawTime = time?.replace(":", "")?.filter { it.isDigit() }?.take(4) ?: ""
 
         return Pair(rawDate, rawTime)
+    }
+
+    // ==================== Navigation to Add Trip Cost / Payment ====================
+
+    private suspend fun navigateToAddTripCost() {
+        val trip = currentState.trip ?: return
+        val tripId = trip.id
+        val vehicleId = trip.vehicleId?.toString() ?: ""
+
+        sendEffect(Effect.NavigateToAddTripCost(tripId = tripId, vehicleId = vehicleId))
+    }
+
+    private suspend fun navigateToAddPayment() {
+        val trip = currentState.trip ?: return
+        val tripId = trip.id
+        val vehicleId = trip.vehicleId?.toString() ?: ""
+
+        sendEffect(Effect.NavigateToAddPayment(tripId = tripId, vehicleId = vehicleId))
     }
 
     // ==================== State Change ====================

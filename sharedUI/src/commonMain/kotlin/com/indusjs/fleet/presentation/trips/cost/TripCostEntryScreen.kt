@@ -34,15 +34,25 @@ import org.jetbrains.compose.resources.painterResource
 
 /**
  * Trip Cost Entry Screen with multi-row cost entries.
+ *
+ * @param initialTripId Optional trip ID to pre-select when navigating from Trip Detail
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripCostEntryScreen(
     viewModel: TripCostEntryViewModel,
+    initialTripId: String? = null,
     onNavigateBack: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Pre-select trip if initialTripId is provided
+    LaunchedEffect(initialTripId) {
+        if (!initialTripId.isNullOrBlank()) {
+            viewModel.sendIntent(TripCostEntryContract.Intent.PreSelectTripById(initialTripId))
+        }
+    }
 
     // Handle side effects
     LaunchedEffect(Unit) {
@@ -192,13 +202,23 @@ fun TripCostEntryScreen(
                     key = { _, item -> item.id }
                 ) { index, entry ->
                     val actualIndex = state.costEntries.size - index
+                    // Calculate date constraints for trip cost
+                    val tripStartDate = state.selectedTrip?.plannedStart?.let {
+                        com.indusjs.datetimeutils.FleetDateTime.getMinDateForTripCost(it)
+                    } ?: state.selectedTrip?.scheduledDate
+                    val tripEndDate = state.selectedTrip?.let { trip ->
+                        val isCompleted = trip.status == com.indusjs.fleet.domain.entity.trip.TripStatus.COMPLETED
+                        com.indusjs.datetimeutils.FleetDateTime.getMaxDateForTripCost(trip.plannedEnd, isCompleted)
+                    } ?: com.indusjs.datetimeutils.FleetDateTime.getTomorrowDate()
+
                     CostEntryRowCard(
                         index = actualIndex,
                         entry = entry,
                         costTypeGroups = state.costTypeGroups,
                         fuelTypeOptions = state.fuelTypeOptions,
                         canDelete = state.costEntries.size > 1,
-                        tripStartDate = state.selectedTrip?.scheduledDate,  // Cost date must be >= Trip start date
+                        tripStartDate = tripStartDate,  // Cost date must be >= Trip start date
+                        tripEndDate = tripEndDate,  // Cost date must be <= Trip end date or tomorrow
                         onToggleExpanded = { viewModel.sendIntent(TripCostEntryContract.Intent.ToggleRowExpanded(entry.id)) },
                         onDelete = { viewModel.sendIntent(TripCostEntryContract.Intent.RemoveCostRow(entry.id)) },
                         onSelectCostType = { selection ->
@@ -519,6 +539,7 @@ private fun CostEntryRowCard(
     fuelTypeOptions: List<Pair<String, String>>,
     canDelete: Boolean,
     tripStartDate: String? = null,  // Cost date must be >= Trip start date
+    tripEndDate: String? = null,  // Cost date must be <= Trip end date or tomorrow
     onToggleExpanded: () -> Unit,
     onDelete: () -> Unit,
     onSelectCostType: (CostTypeSelection) -> Unit,
@@ -653,7 +674,7 @@ private fun CostEntryRowCard(
                         )
                     }
 
-                    // Date & Time picker (unified)
+                    // Date & Time picker (unified) with trip date constraints
                     FleetDateTimePicker(
                         date = entry.date,
                         time = entry.time,
@@ -664,7 +685,8 @@ private fun CostEntryRowCard(
                         label = "Date & Time *",
                         isError = entry.dateError != null,
                         errorMessage = entry.dateError,
-                        minDate = tripStartDate  // Cost date must be >= Trip start date
+                        minDate = tripStartDate,  // Cost date must be >= Trip start date
+                        maxDate = tripEndDate  // Cost date must be <= Trip end date or tomorrow
                     )
 
                     // Amount

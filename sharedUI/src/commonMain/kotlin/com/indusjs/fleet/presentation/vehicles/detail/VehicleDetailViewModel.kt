@@ -115,6 +115,7 @@ class VehicleDetailViewModel(
             is Intent.DeleteCost -> showDeleteCostDialog(intent.costId, intent.costType)
             is Intent.ConfirmDeleteCost -> confirmDeleteCost()
             is Intent.DismissDeleteCostDialog -> updateState { copy(showDeleteCostDialog = false, costToDeleteId = null, costToDeleteType = null) }
+            is Intent.NavigateToAddMaintenanceCost -> sendEffect(Effect.NavigateToMaintenanceCost(currentState.vehicleId))
 
             // History tab intents
             is Intent.LoadHistory -> loadHistory()

@@ -31,15 +31,25 @@ import org.jetbrains.compose.resources.painterResource
 
 /**
  * Maintenance Cost Entry Screen with multi-row support.
+ *
+ * @param initialVehicleId Optional vehicle ID to pre-select when navigating from Vehicle Detail
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaintenanceCostEntryScreen(
     viewModel: MaintenanceCostEntryViewModel,
+    initialVehicleId: String? = null,
     onNavigateBack: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Pre-select vehicle if initialVehicleId is provided
+    LaunchedEffect(initialVehicleId) {
+        if (!initialVehicleId.isNullOrBlank()) {
+            viewModel.sendIntent(MaintenanceCostEntryContract.Intent.PreSelectVehicleById(initialVehicleId))
+        }
+    }
 
     // Handle side effects
     LaunchedEffect(Unit) {
@@ -199,6 +209,10 @@ fun MaintenanceCostEntryScreen(
                         rowNumber = index + 1,
                         costTypeGroups = state.costTypeGroups,
                         canDelete = state.costEntries.size > 1,
+                        minDate = com.indusjs.datetimeutils.FleetDateTime.getMinDateForMaintenance(
+                            state.selectedVehicle?.createdAt
+                        ),
+                        maxDate = com.indusjs.datetimeutils.FleetDateTime.getTomorrowDate(),
                         onToggleExpanded = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ToggleRowExpanded(row.id)) },
                         onDelete = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.RemoveCostRow(row.id)) },
                         onSelectCostType = { selection ->
@@ -312,6 +326,8 @@ private fun MaintenanceCostRowCard(
     rowNumber: Int,
     costTypeGroups: List<CostTypeGroup>,
     canDelete: Boolean,
+    minDate: String? = null,  // Vehicle creation date
+    maxDate: String? = null,  // Tomorrow's date
     onToggleExpanded: () -> Unit,
     onDelete: () -> Unit,
     onSelectCostType: (CostTypeSelection) -> Unit,
@@ -537,7 +553,7 @@ private fun MaintenanceCostRowCard(
                         }
                     }
 
-                    // Date & Time picker (unified)
+                    // Date & Time picker (unified) with date constraints
                     FleetDateTimePicker(
                         date = row.date,
                         time = row.time,
@@ -547,7 +563,9 @@ private fun MaintenanceCostRowCard(
                         },
                         label = "Date & Time *",
                         isError = row.dateError != null,
-                        errorMessage = row.dateError
+                        errorMessage = row.dateError,
+                        minDate = minDate,
+                        maxDate = maxDate
                     )
 
                     // Amount

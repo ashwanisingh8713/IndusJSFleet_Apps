@@ -262,6 +262,7 @@ object VehicleDetailContract {
         data class DeleteCost(val costId: String, val costType: String) : Intent
         data object ConfirmDeleteCost : Intent
         data object DismissDeleteCostDialog : Intent
+        data object NavigateToAddMaintenanceCost : Intent
 
         // History Tab
         data object LoadHistory : Intent
@@ -292,5 +293,6 @@ object VehicleDetailContract {
         data object DocumentDownloading : Effect
         data class CostDeleted(val costId: String) : Effect
         data class StateUpdated(val newState: String) : Effect
+        data class NavigateToMaintenanceCost(val vehicleId: String) : Effect
     }
 }

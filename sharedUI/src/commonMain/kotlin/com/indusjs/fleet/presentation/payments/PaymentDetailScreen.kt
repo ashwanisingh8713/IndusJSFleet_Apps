@@ -1,24 +1,25 @@
 package com.indusjs.fleet.presentation.payments
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.pdf.PaymentReceiptPdfExportHandler
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
+import com.indusjs.fleet.core.util.rememberPhoneDialer
 import com.indusjs.fleet.domain.entity.payment.PaymentStatus
 import com.indusjs.fleet.domain.entity.payment.TripPayment
 import indusjsfleet.sharedui.generated.resources.*
@@ -222,11 +223,13 @@ fun PaymentDetailScreen(
                 }
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
         ) {
             when {
@@ -286,9 +289,10 @@ private fun PaymentDetailContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Hero Section - Amount and Status
         HeroSection(payment = payment)
@@ -308,7 +312,7 @@ private fun PaymentDetailContent(
         // Additional Info Card
         AdditionalInfoCard(payment = payment)
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -318,79 +322,95 @@ private fun HeroSection(payment: TripPayment) {
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp)
         ) {
-            // Mode icon
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
+            // Top row: Amount + Status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = payment.modeIcon,
-                    style = MaterialTheme.typography.headlineMedium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Amount
-            Text(
-                text = payment.amountDisplay,
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-
-            // Net amount if different
-            if (payment.hasTds || payment.hasDiscount) {
-                Text(
-                    text = "Net: ${payment.netAmountDisplay}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Status badge
-            PaymentStatusBadge(status = payment.paymentStatus)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Receipt number
-            payment.receiptNumber?.let { receipt ->
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                ) {
+                Column {
                     Text(
-                        text = "Receipt: $receipt",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
+                        text = payment.amountDisplay,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
+                    if (payment.hasTds || payment.hasDiscount) {
+                        Text(
+                            text = "Net: ${payment.netAmountDisplay}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                PaymentStatusBadge(status = payment.paymentStatus)
             }
 
-            // Date
-            payment.paymentDate?.let { date ->
-                Text(
-                    text = formatDisplayDate(date),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Middle row: Receipt + Date + Mode
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Receipt number
+                payment.receiptNumber?.let { receipt ->
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = receipt,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+
+                // Payment Mode with icon
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = payment.modeIcon,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = payment.modeDisplay,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
+                }
+
+                // Date
+                payment.paymentDate?.let { date ->
+                    Text(
+                        text = formatDisplayDate(date),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                }
             }
+
+            // Payment type
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "${payment.paymentType.icon} ${payment.typeDisplay} Payment",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+            )
         }
     }
 }
@@ -399,110 +419,105 @@ private fun HeroSection(payment: TripPayment) {
 private fun TripInfoCard(payment: TripPayment) {
     val tripInfo = payment.tripInfo ?: return
 
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
             Text(
-                text = "🚛 Trip Information",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                text = "Trip Information",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Vehicle
-            tripInfo.vehicleRegistration?.let { vehicle ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Vehicle",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = vehicle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-
-            // Driver
-            tripInfo.driverName?.let { driver ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Driver",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = driver,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            // Route
+            // Vehicle & Driver in single row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "From",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = tripInfo.startLocation ?: "N/A",
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2
-                    )
+                tripInfo.vehicleRegistration?.let { vehicle ->
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Vehicle",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = vehicle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
-                Text(
-                    text = "→",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-                Column(modifier = Modifier.weight(1f)) {
+                tripInfo.driverName?.let { driver ->
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = "Driver",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = driver,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
+            // Route - compact format
+            if (tripInfo.startLocation != null || tripInfo.endLocation != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = "To",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = tripInfo.startLocation?.take(20) ?: "N/A",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        textAlign = TextAlign.Start
                     )
                     Text(
-                        text = tripInfo.endLocation ?: "N/A",
+                        text = " → ",
                         style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = tripInfo.endLocation?.take(20) ?: "N/A",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        textAlign = TextAlign.End
                     )
                 }
             }
 
-            // Trip price if available
+            // Trip price
             tripInfo.tripPrice?.let { price ->
                 if (price > 0) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = "Trip Price",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
@@ -520,47 +535,53 @@ private fun TripInfoCard(payment: TripPayment) {
 
 @Composable
 private fun PaymentDetailsCard(payment: TripPayment) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
             Text(
-                text = "💳 Payment Details",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                text = "Payment Details",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            DetailRow(label = "Amount", value = payment.amountDisplay)
+            CompactDetailRow(label = "Amount", value = payment.amountDisplay)
 
             if (payment.hasTds) {
-                DetailRow(label = "TDS Deducted", value = payment.tdsDisplay)
+                CompactDetailRow(label = "TDS Deducted", value = payment.tdsDisplay)
             }
 
             if (payment.hasDiscount) {
-                DetailRow(label = "Discount", value = payment.discountDisplay)
+                CompactDetailRow(label = "Discount", value = payment.discountDisplay)
             }
 
-            DetailRow(
+            CompactDetailRow(
                 label = "Net Amount",
                 value = payment.netAmountDisplay,
                 isHighlighted = true
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-            DetailRow(label = "Payment Type", value = "${payment.paymentType.icon} ${payment.typeDisplay}")
-            DetailRow(label = "Payment Mode", value = "${payment.modeIcon} ${payment.modeDisplay}")
+            CompactDetailRow(label = "Type", value = "${payment.paymentType.icon} ${payment.typeDisplay}")
+            CompactDetailRow(label = "Mode", value = "${payment.modeIcon} ${payment.modeDisplay}")
 
             payment.transactionId?.let {
-                DetailRow(label = "Transaction ID", value = it)
+                CompactDetailRow(label = "Transaction ID", value = it)
             }
 
             payment.bankName?.let {
-                DetailRow(label = "Bank Name", value = it)
+                CompactDetailRow(label = "Bank", value = it)
             }
         }
     }
@@ -568,40 +589,89 @@ private fun PaymentDetailsCard(payment: TripPayment) {
 
 @Composable
 private fun CustomerDetailsCard(payment: TripPayment) {
-    if (payment.customerName.isNullOrBlank() &&
-        payment.customerContact.isNullOrBlank() &&
-        payment.customerCompany.isNullOrBlank()) {
-        return
-    }
+    val hasCustomerInfo = !payment.customerName.isNullOrBlank() ||
+            !payment.customerContact.isNullOrBlank() ||
+            !payment.customerCompany.isNullOrBlank()
 
-    Card(modifier = Modifier.fillMaxWidth()) {
+    if (!hasCustomerInfo) return
+
+    // Phone dialer for customer contact
+    val phoneDialer = payment.customerContact?.let { rememberPhoneDialer(it) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
             Text(
-                text = "👤 Customer Details",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                text = "Customer",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             payment.customerName?.let {
-                DetailRow(label = "Name", value = it)
+                CompactDetailRow(label = "Name", value = it)
             }
 
             payment.customerCompany?.let {
-                DetailRow(label = "Company", value = it)
+                // Only show if different from name
+                if (it != payment.customerName) {
+                    CompactDetailRow(label = "Company", value = it)
+                }
             }
 
-            payment.customerContact?.let {
-                DetailRow(label = "Contact", value = it)
+            // Contact with calling functionality
+            payment.customerContact?.let { contact ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp)
+                        .then(
+                            if (phoneDialer != null) {
+                                Modifier.clickable { phoneDialer() }
+                            } else {
+                                Modifier
+                            }
+                        ),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Contact",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = contact,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        if (phoneDialer != null) {
+                            Text(
+                                text = "📞",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
             }
 
             payment.customerGst?.let {
-                DetailRow(label = "GST Number", value = it)
+                CompactDetailRow(label = "GST", value = it)
             }
         }
     }
@@ -614,26 +684,44 @@ private fun FinancialInfoCard(payment: TripPayment) {
 
     if (!hasFinancialInfo) return
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "📊 Financial Information",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                text = "Financial Info",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            payment.financialYear?.let {
-                DetailRow(label = "Financial Year", value = "FY $it")
-            }
-
-            payment.financialMonth?.let {
-                DetailRow(label = "Financial Month", value = it)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                payment.financialYear?.let {
+                    Text(
+                        text = "FY: $it",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                payment.financialMonth?.let {
+                    Text(
+                        text = "Month: $it",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -648,45 +736,51 @@ private fun AdditionalInfoCard(payment: TripPayment) {
 
     if (!hasAdditionalInfo) return
 
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
             Text(
-                text = "📝 Additional Info",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                text = "Additional Info",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             payment.notes?.let {
-                DetailRow(label = "Notes", value = it)
+                CompactDetailRow(label = "Notes", value = it)
             }
 
             payment.receivedBy?.let {
-                DetailRow(label = "Received By", value = it)
+                CompactDetailRow(label = "Received By", value = it)
             }
 
             payment.receivedAtLocation?.let {
-                DetailRow(label = "Received At", value = it)
+                CompactDetailRow(label = "Location", value = it)
             }
 
             payment.createdByName?.let {
-                DetailRow(label = "Created By", value = it)
+                CompactDetailRow(label = "Created By", value = it)
             }
 
             payment.createdAt?.let {
-                DetailRow(label = "Created At", value = formatDisplayDate(it))
+                CompactDetailRow(label = "Created", value = formatDisplayDate(it))
             }
         }
     }
 }
 
 @Composable
-private fun DetailRow(
+private fun CompactDetailRow(
     label: String,
     value: String,
     isHighlighted: Boolean = false
@@ -694,18 +788,19 @@ private fun DetailRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 3.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Medium,
             color = if (isHighlighted) {
                 MaterialTheme.colorScheme.primary
             } else {
@@ -714,6 +809,7 @@ private fun DetailRow(
         )
     }
 }
+
 
 @Composable
 private fun PaymentStatusBadge(

@@ -162,7 +162,8 @@ data class Vehicle(
     val lastServiceDate: Long? = null,
     val nextServiceDate: Long? = null,
     val isOccupied: Boolean = false,
-    val tripAssignment: VehicleTripAssignment? = null
+    val tripAssignment: VehicleTripAssignment? = null,
+    val createdAt: String? = null  // DD-MM-YYYY format for date picker constraints
 )
 
 /**

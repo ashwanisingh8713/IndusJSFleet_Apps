@@ -72,6 +72,7 @@ fun VehicleDetailScreen(
     viewModel: VehicleDetailViewModel,
     vehicleId: String,
     onNavigateBack: () -> Unit = {},
+    onNavigateToMaintenanceCost: (vehicleId: String) -> Unit = {},
     onRequestFilePicker: ((documentType: String, callback: (fileName: String, fileBytes: ByteArray, mimeType: String) -> Unit) -> Unit)? = null,
     onOpenDocumentPreview: ((documentName: String, fileUrl: String) -> Unit)? = null,
     onDownloadDocument: ((documentName: String, fileUrl: String) -> Unit)? = null,
@@ -163,6 +164,9 @@ fun VehicleDetailScreen(
                 }
                 is VehicleDetailContract.Effect.StateUpdated -> {
                     // State updated - handled by ViewModel
+                }
+                is VehicleDetailContract.Effect.NavigateToMaintenanceCost -> {
+                    onNavigateToMaintenanceCost(effect.vehicleId)
                 }
             }
         }
@@ -1817,17 +1821,11 @@ private fun DocumentTypeCard(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (doc.isRequired)
-                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.08f)
-                else
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ),
             border = androidx.compose.foundation.BorderStroke(
-                width = 1.5.dp,
-                color = if (doc.isRequired)
-                    MaterialTheme.colorScheme.error.copy(alpha = 0.4f)
-                else
-                    MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
             )
         ) {
             Row(
@@ -1838,17 +1836,14 @@ private fun DocumentTypeCard(
             ) {
                 // Document icon
                 Surface(
-                    modifier = Modifier.size(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (doc.isRequired)
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
-                    else
-                        MaterialTheme.colorScheme.surfaceVariant
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (doc.isRequired) "📋" else "📁",
-                            style = MaterialTheme.typography.headlineSmall
+                            text = "📁",
+                            style = MaterialTheme.typography.titleLarge
                         )
                     }
                 }
@@ -1857,61 +1852,34 @@ private fun DocumentTypeCard(
 
                 // Document info
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = doc.typeName,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        if (doc.isRequired) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = MaterialTheme.colorScheme.error
-                            ) {
-                                Text(
-                                    text = "Required",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onError,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                )
-                            }
-                        }
-                    }
+                    Text(
+                        text = doc.typeName,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = if (doc.isRequired) "⚠️ Required - Not uploaded" else "Not uploaded",
+                        text = "Not uploaded",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (doc.isRequired)
-                            MaterialTheme.colorScheme.error
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                // Upload button
+                // Upload button - streamlined without icon
                 Button(
                     onClick = { showUploadConfirmDialog = true },
-                    modifier = Modifier.height(42.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                    modifier = Modifier
+                        .height(38.dp)
+                        .widthIn(min = 80.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (doc.isRequired)
-                            MaterialTheme.colorScheme.error
-                        else
-                            MaterialTheme.colorScheme.primary
+                        containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         "Upload",
                         style = MaterialTheme.typography.labelMedium,
@@ -2834,7 +2802,7 @@ private fun CostsTabContent(
         contentPadding = PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Compact Summary Header with Filter Button
+        // Compact Summary Header with Filter Button and Add Cost Button
         item(key = "header") {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -2861,18 +2829,31 @@ private fun CostsTabContent(
                         }
                     }
 
-                    // Filter Button with Badge
-                    BadgedBox(
-                        badge = {
-                            if (activeFilterCount > 0) {
-                                Badge { Text("$activeFilterCount") }
-                            }
-                        }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        FilledTonalIconButton(
-                            onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ShowCostsFilterSheet) }
+                        // Add Cost Button
+                        FilledTonalButton(
+                            onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.NavigateToAddMaintenanceCost) },
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
-                            Text("🔍", style = MaterialTheme.typography.titleMedium)
+                            Text("+ Add Cost", style = MaterialTheme.typography.labelMedium)
+                        }
+
+                        // Filter Button with Badge
+                        BadgedBox(
+                            badge = {
+                                if (activeFilterCount > 0) {
+                                    Badge { Text("$activeFilterCount") }
+                                }
+                            }
+                        ) {
+                            FilledTonalIconButton(
+                                onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ShowCostsFilterSheet) }
+                            ) {
+                                Text("🔍", style = MaterialTheme.typography.titleMedium)
+                            }
                         }
                     }
                 }

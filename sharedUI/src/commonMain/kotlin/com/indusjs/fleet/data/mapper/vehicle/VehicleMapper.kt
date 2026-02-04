@@ -59,6 +59,15 @@ class VehicleMapper {
         val driverName = assignedDriver?.fullName()
             ?: dto.assignedDriverName
 
+        // Convert createdAt from ISO 8601 to DD-MM-YYYY format
+        val createdAtFormatted = dto.createdAt?.let { isoDate ->
+            try {
+                com.indusjs.datetimeutils.FleetDateTime.fromIso8601ToDate(isoDate)
+            } catch (e: Exception) {
+                null
+            }
+        }
+
         return Vehicle(
             id = dto.id.toString(),
             registrationNumber = dto.registrationNumber,
@@ -79,7 +88,8 @@ class VehicleMapper {
             lastServiceDate = dto.lastServiceDate?.let { parseTimestamp(it) },
             nextServiceDate = dto.nextServiceDate?.let { parseTimestamp(it) },
             isOccupied = dto.isOccupied,
-            tripAssignment = dto.tripAssignment?.let { mapTripAssignmentToDomain(it) }
+            tripAssignment = dto.tripAssignment?.let { mapTripAssignmentToDomain(it) },
+            createdAt = createdAtFormatted
         )
     }
 

@@ -96,6 +96,30 @@ object DateTimeUtils {
         FleetDateTime.isDateInRange(date, minDate, maxDate)
 
     /**
+     * Check if calendar can navigate to the previous month based on minDate.
+     */
+    fun canNavigateToPreviousMonth(currentMonth: Int, currentYear: Int, minDate: String?): Boolean =
+        FleetDateTime.canNavigateToPreviousMonth(currentMonth, currentYear, minDate)
+
+    /**
+     * Check if calendar can navigate to the next month based on maxDate.
+     */
+    fun canNavigateToNextMonth(currentMonth: Int, currentYear: Int, maxDate: String?): Boolean =
+        FleetDateTime.canNavigateToNextMonth(currentMonth, currentYear, maxDate)
+
+    /**
+     * Get the valid year range for MonthYearPicker based on minDate and maxDate.
+     */
+    fun getValidYearRange(minDate: String?, maxDate: String?, defaultRangeFromNow: Int = 50): IntRange =
+        FleetDateTime.getValidYearRange(minDate, maxDate, defaultRangeFromNow)
+
+    /**
+     * Check if a specific month is selectable in the MonthYearPicker.
+     */
+    fun isMonthSelectable(month: Int, year: Int, minDate: String?, maxDate: String?): Boolean =
+        FleetDateTime.isMonthSelectable(month, year, minDate, maxDate)
+
+    /**
      * Parse date string (DD-MM-YYYY) to LocalDate.
      */
     fun parseDate(dateString: String): LocalDate? {

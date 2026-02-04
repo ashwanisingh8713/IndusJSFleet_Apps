@@ -112,8 +112,8 @@ fun fleetEntryProvider(
                 onNavigateToProfile = { backStack.add(FleetRoute.Profile) },
                 onNavigateToTeam = { backStack.add(FleetRoute.TeamList) },
                 onNavigateToReports = { backStack.add(FleetRoute.Reports) },
-                onNavigateToAddTripCost = { backStack.add(FleetRoute.TripCostEntry) },
-                onNavigateToAddVehicleCost = { backStack.add(FleetRoute.MaintenanceCostEntry) },
+                onNavigateToAddTripCost = { backStack.add(FleetRoute.TripCostEntry()) },
+                onNavigateToAddVehicleCost = { backStack.add(FleetRoute.MaintenanceCostEntry()) },
                 onNavigateToAddVehicle = { backStack.add(FleetRoute.AddVehicle) },
                 onNavigateToAddDriver = { backStack.add(FleetRoute.CreateDriver) },
                 onNavigateToCreateTrip = { backStack.add(FleetRoute.CreateTrip) },
@@ -165,6 +165,7 @@ fun fleetEntryProvider(
                 viewModel = viewModel,
                 vehicleId = route.vehicleId,
                 onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateToMaintenanceCost = { vehicleId -> backStack.add(FleetRoute.MaintenanceCostEntry(vehicleId = vehicleId)) },
                 onRequestFilePicker = { documentType, callback ->
                     onPickFile?.invoke(
                         FilePickerRequest(
@@ -250,7 +251,13 @@ fun fleetEntryProvider(
             TripDetailScreen(
                 viewModel = viewModel,
                 tripId = route.tripId,
-                onNavigateBack = { backStack.removeLastOrNull() }
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateToAddTripCost = { tripId, vehicleId ->
+                    backStack.add(FleetRoute.TripCostEntry(tripId = tripId, vehicleId = vehicleId))
+                },
+                onNavigateToAddPayment = { tripId, vehicleId ->
+                    backStack.add(FleetRoute.AddPayment(tripId = tripId, vehicleId = vehicleId))
+                }
             )
         }
 
@@ -274,6 +281,7 @@ fun fleetEntryProvider(
             val viewModel = rememberViewModel { tripCostEntryViewModel() }
             TripCostEntryScreen(
                 viewModel = viewModel,
+                initialTripId = route.tripId,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
         }
@@ -282,6 +290,7 @@ fun fleetEntryProvider(
             val viewModel = rememberViewModel { maintenanceCostEntryViewModel() }
             MaintenanceCostEntryScreen(
                 viewModel = viewModel,
+                initialVehicleId = route.vehicleId,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
         }

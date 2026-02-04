@@ -102,10 +102,17 @@ data class TripPaymentTripInfo(
     val vehicleMake: String? = null,
     val vehicleModel: String? = null,
     val driverName: String? = null,
+    val customerName: String? = null,
     val startLocation: String? = null,
     val endLocation: String? = null,
     val tripPrice: Double? = null,
-    val tripState: String? = null
+    val tripState: String? = null,
+    // Trip dates for display (DD-MM-YYYY format)
+    val tripStartDate: String? = null,
+    val tripEndDate: String? = null,
+    // Trip times for display (HH:mm format)
+    val tripStartTime: String? = null,
+    val tripEndTime: String? = null
 ) {
     val vehicleDisplay: String
         get() = vehicleRegistration ?: "N/A"
@@ -115,6 +122,22 @@ data class TripPaymentTripInfo(
 
     val tripPriceDisplay: String
         get() = tripPrice?.let { "₹${it.toInt()}" } ?: "N/A"
+
+    /** Formatted start date & time display */
+    val startDateTimeDisplay: String
+        get() {
+            val date = tripStartDate ?: return "N/A"
+            val time = tripStartTime ?: ""
+            return if (time.isNotBlank()) "$date $time" else date
+        }
+
+    /** Formatted end date & time display */
+    val endDateTimeDisplay: String
+        get() {
+            val date = tripEndDate ?: return "N/A"
+            val time = tripEndTime ?: ""
+            return if (time.isNotBlank()) "$date $time" else date
+        }
 }
 
 /**

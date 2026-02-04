@@ -151,6 +151,10 @@ class AddPaymentViewModel(
             when (result) {
                 is Result.Success -> {
                     val tripSummaries = result.data.map { trip ->
+                        // Use the FleetDateTime utility for proper date extraction (same as TripCostEntryScreen)
+                        val startDateSource = trip.plannedStart ?: trip.scheduledDate
+                        val endDateSource = trip.plannedEnd ?: trip.deliveryDate
+
                         TripSummaryForPayment(
                             id = trip.id,
                             vehicleId = trip.vehicleId,
@@ -160,12 +164,18 @@ class AddPaymentViewModel(
                             startLocation = trip.startLocation?.address ?: "Unknown",
                             endLocation = trip.endLocation?.address ?: "Unknown",
                             tripPrice = trip.tripPrice ?: 0.0,
-                            paidAmount = 0.0, // Will be updated from trip details
-                            pendingAmount = trip.tripPrice ?: 0.0,
+                            paidAmount = trip.paidTripPrice ?: 0.0,
+                            pendingAmount = (trip.tripPrice ?: 0.0) - (trip.paidTripPrice ?: 0.0),
                             customerId = trip.customerId,
                             customerName = trip.customerName,
                             customerContact = trip.customerContact,
-                            state = trip.status.name
+                            state = trip.status.name,
+                            scheduledDate = startDateSource,  // Pass the source for date calculation in screen
+                            paymentStatus = trip.paymentStatus,
+                            tripStartDate = FleetDateTime.getMinDateForTripCost(startDateSource),
+                            tripEndDate = FleetDateTime.getMinDateForTripCost(endDateSource),
+                            tripStartTime = extractTimeFromIso(trip.plannedStart),
+                            tripEndTime = extractTimeFromIso(trip.plannedEnd)
                         )
                     }
                     updateState { copy(isLoadingTrips = false, trips = tripSummaries) }
@@ -183,6 +193,10 @@ class AddPaymentViewModel(
         when (val result = tripRepository.getTripById(tripId)) {
             is Result.Success -> {
                 val trip = result.data
+                // Use the FleetDateTime utility for proper date extraction (same as TripCostEntryScreen)
+                val startDateSource = trip.plannedStart ?: trip.scheduledDate
+                val endDateSource = trip.plannedEnd ?: trip.deliveryDate
+
                 val summary = TripSummaryForPayment(
                     id = trip.id,
                     vehicleId = trip.vehicleId,
@@ -192,12 +206,18 @@ class AddPaymentViewModel(
                     startLocation = trip.startLocation?.address ?: "Unknown",
                     endLocation = trip.endLocation?.address ?: "Unknown",
                     tripPrice = trip.tripPrice ?: 0.0,
-                    paidAmount = 0.0,
-                    pendingAmount = trip.tripPrice ?: 0.0,
+                    paidAmount = trip.paidTripPrice ?: 0.0,
+                    pendingAmount = (trip.tripPrice ?: 0.0) - (trip.paidTripPrice ?: 0.0),
                     customerId = trip.customerId,
                     customerName = trip.customerName,
                     customerContact = trip.customerContact,
-                    state = trip.status.name
+                    state = trip.status.name,
+                    scheduledDate = startDateSource,  // Pass the source for date calculation in screen
+                    paymentStatus = trip.paymentStatus,
+                    tripStartDate = FleetDateTime.getMinDateForTripCost(startDateSource),
+                    tripEndDate = FleetDateTime.getMinDateForTripCost(endDateSource),
+                    tripStartTime = extractTimeFromIso(trip.plannedStart),
+                    tripEndTime = extractTimeFromIso(trip.plannedEnd)
                 )
                 selectTrip(summary)
             }
@@ -359,6 +379,38 @@ class AddPaymentViewModel(
             }
         } catch (e: Exception) {
             "${date}T${time}:00Z"
+        }
+    }
+
+    /**
+     * Extract date in DD-MM-YYYY format from ISO 8601 datetime string.
+     * Falls back to the input if it's already in DD-MM-YYYY format.
+     */
+    private fun extractDateFromIso(isoOrDate: String?): String? {
+        if (isoOrDate.isNullOrBlank()) return null
+
+        return try {
+            // Try parsing as ISO 8601 first
+            val parsed = FleetDateTime.fromIso8601(isoOrDate)
+            if (parsed != null) {
+                FleetDateTime.formatDate(parsed)
+            } else {
+                // Might already be in DD-MM-YYYY format
+                isoOrDate
+            }
+        } catch (e: Exception) {
+            isoOrDate
+        }
+    }
+
+    private fun extractTimeFromIso(isoDate: String?): String? {
+        if (isoDate.isNullOrBlank()) return null
+
+        return try {
+            // Extract time portion (HH:mm) from ISO 8601 string
+            isoDate.substring(11, 16)
+        } catch (e: Exception) {
+            null
         }
     }
 }

@@ -124,6 +124,7 @@ object TripCostEntryContract {
 
         // Trip selection
         data class SelectTrip(val trip: Trip) : Intent
+        data class PreSelectTripById(val tripId: String) : Intent
         data object ToggleTripDropdown : Intent
 
         // Cost entry row management

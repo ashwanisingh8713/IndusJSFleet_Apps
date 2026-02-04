@@ -71,6 +71,7 @@ fun TripsScreen(
                     }
                 },
                 actions = {
+                    // Refresh button
                     IconButton(onClick = { viewModel.sendIntent(TripsContract.Intent.RefreshTrips) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),

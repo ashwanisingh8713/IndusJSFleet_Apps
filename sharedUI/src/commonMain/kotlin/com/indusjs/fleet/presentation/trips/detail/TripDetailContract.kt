@@ -264,6 +264,8 @@ object TripDetailContract {
 
         // Navigation
         data object NavigateBack : Intent
+        data object NavigateToAddTripCost : Intent
+        data object NavigateToAddPayment : Intent
 
         // Error handling
         data object ClearError : Intent
@@ -287,6 +289,8 @@ object TripDetailContract {
         data object TripUpdated : Effect
         data class ExportPdf(val pdfData: TripCostsPdfData) : Effect
         data class StateUpdated(val newState: String) : Effect
+        data class NavigateToAddTripCost(val tripId: String, val vehicleId: String) : Effect
+        data class NavigateToAddPayment(val tripId: String, val vehicleId: String) : Effect
     }
 
     /**

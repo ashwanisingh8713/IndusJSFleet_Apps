@@ -45,7 +45,9 @@ import org.jetbrains.compose.resources.painterResource
 fun TripDetailScreen(
     viewModel: TripDetailViewModel,
     tripId: String,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToAddTripCost: (tripId: String, vehicleId: String) -> Unit = { _, _ -> },
+    onNavigateToAddPayment: (tripId: String, vehicleId: String) -> Unit = { _, _ -> }
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -57,9 +59,12 @@ fun TripDetailScreen(
     var pdfExportData by remember { mutableStateOf<TripDetailContract.TripCostsPdfData?>(null) }
     var isExportingPdf by remember { mutableStateOf(false) }
 
-    // Load trip on first composition
+    // Load trip on first composition - only if not already loaded
     LaunchedEffect(tripId) {
-        viewModel.sendIntent(TripDetailContract.Intent.LoadTrip(tripId))
+        // Only load if trip is not already loaded or tripId changed
+        if (state.trip == null || state.tripId != tripId) {
+            viewModel.sendIntent(TripDetailContract.Intent.LoadTrip(tripId))
+        }
     }
 
     // Handle effects
@@ -89,6 +94,12 @@ fun TripDetailScreen(
                 }
                 is TripDetailContract.Effect.StateUpdated -> {
                     // State updated - handled by ViewModel
+                }
+                is TripDetailContract.Effect.NavigateToAddTripCost -> {
+                    onNavigateToAddTripCost(effect.tripId, effect.vehicleId)
+                }
+                is TripDetailContract.Effect.NavigateToAddPayment -> {
+                    onNavigateToAddPayment(effect.tripId, effect.vehicleId)
                 }
             }
         }
@@ -302,8 +313,38 @@ fun TripDetailScreen(
                                 isLoading = state.isLoadingCosts,
                                 onExportPdf = if (state.hasCosts) {
                                     { viewModel.sendIntent(TripDetailContract.Intent.ExportCostsToPdf) }
-                                } else null
+                                } else null,
+                                onAddTripCost = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddTripCost) }
                             )
+                        }
+
+                        // Record Payment button - only for Owner and General Manager
+                        if (state.canViewTripPrice) {
+                            item {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(
+                                    onClick = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddPayment) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(48.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiary
+                                    )
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text("₹", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Record Payment",
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         // Cancel button for planned trips
@@ -1957,6 +1998,7 @@ private fun EditDropdownField(
  * @param costsByType Costs grouped by their cost type (for category count)
  * @param isLoading Whether costs are being loaded
  * @param onExportPdf Optional callback for PDF export action
+ * @param onAddTripCost Optional callback to add a new trip cost
  */
 @Composable
 private fun TripCostsSection(
@@ -1964,7 +2006,8 @@ private fun TripCostsSection(
     totalCost: Double,
     costsByType: Map<String, List<TripCostDto>>,
     isLoading: Boolean,
-    onExportPdf: (() -> Unit)? = null
+    onExportPdf: (() -> Unit)? = null,
+    onAddTripCost: (() -> Unit)? = null
 ) {
     // State for dialog - which cost to show details for
     var selectedCost by remember { mutableStateOf<TripCostDto?>(null) }
@@ -2001,6 +2044,16 @@ private fun TripCostsSection(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
+                    // Add Trip Cost button in empty state
+                    if (onAddTripCost != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = onAddTripCost,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("+ Add Trip Cost")
+                        }
+                    }
                 }
             }
             else -> {
@@ -2011,10 +2064,32 @@ private fun TripCostsSection(
                     categoryCount = costsByType.size
                 )
 
-                // Export to PDF Button
-                if (onExportPdf != null && costs.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    com.indusjs.fleet.core.ui.costs.ExportPdfButton(onClick = onExportPdf)
+                // Action buttons row
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Add Trip Cost button
+                    if (onAddTripCost != null) {
+                        OutlinedButton(
+                            onClick = onAddTripCost,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("+ Add Cost", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                    // Export to PDF Button
+                    if (onExportPdf != null && costs.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = onExportPdf,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("📄 Export PDF", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

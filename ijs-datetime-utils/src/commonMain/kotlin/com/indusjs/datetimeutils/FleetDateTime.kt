@@ -541,6 +541,108 @@ object FleetDateTime {
     }
 
     // ══════════════════════════════════════════════════════════════════════════════
+    // CALENDAR NAVIGATION HELPERS
+    // ══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Check if calendar can navigate to the previous month based on minDate.
+     * Returns false if all days in the previous month would be before minDate.
+     *
+     * @param currentMonth Current calendar month (1-12)
+     * @param currentYear Current calendar year
+     * @param minDate Minimum allowed date in DD-MM-YYYY format (nullable)
+     * @return true if navigation to previous month is allowed
+     */
+    fun canNavigateToPreviousMonth(currentMonth: Int, currentYear: Int, minDate: String?): Boolean {
+        if (minDate == null) return true
+
+        // Calculate previous month and year
+        val prevMonth = if (currentMonth == 1) 12 else currentMonth - 1
+        val prevYear = if (currentMonth == 1) currentYear - 1 else currentYear
+
+        // Get the last day of the previous month
+        val lastDayOfPrevMonth = getDaysInMonth(prevYear, prevMonth)
+
+        // Check if the last day of previous month is >= minDate
+        val lastDayDate = formatDateParts(lastDayOfPrevMonth, prevMonth, prevYear)
+        return isDateInRange(lastDayDate, minDate, null)
+    }
+
+    /**
+     * Check if calendar can navigate to the next month based on maxDate.
+     * Returns false if all days in the next month would be after maxDate.
+     *
+     * @param currentMonth Current calendar month (1-12)
+     * @param currentYear Current calendar year
+     * @param maxDate Maximum allowed date in DD-MM-YYYY format (nullable)
+     * @return true if navigation to next month is allowed
+     */
+    fun canNavigateToNextMonth(currentMonth: Int, currentYear: Int, maxDate: String?): Boolean {
+        if (maxDate == null) return true
+
+        // Calculate next month and year
+        val nextMonth = if (currentMonth == 12) 1 else currentMonth + 1
+        val nextYear = if (currentMonth == 12) currentYear + 1 else currentYear
+
+        // Check if the first day of next month is <= maxDate
+        val firstDayDate = formatDateParts(1, nextMonth, nextYear)
+        return isDateInRange(firstDayDate, null, maxDate)
+    }
+
+    /**
+     * Get the valid year range for MonthYearPicker based on minDate and maxDate.
+     *
+     * @param minDate Minimum allowed date in DD-MM-YYYY format (nullable)
+     * @param maxDate Maximum allowed date in DD-MM-YYYY format (nullable)
+     * @param defaultRangeFromNow Default range in years if no min/max specified (default: 50)
+     * @return IntRange of valid years
+     */
+    fun getValidYearRange(minDate: String?, maxDate: String?, defaultRangeFromNow: Int = 50): IntRange {
+        val currentYear = now().year
+
+        val minYear = minDate?.let { parseDate(it)?.year } ?: (currentYear - defaultRangeFromNow)
+        val maxYear = maxDate?.let { parseDate(it)?.year } ?: (currentYear + defaultRangeFromNow)
+
+        return minYear..maxYear
+    }
+
+    /**
+     * Check if a specific month is selectable in the MonthYearPicker.
+     * For boundary years, not all months may be valid.
+     *
+     * @param month Month to check (1-12)
+     * @param year Year to check
+     * @param minDate Minimum allowed date in DD-MM-YYYY format (nullable)
+     * @param maxDate Maximum allowed date in DD-MM-YYYY format (nullable)
+     * @return true if the month is selectable
+     */
+    fun isMonthSelectable(month: Int, year: Int, minDate: String?, maxDate: String?): Boolean {
+        // Get the last day of the month to check against minDate
+        val lastDayOfMonth = getDaysInMonth(year, month)
+        val lastDayDate = formatDateParts(lastDayOfMonth, month, year)
+
+        // Get the first day of the month to check against maxDate
+        val firstDayDate = formatDateParts(1, month, year)
+
+        // Month is selectable if:
+        // - Its last day is >= minDate (at least some part is after minDate)
+        // - Its first day is <= maxDate (at least some part is before maxDate)
+        val passesMinCheck = if (minDate != null) {
+            val minValue = parseDate(minDate)?.toDateComparable() ?: return true
+            val lastDayValue = parseDate(lastDayDate)?.toDateComparable() ?: return true
+            lastDayValue >= minValue
+        } else true
+
+        val passesMaxCheck = if (maxDate != null) {
+            val maxValue = parseDate(maxDate)?.toDateComparable() ?: return true
+            val firstDayValue = parseDate(firstDayDate)?.toDateComparable() ?: return true
+            firstDayValue <= maxValue
+        } else true
+
+        return passesMinCheck && passesMaxCheck
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
     // DATE CHECKS
     // ══════════════════════════════════════════════════════════════════════════════
 
@@ -1038,6 +1140,289 @@ object FleetDateTime {
             }
             else -> "Less than a minute"
         }.let { if (difference.isNegative) "$it ago" else it }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════════
+    // DATE CONSTRAINT UTILITIES (for Cost Entry Screens)
+    // ══════════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Get tomorrow's date in DD-MM-YYYY format.
+     * Useful for max date constraint (costs can be recorded up to tomorrow).
+     */
+    fun getTomorrowDate(timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
+        return getDateFromToday(1, timeZone)
+    }
+
+    /**
+     * Get date N years ago from today in DD-MM-YYYY format.
+     * Useful for DOB constraints (e.g., driver must be at least 18 years old).
+     *
+     * @param years Number of years to go back
+     */
+    fun getDateYearsAgo(
+        years: Int,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ): String {
+        val today = Clock.System.todayIn(timeZone)
+        val targetDate = today.minus(years, DateTimeUnit.YEAR)
+        return formatDateParts(targetDate.dayOfMonth, targetDate.monthNumber, targetDate.year)
+    }
+
+    /**
+     * Convert epoch milliseconds to DD-MM-YYYY format.
+     * Useful for converting entity timestamps (Long) to date strings for picker constraints.
+     *
+     * @param timestampMillis Epoch milliseconds (null returns null)
+     * @param timeZone Timezone for conversion
+     */
+    fun timestampToDateString(
+        timestampMillis: Long?,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ): String? {
+        if (timestampMillis == null || timestampMillis <= 0) return null
+        return try {
+            val instant = Instant.fromEpochMilliseconds(timestampMillis)
+            val localDateTime = instant.toLocalDateTime(timeZone)
+            formatDateParts(localDateTime.dayOfMonth, localDateTime.monthNumber, localDateTime.year)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Convert epoch seconds to DD-MM-YYYY format.
+     *
+     * @param timestampSeconds Epoch seconds (null returns null)
+     * @param timeZone Timezone for conversion
+     */
+    fun timestampSecondsToDateString(
+        timestampSeconds: Long?,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ): String? {
+        if (timestampSeconds == null || timestampSeconds <= 0) return null
+        return timestampToDateString(timestampSeconds * 1000, timeZone)
+    }
+
+    /**
+     * Get minimum date for Maintenance Cost entry.
+     * Returns vehicle creation date or fallback to "01-01-2000".
+     *
+     * @param vehicleCreatedAt Vehicle creation date in DD-MM-YYYY or ISO 8601 format
+     */
+    fun getMinDateForMaintenance(vehicleCreatedAt: String?): String {
+        if (vehicleCreatedAt.isNullOrBlank()) return "01-01-2000"
+
+        // Try parsing as DD-MM-YYYY first
+        val parsed = parseDate(vehicleCreatedAt)
+        if (parsed != null) return formatDate(parsed)
+
+        // Try parsing as ISO 8601
+        val fromIso = fromIso8601ToDate(vehicleCreatedAt)
+        if (fromIso != null) return fromIso
+
+        return "01-01-2000"
+    }
+
+    /**
+     * Get minimum date for Trip Cost entry.
+     * Returns trip start date/time.
+     *
+     * @param tripStartDateTime Trip start datetime in DD-MM-YYYY HH:mm or ISO 8601 format
+     */
+    fun getMinDateForTripCost(tripStartDateTime: String?): String? {
+        if (tripStartDateTime.isNullOrBlank()) return null
+
+        // Try parsing as DD-MM-YYYY HH:mm
+        val parsed = parse(tripStartDateTime)
+        if (parsed != null) return formatDate(parsed)
+
+        // Try parsing as DD-MM-YYYY (date only)
+        val dateOnly = parseDate(tripStartDateTime)
+        if (dateOnly != null) return formatDate(dateOnly)
+
+        // Try parsing as ISO 8601
+        val fromIso = fromIso8601ToDate(tripStartDateTime)
+        if (fromIso != null) return fromIso
+
+        return null
+    }
+
+    /**
+     * Get maximum date for Trip Cost entry.
+     * Returns trip end date or tomorrow if trip is ongoing.
+     *
+     * @param tripEndDateTime Trip end datetime in DD-MM-YYYY HH:mm or ISO 8601 format
+     * @param tripIsCompleted Whether the trip is completed
+     */
+    fun getMaxDateForTripCost(
+        tripEndDateTime: String?,
+        tripIsCompleted: Boolean = false,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ): String {
+        // If trip is not completed or no end date, use tomorrow
+        if (!tripIsCompleted || tripEndDateTime.isNullOrBlank()) {
+            return getTomorrowDate(timeZone)
+        }
+
+        // Try parsing as DD-MM-YYYY HH:mm
+        val parsed = parse(tripEndDateTime)
+        if (parsed != null) return formatDate(parsed)
+
+        // Try parsing as DD-MM-YYYY (date only)
+        val dateOnly = parseDate(tripEndDateTime)
+        if (dateOnly != null) return formatDate(dateOnly)
+
+        // Try parsing as ISO 8601
+        val fromIso = fromIso8601ToDate(tripEndDateTime)
+        if (fromIso != null) return fromIso
+
+        return getTomorrowDate(timeZone)
+    }
+
+    /**
+     * Get minimum date for Driver Cost entry.
+     * Returns driver joining date or fallback to "01-01-2000".
+     *
+     * @param driverJoiningDate Driver joining date in DD-MM-YYYY or ISO 8601 format, or timestamp
+     */
+    fun getMinDateForDriverCost(driverJoiningDate: String?): String {
+        if (driverJoiningDate.isNullOrBlank()) return "01-01-2000"
+
+        // Try parsing as DD-MM-YYYY first
+        val parsed = parseDate(driverJoiningDate)
+        if (parsed != null) return formatDate(parsed)
+
+        // Try parsing as ISO 8601
+        val fromIso = fromIso8601ToDate(driverJoiningDate)
+        if (fromIso != null) return fromIso
+
+        return "01-01-2000"
+    }
+
+    /**
+     * Get minimum date for Driver Cost entry from timestamp.
+     *
+     * @param joiningDateTimestamp Driver joining date as epoch milliseconds
+     */
+    fun getMinDateForDriverCostFromTimestamp(
+        joiningDateTimestamp: Long?,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ): String {
+        val dateString = timestampToDateString(joiningDateTimestamp, timeZone)
+        return dateString ?: "01-01-2000"
+    }
+
+    /**
+     * Validate that a cost date is within trip duration.
+     * For full datetime validation.
+     *
+     * @param costDateTime Cost date/time in DD-MM-YYYY HH:mm format
+     * @param tripStartDateTime Trip start date/time
+     * @param tripEndDateTime Trip end date/time (null for ongoing trips)
+     * @return Pair of (isValid, errorMessage)
+     */
+    fun validateCostDateTimeForTrip(
+        costDateTime: String,
+        tripStartDateTime: String?,
+        tripEndDateTime: String?
+    ): Pair<Boolean, String?> {
+        if (tripStartDateTime.isNullOrBlank()) {
+            return Pair(true, null) // No constraint if no start date
+        }
+
+        val costParsed = parse(costDateTime) ?: parseDate(costDateTime)
+        if (costParsed == null) {
+            return Pair(false, "Invalid date format")
+        }
+
+        // Parse trip start
+        val startParsed = parse(tripStartDateTime)
+            ?: parseDate(tripStartDateTime)
+            ?: fromIso8601(tripStartDateTime)
+
+        if (startParsed != null && costParsed.toComparable() < startParsed.toComparable()) {
+            return Pair(false, "Date must be after trip start")
+        }
+
+        // Parse trip end (if exists)
+        if (!tripEndDateTime.isNullOrBlank()) {
+            val endParsed = parse(tripEndDateTime)
+                ?: parseDate(tripEndDateTime)
+                ?: fromIso8601(tripEndDateTime)
+
+            if (endParsed != null && costParsed.toComparable() > endParsed.toComparable()) {
+                return Pair(false, "Date must be before trip end")
+            }
+        }
+
+        return Pair(true, null)
+    }
+
+    /**
+     * Validate that a maintenance cost date is within valid range.
+     *
+     * @param costDate Cost date in DD-MM-YYYY format
+     * @param vehicleCreatedAt Vehicle creation date
+     * @return Pair of (isValid, errorMessage)
+     */
+    fun validateMaintenanceCostDate(
+        costDate: String,
+        vehicleCreatedAt: String?
+    ): Pair<Boolean, String?> {
+        val costParsed = parseDate(costDate)
+        if (costParsed == null) {
+            return Pair(false, "Invalid date format")
+        }
+
+        val minDate = getMinDateForMaintenance(vehicleCreatedAt)
+        val minParsed = parseDate(minDate)
+
+        if (minParsed != null && costParsed.toDateComparable() < minParsed.toDateComparable()) {
+            return Pair(false, "Date must be after vehicle registration")
+        }
+
+        // Check not in future (max is tomorrow)
+        val tomorrow = getTomorrowDate()
+        val tomorrowParsed = parseDate(tomorrow)
+        if (tomorrowParsed != null && costParsed.toDateComparable() > tomorrowParsed.toDateComparable()) {
+            return Pair(false, "Date cannot be more than tomorrow")
+        }
+
+        return Pair(true, null)
+    }
+
+    /**
+     * Validate that a driver cost date is within valid range.
+     *
+     * @param costDate Cost date in DD-MM-YYYY format
+     * @param driverJoiningDate Driver joining date
+     * @return Pair of (isValid, errorMessage)
+     */
+    fun validateDriverCostDate(
+        costDate: String,
+        driverJoiningDate: String?
+    ): Pair<Boolean, String?> {
+        val costParsed = parseDate(costDate)
+        if (costParsed == null) {
+            return Pair(false, "Invalid date format")
+        }
+
+        val minDate = getMinDateForDriverCost(driverJoiningDate)
+        val minParsed = parseDate(minDate)
+
+        if (minParsed != null && costParsed.toDateComparable() < minParsed.toDateComparable()) {
+            return Pair(false, "Date must be after driver joining date")
+        }
+
+        // Check not in future (max is tomorrow)
+        val tomorrow = getTomorrowDate()
+        val tomorrowParsed = parseDate(tomorrow)
+        if (tomorrowParsed != null && costParsed.toDateComparable() > tomorrowParsed.toDateComparable()) {
+            return Pair(false, "Date cannot be more than tomorrow")
+        }
+
+        return Pair(true, null)
     }
 }
 

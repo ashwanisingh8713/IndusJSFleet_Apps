@@ -251,6 +251,20 @@ object AddPaymentContract {
 
         val title: String
             get() = if (isEditMode) "Edit Payment" else "Add Payment"
+
+        /**
+         * Minimum date for payment and due date (Trip Start Date).
+         * Uses trip's scheduled date in DD-MM-YYYY format.
+         */
+        val minPaymentDate: String?
+            get() = selectedTrip?.tripStartDate
+
+        /**
+         * Maximum date for payment date (Current Date + 1 day).
+         * Uses FleetDateTime utility for cross-platform date calculation.
+         */
+        val maxPaymentDate: String
+            get() = com.indusjs.datetimeutils.FleetDateTime.getDateFromToday(1)
     }
 
     sealed interface Intent : UiIntent {
@@ -355,13 +369,28 @@ data class TripSummaryForPayment(
     val customerId: String?,
     val customerName: String?,
     val customerContact: String?,
-    val state: String?
+    val state: String?,
+    // Additional fields for better trip selection
+    val scheduledDate: String? = null,
+    val paymentStatus: String? = null,  // pending, partial, paid
+    // Trip start/end date for date validation and display (DD-MM-YYYY format)
+    val tripStartDate: String? = null,
+    val tripEndDate: String? = null,
+    // Trip start/end time (HH:mm format)
+    val tripStartTime: String? = null,
+    val tripEndTime: String? = null
 ) {
     val routeDisplay: String
         get() = "${startLocation.take(15)} → ${endLocation.take(15)}"
 
+    val routeDisplayFull: String
+        get() = "$startLocation → $endLocation"
+
     val tripPriceDisplay: String
         get() = "₹${tripPrice.toInt()}"
+
+    val paidAmountDisplay: String
+        get() = "₹${paidAmount.toInt()}"
 
     val pendingDisplay: String
         get() = "₹${pendingAmount.toInt()}"
@@ -371,6 +400,44 @@ data class TripSummaryForPayment(
 
     val hasPendingAmount: Boolean
         get() = pendingAmount > 0
+
+    val tripStateLabel: String
+        get() = when (state?.lowercase()) {
+            "planned" -> "Planned"
+            "on_route" -> "On Route"
+            "completed" -> "Completed"
+            "cancelled" -> "Cancelled"
+            "failed" -> "Failed"
+            "delayed" -> "Delayed"
+            else -> state?.replaceFirstChar { it.uppercase() } ?: "Unknown"
+        }
+
+    val paymentStatusLabel: String
+        get() = when (paymentStatus?.lowercase()) {
+            "pending" -> "Pending"
+            "partial" -> "Partial"
+            "paid" -> "Paid"
+            else -> "Pending"
+        }
+
+    val isFullyPaid: Boolean
+        get() = pendingAmount <= 0 || paymentStatus?.lowercase() == "paid"
+
+    /** Display formatted start date & time */
+    val startDateTimeDisplay: String
+        get() {
+            val date = tripStartDate ?: return "N/A"
+            val time = tripStartTime ?: ""
+            return if (time.isNotBlank()) "$date $time" else date
+        }
+
+    /** Display formatted end date & time */
+    val endDateTimeDisplay: String
+        get() {
+            val date = tripEndDate ?: return "N/A"
+            val time = tripEndTime ?: ""
+            return if (time.isNotBlank()) "$date $time" else date
+        }
 }
 
 /**

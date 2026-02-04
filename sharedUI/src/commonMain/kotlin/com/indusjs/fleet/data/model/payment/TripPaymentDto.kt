@@ -5,11 +5,13 @@ import kotlinx.serialization.Serializable
 
 /**
  * Trip payment DTO from API response.
+ * Updated to support both flat fields (list response) and nested objects (detail response).
  */
 @Serializable
 data class TripPaymentDto(
     @SerialName("id") val id: Int,
-    @SerialName("trip_id") val tripId: Int,
+    // trip_id is optional - in detail response it's inside the nested trip object
+    @SerialName("trip_id") val tripId: Int? = null,
     @SerialName("vehicle_id") val vehicleId: Int? = null,
     @SerialName("driver_id") val driverId: Int? = null,
     @SerialName("customer_id") val customerId: Int? = null,
@@ -17,6 +19,16 @@ data class TripPaymentDto(
     @SerialName("customer_contact") val customerContact: String? = null,
     @SerialName("customer_company") val customerCompany: String? = null,
     @SerialName("customer_gst") val customerGst: String? = null,
+    // New flat fields from updated API (for list response)
+    @SerialName("vehicle_registration_number") val vehicleRegistrationNumber: String? = null,
+    @SerialName("trip_start_location") val tripStartLocation: String? = null,
+    @SerialName("trip_end_location") val tripEndLocation: String? = null,
+    @SerialName("trip_scheduled_date") val tripScheduledDate: String? = null,
+    @SerialName("trip_start_time") val tripStartTime: String? = null,
+    @SerialName("trip_delivery_date") val tripDeliveryDate: String? = null,
+    @SerialName("trip_delivery_time") val tripDeliveryTime: String? = null,
+    @SerialName("trip_state") val tripState: String? = null,
+    // Payment amounts
     @SerialName("amount") val amount: Double = 0.0,
     @SerialName("tds_amount") val tdsAmount: Double = 0.0,
     @SerialName("discount_amount") val discountAmount: Double = 0.0,
@@ -31,6 +43,7 @@ data class TripPaymentDto(
     @SerialName("receipt_number") val receiptNumber: String? = null,
     @SerialName("financial_year") val financialYear: String? = null,
     @SerialName("financial_month") val financialMonth: String? = null,
+    @SerialName("financial_quarter") val financialQuarter: String? = null,
     @SerialName("notes") val notes: String? = null,
     @SerialName("received_by") val receivedBy: String? = null,
     @SerialName("received_at_location") val receivedAtLocation: String? = null,
@@ -39,9 +52,19 @@ data class TripPaymentDto(
     @SerialName("created_by_user") val createdByUser: CreatedByUserDto? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
-    // Embedded trip info
-    @SerialName("trip") val trip: TripPaymentTripInfoDto? = null
-)
+    // Nested objects for detail response
+    @SerialName("trip") val trip: TripPaymentTripInfoDto? = null,
+    @SerialName("vehicle") val vehicle: TripPaymentVehicleDto? = null,
+    @SerialName("driver") val driver: TripPaymentDriverDto? = null,
+    @SerialName("customer") val customer: TripPaymentCustomerDto? = null,
+    @SerialName("related_payments") val relatedPayments: List<TripPaymentDto>? = null
+) {
+    /**
+     * Get the effective trip ID from either flat field or nested object.
+     */
+    val effectiveTripId: Int
+        get() = tripId ?: trip?.id ?: 0
+}
 
 /**
  * Created by user info DTO.
@@ -65,13 +88,23 @@ data class TripPaymentTripInfoDto(
     @SerialName("id") val id: Int? = null,
     @SerialName("vehicle_id") val vehicleId: Int? = null,
     @SerialName("vehicle") val vehicle: TripPaymentVehicleDto? = null,
+    @SerialName("vehicle_registration") val vehicleRegistration: String? = null,
     @SerialName("driver_id") val driverId: Int? = null,
     @SerialName("driver") val driver: TripPaymentDriverDto? = null,
+    @SerialName("driver_name") val driverName: String? = null,
+    @SerialName("customer_name") val customerName: String? = null,
     @SerialName("start_location") val startLocation: String? = null,
     @SerialName("end_location") val endLocation: String? = null,
+    @SerialName("planned_start") val plannedStart: String? = null,
+    @SerialName("planned_end") val plannedEnd: String? = null,
+    @SerialName("scheduled_date") val scheduledDate: String? = null,
+    @SerialName("start_time") val startTime: String? = null,
+    @SerialName("delivery_date") val deliveryDate: String? = null,
+    @SerialName("delivery_time") val deliveryTime: String? = null,
     @SerialName("expected_trip_price") val expectedTripPrice: Double? = null,
     @SerialName("paid_trip_price") val paidTripPrice: Double? = null,
     @SerialName("pending_amount") val pendingAmount: Double? = null,
+    @SerialName("payment_status") val paymentStatus: String? = null,
     @SerialName("state") val state: String? = null
 )
 
@@ -83,7 +116,8 @@ data class TripPaymentVehicleDto(
     @SerialName("id") val id: Int? = null,
     @SerialName("registration_number") val registrationNumber: String? = null,
     @SerialName("make") val make: String? = null,
-    @SerialName("model") val model: String? = null
+    @SerialName("model") val model: String? = null,
+    @SerialName("vehicle_type") val vehicleType: String? = null
 )
 
 /**
@@ -93,10 +127,30 @@ data class TripPaymentVehicleDto(
 data class TripPaymentDriverDto(
     @SerialName("id") val id: Int? = null,
     @SerialName("first_name") val firstName: String? = null,
-    @SerialName("last_name") val lastName: String? = null
+    @SerialName("last_name") val lastName: String? = null,
+    @SerialName("mobile") val mobile: String? = null,
+    @SerialName("license_number") val licenseNumber: String? = null
 ) {
     val fullName: String
         get() = listOfNotNull(firstName, lastName).joinToString(" ").ifBlank { "Unknown" }
+}
+
+/**
+ * Customer info in payment response (for detail view).
+ */
+@Serializable
+data class TripPaymentCustomerDto(
+    @SerialName("id") val id: Int? = null,
+    @SerialName("company_name") val companyName: String? = null,
+    @SerialName("person_name") val personName: String? = null,
+    @SerialName("primary_contact") val primaryContact: String? = null,
+    @SerialName("secondary_contact") val secondaryContact: String? = null,
+    @SerialName("email") val email: String? = null,
+    @SerialName("gst_number") val gstNumber: String? = null,
+    @SerialName("company_address") val companyAddress: String? = null
+) {
+    val displayName: String
+        get() = companyName?.ifBlank { null } ?: personName?.ifBlank { null } ?: "Unknown Customer"
 }
 
 /**

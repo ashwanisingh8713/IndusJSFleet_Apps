@@ -70,6 +70,7 @@ object MaintenanceCostEntryContract {
 
         // Vehicle selection
         data class SelectVehicle(val vehicle: Vehicle) : Intent
+        data class PreSelectVehicleById(val vehicleId: String) : Intent
         data object ToggleVehicleDropdown : Intent
 
         // Row management

@@ -94,6 +94,7 @@ class MaintenanceCostEntryViewModel(
             is Intent.LoadVehicles -> loadVehicles()
             is Intent.RefreshCostTypes -> refreshCostTypes()
             is Intent.SelectVehicle -> selectVehicle(intent.vehicle)
+            is Intent.PreSelectVehicleById -> preSelectVehicleById(intent.vehicleId)
             is Intent.ToggleVehicleDropdown -> updateState { copy(showVehicleDropdown = !showVehicleDropdown) }
 
             // Row management
@@ -210,6 +211,31 @@ class MaintenanceCostEntryViewModel(
                 showVehicleDropdown = false,
                 vehicleError = null
             )
+        }
+    }
+
+    /**
+     * Pre-select a vehicle by its ID. Used when navigating from Vehicle Detail screen.
+     * Waits for vehicles to be loaded if needed.
+     */
+    private fun preSelectVehicleById(vehicleId: String) {
+        viewModelScope.launch(dispatcherProvider.io) {
+            // If vehicles are already loaded, find and select
+            val existingVehicle = currentState.vehicles.find { it.id == vehicleId }
+            if (existingVehicle != null) {
+                selectVehicle(existingVehicle)
+                return@launch
+            }
+
+            // If vehicles are loading, wait and try again
+            if (currentState.isLoadingData) {
+                // Wait a bit for vehicles to load
+                kotlinx.coroutines.delay(500)
+                val vehicle = currentState.vehicles.find { it.id == vehicleId }
+                if (vehicle != null) {
+                    selectVehicle(vehicle)
+                }
+            }
         }
     }
 
