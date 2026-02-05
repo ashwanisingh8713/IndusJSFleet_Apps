@@ -5,6 +5,9 @@ import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.fleet.domain.entity.customer.*
 import com.indusjs.fleet.navigation.FleetRoute
+import com.indusjs.pdfreport.model.CustomerTripsPdfData
+import com.indusjs.pdfreport.model.CustomerPaymentsPdfData
+import com.indusjs.pdfreport.model.CustomerFinancialsPdfData
 
 /**
  * MVI Contract for Customer Detail Screen.
@@ -221,59 +224,7 @@ object CustomerDetailContract {
         data class ExportHtml(val content: String, val fileName: String) : Effect
         data class ExportTripsPdf(val pdfData: CustomerTripsPdfData) : Effect
         data class ExportPaymentsPdf(val pdfData: CustomerPaymentsPdfData) : Effect
+        data class ExportFinancialsPdf(val pdfData: CustomerFinancialsPdfData) : Effect
     }
 }
 
-/**
- * Data class for Customer Trips PDF export.
- */
-data class CustomerTripsPdfData(
-    val customerName: String,
-    val customerContact: String,
-    val generatedDate: String,
-    val totalTrips: Int,
-    val completedTrips: Int,
-    val totalRevenue: String,
-    val totalPending: String,
-    val trips: List<CustomerTripPdfItem>
-)
-
-/**
- * Individual trip item for PDF.
- */
-data class CustomerTripPdfItem(
-    val id: String,
-    val vehicleRegistration: String,
-    val route: String,
-    val startDate: String,
-    val endDate: String,
-    val state: String,
-    val price: String,
-    val paid: String,
-    val pending: String
-)
-
-/**
- * Data class for Customer Payments PDF export.
- */
-data class CustomerPaymentsPdfData(
-    val customerName: String,
-    val customerContact: String,
-    val generatedDate: String,
-    val totalReceived: String,
-    val paymentCount: Int,
-    val payments: List<CustomerPaymentPdfItem>
-)
-
-/**
- * Individual payment item for PDF.
- */
-data class CustomerPaymentPdfItem(
-    val id: String,
-    val tripId: String,
-    val date: String,
-    val amount: String,
-    val mode: String,
-    val type: String,
-    val receipt: String
-)

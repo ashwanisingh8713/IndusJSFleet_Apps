@@ -16,7 +16,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
-import com.indusjs.fleet.core.pdf.PaymentReceiptPdfExportHandler
+import com.indusjs.pdfreport.handler.PaymentReceiptPdfHandler
+import com.indusjs.pdfreport.model.PaymentReceiptPdfData
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.util.rememberPhoneDialer
@@ -66,7 +67,7 @@ fun PaymentDetailScreen(
     }
 
     // PDF Export Handler
-    PaymentReceiptPdfExportHandler(
+    PaymentReceiptPdfHandler(
         pdfData = pdfExportData,
         onExportComplete = {
             isExportingPdf = false
@@ -87,36 +88,30 @@ fun PaymentDetailScreen(
     // Helper function to generate PDF data
     fun generatePdfData(payment: TripPayment): PaymentReceiptPdfData {
         return PaymentReceiptPdfData(
-            generatedDate = FleetDateTime.today(),
-            generatedTime = FleetDateTime.currentTime(),
-            paymentId = payment.id,
-            receiptNumber = payment.receiptNumber,
-            paymentDate = payment.paymentDate?.take(10) ?: "",
-            paymentTime = payment.paymentDate?.let {
-                if (it.length > 11) it.substring(11, 16) else null
-            },
+            paymentId = payment.id.toIntOrNull() ?: 0,
+            receiptNumber = payment.receiptNumber ?: "N/A",
+            tripId = payment.tripId.toIntOrNull() ?: 0,
+            vehicleNumber = payment.tripInfo?.vehicleRegistration ?: "N/A",
+            driverName = payment.tripInfo?.driverName,
+            customerName = payment.customerName ?: "N/A",
+            customerCompany = payment.customerCompany,
+            customerContact = payment.customerContact,
+            startLocation = payment.tripInfo?.startLocation ?: "N/A",
+            endLocation = payment.tripInfo?.endLocation ?: "N/A",
+            tripDate = payment.tripInfo?.tripStartDate ?: "",
             amount = payment.amount,
             tdsAmount = payment.tdsAmount,
             discountAmount = payment.discountAmount,
             netAmount = payment.netAmount,
             paymentType = payment.typeDisplay,
             paymentMode = payment.modeDisplay,
+            paymentDate = payment.paymentDate?.take(10) ?: "",
             paymentStatus = payment.paymentStatus.displayName,
             transactionId = payment.transactionId,
             bankName = payment.bankName,
-            tripId = payment.tripId,
-            vehicleNumber = payment.tripInfo?.vehicleRegistration,
-            driverName = payment.tripInfo?.driverName,
-            startLocation = payment.tripInfo?.startLocation,
-            endLocation = payment.tripInfo?.endLocation,
-            tripPrice = payment.tripInfo?.tripPrice,
-            customerName = payment.customerName,
-            customerContact = payment.customerContact,
-            customerCompany = payment.customerCompany,
-            customerGst = payment.customerGst,
             notes = payment.notes,
-            receivedBy = payment.receivedBy,
-            createdBy = payment.createdByName
+            createdBy = payment.createdByName,
+            generatedAt = FleetDateTime.formatDisplayDateTime12Hour(FleetDateTime.now())
         )
     }
 

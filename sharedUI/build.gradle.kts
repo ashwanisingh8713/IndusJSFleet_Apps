@@ -39,6 +39,7 @@ kotlin {
             implementation(project(":ijs-dispatcher-lib"))
             implementation(project(":ijs-datetime-picker"))
             implementation(project(":ijs-datetime-utils"))
+            api(project(":ijs-pdf-report"))
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.ui)

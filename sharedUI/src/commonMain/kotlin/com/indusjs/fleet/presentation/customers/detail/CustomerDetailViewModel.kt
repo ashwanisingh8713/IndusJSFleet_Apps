@@ -14,6 +14,14 @@ import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract.St
 import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract.TripStateFilter
 import com.indusjs.error.result.Result
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.pdfreport.model.CustomerTripsPdfData
+import com.indusjs.pdfreport.model.CustomerTripItem
+import com.indusjs.pdfreport.model.CustomerPaymentsPdfData
+import com.indusjs.pdfreport.model.CustomerPaymentItem
+import com.indusjs.pdfreport.model.CustomerFinancialsPdfData
+import com.indusjs.pdfreport.model.CustomerPaymentStatsPdf
+import com.indusjs.pdfreport.model.CustomerPaymentPdfItem
+import com.indusjs.pdfreport.model.CustomerTripSummaryPdfItem
 import dev.zacsweers.metro.Inject
 
 /**
@@ -516,40 +524,44 @@ class CustomerDetailViewModel(
 
         // Calculate values from trips if summary is null
         val totalTrips = summary?.totalTrips ?: trips.size
-        val completedTrips = summary?.completedTrips ?: trips.count { it.state?.lowercase() == "completed" }
-        val totalRevenue = summary?.totalRevenueDisplay ?: formatCurrencyForPdf(trips.sumOf { it.tripPrice ?: 0.0 })
-        val totalPending = summary?.totalPendingDisplay ?: formatCurrencyForPdf(trips.sumOf {
+        val totalRevenue = summary?.totalRevenue ?: trips.sumOf { it.tripPrice ?: 0.0 }
+        val totalPaid = trips.sumOf { it.paidAmount ?: 0.0 }
+        val totalPending = trips.sumOf {
             val price = it.tripPrice ?: 0.0
             val paid = it.paidAmount ?: 0.0
             (price - paid).coerceAtLeast(0.0)
-        })
+        }
 
         val pdfData = CustomerTripsPdfData(
-            customerName = customer.companyName,
-            customerContact = "${customer.personName} | ${customer.primaryContact}",
-            generatedDate = FleetDateTime.today(),
+            customerId = customer.id.toIntOrNull() ?: 0,
+            customerName = customer.personName,
+            companyName = customer.companyName,
+            contactNumber = customer.primaryContact,
             totalTrips = totalTrips,
-            completedTrips = completedTrips,
             totalRevenue = totalRevenue,
+            totalPaid = totalPaid,
             totalPending = totalPending,
+            dateRange = null,
             trips = trips.map { trip ->
                 val dueAmount = trip.pendingAmount ?: run {
                     val price = trip.tripPrice ?: 0.0
                     val paid = trip.paidAmount ?: 0.0
                     (price - paid).coerceAtLeast(0.0)
                 }
-                CustomerTripPdfItem(
-                    id = trip.id,
-                    vehicleRegistration = trip.vehicleRegistration ?: "-",
-                    route = trip.routeDisplay,
+                CustomerTripItem(
+                    tripId = trip.id.toIntOrNull() ?: 0,
+                    vehicleNumber = trip.vehicleRegistration ?: "-",
+                    startLocation = trip.startLocation ?: "-",
+                    endLocation = trip.endLocation ?: "-",
                     startDate = FleetDateTime.formatIsoToDisplayDate(trip.plannedStart ?: trip.scheduledDate),
                     endDate = FleetDateTime.formatIsoToDisplayDate(trip.plannedEnd),
-                    state = trip.stateDisplay,
-                    price = trip.tripPriceDisplay,
-                    paid = trip.paidAmountDisplay,
-                    pending = formatCurrencyForPdf(dueAmount)
+                    tripStatus = trip.stateDisplay,
+                    tripPrice = trip.tripPrice ?: 0.0,
+                    paidAmount = trip.paidAmount ?: 0.0,
+                    pendingAmount = dueAmount
                 )
-            }
+            },
+            generatedAt = FleetDateTime.formatDisplayDateTime12Hour(FleetDateTime.now())
         )
 
         sendEffect(Effect.ExportTripsPdf(pdfData))
@@ -583,28 +595,34 @@ class CustomerDetailViewModel(
         }
 
         val pdfData = CustomerPaymentsPdfData(
-            customerName = customer.companyName,
-            customerContact = "${customer.personName} | ${customer.primaryContact}",
-            generatedDate = FleetDateTime.today(),
-            totalReceived = formatCurrencyForPdf(state.value.totalReceivedAmount),
-            paymentCount = payments.size,
+            customerId = customer.id.toIntOrNull() ?: 0,
+            customerName = customer.personName,
+            companyName = customer.companyName,
+            contactNumber = customer.primaryContact,
+            totalPayments = payments.size,
+            totalAmount = state.value.totalReceivedAmount,
+            dateRange = null,
             payments = payments.map { payment ->
-                CustomerPaymentPdfItem(
-                    id = payment.id,
-                    tripId = "#${payment.tripId ?: "-"}",
-                    date = payment.date?.let { FleetDateTime.formatIsoToDisplayDateTime12Hour(it) } ?: "-",
-                    amount = payment.amountDisplay,
-                    mode = payment.modeDisplay,
-                    type = payment.paymentType ?: "payment",
-                    receipt = payment.receiptNumber ?: "-"
+                CustomerPaymentItem(
+                    paymentId = payment.id.toIntOrNull() ?: 0,
+                    tripId = payment.tripId?.toIntOrNull() ?: 0,
+                    vehicleNumber = "-", // Vehicle number not available in CustomerPayment
+                    amount = payment.amount,
+                    paymentType = payment.paymentType ?: "payment",
+                    paymentMode = payment.modeDisplay,
+                    paymentDate = payment.date?.let { FleetDateTime.formatIsoToDisplayDateTime12Hour(it) } ?: "-",
+                    receiptNumber = payment.receiptNumber,
+                    startLocation = null,
+                    endLocation = null
                 )
-            }
+            },
+            generatedAt = FleetDateTime.formatDisplayDateTime12Hour(FleetDateTime.now())
         )
 
         sendEffect(Effect.ExportPaymentsPdf(pdfData))
     }
 
-    private suspend fun exportFinancialsPdf() {
+    private fun exportFinancialsPdf() {
         val customer = state.value.customer ?: return
         val report = state.value.financialReport
 
@@ -613,62 +631,73 @@ class CustomerDetailViewModel(
             return
         }
 
-        val htmlContent = buildString {
-            append("""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
-                        h1 { color: #1a73e8; font-size: 20px; margin-bottom: 5px; }
-                        h2 { color: #333; font-size: 16px; margin-top: 20px; }
-                        .header { border-bottom: 2px solid #1a73e8; padding-bottom: 10px; margin-bottom: 15px; }
-                        .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
-                        .stat-box { background: #f5f5f5; padding: 15px; border-radius: 8px; }
-                        .stat-value { font-size: 20px; font-weight: bold; color: #1a73e8; }
-                        .stat-label { font-size: 11px; color: #666; }
-                        .revenue { color: #137333 !important; }
-                        .pending { color: #d93025 !important; }
-                        .footer { margin-top: 30px; font-size: 10px; color: #666; text-align: center; }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>Customer Financial Report</h1>
-                        <div><strong>${customer.companyName}</strong> | ${customer.personName}</div>
-                        <div>Period: ${state.value.financialsStartDate} to ${state.value.financialsEndDate}</div>
-                    </div>
-                    
-                    <div class="summary-grid">
-                        <div class="stat-box">
-                            <div class="stat-value revenue">${report.totalRevenueDisplay}</div>
-                            <div class="stat-label">Total Revenue</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${report.paymentReceivedDisplay}</div>
-                            <div class="stat-label">Total Received</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value pending">${report.paymentPendingDisplay}</div>
-                            <div class="stat-label">Total Pending</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${report.tripSummary?.totalTrips ?: 0}</div>
-                            <div class="stat-label">Total Trips</div>
-                        </div>
-                    </div>
-                    
-                    <div class="footer">
-                        Generated on ${FleetDateTime.today()} | IndusJS Fleet Management
-                    </div>
-                </body>
-                </html>
-            """.trimIndent())
+        // Calculate payment stats
+        val payments = state.value.receivedPayments
+        val paymentStats = CustomerPaymentStatsPdf(
+            totalPayments = payments.size,
+            advancePayments = payments.count { it.paymentType?.lowercase() == "advance" },
+            partialPayments = payments.count { it.paymentType?.lowercase() == "partial" },
+            finalPayments = payments.count { it.paymentType?.lowercase() == "final" },
+            avgPaymentAmount = if (payments.isNotEmpty()) payments.sumOf { it.amount } / payments.size else 0.0
+        )
+
+        // Get recent payments (last 10)
+        val recentPayments = payments.take(10).map { payment ->
+            CustomerPaymentPdfItem(
+                paymentId = payment.id.toIntOrNull() ?: 0,
+                tripId = payment.tripId?.toIntOrNull() ?: 0,
+                paymentDate = payment.date?.let { FleetDateTime.formatIsoToDisplayDate(it) } ?: "-",
+                amount = payment.amount,
+                paymentType = payment.paymentType ?: "payment",
+                paymentMode = payment.modeDisplay,
+                receiptNumber = payment.receiptNumber ?: "-"
+            )
         }
 
-        sendEffect(Effect.ExportHtml(htmlContent, "customer_financials_${customer.id}_${FleetDateTime.today().replace("-", "")}.html"))
-        sendEffect(Effect.ShowSnackbar("Financial report exported successfully"))
+        // Get trip summary
+        val trips = state.value.trips
+        val tripSummary = trips.take(10).map { trip ->
+            val pendingAmount = trip.pendingAmount ?: run {
+                val price = trip.tripPrice ?: 0.0
+                val paid = trip.paidAmount ?: 0.0
+                (price - paid).coerceAtLeast(0.0)
+            }
+            CustomerTripSummaryPdfItem(
+                tripId = trip.id.toIntOrNull() ?: 0,
+                tripDate = FleetDateTime.formatIsoToDisplayDate(trip.plannedStart ?: trip.scheduledDate),
+                route = trip.routeDisplay,
+                tripPrice = trip.tripPrice ?: 0.0,
+                paidAmount = trip.paidAmount ?: 0.0,
+                pendingAmount = pendingAmount,
+                paymentStatus = when {
+                    pendingAmount <= 0 -> "Paid"
+                    (trip.paidAmount ?: 0.0) > 0 -> "Partial"
+                    else -> "Pending"
+                }
+            )
+        }
+
+        val dateRange = "${state.value.financialsStartDate} to ${state.value.financialsEndDate}"
+
+        val pdfData = CustomerFinancialsPdfData(
+            customerId = customer.id.toIntOrNull() ?: 0,
+            customerName = customer.personName,
+            companyName = customer.companyName,
+            contactNumber = customer.primaryContact,
+            dateRange = dateRange,
+            totalTrips = report.tripSummary?.totalTrips ?: trips.size,
+            completedTrips = report.tripSummary?.completedTrips ?: trips.count { it.state?.lowercase() == "completed" },
+            activeTrips = trips.count { it.state?.lowercase() == "on_route" },
+            totalRevenue = report.totalRevenue ?: 0.0,
+            totalReceived = report.paymentReceived ?: 0.0,
+            totalPending = report.paymentPending ?: 0.0,
+            paymentStats = paymentStats,
+            recentPayments = recentPayments,
+            tripSummary = tripSummary,
+            generatedAt = FleetDateTime.formatDisplayDateTime12Hour(FleetDateTime.now())
+        )
+
+        sendEffect(Effect.ExportFinancialsPdf(pdfData))
     }
 
     // ============= Edit Mode Functions =============

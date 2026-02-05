@@ -27,7 +27,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.datetimeutils.FleetDateTime
-import com.indusjs.fleet.core.pdf.PaymentsListPdfExportHandler
+import com.indusjs.pdfreport.handler.PaymentsListPdfHandler
+import com.indusjs.pdfreport.model.PaymentsListPdfData
+import com.indusjs.pdfreport.model.PaymentListItem
 import com.indusjs.fleet.core.ui.EmptyContent
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.domain.entity.payment.*
@@ -115,7 +117,7 @@ fun PaymentsScreen(
     }
 
     // PDF Export Handler
-    PaymentsListPdfExportHandler(
+    PaymentsListPdfHandler(
         pdfData = pdfExportData,
         onExportComplete = {
             isExportingPdf = false
@@ -197,33 +199,38 @@ fun PaymentsScreen(
                                 },
                                 onClick = {
                                     showOptionsMenu = false
+                                    val dateRange = if (state.filter.startDate != null || state.filter.endDate != null) {
+                                        "${state.filter.startDate ?: ""} - ${state.filter.endDate ?: ""}"
+                                    } else null
+                                    val filterInfo = listOfNotNull(
+                                        state.filter.paymentType?.displayName,
+                                        state.filter.paymentMode?.displayName,
+                                        state.filter.paymentStatus?.displayName
+                                    ).joinToString(", ").ifEmpty { null }
+
                                     pdfExportData = PaymentsListPdfData(
-                                        generatedDate = FleetDateTime.today(),
-                                        generatedTime = FleetDateTime.currentTime(),
-                                        fromDate = state.filter.startDate,
-                                        toDate = state.filter.endDate,
-                                        paymentType = state.filter.paymentType?.displayName,
-                                        paymentMode = state.filter.paymentMode?.displayName,
-                                        paymentStatus = state.filter.paymentStatus?.displayName,
-                                        totalReceived = state.payments.filter { it.paymentStatus == PaymentStatus.RECEIVED }.sumOf { it.amount },
-                                        totalPending = state.pendingSummary?.totalPending ?: 0.0,
-                                        thisMonthTotal = state.summary?.thisMonthTotal ?: state.payments.filter { it.paymentStatus == PaymentStatus.RECEIVED }.sumOf { it.amount },
-                                        totalPaymentsCount = state.payments.size,
                                         payments = state.payments.map { payment ->
-                                            PaymentPdfItem(
-                                                id = payment.id,
-                                                paymentDate = payment.paymentDate?.take(10) ?: "",
+                                            PaymentListItem(
+                                                paymentId = payment.id.toIntOrNull() ?: 0,
+                                                tripId = payment.tripId.toIntOrNull() ?: 0,
+                                                vehicleNumber = payment.tripInfo?.vehicleRegistration ?: "N/A",
+                                                customerName = payment.customerName ?: "N/A",
                                                 amount = payment.amount,
                                                 paymentType = payment.typeDisplay,
                                                 paymentMode = payment.modeDisplay,
+                                                paymentDate = payment.paymentDate?.take(10) ?: "",
                                                 paymentStatus = payment.paymentStatus.displayName,
-                                                vehicleNumber = payment.tripInfo?.vehicleRegistration,
-                                                route = payment.tripInfo?.routeDisplay,
-                                                customerName = payment.customerName,
                                                 receiptNumber = payment.receiptNumber,
-                                                notes = payment.notes
+                                                startLocation = payment.tripInfo?.startLocation,
+                                                endLocation = payment.tripInfo?.endLocation
                                             )
-                                        }
+                                        },
+                                        totalPayments = state.payments.size,
+                                        totalReceived = state.payments.filter { it.paymentStatus == PaymentStatus.RECEIVED }.sumOf { it.amount },
+                                        totalPending = state.pendingSummary?.totalPending ?: 0.0,
+                                        dateRange = dateRange,
+                                        filterInfo = filterInfo,
+                                        generatedAt = FleetDateTime.formatDisplayDateTime12Hour(FleetDateTime.now())
                                     )
                                 },
                                 enabled = state.payments.isNotEmpty() && !isExportingPdf

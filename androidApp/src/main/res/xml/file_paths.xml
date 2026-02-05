@@ -35,14 +35,24 @@
         name="external_files"
         path="." />
 
-    <!-- IndusJS Fleet exported PDFs directory (app-specific) -->
+    <!-- App's external Documents directory for PDFs -->
+    <external-files-path
+        name="external_documents"
+        path="Documents/" />
+
+    <!-- Exported PDFs in Documents directory -->
     <external-files-path
         name="exported_pdfs"
-        path="IndusJSFleet/exportedPdf/" />
+        path="Documents/exportedPdf/" />
+
+    <!-- Cache directory for PDFs -->
+    <cache-path
+        name="pdf_cache"
+        path="exportedPdf/" />
 
     <!-- App's internal files directory (fallback) -->
     <files-path
         name="internal_files"
-        path="IndusJSFleet/exportedPdf/" />
+        path="exportedPdf/" />
 </paths>
 

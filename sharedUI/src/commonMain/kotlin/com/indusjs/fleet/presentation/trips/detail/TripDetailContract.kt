@@ -9,6 +9,7 @@ import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
+import com.indusjs.pdfreport.model.TripCostsPdfData
 
 /**
  * MVI Contract for the Trip Detail screen.
@@ -292,37 +293,4 @@ object TripDetailContract {
         data class NavigateToAddTripCost(val tripId: String, val vehicleId: String) : Effect
         data class NavigateToAddPayment(val tripId: String, val vehicleId: String) : Effect
     }
-
-    /**
-     * Data class for PDF export containing all trip cost information.
-     */
-    data class TripCostsPdfData(
-        val tripId: String,
-        val tripNumber: String?,
-        val vehicleNumber: String?,
-        val driverName: String?,
-        // Route
-        val startLocation: String?,
-        val endLocation: String?,
-        // Schedule - Departure
-        val departureDate: String?,
-        val departureTime: String?,
-        // Schedule - Arrival
-        val arrivalDate: String?,
-        val arrivalTime: String?,
-        // Trip Info
-        val tripStatus: String?,
-        val tripStatusLabel: String?,
-        val estimatedDistance: String?,
-        val estimatedDuration: String?,
-        // Customer
-        val customerName: String?,
-        // Costs
-        val costs: List<TripCostDto>,
-        val totalCost: Double,
-        val costsByType: Map<String, Double>,
-        // Export metadata
-        val exportDate: String,
-        val exportTime: String
-    )
 }

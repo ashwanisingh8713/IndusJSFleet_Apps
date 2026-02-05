@@ -36,4 +36,5 @@ include(":ijs-error-lib")
 include(":ijs-dispatcher-lib")
 include(":ijs-datetime-picker")
 include(":ijs-datetime-utils")
+include(":ijs-pdf-report")
 

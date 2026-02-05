@@ -15,8 +15,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.fleet.core.pdf.CustomerPaymentsPdfExportHandler
-import com.indusjs.fleet.core.pdf.CustomerTripsPdfExportHandler
+import com.indusjs.pdfreport.handler.CustomerPaymentsPdfHandler
+import com.indusjs.pdfreport.handler.CustomerTripsPdfHandler
+import com.indusjs.pdfreport.handler.CustomerFinancialsPdfHandler
+import com.indusjs.pdfreport.model.CustomerPaymentsPdfData
+import com.indusjs.pdfreport.model.CustomerTripsPdfData
+import com.indusjs.pdfreport.model.CustomerFinancialsPdfData
 import com.indusjs.fleet.core.ui.*
 import com.indusjs.fleet.domain.entity.customer.Customer
 import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract.CustomerDetailTab
@@ -49,6 +53,7 @@ fun CustomerDetailScreen(
     // PDF export state
     var tripsPdfData by remember { mutableStateOf<CustomerTripsPdfData?>(null) }
     var paymentsPdfData by remember { mutableStateOf<CustomerPaymentsPdfData?>(null) }
+    var financialsPdfData by remember { mutableStateOf<CustomerFinancialsPdfData?>(null) }
 
     LaunchedEffect(customerId) {
         viewModel.sendIntent(Intent.LoadCustomer(customerId))
@@ -72,12 +77,15 @@ fun CustomerDetailScreen(
                 is Effect.ExportPaymentsPdf -> {
                     paymentsPdfData = effect.pdfData
                 }
+                is Effect.ExportFinancialsPdf -> {
+                    financialsPdfData = effect.pdfData
+                }
             }
         }
     }
 
     // Customer Trips PDF Export Handler
-    CustomerTripsPdfExportHandler(
+    CustomerTripsPdfHandler(
         pdfData = tripsPdfData,
         onExportComplete = {
             tripsPdfData = null
@@ -89,13 +97,26 @@ fun CustomerDetailScreen(
     )
 
     // Customer Payments PDF Export Handler
-    CustomerPaymentsPdfExportHandler(
+    CustomerPaymentsPdfHandler(
         pdfData = paymentsPdfData,
         onExportComplete = {
             paymentsPdfData = null
         },
         onExportError = { error ->
             paymentsPdfData = null
+            scope.launch { snackbarHostState.showSnackbar(error) }
+        }
+    )
+
+    // Customer Financials PDF Export Handler
+    CustomerFinancialsPdfHandler(
+        pdfData = financialsPdfData,
+        onExportComplete = {
+            financialsPdfData = null
+            scope.launch { snackbarHostState.showSnackbar("Financial report exported successfully!") }
+        },
+        onExportError = { error ->
+            financialsPdfData = null
             scope.launch { snackbarHostState.showSnackbar(error) }
         }
     )

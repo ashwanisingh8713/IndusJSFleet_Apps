@@ -18,6 +18,9 @@ import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
 import com.indusjs.fleet.domain.usecase.trip.CancelTripUseCase
 import com.indusjs.fleet.domain.usecase.trip.GetTripByIdUseCase
 import com.indusjs.fleet.domain.usecase.trip.UpdateTripStatusUseCase
+import com.indusjs.pdfreport.model.TripCostsPdfData
+import com.indusjs.pdfreport.model.TripCostItem
+import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
 import com.indusjs.fleet.presentation.trips.detail.TripDetailContract.Effect
 import com.indusjs.fleet.presentation.trips.detail.TripDetailContract.Intent
@@ -824,27 +827,33 @@ class TripDetailViewModel(
             time = trip?.deliveryTime
         )
 
-        val pdfData = TripDetailContract.TripCostsPdfData(
-            tripId = trip?.id ?: state.tripId,
+        val pdfData = TripCostsPdfData(
+            tripId = (trip?.id ?: state.tripId).toIntOrNull() ?: 0,
             tripNumber = trip?.tripNumber ?: "Trip #${trip?.id ?: state.tripId}",
-            vehicleNumber = trip?.vehicleNumber,
+            vehicleNumber = trip?.vehicleNumber ?: "N/A",
             driverName = trip?.driverName,
-            startLocation = trip?.startLocation?.address,
-            endLocation = trip?.endLocation?.address,
-            departureDate = departureDate,
-            departureTime = departureTime,
+            startLocation = trip?.startLocation?.address ?: "N/A",
+            endLocation = trip?.endLocation?.address ?: "N/A",
+            departureDate = departureDate ?: "N/A",
             arrivalDate = arrivalDate,
-            arrivalTime = arrivalTime,
-            tripStatus = trip?.status?.let { TripStatus.toApiString(it) },
-            tripStatusLabel = trip?.status?.let { getStatusLabel(it) },
-            estimatedDistance = trip?.displayInfo?.distanceValue?.takeIf { it != "NA" && it != "N/A" },
-            estimatedDuration = trip?.displayInfo?.durationValue?.takeIf { it != "NA" && it != "N/A" },
-            customerName = trip?.customerName,
-            costs = state.costs,
+            tripStatus = trip?.status?.let { TripStatus.toApiString(it) } ?: "N/A",
+            costs = state.costs.map { cost ->
+                TripCostItem(
+                    costId = cost.costId ?: "",
+                    costLabel = cost.costLabel ?: "Unknown",
+                    amount = cost.amount ?: 0.0,
+                    date = cost.date ?: "",
+                    time = cost.time,
+                    notes = cost.notes
+                )
+            },
             totalCost = state.totalCost,
-            costsByType = costsByTypeWithTotals,
-            exportDate = exportDate,
-            exportTime = exportTime
+            fuelCost = costsByTypeWithTotals.filterKeys { it.contains("fuel", ignoreCase = true) }.values.sumOf { it },
+            tollCost = costsByTypeWithTotals.filterKeys { it.contains("toll", ignoreCase = true) }.values.sumOf { it },
+            otherCost = state.totalCost - costsByTypeWithTotals.filterKeys {
+                it.contains("fuel", ignoreCase = true) || it.contains("toll", ignoreCase = true)
+            }.values.sumOf { it },
+            generatedAt = FleetDateTime.formatDisplayDateTime12Hour(FleetDateTime.now())
         )
 
         log.d { "Sending ExportPdf effect with tripId: ${pdfData.tripId}, totalCost: ${pdfData.totalCost}" }

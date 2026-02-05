@@ -21,7 +21,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.fleet.core.error.FleetErrorContext
-import com.indusjs.fleet.core.pdf.PdfExportHandler
+import com.indusjs.pdfreport.handler.TripCostsPdfHandler
+import com.indusjs.pdfreport.model.TripCostsPdfData
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.LoadingContent
@@ -56,7 +57,7 @@ fun TripDetailScreen(
     var showStatusDialog by remember { mutableStateOf(false) }
 
     // PDF Export state
-    var pdfExportData by remember { mutableStateOf<TripDetailContract.TripCostsPdfData?>(null) }
+    var pdfExportData by remember { mutableStateOf<TripCostsPdfData?>(null) }
     var isExportingPdf by remember { mutableStateOf(false) }
 
     // Load trip on first composition - only if not already loaded
@@ -148,7 +149,7 @@ fun TripDetailScreen(
     }
 
     // PDF Export Handler
-    PdfExportHandler(
+    TripCostsPdfHandler(
         pdfData = pdfExportData,
         onExportComplete = {
             isExportingPdf = false

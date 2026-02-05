@@ -26,8 +26,12 @@ import com.indusjs.fleet.core.ui.FleetTextField
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.domain.entity.finance.*
+import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.Effect
 import com.indusjs.fleet.presentation.finance.VehicleFinanceContract.Intent
+import com.indusjs.pdfreport.handler.VehicleFinancePdfHandler
+import com.indusjs.pdfreport.model.EmiPaymentPdfItem
+import com.indusjs.pdfreport.model.VehicleFinancePdfData
 import indusjsfleet.sharedui.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 
@@ -48,6 +52,17 @@ fun VehicleFinanceDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var pdfExportData by remember { mutableStateOf<VehicleFinancePdfData?>(null) }
+
+    // PDF Export Handler
+    VehicleFinancePdfHandler(
+        pdfData = pdfExportData,
+        onExportComplete = { pdfExportData = null },
+        onExportError = { error ->
+            pdfExportData = null
+            // Show error via snackbar
+        }
+    )
 
     LaunchedEffect(vehicleId) {
         viewModel.sendIntent(Intent.SelectVehicle(vehicleId))
@@ -89,6 +104,24 @@ fun VehicleFinanceDetailScreen(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = "Back"
                         )
+                    }
+                },
+                actions = {
+                    if (purchase != null) {
+                        IconButton(
+                            onClick = {
+                                pdfExportData = createVehicleFinancePdfData(
+                                    purchase = purchase,
+                                    vehicle = vehicle,
+                                    payments = state.loanPayments
+                                )
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_download),
+                                contentDescription = "Export PDF"
+                            )
+                        }
                     }
                 }
             )
@@ -932,3 +965,48 @@ private fun PaymentDetailBottomSheet(
         }
     }
 }
+
+/**
+ * Create PDF data from vehicle finance details.
+ */
+private fun createVehicleFinancePdfData(
+    purchase: VehiclePurchase,
+    vehicle: Vehicle?,
+    payments: List<LoanPayment>
+): VehicleFinancePdfData {
+    val paidEmis = payments.filter { it.isPaid }
+    val totalPaid = paidEmis.sumOf { it.amount }
+    val remainingAmount = purchase.loanAmount - totalPaid
+    val remainingEmis = purchase.tenureMonths - paidEmis.size
+
+    return VehicleFinancePdfData(
+        vehicleId = purchase.vehicleId,
+        registrationNumber = vehicle?.registrationNumber ?: "N/A",
+        vehicleName = "${vehicle?.make ?: ""} ${vehicle?.model ?: ""}".trim(),
+        purchaseDate = purchase.purchaseDate,
+        purchasePrice = purchase.purchasePrice,
+        paymentType = purchase.paymentType.name.lowercase(),
+        downPayment = purchase.downPayment,
+        loanAmount = purchase.loanAmount,
+        interestRate = purchase.interestRate,
+        tenureMonths = purchase.tenureMonths,
+        emiAmount = purchase.emiAmount,
+        financierName = purchase.financierName,
+        totalPaidAmount = totalPaid,
+        remainingAmount = remainingAmount.coerceAtLeast(0.0),
+        paidEmisCount = paidEmis.size,
+        remainingEmisCount = remainingEmis.coerceAtLeast(0),
+        nextEmiDueDate = purchase.nextEmiDueDate,
+        emiPayments = payments.map { payment ->
+            EmiPaymentPdfItem(
+                emiNumber = payment.emiNumber ?: 0,
+                paymentDate = payment.paymentDate ?: "",
+                amount = payment.amount,
+                paymentMode = payment.paymentMode?.label ?: "N/A",
+                status = payment.paymentStatus.name.lowercase()
+            )
+        },
+        generatedAt = FleetDateTime.formatDisplayDateTime12Hour(FleetDateTime.now())
+    )
+}
+
