@@ -109,6 +109,10 @@ data class CustomerTrip(
     val endLocation: String? = null,
     val estimatedDistance: Double? = null,
     val scheduledDate: String? = null,
+    val plannedStart: String? = null,
+    val plannedEnd: String? = null,
+    val actualStart: String? = null,
+    val actualEnd: String? = null,
     val tripPrice: Double? = null,
     val paidAmount: Double? = null,
     val pendingAmount: Double? = null,
@@ -258,15 +262,23 @@ data class CustomerPayment(
     val id: String,
     val tripId: String? = null,
     val amount: Double = 0.0,
+    val tdsAmount: Double = 0.0,
+    val discountAmount: Double = 0.0,
+    val netAmount: Double = 0.0,
+    val paymentType: String? = null,
     val mode: PaymentMode? = null,
     val status: String? = null,
     val date: String? = null,
+    val receiptNumber: String? = null,
     val referenceNumber: String? = null,
     val notes: String? = null,
     val createdAt: String? = null
 ) {
     val amountDisplay: String
         get() = "₹${amount.toInt()}"
+
+    val netAmountDisplay: String
+        get() = "₹${netAmount.toInt()}"
 
     val modeIcon: String
         get() = mode?.icon ?: "💰"
@@ -276,6 +288,15 @@ data class CustomerPayment(
 
     val tripDisplay: String
         get() = tripId?.let { "Trip #$it" } ?: "N/A"
+
+    val paymentTypeDisplay: String
+        get() = when (paymentType) {
+            "advance" -> "Advance"
+            "partial" -> "Partial"
+            "final" -> "Final"
+            "refund" -> "Refund"
+            else -> paymentType?.replaceFirstChar { it.uppercase() } ?: "Unknown"
+        }
 }
 
 // ============= Customer Payment Summary Entity =============

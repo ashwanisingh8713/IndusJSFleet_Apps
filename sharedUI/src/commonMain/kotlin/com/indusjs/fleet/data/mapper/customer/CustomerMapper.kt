@@ -74,18 +74,19 @@ object CustomerMapper {
     )
 
     /**
-     * Map CustomerStatisticsDto to CustomerStatistics domain entity.
+     * Map CustomerStatisticsDataDto to CustomerStatistics domain entity.
+     * Updated to match new API response with nested trips/financials/performance.
      */
-    fun CustomerStatisticsDto.toDomain(): CustomerStatistics = CustomerStatistics(
-        customerId = customerId.toString(),
-        totalTrips = totalTrips,
-        completedTrips = completedTrips,
-        activeTrips = activeTrips,
-        totalRevenue = totalRevenue,
-        totalPendingPayment = totalPendingPayment,
-        totalReceivedPayment = totalReceivedPayment,
-        averageTripValue = averageTripValue,
-        lastTripDate = lastTripDate
+    fun CustomerStatisticsDataDto.toDomain(): CustomerStatistics = CustomerStatistics(
+        customerId = customer?.id?.toString() ?: "",
+        totalTrips = trips?.total ?: 0,
+        completedTrips = trips?.completed ?: 0,
+        activeTrips = trips?.onRoute ?: 0,
+        totalRevenue = financials?.totalRevenue ?: 0.0,
+        totalPendingPayment = financials?.totalPending ?: 0.0,
+        totalReceivedPayment = financials?.totalReceived ?: 0.0,
+        averageTripValue = financials?.averageTripValue ?: 0.0,
+        lastTripDate = performance?.lastTripDate
     )
 
     /**
@@ -123,6 +124,10 @@ object CustomerMapper {
         endLocation = endLocation,
         estimatedDistance = estimatedDistance,
         scheduledDate = scheduledDate,
+        plannedStart = plannedStart,
+        plannedEnd = plannedEnd,
+        actualStart = actualStart,
+        actualEnd = actualEnd,
         tripPrice = expectedTripPrice,
         paidAmount = paidTripPrice,
         pendingAmount = pendingAmount,
@@ -158,15 +163,15 @@ object CustomerMapper {
      */
     fun CustomerPendingPaymentDto.toDomain(): CustomerPendingPayment = CustomerPendingPayment(
         tripId = tripId.toString(),
-        vehicleRegistration = vehicleRegistration,
+        vehicleRegistration = vehicleNumber,
         startLocation = startLocation,
         endLocation = endLocation,
-        tripDate = tripDate,
-        tripPrice = expectedTripPrice,
-        paidAmount = paidTripPrice,
+        tripDate = scheduledDate,
+        tripPrice = expectedPrice,
+        paidAmount = paidAmount,
         pendingAmount = pendingAmount,
         daysOverdue = daysOverdue,
-        state = state,
+        state = null,
         paymentStatus = paymentStatus
     )
 
@@ -185,9 +190,14 @@ object CustomerMapper {
         id = id.toString(),
         tripId = tripId?.toString(),
         amount = amount,
+        tdsAmount = tdsAmount,
+        discountAmount = discountAmount,
+        netAmount = netAmount,
+        paymentType = paymentType,
         mode = PaymentMode.fromApiValue(paymentMode),
         status = paymentStatus,
         date = paymentDate,
+        receiptNumber = receiptNumber,
         referenceNumber = referenceNumber,
         notes = notes,
         createdAt = createdAt
@@ -204,40 +214,60 @@ object CustomerMapper {
      * Map PaymentByModeDto to PaymentByMode domain entity.
      */
     fun PaymentByModeDto.toDomain(): PaymentByMode = PaymentByMode(
-        mode = PaymentMode.fromApiValue(mode),
+        mode = PaymentMode.fromApiValue(paymentMode),
         amount = amount,
         count = count,
-        percentage = percentage
+        percentage = 0.0 // Calculate if needed
     )
 
     /**
      * Map MonthlyPaymentDto to MonthlyPayment domain entity.
      */
-    fun MonthlyPaymentDto.toDomain(): MonthlyPayment = MonthlyPayment(
-        month = month,
-        year = year,
-        amount = amount,
-        count = count
-    )
+    fun MonthlyPaymentDto.toDomain(): MonthlyPayment {
+        // month format: "2026-02" - extract month and year
+        val parts = month.split("-")
+        val year = parts.getOrNull(0)?.toIntOrNull() ?: 2026
+        val monthName = when (parts.getOrNull(1)) {
+            "01" -> "Jan"
+            "02" -> "Feb"
+            "03" -> "Mar"
+            "04" -> "Apr"
+            "05" -> "May"
+            "06" -> "Jun"
+            "07" -> "Jul"
+            "08" -> "Aug"
+            "09" -> "Sep"
+            "10" -> "Oct"
+            "11" -> "Nov"
+            "12" -> "Dec"
+            else -> "Unknown"
+        }
+        return MonthlyPayment(
+            month = monthName,
+            year = year,
+            amount = amount,
+            count = count
+        )
+    }
 
     /**
-     * Map CustomerPaymentSummaryDto to CustomerPaymentSummary domain entity.
+     * Map CustomerPaymentSummaryDataDto to CustomerPaymentSummary domain entity.
      */
-    fun CustomerPaymentSummaryDto.toDomain(): CustomerPaymentSummary = CustomerPaymentSummary(
-        byMode = byMode?.map { it.toDomain() } ?: emptyList(),
-        byMonth = byMonth?.map { it.toDomain() } ?: emptyList(),
-        totalTds = tdsSummary?.totalTds ?: 0.0,
-        totalAmount = totalAmount,
-        totalPayments = totalPayments
+    fun CustomerPaymentSummaryDataDto.toDomain(): CustomerPaymentSummary = CustomerPaymentSummary(
+        byMode = byMode.map { it.toDomain() },
+        byMonth = byMonth.map { it.toDomain() },
+        totalTds = totals?.tdsAmount ?: 0.0,
+        totalAmount = totals?.grossAmount ?: 0.0,
+        totalPayments = byMode.sumOf { it.count }
     )
 
     // ============= Financial Report Mapping =============
 
     /**
-     * Map PeriodBreakdownDto to PeriodBreakdown domain entity.
+     * Map MonthlyTrendDto to PeriodBreakdown domain entity.
      */
-    fun PeriodBreakdownDto.toDomain(): PeriodBreakdown = PeriodBreakdown(
-        period = period,
+    fun MonthlyTrendDto.toPeriodBreakdown(): PeriodBreakdown = PeriodBreakdown(
+        period = month,
         revenue = revenue,
         costs = costs,
         profit = profit,
@@ -245,44 +275,29 @@ object CustomerMapper {
     )
 
     /**
-     * Map TopVehicleDto to TopVehicle domain entity.
+     * Map CustomerFinancialReportDataDto to CustomerFinancialReport domain entity.
      */
-    fun TopVehicleDto.toDomain(): TopVehicle = TopVehicle(
-        vehicleId = vehicleId.toString(),
-        vehicleRegistration = vehicleRegistration,
-        trips = trips,
-        revenue = revenue,
-        costs = costs,
-        profit = profit
-    )
-
-    /**
-     * Map FinancialTripSummaryDto to FinancialTripSummary domain entity.
-     */
-    fun FinancialTripSummaryDto.toDomain(): FinancialTripSummary = FinancialTripSummary(
-        totalTrips = totalTrips,
-        completedTrips = completedTrips,
-        averageTripValue = averageTripValue,
-        totalDistance = totalDistance
-    )
-
-    /**
-     * Map CustomerFinancialReportDto to CustomerFinancialReport domain entity.
-     */
-    fun CustomerFinancialReportDto.toDomain(): CustomerFinancialReport = CustomerFinancialReport(
-        customerId = customerId.toString(),
-        customerName = customerName,
+    fun CustomerFinancialReportDataDto.toDomain(): CustomerFinancialReport = CustomerFinancialReport(
+        customerId = customer?.id?.toString() ?: "",
+        customerName = customer?.companyName ?: customer?.personName,
         period = FinancialPeriod.fromApiValue(period),
-        startDate = startDate,
-        endDate = endDate,
-        totalRevenue = totalRevenue,
-        totalCosts = totalCosts,
-        netProfit = netProfit,
-        profitMargin = profitMargin,
-        tripSummary = tripSummary?.toDomain(),
-        periodBreakdown = periodBreakdown?.map { it.toDomain() } ?: emptyList(),
-        topVehicles = topVehicles?.map { it.toDomain() } ?: emptyList(),
-        paymentReceived = paymentReceived,
-        paymentPending = paymentPending
+        startDate = dateRange?.startDate,
+        endDate = dateRange?.endDate,
+        totalRevenue = summary?.totalRevenue ?: 0.0,
+        totalCosts = summary?.totalCosts ?: 0.0,
+        netProfit = summary?.grossProfit ?: 0.0,
+        profitMargin = summary?.profitMargin ?: 0.0,
+        tripSummary = summary?.let {
+            FinancialTripSummary(
+                totalTrips = it.totalTrips,
+                completedTrips = it.totalTrips, // API returns total as completed
+                averageTripValue = if (it.totalTrips > 0) it.totalRevenue / it.totalTrips else 0.0,
+                totalDistance = 0.0
+            )
+        },
+        periodBreakdown = monthlyTrend.map { it.toPeriodBreakdown() },
+        topVehicles = emptyList(), // Not in current API response
+        paymentReceived = summary?.totalReceived ?: 0.0,
+        paymentPending = summary?.totalPending ?: 0.0
     )
 }

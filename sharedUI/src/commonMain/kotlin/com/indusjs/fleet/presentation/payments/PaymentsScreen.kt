@@ -1,5 +1,10 @@
 package com.indusjs.fleet.presentation.payments
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -28,6 +34,18 @@ import com.indusjs.fleet.domain.entity.payment.*
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+
+/**
+ * Data class for grouped payments by Trip.
+ */
+private data class TripPaymentGroup(
+    val tripId: String,
+    val tripInfo: TripPaymentTripInfo?,
+    val payments: List<TripPayment>,
+    val totalAmount: Double,
+    val paymentCount: Int,
+    val customerName: String?
+)
 
 /**
  * Payments List Screen.
@@ -49,6 +67,32 @@ fun PaymentsScreen(
     // PDF Export state
     var pdfExportData by remember { mutableStateOf<PaymentsListPdfData?>(null) }
     var isExportingPdf by remember { mutableStateOf(false) }
+
+    // Track expanded trips - default all collapsed
+    var expandedTrips by remember { mutableStateOf(setOf<String>()) }
+
+    // View mode toggle - grouped vs flat
+    var isGroupedView by remember { mutableStateOf(true) }
+
+    // Dropdown menu state
+    var showOptionsMenu by remember { mutableStateOf(false) }
+
+    // Group payments by tripId
+    val groupedPayments = remember(state.payments) {
+        state.payments.groupBy { it.tripId }
+            .map { (tripId, payments) ->
+                TripPaymentGroup(
+                    tripId = tripId,
+                    tripInfo = payments.firstOrNull()?.tripInfo,
+                    payments = payments.sortedByDescending { it.paymentDate },
+                    totalAmount = payments.sumOf { it.amount },
+                    paymentCount = payments.size,
+                    customerName = payments.firstOrNull()?.customerName
+                        ?: payments.firstOrNull()?.customerCompany
+                )
+            }
+            .sortedByDescending { it.payments.firstOrNull()?.paymentDate }
+    }
 
     // Handle effects
     LaunchedEffect(Unit) {
@@ -116,82 +160,143 @@ fun PaymentsScreen(
                     }
                 },
                 actions = {
-                    // PDF Export button - only show when there's data
-                    if (state.payments.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                // Generate PDF data from current state
-                                val nowValue = FleetDateTime.now()
-                                pdfExportData = PaymentsListPdfData(
-                                    generatedDate = FleetDateTime.today(),
-                                    generatedTime = FleetDateTime.currentTime(),
-                                    fromDate = state.filter.startDate,
-                                    toDate = state.filter.endDate,
-                                    paymentType = state.filter.paymentType?.displayName,
-                                    paymentMode = state.filter.paymentMode?.displayName,
-                                    paymentStatus = state.filter.paymentStatus?.displayName,
-                                    totalReceived = state.payments.filter { it.paymentStatus == PaymentStatus.RECEIVED }.sumOf { it.amount },
-                                    totalPending = state.pendingSummary?.totalPending ?: 0.0,
-                                    thisMonthTotal = state.summary?.thisMonthTotal ?: state.payments.filter { it.paymentStatus == PaymentStatus.RECEIVED }.sumOf { it.amount },
-                                    totalPaymentsCount = state.payments.size,
-                                    payments = state.payments.map { payment ->
-                                        PaymentPdfItem(
-                                            id = payment.id,
-                                            paymentDate = payment.paymentDate?.take(10) ?: "",
-                                            amount = payment.amount,
-                                            paymentType = payment.typeDisplay,
-                                            paymentMode = payment.modeDisplay,
-                                            paymentStatus = payment.paymentStatus.displayName,
-                                            vehicleNumber = payment.tripInfo?.vehicleRegistration,
-                                            route = payment.tripInfo?.routeDisplay,
-                                            customerName = payment.customerName,
-                                            receiptNumber = payment.receiptNumber,
-                                            notes = payment.notes
-                                        )
-                                    }
-                                )
-                            },
-                            enabled = !isExportingPdf
-                        ) {
-                            if (isExportingPdf) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Icon(
-                                    painter = painterResource(Res.drawable.ic_download),
-                                    contentDescription = "Export PDF",
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                        }
-                    }
-                    // Filter button with badge indicator when filters are applied
-                    BadgedBox(
-                        badge = {
-                            if (state.hasFilters) {
-                                Badge(
-                                    containerColor = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(8.dp)
-                                )
-                            }
-                        }
-                    ) {
-                        IconButton(onClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowFilterSheet) }) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_filter),
-                                contentDescription = "Filter",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
-                    IconButton(onClick = { viewModel.sendIntent(PaymentsContract.Intent.Refresh) }) {
+                    // View toggle button - switch between grouped and flat view
+                    IconButton(onClick = { isGroupedView = !isGroupedView }) {
+                        // Use menu icon for grouped, dashboard for flat
                         Icon(
-                            painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh",
+                            painter = painterResource(
+                                if (isGroupedView) Res.drawable.ic_menu else Res.drawable.ic_dashboard
+                            ),
+                            contentDescription = if (isGroupedView) "Switch to Flat View" else "Switch to Grouped View",
                             modifier = Modifier.size(22.dp)
                         )
+                    }
+
+                    // Options menu
+                    Box {
+                        IconButton(onClick = { showOptionsMenu = true }) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_more_vert),
+                                contentDescription = "More options",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showOptionsMenu,
+                            onDismissRequest = { showOptionsMenu = false }
+                        ) {
+                            // Export PDF
+                            DropdownMenuItem(
+                                text = { Text("Export PDF") },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_download),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    pdfExportData = PaymentsListPdfData(
+                                        generatedDate = FleetDateTime.today(),
+                                        generatedTime = FleetDateTime.currentTime(),
+                                        fromDate = state.filter.startDate,
+                                        toDate = state.filter.endDate,
+                                        paymentType = state.filter.paymentType?.displayName,
+                                        paymentMode = state.filter.paymentMode?.displayName,
+                                        paymentStatus = state.filter.paymentStatus?.displayName,
+                                        totalReceived = state.payments.filter { it.paymentStatus == PaymentStatus.RECEIVED }.sumOf { it.amount },
+                                        totalPending = state.pendingSummary?.totalPending ?: 0.0,
+                                        thisMonthTotal = state.summary?.thisMonthTotal ?: state.payments.filter { it.paymentStatus == PaymentStatus.RECEIVED }.sumOf { it.amount },
+                                        totalPaymentsCount = state.payments.size,
+                                        payments = state.payments.map { payment ->
+                                            PaymentPdfItem(
+                                                id = payment.id,
+                                                paymentDate = payment.paymentDate?.take(10) ?: "",
+                                                amount = payment.amount,
+                                                paymentType = payment.typeDisplay,
+                                                paymentMode = payment.modeDisplay,
+                                                paymentStatus = payment.paymentStatus.displayName,
+                                                vehicleNumber = payment.tripInfo?.vehicleRegistration,
+                                                route = payment.tripInfo?.routeDisplay,
+                                                customerName = payment.customerName,
+                                                receiptNumber = payment.receiptNumber,
+                                                notes = payment.notes
+                                            )
+                                        }
+                                    )
+                                },
+                                enabled = state.payments.isNotEmpty() && !isExportingPdf
+                            )
+
+                            // Filter
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text("Filter")
+                                        if (state.hasFilters) {
+                                            Badge(
+                                                containerColor = MaterialTheme.colorScheme.error,
+                                                modifier = Modifier.size(8.dp)
+                                            )
+                                        }
+                                    }
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_filter),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    viewModel.sendIntent(PaymentsContract.Intent.ShowFilterSheet)
+                                }
+                            )
+
+                            // Refresh
+                            DropdownMenuItem(
+                                text = { Text("Refresh") },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_refresh),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    viewModel.sendIntent(PaymentsContract.Intent.Refresh)
+                                }
+                            )
+
+                            // Expand All / Collapse All (only in grouped view)
+                            if (isGroupedView && groupedPayments.isNotEmpty()) {
+                                HorizontalDivider()
+                                val allExpanded = expandedTrips.size == groupedPayments.size
+                                DropdownMenuItem(
+                                    text = { Text(if (allExpanded) "Collapse All" else "Expand All") },
+                                    leadingIcon = {
+                                        Text(
+                                            text = if (allExpanded) "▲" else "▼",
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    },
+                                    onClick = {
+                                        showOptionsMenu = false
+                                        expandedTrips = if (allExpanded) {
+                                            emptySet()
+                                        } else {
+                                            groupedPayments.map { it.tripId }.toSet()
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             )
@@ -256,13 +361,15 @@ fun PaymentsScreen(
                         ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Summary Card
+                        // Summary Card with trip count for grouped view
                         item {
                             PaymentSummaryCard(
                                 totalReceived = state.totalReceived,
                                 totalPending = state.totalPending,
                                 thisMonth = state.thisMonth,
-                                paymentCount = state.payments.size
+                                paymentCount = state.payments.size,
+                                tripCount = if (isGroupedView) groupedPayments.size else 0,
+                                isGroupedView = isGroupedView
                             )
                         }
 
@@ -276,16 +383,40 @@ fun PaymentsScreen(
                             }
                         }
 
-                        // Payment items
-                        items(
-                            items = state.payments,
-                            key = { it.id }
-                        ) { payment ->
-                            PaymentCard(
-                                payment = payment,
-                                onClick = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(payment.id)) },
-                                onLongClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowDeleteConfirmation(payment)) }
-                            )
+                        // Payment items - grouped or flat view
+                        if (isGroupedView) {
+                            // Grouped by Trip with collapsible sections
+                            items(
+                                items = groupedPayments,
+                                key = { it.tripId }
+                            ) { group ->
+                                CollapsibleTripGroupCard(
+                                    group = group,
+                                    isExpanded = expandedTrips.contains(group.tripId),
+                                    onToggleExpand = {
+                                        expandedTrips = if (expandedTrips.contains(group.tripId)) {
+                                            expandedTrips - group.tripId
+                                        } else {
+                                            expandedTrips + group.tripId
+                                        }
+                                    },
+                                    onPaymentClick = { paymentId ->
+                                        viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(paymentId))
+                                    }
+                                )
+                            }
+                        } else {
+                            // Flat list view
+                            items(
+                                items = state.payments,
+                                key = { it.id }
+                            ) { payment ->
+                                PaymentCard(
+                                    payment = payment,
+                                    onClick = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(payment.id)) },
+                                    onLongClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowDeleteConfirmation(payment)) }
+                                )
+                            }
                         }
 
                         // Loading more indicator
@@ -442,6 +573,8 @@ private fun PaymentSummaryCard(
     totalPending: String,
     thisMonth: String,
     paymentCount: Int = 0,
+    tripCount: Int = 0,
+    isGroupedView: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -520,6 +653,20 @@ private fun PaymentSummaryCard(
                     valueColor = MaterialTheme.colorScheme.primary,
                     backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Trip count section - only in grouped view
+            if (isGroupedView) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Grouped by Trip: $tripCount trips",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
         }
@@ -1182,5 +1329,287 @@ private fun PaymentsErrorContent(
                 Text("Add New Payment")
             }
         }
+    }
+}
+
+
+/**
+ * Collapsible card showing a trip group with expandable payment list.
+ * Animation duration: 300ms for smooth expand/collapse.
+ */
+@Composable
+private fun CollapsibleTripGroupCard(
+    group: TripPaymentGroup,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
+    onPaymentClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val rotationAngle by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Trip Header - Always visible, clickable to expand/collapse
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onToggleExpand),
+                color = if (isExpanded)
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                else
+                    MaterialTheme.colorScheme.surface
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Left side: Trip info
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Trip ID badge
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Text(
+                                    text = "Trip #${group.tripId}",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+
+                            // Vehicle badge
+                            group.tripInfo?.vehicleRegistration?.let { vehicle ->
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = MaterialTheme.colorScheme.secondaryContainer
+                                ) {
+                                    Text(
+                                        text = vehicle,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
+                            }
+
+                            // Payment count badge
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.tertiaryContainer
+                            ) {
+                                Text(
+                                    text = "${group.paymentCount} payment${if (group.paymentCount > 1) "s" else ""}",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Route
+                        group.tripInfo?.let { tripInfo ->
+                            Text(
+                                text = "${tripInfo.startLocation ?: "Unknown"} → ${tripInfo.endLocation ?: "Unknown"}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        // Customer
+                        group.customerName?.let { customer ->
+                            Text(
+                                text = customer,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    // Right side: Total amount + expand icon
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "₹${formatGroupAmount(group.totalAmount)}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2E7D32)
+                        )
+
+                        // Arrow indicator using text
+                        Text(
+                            text = if (isExpanded) "▲" else "▼",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+
+            // Expanded content - Payment list
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(animationSpec = tween(300)),
+                exit = shrinkVertically(animationSpec = tween(300))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    group.payments.forEach { payment ->
+                        CompactPaymentItem(
+                            payment = payment,
+                            onClick = { onPaymentClick(payment.id) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Compact payment item shown inside expanded trip group.
+ */
+@Composable
+private fun CompactPaymentItem(
+    payment: TripPayment,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left: Payment type + date
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Payment Type badge
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = "${payment.paymentType.icon} ${payment.typeDisplay}",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = getPaymentTypeColor(payment.paymentType)
+                        )
+                    }
+
+                    // Payment mode
+                    Text(
+                        text = payment.modeIcon,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Payment date
+                payment.paymentDate?.let { date ->
+                    Text(
+                        text = formatPaymentDate(date),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Right: Amount + status
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = payment.amountDisplay,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (payment.isReceived) Color(0xFF2E7D32)
+                    else if (payment.isPending) Color(0xFFE65100)
+                    else MaterialTheme.colorScheme.onSurface
+                )
+                PaymentStatusBadge(status = payment.paymentStatus)
+            }
+        }
+    }
+}
+
+/**
+ * Format large amounts for group display.
+ */
+private fun formatGroupAmount(amount: Double): String {
+    return when {
+        amount >= 10000000 -> {
+            val cr = amount / 10000000
+            "${formatDecimal(cr, 2)} Cr"
+        }
+        amount >= 100000 -> {
+            val lakh = amount / 100000
+            "${formatDecimal(lakh, 2)} L"
+        }
+        amount >= 1000 -> {
+            val k = amount / 1000
+            "${formatDecimal(k, 1)} K"
+        }
+        else -> formatDecimal(amount, 0)
+    }
+}
+
+/**
+ * Format decimal with specified precision (multiplatform compatible).
+ */
+private fun formatDecimal(value: Double, decimals: Int): String {
+    if (decimals == 0) {
+        return kotlin.math.round(value).toLong().toString()
+    }
+    // Manual power calculation for multiplatform
+    var factor = 1.0
+    repeat(decimals) { factor *= 10.0 }
+    val rounded = kotlin.math.round(value * factor) / factor
+    val str = rounded.toString()
+    val parts = str.split(".")
+    return if (parts.size == 1) {
+        str + "." + "0".repeat(decimals)
+    } else {
+        val decPart = parts[1].take(decimals).padEnd(decimals, '0')
+        "${parts[0]}.$decPart"
     }
 }

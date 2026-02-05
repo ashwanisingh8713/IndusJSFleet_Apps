@@ -31,6 +31,7 @@ import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract.St
 fun FinancialsTabContent(
     state: State,
     onIntent: (Intent) -> Unit,
+    onExportPdf: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -40,7 +41,9 @@ fun FinancialsTabContent(
             startDate = state.financialsStartDate,
             endDate = state.financialsEndDate,
             onPeriodSelected = { onIntent(Intent.SetFinancialsPeriod(it)) },
-            onCustomDateClick = { onIntent(Intent.ShowDateRangePicker) }
+            onCustomDateClick = { onIntent(Intent.ShowDateRangePicker) },
+            onExportPdf = onExportPdf,
+            isExporting = state.isExporting
         )
 
         when {
@@ -120,30 +123,53 @@ private fun PeriodSelector(
     startDate: String,
     endDate: String,
     onPeriodSelected: (FinancialPeriod) -> Unit,
-    onCustomDateClick: () -> Unit
+    onCustomDateClick: () -> Unit,
+    onExportPdf: () -> Unit,
+    isExporting: Boolean
 ) {
     Column(
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            items(FinancialPeriod.entries.filter { it != FinancialPeriod.CUSTOM }) { period ->
-                FilterChip(
-                    selected = selectedPeriod == period,
-                    onClick = { onPeriodSelected(period) },
-                    label = { Text(period.displayName) },
-                    shape = RoundedCornerShape(20.dp)
-                )
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(FinancialPeriod.entries.filter { it != FinancialPeriod.CUSTOM }) { period ->
+                    FilterChip(
+                        selected = selectedPeriod == period,
+                        onClick = { onPeriodSelected(period) },
+                        label = { Text(period.displayName) },
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                }
+                item {
+                    FilterChip(
+                        selected = selectedPeriod == FinancialPeriod.CUSTOM,
+                        onClick = onCustomDateClick,
+                        label = { Text("Custom") },
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                }
             }
-            item {
-                FilterChip(
-                    selected = selectedPeriod == FinancialPeriod.CUSTOM,
-                    onClick = onCustomDateClick,
-                    label = { Text("Custom") },
-                    shape = RoundedCornerShape(20.dp)
-                )
+            IconButton(
+                onClick = onExportPdf,
+                enabled = !isExporting,
+                modifier = Modifier.size(40.dp)
+            ) {
+                if (isExporting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("📄", style = MaterialTheme.typography.titleMedium)
+                }
             }
         }
 

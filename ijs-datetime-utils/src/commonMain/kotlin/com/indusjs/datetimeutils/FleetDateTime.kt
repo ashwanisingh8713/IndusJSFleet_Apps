@@ -201,6 +201,64 @@ object FleetDateTime {
     }
 
     // ══════════════════════════════════════════════════════════════════════════════
+    // DISPLAY FORMATTING (DD-MMM-YYYY)
+    // ══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Format FleetDateTimeValue to "DD-MMM-YYYY" (e.g., "05-Feb-2026").
+     */
+    fun formatDisplayDate(value: FleetDateTimeValue): String {
+        val dayStr = if (value.day < 10) "0${value.day}" else "${value.day}"
+        val monthStr = MONTHS_SHORT.getOrElse(value.month - 1) { "Unk" }
+        return "$dayStr-$monthStr-${value.year}"
+    }
+
+    /**
+     * Format FleetDateTimeValue to "DD-MMM-YYYY HH:mm" (e.g., "05-Feb-2026 14:30").
+     */
+    fun formatDisplayDateTime(value: FleetDateTimeValue): String {
+        return "${formatDisplayDate(value)} ${formatTime(value)}"
+    }
+
+    /**
+     * Format ISO 8601 date string to "DD-MMM-YYYY" (e.g., "2026-02-05T10:30:00Z" -> "05-Feb-2026").
+     */
+    fun formatIsoToDisplayDate(isoString: String?): String {
+        if (isoString.isNullOrBlank()) return "N/A"
+        val value = fromIso8601(isoString) ?: return isoString.take(10)
+        return formatDisplayDate(value)
+    }
+
+    /**
+     * Format ISO 8601 datetime string to "DD-MMM-YYYY HH:mm".
+     */
+    fun formatIsoToDisplayDateTime(isoString: String?): String {
+        if (isoString.isNullOrBlank()) return "N/A"
+        val value = fromIso8601(isoString) ?: return isoString.take(16)
+        return formatDisplayDateTime(value)
+    }
+
+    /**
+     * Format ISO 8601 date string to "MMM YYYY" (e.g., "2026-02-05T10:30:00Z" -> "Feb 2026").
+     * Useful for grouping by month.
+     */
+    fun formatIsoToMonthYear(isoString: String?): String {
+        if (isoString.isNullOrBlank()) return "Unknown"
+        val value = fromIso8601(isoString) ?: return "Unknown"
+        val monthName = MONTHS_SHORT.getOrNull(value.month - 1) ?: "Unknown"
+        return "$monthName ${value.year}"
+    }
+
+    /**
+     * Format DD-MM-YYYY to DD-MMM-YYYY (e.g., "05-02-2026" -> "05-Feb-2026").
+     */
+    fun formatToDisplayDate(dateString: String?): String {
+        if (dateString.isNullOrBlank()) return "N/A"
+        val value = parseDate(dateString) ?: return dateString
+        return formatDisplayDate(value)
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
     // ISO 8601 CONVERSION
     // ══════════════════════════════════════════════════════════════════════════════
 

@@ -507,11 +507,43 @@
 					}
 				},
 				{
-					"name": "Get Customer Financial Summary",
+					"name": "Get Customer Statistics",
 					"request": {
 						"method": "GET",
 						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
-						"url": {"raw": "{{base_url}}/customers/{{customer_id}}/financial-summary", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}", "financial-summary"]}
+						"url": {"raw": "{{base_url}}/customers/{{customer_id}}/statistics", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}", "statistics"]}
+					}
+				},
+				{
+					"name": "Get Customer Pending Payments",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/customers/{{customer_id}}/pending-payments?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}", "pending-payments"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
+					}
+				},
+				{
+					"name": "Get Customer Payments",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/customers/{{customer_id}}/payments?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}", "payments"], "query": [{"key": "page", "value": "1"}, {"key": "per_page", "value": "20"}]}
+					}
+				},
+				{
+					"name": "Get Customer Payment Summary",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/customers/{{customer_id}}/payment-summary", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}", "payment-summary"]}
+					}
+				},
+				{
+					"name": "Get Customer Financial Report",
+					"request": {
+						"method": "GET",
+						"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+						"url": {"raw": "{{base_url}}/customers/{{customer_id}}/financial-report", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}", "financial-report"]}
 					}
 				}
 			]

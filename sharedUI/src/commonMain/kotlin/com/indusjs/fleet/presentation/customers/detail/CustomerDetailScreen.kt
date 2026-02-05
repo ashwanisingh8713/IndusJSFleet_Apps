@@ -15,13 +15,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.pdf.CustomerPaymentsPdfExportHandler
+import com.indusjs.fleet.core.pdf.CustomerTripsPdfExportHandler
 import com.indusjs.fleet.core.ui.*
 import com.indusjs.fleet.domain.entity.customer.Customer
-import com.indusjs.fleet.domain.entity.customer.CustomerStatistics
-import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract
 import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract.CustomerDetailTab
 import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract.Effect
 import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract.Intent
+import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract.ReportType
 import com.indusjs.fleet.presentation.customers.detail.CustomerDetailContract.State
 import com.indusjs.fleet.presentation.customers.detail.components.*
 import kotlinx.coroutines.launch
@@ -45,6 +46,10 @@ fun CustomerDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    // PDF export state
+    var tripsPdfData by remember { mutableStateOf<CustomerTripsPdfData?>(null) }
+    var paymentsPdfData by remember { mutableStateOf<CustomerPaymentsPdfData?>(null) }
+
     LaunchedEffect(customerId) {
         viewModel.sendIntent(Intent.LoadCustomer(customerId))
     }
@@ -57,9 +62,43 @@ fun CustomerDetailScreen(
                 is Effect.ShowSnackbar -> scope.launch { snackbarHostState.showSnackbar(effect.message) }
                 is Effect.PdfExported -> scope.launch { snackbarHostState.showSnackbar("Report exported: ${effect.filePath}") }
                 is Effect.PdfExportError -> scope.launch { snackbarHostState.showSnackbar(effect.message) }
+                is Effect.ExportHtml -> {
+                    // Handle HTML export - show message for now
+                    scope.launch { snackbarHostState.showSnackbar("Report ready: ${effect.fileName}") }
+                }
+                is Effect.ExportTripsPdf -> {
+                    tripsPdfData = effect.pdfData
+                }
+                is Effect.ExportPaymentsPdf -> {
+                    paymentsPdfData = effect.pdfData
+                }
             }
         }
     }
+
+    // Customer Trips PDF Export Handler
+    CustomerTripsPdfExportHandler(
+        pdfData = tripsPdfData,
+        onExportComplete = {
+            tripsPdfData = null
+        },
+        onExportError = { error ->
+            tripsPdfData = null
+            scope.launch { snackbarHostState.showSnackbar(error) }
+        }
+    )
+
+    // Customer Payments PDF Export Handler
+    CustomerPaymentsPdfExportHandler(
+        pdfData = paymentsPdfData,
+        onExportComplete = {
+            paymentsPdfData = null
+        },
+        onExportError = { error ->
+            paymentsPdfData = null
+            scope.launch { snackbarHostState.showSnackbar(error) }
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -196,20 +235,18 @@ private fun CustomerDetailTabbedContent(
                 CustomerDetailTab.TRIPS -> TripsTabContent(
                     state = state,
                     onIntent = onIntent,
-                    onTripClick = onNavigateToTrip
-                )
-                CustomerDetailTab.PENDING -> PendingPaymentsTabContent(
-                    state = state,
-                    onIntent = onIntent,
-                    onTripClick = onNavigateToTrip
+                    onTripClick = onNavigateToTrip,
+                    onExportPdf = { onIntent(Intent.ExportPdf(ReportType.TRIPS)) }
                 )
                 CustomerDetailTab.PAYMENTS -> PaymentsTabContent(
                     state = state,
-                    onIntent = onIntent
+                    onIntent = onIntent,
+                    onExportPdf = { onIntent(Intent.ExportPdf(ReportType.PAYMENTS)) }
                 )
                 CustomerDetailTab.FINANCIALS -> FinancialsTabContent(
                     state = state,
-                    onIntent = onIntent
+                    onIntent = onIntent,
+                    onExportPdf = { onIntent(Intent.ExportPdf(ReportType.FINANCIALS)) }
                 )
             }
         }
@@ -235,12 +272,7 @@ private fun OverviewTabContent(
         }
 
         // Hero Card
-        CustomerHeroCard(state.customer!!, { onIntent(Intent.ToggleStatus) }, state.isSaving)
-
-        // Quick Stats (if Owner/GM)
-        if (state.canViewFinancials && state.statistics != null) {
-            QuickStatsCard(state.statistics!!, state.isLoadingStatistics)
-        }
+        CustomerHeroCard(state.customer!!, state.isSaving)
 
         // Contact Details
         CustomerContactCard(state.customer!!)
@@ -276,7 +308,6 @@ private fun ErrorCard(error: String) {
 @Composable
 private fun CustomerHeroCard(
     customer: Customer,
-    onToggleStatus: () -> Unit,
     isSaving: Boolean
 ) {
     Card(
@@ -302,7 +333,7 @@ private fun CustomerHeroCard(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                StatusChip(customer.isActive, onToggleStatus, isSaving)
+                StatusChip(customer.isActive, isSaving)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("👤", style = MaterialTheme.typography.bodyMedium)
@@ -320,7 +351,6 @@ private fun CustomerHeroCard(
 @Composable
 private fun StatusChip(
     isActive: Boolean,
-    onToggle: () -> Unit,
     isSaving: Boolean
 ) {
     val bgColor = if (isActive) {
@@ -353,60 +383,6 @@ private fun StatusChip(
     }
 }
 
-@Composable
-private fun QuickStatsCard(statistics: CustomerStatistics, isLoading: Boolean) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "📊 Quick Stats",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                StatItem("Trips", statistics.totalTrips.toString())
-                StatItem("Revenue", "₹${statistics.totalRevenueLabel}")
-                StatItem("Pending", "₹${statistics.pendingPaymentsLabel}")
-                StatItem("Paid", "₹${statistics.receivedPaymentsLabel}")
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatItem(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
 
 @Composable
 private fun CustomerContactCard(customer: Customer) {

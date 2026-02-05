@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "fleet-api-14-customers",
 		"name": "14. Customers",
-		"description": "Customer management endpoints.\n\n## Role Permissions\n- Create/Edit: Owner, GM, Manager\n- View: All roles\n- Statistics: Owner, GM only",
+		"description": "Customer management endpoints.\n\n## Role Permissions\n- Create/Edit: Owner, GM, Manager\n- View: All roles\n- Statistics/Financial APIs: Owner, GM only\n\n## Financial APIs\n- GET /customers/:id/statistics - Customer statistics\n- GET /customers/:id/pending-payments - Trips with pending payments\n- GET /customers/:id/payments - All customer payments\n- GET /customers/:id/payment-summary - Payment breakdown by mode/type\n- GET /customers/:id/financial-report - Comprehensive P&L report",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -28,7 +28,8 @@
 					"raw": "{\n    \"company_name\": \"ABC Logistics Pvt Ltd\",\n    \"person_name\": \"Rajesh Sharma\",\n    \"primary_contact\": \"+919876543210\",\n    \"secondary_contact\": \"+919876543211\",\n    \"company_address\": \"123, Industrial Area, Mumbai 400001\",\n    \"email\": \"rajesh@abclogistics.com\",\n    \"gst_number\": \"27AABCU9603R1ZM\",\n    \"notes\": \"Premium customer\"\n}"
 				},
 				"url": {"raw": "{{base_url}}/customers", "host": ["{{base_url}}"], "path": ["customers"]}
-			}
+			},
+			"response": [{"name": "Success - 201 Created", "status": "Created", "code": 201, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer created successfully\",\"data\":{\"id\":1,\"company_name\":\"ABC Logistics Pvt Ltd\",\"person_name\":\"Rajesh Sharma\",\"primary_contact\":\"+919876543210\",\"secondary_contact\":\"+919876543211\",\"company_address\":\"123, Industrial Area, Mumbai 400001\",\"email\":\"rajesh@abclogistics.com\",\"gst_number\":\"27AABCU9603R1ZM\",\"notes\":\"Premium customer\",\"owner_id\":1,\"is_active\":true,\"created_by_id\":1,\"created_at\":\"2026-02-04T10:00:00Z\",\"updated_at\":\"2026-02-04T10:00:00Z\"}}"}]
 		},
 		{
 			"name": "List Customers",
@@ -46,7 +47,8 @@
 						{"key": "is_active", "value": "true", "disabled": true}
 					]
 				}
-			}
+			},
+			"response": [{"name": "Success - 200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customers retrieved successfully\",\"data\":{\"items\":[{\"id\":1,\"company_name\":\"ABC Logistics Pvt Ltd\",\"person_name\":\"Rajesh Sharma\",\"primary_contact\":\"+919876543210\",\"is_active\":true,\"total_trips\":15,\"total_revenue\":450000,\"pending_payment\":75000}],\"count\":1,\"page\":1,\"per_page\":20,\"total_pages\":1,\"has_more\":false}}"}]
 		},
 		{
 			"name": "Get Customer",
@@ -54,7 +56,8 @@
 				"method": "GET",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/customers/{{customer_id}}", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}"]}
-			}
+			},
+			"response": [{"name": "Success - 200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer retrieved successfully\",\"data\":{\"id\":1,\"company_name\":\"ABC Logistics Pvt Ltd\",\"person_name\":\"Rajesh Sharma\",\"primary_contact\":\"+919876543210\",\"secondary_contact\":\"+919876543211\",\"company_address\":\"123, Industrial Area, Mumbai 400001\",\"email\":\"rajesh@abclogistics.com\",\"gst_number\":\"27AABCU9603R1ZM\",\"owner_id\":1,\"is_active\":true,\"created_at\":\"2026-02-04T10:00:00Z\"}}"}]
 		},
 		{
 			"name": "Update Customer",
@@ -69,7 +72,8 @@
 					"raw": "{\n    \"company_name\": \"ABC Logistics India Pvt Ltd\",\n    \"person_name\": \"Rajesh Kumar Sharma\",\n    \"primary_contact\": \"+919876543212\",\n    \"company_address\": \"456, New Industrial Area, Mumbai 400002\"\n}"
 				},
 				"url": {"raw": "{{base_url}}/customers/{{customer_id}}", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}"]}
-			}
+			},
+			"response": [{"name": "Success - 200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer updated successfully\",\"data\":{\"id\":1,\"company_name\":\"ABC Logistics India Pvt Ltd\",\"person_name\":\"Rajesh Kumar Sharma\",\"primary_contact\":\"+919876543212\",\"company_address\":\"456, New Industrial Area, Mumbai 400002\",\"is_active\":true,\"updated_at\":\"2026-02-04T12:00:00Z\"}}"}]
 		},
 		{
 			"name": "Toggle Customer Active",
@@ -77,7 +81,8 @@
 				"method": "PATCH",
 				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
 				"url": {"raw": "{{base_url}}/customers/{{customer_id}}/toggle-active", "host": ["{{base_url}}"], "path": ["customers", "{{customer_id}}", "toggle-active"]}
-			}
+			},
+			"response": [{"name": "Success - Deactivated", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer deactivated successfully\",\"data\":{\"id\":1,\"company_name\":\"ABC Logistics\",\"is_active\":false}}"}]
 		},
 		{
 			"name": "Get Customer Trips",
@@ -94,8 +99,101 @@
 						{"key": "state", "value": "completed", "disabled": true}
 					]
 				}
-			}
+			},
+			"response": [{"name": "Success - 200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer trips retrieved successfully\",\"data\":{\"customer\":{\"id\":1,\"company_name\":\"ABC Logistics\",\"person_name\":\"Rajesh Sharma\"},\"items\":[{\"id\":5,\"start_location\":\"Mumbai\",\"end_location\":\"Delhi\",\"scheduled_date\":\"2026-02-01T08:00:00Z\",\"state\":\"completed\",\"expected_trip_price\":45000,\"paid_trip_price\":45000,\"payment_status\":\"full\",\"vehicle\":{\"id\":2,\"registration_number\":\"MH12AB1234\"}}],\"count\":1,\"page\":1,\"per_page\":20,\"total_pages\":1,\"has_more\":false}}"}]
+		},
+		{
+			"name": "Get Customer Statistics",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/customers/{{customer_id}}/statistics",
+					"host": ["{{base_url}}"],
+					"path": ["customers", "{{customer_id}}", "statistics"]
+				},
+				"description": "Get customer statistics including trip counts, revenue, and payment info. Owner/GM only."
+			},
+			"response": [{"name": "Success - 200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer statistics retrieved successfully\",\"data\":{\"customer\":{\"id\":1,\"company_name\":\"ABC Logistics Pvt Ltd\",\"person_name\":\"Rajesh Sharma\",\"primary_contact\":\"+919876543210\"},\"trips\":{\"total\":15,\"completed\":12,\"on_route\":2,\"planned\":1,\"cancelled\":0},\"financials\":{\"total_revenue\":450000,\"total_received\":375000,\"total_pending\":75000,\"average_trip_value\":30000},\"performance\":{\"on_time_delivery_rate\":92.5,\"relationship_since\":\"2025-06-15T00:00:00Z\",\"last_trip_date\":\"2026-02-03T06:00:00Z\"}}}"}]
+		},
+		{
+			"name": "Get Customer Pending Payments",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/customers/{{customer_id}}/pending-payments?page=1&per_page=20",
+					"host": ["{{base_url}}"],
+					"path": ["customers", "{{customer_id}}", "pending-payments"],
+					"query": [
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"},
+						{"key": "start_date", "value": "2026-01-01", "disabled": true},
+						{"key": "end_date", "value": "2026-12-31", "disabled": true}
+					]
+				},
+				"description": "Get trips with pending payments for a customer. Returns trip details with expected, paid, and pending amounts. Owner/GM only."
+			},
+			"response": [{"name": "Success - 200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer pending payments retrieved\",\"data\":{\"customer\":{\"id\":1,\"company_name\":\"ABC Logistics Pvt Ltd\",\"person_name\":\"Rajesh Sharma\",\"primary_contact\":\"+919876543210\"},\"items\":[{\"trip_id\":8,\"scheduled_date\":\"2026-02-03T06:00:00Z\",\"start_location\":\"Delhi\",\"end_location\":\"Jaipur\",\"vehicle_number\":\"MH14CD5678\",\"expected_price\":25000,\"paid_amount\":10000,\"pending_amount\":15000,\"days_overdue\":1,\"payment_status\":\"partial\"},{\"trip_id\":10,\"scheduled_date\":\"2026-01-28T10:00:00Z\",\"start_location\":\"Mumbai\",\"end_location\":\"Pune\",\"vehicle_number\":\"MH12AB1234\",\"expected_price\":18000,\"paid_amount\":0,\"pending_amount\":18000,\"days_overdue\":7,\"payment_status\":\"pending\"}],\"summary\":{\"total_pending\":33000,\"pending_count\":2},\"count\":2,\"page\":1,\"per_page\":20,\"total_pages\":1,\"has_more\":false}}"}]
+		},
+		{
+			"name": "Get Customer Payments",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/customers/{{customer_id}}/payments?page=1&per_page=20",
+					"host": ["{{base_url}}"],
+					"path": ["customers", "{{customer_id}}", "payments"],
+					"query": [
+						{"key": "page", "value": "1"},
+						{"key": "per_page", "value": "20"},
+						{"key": "start_date", "value": "2026-01-01", "disabled": true},
+						{"key": "end_date", "value": "2026-12-31", "disabled": true},
+						{"key": "status", "value": "received", "disabled": true},
+						{"key": "mode", "value": "cash", "disabled": true}
+					]
+				},
+				"description": "Get all payments received from a customer. Supports filtering by date range, status, and mode. Owner/GM only."
+			},
+			"response": [{"name": "Success - 200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer payments retrieved\",\"data\":{\"customer\":{\"id\":1,\"company_name\":\"ABC Logistics Pvt Ltd\",\"person_name\":\"Rajesh Sharma\",\"primary_contact\":\"+919876543210\"},\"items\":[{\"id\":12,\"trip_id\":8,\"amount\":10000,\"tds_amount\":200,\"discount_amount\":0,\"net_amount\":9800,\"payment_type\":\"advance\",\"payment_mode\":\"upi\",\"payment_source\":\"customer@upi\",\"payment_status\":\"received\",\"payment_date\":\"2026-02-03T09:00:00Z\",\"receipt_number\":\"RP-202602-001-00012\",\"financial_year\":\"2025-26\",\"financial_month\":\"2026-02\"},{\"id\":10,\"trip_id\":5,\"amount\":45000,\"tds_amount\":900,\"net_amount\":44100,\"payment_type\":\"final\",\"payment_mode\":\"bank_transfer\",\"payment_source\":\"XXXX1234 - HDFC\",\"payment_status\":\"received\",\"payment_date\":\"2026-02-01T14:00:00Z\",\"receipt_number\":\"RP-202602-001-00010\"}],\"summary\":{\"total_received\":53900,\"total_pending\":33000,\"payment_count\":2},\"count\":2,\"page\":1,\"per_page\":20,\"total_pages\":1,\"has_more\":false}}"}]
+		},
+		{
+			"name": "Get Customer Payment Summary",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/customers/{{customer_id}}/payment-summary",
+					"host": ["{{base_url}}"],
+					"path": ["customers", "{{customer_id}}", "payment-summary"],
+					"query": [
+						{"key": "start_date", "value": "2026-01-01", "disabled": true},
+						{"key": "end_date", "value": "2026-12-31", "disabled": true}
+					]
+				},
+				"description": "Get payment breakdown by mode (cash, upi, bank_transfer), type (advance, partial, final), and monthly trend. Owner/GM only."
+			},
+			"response": [{"name": "Success - 200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer payment summary retrieved\",\"data\":{\"customer\":{\"id\":1,\"company_name\":\"ABC Logistics Pvt Ltd\",\"person_name\":\"Rajesh Sharma\",\"primary_contact\":\"+919876543210\"},\"totals\":{\"gross_amount\":375000,\"tds_amount\":7500,\"discount_amount\":2500,\"net_amount\":365000},\"by_mode\":[{\"payment_mode\":\"bank_transfer\",\"amount\":200000,\"count\":5},{\"payment_mode\":\"upi\",\"amount\":120000,\"count\":8},{\"payment_mode\":\"cash\",\"amount\":45000,\"count\":3}],\"by_type\":[{\"payment_type\":\"final\",\"amount\":280000,\"count\":10},{\"payment_type\":\"advance\",\"amount\":60000,\"count\":4},{\"payment_type\":\"partial\",\"amount\":25000,\"count\":2}],\"by_month\":[{\"month\":\"2026-02\",\"amount\":55000,\"count\":3},{\"month\":\"2026-01\",\"amount\":120000,\"count\":5},{\"month\":\"2025-12\",\"amount\":95000,\"count\":4}],\"date_range\":{\"start_date\":null,\"end_date\":null}}}"}]
+		},
+		{
+			"name": "Get Customer Financial Report",
+			"request": {
+				"method": "GET",
+				"header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+				"url": {
+					"raw": "{{base_url}}/customers/{{customer_id}}/financial-report",
+					"host": ["{{base_url}}"],
+					"path": ["customers", "{{customer_id}}", "financial-report"],
+					"query": [
+						{"key": "start_date", "value": "2026-01-01", "disabled": true},
+						{"key": "end_date", "value": "2026-12-31", "disabled": true},
+						{"key": "period", "value": "monthly", "disabled": true}
+					]
+				},
+				"description": "Get comprehensive P&L report for a customer including revenue, costs, and profit breakdown. Owner/GM only."
+			},
+			"response": [{"name": "Success - 200 OK", "status": "OK", "code": 200, "_postman_previewlanguage": "json", "body": "{\"success\":true,\"message\":\"Customer financial report retrieved\",\"data\":{\"customer\":{\"id\":1,\"company_name\":\"ABC Logistics Pvt Ltd\",\"person_name\":\"Rajesh Sharma\",\"primary_contact\":\"+919876543210\"},\"summary\":{\"total_trips\":15,\"total_revenue\":450000,\"total_costs\":285000,\"gross_profit\":165000,\"profit_margin\":36.67,\"total_received\":375000,\"total_pending\":75000},\"cost_breakdown\":{\"fuel_costs\":145000,\"toll_costs\":35000,\"driver_costs\":65000,\"maintenance_costs\":25000,\"other_costs\":15000},\"monthly_trend\":[{\"month\":\"2026-02\",\"trips\":3,\"revenue\":85000,\"costs\":52000,\"profit\":33000,\"margin\":38.82},{\"month\":\"2026-01\",\"trips\":5,\"revenue\":145000,\"costs\":92000,\"profit\":53000,\"margin\":36.55},{\"month\":\"2025-12\",\"trips\":4,\"revenue\":120000,\"costs\":78000,\"profit\":42000,\"margin\":35.0}],\"date_range\":{\"start_date\":null,\"end_date\":null},\"period\":\"monthly\"}}"}]
 		}
 	]
 }
-

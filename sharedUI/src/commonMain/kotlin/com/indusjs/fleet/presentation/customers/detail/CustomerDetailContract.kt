@@ -13,11 +13,11 @@ object CustomerDetailContract {
 
     /**
      * Tab types for Customer Detail Screen.
+     * TRIPS tab includes trips and pending payments (merged).
      */
     enum class CustomerDetailTab(val title: String, val icon: String) {
         OVERVIEW("Overview", "📋"),
-        TRIPS("Trips", "🚛"),
-        PENDING("Pending", "⏳"),
+        TRIPS("Trips", "🚛"),  // Includes pending payments section
         PAYMENTS("Payments", "💳"),
         FINANCIALS("Financials", "📊")
     }
@@ -109,6 +109,9 @@ object CustomerDetailContract {
         val isExportingPdf: Boolean = false,
         val exportType: ReportType? = null
     ) : UiState {
+
+        val isExporting: Boolean
+            get() = isExportingPdf
 
         val hasChanges: Boolean
             get() = customer?.let { c ->
@@ -215,5 +218,62 @@ object CustomerDetailContract {
         data class ShowSnackbar(val message: String) : Effect
         data class PdfExported(val filePath: String) : Effect
         data class PdfExportError(val message: String) : Effect
+        data class ExportHtml(val content: String, val fileName: String) : Effect
+        data class ExportTripsPdf(val pdfData: CustomerTripsPdfData) : Effect
+        data class ExportPaymentsPdf(val pdfData: CustomerPaymentsPdfData) : Effect
     }
 }
+
+/**
+ * Data class for Customer Trips PDF export.
+ */
+data class CustomerTripsPdfData(
+    val customerName: String,
+    val customerContact: String,
+    val generatedDate: String,
+    val totalTrips: Int,
+    val completedTrips: Int,
+    val totalRevenue: String,
+    val totalPending: String,
+    val trips: List<CustomerTripPdfItem>
+)
+
+/**
+ * Individual trip item for PDF.
+ */
+data class CustomerTripPdfItem(
+    val id: String,
+    val vehicleRegistration: String,
+    val route: String,
+    val startDate: String,
+    val endDate: String,
+    val state: String,
+    val price: String,
+    val paid: String,
+    val pending: String
+)
+
+/**
+ * Data class for Customer Payments PDF export.
+ */
+data class CustomerPaymentsPdfData(
+    val customerName: String,
+    val customerContact: String,
+    val generatedDate: String,
+    val totalReceived: String,
+    val paymentCount: Int,
+    val payments: List<CustomerPaymentPdfItem>
+)
+
+/**
+ * Individual payment item for PDF.
+ */
+data class CustomerPaymentPdfItem(
+    val id: String,
+    val tripId: String,
+    val date: String,
+    val amount: String,
+    val mode: String,
+    val type: String,
+    val receipt: String
+)

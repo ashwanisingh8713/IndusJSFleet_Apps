@@ -39,6 +39,21 @@ data class CustomerDto(
 )
 
 /**
+ * Customer summary DTO used in nested API responses.
+ */
+@Serializable
+data class CustomerSummaryDto(
+    @SerialName("id")
+    val id: Int,
+    @SerialName("company_name")
+    val companyName: String? = null,
+    @SerialName("person_name")
+    val personName: String? = null,
+    @SerialName("primary_contact")
+    val primaryContact: String? = null
+)
+
+/**
  * Request to create a new customer.
  */
 @Serializable
@@ -85,28 +100,64 @@ data class UpdateCustomerRequest(
 )
 
 /**
- * Customer statistics DTO from API.
+ * Customer statistics - trips breakdown.
  */
 @Serializable
-data class CustomerStatisticsDto(
-    @SerialName("customer_id")
-    val customerId: Int,
-    @SerialName("total_trips")
-    val totalTrips: Int = 0,
-    @SerialName("completed_trips")
-    val completedTrips: Int = 0,
-    @SerialName("active_trips")
-    val activeTrips: Int = 0,
+data class CustomerStatisticsTripsDto(
+    @SerialName("total")
+    val total: Int = 0,
+    @SerialName("completed")
+    val completed: Int = 0,
+    @SerialName("on_route")
+    val onRoute: Int = 0,
+    @SerialName("planned")
+    val planned: Int = 0,
+    @SerialName("cancelled")
+    val cancelled: Int = 0
+)
+
+/**
+ * Customer statistics - financials breakdown.
+ */
+@Serializable
+data class CustomerStatisticsFinancialsDto(
     @SerialName("total_revenue")
     val totalRevenue: Double = 0.0,
-    @SerialName("total_pending_payment")
-    val totalPendingPayment: Double = 0.0,
-    @SerialName("total_received_payment")
-    val totalReceivedPayment: Double = 0.0,
+    @SerialName("total_received")
+    val totalReceived: Double = 0.0,
+    @SerialName("total_pending")
+    val totalPending: Double = 0.0,
     @SerialName("average_trip_value")
-    val averageTripValue: Double = 0.0,
+    val averageTripValue: Double = 0.0
+)
+
+/**
+ * Customer statistics - performance breakdown.
+ */
+@Serializable
+data class CustomerStatisticsPerformanceDto(
+    @SerialName("on_time_delivery_rate")
+    val onTimeDeliveryRate: Double = 0.0,
+    @SerialName("relationship_since")
+    val relationshipSince: String? = null,
     @SerialName("last_trip_date")
     val lastTripDate: String? = null
+)
+
+/**
+ * Customer statistics data DTO from API.
+ * New API response format with nested objects.
+ */
+@Serializable
+data class CustomerStatisticsDataDto(
+    @SerialName("customer")
+    val customer: CustomerSummaryDto? = null,
+    @SerialName("trips")
+    val trips: CustomerStatisticsTripsDto? = null,
+    @SerialName("financials")
+    val financials: CustomerStatisticsFinancialsDto? = null,
+    @SerialName("performance")
+    val performance: CustomerStatisticsPerformanceDto? = null
 )
 
 /**
@@ -123,7 +174,27 @@ data class CustomerResponse(
 )
 
 /**
+ * Nested data object for customer list response.
+ */
+@Serializable
+data class CustomerListDataDto(
+    @SerialName("items")
+    val items: List<CustomerDto> = emptyList(),
+    @SerialName("count")
+    val count: Int = 0,
+    @SerialName("page")
+    val page: Int = 1,
+    @SerialName("per_page")
+    val perPage: Int = 20,
+    @SerialName("total_pages")
+    val totalPages: Int = 1,
+    @SerialName("has_more")
+    val hasMore: Boolean = false
+)
+
+/**
  * API response wrapper for customer list.
+ * Response: { success, message, data: { items, count, page, per_page, total_pages, has_more } }
  */
 @Serializable
 data class CustomerListResponse(
@@ -132,19 +203,31 @@ data class CustomerListResponse(
     @SerialName("message")
     val message: String? = null,
     @SerialName("data")
-    val data: List<CustomerDto>? = null,
-    @SerialName("page")
-    val page: Int? = null,
-    @SerialName("per_page")
-    val perPage: Int? = null,
-    @SerialName("total")
-    val total: Int? = null,
-    @SerialName("total_pages")
-    val totalPages: Int? = null
-)
+    val data: CustomerListDataDto? = null
+) {
+    // Convenience accessors
+    val customers: List<CustomerDto>
+        get() = data?.items ?: emptyList()
+
+    val page: Int
+        get() = data?.page ?: 1
+
+    val perPage: Int
+        get() = data?.perPage ?: 20
+
+    val total: Int
+        get() = data?.count ?: 0
+
+    val totalPages: Int
+        get() = data?.totalPages ?: 1
+
+    val hasMore: Boolean
+        get() = data?.hasMore ?: false
+}
 
 /**
  * API response wrapper for customer statistics.
+ * Response: { success, message, data: { customer, trips, financials, performance } }
  */
 @Serializable
 data class CustomerStatisticsResponse(
@@ -153,7 +236,7 @@ data class CustomerStatisticsResponse(
     @SerialName("message")
     val message: String? = null,
     @SerialName("data")
-    val data: CustomerStatisticsDto? = null
+    val data: CustomerStatisticsDataDto? = null
 )
 
 // ============= Customer Trips DTOs =============
@@ -305,35 +388,69 @@ data class CustomerTripsResponse(
 
 /**
  * Customer pending payment DTO from API.
+ * Maps to items in /customers/:id/pending-payments response.
  */
 @Serializable
 data class CustomerPendingPaymentDto(
     @SerialName("trip_id")
     val tripId: Int,
-    @SerialName("vehicle_registration")
-    val vehicleRegistration: String? = null,
+    @SerialName("scheduled_date")
+    val scheduledDate: String? = null,
     @SerialName("start_location")
     val startLocation: String? = null,
     @SerialName("end_location")
     val endLocation: String? = null,
-    @SerialName("trip_date")
-    val tripDate: String? = null,
-    @SerialName("expected_trip_price")
-    val expectedTripPrice: Double = 0.0,
-    @SerialName("paid_trip_price")
-    val paidTripPrice: Double = 0.0,
+    @SerialName("vehicle_number")
+    val vehicleNumber: String? = null,
+    @SerialName("expected_price")
+    val expectedPrice: Double = 0.0,
+    @SerialName("paid_amount")
+    val paidAmount: Double = 0.0,
     @SerialName("pending_amount")
     val pendingAmount: Double = 0.0,
     @SerialName("days_overdue")
     val daysOverdue: Int = 0,
-    @SerialName("state")
-    val state: String? = null,
     @SerialName("payment_status")
     val paymentStatus: String? = null
 )
 
 /**
+ * Summary for pending payments.
+ */
+@Serializable
+data class CustomerPendingPaymentsSummaryDto(
+    @SerialName("total_pending")
+    val totalPending: Double = 0.0,
+    @SerialName("pending_count")
+    val pendingCount: Int = 0
+)
+
+/**
+ * Nested data object for customer pending payments response.
+ */
+@Serializable
+data class CustomerPendingPaymentsDataDto(
+    @SerialName("customer")
+    val customer: CustomerSummaryDto? = null,
+    @SerialName("items")
+    val items: List<CustomerPendingPaymentDto> = emptyList(),
+    @SerialName("summary")
+    val summary: CustomerPendingPaymentsSummaryDto? = null,
+    @SerialName("count")
+    val count: Int = 0,
+    @SerialName("page")
+    val page: Int = 1,
+    @SerialName("per_page")
+    val perPage: Int = 20,
+    @SerialName("total_pages")
+    val totalPages: Int = 1,
+    @SerialName("has_more")
+    val hasMore: Boolean = false
+)
+
+/**
  * API response for customer pending payments.
+ * Response: { success, message, data: { customer, items, summary, pagination... } }
  */
 @Serializable
 data class CustomerPendingPaymentsResponse(
@@ -342,25 +459,29 @@ data class CustomerPendingPaymentsResponse(
     @SerialName("message")
     val message: String? = null,
     @SerialName("data")
-    val data: List<CustomerPendingPaymentDto>? = null,
-    @SerialName("total_pending")
-    val totalPending: Double? = null,
-    @SerialName("overdue_count")
-    val overdueCount: Int? = null,
-    @SerialName("page")
-    val page: Int? = null,
-    @SerialName("per_page")
-    val perPage: Int? = null,
-    @SerialName("total")
-    val total: Int? = null,
-    @SerialName("total_pages")
-    val totalPages: Int? = null
-)
+    val data: CustomerPendingPaymentsDataDto? = null
+) {
+    val payments: List<CustomerPendingPaymentDto>
+        get() = data?.items ?: emptyList()
+    val totalPending: Double
+        get() = data?.summary?.totalPending ?: 0.0
+    val overdueCount: Int
+        get() = payments.count { it.daysOverdue > 0 }
+    val page: Int
+        get() = data?.page ?: 1
+    val totalPages: Int
+        get() = data?.totalPages ?: 1
+    val total: Int
+        get() = data?.count ?: 0
+    val hasMore: Boolean
+        get() = data?.hasMore ?: false
+}
 
 // ============= Customer Payments DTOs =============
 
 /**
  * Customer payment DTO from API.
+ * Maps to items in /customers/:id/payments response.
  */
 @Serializable
 data class CustomerPaymentDto(
@@ -370,12 +491,28 @@ data class CustomerPaymentDto(
     val tripId: Int? = null,
     @SerialName("amount")
     val amount: Double = 0.0,
+    @SerialName("tds_amount")
+    val tdsAmount: Double = 0.0,
+    @SerialName("discount_amount")
+    val discountAmount: Double = 0.0,
+    @SerialName("net_amount")
+    val netAmount: Double = 0.0,
+    @SerialName("payment_type")
+    val paymentType: String? = null,
     @SerialName("payment_mode")
     val paymentMode: String? = null,
+    @SerialName("payment_source")
+    val paymentSource: String? = null,
     @SerialName("payment_status")
     val paymentStatus: String? = null,
     @SerialName("payment_date")
     val paymentDate: String? = null,
+    @SerialName("receipt_number")
+    val receiptNumber: String? = null,
+    @SerialName("financial_year")
+    val financialYear: String? = null,
+    @SerialName("financial_month")
+    val financialMonth: String? = null,
     @SerialName("reference_number")
     val referenceNumber: String? = null,
     @SerialName("notes")
@@ -385,7 +522,44 @@ data class CustomerPaymentDto(
 )
 
 /**
+ * Summary for customer payments.
+ */
+@Serializable
+data class CustomerPaymentsSummaryDto(
+    @SerialName("total_received")
+    val totalReceived: Double = 0.0,
+    @SerialName("total_pending")
+    val totalPending: Double = 0.0,
+    @SerialName("payment_count")
+    val paymentCount: Int = 0
+)
+
+/**
+ * Nested data object for customer payments response.
+ */
+@Serializable
+data class CustomerPaymentsDataDto(
+    @SerialName("customer")
+    val customer: CustomerSummaryDto? = null,
+    @SerialName("items")
+    val items: List<CustomerPaymentDto> = emptyList(),
+    @SerialName("summary")
+    val summary: CustomerPaymentsSummaryDto? = null,
+    @SerialName("count")
+    val count: Int = 0,
+    @SerialName("page")
+    val page: Int = 1,
+    @SerialName("per_page")
+    val perPage: Int = 20,
+    @SerialName("total_pages")
+    val totalPages: Int = 1,
+    @SerialName("has_more")
+    val hasMore: Boolean = false
+)
+
+/**
  * API response for customer payments.
+ * Response: { success, message, data: { customer, items, summary, pagination... } }
  */
 @Serializable
 data class CustomerPaymentsResponse(
@@ -394,34 +568,50 @@ data class CustomerPaymentsResponse(
     @SerialName("message")
     val message: String? = null,
     @SerialName("data")
-    val data: List<CustomerPaymentDto>? = null,
-    @SerialName("total_received")
-    val totalReceived: Double? = null,
-    @SerialName("page")
-    val page: Int? = null,
-    @SerialName("per_page")
-    val perPage: Int? = null,
-    @SerialName("total")
-    val total: Int? = null,
-    @SerialName("total_pages")
-    val totalPages: Int? = null
-)
+    val data: CustomerPaymentsDataDto? = null
+) {
+    val payments: List<CustomerPaymentDto>
+        get() = data?.items ?: emptyList()
+    val totalReceived: Double
+        get() = data?.summary?.totalReceived ?: 0.0
+    val totalPending: Double
+        get() = data?.summary?.totalPending ?: 0.0
+    val page: Int
+        get() = data?.page ?: 1
+    val totalPages: Int
+        get() = data?.totalPages ?: 1
+    val total: Int
+        get() = data?.count ?: 0
+    val hasMore: Boolean
+        get() = data?.hasMore ?: false
+}
 
 // ============= Customer Payment Summary DTOs =============
 
 /**
- * Payment breakdown by mode.
+ * Payment breakdown by mode (cash, upi, bank_transfer).
  */
 @Serializable
 data class PaymentByModeDto(
-    @SerialName("mode")
-    val mode: String,
+    @SerialName("payment_mode")
+    val paymentMode: String? = null,
     @SerialName("amount")
     val amount: Double = 0.0,
     @SerialName("count")
-    val count: Int = 0,
-    @SerialName("percentage")
-    val percentage: Double = 0.0
+    val count: Int = 0
+)
+
+/**
+ * Payment breakdown by type (advance, partial, final).
+ */
+@Serializable
+data class PaymentByTypeDto(
+    @SerialName("payment_type")
+    val paymentType: String? = null,
+    @SerialName("amount")
+    val amount: Double = 0.0,
+    @SerialName("count")
+    val count: Int = 0
 )
 
 /**
@@ -431,8 +621,6 @@ data class PaymentByModeDto(
 data class MonthlyPaymentDto(
     @SerialName("month")
     val month: String,
-    @SerialName("year")
-    val year: Int,
     @SerialName("amount")
     val amount: Double = 0.0,
     @SerialName("count")
@@ -440,35 +628,53 @@ data class MonthlyPaymentDto(
 )
 
 /**
- * TDS summary.
+ * Payment totals.
  */
 @Serializable
-data class TdsSummaryDto(
-    @SerialName("total_tds")
-    val totalTds: Double = 0.0,
-    @SerialName("tds_percentage")
-    val tdsPercentage: Double = 0.0
+data class PaymentTotalsDto(
+    @SerialName("gross_amount")
+    val grossAmount: Double = 0.0,
+    @SerialName("tds_amount")
+    val tdsAmount: Double = 0.0,
+    @SerialName("discount_amount")
+    val discountAmount: Double = 0.0,
+    @SerialName("net_amount")
+    val netAmount: Double = 0.0
 )
 
 /**
- * Customer payment summary DTO from API.
+ * Date range for payment summary.
  */
 @Serializable
-data class CustomerPaymentSummaryDto(
+data class DateRangeDto(
+    @SerialName("start_date")
+    val startDate: String? = null,
+    @SerialName("end_date")
+    val endDate: String? = null
+)
+
+/**
+ * Nested data object for customer payment summary response.
+ */
+@Serializable
+data class CustomerPaymentSummaryDataDto(
+    @SerialName("customer")
+    val customer: CustomerSummaryDto? = null,
+    @SerialName("totals")
+    val totals: PaymentTotalsDto? = null,
     @SerialName("by_mode")
-    val byMode: List<PaymentByModeDto>? = null,
+    val byMode: List<PaymentByModeDto> = emptyList(),
+    @SerialName("by_type")
+    val byType: List<PaymentByTypeDto> = emptyList(),
     @SerialName("by_month")
-    val byMonth: List<MonthlyPaymentDto>? = null,
-    @SerialName("tds_summary")
-    val tdsSummary: TdsSummaryDto? = null,
-    @SerialName("total_amount")
-    val totalAmount: Double = 0.0,
-    @SerialName("total_payments")
-    val totalPayments: Int = 0
+    val byMonth: List<MonthlyPaymentDto> = emptyList(),
+    @SerialName("date_range")
+    val dateRange: DateRangeDto? = null
 )
 
 /**
  * API response for customer payment summary.
+ * Response: { success, message, data: { customer, totals, by_mode, by_type, by_month, date_range } }
  */
 @Serializable
 data class CustomerPaymentSummaryResponse(
@@ -477,37 +683,56 @@ data class CustomerPaymentSummaryResponse(
     @SerialName("message")
     val message: String? = null,
     @SerialName("data")
-    val data: CustomerPaymentSummaryDto? = null
+    val data: CustomerPaymentSummaryDataDto? = null
 )
 
 // ============= Customer Financial Report DTOs =============
 
 /**
- * Period breakdown item.
+ * Financial summary DTO.
  */
 @Serializable
-data class PeriodBreakdownDto(
-    @SerialName("period")
-    val period: String,
-    @SerialName("revenue")
-    val revenue: Double = 0.0,
-    @SerialName("costs")
-    val costs: Double = 0.0,
-    @SerialName("profit")
-    val profit: Double = 0.0,
-    @SerialName("trips")
-    val trips: Int = 0
+data class FinancialSummaryDto(
+    @SerialName("total_trips")
+    val totalTrips: Int = 0,
+    @SerialName("total_revenue")
+    val totalRevenue: Double = 0.0,
+    @SerialName("total_costs")
+    val totalCosts: Double = 0.0,
+    @SerialName("gross_profit")
+    val grossProfit: Double = 0.0,
+    @SerialName("profit_margin")
+    val profitMargin: Double = 0.0,
+    @SerialName("total_received")
+    val totalReceived: Double = 0.0,
+    @SerialName("total_pending")
+    val totalPending: Double = 0.0
 )
 
 /**
- * Top vehicle item in financial report.
+ * Cost breakdown DTO.
  */
 @Serializable
-data class TopVehicleDto(
-    @SerialName("vehicle_id")
-    val vehicleId: Int,
-    @SerialName("vehicle_registration")
-    val vehicleRegistration: String,
+data class CostBreakdownDto(
+    @SerialName("fuel_costs")
+    val fuelCosts: Double = 0.0,
+    @SerialName("toll_costs")
+    val tollCosts: Double = 0.0,
+    @SerialName("driver_costs")
+    val driverCosts: Double = 0.0,
+    @SerialName("maintenance_costs")
+    val maintenanceCosts: Double = 0.0,
+    @SerialName("other_costs")
+    val otherCosts: Double = 0.0
+)
+
+/**
+ * Monthly trend item.
+ */
+@Serializable
+data class MonthlyTrendDto(
+    @SerialName("month")
+    val month: String,
     @SerialName("trips")
     val trips: Int = 0,
     @SerialName("revenue")
@@ -515,61 +740,33 @@ data class TopVehicleDto(
     @SerialName("costs")
     val costs: Double = 0.0,
     @SerialName("profit")
-    val profit: Double = 0.0
+    val profit: Double = 0.0,
+    @SerialName("margin")
+    val margin: Double = 0.0
 )
 
 /**
- * Trip summary in financial report.
+ * Nested data object for customer financial report response.
  */
 @Serializable
-data class FinancialTripSummaryDto(
-    @SerialName("total_trips")
-    val totalTrips: Int = 0,
-    @SerialName("completed_trips")
-    val completedTrips: Int = 0,
-    @SerialName("average_trip_value")
-    val averageTripValue: Double = 0.0,
-    @SerialName("total_distance")
-    val totalDistance: Double = 0.0
-)
-
-/**
- * Customer financial report DTO from API.
- */
-@Serializable
-data class CustomerFinancialReportDto(
-    @SerialName("customer_id")
-    val customerId: Int,
-    @SerialName("customer_name")
-    val customerName: String? = null,
+data class CustomerFinancialReportDataDto(
+    @SerialName("customer")
+    val customer: CustomerSummaryDto? = null,
+    @SerialName("summary")
+    val summary: FinancialSummaryDto? = null,
+    @SerialName("cost_breakdown")
+    val costBreakdown: CostBreakdownDto? = null,
+    @SerialName("monthly_trend")
+    val monthlyTrend: List<MonthlyTrendDto> = emptyList(),
+    @SerialName("date_range")
+    val dateRange: DateRangeDto? = null,
     @SerialName("period")
-    val period: String? = null,
-    @SerialName("start_date")
-    val startDate: String? = null,
-    @SerialName("end_date")
-    val endDate: String? = null,
-    @SerialName("total_revenue")
-    val totalRevenue: Double = 0.0,
-    @SerialName("total_costs")
-    val totalCosts: Double = 0.0,
-    @SerialName("net_profit")
-    val netProfit: Double = 0.0,
-    @SerialName("profit_margin")
-    val profitMargin: Double = 0.0,
-    @SerialName("trip_summary")
-    val tripSummary: FinancialTripSummaryDto? = null,
-    @SerialName("period_breakdown")
-    val periodBreakdown: List<PeriodBreakdownDto>? = null,
-    @SerialName("top_vehicles")
-    val topVehicles: List<TopVehicleDto>? = null,
-    @SerialName("payment_received")
-    val paymentReceived: Double = 0.0,
-    @SerialName("payment_pending")
-    val paymentPending: Double = 0.0
+    val period: String? = null
 )
 
 /**
  * API response for customer financial report.
+ * Response: { success, message, data: { customer, summary, cost_breakdown, monthly_trend, date_range, period } }
  */
 @Serializable
 data class CustomerFinancialReportResponse(
@@ -578,5 +775,5 @@ data class CustomerFinancialReportResponse(
     @SerialName("message")
     val message: String? = null,
     @SerialName("data")
-    val data: CustomerFinancialReportDto? = null
+    val data: CustomerFinancialReportDataDto? = null
 )

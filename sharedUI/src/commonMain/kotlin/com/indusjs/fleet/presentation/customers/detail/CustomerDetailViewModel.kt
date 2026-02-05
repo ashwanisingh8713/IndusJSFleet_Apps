@@ -183,13 +183,9 @@ class CustomerDetailViewModel(
         when (tab) {
             CustomerDetailTab.OVERVIEW -> { /* Already loaded */ }
             CustomerDetailTab.TRIPS -> {
+                // Payment info is integrated into each trip row
                 if (!state.value.tripsDataLoaded) {
                     loadTrips()
-                }
-            }
-            CustomerDetailTab.PENDING -> {
-                if (!state.value.pendingPaymentsDataLoaded && state.value.canViewFinancials) {
-                    loadPendingPayments()
                 }
             }
             CustomerDetailTab.PAYMENTS -> {
@@ -493,10 +489,186 @@ class CustomerDetailViewModel(
     private suspend fun exportPdf(reportType: ReportType) {
         updateState { copy(isExportingPdf = true, exportType = reportType) }
 
-        // TODO: Implement PDF export based on report type
-        // For now, just show a message
-        updateState { copy(isExportingPdf = false, exportType = null) }
-        sendEffect(Effect.ShowSnackbar("PDF export coming soon"))
+        try {
+            when (reportType) {
+                ReportType.TRIPS -> exportTripsPdf()
+                ReportType.PENDING_PAYMENTS -> exportTripsPdf() // Use trips PDF for pending as well
+                ReportType.PAYMENTS -> exportPaymentsPdf()
+                ReportType.FINANCIALS -> exportFinancialsPdf()
+            }
+        } catch (e: Exception) {
+            log.e { "PDF export failed: ${e.message}" }
+            sendEffect(Effect.ShowSnackbar("Failed to export PDF: ${e.message}"))
+        } finally {
+            updateState { copy(isExportingPdf = false, exportType = null) }
+        }
+    }
+
+    private fun exportTripsPdf() {
+        val customer = state.value.customer ?: return
+        val trips = state.value.trips
+        val summary = state.value.tripsSummary
+
+        if (trips.isEmpty()) {
+            sendEffect(Effect.ShowSnackbar("No trips to export"))
+            return
+        }
+
+        // Calculate values from trips if summary is null
+        val totalTrips = summary?.totalTrips ?: trips.size
+        val completedTrips = summary?.completedTrips ?: trips.count { it.state?.lowercase() == "completed" }
+        val totalRevenue = summary?.totalRevenueDisplay ?: formatCurrencyForPdf(trips.sumOf { it.tripPrice ?: 0.0 })
+        val totalPending = summary?.totalPendingDisplay ?: formatCurrencyForPdf(trips.sumOf {
+            val price = it.tripPrice ?: 0.0
+            val paid = it.paidAmount ?: 0.0
+            (price - paid).coerceAtLeast(0.0)
+        })
+
+        val pdfData = CustomerTripsPdfData(
+            customerName = customer.companyName,
+            customerContact = "${customer.personName} | ${customer.primaryContact}",
+            generatedDate = FleetDateTime.today(),
+            totalTrips = totalTrips,
+            completedTrips = completedTrips,
+            totalRevenue = totalRevenue,
+            totalPending = totalPending,
+            trips = trips.map { trip ->
+                val dueAmount = trip.pendingAmount ?: run {
+                    val price = trip.tripPrice ?: 0.0
+                    val paid = trip.paidAmount ?: 0.0
+                    (price - paid).coerceAtLeast(0.0)
+                }
+                CustomerTripPdfItem(
+                    id = trip.id,
+                    vehicleRegistration = trip.vehicleRegistration ?: "-",
+                    route = trip.routeDisplay,
+                    startDate = FleetDateTime.formatIsoToDisplayDate(trip.plannedStart ?: trip.scheduledDate),
+                    endDate = FleetDateTime.formatIsoToDisplayDate(trip.plannedEnd),
+                    state = trip.stateDisplay,
+                    price = trip.tripPriceDisplay,
+                    paid = trip.paidAmountDisplay,
+                    pending = formatCurrencyForPdf(dueAmount)
+                )
+            }
+        )
+
+        sendEffect(Effect.ExportTripsPdf(pdfData))
+    }
+
+    private fun formatCurrencyForPdf(amount: Double): String {
+        return when {
+            amount >= 10000000 -> {
+                val value = amount / 10000000
+                "₹${((value * 10).toInt() / 10.0)}Cr"
+            }
+            amount >= 100000 -> {
+                val value = amount / 100000
+                "₹${((value * 10).toInt() / 10.0)}L"
+            }
+            amount >= 1000 -> {
+                val value = amount / 1000
+                "₹${((value * 10).toInt() / 10.0)}K"
+            }
+            else -> "₹${amount.toInt()}"
+        }
+    }
+
+    private suspend fun exportPaymentsPdf() {
+        val customer = state.value.customer ?: return
+        val payments = state.value.receivedPayments
+
+        if (payments.isEmpty()) {
+            sendEffect(Effect.ShowSnackbar("No payments to export"))
+            return
+        }
+
+        val pdfData = CustomerPaymentsPdfData(
+            customerName = customer.companyName,
+            customerContact = "${customer.personName} | ${customer.primaryContact}",
+            generatedDate = FleetDateTime.today(),
+            totalReceived = formatCurrencyForPdf(state.value.totalReceivedAmount),
+            paymentCount = payments.size,
+            payments = payments.map { payment ->
+                CustomerPaymentPdfItem(
+                    id = payment.id,
+                    tripId = "#${payment.tripId ?: "-"}",
+                    date = payment.date?.let { FleetDateTime.formatIsoToDisplayDateTime(it) } ?: "-",
+                    amount = payment.amountDisplay,
+                    mode = payment.modeDisplay,
+                    type = payment.paymentType ?: "payment",
+                    receipt = payment.receiptNumber ?: "-"
+                )
+            }
+        )
+
+        sendEffect(Effect.ExportPaymentsPdf(pdfData))
+    }
+
+    private suspend fun exportFinancialsPdf() {
+        val customer = state.value.customer ?: return
+        val report = state.value.financialReport
+
+        if (report == null) {
+            sendEffect(Effect.ShowSnackbar("No financial data to export"))
+            return
+        }
+
+        val htmlContent = buildString {
+            append("""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
+                        h1 { color: #1a73e8; font-size: 20px; margin-bottom: 5px; }
+                        h2 { color: #333; font-size: 16px; margin-top: 20px; }
+                        .header { border-bottom: 2px solid #1a73e8; padding-bottom: 10px; margin-bottom: 15px; }
+                        .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
+                        .stat-box { background: #f5f5f5; padding: 15px; border-radius: 8px; }
+                        .stat-value { font-size: 20px; font-weight: bold; color: #1a73e8; }
+                        .stat-label { font-size: 11px; color: #666; }
+                        .revenue { color: #137333 !important; }
+                        .pending { color: #d93025 !important; }
+                        .footer { margin-top: 30px; font-size: 10px; color: #666; text-align: center; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Customer Financial Report</h1>
+                        <div><strong>${customer.companyName}</strong> | ${customer.personName}</div>
+                        <div>Period: ${state.value.financialsStartDate} to ${state.value.financialsEndDate}</div>
+                    </div>
+                    
+                    <div class="summary-grid">
+                        <div class="stat-box">
+                            <div class="stat-value revenue">${report.totalRevenueDisplay}</div>
+                            <div class="stat-label">Total Revenue</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${report.paymentReceivedDisplay}</div>
+                            <div class="stat-label">Total Received</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value pending">${report.paymentPendingDisplay}</div>
+                            <div class="stat-label">Total Pending</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${report.tripSummary?.totalTrips ?: 0}</div>
+                            <div class="stat-label">Total Trips</div>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        Generated on ${FleetDateTime.today()} | IndusJS Fleet Management
+                    </div>
+                </body>
+                </html>
+            """.trimIndent())
+        }
+
+        sendEffect(Effect.ExportHtml(htmlContent, "customer_financials_${customer.id}_${FleetDateTime.today().replace("-", "")}.html"))
+        sendEffect(Effect.ShowSnackbar("Financial report exported successfully"))
     }
 
     // ============= Edit Mode Functions =============

@@ -47,11 +47,11 @@ class CustomerRepositoryImpl(
         val token = requireAuthToken()
         val response = remoteDataSource.getCustomers(token, page, perPage)
 
-        if (response.success && response.data != null) {
+        if (response.success && response.customers.isNotEmpty()) {
             // Cache customers locally
-            localDataSource.saveCustomers(response.data)
+            localDataSource.saveCustomers(response.customers)
 
-            var customers = response.data.toDomainList()
+            var customers = response.customers.toDomainList()
 
             // Apply local filtering if needed
             if (!searchQuery.isNullOrBlank()) {
@@ -68,6 +68,9 @@ class CustomerRepositoryImpl(
             }
 
             Result.Success(customers)
+        } else if (response.success) {
+            // Success but empty list
+            Result.Success(emptyList())
         } else {
             Result.Error(ApiException(response.message ?: "Failed to fetch customers"))
         }
@@ -234,10 +237,10 @@ class CustomerRepositoryImpl(
         val token = requireAuthToken()
         val response = remoteDataSource.getCustomers(token, page = 1, perPage = 100)
 
-        if (response.success && response.data != null) {
-            localDataSource.saveCustomers(response.data)
+        if (response.success && response.customers.isNotEmpty()) {
+            localDataSource.saveCustomers(response.customers)
 
-            var summaries = response.data.toSummaryList()
+            var summaries = response.customers.toSummaryList()
 
             if (!searchQuery.isNullOrBlank()) {
                 val query = searchQuery.lowercase()
@@ -285,12 +288,16 @@ class CustomerRepositoryImpl(
         val token = requireAuthToken()
         val response = remoteDataSource.getCustomers(token, page = 1, perPage = 100)
 
-        if (response.success && response.data != null) {
+        if (response.success && response.customers.isNotEmpty()) {
             // Clear and repopulate cache
             localDataSource.clearCache()
-            localDataSource.saveCustomers(response.data)
-            log.d { "Refreshed ${response.data.size} customers" }
-            Result.Success(response.data.toDomainList())
+            localDataSource.saveCustomers(response.customers)
+            log.d { "Refreshed ${response.customers.size} customers" }
+            Result.Success(response.customers.toDomainList())
+        } else if (response.success) {
+            // Success but empty - clear cache
+            localDataSource.clearCache()
+            Result.Success(emptyList())
         } else {
             Result.Error(ApiException(response.message ?: "Failed to refresh customers"))
         }
@@ -352,19 +359,17 @@ class CustomerRepositoryImpl(
         val response = remoteDataSource.getCustomerPendingPayments(token, customerId.toInt(), page, perPage)
 
         if (response.success) {
-            val payments = response.data?.toPendingPaymentsDomain() ?: emptyList()
-            val totalPages = response.totalPages ?: 1
-            val total = response.total ?: payments.size
+            val payments = response.payments.toPendingPaymentsDomain()
 
             Result.Success(
                 CustomerPendingPaymentsResult(
                     payments = payments,
-                    totalPending = response.totalPending ?: 0.0,
-                    overdueCount = response.overdueCount ?: 0,
-                    page = page,
-                    totalPages = totalPages,
-                    total = total,
-                    hasMore = page < totalPages
+                    totalPending = response.totalPending,
+                    overdueCount = response.overdueCount,
+                    page = response.page,
+                    totalPages = response.totalPages,
+                    total = response.total,
+                    hasMore = response.hasMore
                 )
             )
         } else {
@@ -388,18 +393,16 @@ class CustomerRepositoryImpl(
         val response = remoteDataSource.getCustomerPayments(token, customerId.toInt(), page, perPage, status, mode)
 
         if (response.success) {
-            val payments = response.data?.toPaymentsDomain() ?: emptyList()
-            val totalPages = response.totalPages ?: 1
-            val total = response.total ?: payments.size
+            val payments = response.payments.toPaymentsDomain()
 
             Result.Success(
                 CustomerPaymentsResult(
                     payments = payments,
-                    totalReceived = response.totalReceived ?: 0.0,
-                    page = page,
-                    totalPages = totalPages,
-                    total = total,
-                    hasMore = page < totalPages
+                    totalReceived = response.totalReceived,
+                    page = response.page,
+                    totalPages = response.totalPages,
+                    total = response.total,
+                    hasMore = response.hasMore
                 )
             )
         } else {
