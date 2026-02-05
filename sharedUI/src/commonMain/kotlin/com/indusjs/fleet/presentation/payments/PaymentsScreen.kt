@@ -940,17 +940,11 @@ private fun PaymentStatusBadge(
 }
 
 
+/**
+ * Format ISO date to display format: "DD-MMM-YYYY hh:mm AM/PM"
+ */
 private fun formatPaymentDate(isoDate: String): String {
-    return try {
-        val parts = isoDate.take(10).split("-")
-        if (parts.size == 3) {
-            "${parts[2]}-${parts[1]}-${parts[0].takeLast(2)}"
-        } else {
-            isoDate.take(10)
-        }
-    } catch (_: Exception) {
-        isoDate.take(10)
-    }
+    return FleetDateTime.formatIsoToDisplayDateTime12Hour(isoDate)
 }
 
 /**

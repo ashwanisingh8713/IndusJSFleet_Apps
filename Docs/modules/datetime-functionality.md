@@ -89,6 +89,26 @@ enum class PickerMode {
 | `formatIsoToMonthYear(isoString: String?)` | ISO to "MMM YYYY" | `String` |
 | `formatToDisplayDate(dateString: String?)` | DD-MM-YYYY to DD-MMM-YYYY | `String` |
 
+### Universal Format Functions (Any Input Format)
+
+| Function | Description | Returns |
+|----------|-------------|---------|
+| `formatAnyToDisplayDate(dateString: String?)` | Any format (ISO/YYYY-MM-DD/DD-MM-YYYY) to DD-MMM-YYYY | `String` |
+| `formatIsoToTime12Hour(isoString: String?)` | ISO to "hh:mm AM/PM" (time only) | `String` |
+| `formatAnyToTime12Hour(timeString: String?)` | Any time format to "hh:mm AM/PM" | `String` |
+| `formatAnyToDisplayDateTime12Hour(dateString: String?, timeString: String?)` | Any format to "DD-MMM-YYYY hh:mm AM/PM" | `String` |
+
+### 12-Hour Format with AM/PM (Recommended for User-Facing Display)
+
+| Function | Description | Returns |
+|----------|-------------|---------|
+| `formatTime12Hour(hour: Int, minute: Int)` | Format to "hh:mm AM/PM" | `String` |
+| `formatTime12Hour(value: FleetDateTimeValue)` | Format value to 12-hour time | `String` |
+| `formatDisplayDateTime12Hour(value: FleetDateTimeValue)` | Format to "DD-MMM-YYYY hh:mm AM/PM" | `String` |
+| `formatIsoToDisplayDateTime12Hour(isoString: String?)` | ISO to "DD-MMM-YYYY hh:mm AM/PM" | `String` |
+| `formatToDisplayDateTime12Hour(dateTime: String?)` | DD-MM-YYYY HH:mm to 12-hour display | `String` |
+| `formatToDisplayDateTime12Hour(date: String?, time: String?)` | Separate date/time to 12-hour display | `String` |
+
 ### Comparison
 
 | Function | Description | Returns |
@@ -210,9 +230,12 @@ data class FleetDateTimeValue(
     val minute: Int = 0,
     val second: Int = 0
 ) {
-    fun toDateString(): String      // DD-MM-YYYY
-    fun toTimeString(): String      // HH:mm
-    fun toDateTimeString(): String  // DD-MM-YYYY HH:mm
+    fun toDateString(): String           // DD-MM-YYYY
+    fun toTimeString(): String           // HH:mm
+    fun toDateTimeString(): String       // DD-MM-YYYY HH:mm
+    fun toDisplayDate(): String          // DD-MMM-YYYY
+    fun toTime12HourString(): String     // hh:mm AM/PM
+    fun toDisplayDateTime12Hour(): String // DD-MMM-YYYY hh:mm AM/PM (Primary display format)
     fun toLocalDate(): LocalDate
     fun toLocalDateTime(): LocalDateTime
 }
@@ -333,8 +356,8 @@ data class DateTimeDifference(
 4. **Always validate dates** with min/max constraints
 
 ### Display Formatting
-5. Use `formatIsoToDisplayDate()` for display formatting (DD-MMM-YYYY)
-6. Use `formatIsoToDisplayDateTime()` for datetime display (DD-MMM-YYYY HH:mm)
+5. Use `formatIsoToDisplayDate()` for date-only display (DD-MMM-YYYY)
+6. Use `formatIsoToDisplayDateTime12Hour()` for datetime display (DD-MMM-YYYY hh:mm AM/PM) - **Recommended for user-facing content**
 7. Use `formatIsoToMonthYear()` for grouping by month
 
 ### API Communication
@@ -351,6 +374,12 @@ data class DateTimeDifference(
 14. Always validate with `isValidDate()` / `isValidTime()` before processing
 15. Use `validateCostDateTimeForTrip()` for trip cost date validation
 16. Use `validateMaintenanceCostDate()` for maintenance cost date validation
+
+### 12-Hour Format Guidelines
+17. Use 12-hour format (AM/PM) for all user-facing datetime displays
+18. Input fields can remain in 24-hour format for easier data entry
+19. Picker preview should show 12-hour format for consistency
+20. PDF exports should use 12-hour format for datetime
 
 ---
 
@@ -388,9 +417,49 @@ val departureIso = FleetDateTime.toIso8601(
     state.departureTime   // HH:mm
 )
 
-// Converting API response to display format
-val displayDate = FleetDateTime.formatIsoToDisplayDateTime(trip.scheduledDate)
-// Result: "05-Feb-2026 14:30"
+// Converting API response to display format (12-hour with AM/PM - recommended)
+val displayDate = FleetDateTime.formatIsoToDisplayDateTime12Hour(trip.scheduledDate)
+// Result: "05-Feb-2026 02:30 PM"
+
+// For date-only display
+val dateOnly = FleetDateTime.formatIsoToDisplayDate(trip.scheduledDate)
+// Result: "05-Feb-2026"
+```
+
+### 12-Hour Time Formatting
+
+```kotlin
+// Format time to 12-hour with AM/PM
+val time12Hour = FleetDateTime.formatTime12Hour(14, 30)
+// Result: "02:30 PM"
+
+// Format FleetDateTimeValue to 12-hour display
+val value = FleetDateTime.now()
+val display = value.toDisplayDateTime12Hour()
+// Result: "05-Feb-2026 02:30 PM"
+
+// From separate date/time strings
+val formattedDateTime = FleetDateTime.formatToDisplayDateTime12Hour("05-02-2026", "14:30")
+// Result: "05-Feb-2026 02:30 PM"
+```
+
+### Universal Format Functions (Any Input)
+
+```kotlin
+// Format any date format to display (handles ISO, YYYY-MM-DD, DD-MM-YYYY)
+val display1 = FleetDateTime.formatAnyToDisplayDate("2026-02-05T14:30:00Z") // "05-Feb-2026"
+val display2 = FleetDateTime.formatAnyToDisplayDate("2026-02-05")           // "05-Feb-2026"
+val display3 = FleetDateTime.formatAnyToDisplayDate("05-02-2026")           // "05-Feb-2026"
+
+// Format any time format to 12-hour
+val time1 = FleetDateTime.formatAnyToTime12Hour("14:30")                    // "02:30 PM"
+val time2 = FleetDateTime.formatAnyToTime12Hour("14:30:00")                 // "02:30 PM"
+val time3 = FleetDateTime.formatAnyToTime12Hour("2026-02-05T14:30:00Z")     // "02:30 PM"
+
+// Format any datetime to display (handles all input combinations)
+val dt1 = FleetDateTime.formatAnyToDisplayDateTime12Hour("2026-02-05T14:30:00Z")       // "05-Feb-2026 02:30 PM"
+val dt2 = FleetDateTime.formatAnyToDisplayDateTime12Hour("05-02-2026", "14:30")        // "05-Feb-2026 02:30 PM"
+val dt3 = FleetDateTime.formatAnyToDisplayDateTime12Hour("2026-02-05")                 // "05-Feb-2026"
 ```
 
 ### Date Validation

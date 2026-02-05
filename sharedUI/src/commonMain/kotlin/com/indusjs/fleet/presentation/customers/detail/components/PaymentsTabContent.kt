@@ -577,7 +577,7 @@ fun EnhancedPaymentItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Date with proper format: DD-MMM-YYYY HH:mm
+                // Date with proper format: DD-MMM-YYYY hh:mm AM/PM
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -587,7 +587,7 @@ fun EnhancedPaymentItem(
                         style = MaterialTheme.typography.labelSmall
                     )
                     Text(
-                        text = payment.date?.let { FleetDateTime.formatIsoToDisplayDateTime(it) } ?: "-",
+                        text = payment.date?.let { FleetDateTime.formatIsoToDisplayDateTime12Hour(it) } ?: "-",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

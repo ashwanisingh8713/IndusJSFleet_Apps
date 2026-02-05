@@ -227,21 +227,8 @@ object CustomerMapper {
         // month format: "2026-02" - extract month and year
         val parts = month.split("-")
         val year = parts.getOrNull(0)?.toIntOrNull() ?: 2026
-        val monthName = when (parts.getOrNull(1)) {
-            "01" -> "Jan"
-            "02" -> "Feb"
-            "03" -> "Mar"
-            "04" -> "Apr"
-            "05" -> "May"
-            "06" -> "Jun"
-            "07" -> "Jul"
-            "08" -> "Aug"
-            "09" -> "Sep"
-            "10" -> "Oct"
-            "11" -> "Nov"
-            "12" -> "Dec"
-            else -> "Unknown"
-        }
+        val monthNum = parts.getOrNull(1)?.toIntOrNull() ?: 1
+        val monthName = com.indusjs.datetimeutils.FleetDateTime.getMonthNameShort(monthNum)
         return MonthlyPayment(
             month = monthName,
             year = year,

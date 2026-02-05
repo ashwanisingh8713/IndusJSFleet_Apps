@@ -592,7 +592,7 @@ class CustomerDetailViewModel(
                 CustomerPaymentPdfItem(
                     id = payment.id,
                     tripId = "#${payment.tripId ?: "-"}",
-                    date = payment.date?.let { FleetDateTime.formatIsoToDisplayDateTime(it) } ?: "-",
+                    date = payment.date?.let { FleetDateTime.formatIsoToDisplayDateTime12Hour(it) } ?: "-",
                     amount = payment.amountDisplay,
                     mode = payment.modeDisplay,
                     type = payment.paymentType ?: "payment",

@@ -135,28 +135,19 @@ object DateTimeUtils {
         formatDateParts(date.dayOfMonth, date.monthNumber, date.year)
 
     /**
-     * Format date for display: "18 April 2024"
-     * Input: DD-MM-YYYY (e.g., "18-04-2024")
-     * Output: "18 April 2024"
+     * Format date for display: "05-Feb-2026" (DD-MMM-YYYY)
+     * Input: DD-MM-YYYY (e.g., "05-02-2026")
+     * Output: "05-Feb-2026"
      */
     fun formatDateForDisplay(date: String): String {
         if (date.isBlank()) return ""
-        return try {
-            val parts = date.split("-")
-            if (parts.size != 3) return date
-            val day = parts[0].toIntOrNull() ?: return date
-            val month = parts[1].toIntOrNull() ?: return date
-            val year = parts[2].toIntOrNull() ?: return date
-            "$day ${getMonthName(month)} $year"
-        } catch (e: Exception) {
-            date
-        }
+        return FleetDateTime.formatToDisplayDate(date)
     }
 
     /**
-     * Format time for display: "10:30 AM" (12-hour format)
+     * Format time for display: "02:30 PM" (12-hour format)
      * Input: HH:MM (24-hour, e.g., "14:30")
-     * Output: "2:30 PM"
+     * Output: "02:30 PM"
      */
     fun formatTimeForDisplay(time: String): String {
         if (time.isBlank()) return ""
@@ -165,34 +156,19 @@ object DateTimeUtils {
             if (parts.size != 2) return time
             val hour = parts[0].toIntOrNull() ?: return time
             val minute = parts[1].toIntOrNull() ?: return time
-
-            val period = if (hour >= 12) "PM" else "AM"
-            val hour12 = when {
-                hour == 0 -> 12
-                hour > 12 -> hour - 12
-                else -> hour
-            }
-            val minuteStr = if (minute < 10) "0$minute" else "$minute"
-            "$hour12:$minuteStr $period"
+            FleetDateTime.formatTime12Hour(hour, minute)
         } catch (e: Exception) {
             time
         }
     }
 
     /**
-     * Format date and time for display: "18 April 2024, 10:30 AM"
+     * Format date and time for display: "05-Feb-2026 02:30 PM"
      * Input: date (DD-MM-YYYY), time (HH:MM 24-hour)
-     * Output: "18 April 2024, 10:30 AM"
+     * Output: "05-Feb-2026 02:30 PM"
      */
     fun formatDateTimeForDisplay(date: String, time: String): String {
-        val formattedDate = formatDateForDisplay(date)
-        val formattedTime = formatTimeForDisplay(time)
-
-        return when {
-            formattedDate.isNotBlank() && formattedTime.isNotBlank() -> "$formattedDate, $formattedTime"
-            formattedDate.isNotBlank() -> formattedDate
-            formattedTime.isNotBlank() -> formattedTime
-            else -> ""
-        }
+        if (date.isBlank() && time.isBlank()) return ""
+        return FleetDateTime.formatToDisplayDateTime12Hour(date, time)
     }
 }

@@ -810,45 +810,11 @@ private fun getNextEmiDueDate(purchase: VehiclePurchase): String {
 }
 
 /**
- * Format date for display using ijs-datetime-utils.
- * Converts ISO 8601, YYYY-MM-DD, or DD-MM-YYYY format to "07 Apr 2024" format.
+ * Format date for display using FleetDateTime.
+ * Converts ISO 8601, YYYY-MM-DD, or DD-MM-YYYY format to "DD-MMM-YYYY" format.
  */
-private fun formatDueDateDisplay(dateString: String?): String {
-    if (dateString.isNullOrBlank()) return "N/A"
-
-    // Try to parse ISO format first (e.g., "2026-01-15T00:00:00Z")
-    val parsed = FleetDateTime.fromIso8601(dateString)
-    if (parsed != null) {
-        val day = parsed.day.toString().padStart(2, '0')
-        val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[parsed.month - 1]
-        return "$day $monthName ${parsed.year}"
-    }
-
-    val parts = dateString.split("-")
-    if (parts.size == 3) {
-        return try {
-            // Check if YYYY-MM-DD format (year first, 4 digits)
-            if (parts[0].length == 4) {
-                val year = parts[0].toInt()
-                val month = parts[1].toInt()
-                val day = parts[2].toInt()
-                val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month - 1]
-                "${day.toString().padStart(2, '0')} $monthName $year"
-            } else {
-                // DD-MM-YYYY format
-                val day = parts[0].toInt()
-                val month = parts[1].toInt()
-                val year = parts[2].toInt()
-                val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month - 1]
-                "${day.toString().padStart(2, '0')} $monthName $year"
-            }
-        } catch (e: Exception) {
-            dateString
-        }
-    }
-
-    return dateString
-}
+private fun formatDueDateDisplay(dateString: String?): String =
+    FleetDateTime.formatAnyToDisplayDate(dateString)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

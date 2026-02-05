@@ -158,6 +158,8 @@ Shows loading indicator during PDF generation.
 3. **Provide Open/Share options** in result dialog
 4. **Handle permissions properly** for storage access
 5. **Generate meaningful filenames** with dates (e.g., `TripCosts_AB12CD34_2026-02-05.pdf`)
+6. **Use 12-hour format with AM/PM** for datetime display in PDFs using `FleetDateTime.formatIsoToDisplayDateTime12Hour()`
+7. **Use DD-MMM-YYYY format** for dates using `FleetDateTime.formatIsoToDisplayDate()`
 6. **Use consistent styling** across all PDF reports
 7. **Include header with company/app branding**
 8. **Include footer with page numbers** for multi-page reports

@@ -391,35 +391,11 @@ private fun SummaryItem(
 }
 
 /**
- * Format date for display using ijs-datetime-utils.
+ * Format date for display using FleetDateTime.
+ * Output format: "DD-MMM-YYYY"
  */
-private fun formatDateDisplay(dateString: String?): String {
-    if (dateString.isNullOrBlank()) return "N/A"
-
-    // Try to parse ISO format first
-    val parsed = FleetDateTime.fromIso8601(dateString)
-    if (parsed != null) {
-        val day = parsed.day
-        val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[parsed.month - 1]
-        return "$day $monthName ${parsed.year}"
-    }
-
-    // If already in DD-MM-YYYY format
-    val parts = dateString.split("-")
-    if (parts.size == 3 && parts[0].length <= 2) {
-        return try {
-            val day = parts[0].toInt()
-            val month = parts[1].toInt()
-            val year = parts[2].toInt()
-            val monthName = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month - 1]
-            "$day $monthName $year"
-        } catch (e: Exception) {
-            dateString
-        }
-    }
-
-    return dateString
-}
+private fun formatDateDisplay(dateString: String?): String =
+    FleetDateTime.formatAnyToDisplayDate(dateString)
 
 @Composable
 private fun PaymentHistoryCard(

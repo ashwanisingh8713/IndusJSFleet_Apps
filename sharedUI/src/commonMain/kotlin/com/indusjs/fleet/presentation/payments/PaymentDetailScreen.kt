@@ -836,33 +836,9 @@ private fun PaymentStatusBadge(
     }
 }
 
+/**
+ * Format ISO date to display format: "DD-MMM-YYYY hh:mm AM/PM"
+ */
 private fun formatDisplayDate(isoDate: String): String {
-    return try {
-        val parts = isoDate.take(10).split("-")
-        if (parts.size == 3) {
-            "${parts[2]} ${getMonthName(parts[1].toInt())} ${parts[0]}"
-        } else {
-            isoDate.take(10)
-        }
-    } catch (e: Exception) {
-        isoDate.take(10)
-    }
-}
-
-private fun getMonthName(month: Int): String {
-    return when (month) {
-        1 -> "Jan"
-        2 -> "Feb"
-        3 -> "Mar"
-        4 -> "Apr"
-        5 -> "May"
-        6 -> "Jun"
-        7 -> "Jul"
-        8 -> "Aug"
-        9 -> "Sep"
-        10 -> "Oct"
-        11 -> "Nov"
-        12 -> "Dec"
-        else -> ""
-    }
+    return FleetDateTime.formatIsoToDisplayDateTime12Hour(isoDate)
 }

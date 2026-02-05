@@ -53,8 +53,8 @@ object FleetDateTime {
         val localDateTime = instant.toLocalDateTime(timeZone)
         return FleetDateTimeValue(
             year = localDateTime.year,
-            month = localDateTime.monthNumber,
-            day = localDateTime.dayOfMonth,
+            month = localDateTime.month.number,
+            day = localDateTime.date.day,
             hour = localDateTime.hour,
             minute = localDateTime.minute,
             second = localDateTime.second
@@ -66,7 +66,7 @@ object FleetDateTime {
      */
     fun today(timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
         val today = Clock.System.todayIn(timeZone)
-        return formatDateParts(today.dayOfMonth, today.monthNumber, today.year)
+        return formatDateParts(today.day, today.month.number, today.year)
     }
 
     /**
@@ -82,7 +82,7 @@ object FleetDateTime {
      */
     fun currentDateTime(timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
         val now = Clock.System.now().toLocalDateTime(timeZone)
-        return "${formatDateParts(now.dayOfMonth, now.monthNumber, now.year)} ${formatTimeParts(now.hour, now.minute)}"
+        return "${formatDateParts(now.date.day, now.month.number, now.year)} ${formatTimeParts(now.hour, now.minute)}"
     }
 
     // ══════════════════════════════════════════════════════════════════════════════
@@ -256,6 +256,199 @@ object FleetDateTime {
         if (dateString.isNullOrBlank()) return "N/A"
         val value = parseDate(dateString) ?: return dateString
         return formatDisplayDate(value)
+    }
+
+    /**
+     * Format any date format to DD-MMM-YYYY display format.
+     * Supports: ISO 8601, YYYY-MM-DD, DD-MM-YYYY formats.
+     * Examples:
+     * - "2026-02-05T14:30:00Z" -> "05-Feb-2026"
+     * - "2026-02-05" -> "05-Feb-2026"
+     * - "05-02-2026" -> "05-Feb-2026"
+     */
+    fun formatAnyToDisplayDate(dateString: String?): String {
+        if (dateString.isNullOrBlank()) return "N/A"
+
+        // Try ISO 8601 format first (e.g., "2026-02-05T14:30:00Z")
+        val isoResult = fromIso8601(dateString)
+        if (isoResult != null) {
+            return formatDisplayDate(isoResult)
+        }
+
+        // Try DD-MM-YYYY format
+        val ddMmYyyyResult = parseDate(dateString)
+        if (ddMmYyyyResult != null) {
+            return formatDisplayDate(ddMmYyyyResult)
+        }
+
+        // Try YYYY-MM-DD format
+        val parts = dateString.split("-")
+        if (parts.size == 3 && parts[0].length == 4) {
+            return try {
+                val year = parts[0].toInt()
+                val month = parts[1].toInt()
+                val day = parts[2].toInt()
+                formatDisplayDate(FleetDateTimeValue(year, month, day))
+            } catch (e: Exception) {
+                dateString
+            }
+        }
+
+        return dateString
+    }
+
+    /**
+     * Format ISO 8601 datetime string to 12-hour time only (e.g., "02:30 PM").
+     * Useful for extracting time from ISO strings.
+     */
+    fun formatIsoToTime12Hour(isoString: String?): String {
+        if (isoString.isNullOrBlank()) return "N/A"
+        val value = fromIso8601(isoString) ?: return "N/A"
+        return formatTime12Hour(value)
+    }
+
+    /**
+     * Format any time format to 12-hour format with AM/PM.
+     * Supports: ISO 8601, HH:mm, HH:mm:ss formats.
+     * Examples:
+     * - "2026-02-05T14:30:00Z" -> "02:30 PM"
+     * - "14:30" -> "02:30 PM"
+     * - "14:30:00" -> "02:30 PM"
+     * - "09:15" -> "09:15 AM"
+     */
+    fun formatAnyToTime12Hour(timeString: String?): String {
+        if (timeString.isNullOrBlank()) return "N/A"
+
+        return try {
+            val (hours, minutes) = when {
+                // ISO 8601 format: "2026-01-04T14:30:00Z"
+                timeString.contains("T") -> {
+                    val timePart = timeString.substringAfter("T").substringBefore("Z").substringBefore(".")
+                    val parts = timePart.split(":")
+                    Pair(
+                        parts.getOrNull(0)?.toIntOrNull() ?: 0,
+                        parts.getOrNull(1)?.toIntOrNull() ?: 0
+                    )
+                }
+                // Simple time format: "14:30" or "14:30:00"
+                timeString.contains(":") -> {
+                    val parts = timeString.split(":")
+                    Pair(
+                        parts.getOrNull(0)?.toIntOrNull() ?: 0,
+                        parts.getOrNull(1)?.toIntOrNull() ?: 0
+                    )
+                }
+                else -> return timeString
+            }
+            formatTime12Hour(hours, minutes)
+        } catch (e: Exception) {
+            timeString
+        }
+    }
+
+    /**
+     * Format any datetime format to "DD-MMM-YYYY hh:mm AM/PM".
+     * Supports: ISO 8601, separate date/time strings.
+     * Examples:
+     * - formatAnyToDisplayDateTime12Hour("2026-02-05T14:30:00Z") -> "05-Feb-2026 02:30 PM"
+     * - formatAnyToDisplayDateTime12Hour("05-02-2026", "14:30") -> "05-Feb-2026 02:30 PM"
+     */
+    fun formatAnyToDisplayDateTime12Hour(dateString: String?, timeString: String? = null): String {
+        if (dateString.isNullOrBlank()) return "N/A"
+
+        // If timeString is provided separately
+        if (!timeString.isNullOrBlank()) {
+            val formattedDate = formatAnyToDisplayDate(dateString)
+            val formattedTime = formatAnyToTime12Hour(timeString)
+            return if (formattedTime != "N/A") "$formattedDate $formattedTime" else formattedDate
+        }
+
+        // Try to parse as ISO 8601 (includes time)
+        val isoResult = fromIso8601(dateString)
+        if (isoResult != null) {
+            return formatDisplayDateTime12Hour(isoResult)
+        }
+
+        // If date contains "T", try to extract and format time separately
+        if (dateString.contains("T")) {
+            val datePart = dateString.substringBefore("T")
+            val timePart = dateString.substringAfter("T")
+            val formattedDate = formatAnyToDisplayDate(datePart)
+            val formattedTime = formatAnyToTime12Hour(timePart)
+            return if (formattedTime != "N/A") "$formattedDate $formattedTime" else formattedDate
+        }
+
+        // Just date, no time
+        return formatAnyToDisplayDate(dateString)
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // 12-HOUR FORMAT WITH AM/PM
+    // ══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Format time to 12-hour format with AM/PM (e.g., "02:30 PM").
+     * Handles edge cases:
+     * - Hour 0 (midnight) → 12:00 AM
+     * - Hour 12 (noon) → 12:00 PM
+     * - Hours 1-11 → 01:00-11:00 AM
+     * - Hours 13-23 → 01:00-11:00 PM
+     */
+    fun formatTime12Hour(hour: Int, minute: Int): String {
+        val period = if (hour < 12) "AM" else "PM"
+        val hour12 = when {
+            hour == 0 -> 12      // Midnight
+            hour == 12 -> 12     // Noon
+            hour > 12 -> hour - 12
+            else -> hour
+        }
+        val hourStr = if (hour12 < 10) "0$hour12" else "$hour12"
+        val minuteStr = if (minute < 10) "0$minute" else "$minute"
+        return "$hourStr:$minuteStr $period"
+    }
+
+    /**
+     * Format FleetDateTimeValue time to 12-hour format with AM/PM.
+     */
+    fun formatTime12Hour(value: FleetDateTimeValue): String {
+        return formatTime12Hour(value.hour, value.minute)
+    }
+
+    /**
+     * Format FleetDateTimeValue to "DD-MMM-YYYY hh:mm AM/PM" (e.g., "05-Feb-2026 02:30 PM").
+     * Primary display format for user-facing datetime.
+     */
+    fun formatDisplayDateTime12Hour(value: FleetDateTimeValue): String {
+        return "${formatDisplayDate(value)} ${formatTime12Hour(value)}"
+    }
+
+    /**
+     * Format ISO 8601 datetime string to "DD-MMM-YYYY hh:mm AM/PM" (12-hour format).
+     * Primary display format for user-facing datetime.
+     */
+    fun formatIsoToDisplayDateTime12Hour(isoString: String?): String {
+        if (isoString.isNullOrBlank()) return "N/A"
+        val value = fromIso8601(isoString) ?: return isoString.take(16)
+        return formatDisplayDateTime12Hour(value)
+    }
+
+    /**
+     * Format DD-MM-YYYY HH:mm to "DD-MMM-YYYY hh:mm AM/PM" (12-hour format).
+     */
+    fun formatToDisplayDateTime12Hour(dateTime: String?): String {
+        if (dateTime.isNullOrBlank()) return "N/A"
+        val value = parse(dateTime) ?: return dateTime
+        return formatDisplayDateTime12Hour(value)
+    }
+
+    /**
+     * Format DD-MM-YYYY and HH:mm to "DD-MMM-YYYY hh:mm AM/PM" (12-hour format).
+     */
+    fun formatToDisplayDateTime12Hour(date: String?, time: String?): String {
+        if (date.isNullOrBlank()) return "N/A"
+        val timeStr = time ?: "00:00"
+        val value = parse(date, timeStr) ?: return "$date $timeStr"
+        return formatDisplayDateTime12Hour(value)
     }
 
     // ══════════════════════════════════════════════════════════════════════════════
@@ -443,6 +636,8 @@ object FleetDateTime {
 
     /**
      * Convert FleetDateTimeValue to relative description.
+     * Uses 12-hour format with AM/PM for time display.
+     * Examples: "Today at 02:30 PM", "Tomorrow at 10:00 AM"
      */
     fun toRelativeDescription(
         value: FleetDateTimeValue,
@@ -450,7 +645,7 @@ object FleetDateTime {
     ): String {
         val today = Clock.System.todayIn(timeZone)
         val targetDate = LocalDate(value.year, value.month, value.day)
-        val timeStr = formatTime(value)
+        val timeStr = formatTime12Hour(value)
 
         val daysDiff = (targetDate.toEpochDays() - today.toEpochDays()).toInt()
 
@@ -711,8 +906,8 @@ object FleetDateTime {
         val parsed = parseDate(date) ?: return false
         val today = Clock.System.todayIn(timeZone)
         return parsed.year == today.year &&
-                parsed.month == today.monthNumber &&
-                parsed.day == today.dayOfMonth
+                parsed.month == today.month.number &&
+                parsed.day == today.day
     }
 
     /**
@@ -722,8 +917,8 @@ object FleetDateTime {
         val parsed = parseDate(date) ?: return false
         val tomorrow = Clock.System.todayIn(timeZone).plus(1, DateTimeUnit.DAY)
         return parsed.year == tomorrow.year &&
-                parsed.month == tomorrow.monthNumber &&
-                parsed.day == tomorrow.dayOfMonth
+                parsed.month == tomorrow.month.number &&
+                parsed.day == tomorrow.day
     }
 
     /**
@@ -733,8 +928,8 @@ object FleetDateTime {
         val parsed = parseDate(date) ?: return false
         val yesterday = Clock.System.todayIn(timeZone).minus(1, DateTimeUnit.DAY)
         return parsed.year == yesterday.year &&
-                parsed.month == yesterday.monthNumber &&
-                parsed.day == yesterday.dayOfMonth
+                parsed.month == yesterday.month.number &&
+                parsed.day == yesterday.day
     }
 
     /**
@@ -785,7 +980,7 @@ object FleetDateTime {
     fun isThisMonth(date: String, timeZone: TimeZone = TimeZone.currentSystemDefault()): Boolean {
         val parsed = parseDate(date) ?: return false
         val today = Clock.System.todayIn(timeZone)
-        return parsed.year == today.year && parsed.month == today.monthNumber
+        return parsed.year == today.year && parsed.month == today.month.number
     }
 
     /**
@@ -794,10 +989,10 @@ object FleetDateTime {
     fun isNextMonth(date: String, timeZone: TimeZone = TimeZone.currentSystemDefault()): Boolean {
         val parsed = parseDate(date) ?: return false
         val today = Clock.System.todayIn(timeZone)
-        val nextMonth = if (today.monthNumber == 12) {
+        val nextMonth = if (today.month.number == 12) {
             Pair(today.year + 1, 1)
         } else {
-            Pair(today.year, today.monthNumber + 1)
+            Pair(today.year, today.month.number + 1)
         }
         return parsed.year == nextMonth.first && parsed.month == nextMonth.second
     }
@@ -856,7 +1051,7 @@ object FleetDateTime {
         val parsed = parseDate(date) ?: return null
         val localDate = LocalDate(parsed.year, parsed.month, parsed.day)
         val newDate = localDate.plus(days, DateTimeUnit.DAY)
-        return formatDateParts(newDate.dayOfMonth, newDate.monthNumber, newDate.year)
+        return formatDateParts(newDate.day, newDate.month.number, newDate.year)
     }
 
     /**
@@ -873,7 +1068,7 @@ object FleetDateTime {
         val parsed = parseDate(date) ?: return null
         val localDate = LocalDate(parsed.year, parsed.month, parsed.day)
         val newDate = localDate.plus(months, DateTimeUnit.MONTH)
-        return formatDateParts(newDate.dayOfMonth, newDate.monthNumber, newDate.year)
+        return formatDateParts(newDate.day, newDate.month.number, newDate.year)
     }
 
     /**
@@ -883,7 +1078,7 @@ object FleetDateTime {
         val parsed = parseDate(date) ?: return null
         val localDate = LocalDate(parsed.year, parsed.month, parsed.day)
         val newDate = localDate.plus(years, DateTimeUnit.YEAR)
-        return formatDateParts(newDate.dayOfMonth, newDate.monthNumber, newDate.year)
+        return formatDateParts(newDate.day, newDate.month.number, newDate.year)
     }
 
     /**
@@ -899,8 +1094,8 @@ object FleetDateTime {
         return formatDateTime(
             FleetDateTimeValue(
                 year = newDateTime.year,
-                month = newDateTime.monthNumber,
-                day = newDateTime.dayOfMonth,
+                month = newDateTime.month.number,
+                day = newDateTime.date.day,
                 hour = newDateTime.hour,
                 minute = newDateTime.minute,
                 second = newDateTime.second
@@ -919,8 +1114,8 @@ object FleetDateTime {
         return formatDateTime(
             FleetDateTimeValue(
                 year = newDateTime.year,
-                month = newDateTime.monthNumber,
-                day = newDateTime.dayOfMonth,
+                month = newDateTime.month.number,
+                day = newDateTime.date.day,
                 hour = newDateTime.hour,
                 minute = newDateTime.minute,
                 second = newDateTime.second
@@ -951,7 +1146,7 @@ object FleetDateTime {
         val parsed = parseDate(date) ?: return null
         val localDate = LocalDate(parsed.year, parsed.month, parsed.day)
         val monday = localDate.minus(localDate.dayOfWeek.ordinal, DateTimeUnit.DAY)
-        return formatDateParts(monday.dayOfMonth, monday.monthNumber, monday.year)
+        return formatDateParts(monday.day, monday.month.number, monday.year)
     }
 
     /**
@@ -961,7 +1156,7 @@ object FleetDateTime {
         val parsed = parseDate(date) ?: return null
         val localDate = LocalDate(parsed.year, parsed.month, parsed.day)
         val sunday = localDate.plus(6 - localDate.dayOfWeek.ordinal, DateTimeUnit.DAY)
-        return formatDateParts(sunday.dayOfMonth, sunday.monthNumber, sunday.year)
+        return formatDateParts(sunday.day, sunday.month.number, sunday.year)
     }
 
     /**
@@ -1084,7 +1279,7 @@ object FleetDateTime {
     ): String {
         val today = Clock.System.todayIn(timeZone)
         val targetDate = today.plus(daysAhead, DateTimeUnit.DAY)
-        return formatDateParts(targetDate.dayOfMonth, targetDate.monthNumber, targetDate.year)
+        return formatDateParts(targetDate.day, targetDate.month.number, targetDate.year)
     }
 
     // ══════════════════════════════════════════════════════════════════════════════
@@ -1224,7 +1419,7 @@ object FleetDateTime {
     ): String {
         val today = Clock.System.todayIn(timeZone)
         val targetDate = today.minus(years, DateTimeUnit.YEAR)
-        return formatDateParts(targetDate.dayOfMonth, targetDate.monthNumber, targetDate.year)
+        return formatDateParts(targetDate.day, targetDate.month.number, targetDate.year)
     }
 
     /**
@@ -1242,7 +1437,7 @@ object FleetDateTime {
         return try {
             val instant = Instant.fromEpochMilliseconds(timestampMillis)
             val localDateTime = instant.toLocalDateTime(timeZone)
-            formatDateParts(localDateTime.dayOfMonth, localDateTime.monthNumber, localDateTime.year)
+            formatDateParts(localDateTime.date.day, localDateTime.month.number, localDateTime.year)
         } catch (e: Exception) {
             null
         }
@@ -1513,6 +1708,22 @@ data class FleetDateTimeValue(
      * Format to "DD-MM-YYYY HH:mm".
      */
     fun toDateTimeString(): String = "${toDateString()} ${toTimeString()}"
+
+    /**
+     * Format to "DD-MMM-YYYY" (e.g., "05-Feb-2026").
+     */
+    fun toDisplayDate(): String = FleetDateTime.formatDisplayDate(this)
+
+    /**
+     * Format to "hh:mm AM/PM" (e.g., "02:30 PM").
+     */
+    fun toTime12HourString(): String = FleetDateTime.formatTime12Hour(this)
+
+    /**
+     * Format to "DD-MMM-YYYY hh:mm AM/PM" (e.g., "05-Feb-2026 02:30 PM").
+     * Primary display format for user-facing datetime.
+     */
+    fun toDisplayDateTime12Hour(): String = FleetDateTime.formatDisplayDateTime12Hour(this)
 
     /**
      * Convert to comparable Long for sorting (YYYYMMDDHHmmss).
