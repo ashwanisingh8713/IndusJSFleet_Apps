@@ -154,9 +154,7 @@ fun TripDetailScreen(
         onExportComplete = {
             isExportingPdf = false
             pdfExportData = null
-            scope.launch {
-                snackbarHostState.showSnackbar("PDF exported successfully!")
-            }
+            // No snackbar needed - dialog already shows success
         },
         onExportError = { error: String ->
             isExportingPdf = false

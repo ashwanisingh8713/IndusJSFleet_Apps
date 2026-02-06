@@ -54,8 +54,9 @@ fun VehicleFinancePdfHandler(
     }
 
     if (showDialog && exportResult != null) {
+        val currentResult = exportResult!! // Capture the result before any callbacks
         PdfExportDialog(
-            result = exportResult!!,
+            result = currentResult,
             onDismiss = {
                 showDialog = false
                 isExporting = false
@@ -64,12 +65,12 @@ fun VehicleFinancePdfHandler(
             },
             onShare = {
                 scope.launch {
-                    exportResult?.let { PdfReportFacade.shareReport(it) }
+                    PdfReportFacade.shareReport(currentResult)
                 }
             },
             onOpen = {
                 scope.launch {
-                    exportResult?.let { PdfReportFacade.openReport(it) }
+                    PdfReportFacade.openReport(currentResult)
                 }
             }
         )
