@@ -105,9 +105,13 @@ fun ExportPdfButton(
  *
  * Layout:
  * ┌─────────────────────────────────────────────────┐
- * │ ⛽ Fuel (1 entry • 5%)              ₹500.00    │
+ * │ ⛽ Diesel (1 entry • 5%)            ₹500.00    │
  * │    📅 10-01-2026 • 🕐 2:30 PM                   │
  * └─────────────────────────────────────────────────┘
+ *
+ * Uses the new structured cost fields:
+ * - displayLabel for the title (uses cost_label with fallbacks)
+ * - effectiveCostType for icon/color (uses cost_id if available)
  */
 @Composable
 fun CostListItem(
@@ -116,9 +120,12 @@ fun CostListItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val costColor = getCostTypeColorComposable(cost.costType)
-    val displayName = CostTypeUtils.getDisplayName(cost.costType)
-    val typeIcon = CostTypeUtils.getIcon(cost.costType)
+    // Use effectiveCostType (cost_id) for icon and color lookup
+    val effectiveType = cost.effectiveCostType
+    val costColor = getCostTypeColorComposable(effectiveType)
+    // Use displayLabel which prefers cost_label, then custom_cost_label, then costType
+    val displayName = cost.displayLabel
+    val typeIcon = CostTypeUtils.getIcon(effectiveType)
     val percentage = if (totalCost > 0) (cost.amount / totalCost * 100).toInt() else 0
 
     Surface(
@@ -226,15 +233,23 @@ fun CostListItem(
 
 /**
  * Cost detail dialog showing full information about a cost entry.
+ *
+ * Uses the new structured cost fields:
+ * - displayLabel for the title (uses cost_label with fallbacks)
+ * - effectiveCostType for icon/color (uses cost_id if available)
+ * - isFuelCost to check if fuel-specific fields should be shown
  */
 @Composable
 fun CostDetailDialog(
     cost: TripCostDto,
     onDismiss: () -> Unit
 ) {
-    val costColor = getCostTypeColorComposable(cost.costType)
-    val displayName = CostTypeUtils.getDisplayName(cost.costType)
-    val typeIcon = CostTypeUtils.getIcon(cost.costType)
+    // Use effectiveCostType (cost_id) for icon and color lookup
+    val effectiveType = cost.effectiveCostType
+    val costColor = getCostTypeColorComposable(effectiveType)
+    // Use displayLabel which prefers cost_label, then custom_cost_label, then costType
+    val displayName = cost.displayLabel
+    val typeIcon = CostTypeUtils.getIcon(effectiveType)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -342,8 +357,8 @@ fun CostDetailDialog(
                         )
                     }
 
-                    // Fuel specific details
-                    if (cost.costType == "fuel") {
+                    // Fuel specific details - use isFuelCost which checks group_id TC-G-001
+                    if (cost.isFuelCost || cost.costType == "fuel") {
                         cost.fuelQuantity?.let { qty ->
                             DetailRow(
                                 icon = "⛽",
