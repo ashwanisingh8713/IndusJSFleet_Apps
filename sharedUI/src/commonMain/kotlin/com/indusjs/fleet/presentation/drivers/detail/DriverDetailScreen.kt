@@ -1,10 +1,8 @@
 package com.indusjs.fleet.presentation.drivers.detail
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -16,7 +14,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
@@ -50,7 +47,8 @@ import org.jetbrains.compose.resources.painterResource
 fun DriverDetailScreen(
     viewModel: DriverDetailViewModel,
     driverId: String,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToAddDriverCost: (String) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -84,6 +82,9 @@ fun DriverDetailScreen(
                 }
                 is DriverDetailContract.Effect.StateUpdated -> {
                     // State updated - handled by ViewModel
+                }
+                is DriverDetailContract.Effect.NavigateToAddDriverCost -> {
+                    onNavigateToAddDriverCost(effect.driverId)
                 }
             }
         }
@@ -501,6 +502,12 @@ private fun DriverCostsTabContent(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { viewModel.sendIntent(DriverDetailContract.Intent.NavigateToAddDriverCost) }
+                        ) {
+                            Text("Add Driver Cost")
+                        }
                     }
                 }
             }
@@ -598,6 +605,24 @@ private fun DriverCostsTabContent(
                 },
                 onDismiss = { viewModel.sendIntent(DriverDetailContract.Intent.HideCostsFilterSheet) }
             )
+        }
+
+        // FAB for adding driver cost (only show when not empty state)
+        if (state.costs.isNotEmpty()) {
+            FloatingActionButton(
+                onClick = { viewModel.sendIntent(DriverDetailContract.Intent.NavigateToAddDriverCost) },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_add),
+                    contentDescription = "Add Driver Cost",
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }
@@ -1396,57 +1421,6 @@ private fun EditModeContent(
             isLoading = state.isLoadingCaretakers
         )
     }
-}
-
-@Composable
-private fun StatusChangeDialog(
-    currentStatus: DriverStatus,
-    onStatusSelected: (DriverStatus) -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Change Status") },
-        text = {
-            Column {
-                DriverStatus.entries.forEach { status ->
-                    Surface(
-                        onClick = { onStatusSelected(status) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (status == currentStatus)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surface
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = getStatusDisplayName(status),
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.weight(1f)
-                            )
-                            if (status == currentStatus) {
-                                Text("✓", color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                    }
-                    if (status != DriverStatus.entries.last()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
 }
 
 @Composable

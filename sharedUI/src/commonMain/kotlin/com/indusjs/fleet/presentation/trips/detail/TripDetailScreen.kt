@@ -20,11 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.pdfreport.handler.TripCostsPdfHandler
 import com.indusjs.pdfreport.model.TripCostsPdfData
 import com.indusjs.fleet.core.ui.ErrorContent
-import com.indusjs.fleet.core.ui.FleetMobileField
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.ui.ClickablePhoneRow
 import com.indusjs.fleet.core.ui.state.StateChangeDialog
@@ -48,7 +48,8 @@ fun TripDetailScreen(
     tripId: String,
     onNavigateBack: () -> Unit = {},
     onNavigateToAddTripCost: (tripId: String, vehicleId: String) -> Unit = { _, _ -> },
-    onNavigateToAddPayment: (tripId: String, vehicleId: String) -> Unit = { _, _ -> }
+    onNavigateToAddPayment: (tripId: String, vehicleId: String) -> Unit = { _, _ -> },
+    onNavigateToAddCustomer: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -102,6 +103,9 @@ fun TripDetailScreen(
                 is TripDetailContract.Effect.NavigateToAddPayment -> {
                     onNavigateToAddPayment(effect.tripId, effect.vehicleId)
                 }
+                is TripDetailContract.Effect.NavigateToAddCustomer -> {
+                    onNavigateToAddCustomer()
+                }
             }
         }
     }
@@ -147,6 +151,7 @@ fun TripDetailScreen(
             isLoading = state.isUpdatingState
         )
     }
+
 
     // PDF Export Handler
     TripCostsPdfHandler(
@@ -1027,6 +1032,7 @@ private fun ActualTimesSection(trip: Trip) {
 
 /**
  * Formats schedule date/time from ISO or separate date/time fields.
+ * Output format: DD-MMM-YYYY hh:mm AM/PM (e.g., "05-Feb-2026 02:30 PM")
  */
 private fun formatScheduleDateTime(
     isoDateTime: String?,
@@ -1035,54 +1041,28 @@ private fun formatScheduleDateTime(
 ): String {
     // Try to use ISO format first
     if (!isoDateTime.isNullOrBlank()) {
-        return formatIsoDateTime(isoDateTime)
+        return FleetDateTime.formatIsoToDisplayDateTime12Hour(isoDateTime)
     }
 
     // Fallback to separate date/time fields
-    val parts = mutableListOf<String>()
-    if (!date.isNullOrBlank()) {
-        parts.add(date)
-    }
-    if (!time.isNullOrBlank()) {
-        // Format time if it's in HHMM format
-        val formattedTime = if (time.length == 4 && time.all { it.isDigit() }) {
-            "${time.substring(0, 2)}:${time.substring(2, 4)}"
-        } else {
-            time
-        }
-        parts.add(formattedTime)
+    if (!date.isNullOrBlank() && !time.isNullOrBlank()) {
+        return FleetDateTime.formatAnyToDisplayDateTime12Hour(date, time)
     }
 
-    return parts.joinToString(" at ")
+    if (!date.isNullOrBlank()) {
+        return FleetDateTime.formatAnyToDisplayDate(date)
+    }
+
+    return ""
 }
 
 /**
  * Formats ISO 8601 datetime string to human-readable format.
+ * Output format: DD-MMM-YYYY hh:mm AM/PM (e.g., "05-Feb-2026 02:30 PM")
  */
 private fun formatIsoDateTime(isoDateTime: String): String {
     if (isoDateTime.isBlank()) return ""
-
-    return try {
-        // Parse ISO 8601: 2026-01-04T11:11:00Z
-        val parts = isoDateTime.replace("Z", "").split("T")
-        if (parts.size == 2) {
-            val datePart = parts[0] // 2026-01-04
-            val timePart = parts[1].substring(0, 5) // 11:11
-
-            // Convert date to DD-MM-YYYY
-            val dateComponents = datePart.split("-")
-            if (dateComponents.size == 3) {
-                val formattedDate = "${dateComponents[2]}-${dateComponents[1]}-${dateComponents[0]}"
-                "$formattedDate at $timePart"
-            } else {
-                "$datePart at $timePart"
-            }
-        } else {
-            isoDateTime
-        }
-    } catch (e: Exception) {
-        isoDateTime
-    }
+    return FleetDateTime.formatIsoToDisplayDateTime12Hour(isoDateTime)
 }
 
 @Composable
@@ -1829,25 +1809,184 @@ private fun EditModeContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = state.customerName,
-                    onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCustomerName(it)) },
-                    label = { Text("Customer Name") },
-                    leadingIcon = { Text("👤", modifier = Modifier.padding(start = 8.dp)) },
-                    singleLine = true,
+                // Customer Selection Section - Enhanced UI similar to CreateTripScreen
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "👤 Customer Details",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    // Refresh button
+                    IconButton(
+                        onClick = { viewModel.sendIntent(TripDetailContract.Intent.RefreshCustomers) },
+                        enabled = !state.isRefreshingCustomers,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        if (state.isRefreshingCustomers) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_refresh),
+                                contentDescription = "Refresh customers",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                // Show selected customer card OR selection button
+                if (state.selectedCustomer != null || state.customerName.isNotBlank()) {
+                    // Selected Customer Card with clear option
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                ) {
+                                    Text(
+                                        text = "👤",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.padding(8.dp)
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = state.customerName.ifBlank { "Customer Selected" },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (state.customerContact.isNotBlank()) {
+                                        Text(
+                                            text = "📞 ${state.customerContact}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
 
-                FleetMobileField(
-                    rawValue = state.customerContact,
-                    onRawValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCustomerContact(it)) },
-                    label = "Customer Contact",
-                    placeholder = "Enter 10-digit mobile",
-                    leadingEmoji = "📞"
-                )
+                            // Clear button
+                            IconButton(
+                                onClick = { viewModel.sendIntent(TripDetailContract.Intent.ClearCustomerSelection) }
+                            ) {
+                                Text("✕", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Change Customer and Add New buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        TextButton(
+                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.ToggleCustomerBottomSheet) }
+                        ) {
+                            Text("🔄 Change Customer")
+                        }
+                        TextButton(
+                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddCustomer) }
+                        ) {
+                            Text("+ Add New Customer")
+                        }
+                    }
+                } else if (state.customers.isEmpty() && !state.isLoadingCustomers) {
+                    // Empty state - no customers
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "👤",
+                            style = MaterialTheme.typography.displaySmall
+                        )
+                        Text(
+                            text = "No customers found",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Add a customer to associate with this trip.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddCustomer) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text("➕ Add New Customer")
+                        }
+                    }
+                } else {
+                    // Select Customer Button
+                    OutlinedButton(
+                        onClick = { viewModel.sendIntent(TripDetailContract.Intent.ToggleCustomerBottomSheet) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("👤", modifier = Modifier.padding(end = 8.dp))
+                        Text(
+                            text = "Select Customer",
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // Add New Customer text button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(
+                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddCustomer) }
+                        ) {
+                            Text("+ Add New Customer")
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -1856,7 +1995,7 @@ private fun EditModeContent(
                     OutlinedTextField(
                         value = state.tripPrice,
                         onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateTripPrice(it)) },
-                        label = { Text("Trip Price (₹)") },
+                        label = { Text("Trip Price (Expected) *") },
                         leadingIcon = { Text("💰", modifier = Modifier.padding(start = 8.dp)) },
                         placeholder = { Text("Enter trip price") },
                         singleLine = true,
@@ -2138,4 +2277,3 @@ private fun TripCostsLoadingContent() {
         CircularProgressIndicator(modifier = Modifier.size(32.dp))
     }
 }
-

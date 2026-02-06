@@ -108,6 +108,7 @@ object DriverCostEntryContract {
         // Load data
         data object LoadDrivers : Intent
         data object RefreshCostTypes : Intent
+        data class SetInitialDriver(val driverId: String) : Intent
 
         // Driver selection
         data class SelectDriver(val driver: Driver) : Intent
@@ -149,4 +150,3 @@ object DriverCostEntryContract {
         data class CostsSaved(val count: Int) : Effect
     }
 }
-

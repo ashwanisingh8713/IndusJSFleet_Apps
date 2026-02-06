@@ -414,7 +414,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         getVehiclesUseCase,
         getDriversUseCase,
         userLocalDataSource,
-        googlePlacesService
+        googlePlacesService,
+        customerRepository
     )
 
     override fun mapsViewModel() = MapsViewModel(dispatcherProvider)

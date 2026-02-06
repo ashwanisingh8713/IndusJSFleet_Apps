@@ -96,6 +96,7 @@ class DriverDetailViewModel(
 
             // Navigation & errors
             is Intent.NavigateBack -> sendEffect(Effect.NavigateBack)
+            is Intent.NavigateToAddDriverCost -> navigateToAddDriverCost()
             is Intent.ClearError -> updateState { copy(error = null) }
 
             // Tab selection
@@ -733,5 +734,9 @@ class DriverDetailViewModel(
             }
         }
     }
-}
 
+    private fun navigateToAddDriverCost() {
+        val driverId = currentState.driver?.id ?: return
+        sendEffect(Effect.NavigateToAddDriverCost(driverId))
+    }
+}

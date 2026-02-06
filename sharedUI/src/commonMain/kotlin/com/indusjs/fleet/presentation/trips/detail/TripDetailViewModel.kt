@@ -9,10 +9,12 @@ import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.model.trip.UpdateTripRequest
+import com.indusjs.fleet.domain.entity.customer.Customer
 import com.indusjs.fleet.domain.entity.trip.TripStatus
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
+import com.indusjs.fleet.domain.repository.customer.CustomerRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
 import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
 import com.indusjs.fleet.domain.usecase.trip.CancelTripUseCase
@@ -48,7 +50,8 @@ class TripDetailViewModel(
     private val getVehiclesUseCase: GetVehiclesUseCase,
     private val getDriversUseCase: GetDriversUseCase,
     private val userLocalDataSource: UserLocalDataSource,
-    private val googlePlacesService: GooglePlacesService? = null
+    private val googlePlacesService: GooglePlacesService? = null,
+    private val customerRepository: CustomerRepository? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     private val log = Logger.withTag("TripDetailViewModel")
@@ -73,6 +76,17 @@ class TripDetailViewModel(
             is Intent.ToggleDriverDropdown -> updateState {
                 copy(showDriverDropdown = !showDriverDropdown, showVehicleDropdown = false)
             }
+
+            // Customer selection
+            is Intent.LoadCustomers -> loadCustomers()
+            is Intent.ToggleCustomerBottomSheet -> updateState {
+                copy(showCustomerBottomSheet = !showCustomerBottomSheet, customerSearchQuery = "")
+            }
+            is Intent.SelectCustomer -> selectCustomer(intent.customer)
+            is Intent.UpdateCustomerSearchQuery -> updateState { copy(customerSearchQuery = intent.query) }
+            is Intent.ClearCustomerSelection -> clearCustomerSelection()
+            is Intent.RefreshCustomers -> refreshCustomers()
+            is Intent.NavigateToAddCustomer -> navigateToAddCustomer()
 
             // Location updates
             is Intent.UpdateStartLocation -> updateState { copy(startLocationAddress = intent.address) }
@@ -266,6 +280,9 @@ class TripDetailViewModel(
 
         // Load vehicles and drivers for selection
         loadVehiclesAndDrivers()
+
+        // Load customers for selection
+        loadCustomers()
     }
 
     private suspend fun loadVehiclesAndDrivers() {
@@ -314,6 +331,110 @@ class TripDetailViewModel(
                 }
             }
         }
+    }
+
+    /**
+     * Load customers from local database for customer selection.
+     */
+    private suspend fun loadCustomers() {
+        if (customerRepository == null) {
+            log.w { "CustomerRepository not available" }
+            return
+        }
+
+        updateState { copy(isLoadingCustomers = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = customerRepository.getCustomers(page = 1, perPage = 100, isActive = true)) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            customers = result.data,
+                            isLoadingCustomers = false
+                        )
+                    }
+                    log.d { "Loaded ${result.data.size} customers" }
+                }
+                is Result.Error -> {
+                    updateState { copy(isLoadingCustomers = false) }
+                    log.e { "Failed to load customers: ${result.message}" }
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    /**
+     * Select a customer and populate the customer fields.
+     */
+    private fun selectCustomer(customer: Customer) {
+        updateState {
+            copy(
+                selectedCustomer = customer,
+                customerName = customer.companyName,
+                customerContact = customer.primaryContact,
+                showCustomerBottomSheet = false,
+                customerSearchQuery = ""
+            )
+        }
+        log.d { "Selected customer: ${customer.companyName}" }
+    }
+
+    /**
+     * Clear customer selection.
+     */
+    private fun clearCustomerSelection() {
+        updateState {
+            copy(
+                selectedCustomer = null,
+                customerName = "",
+                customerContact = "",
+                customerSearchQuery = ""
+            )
+        }
+        log.d { "Cleared customer selection" }
+    }
+
+    /**
+     * Refresh customers from API and update local DB.
+     */
+    private fun refreshCustomers() {
+        val repository = customerRepository ?: run {
+            log.e { "CustomerRepository not available" }
+            sendEffect(Effect.ShowError("Customer feature not available"))
+            return
+        }
+
+        CoroutineScope(dispatcherProvider.main).launch {
+            updateState { copy(isRefreshingCustomers = true) }
+            try {
+                // Refresh customers from API (which updates local DB)
+                when (val result = repository.refreshCustomers()) {
+                    is Result.Success -> {
+                        // Reload from local DB
+                        loadCustomers()
+                        sendEffect(Effect.ShowSnackbar("Customers refreshed"))
+                    }
+                    is Result.Error -> {
+                        sendEffect(Effect.ShowError("Failed to refresh customers: ${result.message}"))
+                    }
+                    is Result.Loading -> { /* Already handled */ }
+                }
+            } catch (e: Exception) {
+                log.e { "Failed to refresh customers: ${e.message}" }
+                sendEffect(Effect.ShowError("Failed to refresh customers"))
+            } finally {
+                updateState { copy(isRefreshingCustomers = false) }
+            }
+        }
+    }
+
+    /**
+     * Navigate to add customer screen.
+     */
+    private fun navigateToAddCustomer() {
+        updateState { copy(showCustomerBottomSheet = false) }
+        sendEffect(Effect.NavigateToAddCustomer)
     }
 
     private fun exitEditMode() {

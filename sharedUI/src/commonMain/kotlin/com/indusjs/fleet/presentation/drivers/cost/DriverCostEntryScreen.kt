@@ -37,10 +37,18 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun DriverCostEntryScreen(
     viewModel: DriverCostEntryViewModel,
+    initialDriverId: String? = null,
     onNavigateBack: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Set initial driver if provided
+    LaunchedEffect(initialDriverId, state.drivers) {
+        if (!initialDriverId.isNullOrBlank() && state.drivers.isNotEmpty() && state.selectedDriver == null) {
+            viewModel.sendIntent(DriverCostEntryContract.Intent.SetInitialDriver(initialDriverId))
+        }
+    }
 
     // Handle side effects
     LaunchedEffect(Unit) {

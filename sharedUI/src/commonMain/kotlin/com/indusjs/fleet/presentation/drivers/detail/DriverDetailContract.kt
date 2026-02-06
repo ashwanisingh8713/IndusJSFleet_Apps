@@ -170,6 +170,7 @@ object DriverDetailContract {
 
         // Navigation
         data object NavigateBack : Intent
+        data object NavigateToAddDriverCost : Intent
 
         // Error handling
         data object ClearError : Intent
@@ -211,6 +212,6 @@ object DriverDetailContract {
         data class DriverDeleted(val driverId: String) : Effect
         data object DriverUpdated : Effect
         data class StateUpdated(val newStatus: String) : Effect
+        data class NavigateToAddDriverCost(val driverId: String) : Effect
     }
 }
-

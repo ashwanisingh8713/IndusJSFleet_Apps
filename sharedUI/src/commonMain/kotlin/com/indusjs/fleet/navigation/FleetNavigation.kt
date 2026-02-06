@@ -117,7 +117,7 @@ fun fleetEntryProvider(
                 onNavigateToAddVehicle = { backStack.add(FleetRoute.AddVehicle) },
                 onNavigateToAddDriver = { backStack.add(FleetRoute.CreateDriver) },
                 onNavigateToCreateTrip = { backStack.add(FleetRoute.CreateTrip) },
-                onNavigateToAddDriverCost = { backStack.add(FleetRoute.DriverCostEntry) },
+                onNavigateToAddDriverCost = { backStack.add(FleetRoute.DriverCostEntry()) },
                 onNavigateToAlertsList = { backStack.add(FleetRoute.AlertsList) },
                 onNavigateToCustomers = { backStack.add(FleetRoute.Customers) },
                 onNavigateToPayments = { backStack.add(FleetRoute.Payments) },
@@ -219,7 +219,10 @@ fun fleetEntryProvider(
             DriverDetailScreen(
                 viewModel = viewModel,
                 driverId = route.driverId,
-                onNavigateBack = { backStack.removeLastOrNull() }
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateToAddDriverCost = { driverId ->
+                    backStack.add(FleetRoute.DriverCostEntry(driverId = driverId))
+                }
             )
         }
 
@@ -299,6 +302,7 @@ fun fleetEntryProvider(
             val viewModel = rememberViewModel { driverCostEntryViewModel() }
             DriverCostEntryScreen(
                 viewModel = viewModel,
+                initialDriverId = route.driverId,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
         }

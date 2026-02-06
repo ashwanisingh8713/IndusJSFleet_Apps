@@ -1803,3 +1803,55 @@ data class DateTimeDifference(
     fun humanReadable(): String = FleetDateTime.formatDurationHumanReadable(this)
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// STRING EXTENSION FUNCTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Extension function to convert any date string to display format (DD-MMM-YYYY).
+ * Supports: ISO 8601, YYYY-MM-DD, DD-MM-YYYY formats.
+ *
+ * Examples:
+ * - "2026-02-05T14:30:00Z".toDisplayDate() -> "05-Feb-2026"
+ * - "2026-02-05".toDisplayDate() -> "05-Feb-2026"
+ * - "05-02-2026".toDisplayDate() -> "05-Feb-2026"
+ */
+fun String.toDisplayDate(): String = FleetDateTime.formatAnyToDisplayDate(this)
+
+/**
+ * Extension function to convert any datetime string to 12-hour display format.
+ * Output: DD-MMM-YYYY hh:mm AM/PM (e.g., "05-Feb-2026 02:30 PM")
+ *
+ * Supports: ISO 8601 and various date formats.
+ *
+ * Examples:
+ * - "2026-02-05T14:30:00Z".toDisplayDateTime12Hour() -> "05-Feb-2026 02:30 PM"
+ * - "05-02-2026 14:30".toDisplayDateTime12Hour() -> "05-Feb-2026 02:30 PM"
+ */
+fun String.toDisplayDateTime12Hour(): String = FleetDateTime.formatAnyToDisplayDateTime12Hour(this)
+
+/**
+ * Extension function to convert ISO 8601 string to display date format.
+ *
+ * Example:
+ * - "2026-02-05T14:30:00Z".isoToDisplayDate() -> "05-Feb-2026"
+ */
+fun String.isoToDisplayDate(): String = FleetDateTime.formatIsoToDisplayDate(this)
+
+/**
+ * Extension function to convert ISO 8601 string to 12-hour display format.
+ *
+ * Example:
+ * - "2026-02-05T14:30:00Z".isoToDisplayDateTime12Hour() -> "05-Feb-2026 02:30 PM"
+ */
+fun String.isoToDisplayDateTime12Hour(): String = FleetDateTime.formatIsoToDisplayDateTime12Hour(this)
+
+/**
+ * Extension function to convert any time string to 12-hour format.
+ *
+ * Examples:
+ * - "14:30".toTime12Hour() -> "02:30 PM"
+ * - "2026-02-05T14:30:00Z".toTime12Hour() -> "02:30 PM"
+ */
+fun String.toTime12Hour(): String = FleetDateTime.formatAnyToTime12Hour(this)
+

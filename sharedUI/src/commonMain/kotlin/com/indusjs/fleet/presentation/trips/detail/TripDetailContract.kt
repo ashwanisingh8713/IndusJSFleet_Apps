@@ -5,6 +5,7 @@ import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.indusjs.fleet.data.model.costs.TripCostDto
+import com.indusjs.fleet.domain.entity.customer.Customer
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.entity.trip.TripStatus
@@ -53,6 +54,14 @@ object TripDetailContract {
         val showVehicleDropdown: Boolean = false,
         val showDriverDropdown: Boolean = false,
         val isLoadingVehiclesDrivers: Boolean = false,
+
+        // Customer selection (for edit mode)
+        val customers: List<Customer> = emptyList(),
+        val selectedCustomer: Customer? = null,
+        val showCustomerBottomSheet: Boolean = false,
+        val isLoadingCustomers: Boolean = false,
+        val isRefreshingCustomers: Boolean = false,
+        val customerSearchQuery: String = "",
 
         // Editable fields - Location
         val startLocationAddress: String = "",
@@ -147,6 +156,20 @@ object TripDetailContract {
             get() = costs.isNotEmpty()
 
         /**
+         * Get filtered customers based on search query.
+         */
+        val filteredCustomers: List<Customer>
+            get() = if (customerSearchQuery.isBlank()) {
+                customers
+            } else {
+                customers.filter { customer ->
+                    customer.companyName.contains(customerSearchQuery, ignoreCase = true) ||
+                    customer.personName.contains(customerSearchQuery, ignoreCase = true) ||
+                    customer.primaryContact.contains(customerSearchQuery, ignoreCase = true)
+                }
+            }
+
+        /**
          * Determines if the user can edit this trip.
          * - Owner and General Manager can edit trips in any state
          * - Manager can only edit trips in PLANNED state
@@ -209,6 +232,15 @@ object TripDetailContract {
         data class SelectDriver(val driver: Driver) : Intent
         data object ToggleVehicleDropdown : Intent
         data object ToggleDriverDropdown : Intent
+
+        // Customer selection
+        data object LoadCustomers : Intent
+        data object ToggleCustomerBottomSheet : Intent
+        data class SelectCustomer(val customer: Customer) : Intent
+        data class UpdateCustomerSearchQuery(val query: String) : Intent
+        data object ClearCustomerSelection : Intent
+        data object RefreshCustomers : Intent
+        data object NavigateToAddCustomer : Intent
 
         // Location updates
         data class UpdateStartLocation(val address: String) : Intent
@@ -292,5 +324,6 @@ object TripDetailContract {
         data class StateUpdated(val newState: String) : Effect
         data class NavigateToAddTripCost(val tripId: String, val vehicleId: String) : Effect
         data class NavigateToAddPayment(val tripId: String, val vehicleId: String) : Effect
+        data object NavigateToAddCustomer : Effect
     }
 }

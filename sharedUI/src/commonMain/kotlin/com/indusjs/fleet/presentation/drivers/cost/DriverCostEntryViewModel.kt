@@ -92,6 +92,7 @@ class DriverCostEntryViewModel(
         when (intent) {
             is DriverCostEntryContract.Intent.LoadDrivers -> loadDrivers()
             is DriverCostEntryContract.Intent.RefreshCostTypes -> refreshCostTypes()
+            is DriverCostEntryContract.Intent.SetInitialDriver -> setInitialDriver(intent.driverId)
             is DriverCostEntryContract.Intent.SelectDriver -> selectDriver(intent.driver)
             is DriverCostEntryContract.Intent.ToggleDriverDropdown -> updateState { copy(showDriverDropdown = !showDriverDropdown) }
 
@@ -372,5 +373,17 @@ class DriverCostEntryViewModel(
             }
         }
     }
-}
 
+    private fun setInitialDriver(driverId: String) {
+        // Find the driver by ID
+        val driver = state.value.drivers.find { it.id == driverId }
+
+        if (driver != null) {
+            // Driver found, select the driver
+            selectDriver(driver)
+        } else {
+            // Driver not found, clear the selection
+            updateState { copy(selectedDriver = null) }
+        }
+    }
+}

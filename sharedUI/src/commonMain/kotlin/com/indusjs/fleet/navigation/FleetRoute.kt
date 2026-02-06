@@ -51,7 +51,7 @@ sealed interface FleetRoute : NavKey {
 
     @Serializable data class TripCostEntry(val tripId: String? = null, val vehicleId: String? = null) : FleetRoute
     @Serializable data class MaintenanceCostEntry(val vehicleId: String? = null) : FleetRoute
-    @Serializable data object DriverCostEntry : FleetRoute
+    @Serializable data class DriverCostEntry(val driverId: String? = null) : FleetRoute
 
     // ==================== Alerts Routes ====================
 
@@ -93,4 +93,3 @@ sealed interface FleetRoute : NavKey {
     @Serializable data class EditPurchaseInfo(val vehicleId: String) : FleetRoute
     @Serializable data class EmiPaymentHistory(val vehicleId: String) : FleetRoute
 }
-
