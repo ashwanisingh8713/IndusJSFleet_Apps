@@ -72,8 +72,10 @@ object CreateTripContract {
         val customerSearchQuery: String = "",
         val customerSuggestions: List<Customer> = emptyList(),
         val showCustomerDropdown: Boolean = false,
+        val showCustomerBottomSheet: Boolean = false,
         val isSearchingCustomers: Boolean = false,
         val isRefreshingCustomers: Boolean = false,
+        val isLoadingCustomers: Boolean = false,
         val allCustomers: List<Customer> = emptyList(),
 
         // Pricing
@@ -259,6 +261,8 @@ object CreateTripContract {
         // Customer selection from local DB
         data class SelectCustomer(val customer: Customer) : Intent
         data class SearchCustomers(val query: String) : Intent
+        data class UpdateCustomerSearchQuery(val query: String) : Intent
+        data object ToggleCustomerBottomSheet : Intent
         data object ClearCustomerSelection : Intent
         data object DismissCustomerDropdown : Intent
         data object NavigateToAddCustomer : Intent

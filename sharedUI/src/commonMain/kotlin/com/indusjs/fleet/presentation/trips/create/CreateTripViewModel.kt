@@ -64,49 +64,36 @@ class CreateTripViewModel(
 
     /**
      * Load customers from repository for autocomplete.
-     * First loads from local DB for fast display, then syncs from API in background.
+     * Loads from local DB only - no API sync (user can manually refresh if needed).
      */
     private suspend fun loadCustomersFromRepository() {
         customerRepository?.let { repo ->
+            updateState { copy(isLoadingCustomers = true) }
             try {
-                // First: Load from local cache for fast initial display
+                // Load from local cache only
                 val localCustomers = repo.getLocalCustomers()
-                if (localCustomers.isNotEmpty()) {
-                    val activeLocal = localCustomers.filter { it.isActive }
-                        .map { summary ->
-                            Customer(
-                                id = summary.id,
-                                companyName = summary.companyName,
-                                personName = summary.personName,
-                                primaryContact = summary.primaryContact,
-                                secondaryContact = null,
-                                companyAddress = null,
-                                email = null,
-                                gstNumber = null,
-                                notes = null,
-                                isActive = summary.isActive,
-                                createdAt = null,
-                                updatedAt = null
-                            )
-                        }
-                    updateState { copy(allCustomers = activeLocal) }
-                    log.d { "Loaded ${activeLocal.size} customers from local cache" }
-                }
-
-                // Then: Sync from API in background
-                when (val result = repo.refreshCustomers()) {
-                    is Result.Success -> {
-                        val activeCustomers = result.data.filter { it.isActive }
-                        updateState { copy(allCustomers = activeCustomers) }
-                        log.d { "Synced ${activeCustomers.size} customers from API" }
+                val activeLocal = localCustomers.filter { it.isActive }
+                    .map { summary ->
+                        Customer(
+                            id = summary.id,
+                            companyName = summary.companyName,
+                            personName = summary.personName,
+                            primaryContact = summary.primaryContact,
+                            secondaryContact = null,
+                            companyAddress = null,
+                            email = null,
+                            gstNumber = null,
+                            notes = null,
+                            isActive = summary.isActive,
+                            createdAt = null,
+                            updatedAt = null
+                        )
                     }
-                    is Result.Error -> {
-                        log.e { "Failed to sync customers: ${result.message}" }
-                    }
-                    is Result.Loading -> { }
-                }
+                updateState { copy(allCustomers = activeLocal, isLoadingCustomers = false) }
+                log.d { "Loaded ${activeLocal.size} customers from local cache" }
             } catch (e: Exception) {
                 log.e { "Error loading customers: ${e.message}" }
+                updateState { copy(isLoadingCustomers = false) }
             }
         }
     }
@@ -224,9 +211,16 @@ class CreateTripViewModel(
             // Customer selection from local DB
             is Intent.SelectCustomer -> selectCustomer(intent.customer)
             is Intent.SearchCustomers -> searchCustomers(intent.query)
+            is Intent.UpdateCustomerSearchQuery -> updateState { copy(customerSearchQuery = intent.query) }
+            is Intent.ToggleCustomerBottomSheet -> updateState {
+                copy(showCustomerBottomSheet = !showCustomerBottomSheet, customerSearchQuery = "")
+            }
             is Intent.ClearCustomerSelection -> clearCustomerSelection()
             is Intent.DismissCustomerDropdown -> updateState { copy(showCustomerDropdown = false) }
-            is Intent.NavigateToAddCustomer -> sendEffect(Effect.NavigateToAddCustomer)
+            is Intent.NavigateToAddCustomer -> {
+                updateState { copy(showCustomerBottomSheet = false) }
+                sendEffect(Effect.NavigateToAddCustomer)
+            }
             is Intent.RefreshCustomers -> refreshCustomersFromApi()
 
             // Pricing updates
@@ -975,6 +969,7 @@ class CreateTripViewModel(
                 customerContact = customer.primaryContact,
                 customerSearchQuery = customer.companyName,
                 showCustomerDropdown = false,
+                showCustomerBottomSheet = false,
                 customerNameError = null,
                 customerContactError = null
             )

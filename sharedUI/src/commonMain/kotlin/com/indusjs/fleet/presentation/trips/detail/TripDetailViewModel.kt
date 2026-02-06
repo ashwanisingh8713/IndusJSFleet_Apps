@@ -335,6 +335,7 @@ class TripDetailViewModel(
 
     /**
      * Load customers from local database for customer selection.
+     * Loads from local DB only - no API sync (user can manually refresh if needed).
      */
     private suspend fun loadCustomers() {
         if (customerRepository == null) {
@@ -345,21 +346,36 @@ class TripDetailViewModel(
         updateState { copy(isLoadingCustomers = true) }
 
         withContext(dispatcherProvider.io) {
-            when (val result = customerRepository.getCustomers(page = 1, perPage = 100, isActive = true)) {
-                is Result.Success -> {
-                    updateState {
-                        copy(
-                            customers = result.data,
-                            isLoadingCustomers = false
+            try {
+                // Load from local cache only
+                val localCustomers = customerRepository.getLocalCustomers()
+                val activeCustomers = localCustomers.filter { it.isActive }
+                    .map { summary ->
+                        Customer(
+                            id = summary.id,
+                            companyName = summary.companyName,
+                            personName = summary.personName,
+                            primaryContact = summary.primaryContact,
+                            secondaryContact = null,
+                            companyAddress = null,
+                            email = null,
+                            gstNumber = null,
+                            notes = null,
+                            isActive = summary.isActive,
+                            createdAt = null,
+                            updatedAt = null
                         )
                     }
-                    log.d { "Loaded ${result.data.size} customers" }
+                updateState {
+                    copy(
+                        customers = activeCustomers,
+                        isLoadingCustomers = false
+                    )
                 }
-                is Result.Error -> {
-                    updateState { copy(isLoadingCustomers = false) }
-                    log.e { "Failed to load customers: ${result.message}" }
-                }
-                is Result.Loading -> { /* Already handled */ }
+                log.d { "Loaded ${activeCustomers.size} customers from local cache" }
+            } catch (e: Exception) {
+                updateState { copy(isLoadingCustomers = false) }
+                log.e { "Failed to load customers: ${e.message}" }
             }
         }
     }

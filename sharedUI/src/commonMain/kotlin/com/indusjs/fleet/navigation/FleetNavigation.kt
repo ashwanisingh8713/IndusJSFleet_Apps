@@ -260,6 +260,9 @@ fun fleetEntryProvider(
                 },
                 onNavigateToAddPayment = { tripId, vehicleId ->
                     backStack.add(FleetRoute.AddPayment(tripId = tripId, vehicleId = vehicleId))
+                },
+                onNavigateToAddCustomer = {
+                    backStack.add(FleetRoute.CreateCustomer)
                 }
             )
         }

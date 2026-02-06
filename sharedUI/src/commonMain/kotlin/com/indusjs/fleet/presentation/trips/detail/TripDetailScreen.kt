@@ -27,6 +27,8 @@ import com.indusjs.pdfreport.model.TripCostsPdfData
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.LoadingContent
 import com.indusjs.fleet.core.ui.ClickablePhoneRow
+import com.indusjs.fleet.core.ui.customer.CustomerDetailsSection
+import com.indusjs.fleet.core.ui.customer.CustomerSelectionBottomSheet
 import com.indusjs.fleet.core.ui.state.StateChangeDialog
 import com.indusjs.fleet.core.ui.state.getTripStateOptions
 import com.indusjs.fleet.core.util.formatCurrency
@@ -473,6 +475,19 @@ fun TripDetailScreen(
                 }
             }
         }
+    }
+
+    // Customer Selection Bottom Sheet for Edit Mode
+    if (state.showCustomerBottomSheet) {
+        CustomerSelectionBottomSheet(
+            customers = state.customers,
+            searchQuery = state.customerSearchQuery,
+            isLoading = state.isLoadingCustomers,
+            onDismiss = { viewModel.sendIntent(TripDetailContract.Intent.ToggleCustomerBottomSheet) },
+            onSearchQueryChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCustomerSearchQuery(it)) },
+            onCustomerSelect = { viewModel.sendIntent(TripDetailContract.Intent.SelectCustomer(it)) },
+            onAddNewCustomer = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddCustomer) }
+        )
     }
 }
 
@@ -1809,184 +1824,19 @@ private fun EditModeContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Customer Selection Section - Enhanced UI similar to CreateTripScreen
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "👤 Customer Details",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    // Refresh button
-                    IconButton(
-                        onClick = { viewModel.sendIntent(TripDetailContract.Intent.RefreshCustomers) },
-                        enabled = !state.isRefreshingCustomers,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        if (state.isRefreshingCustomers) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh customers",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                // Customer Selection Section - Using shared component
+                CustomerDetailsSection(
+                    selectedCustomer = state.selectedCustomer,
+                    customerName = state.customerName,
+                    customerContact = state.customerContact,
+                    isRefreshing = state.isRefreshingCustomers,
+                    hasCustomers = state.customers.isNotEmpty(),
+                    validationError = null,
+                    onSelectClick = { viewModel.sendIntent(TripDetailContract.Intent.ToggleCustomerBottomSheet) },
+                    onClearClick = { viewModel.sendIntent(TripDetailContract.Intent.ClearCustomerSelection) },
+                    onRefreshClick = { viewModel.sendIntent(TripDetailContract.Intent.RefreshCustomers) },
+                    onAddNewClick = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddCustomer) }
                 )
-
-                // Show selected customer card OR selection button
-                if (state.selectedCustomer != null || state.customerName.isNotBlank()) {
-                    // Selected Customer Card with clear option
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                                ) {
-                                    Text(
-                                        text = "👤",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.padding(8.dp)
-                                    )
-                                }
-                                Column {
-                                    Text(
-                                        text = state.customerName.ifBlank { "Customer Selected" },
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    if (state.customerContact.isNotBlank()) {
-                                        Text(
-                                            text = "📞 ${state.customerContact}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Clear button
-                            IconButton(
-                                onClick = { viewModel.sendIntent(TripDetailContract.Intent.ClearCustomerSelection) }
-                            ) {
-                                Text("✕", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Change Customer and Add New buttons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        TextButton(
-                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.ToggleCustomerBottomSheet) }
-                        ) {
-                            Text("🔄 Change Customer")
-                        }
-                        TextButton(
-                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddCustomer) }
-                        ) {
-                            Text("+ Add New Customer")
-                        }
-                    }
-                } else if (state.customers.isEmpty() && !state.isLoadingCustomers) {
-                    // Empty state - no customers
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "👤",
-                            style = MaterialTheme.typography.displaySmall
-                        )
-                        Text(
-                            text = "No customers found",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "Add a customer to associate with this trip.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddCustomer) },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            )
-                        ) {
-                            Text("➕ Add New Customer")
-                        }
-                    }
-                } else {
-                    // Select Customer Button
-                    OutlinedButton(
-                        onClick = { viewModel.sendIntent(TripDetailContract.Intent.ToggleCustomerBottomSheet) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("👤", modifier = Modifier.padding(end = 8.dp))
-                        Text(
-                            text = "Select Customer",
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    // Add New Customer text button
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(
-                            onClick = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddCustomer) }
-                        ) {
-                            Text("+ Add New Customer")
-                        }
-                    }
-                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
