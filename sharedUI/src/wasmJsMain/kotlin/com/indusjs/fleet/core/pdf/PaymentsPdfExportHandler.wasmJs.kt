@@ -9,7 +9,7 @@ import com.indusjs.fleet.presentation.payments.PaymentReceiptPdfData
  * TODO: Implement using JS PDF libraries
  */
 @Composable
-actual fun PaymentsListPdfExportHandler(
+fun PaymentsListPdfExportHandler(
     pdfData: PaymentsListPdfData?,
     onExportComplete: () -> Unit,
     onExportError: (String) -> Unit
@@ -25,7 +25,7 @@ actual fun PaymentsListPdfExportHandler(
  * TODO: Implement using JS PDF libraries
  */
 @Composable
-actual fun PaymentReceiptPdfExportHandler(
+fun PaymentReceiptPdfExportHandler(
     pdfData: PaymentReceiptPdfData?,
     onExportComplete: () -> Unit,
     onExportError: (String) -> Unit

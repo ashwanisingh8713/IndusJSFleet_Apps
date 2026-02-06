@@ -2,15 +2,15 @@ package com.indusjs.fleet.core.pdf
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import com.indusjs.fleet.presentation.trips.detail.TripDetailContract
+import com.indusjs.pdfreport.model.TripCostsPdfData
 
 /**
  * WasmJS implementation of PdfExportHandler.
  * TODO: Implement using JS PDF libraries like jsPDF or pdfmake
  */
 @Composable
-actual fun PdfExportHandler(
-    pdfData: TripDetailContract.TripCostsPdfData?,
+fun PdfExportHandler(
+    pdfData: TripCostsPdfData?,
     onExportComplete: () -> Unit,
     onExportError: (String) -> Unit
 ) {

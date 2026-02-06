@@ -1,15 +1,15 @@
 package com.indusjs.fleet.core.pdf
 
-import com.indusjs.fleet.presentation.trips.detail.TripDetailContract
+import com.indusjs.pdfreport.model.TripCostsPdfData
 
 /**
  * WasmJS implementation of TripCostsPdfGenerator.
  * TODO: Implement using JS PDF libraries like jsPDF or pdfmake
  */
-actual class TripCostsPdfGenerator {
+class TripCostsPdfGenerator {
 
-    actual fun generateAndSharePdf(
-        pdfData: TripDetailContract.TripCostsPdfData,
+    fun generateAndSharePdf(
+        pdfData: TripCostsPdfData,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {

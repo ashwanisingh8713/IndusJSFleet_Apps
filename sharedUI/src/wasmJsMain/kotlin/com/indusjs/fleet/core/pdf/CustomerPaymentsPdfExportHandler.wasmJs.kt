@@ -1,13 +1,13 @@
 package com.indusjs.fleet.core.pdf
 
 import androidx.compose.runtime.Composable
-import com.indusjs.fleet.presentation.customers.detail.CustomerPaymentsPdfData
+import com.indusjs.pdfreport.model.CustomerPaymentsPdfData
 
 /**
  * WasmJS implementation of CustomerPaymentsPdfExportHandler.
  */
 @Composable
-actual fun CustomerPaymentsPdfExportHandler(
+fun CustomerPaymentsPdfExportHandler(
     pdfData: CustomerPaymentsPdfData?,
     onExportComplete: () -> Unit,
     onExportError: (String) -> Unit
