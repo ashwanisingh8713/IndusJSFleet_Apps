@@ -78,6 +78,12 @@ interface CostsRemoteDataSource : RemoteDataSource {
         endDate: String?
     ): com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse
 
+    suspend fun createDriverCost(
+        token: String,
+        driverId: String,
+        request: com.indusjs.fleet.data.model.driver.CreateDriverCostRequest
+    ): com.indusjs.fleet.data.model.driver.DriverCostApiResponse
+
     suspend fun bulkCreateDriverCosts(
         token: String,
         driverId: String,
@@ -615,6 +621,48 @@ class CostsRemoteDataSourceImpl(
         } catch (e: Exception) {
             log.e(e) { "Failed to parse driver costs response: ${e.message}" }
             com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse(
+                success = false,
+                message = "Failed to parse response: ${e.message}"
+            )
+        }
+    }
+
+    override suspend fun createDriverCost(
+        token: String,
+        driverId: String,
+        request: com.indusjs.fleet.data.model.driver.CreateDriverCostRequest
+    ): com.indusjs.fleet.data.model.driver.DriverCostApiResponse {
+        return try {
+            log.d { "Creating driver cost for driver: $driverId, trip: ${request.tripId}" }
+            val response: HttpResponse = httpClient.post("$baseUrl/drivers/$driverId/costs") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(json.encodeToString(request))
+            }
+            handleDriverCostResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to create driver cost: ${e.message}" }
+            com.indusjs.fleet.data.model.driver.DriverCostApiResponse(
+                success = false,
+                message = e.message ?: "Network error"
+            )
+        }
+    }
+
+    private suspend fun handleDriverCostResponse(response: HttpResponse): com.indusjs.fleet.data.model.driver.DriverCostApiResponse {
+        val responseBody = response.bodyAsText()
+        return try {
+            if (response.status.isSuccess()) {
+                json.decodeFromString<com.indusjs.fleet.data.model.driver.DriverCostApiResponse>(responseBody)
+            } else {
+                com.indusjs.fleet.data.model.driver.DriverCostApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                )
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to parse driver cost response: ${e.message}" }
+            com.indusjs.fleet.data.model.driver.DriverCostApiResponse(
                 success = false,
                 message = "Failed to parse response: ${e.message}"
             )

@@ -118,6 +118,22 @@ interface CostsRepository : Repository {
     ): Result<DriverCostsListDto>
 
     /**
+     * Create a single driver cost entry.
+     * POST /drivers/{driver_id}/costs
+     *
+     * Used for syncing driver expenses from trip costs.
+     * The request includes trip_id for traceability.
+     *
+     * @param driverId Driver ID
+     * @param request Create driver cost request with trip_id for linking
+     * @return Result containing the created DriverCostDto or error
+     */
+    suspend fun createDriverCost(
+        driverId: String,
+        request: com.indusjs.fleet.data.model.driver.CreateDriverCostRequest
+    ): Result<com.indusjs.fleet.data.model.driver.DriverCostDto>
+
+    /**
      * Bulk create driver costs for a specific driver.
      * POST /drivers/{driver_id}/costs/bulk
      *

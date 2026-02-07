@@ -1,10 +1,12 @@
 package com.indusjs.fleet.presentation.trips.cost
 
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.ui.CostTypeSelection
+import com.indusjs.fleet.core.util.TripCostToDriverCostMapper
 import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
 import com.indusjs.fleet.data.model.costs.BulkCostItem
@@ -416,6 +418,10 @@ class TripCostEntryViewModel(
         withContext(dispatcherProvider.io) {
             when (val result = costsRepository.bulkCreateTripCosts(currentState.selectedTrip.id, request)) {
                 is Result.Success -> {
+                    // Sync driver expenses after successful trip cost save
+                    // This creates corresponding entries in the driver's cost history
+                    syncDriverExpenses(currentState.selectedTrip, validEntries)
+
                     updateState {
                         copy(
                             isSaving = false,
@@ -436,6 +442,89 @@ class TripCostEntryViewModel(
                 }
                 is Result.Loading -> { /* ignore */ }
             }
+        }
+    }
+
+    /**
+     * Sync driver expense entries from trip costs to driver costs.
+     *
+     * This creates corresponding entries in the driver's cost history
+     * with a reference to the trip for traceability.
+     *
+     * Implementation details:
+     * - One-way sync: Trip Cost → Driver Cost
+     * - Only syncs costs from the Driver Expenses group (TC-G-004)
+     * - Maps trip cost types to appropriate driver cost types (DC-G-004)
+     * - Includes trip_id reference for traceability
+     * - Failures are logged but don't affect trip cost save success
+     *
+     * @param trip The trip associated with the costs
+     * @param entries The list of cost entries to check for driver expenses
+     */
+    private suspend fun syncDriverExpenses(trip: Trip, entries: List<CostEntryRow>) {
+        val log = Logger.withTag("TripCostEntryVM")
+
+        val driverIdInt = trip.driverId.toIntOrNull()
+        val tripIdInt = trip.id.toIntOrNull()
+
+        if (driverIdInt == null || driverIdInt == 0) {
+            log.w { "Cannot sync driver expenses: no driver assigned to trip ${trip.id}" }
+            return
+        }
+
+        if (tripIdInt == null) {
+            log.w { "Cannot sync driver expenses: invalid trip ID ${trip.id}" }
+            return
+        }
+
+        // Filter driver expense entries (TC-G-004 group)
+        val driverExpenseEntries = entries.filter { TripCostToDriverCostMapper.isDriverExpense(it) }
+
+        if (driverExpenseEntries.isEmpty()) {
+            log.d { "No driver expenses to sync for trip ${trip.id}" }
+            return
+        }
+
+        log.d { "Syncing ${driverExpenseEntries.size} driver expense(s) for driver $driverIdInt from trip ${trip.id}" }
+
+        var successCount = 0
+        var failureCount = 0
+
+        for (entry in driverExpenseEntries) {
+            try {
+                val driverCostRequest = TripCostToDriverCostMapper.mapToDriverCost(
+                    entry = entry,
+                    driverId = driverIdInt,
+                    tripId = tripIdInt,
+                    date = entry.date // DD-MM-YYYY format for driver cost API
+                )
+
+                if (driverCostRequest != null) {
+                    when (val result = costsRepository.createDriverCost(
+                        driverId = driverIdInt.toString(),
+                        request = driverCostRequest
+                    )) {
+                        is Result.Success -> {
+                            successCount++
+                            log.d { "Driver expense synced: ${entry.costTypeLabel} - ₹${entry.amount}" }
+                        }
+                        is Result.Error -> {
+                            failureCount++
+                            // Log error but don't fail the trip cost save
+                            log.w { "Failed to sync driver expense '${entry.costTypeLabel}': ${result.message}" }
+                        }
+                        is Result.Loading -> { /* ignore */ }
+                    }
+                }
+            } catch (e: Exception) {
+                failureCount++
+                // Log error but don't fail the trip cost save
+                log.e(e) { "Error syncing driver expense '${entry.costTypeLabel}': ${e.message}" }
+            }
+        }
+
+        if (successCount > 0) {
+            log.i { "Driver expense sync complete: $successCount synced, $failureCount failed" }
         }
     }
 }
