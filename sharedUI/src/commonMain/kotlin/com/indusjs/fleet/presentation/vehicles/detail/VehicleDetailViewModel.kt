@@ -116,6 +116,7 @@ class VehicleDetailViewModel(
             is Intent.ConfirmDeleteCost -> confirmDeleteCost()
             is Intent.DismissDeleteCostDialog -> updateState { copy(showDeleteCostDialog = false, costToDeleteId = null, costToDeleteType = null) }
             is Intent.NavigateToAddMaintenanceCost -> sendEffect(Effect.NavigateToMaintenanceCost(currentState.vehicleId))
+            is Intent.ExportMaintenanceCostsPdf -> exportMaintenanceCostsToPdf()
 
             // History tab intents
             is Intent.LoadHistory -> loadHistory()
@@ -1007,6 +1008,87 @@ class VehicleDetailViewModel(
                 }
                 is Result.Loading -> {}
             }
+        }
+    }
+
+    /**
+     * Export maintenance costs to PDF.
+     * Creates PDF data and sends an effect for the screen to handle platform-specific PDF generation.
+     */
+    private fun exportMaintenanceCostsToPdf() {
+        val state = currentState
+        val vehicle = state.vehicle
+
+        if (state.maintenanceCosts.isEmpty()) {
+            sendEffect(Effect.ShowSnackbar("No costs to export"))
+            return
+        }
+
+        if (vehicle == null) {
+            sendEffect(Effect.ShowSnackbar("Vehicle data not available"))
+            return
+        }
+
+        // Build period string from filters or use "All Time"
+        val period = if (state.costsStartDate.isNotBlank() || state.costsEndDate.isNotBlank()) {
+            val from = state.costsStartDate.ifBlank { "Start" }
+            val to = state.costsEndDate.ifBlank { "Present" }
+            "$from to $to"
+        } else {
+            "All Time"
+        }
+
+        // Convert MaintenanceCostDto to VehicleMaintenanceCostItem
+        val costItems = state.maintenanceCosts.map { cost ->
+            com.indusjs.pdfreport.model.VehicleMaintenanceCostItem(
+                id = cost.id,
+                costId = cost.effectiveCostType,
+                costLabel = cost.displayLabel,
+                amount = cost.amount,
+                date = formatDateForPdf(cost.date),
+                vendorName = cost.vendorName,
+                description = cost.description,
+                notes = cost.notes
+            )
+        }
+
+        // Group costs by type
+        val costsByType = costItems.groupBy { it.costLabel }
+
+        // Calculate totals
+        val totalAmount = state.maintenanceCostsTotalAmount
+        val entryCount = state.maintenanceCosts.size
+        val categoryCount = costsByType.size
+
+        // Generate timestamp
+        val generatedAt = com.indusjs.datetimeutils.FleetDateTime.currentDateTime()
+
+        val pdfData = com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData(
+            vehicleId = vehicle.id.toIntOrNull() ?: 0,
+            registrationNumber = vehicle.registrationNumber,
+            vehicleMake = vehicle.make,
+            vehicleModel = vehicle.model,
+            period = period,
+            costs = costItems,
+            costsByType = costsByType,
+            totalAmount = totalAmount,
+            entryCount = entryCount,
+            categoryCount = categoryCount,
+            generatedAt = generatedAt
+        )
+
+        sendEffect(Effect.ExportMaintenanceCostsPdf(pdfData))
+    }
+
+    /**
+     * Format date for PDF display (DD-MMM-YYYY format).
+     */
+    private fun formatDateForPdf(date: String?): String {
+        if (date.isNullOrBlank()) return "N/A"
+        return try {
+            com.indusjs.datetimeutils.FleetDateTime.formatAnyToDisplayDate(date)
+        } catch (e: Exception) {
+            date
         }
     }
 

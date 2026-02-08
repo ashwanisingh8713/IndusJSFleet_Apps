@@ -20,6 +20,10 @@ object PdfFileNameGenerator {
                 val vehicleNumber = sanitize(data.vehicleNumber)
                 "TripCosts_${vehicleNumber}_Trip${data.tripId}_$timestamp.pdf"
             }
+            is DriverCostsPdfData -> {
+                val driverName = sanitize(data.driverName)
+                "DriverCosts_${driverName}_Driver${data.driverId}_$timestamp.pdf"
+            }
             is CustomerTripsPdfData -> {
                 val customerName = sanitize(data.customerName)
                 "CustomerTrips_${customerName}_$timestamp.pdf"
@@ -54,6 +58,10 @@ object PdfFileNameGenerator {
             is CustomerFinancialsPdfData -> {
                 val customerName = sanitize(data.customerName)
                 "CustomerFinancials_${customerName}_$timestamp.pdf"
+            }
+            is VehicleMaintenanceCostsPdfData -> {
+                val vehicleNumber = sanitize(data.registrationNumber)
+                "VehicleMaintenanceCosts_${vehicleNumber}_$timestamp.pdf"
             }
         }
     }

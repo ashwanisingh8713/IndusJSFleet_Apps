@@ -3,11 +3,8 @@ package com.indusjs.fleet.presentation.drivers.detail
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
-import com.indusjs.fleet.data.model.driver.DriverCostTypes
 import com.indusjs.fleet.data.model.team.TeamMemberDto
-import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
-import com.indusjs.fleet.domain.entity.driver.LicenseType
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
 import com.indusjs.fleet.domain.repository.team.TeamRepository
@@ -21,14 +18,8 @@ import com.indusjs.fleet.presentation.drivers.detail.DriverDetailContract.Intent
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailContract.State
 import dev.zacsweers.metro.Inject
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
-import kotlinx.datetime.todayIn
-import kotlin.time.Clock
 
 /**
  * ViewModel for the Driver Detail screen implementing MVI pattern.
@@ -112,6 +103,17 @@ class DriverDetailViewModel(
             is Intent.HideCostsFilterSheet -> updateState { copy(showCostsFilterSheet = false) }
             is Intent.ApplyCostFilters -> applyCostFilters(intent.startDate, intent.endDate, intent.month)
             is Intent.ClearCostFilters -> clearCostFilters()
+
+            // Cost group expand/collapse
+            is Intent.ToggleCostGroup -> toggleCostGroup(intent.groupId)
+            is Intent.ExpandAllCostGroups -> expandAllCostGroups()
+            is Intent.CollapseAllCostGroups -> collapseAllCostGroups()
+
+            // PDF Export
+            is Intent.ExportCostsToPdf -> exportCostsToPdf()
+
+            // Trip navigation
+            is Intent.NavigateToTripDetail -> sendEffect(Effect.NavigateToTripDetail(intent.tripId))
 
             // History tab intents
             is Intent.LoadHistory -> loadHistory()
@@ -434,15 +436,11 @@ class DriverDetailViewModel(
     private fun getDefaultFromDate(): String = "01-01-1971"
 
     /**
-     * Get default to date (current date + 1 week) for API calls
+     * Get default to date (current date + 1 week) for API calls.
+     * Uses FleetDateTime utility for cross-platform date calculation.
      */
     private fun getDefaultToDate(): String {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        val futureDate = today.plus(7, DateTimeUnit.DAY)
-        val day = futureDate.day.toString().padStart(2, '0')
-        val month = futureDate.month.ordinal.plus(1).toString().padStart(2, '0')
-        val year = futureDate.year.toString()
-        return "$day-$month-$year"
+        return com.indusjs.datetimeutils.FleetDateTime.getDateFromToday(7)
     }
 
     private suspend fun loadCosts() {
@@ -470,10 +468,44 @@ class DriverDetailViewModel(
                     val costs = data.costs
                     val summary = data.summary
 
-                    // Calculate totals
-                    val totalEarnings = summary?.totalEarnings ?: costs.filter { !it.isDeductionCost }.sumOf { it.amount }
-                    val totalDeductions = summary?.totalDeductions ?: costs.filter { it.isDeductionCost }.sumOf { it.amount }
-                    val netAmount = summary?.netAmount ?: (totalEarnings - totalDeductions)
+                    // Calculate totals locally to ensure accuracy
+                    // The API summary may return 0 for driver costs added from trips
+                    // because those are tracked differently on the backend
+                    val localEarnings = costs.filter { !it.isDeductionCost }.sumOf { it.amount }
+                    val localDeductions = costs.filter { it.isDeductionCost }.sumOf { it.amount }
+                    val localNetAmount = localEarnings - localDeductions
+
+                    // Use API summary only if it has meaningful values (non-zero)
+                    // Otherwise, prefer local calculation from actual cost items
+                    val totalEarnings = if (summary != null && summary.totalEarnings > 0) {
+                        summary.totalEarnings
+                    } else {
+                        localEarnings
+                    }
+                    val totalDeductions = if (summary != null && summary.totalDeductions > 0) {
+                        summary.totalDeductions
+                    } else {
+                        localDeductions
+                    }
+                    val netAmount = if (summary != null && (summary.totalEarnings > 0 || summary.totalDeductions > 0)) {
+                        summary.netAmount
+                    } else {
+                        localNetAmount
+                    }
+
+                    // Compute cost breakdown by group
+                    val byGroup = costs.groupBy { it.groupId }
+
+                    // Compute cost breakdown by type
+                    val byType = costs.groupBy { it.costId }
+
+                    // Compute group totals
+                    val groupTotals = byGroup.mapValues { (_, groupCosts) ->
+                        groupCosts.sumOf { it.amount }
+                    }
+
+                    // All groups expanded by default
+                    val allGroups = byGroup.keys
 
                     updateState {
                         copy(
@@ -483,7 +515,11 @@ class DriverDetailViewModel(
                             costsDeductionsAmount = totalDeductions,
                             costsNetAmount = netAmount,
                             costsPage = data.page,
-                            hasMoreCosts = data.page < data.totalPages
+                            hasMoreCosts = data.page < data.totalPages,
+                            costsByGroup = byGroup,
+                            costsByType = byType,
+                            groupTotals = groupTotals,
+                            expandedGroups = allGroups
                         )
                     }
                 }
@@ -568,6 +604,101 @@ class DriverDetailViewModel(
             )
         }
         refreshCosts()
+    }
+
+    // ==================== Cost Group Functions ====================
+
+    private fun toggleCostGroup(groupId: String) {
+        updateState {
+            val newExpanded = if (expandedGroups.contains(groupId)) {
+                expandedGroups - groupId
+            } else {
+                expandedGroups + groupId
+            }
+            copy(expandedGroups = newExpanded)
+        }
+    }
+
+    private fun expandAllCostGroups() {
+        updateState {
+            copy(expandedGroups = costsByGroup.keys)
+        }
+    }
+
+    private fun collapseAllCostGroups() {
+        updateState {
+            copy(expandedGroups = emptySet())
+        }
+    }
+
+    // ==================== PDF Export Functions ====================
+
+    private suspend fun exportCostsToPdf() {
+        val driver = currentState.driver ?: return
+        val costs = currentState.costs
+
+        if (costs.isEmpty()) {
+            sendEffect(Effect.ShowSnackbar("No costs to export"))
+            return
+        }
+
+        // Build period string
+        val period = when {
+            currentState.costsMonth.isNotBlank() -> currentState.costsMonth
+            currentState.costsStartDate.isNotBlank() && currentState.costsEndDate.isNotBlank() ->
+                "${currentState.costsStartDate} to ${currentState.costsEndDate}"
+            else -> "All Time"
+        }
+
+        // Get group names mapping
+        val groupNames = mapOf(
+            "DC-G-001" to "Salary & Wages",
+            "DC-G-002" to "Incentives & Bonuses",
+            "DC-G-003" to "Deductions",
+            "DC-G-004" to "Other"
+        )
+
+        // Convert costs to PDF items
+        val pdfCosts = costs.map { cost ->
+            com.indusjs.pdfreport.model.DriverCostItem(
+                id = cost.id,
+                costId = cost.costId,
+                costLabel = cost.displayLabel,
+                groupId = cost.groupId,
+                groupName = groupNames[cost.groupId] ?: "Other",
+                amount = cost.amount,
+                date = cost.date,
+                isDeduction = cost.isDeductionCost,
+                tripId = cost.tripId,
+                description = cost.description,
+                notes = cost.notes
+            )
+        }
+
+        // Group costs for PDF
+        val pdfCostsByGroup = pdfCosts.groupBy { it.groupId }
+            .mapKeys { (groupId, _) -> groupNames[groupId] ?: "Other" }
+
+        // Generate timestamp using FleetDateTime
+        val generatedAt = com.indusjs.datetimeutils.FleetDateTime.currentDateTime()
+
+        val pdfData = com.indusjs.pdfreport.model.DriverCostsPdfData(
+            driverId = driver.id.toIntOrNull() ?: 0,
+            driverName = "${driver.firstName} ${driver.lastName}",
+            mobile = driver.mobile,
+            licenseNumber = driver.licenseNumber,
+            period = period,
+            costs = pdfCosts,
+            costsByGroup = pdfCostsByGroup,
+            totalEarnings = currentState.costsTotalAmount,
+            totalDeductions = currentState.costsDeductionsAmount,
+            netAmount = currentState.costsNetAmount,
+            entryCount = costs.size,
+            categoryCount = currentState.costCategoryCount,
+            generatedAt = generatedAt
+        )
+
+        sendEffect(Effect.ExportPdf(pdfData))
     }
 
     // ==================== History Tab Functions ====================

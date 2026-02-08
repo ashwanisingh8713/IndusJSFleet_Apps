@@ -16,6 +16,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.datetimepicker.FleetDatePicker
+import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.ui.ErrorContent
 import com.indusjs.fleet.core.ui.FleetDateField
@@ -35,8 +37,11 @@ import com.indusjs.fleet.core.util.formatCostAmount
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
+import com.indusjs.pdfreport.handler.DriverCostsPdfHandler
+import com.indusjs.pdfreport.model.DriverCostsPdfData
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
 /**
@@ -48,12 +53,18 @@ fun DriverDetailScreen(
     viewModel: DriverDetailViewModel,
     driverId: String,
     onNavigateBack: () -> Unit = {},
-    onNavigateToAddDriverCost: (String) -> Unit = {}
+    onNavigateToAddDriverCost: (String) -> Unit = {},
+    onNavigateToTripDetail: (Int) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showStatusDialog by remember { mutableStateOf(false) }
+
+    // PDF Export state
+    var pdfExportData by remember { mutableStateOf<DriverCostsPdfData?>(null) }
+    var isExportingPdf by remember { mutableStateOf(false) }
 
     // Load driver on first composition
     LaunchedEffect(driverId) {
@@ -86,9 +97,33 @@ fun DriverDetailScreen(
                 is DriverDetailContract.Effect.NavigateToAddDriverCost -> {
                     onNavigateToAddDriverCost(effect.driverId)
                 }
+                is DriverDetailContract.Effect.NavigateToTripDetail -> {
+                    onNavigateToTripDetail(effect.tripId)
+                }
+                is DriverDetailContract.Effect.ExportPdf -> {
+                    // Trigger PDF export by setting the data
+                    isExportingPdf = true
+                    pdfExportData = effect.pdfData
+                }
             }
         }
     }
+
+    // PDF Export Handler
+    DriverCostsPdfHandler(
+        pdfData = pdfExportData,
+        onExportComplete = {
+            isExportingPdf = false
+            pdfExportData = null
+        },
+        onExportError = { error ->
+            isExportingPdf = false
+            pdfExportData = null
+            scope.launch {
+                snackbarHostState.showSnackbar(error)
+            }
+        }
+    )
 
     // Delete confirmation dialog
     if (showDeleteDialog) {
@@ -276,6 +311,30 @@ fun DriverDetailScreen(
                 }
             }
         }
+
+        // PDF Export progress indicator
+        if (isExportingPdf) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Exporting to PDF...")
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -422,6 +481,11 @@ private fun DriverOverviewContent(
 
 /**
  * Costs tab content displaying driver earnings, deductions, and costs.
+ * Features:
+ * - Enhanced Hero card with animated metrics
+ * - Collapsible cost groups (Salary, Incentives, Deductions, Other)
+ * - Cost breakdown by type with trip links
+ * - PDF export functionality
  */
 @Composable
 private fun DriverCostsTabContent(
@@ -465,7 +529,7 @@ private fun DriverCostsTabContent(
                             style = MaterialTheme.typography.displayMedium
                         )
                         Text(
-                            text = state.costsError,
+                            text = state.costsError ?: "An error occurred",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -519,17 +583,19 @@ private fun DriverCostsTabContent(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Summary Card
+                    // Enhanced Hero Card
                     item {
-                        DriverCostsSummaryCard(
+                        DriverCostsHeroCard(
                             earnings = state.costsTotalAmount,
                             deductions = state.costsDeductionsAmount,
                             netAmount = state.costsNetAmount,
-                            costCount = state.costs.size
+                            entryCount = state.costs.size,
+                            categoryCount = state.costCategoryCount,
+                            onExportPdf = { viewModel.sendIntent(DriverDetailContract.Intent.ExportCostsToPdf) }
                         )
                     }
 
-                    // Filter Row
+                    // Filter and Expand/Collapse Row
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -537,16 +603,39 @@ private fun DriverCostsTabContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Cost Entries",
+                                text = "Cost Breakdown",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            OutlinedButton(
-                                onClick = { viewModel.sendIntent(DriverDetailContract.Intent.ShowCostsFilterSheet) },
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text("🔍 Filter")
+                                // Expand/Collapse All
+                                if (state.costsByGroup.size > 1) {
+                                    val allExpanded = state.expandedGroups.size == state.costsByGroup.size
+                                    TextButton(
+                                        onClick = {
+                                            if (allExpanded) {
+                                                viewModel.sendIntent(DriverDetailContract.Intent.CollapseAllCostGroups)
+                                            } else {
+                                                viewModel.sendIntent(DriverDetailContract.Intent.ExpandAllCostGroups)
+                                            }
+                                        },
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = if (allExpanded) "Collapse All" else "Expand All",
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    }
+                                }
+                                OutlinedButton(
+                                    onClick = { viewModel.sendIntent(DriverDetailContract.Intent.ShowCostsFilterSheet) },
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Text("🔍 Filter")
+                                }
                             }
                         }
                     }
@@ -563,15 +652,38 @@ private fun DriverCostsTabContent(
                         }
                     }
 
-                    // Cost Items
-                    items(state.costs.size) { index ->
-                        val cost = state.costs[index]
-                        DriverCostItem(cost = cost)
+                    // Cost Groups (Collapsible Sections)
+                    val groupOrder = listOf("DC-G-001", "DC-G-002", "DC-G-003", "DC-G-004")
+                    val groupNames = mapOf(
+                        "DC-G-001" to "Salary & Wages",
+                        "DC-G-002" to "Incentives & Bonuses",
+                        "DC-G-003" to "Deductions",
+                        "DC-G-004" to "Other"
+                    )
+                    val groupIcons = mapOf(
+                        "DC-G-001" to "💼",
+                        "DC-G-002" to "🏆",
+                        "DC-G-003" to "📉",
+                        "DC-G-004" to "📋"
+                    )
 
-                        // Load more when reaching the end
-                        if (index == state.costs.size - 1 && state.hasMoreCosts && !state.isLoadingCosts) {
-                            LaunchedEffect(Unit) {
-                                viewModel.sendIntent(DriverDetailContract.Intent.LoadMoreCosts)
+                    groupOrder.forEach { groupId ->
+                        val groupCosts = state.costsByGroup[groupId]
+                        if (groupCosts != null && groupCosts.isNotEmpty()) {
+                            item(key = "group_$groupId") {
+                                DriverCostGroupSection(
+                                    groupId = groupId,
+                                    groupName = groupNames[groupId] ?: "Other",
+                                    groupIcon = groupIcons[groupId] ?: "📋",
+                                    costs = groupCosts,
+                                    totalAmount = state.groupTotals[groupId] ?: 0.0,
+                                    isExpanded = state.expandedGroups.contains(groupId),
+                                    isDeductionGroup = groupId == "DC-G-003",
+                                    onToggle = { viewModel.sendIntent(DriverDetailContract.Intent.ToggleCostGroup(groupId)) },
+                                    onTripClick = { tripId ->
+                                        viewModel.sendIntent(DriverDetailContract.Intent.NavigateToTripDetail(tripId))
+                                    }
+                                )
                             }
                         }
                     }
@@ -628,7 +740,378 @@ private fun DriverCostsTabContent(
 }
 
 /**
+ * Compact summary card for driver costs - consistent with project theme.
+ * Shows net amount, earnings, and deductions in a clean, compact layout.
+ */
+@Composable
+private fun DriverCostsHeroCard(
+    earnings: Double,
+    deductions: Double,
+    netAmount: Double,
+    entryCount: Int,
+    categoryCount: Int,
+    onExportPdf: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Header Row with Title and Export Button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Cost Summary",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    // Entry count badge
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        val entryText = if (entryCount == 1) "entry" else "entries"
+                        Text(
+                            text = "$entryCount $entryText",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+                // Export button
+                TextButton(
+                    onClick = onExportPdf,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "📄 Export",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            // Summary Row - Earnings, Deductions, Net Amount
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Earnings Card
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Earnings",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "₹${formatCostAmount(earnings)}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // Deductions Card
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Deductions",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "- ₹${formatCostAmount(deductions)}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+
+                // Net Amount Card (highlighted)
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Net",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = "₹${formatCostAmount(netAmount)}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Collapsible cost group section.
+ */
+@Composable
+private fun DriverCostGroupSection(
+    groupId: String,
+    groupName: String,
+    groupIcon: String,
+    costs: List<com.indusjs.fleet.data.model.driver.DriverCostDto>,
+    totalAmount: Double,
+    isExpanded: Boolean,
+    isDeductionGroup: Boolean,
+    onToggle: () -> Unit,
+    onTripClick: (Int) -> Unit
+) {
+    val groupColor = if (isDeductionGroup) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
+    ) {
+        Column {
+            // Header (always visible, clickable)
+            Surface(
+                onClick = onToggle,
+                color = androidx.compose.ui.graphics.Color.Transparent
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Icon
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = groupColor.copy(alpha = 0.1f),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                Text(groupIcon, style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+
+                        Column {
+                            Text(
+                                text = groupName,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${costs.size} ${if (costs.size == 1) "entry" else "entries"}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Total amount
+                        Text(
+                            text = "${if (isDeductionGroup) "- " else ""}₹${formatCostAmount(totalAmount)}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = groupColor
+                        )
+
+                        // Expand/Collapse indicator
+                        Text(
+                            text = if (isExpanded) "▼" else "▶",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Expanded content
+            androidx.compose.animation.AnimatedVisibility(visible = isExpanded) {
+                Column(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    costs.forEach { cost ->
+                        EnhancedDriverCostItem(
+                            cost = cost,
+                            isDeductionGroup = isDeductionGroup,
+                            onTripClick = onTripClick
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Enhanced driver cost item with trip link support.
+ */
+@Composable
+private fun EnhancedDriverCostItem(
+    cost: com.indusjs.fleet.data.model.driver.DriverCostDto,
+    isDeductionGroup: Boolean,
+    onTripClick: (Int) -> Unit
+) {
+    val itemColor = if (isDeductionGroup) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left side - Color bar + Content
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                // Colored indicator bar
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(itemColor)
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    // Cost Label
+                    Text(
+                        text = cost.displayLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    // Date - formatted using FleetDateTime (DD-MMM-YYYY format)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "📅 ${FleetDateTime.formatAnyToDisplayDate(cost.date)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        // Trip link (if available)
+                        cost.tripId?.let { tripId ->
+                            Surface(
+                                onClick = { onTripClick(tripId) },
+                                shape = RoundedCornerShape(4.dp),
+                                color = MaterialTheme.colorScheme.tertiaryContainer
+                            ) {
+                                Text(
+                                    text = "🚚 Trip #$tripId",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Description if available
+                    if (!cost.description.isNullOrBlank()) {
+                        Text(
+                            text = cost.description,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+
+            // Amount
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "${if (isDeductionGroup) "- " else "+ "}₹${formatCostAmount(cost.amount)}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = itemColor
+                )
+            }
+        }
+    }
+}
+
+/**
  * Summary card showing earnings, deductions, and net amount.
+ * @deprecated Use DriverCostsHeroCard instead
  */
 @Composable
 private fun DriverCostsSummaryCard(
@@ -745,7 +1228,7 @@ private fun DriverCostItem(cost: com.indusjs.fleet.data.model.driver.DriverCostD
                 // Date and Description
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "📅 ${cost.date}",
+                        text = "📅 ${FleetDateTime.formatAnyToDisplayDate(cost.date)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -846,7 +1329,7 @@ private fun ActiveFiltersRow(
 }
 
 /**
- * Costs filter bottom sheet.
+ * Costs filter bottom sheet using FleetDatePicker for date selection.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -860,6 +1343,9 @@ private fun CostsFilterSheet(
     var localStartDate by remember { mutableStateOf(startDate) }
     var localEndDate by remember { mutableStateOf(endDate) }
     var localMonth by remember { mutableStateOf(month) }
+
+    // Get today's date for maxDate constraint using FleetDateTime
+    val today = remember { FleetDateTime.today() }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -901,26 +1387,27 @@ private fun CostsFilterSheet(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            // Date Range
-            FleetDateField(
-                rawValue = localStartDate,
-                onRawValueChange = {
+            // Date Range using FleetDatePicker from ijs-datetime-picker
+            FleetDatePicker(
+                date = localStartDate,
+                onDateChange = {
                     localStartDate = it
                     // Clear month if date range is used
                     if (it.isNotBlank()) localMonth = ""
                 },
                 label = "Start Date",
-                placeholder = "DD-MM-YYYY"
+                maxDate = today  // Can't select future dates for cost filtering
             )
 
-            FleetDateField(
-                rawValue = localEndDate,
-                onRawValueChange = {
+            FleetDatePicker(
+                date = localEndDate,
+                onDateChange = {
                     localEndDate = it
                     if (it.isNotBlank()) localMonth = ""
                 },
                 label = "End Date",
-                placeholder = "DD-MM-YYYY"
+                minDate = localStartDate.takeIf { it.isNotBlank() },  // End date must be after start date
+                maxDate = today  // Can't select future dates
             )
 
             Spacer(modifier = Modifier.height(8.dp))

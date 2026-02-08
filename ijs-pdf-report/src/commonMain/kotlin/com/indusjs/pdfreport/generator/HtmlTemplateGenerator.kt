@@ -14,6 +14,7 @@ object HtmlTemplateGenerator {
     fun generateHtml(data: PdfReportData): String {
         return when (data) {
             is TripCostsPdfData -> generateTripCostsHtml(data)
+            is DriverCostsPdfData -> generateDriverCostsHtml(data)
             is CustomerTripsPdfData -> generateCustomerTripsHtml(data)
             is CustomerPaymentsPdfData -> generateCustomerPaymentsHtml(data)
             is PaymentsListPdfData -> generatePaymentsListHtml(data)
@@ -23,6 +24,7 @@ object HtmlTemplateGenerator {
             is VehicleProfitLossPdfData -> generateVehicleProfitLossHtml(data)
             is CostAnalysisPdfData -> generateCostAnalysisHtml(data)
             is CustomerFinancialsPdfData -> generateCustomerFinancialsHtml(data)
+            is VehicleMaintenanceCostsPdfData -> generateVehicleMaintenanceCostsHtml(data)
         }
     }
 
@@ -132,6 +134,145 @@ object HtmlTemplateGenerator {
                                     <td></td>
                                 </tr>
                             </tfoot>
+                        </table>
+                    </div>
+                """.trimIndent())
+            }
+
+            // Footer
+            append(generateFooter(data.generatedAt))
+        })
+    }
+
+    /**
+     * Generate HTML for Driver Costs report.
+     */
+    fun generateDriverCostsHtml(data: DriverCostsPdfData): String {
+        return wrapInDocument(data.title, buildString {
+            // Header
+            append(generateHeader(data.title, data.driverName))
+
+            // Driver Info Section
+            append("""
+                <div class="section">
+                    <div class="section-title">Driver Information</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">Driver Name</span>
+                            <span class="value">${data.driverName}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Mobile</span>
+                            <span class="value">${data.mobile ?: "N/A"}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">License</span>
+                            <span class="value">${data.licenseNumber ?: "N/A"}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Period</span>
+                            <span class="value">${data.period}</span>
+                        </div>
+                    </div>
+                </div>
+            """.trimIndent())
+
+            // Summary Section
+            append("""
+                <div class="section">
+                    <div class="section-title">Cost Summary</div>
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <span class="summary-label">Total Earnings</span>
+                            <span class="summary-value success">₹${formatAmount(data.totalEarnings)}</span>
+                        </div>
+                        <div class="summary-card">
+                            <span class="summary-label">Total Deductions</span>
+                            <span class="summary-value danger">₹${formatAmount(data.totalDeductions)}</span>
+                        </div>
+                        <div class="summary-card">
+                            <span class="summary-label">Net Amount</span>
+                            <span class="summary-value primary">₹${formatAmount(data.netAmount)}</span>
+                        </div>
+                        <div class="summary-card">
+                            <span class="summary-label">Total Entries</span>
+                            <span class="summary-value">${data.entryCount}</span>
+                        </div>
+                    </div>
+                </div>
+            """.trimIndent())
+
+            // Cost Details by Group
+            if (data.costs.isNotEmpty()) {
+                // Costs by Group
+                data.costsByGroup.forEach { (groupName, groupCosts) ->
+                    val groupTotal = groupCosts.sumOf { it.amount }
+                    val isDeductionGroup = groupCosts.any { it.isDeduction }
+
+                    append("""
+                        <div class="section">
+                            <div class="section-title">$groupName (${groupCosts.size} entries)</div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cost Type</th>
+                                        <th>Date</th>
+                                        <th>Trip</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    """.trimIndent())
+
+                    groupCosts.forEach { cost ->
+                        val amountClass = if (cost.isDeduction) "amount danger" else "amount success"
+                        val amountPrefix = if (cost.isDeduction) "- " else "+ "
+                        append("""
+                            <tr>
+                                <td>${cost.costLabel}</td>
+                                <td>${cost.date}</td>
+                                <td>${cost.tripId?.let { "Trip #$it" } ?: "-"}</td>
+                                <td>${cost.description ?: "-"}</td>
+                                <td class="$amountClass">$amountPrefix₹${formatAmount(cost.amount)}</td>
+                            </tr>
+                        """.trimIndent())
+                    }
+
+                    val totalClass = if (isDeductionGroup) "amount danger" else "amount success"
+                    val totalPrefix = if (isDeductionGroup) "- " else ""
+                    append("""
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="4"><strong>Group Total</strong></td>
+                                        <td class="$totalClass"><strong>$totalPrefix₹${formatAmount(groupTotal)}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    """.trimIndent())
+                }
+
+                // Grand Total Summary
+                append("""
+                    <div class="section">
+                        <div class="section-title">Grand Total</div>
+                        <table class="data-table">
+                            <tbody>
+                                <tr>
+                                    <td>Total Earnings</td>
+                                    <td class="amount success">+ ₹${formatAmount(data.totalEarnings)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Deductions</td>
+                                    <td class="amount danger">- ₹${formatAmount(data.totalDeductions)}</td>
+                                </tr>
+                                <tr class="highlight">
+                                    <td><strong>Net Amount</strong></td>
+                                    <td class="amount primary"><strong>₹${formatAmount(data.netAmount)}</strong></td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 """.trimIndent())
@@ -1709,6 +1850,149 @@ object HtmlTemplateGenerator {
                                     <td>₹${formatAmount(payment.amount)}</td>
                                     <td>${formatPaymentType(payment.paymentType)}</td>
                                     <td>${formatPaymentMode(payment.paymentMode)}</td>
+                                </tr>
+                    """.trimIndent())
+                }
+
+                append("""
+                            </tbody>
+                        </table>
+                    </div>
+                """.trimIndent())
+            }
+
+            append(generateFooter(data.generatedAt))
+        })
+    }
+
+    /**
+     * Generate HTML for Vehicle Maintenance Costs report.
+     */
+    fun generateVehicleMaintenanceCostsHtml(data: VehicleMaintenanceCostsPdfData): String {
+        return wrapInDocument(data.title, buildString {
+            // Header
+            append(generateHeader(data.title, data.registrationNumber))
+
+            // Vehicle Info Section
+            append("""
+                <div class="section">
+                    <div class="section-title">Vehicle Information</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">Registration</span>
+                            <span class="value">${data.registrationNumber}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Make</span>
+                            <span class="value">${data.vehicleMake}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Model</span>
+                            <span class="value">${data.vehicleModel}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Period</span>
+                            <span class="value">${data.period}</span>
+                        </div>
+                    </div>
+                </div>
+            """.trimIndent())
+
+            // Cost Summary Section
+            append("""
+                <div class="section">
+                    <div class="section-title">Cost Summary</div>
+                    <div class="summary-grid">
+                        <div class="summary-card primary">
+                            <span class="summary-label">Total Amount</span>
+                            <span class="summary-value">₹${formatAmount(data.totalAmount)}</span>
+                        </div>
+                        <div class="summary-card">
+                            <span class="summary-label">Total Entries</span>
+                            <span class="summary-value">${data.entryCount}</span>
+                        </div>
+                        <div class="summary-card">
+                            <span class="summary-label">Categories</span>
+                            <span class="summary-value">${data.categoryCount}</span>
+                        </div>
+                    </div>
+                </div>
+            """.trimIndent())
+
+            // Costs by Category
+            if (data.costsByType.isNotEmpty()) {
+                append("""
+                    <div class="section">
+                        <div class="section-title">Cost Breakdown by Category</div>
+                """.trimIndent())
+
+                data.costsByType.forEach { (category, costs) ->
+                    val categoryTotal = costs.sumOf { it.amount }
+                    append("""
+                        <div class="category-section">
+                            <div class="category-header">
+                                <span class="category-name">$category</span>
+                                <span class="category-total">₹${formatAmount(categoryTotal)} (${costs.size} entries)</span>
+                            </div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Vendor</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    """.trimIndent())
+
+                    costs.forEach { cost ->
+                        append("""
+                                    <tr>
+                                        <td>${cost.date}</td>
+                                        <td>${cost.description ?: cost.notes ?: "-"}</td>
+                                        <td>${cost.vendorName ?: "-"}</td>
+                                        <td>₹${formatAmount(cost.amount)}</td>
+                                    </tr>
+                        """.trimIndent())
+                    }
+
+                    append("""
+                                </tbody>
+                            </table>
+                        </div>
+                    """.trimIndent())
+                }
+
+                append("</div>")
+            }
+
+            // All Costs Table
+            if (data.costs.isNotEmpty()) {
+                append("""
+                    <div class="section">
+                        <div class="section-title">All Maintenance Costs</div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Vendor</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                """.trimIndent())
+
+                data.costs.forEach { cost ->
+                    append("""
+                                <tr>
+                                    <td>${cost.date}</td>
+                                    <td>${cost.costLabel}</td>
+                                    <td>${cost.description ?: cost.notes ?: "-"}</td>
+                                    <td>${cost.vendorName ?: "-"}</td>
+                                    <td>₹${formatAmount(cost.amount)}</td>
                                 </tr>
                     """.trimIndent())
                 }

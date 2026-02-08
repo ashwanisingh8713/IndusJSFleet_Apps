@@ -46,6 +46,8 @@ import com.indusjs.fleet.domain.entity.vehicle.VehicleDocumentsData
 import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
 import com.indusjs.fleet.domain.entity.vehicle.VehicleTripItem
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
+import com.indusjs.pdfreport.handler.VehicleMaintenanceCostsPdfHandler
+import com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData
 import indusjsfleet.sharedui.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -80,8 +82,13 @@ fun VehicleDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isDownloading by remember { mutableStateOf(false) }
+
+    // PDF Export state
+    var pdfExportData by remember { mutableStateOf<VehicleMaintenanceCostsPdfData?>(null) }
+    var isExportingPdf by remember { mutableStateOf(false) }
 
     // Load vehicle on first composition
     LaunchedEffect(vehicleId) {
@@ -168,9 +175,29 @@ fun VehicleDetailScreen(
                 is VehicleDetailContract.Effect.NavigateToMaintenanceCost -> {
                     onNavigateToMaintenanceCost(effect.vehicleId)
                 }
+                is VehicleDetailContract.Effect.ExportMaintenanceCostsPdf -> {
+                    isExportingPdf = true
+                    pdfExportData = effect.pdfData
+                }
             }
         }
     }
+
+    // PDF Export Handler
+    VehicleMaintenanceCostsPdfHandler(
+        pdfData = pdfExportData,
+        onExportComplete = {
+            isExportingPdf = false
+            pdfExportData = null
+        },
+        onExportError = { error ->
+            isExportingPdf = false
+            pdfExportData = null
+            scope.launch {
+                snackbarHostState.showSnackbar(error)
+            }
+        }
+    )
 
     // Delete confirmation dialog
     if (showDeleteDialog) {
@@ -2546,7 +2573,8 @@ private fun CostsTabContent(
 
     // Load costs on first composition
     LaunchedEffect(Unit) {
-        if (state.tripCosts.isEmpty() && state.maintenanceCosts.isEmpty() && !state.isLoadingCosts) {
+        // Only check maintenance costs since Vehicle Costs tab shows only maintenance costs
+        if (state.maintenanceCosts.isEmpty() && !state.isLoadingCosts) {
             viewModel.sendIntent(VehicleDetailContract.Intent.LoadCosts)
         }
     }
@@ -2787,9 +2815,9 @@ private fun CostsTabContent(
         }
     }
 
-    // Combine and group costs by date
-    val allCosts = (state.tripCosts.map { CostDisplayItem.fromTripCost(it) } +
-            state.maintenanceCosts.map { CostDisplayItem.fromMaintenanceCost(it) })
+    // Show only Maintenance Costs (Vehicle Maintenance Costs per costs-README.md)
+    // Trip costs are shown in Trip Detail screen, not here
+    val allCosts = state.maintenanceCosts.map { CostDisplayItem.fromMaintenanceCost(it) }
         .sortedByDescending { it.date }
     val groupedByDate = allCosts.groupBy { it.dateLabel }
     val activeFilterCount = state.selectedCostTypeFilters.size +
@@ -2817,22 +2845,36 @@ private fun CostsTabContent(
                 ) {
                     Column {
                         Text(
-                            text = "₹${formatAmount(state.costsTotalAmount)}",
+                            text = "Maintenance Costs",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "₹${formatAmount(state.maintenanceCostsTotalAmount)}",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                        Row {
-                            Text("Trip: ₹${formatAmount(state.tripCostsTotalAmount)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                            Text(" • ", style = MaterialTheme.typography.labelSmall)
-                            Text("Maint: ₹${formatAmount(state.maintenanceCostsTotalAmount)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
-                        }
+                        Text(
+                            text = "${state.maintenanceCosts.size} entries",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
                     }
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Export Button
+                        if (state.maintenanceCosts.isNotEmpty()) {
+                            FilledTonalIconButton(
+                                onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ExportMaintenanceCostsPdf) }
+                            ) {
+                                Text("📄", style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+
                         // Add Cost Button
                         FilledTonalButton(
                             onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.NavigateToAddMaintenanceCost) },
@@ -2917,7 +2959,7 @@ private fun CostsTabContent(
             }
         }
 
-        // Empty State
+        // Empty State - Updated for maintenance costs only
         if (allCosts.isEmpty() && !state.isLoadingCosts && state.costsError == null) {
             item(key = "empty") {
                 Card(
@@ -2926,12 +2968,14 @@ private fun CostsTabContent(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("💰", style = MaterialTheme.typography.displaySmall)
+                        Text("🔧", style = MaterialTheme.typography.displaySmall)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text("No costs recorded", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Text("Trip and maintenance costs appear here", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("No maintenance costs", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text("Vehicle maintenance expenses appear here", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.height(10.dp))
-                        TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshCosts) }) { Text("🔄 Refresh") }
+                        Button(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.NavigateToAddMaintenanceCost) }) {
+                            Text("+ Add Maintenance Cost")
+                        }
                     }
                 }
             }

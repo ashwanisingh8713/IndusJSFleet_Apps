@@ -5,6 +5,7 @@ package com.indusjs.pdfreport.model
  */
 enum class PdfReportType {
     TRIP_COSTS,
+    DRIVER_COSTS,
     CUSTOMER_TRIPS,
     CUSTOMER_PAYMENTS,
     CUSTOMER_FINANCIALS,
@@ -13,7 +14,8 @@ enum class PdfReportType {
     VEHICLE_FINANCE,
     FLEET_PROFIT_LOSS,
     VEHICLE_PROFIT_LOSS,
-    COST_ANALYSIS
+    COST_ANALYSIS,
+    VEHICLE_MAINTENANCE_COSTS
 }
 
 /**

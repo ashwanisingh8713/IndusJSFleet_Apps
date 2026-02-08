@@ -20,6 +20,8 @@ import com.indusjs.fleet.domain.entity.vehicle.VehicleTripItem
 import com.indusjs.fleet.domain.entity.vehicle.VehicleTripsData
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
 
+import com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData
+
 /**
  * MVI Contract for the Vehicle Detail screen.
  */
@@ -263,6 +265,7 @@ object VehicleDetailContract {
         data object ConfirmDeleteCost : Intent
         data object DismissDeleteCostDialog : Intent
         data object NavigateToAddMaintenanceCost : Intent
+        data object ExportMaintenanceCostsPdf : Intent
 
         // History Tab
         data object LoadHistory : Intent
@@ -294,5 +297,6 @@ object VehicleDetailContract {
         data class CostDeleted(val costId: String) : Effect
         data class StateUpdated(val newState: String) : Effect
         data class NavigateToMaintenanceCost(val vehicleId: String) : Effect
+        data class ExportMaintenanceCostsPdf(val pdfData: VehicleMaintenanceCostsPdfData) : Effect
     }
 }

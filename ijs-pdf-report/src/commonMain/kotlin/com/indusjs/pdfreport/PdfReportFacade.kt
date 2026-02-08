@@ -33,6 +33,16 @@ object PdfReportFacade {
     }
 
     /**
+     * Generate Driver Costs PDF report.
+     */
+    suspend fun generateDriverCostsReport(
+        data: DriverCostsPdfData,
+        onProgress: ((Float) -> Unit)? = null
+    ): PdfExportResult {
+        return generateReport(data, onProgress)
+    }
+
+    /**
      * Generate Customer Trips PDF report.
      */
     suspend fun generateCustomerTripsReport(
@@ -117,6 +127,16 @@ object PdfReportFacade {
      */
     suspend fun generateCustomerFinancialsReport(
         data: CustomerFinancialsPdfData,
+        onProgress: ((Float) -> Unit)? = null
+    ): PdfExportResult {
+        return generateReport(data, onProgress)
+    }
+
+    /**
+     * Generate Vehicle Maintenance Costs PDF report.
+     */
+    suspend fun generateVehicleMaintenanceCostsReport(
+        data: VehicleMaintenanceCostsPdfData,
         onProgress: ((Float) -> Unit)? = null
     ): PdfExportResult {
         return generateReport(data, onProgress)

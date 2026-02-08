@@ -9,6 +9,7 @@ import com.indusjs.fleet.data.model.team.TeamMemberDto
 import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.driver.LicenseType
+import com.indusjs.pdfreport.model.DriverCostsPdfData
 
 /**
  * MVI Contract for the Driver Detail screen.
@@ -75,6 +76,16 @@ object DriverDetailContract {
         val costsError: String? = null,
         val costsPage: Int = 1,
         val hasMoreCosts: Boolean = false,
+
+        // Cost breakdown by group (DC-G-001, DC-G-002, etc.)
+        val costsByGroup: Map<String, List<DriverCostDto>> = emptyMap(),
+        // Cost breakdown by type (DC-001-001, DC-002-001, etc.)
+        val costsByType: Map<String, List<DriverCostDto>> = emptyMap(),
+        // Expanded groups state (group_id -> isExpanded)
+        val expandedGroups: Set<String> = emptySet(),
+        // Summary by group (group_id -> total amount)
+        val groupTotals: Map<String, Double> = emptyMap(),
+
         // Costs Filters
         val costsStartDate: String = "",
         val costsEndDate: String = "",
@@ -124,6 +135,18 @@ object DriverDetailContract {
 
         val hasCosts: Boolean
             get() = costs.isNotEmpty()
+
+        /**
+         * Number of cost type categories
+         */
+        val costCategoryCount: Int
+            get() = costsByType.size
+
+        /**
+         * Number of cost groups (Salary, Incentives, Deductions, Other)
+         */
+        val costGroupCount: Int
+            get() = costsByGroup.size
     }
 
     /**
@@ -171,6 +194,7 @@ object DriverDetailContract {
         // Navigation
         data object NavigateBack : Intent
         data object NavigateToAddDriverCost : Intent
+        data class NavigateToTripDetail(val tripId: Int) : Intent
 
         // Error handling
         data object ClearError : Intent
@@ -189,6 +213,14 @@ object DriverDetailContract {
         data object HideCostsFilterSheet : Intent
         data class ApplyCostFilters(val startDate: String, val endDate: String, val month: String) : Intent
         data object ClearCostFilters : Intent
+
+        // Cost group expand/collapse
+        data class ToggleCostGroup(val groupId: String) : Intent
+        data object ExpandAllCostGroups : Intent
+        data object CollapseAllCostGroups : Intent
+
+        // PDF Export
+        data object ExportCostsToPdf : Intent
 
         // History Tab
         data object LoadHistory : Intent
@@ -213,5 +245,7 @@ object DriverDetailContract {
         data object DriverUpdated : Effect
         data class StateUpdated(val newStatus: String) : Effect
         data class NavigateToAddDriverCost(val driverId: String) : Effect
+        data class NavigateToTripDetail(val tripId: Int) : Effect
+        data class ExportPdf(val pdfData: DriverCostsPdfData) : Effect
     }
 }
