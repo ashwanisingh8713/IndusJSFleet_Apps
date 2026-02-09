@@ -24,6 +24,12 @@ interface VehicleRepository : Repository {
     fun getVehicles(): Flow<Result<List<Vehicle>>>
 
     /**
+     * Get available vehicles for trip assignment.
+     * Returns only vehicles with status=active that are not currently occupied.
+     */
+    fun getAvailableVehicles(): Flow<Result<List<Vehicle>>>
+
+    /**
      * Get a specific vehicle by ID.
      */
     suspend fun getVehicleById(id: String): Result<Vehicle>

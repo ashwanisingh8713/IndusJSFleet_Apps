@@ -22,6 +22,19 @@ class GetVehiclesUseCase(
 }
 
 /**
+ * Use case for getting available vehicles for trip assignment.
+ * Returns only vehicles with status=active that are not currently occupied.
+ */
+@Inject
+class GetAvailableVehiclesUseCase(
+    private val vehicleRepository: VehicleRepository
+) {
+    operator fun invoke(): Flow<Result<List<Vehicle>>> {
+        return vehicleRepository.getAvailableVehicles()
+    }
+}
+
+/**
  * Use case for getting a vehicle by ID.
  */
 @Inject

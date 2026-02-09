@@ -10,9 +10,11 @@ import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.model.trip.UpdateTripRequest
 import com.indusjs.fleet.domain.entity.customer.Customer
+import com.indusjs.fleet.domain.entity.driver.Driver
+import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.trip.TripStatus
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
-import com.indusjs.fleet.domain.entity.driver.Driver
+import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.customer.CustomerRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
@@ -286,16 +288,25 @@ class TripDetailViewModel(
     }
 
     private suspend fun loadVehiclesAndDrivers() {
+        val trip = currentState.trip
+        val currentVehicleId = trip?.vehicleId
+        val currentDriverId = trip?.driverId
+
         withContext(dispatcherProvider.io) {
-            // Load vehicles
+            // Load ALL vehicles, then filter client-side
+            // This ensures currently assigned vehicle is included even if inactive
             getVehiclesUseCase().collectLatest { result ->
                 when (result) {
                     is Result.Success -> {
-                        val trip = currentState.trip
-                        val currentVehicle = result.data.find { it.id == trip?.vehicleId }
+                        // Client-side filtering: show only available vehicles
+                        // But always include the currently assigned vehicle (even if inactive) for edit mode
+                        val availableVehicles = result.data.filter { vehicle ->
+                            VehicleStatus.isAvailableForAssignment(vehicle.status) || vehicle.id == currentVehicleId
+                        }
+                        val currentVehicle = availableVehicles.find { it.id == currentVehicleId }
                         updateState {
                             copy(
-                                vehicles = result.data,
+                                vehicles = availableVehicles,
                                 selectedVehicle = currentVehicle
                             )
                         }
@@ -309,15 +320,20 @@ class TripDetailViewModel(
         }
 
         withContext(dispatcherProvider.io) {
-            // Load drivers
+            // Load ALL drivers, then filter client-side
+            // This ensures currently assigned driver is included even if inactive
             getDriversUseCase().collectLatest { result ->
                 when (result) {
                     is Result.Success -> {
-                        val trip = currentState.trip
-                        val currentDriver = result.data.find { it.id == trip?.driverId }
+                        // Client-side filtering: show only available drivers
+                        // But always include the currently assigned driver (even if inactive) for edit mode
+                        val availableDrivers = result.data.filter { driver ->
+                            (DriverStatus.isAvailableForAssignment(driver.status) && driver.isActive) || driver.id == currentDriverId
+                        }
+                        val currentDriver = availableDrivers.find { it.id == currentDriverId }
                         updateState {
                             copy(
-                                drivers = result.data,
+                                drivers = availableDrivers,
                                 selectedDriver = currentDriver,
                                 isLoadingVehiclesDrivers = false
                             )

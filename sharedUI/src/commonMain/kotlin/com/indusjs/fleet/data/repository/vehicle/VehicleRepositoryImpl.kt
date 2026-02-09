@@ -53,6 +53,22 @@ class VehicleRepositoryImpl(
         }
     }
 
+    override fun getAvailableVehicles(): Flow<Result<List<Vehicle>>> = flow {
+        emit(Result.Loading)
+        try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.getAvailableVehicles(token)
+
+            if (response.success && response.data != null) {
+                emit(Result.Success(mapper.mapToDomainList(response.data)))
+            } else {
+                emit(Result.Error(ApiException(response.message ?: "Failed to get available vehicles"), response.message))
+            }
+        } catch (e: Exception) {
+            emit(Result.Error(e, ApiErrorHandler.extractErrorMessage(e)))
+        }
+    }
+
     override suspend fun getVehicleById(id: String): Result<Vehicle> {
         return try {
             val token = requireAuthToken()

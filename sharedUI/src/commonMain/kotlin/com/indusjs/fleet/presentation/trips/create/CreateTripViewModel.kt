@@ -9,11 +9,13 @@ import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.domain.entity.customer.Customer
+import com.indusjs.fleet.domain.entity.driver.DriverStatus
 import com.indusjs.fleet.domain.entity.trip.CreateTripData
+import com.indusjs.fleet.domain.entity.vehicle.VehicleStatus
 import com.indusjs.fleet.domain.repository.customer.CustomerRepository
-import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
+import com.indusjs.fleet.domain.usecase.driver.GetAvailableDriversUseCase
 import com.indusjs.fleet.domain.usecase.trip.CreateTripWithDataUseCase
-import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
+import com.indusjs.fleet.domain.usecase.vehicle.GetAvailableVehiclesUseCase
 import com.indusjs.fleet.presentation.trips.create.CreateTripContract.Effect
 import com.indusjs.fleet.presentation.trips.create.CreateTripContract.Intent
 import com.indusjs.fleet.presentation.trips.create.CreateTripContract.State
@@ -32,8 +34,9 @@ import kotlinx.coroutines.withContext
 @Inject
 class CreateTripViewModel(
     private val dispatcherProvider: DispatcherProvider,
-    private val getVehiclesUseCase: GetVehiclesUseCase,
-    private val getDriversUseCase: GetDriversUseCase,
+
+    private val getAvailableVehiclesUseCase: GetAvailableVehiclesUseCase,
+    private val getAvailableDriversUseCase: GetAvailableDriversUseCase,
     private val createTripWithDataUseCase: CreateTripWithDataUseCase,
     private val userLocalDataSource: UserLocalDataSource,
     private val googlePlacesService: GooglePlacesService? = null,
@@ -392,11 +395,15 @@ class CreateTripViewModel(
         updateState { copy(isLoadingData = true) }
 
         withContext(dispatcherProvider.io) {
-            // Load vehicles
-            getVehiclesUseCase().collectLatest { result ->
+            // Load available vehicles (only active status from API)
+            getAvailableVehiclesUseCase().collectLatest { result ->
                 when (result) {
                     is Result.Success -> {
-                        updateState { copy(vehicles = result.data) }
+                        // Client-side fallback filtering to ensure only available vehicles are shown
+                        val availableVehicles = result.data.filter { vehicle ->
+                            VehicleStatus.isAvailableForAssignment(vehicle.status)
+                        }
+                        updateState { copy(vehicles = availableVehicles) }
                     }
                     is Result.Error -> {
                         sendEffect(Effect.ShowError("Failed to load vehicles: ${result.message}"))
@@ -407,11 +414,15 @@ class CreateTripViewModel(
         }
 
         withContext(dispatcherProvider.io) {
-            // Load drivers
-            getDriversUseCase().collectLatest { result ->
+            // Load available drivers (only active status from API)
+            getAvailableDriversUseCase().collectLatest { result ->
                 when (result) {
                     is Result.Success -> {
-                        updateState { copy(drivers = result.data, isLoadingData = false) }
+                        // Client-side fallback filtering to ensure only available drivers are shown
+                        val availableDrivers = result.data.filter { driver ->
+                            DriverStatus.isAvailableForAssignment(driver.status) && driver.isActive
+                        }
+                        updateState { copy(drivers = availableDrivers, isLoadingData = false) }
                     }
                     is Result.Error -> {
                         updateState { copy(isLoadingData = false) }

@@ -46,6 +46,7 @@ import kotlinx.serialization.json.Json
  */
 interface VehicleRemoteDataSource : RemoteDataSource {
     suspend fun getVehicles(token: String): VehicleApiResponse<List<VehicleDto>>
+    suspend fun getAvailableVehicles(token: String): VehicleApiResponse<List<VehicleDto>>
     suspend fun getVehicleById(token: String, id: String): VehicleApiResponse<VehicleDto>
     suspend fun createVehicle(token: String, request: CreateVehicleRequest): VehicleApiResponse<VehicleDto>
     suspend fun createVehicleWithDocuments(token: String, request: CreateVehicleWithDocumentsRequest): VehicleApiResponse<VehicleDto>
@@ -126,6 +127,20 @@ class VehicleRemoteDataSourceImpl(
             parseListResponse(response)
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch vehicles: ${e.message}" }
+            VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
+        }
+    }
+
+    override suspend fun getAvailableVehicles(token: String): VehicleApiResponse<List<VehicleDto>> {
+        return try {
+            log.d { "Fetching available vehicles (state=active)" }
+            val response: HttpResponse = httpClient.get(baseUrl) {
+                header(HttpHeaders.Authorization, "Bearer $token")
+                parameter("state", "active")
+            }
+            parseListResponse(response)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch available vehicles: ${e.message}" }
             VehicleApiResponse(success = false, message = ApiErrorHandler.getNetworkErrorMessage(e))
         }
     }

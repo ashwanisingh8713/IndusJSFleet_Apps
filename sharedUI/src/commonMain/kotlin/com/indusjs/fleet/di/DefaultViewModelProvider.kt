@@ -53,6 +53,7 @@ import com.indusjs.fleet.domain.usecase.dashboard.GetPendingPaymentsUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.RefreshDashboardUseCase
 import com.indusjs.fleet.domain.usecase.driver.CreateDriverUseCase
 import com.indusjs.fleet.domain.usecase.driver.DeleteDriverUseCase
+import com.indusjs.fleet.domain.usecase.driver.GetAvailableDriversUseCase
 import com.indusjs.fleet.domain.usecase.driver.GetDriverByIdUseCase
 import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
 import com.indusjs.fleet.domain.usecase.driver.ToggleDriverActiveUseCase
@@ -66,6 +67,7 @@ import com.indusjs.fleet.domain.usecase.trip.UpdateTripStatusUseCase
 import com.indusjs.fleet.domain.usecase.trip.UpdateTripUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleWithDocumentsUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.DeleteVehicleUseCase
+import com.indusjs.fleet.domain.usecase.vehicle.GetAvailableVehiclesUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehicleByIdUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
@@ -209,6 +211,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         VehicleRepositoryImpl(vehicleRemoteDataSource, userLocalDataSource, vehicleMapper)
     }
     private val getVehiclesUseCase by lazy { GetVehiclesUseCase(vehicleRepository) }
+    private val getAvailableVehiclesUseCase by lazy { GetAvailableVehiclesUseCase(vehicleRepository) }
     private val getVehicleByIdUseCase by lazy { GetVehicleByIdUseCase(vehicleRepository) }
     private val updateVehicleUseCase by lazy { UpdateVehicleUseCase(vehicleRepository) }
     private val deleteVehicleUseCase by lazy { DeleteVehicleUseCase(vehicleRepository) }
@@ -221,6 +224,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         DriverRepositoryImpl(driverRemoteDataSource, userLocalDataSource, driverMapper)
     }
     private val getDriversUseCase by lazy { GetDriversUseCase(driverRepository) }
+    private val getAvailableDriversUseCase by lazy { GetAvailableDriversUseCase(driverRepository) }
     private val getDriverByIdUseCase by lazy { GetDriverByIdUseCase(driverRepository) }
     private val createDriverUseCase by lazy { CreateDriverUseCase(driverRepository) }
     private val updateDriverUseCase by lazy { UpdateDriverUseCase(driverRepository) }
@@ -396,8 +400,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
 
     override fun createTripViewModel() = CreateTripViewModel(
         dispatcherProvider,
-        getVehiclesUseCase,
-        getDriversUseCase,
+        getAvailableVehiclesUseCase,
+        getAvailableDriversUseCase,
         createTripWithDataUseCase,
         userLocalDataSource,
         googlePlacesService,
