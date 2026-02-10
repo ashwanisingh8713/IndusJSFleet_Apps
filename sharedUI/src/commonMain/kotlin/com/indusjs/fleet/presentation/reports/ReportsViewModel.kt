@@ -41,10 +41,18 @@ class ReportsViewModel(
             is Intent.HideDateRangePicker -> updateState { copy(showDateRangePicker = false) }
             is Intent.UpdateStartDate -> updateState { copy(startDate = intent.date) }
             is Intent.UpdateEndDate -> updateState { copy(endDate = intent.date) }
+            // Navigation - P&L Reports
             is Intent.NavigateToVehiclePL -> sendEffect(Effect.NavigateToVehiclePL)
             is Intent.NavigateToTripPL -> sendEffect(Effect.NavigateToTripPL)
-            is Intent.NavigateToCostAnalysis -> sendEffect(Effect.NavigateToCostAnalysis)
             is Intent.NavigateToConsolidatedPL -> sendEffect(Effect.NavigateToConsolidatedPL)
+            // Navigation - Cost Analysis Reports
+            is Intent.NavigateToCostAnalysis -> sendEffect(Effect.NavigateToCostAnalysis)
+            is Intent.NavigateToMaintenanceCostReport -> sendEffect(Effect.NavigateToMaintenanceCostReport)
+            is Intent.NavigateToTripCostReport -> sendEffect(Effect.NavigateToTripCostReport)
+            is Intent.NavigateToDriverCostReport -> sendEffect(Effect.NavigateToDriverCostReport)
+            // Navigation - Combined Reports
+            is Intent.NavigateToCombinedReport -> sendEffect(Effect.NavigateToCombinedReport)
+            // Export
             is Intent.ExportToPdf -> exportToPdf()
             is Intent.DismissExportDialog -> updateState { copy(exportSuccess = false, exportedFilePath = null) }
         }
@@ -85,6 +93,15 @@ class ReportsViewModel(
      * Calculate date range based on the selected period.
      * Returns Pair(startDate, endDate) in YYYY-MM-DD format for API.
      * The P&L Summary API only accepts start_date and end_date, NOT period parameter.
+     *
+     * As per report-pl-screen.prompt.md Date Range Periods:
+     * - Daily: Current date only
+     * - Weekly: Last 7 days (rolling)
+     * - 15 Days: Last 15 days (rolling)
+     * - Monthly: Current calendar month
+     * - Quarterly: Current quarter (Q1: Apr-Jun, Q2: Jul-Sep, Q3: Oct-Dec, Q4: Jan-Mar)
+     * - Half Yearly: Last 6 months (rolling)
+     * - Yearly: Financial year (Apr 1 - Mar 31)
      */
     private fun calculateDateRangeForPeriod(period: ReportPeriod): Pair<String, String> {
         val nowMs = currentTimeMillis()
@@ -99,21 +116,44 @@ class ReportsViewModel(
                 dateStr to dateStr
             }
             ReportPeriod.WEEKLY -> {
-                // Start of current week (Monday) to today
-                val dayOfWeek = today.dayOfWeek.isoDayNumber // Monday = 1, Sunday = 7
-                log.d { "Day of week: $dayOfWeek (${today.dayOfWeek})" }
-                val startOfWeek = today.minus(DatePeriod(days = dayOfWeek - 1))
-                startOfWeek.toString() to today.toString()
+                // Last 7 days (rolling)
+                val startDate = today.minus(DatePeriod(days = 6))
+                startDate.toString() to today.toString()
+            }
+            ReportPeriod.FIFTEEN_DAYS -> {
+                // Last 15 days (rolling)
+                val startDate = today.minus(DatePeriod(days = 14))
+                startDate.toString() to today.toString()
             }
             ReportPeriod.MONTHLY -> {
                 // Start of current month to today
                 val startOfMonth = LocalDate(today.year, today.month, 1)
                 startOfMonth.toString() to today.toString()
             }
+            ReportPeriod.QUARTERLY -> {
+                // Current quarter (Indian financial quarters)
+                // Q1: Apr-Jun, Q2: Jul-Sep, Q3: Oct-Dec, Q4: Jan-Mar
+                val quarterStart = when (today.monthNumber) {
+                    in 4..6 -> LocalDate(today.year, Month.APRIL, 1)      // Q1
+                    in 7..9 -> LocalDate(today.year, Month.JULY, 1)       // Q2
+                    in 10..12 -> LocalDate(today.year, Month.OCTOBER, 1) // Q3
+                    else -> LocalDate(today.year - 1, Month.JANUARY, 1)  // Q4 (Jan-Mar of previous FY)
+                }
+                quarterStart.toString() to today.toString()
+            }
+            ReportPeriod.HALF_YEARLY -> {
+                // Last 6 months (rolling)
+                val startDate = today.minus(DatePeriod(months = 6))
+                startDate.toString() to today.toString()
+            }
             ReportPeriod.YEARLY -> {
-                // Start of current year to today
-                val startOfYear = LocalDate(today.year, Month.JANUARY, 1)
-                startOfYear.toString() to today.toString()
+                // Financial year (April 1 to March 31)
+                val fyStart = if (today.monthNumber >= 4) {
+                    LocalDate(today.year, Month.APRIL, 1)
+                } else {
+                    LocalDate(today.year - 1, Month.APRIL, 1)
+                }
+                fyStart.toString() to today.toString()
             }
             ReportPeriod.CUSTOM -> {
                 // Custom dates handled separately
