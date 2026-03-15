@@ -552,6 +552,43 @@ Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "Back")
 
 ---
 
+## Class Size Enforcement
+
+> **STRICT RULE — No Exceptions**
+
+- Every class file **must not exceed 500 lines**.
+- If a class grows beyond 500 lines, it **must be refactored** by splitting it into multiple focused classes.
+- Follow proper architectural patterns when splitting:
+  - Extract cohesive groups of methods into dedicated service, helper, or utility classes.
+  - Use composition over inheritance when delegating responsibilities to new classes.
+  - Ensure each new class has a **single, clear responsibility** (follow the Single Responsibility Principle).
+  - Name new classes explicitly based on their responsibility (e.g., `UserValidator`, `UserRepository`, `UserNotificationService`).
+- New class files must be placed in appropriate directories/modules consistent with the existing project architecture.
+- Do **not** merge unrelated logic into a single class just to avoid creating new files.
+
+### Refactoring Examples
+
+```
+❌ VehicleDetailViewModel.kt (650 lines) — too large
+
+✅ Split into:
+   VehicleDetailViewModel.kt       (handles intents, state)
+   VehicleDetailDataLoader.kt      (loads vehicle, trips, documents)
+   VehicleDetailStateReducer.kt    (state update logic)
+   VehicleDocumentHandler.kt       (document upload/delete logic)
+```
+
+```
+❌ TripRepositoryImpl.kt (520 lines) — too large
+
+✅ Split into:
+   TripRepositoryImpl.kt           (CRUD operations)
+   TripCostRepository.kt           (cost-related operations)
+   TripStatusManager.kt            (status transition logic)
+```
+
+---
+
 ## Application Use Cases
 
 ### Vehicle Management
