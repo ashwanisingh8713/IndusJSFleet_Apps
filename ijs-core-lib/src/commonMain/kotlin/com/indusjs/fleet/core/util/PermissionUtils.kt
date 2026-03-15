@@ -1,6 +1,6 @@
 package com.indusjs.fleet.core.util
 
-import com.indusjs.fleet.domain.entity.trip.TripStatus
+import com.indusjs.fleet.core.constants.StatusConstants
 import com.indusjs.fleet.domain.entity.user.UserRole
 
 /**
@@ -33,12 +33,15 @@ object PermissionUtils {
      * Owner and General Manager can edit trips in any state.
      * Manager can only edit planned trips.
      * Supervisor cannot edit trips.
+     *
+     * @param role User role string
+     * @param tripStatus Trip status string (e.g., "planned", "on_route")
      */
-    fun canEditTrip(role: String, tripStatus: TripStatus): Boolean {
+    fun canEditTrip(role: String, tripStatus: String): Boolean {
         val userRole = parseRole(role)
         return when (userRole) {
             UserRole.OWNER, UserRole.GENERAL_MANAGER -> true
-            UserRole.MANAGER -> tripStatus == TripStatus.PLANNED
+            UserRole.MANAGER -> tripStatus.lowercase() == StatusConstants.TripState.PLANNED
             UserRole.SUPERVISOR -> false
         }
     }

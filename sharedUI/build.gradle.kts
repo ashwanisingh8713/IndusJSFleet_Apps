@@ -34,6 +34,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // IndusJS Libraries
+            implementation(project(":ijs-core-lib"))
+            implementation(project(":ijs-network-lib"))
+            implementation(project(":ijs-reports-lib"))
+            implementation(project(":ijs-finance-lib"))
             implementation(project(":ijs-error-lib"))
             implementation(project(":ijs-dispatcher-lib"))
             implementation(project(":ijs-datetime-picker"))

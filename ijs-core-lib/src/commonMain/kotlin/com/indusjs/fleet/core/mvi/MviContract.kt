@@ -18,4 +18,3 @@ interface UiIntent
  */
 interface UiEffect
 
-

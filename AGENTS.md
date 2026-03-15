@@ -32,10 +32,14 @@
 
 ```
 IndusJSFleet/
-├── sharedUI/           # ★ CORE: All shared UI + business logic (KMP)
+├── sharedUI/           # ★ CORE: Compose UI + remaining business logic (KMP)
 ├── androidApp/         # Android entry point (thin shell)
 ├── webApp/             # Web entry point (thin shell)
 ├── iosApp/             # iOS entry point (Xcode project)
+├── ijs-core-lib/       # Foundation: MVI, constants, utilities, base contracts, user entities
+├── ijs-network-lib/    # Networking: HTTP client, auth manager, user data layer
+├── ijs-reports-lib/    # Reports: P&L, cost analysis, consolidated reports
+├── ijs-finance-lib/    # Finance: vehicle purchase, loan tracking, EMI payments
 ├── ijs-error-lib/      # Error handling: Result<T>, exception hierarchy, ErrorHandler
 ├── ijs-dispatcher-lib/ # Coroutine dispatchers: DispatcherProvider, test helpers
 ├── ijs-datetime-utils/ # Date/time utilities: FleetDateTime object
@@ -51,11 +55,16 @@ androidApp ──→ sharedUI
 webApp ─────→ sharedUI
 iosApp ─────→ sharedUI (via framework)
 
-sharedUI ──→ ijs-error-lib
-sharedUI ──→ ijs-dispatcher-lib
+sharedUI ──→ ijs-core-lib
+sharedUI ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-reports-lib ──→ ijs-network-lib
+sharedUI ──→ ijs-finance-lib ──→ ijs-network-lib
 sharedUI ──→ ijs-datetime-picker ──→ ijs-datetime-utils
-sharedUI ──→ ijs-datetime-utils
 sharedUI ──→ ijs-pdf-report ──→ ijs-datetime-utils
+
+ijs-core-lib ──→ ijs-error-lib
+ijs-core-lib ──→ ijs-dispatcher-lib
+ijs-core-lib ──→ ijs-datetime-utils
 
 locationTracker (standalone Android app, no dependencies on sharedUI)
 ```
