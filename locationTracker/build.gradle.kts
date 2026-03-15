@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.android)
@@ -7,13 +5,14 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
+apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
+// compileSdk, targetSdk, compileOptions, jvmTarget set by fleet-android-conventions
+
 android {
     namespace = "com.indusjs.fleet.locationtracker"
-    compileSdk = 36
 
     defaultConfig {
-        minSdk = 24
-        targetSdk = 36
+        minSdk = 24 // Override: locationTracker requires API 24+
 
         applicationId = "com.indusjs.fleet.locationtracker"
         versionCode = 1
@@ -32,15 +31,6 @@ android {
             excludes += "/META-INF/io.netty.versions.properties"
         }
     }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-}
-
-kotlin {
-    compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
 }
 
 dependencies {

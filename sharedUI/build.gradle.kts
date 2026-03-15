@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
@@ -15,14 +14,14 @@ plugins {
     alias(libs.plugins.buildConfig)
 }
 
+apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
+
 @OptIn(ExperimentalWasmDsl::class)
 kotlin {
+    // Android target (compileSdk, minSdk, jvmTarget set by fleet-android-conventions)
     android {
         namespace = "com.indusjs.fleet"
-        compileSdk = 36
-        minSdk = 23
         androidResources.enable = true
-        compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
     }
 
     js { browser() }

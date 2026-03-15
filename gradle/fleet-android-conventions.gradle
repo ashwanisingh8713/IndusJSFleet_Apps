@@ -1,0 +1,69 @@
+/**
+ * Fleet Android Build Conventions
+ *
+ * Centralizes compileSdk, minSdk, targetSdk, jvmTarget, and Java
+ * compatibility for ALL modules. Auto-configures both KMP library
+ * android targets and Android application modules.
+ *
+ * Usage — just one line in any module's build.gradle.kts:
+ *   apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
+ *
+ * Values are also exported as extra properties if needed directly:
+ *   val fleetCompileSdk: Int by extra
+ */
+
+// ── Common values ────────────────────────────────────────────────
+def FLEET_COMPILE_SDK  = 36
+def FLEET_MIN_SDK      = 23
+def FLEET_TARGET_SDK   = 36
+def FLEET_JAVA_VERSION = JavaVersion.VERSION_17
+
+// Export as extra properties (available if a module needs them directly)
+ext.fleetCompileSdk  = FLEET_COMPILE_SDK
+ext.fleetMinSdk      = FLEET_MIN_SDK
+ext.fleetTargetSdk   = FLEET_TARGET_SDK
+ext.fleetJavaVersion = FLEET_JAVA_VERSION
+
+// ── Auto-configure: KMP Android library targets ─────────────────
+pluginManager.withPlugin('com.android.kotlin.multiplatform.library') {
+    // Resolve JvmTarget via the plugin's own classloader (available at runtime)
+    def jvmTargetClass = kotlin.class.classLoader.loadClass('org.jetbrains.kotlin.gradle.dsl.JvmTarget')
+    def JVM_17 = Enum.valueOf(jvmTargetClass, 'JVM_17')
+
+    kotlin.targets.configureEach { target ->
+        if (target.name == 'android') {
+            target.compileSdk = FLEET_COMPILE_SDK
+            target.minSdk     = FLEET_MIN_SDK
+            target.compilerOptions({ opts ->
+                opts.jvmTarget.set(JVM_17)
+            } as Action)
+        }
+    }
+}
+
+// ── Auto-configure: Android application modules ─────────────────
+pluginManager.withPlugin('com.android.application') {
+    android {
+        compileSdk = FLEET_COMPILE_SDK
+        defaultConfig {
+            minSdk    = FLEET_MIN_SDK
+            targetSdk = FLEET_TARGET_SDK
+        }
+        compileOptions {
+            sourceCompatibility = FLEET_JAVA_VERSION
+            targetCompatibility = FLEET_JAVA_VERSION
+        }
+    }
+}
+
+// ── Auto-configure: Kotlin Android (non-KMP) compiler options ───
+pluginManager.withPlugin('org.jetbrains.kotlin.android') {
+    def jvmTargetClass = kotlin.class.classLoader.loadClass('org.jetbrains.kotlin.gradle.dsl.JvmTarget')
+    def JVM_17 = Enum.valueOf(jvmTargetClass, 'JVM_17')
+
+    kotlin {
+        compilerOptions({ opts ->
+            opts.jvmTarget.set(JVM_17)
+        } as Action)
+    }
+}

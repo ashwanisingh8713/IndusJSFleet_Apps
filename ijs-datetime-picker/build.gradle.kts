@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -8,14 +7,13 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
+
 @OptIn(ExperimentalWasmDsl::class)
 kotlin {
-    // Android target
+    // Android target (compileSdk, minSdk, jvmTarget set by fleet-android-conventions)
     android {
         namespace = "com.indusjs.datetimepicker"
-        compileSdk = 36
-        minSdk = 23
-        compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
     }
 
     // iOS targets

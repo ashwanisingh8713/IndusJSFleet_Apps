@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.android)
@@ -8,14 +6,13 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
 }
 
+apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
+// compileSdk, minSdk, targetSdk, compileOptions, jvmTarget set by fleet-android-conventions
+
 android {
     namespace = "com.indusjs.fleet.androidApp"
-    compileSdk = 36
 
     defaultConfig {
-        minSdk = 23
-        targetSdk = 36
-
         applicationId = "com.indusjs.fleet.androidApp"
         versionCode = 1
         versionName = "1.0.0"
@@ -26,10 +23,6 @@ android {
         buildConfig = true
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
 
     buildTypes {
         debug {
@@ -48,9 +41,6 @@ android {
     }
 }
 
-kotlin {
-    compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
-}
 
 dependencies {
     implementation(project(":sharedUI"))
