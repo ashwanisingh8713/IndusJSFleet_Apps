@@ -6,7 +6,6 @@ import com.indusjs.fleet.data.database.dao.CostTypesDao
 import com.indusjs.fleet.data.database.entity.DriverCostTypesEntity
 import com.indusjs.fleet.data.database.entity.MaintenanceCostTypesEntity
 import com.indusjs.fleet.data.database.entity.TripCostTypesEntity
-import com.indusjs.fleet.data.datasource.LocalDataSource
 import com.indusjs.fleet.data.model.costs.CostTypeCategoryDto
 import com.indusjs.fleet.data.model.costs.CostTypeGroupDto
 import dev.zacsweers.metro.Inject
@@ -14,33 +13,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /**
- * Local data source interface for Cost Types caching.
- * Abstracts the underlying storage mechanism (Settings-based).
+ * Implementation of CostsLocalDataSource using Room DAOs.
  *
- * Cost types are fetched on first app launch and can be refreshed manually.
- */
-interface CostsLocalDataSource : LocalDataSource {
-    suspend fun getTripCostTypes(): CostTypeCategoryDto?
-    suspend fun saveTripCostTypes(data: CostTypeCategoryDto)
-    suspend fun hasTripCostTypes(): Boolean
-    suspend fun clearTripCostTypes()
-
-    suspend fun getMaintenanceCostTypes(): CostTypeCategoryDto?
-    suspend fun saveMaintenanceCostTypes(data: CostTypeCategoryDto)
-    suspend fun hasMaintenanceCostTypes(): Boolean
-    suspend fun clearMaintenanceCostTypes()
-
-    suspend fun getDriverCostTypes(): CostTypeCategoryDto?
-    suspend fun saveDriverCostTypes(data: CostTypeCategoryDto)
-    suspend fun hasDriverCostTypes(): Boolean
-    suspend fun clearDriverCostTypes()
-
-    suspend fun hasCostTypesCached(): Boolean
-    suspend fun clearCache()
-}
-
-/**
- * Implementation of CostsLocalDataSource using Settings-based DAO.
+ * The interface [CostsLocalDataSource] is defined in ijs-network-lib.
  */
 @Inject
 class CostsLocalDataSourceImpl(

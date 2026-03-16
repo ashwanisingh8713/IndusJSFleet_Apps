@@ -1,7 +1,6 @@
 package com.indusjs.fleet.data.datasource.dashboard
 
 import com.indusjs.fleet.data.database.dao.DashboardDao
-import com.indusjs.fleet.data.datasource.LocalDataSource
 import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
 import com.indusjs.fleet.data.model.dashboard.DashboardDataDto
 import dev.zacsweers.metro.Inject
@@ -9,20 +8,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Local data source interface for Dashboard caching.
- * Abstracts the underlying storage mechanism (Settings-based).
- */
-interface DashboardLocalDataSource : LocalDataSource {
-    suspend fun saveDashboard(data: DashboardDataDto)
-    suspend fun getCachedDashboard(): DashboardDataDto?
-    fun observeDashboard(): Flow<DashboardDataDto?>
-    suspend fun hasCachedData(): Boolean
-    suspend fun clearCache()
-    suspend fun getCacheTime(): Long?
-}
-
-/**
- * Implementation of DashboardLocalDataSource using Settings-based DAO.
+ * Implementation of DashboardLocalDataSource using Room DAOs.
+ *
+ * The interface [DashboardLocalDataSource] is defined in ijs-network-lib.
  */
 @Inject
 class DashboardLocalDataSourceImpl(

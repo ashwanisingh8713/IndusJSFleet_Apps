@@ -738,9 +738,10 @@ private fun CostHistoryItem(cost: DriverCostDto) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (!cost.notes.isNullOrBlank()) {
+                val costNotes = cost.notes
+                if (!costNotes.isNullOrBlank()) {
                     Text(
-                        text = cost.notes,
+                        text = costNotes,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

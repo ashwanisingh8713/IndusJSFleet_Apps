@@ -1085,9 +1085,10 @@ private fun EnhancedDriverCostItem(
                     }
 
                     // Description if available
-                    if (!cost.description.isNullOrBlank()) {
+                    val costDescription = cost.description
+                    if (!costDescription.isNullOrBlank()) {
                         Text(
-                            text = cost.description,
+                            text = costDescription,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1

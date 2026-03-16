@@ -550,15 +550,16 @@ private fun TripHeader(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    val price = trip.tripPrice
                     Text(
-                        text = if (trip.tripPrice != null && trip.tripPrice > 0) {
-                            formatCurrency(trip.tripPrice)
+                        text = if (price != null && price > 0) {
+                            formatCurrency(price)
                         } else {
                             "Not Set"
                         },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (trip.tripPrice != null && trip.tripPrice > 0) {
+                        color = if (price != null && price > 0) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant

@@ -7,36 +7,18 @@ import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
 import com.indusjs.fleet.data.database.FleetDatabase
 import com.indusjs.fleet.data.datasource.costs.CostsLocalDataSourceImpl
-import com.indusjs.fleet.data.datasource.costs.CostsRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl
-import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
-import com.indusjs.fleet.data.datasource.driver.DriverRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
-import com.indusjs.fleet.data.datasource.reports.ReportsRemoteDataSource
-import com.indusjs.fleet.data.datasource.team.TeamRemoteDataSourceImpl
-import com.indusjs.fleet.data.datasource.trip.TripRemoteDataSourceImpl
-import com.indusjs.fleet.data.datasource.user.UserLocalDataSourceImpl
-import com.indusjs.fleet.data.datasource.user.UserRemoteDataSourceImpl
-import com.indusjs.fleet.data.datasource.vehicle.VehicleRemoteDataSourceImpl
-import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
-import com.indusjs.fleet.data.mapper.driver.DriverMapper
-import com.indusjs.fleet.data.mapper.trip.TripMapper
-import com.indusjs.fleet.data.mapper.trip.TripStopMapper
-import com.indusjs.fleet.data.mapper.vehicle.VehicleMapper
-import com.indusjs.fleet.data.repository.costs.CostTypesRepositoryImpl
-import com.indusjs.fleet.data.repository.costs.CostsRepositoryImpl
-import com.indusjs.fleet.data.repository.dashboard.DashboardRepositoryImpl
-import com.indusjs.fleet.data.repository.driver.DriverRepositoryImpl
-import com.indusjs.fleet.data.repository.reports.ReportsRepositoryImpl
-import com.indusjs.fleet.data.repository.team.TeamRepositoryImpl
-import com.indusjs.fleet.data.repository.trip.TripRepositoryImpl
-import com.indusjs.fleet.data.repository.user.UserRepositoryImpl
-import com.indusjs.fleet.data.repository.vehicle.VehicleRepositoryImpl
 import com.indusjs.fleet.data.datasource.team.TeamLocalDataSourceImpl
+import com.indusjs.fleet.data.datasource.customer.CustomerLocalDataSourceImpl
+import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
+import com.indusjs.fleet.domain.repository.customer.CustomerRepository
 import com.indusjs.fleet.domain.repository.dashboard.DashboardRepository
 import com.indusjs.fleet.domain.repository.driver.DriverRepository
+import com.indusjs.fleet.domain.repository.finance.VehicleFinanceRepository
+import com.indusjs.fleet.domain.repository.payment.TripPaymentRepository
 import com.indusjs.fleet.domain.repository.reports.ReportsRepository
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.trip.TripRepository
@@ -46,6 +28,10 @@ import com.indusjs.fleet.domain.usecase.costs.GetMaintenanceCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.GetDriverCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.GetTripCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.InitializeCostTypesUseCase
+import com.indusjs.fleet.domain.usecase.customer.CreateCustomerUseCase
+import com.indusjs.fleet.domain.usecase.customer.GetCustomersUseCase
+import com.indusjs.fleet.domain.usecase.customer.GetLocalCustomersUseCase
+import com.indusjs.fleet.domain.usecase.customer.RefreshCustomersUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetAlertsStatusUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetCostOverviewUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetDashboardUseCase
@@ -71,16 +57,21 @@ import com.indusjs.fleet.domain.usecase.vehicle.GetAvailableVehiclesUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehicleByIdUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
-import com.indusjs.fleet.presentation.auth.LoginViewModel
-import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryViewModel
-import com.indusjs.fleet.presentation.trips.cost.TripCostEntryViewModel
-import com.indusjs.fleet.presentation.drivers.cost.DriverCostEntryViewModel
 import com.indusjs.fleet.presentation.alerts.AlertsListViewModel
+import com.indusjs.fleet.presentation.auth.LoginViewModel
+import com.indusjs.fleet.presentation.customers.create.CreateCustomerViewModel
+import com.indusjs.fleet.presentation.customers.detail.CustomerDetailViewModel
+import com.indusjs.fleet.presentation.customers.list.CustomersListViewModel
 import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
 import com.indusjs.fleet.presentation.drivers.DriversViewModel
+import com.indusjs.fleet.presentation.drivers.cost.DriverCostEntryViewModel
 import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
 import com.indusjs.fleet.presentation.drivers.detail.DriverDetailViewModel
+import com.indusjs.fleet.presentation.finance.VehicleFinanceViewModel
 import com.indusjs.fleet.presentation.maps.MapsViewModel
+import com.indusjs.fleet.presentation.payments.AddPaymentViewModel
+import com.indusjs.fleet.presentation.payments.PaymentDetailViewModel
+import com.indusjs.fleet.presentation.payments.PaymentsViewModel
 import com.indusjs.fleet.presentation.reports.ReportsViewModel
 import com.indusjs.fleet.presentation.reports.consolidated.ConsolidatedPLViewModel
 import com.indusjs.fleet.presentation.reports.cost.CostAnalysisViewModel
@@ -90,6 +81,7 @@ import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
 import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailViewModel
 import com.indusjs.fleet.presentation.team.list.TeamListViewModel
 import com.indusjs.fleet.presentation.trips.TripsViewModel
+import com.indusjs.fleet.presentation.trips.cost.TripCostEntryViewModel
 import com.indusjs.fleet.presentation.trips.create.CreateTripViewModel
 import com.indusjs.fleet.presentation.trips.detail.TripDetailViewModel
 import com.indusjs.fleet.presentation.user.changepassword.ChangePasswordViewModel
@@ -98,34 +90,18 @@ import com.indusjs.fleet.presentation.user.profile.ProfileViewModel
 import com.indusjs.fleet.presentation.user.signup.SignUpViewModel
 import com.indusjs.fleet.presentation.vehicles.AddVehicleViewModel
 import com.indusjs.fleet.presentation.vehicles.VehiclesViewModel
+import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryViewModel
 import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailViewModel
-import com.indusjs.fleet.presentation.customers.list.CustomersListViewModel
-import com.indusjs.fleet.presentation.customers.detail.CustomerDetailViewModel
-import com.indusjs.fleet.presentation.customers.create.CreateCustomerViewModel
-import com.indusjs.fleet.data.datasource.customer.CustomerRemoteDataSource
-import com.indusjs.fleet.data.datasource.customer.CustomerLocalDataSourceImpl
-import com.indusjs.fleet.data.repository.customer.CustomerRepositoryImpl
-import com.indusjs.fleet.domain.usecase.customer.*
-import com.indusjs.fleet.data.datasource.payment.TripPaymentRemoteDataSource
-import com.indusjs.fleet.data.repository.payment.TripPaymentRepositoryImpl
-import com.indusjs.fleet.domain.repository.payment.TripPaymentRepository
-import com.indusjs.fleet.presentation.payments.PaymentsViewModel
-import com.indusjs.fleet.presentation.payments.AddPaymentViewModel
-import com.indusjs.fleet.presentation.payments.PaymentDetailViewModel
-import com.indusjs.fleet.data.datasource.finance.VehicleFinanceRemoteDataSourceImpl
-import com.indusjs.fleet.data.repository.finance.VehicleFinanceRepositoryImpl
-import com.indusjs.fleet.domain.repository.finance.VehicleFinanceRepository
-import com.indusjs.fleet.presentation.finance.VehicleFinanceViewModel
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
 
 /**
- * Development/Stub implementation of ViewModelProvider.
- * Creates dependencies manually without Metro code generation.
+ * Default implementation of ViewModelProvider.
  *
- * In production with Metro DI fully configured, use MetroViewModelProvider instead.
- * This serves as a bridge during the migration to full Metro DI.
+ * Uses Metro DI via [NetworkDataGraph] for all data layer wiring
+ * (data sources, mappers, repositories). ViewModel creation remains
+ * manual here, receiving dependencies from the graph.
  *
  * IMPORTANT: Use getInstance() to get a shared singleton instance.
  * This ensures the same Settings instance is used throughout the app lifecycle,
@@ -168,7 +144,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         AuthenticationManager.registerSessionClearCallback {
             log.w { "Session clear callback invoked - clearing auth data only" }
             // Only clear auth-related data, not all settings
-            userLocalDataSource.clearSession()
+            // Access networkDataGraph lazily — it's initialized on first use
+            networkDataGraph.userLocalDataSource.clearSession()
         }
     }
 
@@ -197,19 +174,57 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         }
     }
 
-    // Lazy-initialized User feature dependencies
-    private val userLocalDataSource by lazy { UserLocalDataSourceImpl(settings) }
-    private val userRemoteDataSource by lazy { UserRemoteDataSourceImpl(httpClient) }
-    override val userRepository: UserRepository by lazy {
-        UserRepositoryImpl(userRemoteDataSource, userLocalDataSource)
+    // ==================== NetworkDataGraph (Metro DI) ====================
+    // All data sources, mappers, repositories, and their bindings are wired
+    // inside ijs-network-lib's NetworkDataGraph. We provide external dependencies
+    // (HttpClient, Json, Settings, DispatcherProvider, Room-backed local data sources)
+    // and receive fully-wired repositories in return.
+
+    // Room-backed local data sources (impls live in sharedUI, interfaces in ijs-network-lib)
+    private val dashboardCacheMapper by lazy { DashboardCacheMapper(json) }
+    private val dashboardLocalDataSource by lazy {
+        DashboardLocalDataSourceImpl(database.dashboardDao(), dashboardCacheMapper)
+    }
+    private val costsLocalDataSource by lazy { CostsLocalDataSourceImpl(database.costTypesDao(), json) }
+    private val teamLocalDataSource by lazy { TeamLocalDataSourceImpl(database.teamMembersDao()) }
+    private val customerLocalDataSource by lazy { CustomerLocalDataSourceImpl(database.customerDao()) }
+
+    /**
+     * The Metro-generated NetworkDataGraph that wires all data layer dependencies.
+     * Replaces ~120 lines of manual data source/repository/use case instantiation.
+     */
+    private val networkDataGraph: NetworkDataGraph by lazy {
+        NetworkDataGraph.create(
+            httpClient = httpClient,
+            json = json,
+            settings = settings,
+            dispatcherProvider = dispatcherProvider,
+            dashboardLocalDataSource = dashboardLocalDataSource,
+            costsLocalDataSource = costsLocalDataSource,
+            teamLocalDataSource = teamLocalDataSource,
+            customerLocalDataSource = customerLocalDataSource
+        )
     }
 
-    // Lazy-initialized Vehicle feature dependencies
-    private val vehicleMapper by lazy { VehicleMapper() }
-    private val vehicleRemoteDataSource by lazy { VehicleRemoteDataSourceImpl(httpClient) }
-    private val vehicleRepository: VehicleRepository by lazy {
-        VehicleRepositoryImpl(vehicleRemoteDataSource, userLocalDataSource, vehicleMapper)
-    }
+    // ==================== Repository Accessors (from NetworkDataGraph) ====================
+
+    override val userRepository: UserRepository get() = networkDataGraph.userRepository
+    private val userLocalDataSource get() = networkDataGraph.userLocalDataSource
+    private val vehicleRepository: VehicleRepository get() = networkDataGraph.vehicleRepository
+    private val driverRepository: DriverRepository get() = networkDataGraph.driverRepository
+    private val tripRepository: TripRepository get() = networkDataGraph.tripRepository
+    private val dashboardRepository: DashboardRepository get() = networkDataGraph.dashboardRepository
+    private val customerRepository: CustomerRepository get() = networkDataGraph.customerRepository
+    private val teamRepository: TeamRepository get() = networkDataGraph.teamRepository
+    private val tripPaymentRepository: TripPaymentRepository get() = networkDataGraph.tripPaymentRepository
+    private val costsRepository: CostsRepository get() = networkDataGraph.costsRepository
+    private val costTypesRepository: CostTypesRepository get() = networkDataGraph.costTypesRepository
+    private val vehicleFinanceRepository: VehicleFinanceRepository get() = networkDataGraph.vehicleFinanceRepository
+    private val reportsRepository: ReportsRepository get() = networkDataGraph.reportsRepository
+
+    // ==================== Use Cases (created from graph-provided repositories) ====================
+
+    // Vehicle use cases
     private val getVehiclesUseCase by lazy { GetVehiclesUseCase(vehicleRepository) }
     private val getAvailableVehiclesUseCase by lazy { GetAvailableVehiclesUseCase(vehicleRepository) }
     private val getVehicleByIdUseCase by lazy { GetVehicleByIdUseCase(vehicleRepository) }
@@ -217,12 +232,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val deleteVehicleUseCase by lazy { DeleteVehicleUseCase(vehicleRepository) }
     private val createVehicleWithDocumentsUseCase by lazy { CreateVehicleWithDocumentsUseCase(vehicleRepository) }
 
-    // Lazy-initialized Driver feature dependencies
-    private val driverMapper by lazy { DriverMapper() }
-    private val driverRemoteDataSource by lazy { DriverRemoteDataSourceImpl(httpClient) }
-    private val driverRepository: DriverRepository by lazy {
-        DriverRepositoryImpl(driverRemoteDataSource, userLocalDataSource, driverMapper)
-    }
+    // Driver use cases
     private val getDriversUseCase by lazy { GetDriversUseCase(driverRepository) }
     private val getAvailableDriversUseCase by lazy { GetAvailableDriversUseCase(driverRepository) }
     private val getDriverByIdUseCase by lazy { GetDriverByIdUseCase(driverRepository) }
@@ -232,13 +242,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val updateDriverStatusUseCase by lazy { UpdateDriverStatusUseCase(driverRepository) }
     private val toggleDriverActiveUseCase by lazy { ToggleDriverActiveUseCase(driverRepository) }
 
-    // Lazy-initialized Trip feature dependencies
-    private val tripMapper by lazy { TripMapper() }
-    private val tripStopMapper by lazy { TripStopMapper() }
-    private val tripRemoteDataSource by lazy { TripRemoteDataSourceImpl(httpClient) }
-    private val tripRepository: TripRepository by lazy {
-        TripRepositoryImpl(tripRemoteDataSource, userLocalDataSource, tripMapper, tripStopMapper)
-    }
+    // Trip use cases
     private val getTripsUseCase by lazy { GetTripsUseCase(tripRepository) }
     private val getTripByIdUseCase by lazy { GetTripByIdUseCase(tripRepository) }
     private val createTripWithDataUseCase by lazy { CreateTripWithDataUseCase(tripRepository) }
@@ -246,80 +250,28 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val updateTripStatusUseCase by lazy { UpdateTripStatusUseCase(tripRepository) }
     private val cancelTripUseCase by lazy { CancelTripUseCase(tripRepository) }
 
-    // Lazy-initialized Team feature dependencies
-    private val teamRemoteDataSource by lazy { TeamRemoteDataSourceImpl(httpClient) }
-    private val teamLocalDataSource by lazy { TeamLocalDataSourceImpl(database.teamMembersDao()) }
-    private val teamRepository: TeamRepository by lazy {
-        TeamRepositoryImpl(teamRemoteDataSource, userLocalDataSource, teamLocalDataSource)
-    }
-
-    // Lazy-initialized Dashboard feature dependencies with Settings-based caching
-    private val dashboardRemoteDataSource by lazy { DashboardRemoteDataSourceImpl(httpClient) }
-    private val dashboardCacheMapper by lazy { DashboardCacheMapper(json) }
-    private val dashboardLocalDataSource by lazy {
-        DashboardLocalDataSourceImpl(database.dashboardDao(), dashboardCacheMapper)
-    }
-    private val dashboardRepository: DashboardRepository by lazy {
-        DashboardRepositoryImpl(dashboardRemoteDataSource, dashboardLocalDataSource, userLocalDataSource)
-    }
+    // Dashboard use cases
     private val getDashboardUseCase by lazy { GetDashboardUseCase(dashboardRepository) }
     private val refreshDashboardUseCase by lazy { RefreshDashboardUseCase(dashboardRepository) }
     private val getCostOverviewUseCase by lazy { GetCostOverviewUseCase(dashboardRepository) }
     private val getPendingPaymentsUseCase by lazy { GetPendingPaymentsUseCase(dashboardRepository) }
     private val getAlertsStatusUseCase by lazy { GetAlertsStatusUseCase(dashboardRepository) }
 
-    // Lazy-initialized Costs feature dependencies
-    private val costsRemoteDataSource by lazy { CostsRemoteDataSourceImpl(httpClient) }
-    private val costsLocalDataSource by lazy { CostsLocalDataSourceImpl(database.costTypesDao(), json) }
-    private val costsRepository: CostsRepository by lazy {
-        CostsRepositoryImpl(costsRemoteDataSource, userLocalDataSource)
-    }
-
-    // Cost Types Repository and Use Cases
-    private val costTypesRepository: CostTypesRepository by lazy {
-        CostTypesRepositoryImpl(costsRemoteDataSource, costsLocalDataSource, userLocalDataSource)
-    }
+    // Cost Types use cases
     private val initializeCostTypesUseCase by lazy { InitializeCostTypesUseCase(costTypesRepository) }
     private val getTripCostTypesUseCase by lazy { GetTripCostTypesUseCase(costTypesRepository) }
     private val getMaintenanceCostTypesUseCase by lazy { GetMaintenanceCostTypesUseCase(costTypesRepository) }
     private val getDriverCostTypesUseCase by lazy { GetDriverCostTypesUseCase(costTypesRepository) }
 
+    // Customer use cases
+    private val getCustomersUseCase by lazy { GetCustomersUseCase(customerRepository) }
+    private val getLocalCustomersUseCase by lazy { GetLocalCustomersUseCase(customerRepository) }
+    private val createCustomerUseCase by lazy { CreateCustomerUseCase(customerRepository) }
+    private val refreshCustomersUseCase by lazy { RefreshCustomersUseCase(customerRepository) }
+
     // App Initializer - handles one-time initialization tasks
     val appInitializer: AppInitializer by lazy {
         AppInitializer(initializeCostTypesUseCase, dispatcherProvider)
-    }
-
-    // Lazy-initialized Reports feature dependencies
-    private val reportsRemoteDataSource by lazy { ReportsRemoteDataSource(httpClient, json) }
-    private val reportsRepository: ReportsRepository by lazy {
-        ReportsRepositoryImpl(reportsRemoteDataSource, userLocalDataSource)
-    }
-
-    // Lazy-initialized Customer feature dependencies
-    private val customerRemoteDataSource by lazy { CustomerRemoteDataSource(httpClient, json) }
-    private val customerLocalDataSource by lazy { CustomerLocalDataSourceImpl(database.customerDao()) }
-    private val customerRepository by lazy {
-        CustomerRepositoryImpl(customerRemoteDataSource, customerLocalDataSource, userLocalDataSource)
-    }
-    private val getCustomersUseCase by lazy { GetCustomersUseCase(customerRepository) }
-    private val getCustomerUseCase by lazy { GetCustomerUseCase(customerRepository) }
-    private val getLocalCustomersUseCase by lazy { GetLocalCustomersUseCase(customerRepository) }
-    private val createCustomerUseCase by lazy { CreateCustomerUseCase(customerRepository) }
-    private val updateCustomerUseCase by lazy { UpdateCustomerUseCase(customerRepository) }
-    private val toggleCustomerStatusUseCase by lazy { ToggleCustomerStatusUseCase(customerRepository) }
-    private val getCustomerStatisticsUseCase by lazy { GetCustomerStatisticsUseCase(customerRepository) }
-    private val refreshCustomersUseCase by lazy { RefreshCustomersUseCase(customerRepository) }
-
-    // Lazy-initialized Payment feature dependencies
-    private val tripPaymentRemoteDataSource by lazy { TripPaymentRemoteDataSource(httpClient, json) }
-    private val tripPaymentRepository: TripPaymentRepository by lazy {
-        TripPaymentRepositoryImpl(tripPaymentRemoteDataSource, dashboardRemoteDataSource, userLocalDataSource)
-    }
-
-    // Lazy-initialized Vehicle Finance feature dependencies
-    private val vehicleFinanceRemoteDataSource by lazy { VehicleFinanceRemoteDataSourceImpl(httpClient, json) }
-    private val vehicleFinanceRepository: VehicleFinanceRepository by lazy {
-        VehicleFinanceRepositoryImpl(vehicleFinanceRemoteDataSource, userLocalDataSource, dispatcherProvider)
     }
 
     // Auth ViewModels

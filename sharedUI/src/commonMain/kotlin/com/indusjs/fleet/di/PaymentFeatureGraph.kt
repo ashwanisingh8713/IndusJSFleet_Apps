@@ -1,7 +1,7 @@
 package com.indusjs.fleet.di
 
 import com.indusjs.dispatcher.DispatcherProvider
-import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
+import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSource
 import com.indusjs.fleet.data.datasource.payment.TripPaymentRemoteDataSource
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.repository.payment.TripPaymentRepositoryImpl
@@ -41,7 +41,7 @@ abstract class PaymentFeatureGraph {
             @Provides json: Json,
             @Provides dispatcherProvider: DispatcherProvider,
             @Provides userLocalDataSource: UserLocalDataSource,
-            @Provides dashboardRemoteDataSource: DashboardRemoteDataSourceImpl,
+            @Provides dashboardRemoteDataSource: DashboardRemoteDataSource,
             @Provides tripRepository: TripRepository,
             @Provides userRepository: UserRepository
         ): PaymentFeatureGraph

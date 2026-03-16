@@ -355,33 +355,37 @@ private fun TripCard(
                         value = trip.displayInfo.totalCostLabel,
                         label = "Trip Cost"
                     )
-                } else if (!trip.displayInfo.cargoTypeLabel.isNullOrBlank()) {
-                    TripInfoItem(
-                        value = trip.displayInfo.cargoTypeLabel.take(10),
-                        label = "Cargo"
-                    )
                 } else {
-                    // Fallback: Show estimated distance for Planned state
-                    if (trip.status == TripStatus.PLANNED) {
+                    val cargoLabel = trip.displayInfo.cargoTypeLabel
+                    if (!cargoLabel.isNullOrBlank()) {
                         TripInfoItem(
-                            value = trip.displayInfo.estimatedDistance?.let { "${it.toInt()} km" } ?: "NA",
-                            label = "Est. Total",
-                            isNA = trip.displayInfo.estimatedDistance == null
+                            value = cargoLabel.take(10),
+                            label = "Cargo"
                         )
                     } else {
-                        TripInfoItem(
-                            value = getStatusDisplayName(trip.status).take(10),
-                            label = "Status"
-                        )
+                        // Fallback: Show estimated distance for Planned state
+                        if (trip.status == TripStatus.PLANNED) {
+                            TripInfoItem(
+                                value = trip.displayInfo.estimatedDistance?.let { "${it.toInt()} km" } ?: "NA",
+                                label = "Est. Total",
+                                isNA = trip.displayInfo.estimatedDistance == null
+                            )
+                        } else {
+                            TripInfoItem(
+                                value = getStatusDisplayName(trip.status).take(10),
+                                label = "Status"
+                            )
+                        }
                     }
                 }
             }
 
             // Progress indicator for On Route trips
-            if (trip.status == TripStatus.ON_ROUTE && trip.displayInfo.progressPercent != null) {
+            val progressPct = trip.displayInfo.progressPercent
+            if (trip.status == TripStatus.ON_ROUTE && progressPct != null) {
                 Spacer(modifier = Modifier.height(10.dp))
                 TripProgressIndicator(
-                    progressPercent = trip.displayInfo.progressPercent,
+                    progressPercent = progressPct,
                     remainingDistance = trip.displayInfo.remainingDistance
                 )
             }
@@ -467,7 +471,8 @@ private fun RouteSection(trip: Trip) {
         }
 
         // Current Location (if on route)
-        if (trip.status == TripStatus.ON_ROUTE && trip.currentLocation != null) {
+        val currentLoc = trip.currentLocation
+        if (trip.status == TripStatus.ON_ROUTE && currentLoc != null) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
@@ -492,7 +497,7 @@ private fun RouteSection(trip: Trip) {
                         color = MaterialTheme.colorScheme.tertiary
                     )
                     Text(
-                        text = trip.currentLocation.address,
+                        text = currentLoc.address,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,

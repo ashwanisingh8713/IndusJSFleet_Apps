@@ -10,32 +10,51 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 /**
- * Provides configured HttpClient for API calls.
+ * Provides configured HttpClient and Json instances for API calls.
+ *
+ * This is the single source of truth for network configuration.
+ * Use [create] for standalone HttpClient or [createHttpClient] with a shared Json instance.
  */
 object HttpClientProvider {
 
     /**
-     * Creates a configured HttpClient instance.
+     * Creates a configured Json instance for API serialization.
+     * Use this when you need a shared Json instance across components.
+     */
+    fun createJson(): Json = Json {
+        prettyPrint = true
+        isLenient = true
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+        encodeDefaults = true
+        explicitNulls = false // Don't include null values in JSON output
+    }
+
+    /**
+     * Creates a configured HttpClient instance with its own internal Json.
      * Includes a 401 Unauthorized interceptor that triggers authentication events.
      */
-    fun create(): HttpClient = HttpClient {
+    fun create(): HttpClient = createHttpClient(createJson())
+
+    /**
+     * Creates a configured HttpClient instance with a provided Json instance.
+     * Includes a 401 Unauthorized interceptor that triggers authentication events.
+     *
+     * Use this when you want to share the same Json instance across the app
+     * (e.g., via DI framework).
+     *
+     * @param json The Json instance to use for content negotiation
+     */
+    fun createHttpClient(json: Json): HttpClient = HttpClient {
         // Install JSON serialization
         install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                isLenient = true
-                ignoreUnknownKeys = true
-                coerceInputValues = true
-                encodeDefaults = true
-                explicitNulls = false // Don't include null values in JSON output
-            })
+            json(json)
         }
 
         // Install logging for debugging
@@ -61,7 +80,7 @@ object HttpClientProvider {
         HttpResponseValidator {
             validateResponse { response ->
                 if (response.status == HttpStatusCode.Unauthorized) {
-                    // Check if the request had an Authorization header by looking for "Bearer" in headers
+                    // Check if the request had an Authorization header
                     val authHeader = response.call.request.headers["Authorization"]
                     val hadAuthHeader = authHeader != null && authHeader.startsWith("Bearer")
                     if (hadAuthHeader) {

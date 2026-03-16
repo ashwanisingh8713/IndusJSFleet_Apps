@@ -400,12 +400,15 @@ private fun VehicleDriverSelectionSection(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    if (isOccupied && vehicle.tripAssignment != null) {
+                                    if (isOccupied) {
+                                        val assignment = vehicle.tripAssignment
+                                        if (assignment != null) {
                                         Text(
-                                            text = "🕐 ${vehicle.tripAssignment.plannedStart ?: "N/A"} - ${vehicle.tripAssignment.plannedEnd ?: "N/A"}",
+                                            text = "🕐 ${assignment.plannedStart ?: "N/A"} - ${assignment.plannedEnd ?: "N/A"}",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.error
                                         )
+                                        }
                                     }
                                 }
                             }
@@ -477,12 +480,15 @@ private fun VehicleDriverSelectionSection(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    if (isOccupied && driver.tripAssignment != null) {
+                                    if (isOccupied) {
+                                        val assignment = driver.tripAssignment
+                                        if (assignment != null) {
                                         Text(
-                                            text = "🕐 ${driver.tripAssignment.plannedStart ?: "N/A"} - ${driver.tripAssignment.plannedEnd ?: "N/A"}",
+                                            text = "🕐 ${assignment.plannedStart ?: "N/A"} - ${assignment.plannedEnd ?: "N/A"}",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.error
                                         )
+                                        }
                                     }
                                 }
                             }

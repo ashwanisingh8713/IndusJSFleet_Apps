@@ -37,26 +37,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.indusjs.fleet.data.model.costs.CostTypeGroupDto
+import com.indusjs.fleet.data.model.costs.CostTypeItemDto
 import indusjsfleet.sharedui.generated.resources.Res
 import indusjsfleet.sharedui.generated.resources.ic_check
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * Data class representing a cost type group with ID.
+ * Type alias for CostTypeGroupDto - used across UI layer for cost type groups.
  */
-data class CostTypeGroup(
-    val groupId: String,
-    val groupName: String,
-    val items: List<CostTypeItem>
-)
+typealias CostTypeGroup = CostTypeGroupDto
 
 /**
- * Data class representing a cost type item.
+ * Type alias for CostTypeItemDto - used across UI layer for cost type items.
  */
-data class CostTypeItem(
-    val id: String,
-    val label: String
-)
+typealias CostTypeItem = CostTypeItemDto
 
 /**
  * Result of cost type selection containing all relevant data.

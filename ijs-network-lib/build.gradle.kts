@@ -27,7 +27,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // Expose ijs-core-lib transitively (includes ijs-error-lib, ijs-dispatcher-lib)
+            // Expose ijs-core-lib transitively (includes ijs-error-lib, ijs-dispatcher-lib, ijs-datetime-utils)
             api(project(":ijs-core-lib"))
 
             // Ktor
@@ -44,6 +44,9 @@ kotlin {
 
             // Settings (for UserLocalDataSource)
             implementation(libs.multiplatformSettings)
+
+            // Date/Time (needed by domain entities and mappers)
+            implementation(libs.kotlinx.datetime)
         }
 
         commonTest.dependencies {
@@ -58,6 +61,14 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+        }
+
+        jsMain.dependencies {
+            implementation(libs.ktor.client.js)
+        }
+
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
         }
     }
 }

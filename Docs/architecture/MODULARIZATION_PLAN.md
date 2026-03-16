@@ -332,3 +332,36 @@ After full migration:
 - [ ] Reports render with data
 - [ ] Vehicle finance flow works
 
+---
+
+## 8. Implementation Progress
+
+### Completed ✅
+
+| Date | What | Details |
+|------|------|---------|
+| 15-Mar-2026 | `ijs-core-lib` created | MVI, StatusConstants, utilities, user entities, marker interfaces |
+| 15-Mar-2026 | `ijs-network-lib` created | HttpClient, ApiConfig, ApiErrorHandler, Auth, UserLocalDataSource, UserRepository |
+| 15-Mar-2026 | `ijs-reports-lib` created | P&L entities, DTOs, mapper, remote data source, repository |
+| 15-Mar-2026 | `ijs-finance-lib` created | Purchase/Loan entities, DTOs, mapper, remote data source, repository |
+| 16-Mar-2026 | Network consolidation | Moved `NetworkConfig` factory methods to `ijs-network-lib` `HttpClientProvider` (added `createJson()`, `createHttpClient(json)`) |
+| 16-Mar-2026 | `GooglePlacesService` moved | Moved from `sharedUI` to `ijs-network-lib` (data/datasource/location/) — zero import changes |
+| 16-Mar-2026 | `ApiConfig.Endpoints` expanded | Added all 50+ endpoint constants for vehicles, drivers, trips, customers, payments, team, documents, finance, reports, caretaker |
+| 16-Mar-2026 | JS/WasmJS Ktor engines | Added `ktor-client-js` to `jsMain` and `wasmJsMain` source sets in `ijs-network-lib` |
+| 16-Mar-2026 | `NetworkModule.kt` simplified | Removed duplicate `NetworkConfig` object — now delegates to `HttpClientProvider` from `ijs-network-lib` |
+| 16-Mar-2026 | `doc/` folders created | Added `doc/README.md` to all 9 modules: core, network, reports, finance, error, dispatcher, datetime-utils, datetime-picker, pdf-report |
+| 16-Mar-2026 | Full build verified | ✅ `ijs-network-lib`, `ijs-reports-lib`, `ijs-finance-lib`, `sharedUI`, `androidApp:assembleDebug` — all pass |
+
+### Pending ⏳
+
+| Module | Status |
+|--------|--------|
+| `ijs-costs-lib` | Not started — requires extracting CostModels, DriverCostModels, CostsRemoteDataSource, repositories, use cases |
+| `ijs-vehicle-lib` | Not started |
+| `ijs-driver-lib` | Not started |
+| `ijs-trip-lib` | Not started — GooglePlacesService already moved to ijs-network-lib (shared utility) |
+| `ijs-customer-lib` | Not started |
+| `ijs-payment-lib` | Not started |
+| `ijs-team-lib` | Not started |
+| `settings.gradle.kts` update | Pending — needs new module includes when they're created |
+| `sharedUI` cleanup | Pending — remove files that were moved to new modules |

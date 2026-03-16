@@ -640,19 +640,20 @@ private fun CurrentLocationSection(vehicle: Vehicle) {
         title = "Current Location",
         icon = "📍"
     ) {
-        if (vehicle.lastLocation != null) {
+        val location = vehicle.lastLocation
+        if (location != null) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Lat: ${vehicle.lastLocation.latitude}",
+                        text = "Lat: ${location.latitude}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Lng: ${vehicle.lastLocation.longitude}",
+                        text = "Lng: ${location.longitude}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -1490,8 +1491,10 @@ private fun DocumentTypeCard(
     var showOptionsMenu by remember { mutableStateOf(false) }
     var showUploadConfirmDialog by remember { mutableStateOf(false) }
 
-    val isExpiringSoon = doc.document?.daysRemaining != null && doc.document.daysRemaining <= 30
-    val isExpired = doc.document?.daysRemaining != null && doc.document.daysRemaining <= 0
+    val docInfo = doc.document
+    val daysLeft = docInfo?.daysRemaining
+    val isExpiringSoon = daysLeft != null && daysLeft <= 30
+    val isExpired = daysLeft != null && daysLeft <= 0
 
     // Upload confirmation dialog
     if (showUploadConfirmDialog) {
@@ -1656,9 +1659,9 @@ private fun DocumentTypeCard(
                                 Text(
                                     text = when {
                                         isExpired -> "⚠️ Expired"
-                                        isExpiringSoon -> "⏰ Expires in ${doc.document?.daysRemaining} days"
-                                        doc.document?.expiryDate != null -> "✓ Valid till ${formatIsoDateToDisplay(doc.document.expiryDate)}"
-                                        else -> "✓ ${doc.document?.statusLabel ?: "Uploaded"}"
+                                        isExpiringSoon -> "⏰ Expires in $daysLeft days"
+                                        docInfo?.expiryDate != null -> "✓ Valid till ${formatIsoDateToDisplay(docInfo.expiryDate)}"
+                                        else -> "✓ ${docInfo?.statusLabel ?: "Uploaded"}"
                                     },
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Medium,
@@ -2004,9 +2007,10 @@ private fun StatusSection(vehicle: Vehicle) {
     }
 
     // Trip Assignment Card (if occupied)
-    if (vehicle.isOccupied && vehicle.tripAssignment != null) {
+    val tripAssign = vehicle.tripAssignment
+    if (vehicle.isOccupied && tripAssign != null) {
         Spacer(modifier = Modifier.height(12.dp))
-        TripAssignmentCard(tripAssignment = vehicle.tripAssignment)
+        TripAssignmentCard(tripAssignment = tripAssign)
     }
 }
 

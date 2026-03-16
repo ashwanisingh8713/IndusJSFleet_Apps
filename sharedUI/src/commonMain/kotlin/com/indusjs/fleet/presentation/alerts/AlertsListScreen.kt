@@ -518,14 +518,15 @@ private fun AlertItemCard(
             }
 
             // Entity info (vehicle registration or driver name)
-            if (alert.type == AlertType.DOCUMENT_EXPIRY && alert.vehicleRegistrationNumber != null) {
+            val vehicleRegNumber = alert.vehicleRegistrationNumber
+            if (alert.type == AlertType.DOCUMENT_EXPIRY && vehicleRegNumber != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(text = "🚛", style = MaterialTheme.typography.labelMedium)
                     Text(
-                        text = alert.vehicleRegistrationNumber,
+                        text = vehicleRegNumber,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -533,14 +534,15 @@ private fun AlertItemCard(
                 }
             }
 
-            if (alert.type == AlertType.LICENSE_EXPIRY && alert.driverName != null) {
+            val driverNameValue = alert.driverName
+            if (alert.type == AlertType.LICENSE_EXPIRY && driverNameValue != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(text = "👤", style = MaterialTheme.typography.labelMedium)
                     Text(
-                        text = alert.driverName,
+                        text = driverNameValue,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
