@@ -12,6 +12,8 @@ import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
 import com.indusjs.fleet.data.model.costs.BulkCostItem
 import com.indusjs.fleet.data.model.costs.BulkCreateTripCostsRequest
 import com.indusjs.fleet.data.model.costs.TripCostTypes
+import com.indusjs.fleet.data.model.costs.toFlatList
+import com.indusjs.fleet.data.model.costs.toCostTypeGroups
 import com.indusjs.fleet.domain.entity.trip.Trip
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository

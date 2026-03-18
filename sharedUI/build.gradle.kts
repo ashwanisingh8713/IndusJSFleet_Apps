@@ -36,7 +36,14 @@ kotlin {
             // IndusJS Libraries
             implementation(project(":ijs-core-lib"))
             implementation(project(":ijs-network-lib"))
-            // ijs-reports-lib and ijs-finance-lib are folded into ijs-network-lib
+            implementation(project(":ijs-driver-lib"))
+            implementation(project(":ijs-vehicle-lib"))
+            implementation(project(":ijs-trip-lib"))
+            implementation(project(":ijs-customer-lib"))
+            implementation(project(":ijs-payment-lib"))
+            implementation(project(":ijs-team-lib"))
+            implementation(project(":ijs-reports-lib"))
+            implementation(project(":ijs-finance-lib"))
             implementation(project(":ijs-error-lib"))
             implementation(project(":ijs-dispatcher-lib"))
             implementation(project(":ijs-datetime-picker"))

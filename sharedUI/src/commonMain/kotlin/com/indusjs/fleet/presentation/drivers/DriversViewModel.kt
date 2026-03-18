@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel for the Drivers screen implementing MVI pattern.
  *
- * Dependencies are injected via Metro DI through the DriversFeatureGraph.
+ * Dependencies are provided via DefaultViewModelProvider.
  */
 @Inject
 class DriversViewModel(

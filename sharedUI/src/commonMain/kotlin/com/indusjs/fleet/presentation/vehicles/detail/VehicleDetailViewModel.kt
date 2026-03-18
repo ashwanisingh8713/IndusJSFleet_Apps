@@ -8,6 +8,7 @@ import com.indusjs.fleet.domain.entity.driver.Driver
 import com.indusjs.fleet.domain.entity.vehicle.VehicleType
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
+import com.indusjs.fleet.data.model.costs.toCostTypeGroups
 import com.indusjs.fleet.domain.repository.team.TeamRepository
 import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
 import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase

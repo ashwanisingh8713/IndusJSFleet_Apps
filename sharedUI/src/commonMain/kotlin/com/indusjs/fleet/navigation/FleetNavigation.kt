@@ -9,6 +9,7 @@ import com.indusjs.fleet.di.rememberSharedViewModel
 import com.indusjs.fleet.di.clearSharedViewModel
 import com.indusjs.fleet.domain.entity.vehicle.DocumentType
 import com.indusjs.fleet.presentation.auth.LoginScreen
+import com.indusjs.fleet.presentation.onboarding.OnboardingScreen
 import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryScreen
 import com.indusjs.fleet.presentation.trips.cost.TripCostEntryScreen
 import com.indusjs.fleet.presentation.drivers.cost.DriverCostEntryScreen
@@ -66,6 +67,18 @@ fun fleetEntryProvider(
     onSaveDocument: ((documentName: String, fileBytes: ByteArray, mimeType: String) -> Unit)? = null
 ): (FleetRoute) -> NavEntry<FleetRoute> = { route ->
     when (route) {
+        // ==================== Onboarding ====================
+
+        is FleetRoute.Onboarding -> NavEntry(route) {
+            val viewModel = rememberViewModel { onboardingViewModel() }
+            OnboardingScreen(
+                viewModel = viewModel,
+                onComplete = {
+                    backStack.navigateAndClear(FleetRoute.Login)
+                }
+            )
+        }
+
         // ==================== Auth ====================
 
         is FleetRoute.Login -> NavEntry(route) {

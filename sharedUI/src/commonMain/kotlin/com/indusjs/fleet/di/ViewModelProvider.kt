@@ -7,6 +7,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.presentation.auth.LoginViewModel
+import com.indusjs.fleet.presentation.onboarding.OnboardingViewModel
  import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryViewModel
 import com.indusjs.fleet.presentation.trips.cost.TripCostEntryViewModel
 import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
@@ -43,6 +44,10 @@ import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailViewModel
 interface ViewModelProvider {
     val dispatcherProvider: DispatcherProvider
     val userRepository: UserRepository
+
+    // Onboarding
+    fun hasCompletedOnboarding(): Boolean
+    fun onboardingViewModel(): OnboardingViewModel
 
     // Auth ViewModels
     fun loginViewModel(): LoginViewModel

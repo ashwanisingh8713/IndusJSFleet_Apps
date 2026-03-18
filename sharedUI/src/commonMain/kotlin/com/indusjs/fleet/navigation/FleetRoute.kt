@@ -14,6 +14,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface FleetRoute : NavKey {
 
+    // ==================== Onboarding Routes ====================
+
+    @Serializable data object Onboarding : FleetRoute
+
     // ==================== Auth Routes ====================
 
     @Serializable data object Login : FleetRoute

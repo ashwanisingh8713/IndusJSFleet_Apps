@@ -9,7 +9,7 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel for the User Profile screen implementing MVI pattern.
  *
- * Dependencies are injected via Metro DI through the UserFeatureGraph.
+ * Dependencies are provided via DefaultViewModelProvider.
  */
 @Inject
 class ProfileViewModel(

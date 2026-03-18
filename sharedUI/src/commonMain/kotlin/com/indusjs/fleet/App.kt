@@ -54,19 +54,28 @@ fun App(
 
     // Check auth status on app launch
     LaunchedEffect(Unit) {
-        co.touchlab.kermit.Logger.d("App") { "Checking auth status on app launch..." }
+        co.touchlab.kermit.Logger.d("App") { "Checking app launch status..." }
         try {
-            val isLoggedIn = viewModelProvider.userRepository.isLoggedIn()
-            co.touchlab.kermit.Logger.d("App") { "Auth check result: isLoggedIn=$isLoggedIn" }
-            initialRoute = if (isLoggedIn) FleetRoute.Dashboard else FleetRoute.Login
-            co.touchlab.kermit.Logger.d("App") { "Initial route set to: $initialRoute" }
+            // Check if onboarding has been completed
+            val onboardingCompleted = viewModelProvider.hasCompletedOnboarding()
+            co.touchlab.kermit.Logger.d("App") { "Onboarding completed: $onboardingCompleted" }
+
+            if (!onboardingCompleted) {
+                initialRoute = FleetRoute.Onboarding
+                co.touchlab.kermit.Logger.d("App") { "Initial route set to: Onboarding" }
+            } else {
+                val isLoggedIn = viewModelProvider.userRepository.isLoggedIn()
+                co.touchlab.kermit.Logger.d("App") { "Auth check result: isLoggedIn=$isLoggedIn" }
+                initialRoute = if (isLoggedIn) FleetRoute.Dashboard else FleetRoute.Login
+                co.touchlab.kermit.Logger.d("App") { "Initial route set to: $initialRoute" }
+            }
         } catch (e: Exception) {
-            co.touchlab.kermit.Logger.e("App", e) { "Auth check failed: ${e.message}" }
+            co.touchlab.kermit.Logger.e("App", e) { "Startup check failed: ${e.message}" }
             // If check fails, default to login
             initialRoute = FleetRoute.Login
         } finally {
             isCheckingAuth = false
-            co.touchlab.kermit.Logger.d("App") { "Auth check complete, isCheckingAuth=$isCheckingAuth" }
+            co.touchlab.kermit.Logger.d("App") { "Startup check complete, isCheckingAuth=$isCheckingAuth" }
         }
     }
 

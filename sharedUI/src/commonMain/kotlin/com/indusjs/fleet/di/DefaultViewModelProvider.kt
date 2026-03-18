@@ -12,6 +12,7 @@ import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.team.TeamLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.customer.CustomerLocalDataSourceImpl
 import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
+// Domain repository interfaces
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.customer.CustomerRepository
@@ -59,6 +60,7 @@ import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
 import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
 import com.indusjs.fleet.presentation.alerts.AlertsListViewModel
 import com.indusjs.fleet.presentation.auth.LoginViewModel
+import com.indusjs.fleet.presentation.onboarding.OnboardingViewModel
 import com.indusjs.fleet.presentation.customers.create.CreateCustomerViewModel
 import com.indusjs.fleet.presentation.customers.detail.CustomerDetailViewModel
 import com.indusjs.fleet.presentation.customers.list.CustomersListViewModel
@@ -174,13 +176,16 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         }
     }
 
-    // ==================== NetworkDataGraph (Metro DI) ====================
-    // All data sources, mappers, repositories, and their bindings are wired
-    // inside ijs-network-lib's NetworkDataGraph. We provide external dependencies
-    // (HttpClient, Json, Settings, DispatcherProvider, Room-backed local data sources)
-    // and receive fully-wired repositories in return.
+    // ==================== NetworkDataGraph (ijs-network-lib) ====================
+    // NetworkDataGraph manages ONLY shared/infrastructure repositories:
+    // - User/Auth (login, profile, tokens)
+    // - Dashboard (aggregation service)
+    // - Costs/CostTypes (cross-cutting cost type cache)
+    //
+    // Feature-specific repositories are constructed directly below from
+    // their respective feature modules (ijs-vehicle-lib, ijs-trip-lib, etc.).
 
-    // Room-backed local data sources (impls live in sharedUI, interfaces in ijs-network-lib)
+    // Room-backed local data sources (impls live in sharedUI, interfaces in feature libs)
     private val dashboardCacheMapper by lazy { DashboardCacheMapper(json) }
     private val dashboardLocalDataSource by lazy {
         DashboardLocalDataSourceImpl(database.dashboardDao(), dashboardCacheMapper)
@@ -190,8 +195,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val customerLocalDataSource by lazy { CustomerLocalDataSourceImpl(database.customerDao()) }
 
     /**
-     * The Metro-generated NetworkDataGraph that wires all data layer dependencies.
-     * Replaces ~120 lines of manual data source/repository/use case instantiation.
+     * The NetworkDataGraph that wires shared data layer dependencies.
+     * Only manages: user, dashboard, costs, costTypes repositories.
      */
     private val networkDataGraph: NetworkDataGraph by lazy {
         NetworkDataGraph.create(
@@ -200,27 +205,40 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
             settings = settings,
             dispatcherProvider = dispatcherProvider,
             dashboardLocalDataSource = dashboardLocalDataSource,
-            costsLocalDataSource = costsLocalDataSource,
+            costsLocalDataSource = costsLocalDataSource
+        )
+    }
+
+    // ==================== Feature Repositories (from feature libs) ====================
+    // Constructed via FeatureRepositoryFactory from each feature module's classes.
+
+    private val featureRepos: FeatureRepositoryFactory by lazy {
+        FeatureRepositoryFactory(
+            httpClient = httpClient,
+            json = json,
+            settings = settings,
+            dispatcherProvider = dispatcherProvider,
             teamLocalDataSource = teamLocalDataSource,
             customerLocalDataSource = customerLocalDataSource
         )
     }
 
-    // ==================== Repository Accessors (from NetworkDataGraph) ====================
+    private val userLocalDataSource get() = networkDataGraph.userLocalDataSource
+
+    // ==================== Repository Accessors ====================
 
     override val userRepository: UserRepository get() = networkDataGraph.userRepository
-    private val userLocalDataSource get() = networkDataGraph.userLocalDataSource
-    private val vehicleRepository: VehicleRepository get() = networkDataGraph.vehicleRepository
-    private val driverRepository: DriverRepository get() = networkDataGraph.driverRepository
-    private val tripRepository: TripRepository get() = networkDataGraph.tripRepository
+    private val vehicleRepository: VehicleRepository get() = featureRepos.vehicleRepository
+    private val driverRepository: DriverRepository get() = featureRepos.driverRepository
+    private val tripRepository: TripRepository get() = featureRepos.tripRepository
     private val dashboardRepository: DashboardRepository get() = networkDataGraph.dashboardRepository
-    private val customerRepository: CustomerRepository get() = networkDataGraph.customerRepository
-    private val teamRepository: TeamRepository get() = networkDataGraph.teamRepository
-    private val tripPaymentRepository: TripPaymentRepository get() = networkDataGraph.tripPaymentRepository
+    private val customerRepository: CustomerRepository get() = featureRepos.customerRepository
+    private val teamRepository: TeamRepository get() = featureRepos.teamRepository
+    private val tripPaymentRepository: TripPaymentRepository get() = featureRepos.tripPaymentRepository
     private val costsRepository: CostsRepository get() = networkDataGraph.costsRepository
     private val costTypesRepository: CostTypesRepository get() = networkDataGraph.costTypesRepository
-    private val vehicleFinanceRepository: VehicleFinanceRepository get() = networkDataGraph.vehicleFinanceRepository
-    private val reportsRepository: ReportsRepository get() = networkDataGraph.reportsRepository
+    private val vehicleFinanceRepository: VehicleFinanceRepository get() = featureRepos.vehicleFinanceRepository
+    private val reportsRepository: ReportsRepository get() = featureRepos.reportsRepository
 
     // ==================== Use Cases (created from graph-provided repositories) ====================
 
@@ -273,6 +291,12 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     val appInitializer: AppInitializer by lazy {
         AppInitializer(initializeCostTypesUseCase, dispatcherProvider)
     }
+
+    // Onboarding
+    override fun hasCompletedOnboarding(): Boolean =
+        settings.getBoolean(OnboardingViewModel.KEY_ONBOARDING_COMPLETED, false)
+
+    override fun onboardingViewModel() = OnboardingViewModel(settings)
 
     // Auth ViewModels
     override fun loginViewModel() = LoginViewModel(dispatcherProvider, userRepository)

@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel for Team Members List screen.
  *
- * Dependencies are injected via Metro DI through the TeamFeatureGraph.
+ * Dependencies are provided via DefaultViewModelProvider.
  */
 @Inject
 class TeamListViewModel(

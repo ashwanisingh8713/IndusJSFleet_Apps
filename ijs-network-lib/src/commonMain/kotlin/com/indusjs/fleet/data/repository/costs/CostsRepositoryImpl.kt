@@ -34,9 +34,10 @@ class CostsRepositoryImpl(
         return try {
             val token = requireAuthToken()
             val response = remoteDataSource.createTripCost(token, request)
+            val data = response.data
 
-            if (response.success && response.data != null) {
-                Result.Success(response.data)
+            if (response.success && data != null) {
+                Result.Success(data)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to create trip cost"))
             }
@@ -68,9 +69,10 @@ class CostsRepositoryImpl(
         return try {
             val token = requireAuthToken()
             val response = remoteDataSource.getTripCosts(token, tripId)
+            val data = response.data
 
-            if (response.success && response.data != null) {
-                Result.Success(response.data.costs)
+            if (response.success && data != null) {
+                Result.Success(data.costs)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch trip costs"))
             }
@@ -85,9 +87,10 @@ class CostsRepositoryImpl(
         return try {
             val token = requireAuthToken()
             val response = remoteDataSource.getTripCostSummary(token, tripId)
+            val data = response.data
 
-            if (response.success && response.data != null) {
-                Result.Success(response.data)
+            if (response.success && data != null) {
+                Result.Success(data)
             } else {
                 // If no costs, return empty summary instead of error
                 Result.Success(TripCostSummaryDto())
@@ -103,9 +106,10 @@ class CostsRepositoryImpl(
         return try {
             val token = requireAuthToken()
             val response = remoteDataSource.createMaintenanceCost(token, request)
+            val data = response.data
 
-            if (response.success && response.data != null) {
-                Result.Success(response.data)
+            if (response.success && data != null) {
+                Result.Success(data)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to create maintenance cost"))
             }
@@ -137,9 +141,10 @@ class CostsRepositoryImpl(
         return try {
             val token = requireAuthToken()
             val response = remoteDataSource.getMaintenanceCosts(token, vehicleId)
+            val data = response.data
 
-            if (response.success && response.data != null) {
-                Result.Success(response.data.costs)
+            if (response.success && data != null) {
+                Result.Success(data.costs)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to fetch maintenance costs"))
             }
@@ -175,9 +180,10 @@ class CostsRepositoryImpl(
                 sortBy = sortBy,
                 sortOrder = sortOrder
             )
+            val data = response.data
 
-            if (response.success && response.data != null) {
-                Result.Success(response.data)
+            if (response.success && data != null) {
+                Result.Success(data)
             } else {
                 // Return empty data instead of error
                 Result.Success(VehicleTripCostsDataDto())
@@ -212,9 +218,10 @@ class CostsRepositoryImpl(
                 sortBy = sortBy,
                 sortOrder = sortOrder
             )
+            val data = response.data
 
-            if (response.success && response.data != null) {
-                Result.Success(response.data)
+            if (response.success && data != null) {
+                Result.Success(data)
             } else {
                 // Return empty data instead of error
                 Result.Success(VehicleMaintenanceCostsDataDto())
@@ -283,9 +290,10 @@ class CostsRepositoryImpl(
                 startDate = startDate,
                 endDate = endDate
             )
+            val data = response.data
 
-            if (response.success && response.data != null) {
-                Result.Success(response.data)
+            if (response.success && data != null) {
+                Result.Success(data)
             } else {
                 // Return empty data instead of error
                 Result.Success(DriverCostsListDto())
@@ -304,9 +312,10 @@ class CostsRepositoryImpl(
         return try {
             val token = requireAuthToken()
             val response = remoteDataSource.createDriverCost(token, driverId, request)
+            val data = response.data
 
-            if (response.success && response.data != null) {
-                Result.Success(response.data)
+            if (response.success && data != null) {
+                Result.Success(data)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to create driver cost"))
             }

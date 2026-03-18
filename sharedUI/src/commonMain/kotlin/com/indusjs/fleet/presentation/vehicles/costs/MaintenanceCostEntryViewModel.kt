@@ -10,6 +10,8 @@ import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
 import com.indusjs.fleet.data.model.costs.BulkCreateMaintenanceCostsRequest
 import com.indusjs.fleet.data.model.costs.BulkMaintenanceCostItem
 import com.indusjs.fleet.data.model.costs.MaintenanceCostTypes
+import com.indusjs.fleet.data.model.costs.toFlatList
+import com.indusjs.fleet.data.model.costs.toCostTypeGroups
 import com.indusjs.fleet.domain.entity.vehicle.Vehicle
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
@@ -396,15 +398,10 @@ class MaintenanceCostEntryViewModel(
                 costLabel = entry.costTypeLabel.ifBlank { entry.costType },
                 groupId = entry.selectedGroupId.ifBlank { "VMC-G-006" }, // Default to Miscellaneous
                 customCostLabel = null, // Can be extended for custom cost types
-                // Legacy field
-                costType = entry.costType,
                 amount = entry.amount.toDoubleOrNull() ?: 0.0,
-                date = convertFormattedToIsoDateTime(entry.date, entry.time),
-                time = if (entry.time.isNotBlank()) convertFormattedToIsoDateTime(entry.date, entry.time) else null,
+                dateTime = convertFormattedToIsoDateTime(entry.date, entry.time),
                 description = entry.description.takeIf { it.isNotBlank() },
-                notes = entry.notes.takeIf { it.isNotBlank() },
-                vendorName = entry.vendorName.takeIf { it.isNotBlank() },
-                invoiceNo = entry.invoiceNo.takeIf { it.isNotBlank() }
+                notes = entry.notes.takeIf { it.isNotBlank() }
             )
         }
 

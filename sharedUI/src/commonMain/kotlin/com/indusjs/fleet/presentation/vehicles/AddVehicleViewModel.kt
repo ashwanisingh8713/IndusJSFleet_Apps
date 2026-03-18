@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel for the Add/Register Vehicle screen implementing MVI pattern.
  *
- * Dependencies are injected via Metro DI through the VehiclesFeatureGraph.
+ * Dependencies are provided via DefaultViewModelProvider.
  */
 @Inject
 class AddVehicleViewModel(

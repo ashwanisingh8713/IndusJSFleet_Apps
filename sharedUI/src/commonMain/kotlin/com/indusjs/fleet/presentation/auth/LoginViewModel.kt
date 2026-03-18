@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel for the Login screen implementing MVI pattern.
  *
- * Dependencies are injected via Metro DI through the AuthFeatureGraph.
+ * Dependencies are provided via DefaultViewModelProvider.
  *
  * On initialization, checks if user is already logged in and auto-navigates to dashboard.
  */

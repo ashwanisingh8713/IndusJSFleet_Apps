@@ -11,30 +11,26 @@ apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
 
 @OptIn(ExperimentalWasmDsl::class)
 kotlin {
-    // Android target (compileSdk, minSdk, jvmTarget set by fleet-android-conventions)
     android {
         namespace = "com.indusjs.fleet.finance"
     }
 
-    // iOS targets
     iosX64()
     iosArm64()
     iosSimulatorArm64()
 
-    // Web targets
     js { browser() }
     wasmJs { browser() }
 
     sourceSets {
         commonMain.dependencies {
-            // Expose ijs-network-lib transitively (includes ijs-core-lib → ijs-error-lib, ijs-dispatcher-lib)
             api(project(":ijs-network-lib"))
 
-            // Kotlin
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kermit)
             implementation(libs.ktor.client.core)
+            implementation(libs.kotlinx.datetime)
         }
 
         commonTest.dependencies {

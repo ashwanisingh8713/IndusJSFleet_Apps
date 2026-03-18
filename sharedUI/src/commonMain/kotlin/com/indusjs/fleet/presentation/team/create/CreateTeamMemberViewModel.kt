@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 /**
  * ViewModel for Create Team Member screen.
  *
- * Dependencies are injected via Metro DI through the TeamFeatureGraph.
+ * Dependencies are provided via DefaultViewModelProvider.
  */
 @Inject
 class CreateTeamMemberViewModel(
