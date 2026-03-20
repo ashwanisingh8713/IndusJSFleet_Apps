@@ -2,20 +2,18 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kmp.library)
-    alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.metro)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.compose.multiplatform)
+    alias(libs.plugins.android.kmp.library)
 }
 
 apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
-apply(from = rootProject.file("gradle/fleet-compose-conventions.gradle"))
 
 @OptIn(ExperimentalWasmDsl::class)
 kotlin {
     android {
-        namespace = "com.indusjs.fleet.customer"
+        namespace = "com.indusjs.uicomponents"
+        androidResources.enable = true
     }
 
     iosX64()
@@ -27,21 +25,23 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // Data layer (networking, auth, HTTP client)
-            api(project(":ijs-network-lib"))
+            // Foundation — exposes shared DTOs, MVI base, error types, StatusConstants
+            api(project(":ijs-core-lib"))
 
-            // PDF report generation (for customer trips/payments/financials export)
-            implementation(project(":ijs-pdf-report"))
+            // Compose Multiplatform
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.ui)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.resources)
+            implementation(libs.compose.material3)
 
-            implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.kotlinx.serialization.json)
+            // Utilities
             implementation(libs.kermit)
-            implementation(libs.ktor.client.core)
+            implementation(libs.kotlinx.datetime)
         }
 
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation(libs.kotlinx.coroutines.test)
         }
 
         androidMain.dependencies {

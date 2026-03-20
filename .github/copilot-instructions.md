@@ -5,10 +5,10 @@
 **IndusJS Fleet** is a Kotlin Multiplatform (KMP) Fleet Management application targeting:
 - **Android** (primary)
 - **iOS** (Swift/Kotlin interop)
-- **Web** (Kobweb - planned migration)
+- **Web** (JS + WasmJS)
 - **Desktop** (future)
 
-The app manages vehicles, drivers, trips, costs, and real-time tracking for fleet operations.
+The app manages vehicles, drivers, trips, costs, payments, customers, team members, vehicle finances, and real-time GPS tracking for fleet operations.
 
 ---
 
@@ -17,7 +17,7 @@ The app manages vehicles, drivers, trips, costs, and real-time tracking for flee
 | Category | Technology | Version |
 |----------|------------|---------|
 | Language | Kotlin | 2.3.0 |
-| UI Framework | Compose Multiplatform | 1.10.0 |
+| UI Framework | Compose Multiplatform | 1.10.0-rc01 |
 | Design System | Material 3 | 1.10.0-alpha05 |
 | Networking | Ktor Client | 3.3.3 |
 | DI Framework | Metro (ZacSweers) | 0.9.1 |
@@ -28,78 +28,218 @@ The app manages vehicles, drivers, trips, costs, and real-time tracking for flee
 | Logging | Kermit | 2.0.8 |
 | Preferences | multiplatform-settings | 1.3.0 |
 | Theming | MaterialKolor | 4.0.5 |
-
-### Shared Libraries
-
-| Library | Purpose |
-|---------|---------|
-| `ijs-error-lib` | Error handling, FleetException hierarchy, error context |
-| `ijs-dispatcher-lib` | Coroutine dispatchers, DispatcherProvider |
+| Crash Reporting | Firebase Crashlytics | BOM-managed |
+| Tracking | MQTT (HiveMQ) via locationTracker | - |
+| Location | Google Places + Distance Matrix API | - |
 
 ---
 
-## Architecture: Clean Architecture + MVI
+## Module Catalog
+
+> **STRICT RULE:** Every module **must** follow **Clean Architecture** (Domain → Data → Presentation layering). Every feature module **must** use **Metro DI** for dependency injection. Every module containing UI or ViewModel logic **must** follow the **MVI** (Model-View-Intent) pattern.
+
+### Module Dependency Graph
+
+```
+androidApp ──→ sharedUI
+webApp ─────→ sharedUI
+iosApp ─────→ sharedUI (via framework)
+
+sharedUI ──→ ijs-core-lib
+sharedUI ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-vehicle-lib ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-driver-lib  ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-trip-lib    ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-customer-lib──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-payment-lib ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-team-lib    ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-reports-lib ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-finance-lib ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ ijs-datetime-picker ──→ ijs-datetime-utils
+sharedUI ──→ ijs-pdf-report  ──→ ijs-datetime-utils
+
+ijs-core-lib ──→ ijs-error-lib
+ijs-core-lib ──→ ijs-dispatcher-lib
+ijs-core-lib ──→ ijs-datetime-utils
+
+locationTracker (standalone Android app, no dependencies on sharedUI)
+```
+
+### Foundation Modules (No Feature Logic)
+
+| Module | Namespace | Description | Architecture |
+|--------|-----------|-------------|--------------|
+| **`ijs-error-lib`** | `com.indusjs.error` | **Error handling foundation.** Provides `Result<T>` sealed class, exception hierarchy (`IjsException`, `ApiException`, `NetworkException`, `AuthException`, `ValidationException`), `ErrorHandler`, `ErrorClassifier`, `ErrorContext`, and HTTP error codes. Zero external dependencies beyond coroutines. | Pure utility — no DI/MVI needed |
+| **`ijs-dispatcher-lib`** | `com.indusjs.dispatcher` | **Coroutine dispatcher abstraction.** Provides `DispatcherProvider` interface, `DefaultDispatcherProvider`, and platform-specific implementations (`AndroidDispatcherProvider`, `IosDispatcherProvider`, `JsDispatcherProvider`, `WasmJsDispatcherProvider`). Enables testable coroutine code via dispatcher injection. **Must be used wherever background work is required.** | Pure utility — no DI/MVI needed |
+| **`ijs-datetime-utils`** | `com.indusjs.datetimeutils` | **Date/time conversion utilities.** Provides `FleetDateTime` object for DD-MM-YYYY ↔ ISO 8601 conversion, date formatting, and time manipulation. Single-file module wrapping `kotlinx-datetime`. | Pure utility — no DI/MVI needed |
+| **`ijs-core-lib`** | `com.indusjs.fleet.core` | **Shared foundation for all feature modules.** Aggregates `ijs-error-lib`, `ijs-dispatcher-lib`, `ijs-datetime-utils` via `api()`. Provides: MVI base classes (`MviViewModel`, `MviContract`, `MviExtensions`), `FleetErrorContext`, `StatusConstants`, utilities (`ValidationUtils`, `FormatUtils`, `CostTypeUtils`, `TimeUtils`, `PhoneCallUtil`), shared DTOs (`CostModels`, `DataModels`, `DriverCostModels`, `HistoryDto`, `StateHistoryDto`), and base interfaces (`DataSource`, `Mapper`, `Repository`, `UseCase`, `Entity`). **Every feature module depends on this transitively via `ijs-network-lib`.** | Clean Architecture base classes — no DI/MVI needed |
+
+### Infrastructure Module
+
+| Module | Namespace | Description | Architecture |
+|--------|-----------|-------------|--------------|
+| **`ijs-network-lib`** | `com.indusjs.fleet.network` | **Networking & cross-cutting data layer.** Provides: HTTP client setup (`HttpClientProvider`, `ApiConfig`, `ApiErrorHandler`, `NetworkError`), authentication (`AuthenticationManager`, `AuthTokenHelper`), `UserLocalDataSource`/`UserRemoteDataSource` (auth tokens, user session), `DashboardRemoteDataSource`/`DashboardRepositoryImpl` (dashboard stats), `CostsRemoteDataSource`/`CostsRepositoryImpl` (shared cost operations), `GooglePlacesService` (location autocomplete), `NetworkDataGraph` (Metro DI graph), and domain entities for dashboard/maps. Exposes `ijs-core-lib` transitively via `api()`. **Every feature module depends on this.** | **Clean Architecture + Metro DI** |
+
+### Feature Data Modules
+
+Each feature module contains the **data layer + domain layer** for its feature, following Clean Architecture strictly:
+- `domain/entity/` — Domain entities (pure Kotlin data classes)
+- `domain/repository/` — Repository interfaces
+- `domain/usecase/` — Use case classes
+- `data/model/` — DTOs with `@Serializable` + `@SerialName`
+- `data/datasource/` — Remote data source implementations
+- `data/mapper/` — DTO ↔ Entity mappers
+- `data/repository/` — Repository implementations
+
+| Module | Namespace | Description | Key Files |
+|--------|-----------|-------------|-----------|
+| **`ijs-vehicle-lib`** | `com.indusjs.fleet.vehicle` | **Vehicle feature data layer.** CRUD operations for vehicles, document management, maintenance costs, vehicle status transitions (`inactive → active → on_route → maintenance → damaged → decommissioned`). | `VehicleRemoteDataSource`, `VehicleRepositoryImpl`, `VehicleMapper`, `VehicleDto`, `Vehicle`, `VehicleDetail`, `VehicleUseCases` |
+| **`ijs-driver-lib`** | `com.indusjs.fleet.driver` | **Driver feature data layer.** CRUD for drivers, license tracking, driver cost management (salary, advance, bonus, penalty), status transitions (`inactive → active → on_route → on_leave → suspended → terminated`). | `DriverRemoteDataSource`, `DriverRepositoryImpl`, `DriverMapper`, `DriverDto`, `DriverCostModels`, `Driver`, `DriverUseCases` |
+| **`ijs-trip-lib`** | `com.indusjs.fleet.trip` | **Trip feature data layer.** Trip planning, route management, cargo tracking, scheduling, trip cost recording, state machine (`planned → on_route → completed`, or `cancelled`/`failed`/`delayed`). | `TripRemoteDataSource`, `TripRepositoryImpl`, `TripMapper`, `TripDto`, `Trip`, `TripUseCases` |
+| **`ijs-customer-lib`** | `com.indusjs.fleet.customer` | **Customer feature data layer.** Customer CRUD, company/contact/GST info, trip history by customer, financial summaries. Includes both remote and local data sources for caching. | `CustomerRemoteDataSource`, `CustomerLocalDataSource`, `CustomerRepositoryImpl`, `CustomerMapper`, `CustomerDto`, `Customer`, `CustomerUseCases` |
+| **`ijs-payment-lib`** | `com.indusjs.fleet.payment` | **Payment feature data layer.** Trip payment recording (cash, UPI, bank transfer, cheque, card), payment status tracking (`received`, `pending`, `cancelled`), payment history. | `TripPaymentRemoteDataSource`, `TripPaymentRepositoryImpl`, `TripPaymentMapper`, `TripPaymentDto`, `TripPaymentRequest`, `TripPayment`, `PaymentEnums` |
+| **`ijs-team-lib`** | `com.indusjs.fleet.team` | **Team management data layer.** Team member CRUD (General Manager, Manager, Supervisor), role-based access, member status management. Includes local data source for caching. | `TeamRemoteDataSource`, `TeamLocalDataSource`, `TeamRepositoryImpl`, `TeamMapper`, `TeamDto`, `TeamMember` |
+| **`ijs-reports-lib`** | `com.indusjs.fleet.reports` | **Reports & analytics data layer.** Profit/Loss by vehicle, by trip, cost analysis with date ranges, consolidated P&L statements. Owner/GM-only access. | `ReportsRemoteDataSource`, `ReportsRepositoryImpl`, `ProfitLossDto`, `ProfitLossRequest`, `ProfitLossEntities` |
+| **`ijs-finance-lib`** | `com.indusjs.fleet.finance` | **Vehicle finance data layer.** Vehicle purchase records, loan tracking, EMI payment history, finance status summaries. | `VehicleFinanceRemoteDataSource`, `VehicleFinanceRepositoryImpl`, `VehicleFinanceMapper`, `VehicleFinanceDto`, `VehiclePurchase`, `LoanPayment` |
+
+### UI Component Modules
+
+| Module | Namespace | Description | Architecture |
+|--------|-----------|-------------|--------------|
+| **`ijs-datetime-picker`** | `com.indusjs.datetimepicker` | **Compose date/time picker component.** Provides `FleetDateTimePicker`, `DatePickerSection`, `TimePickerSection`, `QuickDateShortcuts`. Material 3 styled. Depends on `ijs-datetime-utils`. | Pure Compose UI — no DI/MVI needed |
+| **`ijs-pdf-report`** | `com.indusjs.pdfreport` | **PDF report generation.** HTML→PDF conversion with platform-specific generators (Android WebView, iOS WKWebView, JS/WASM browser). Provides `PdfReportFacade`, `PdfExportDialog`, and specialized handlers for each report type (vehicle costs, trip costs, driver costs, P&L, payments, customer financials). | Platform-specific — no DI/MVI needed |
+
+### Application Modules
+
+| Module | Namespace | Description |
+|--------|-----------|-------------|
+| **`sharedUI`** | `com.indusjs.fleet` | **Core Compose UI module.** Contains ALL presentation layer code: Screens, ViewModels (MVI), Contracts, Navigation, DI graphs, theming. Depends on all feature modules. Produces `SharedUI` iOS framework. Contains `FeatureRepositoryFactory` for wiring feature repos, `DefaultViewModelProvider` for ViewModel creation, and `FleetNavigation` for route handling. |
+| **`androidApp`** | `com.indusjs.fleet.androidApp` | **Android entry point (thin shell).** `FleetApplication` + `AppActivity`. Firebase Crashlytics integration. |
+| **`webApp`** | N/A | **Web entry point (thin shell).** JS + WasmJS browser targets. Single `main.kt`. |
+| **`locationTracker`** | `com.indusjs.fleet.locationtracker` | **Standalone Android GPS tracking app (separate APK).** MQTT-based location publishing via HiveMQ. Contains `LocationTrackingService`, `MqttClientManager`, `TrackerPreferencesRepository`. No dependency on `sharedUI`. |
+
+---
+
+## Build Configuration
+
+### Centralized Android Conventions
+
+All modules use `gradle/fleet-android-conventions.gradle` for shared build settings:
+
+```groovy
+// Applied in each module's build.gradle.kts:
+apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
+```
+
+**Centralized values:**
+- `compileSdk = 36`
+- `minSdk = 23` (locationTracker overrides to 24)
+- `targetSdk = 36`
+- `jvmTarget = JVM_17`
+
+**Do NOT set these values in individual module build files.** They are auto-configured.
+
+### Build Commands
+
+```bash
+./gradlew :androidApp:assembleDebug              # Android debug APK
+./gradlew :androidApp:assembleRelease             # Android release APK
+./gradlew :webApp:jsBrowserDevelopmentRun          # Web JS dev server
+./gradlew :webApp:wasmJsBrowserDevelopmentRun      # Web WASM dev server
+./gradlew :locationTracker:assembleDebug           # Location tracker APK
+```
+
+---
+
+## Architecture: Clean Architecture + MVI + Metro DI
+
+> **STRICT RULE:** Every module containing business logic **must** follow Clean Architecture. Presentation modules **must** use MVI pattern. DI **must** use Metro annotations.
 
 ### Layer Structure
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                      Presentation Layer                          │
+│                      Presentation Layer (sharedUI)               │
 │  ┌─────────────────────────────────────────────────────────────┐ │
 │  │  UI (Compose)  ←→  ViewModel (MVI)  ←→  State/Intent/Effect │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────┘
                               ↓ Uses
 ┌──────────────────────────────────────────────────────────────────┐
-│                        Domain Layer                              │
+│                        Domain Layer (feature-lib modules)        │
 │  ┌─────────────────────────────────────────────────────────────┐ │
 │  │        Use Cases  ←→  Entities  ←→  Repository Interfaces  │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────┘
                               ↓ Implements
 ┌──────────────────────────────────────────────────────────────────┐
-│                         Data Layer                               │
+│                         Data Layer (feature-lib modules)         │
 │  ┌─────────────────────────────────────────────────────────────┐ │
 │  │  Repository Impl  ←→  Data Sources  ←→  DTOs/Mappers       │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### Folder Structure
+### Data Flow (Request Lifecycle)
+
+```
+User taps button
+  → Screen calls viewModel.sendIntent(Intent.LoadData)
+    → ViewModel.handleIntent() routes to handler function
+      → handler calls useCase() → returns Flow<Result<T>>
+        → UseCase calls repository.getData() → Flow<Result<T>>
+          → Repository:
+              1. emit(Result.Loading)
+              2. token = userLocalDataSource.getAuthToken()
+              3. response = remoteDataSource.apiCall(token)
+              4. if success → emit(Result.Success(mapper.toDomain(dto)))
+              5. if error → emit(Result.Error(exception, message))
+    → ViewModel collects flow → updateState { copy(data = result.data) }
+  → Screen observes state via collectAsStateWithLifecycle()
+  → UI recomposes with new data
+```
+
+### Folder Structure (Feature Module — e.g., `ijs-vehicle-lib`)
+
+```
+ijs-vehicle-lib/src/commonMain/kotlin/com/indusjs/fleet/
+├── data/
+│   ├── datasource/vehicle/    # VehicleRemoteDataSource + Impl
+│   ├── mapper/vehicle/        # VehicleMapper (DTO ↔ Entity)
+│   ├── model/vehicle/         # VehicleDto (@Serializable)
+│   └── repository/vehicle/    # VehicleRepositoryImpl
+└── domain/
+    ├── entity/vehicle/        # Vehicle, VehicleDetail (data classes)
+    ├── repository/vehicle/    # VehicleRepository (interface)
+    └── usecase/vehicle/       # VehicleUseCases
+```
+
+### Folder Structure (Presentation — in `sharedUI`)
 
 ```
 sharedUI/src/commonMain/kotlin/com/indusjs/fleet/
-├── core/                          # Core utilities
-│   ├── dispatcher/                # Coroutine dispatchers
-│   ├── error/                     # FleetException hierarchy
-│   ├── mvi/                       # MVI base classes
-│   ├── network/                   # ApiConfig, HttpClient
-│   ├── result/                    # Result<T> sealed class
-│   ├── ui/                        # Reusable UI components
-│   └── util/                      # TimeUtils, ValidationUtils
-├── data/                          # Data layer
-│   ├── datasource/{feature}/      # Remote/Local data sources
-│   ├── mapper/{feature}/          # DTO ↔ Entity mappers
-│   ├── model/{feature}/           # DTOs with @Serializable
-│   └── repository/{feature}/      # Repository implementations
-├── di/                            # Metro DI graphs
-│   ├── RootGraph.kt               # App-level dependencies
-│   ├── {Feature}FeatureGraph.kt   # Feature-specific graphs
-│   └── ViewModelProvider.kt       # ViewModel factory
-├── domain/                        # Domain layer
-│   ├── entity/{feature}/          # Domain entities
-│   ├── repository/{feature}/      # Repository interfaces
-│   └── usecase/{feature}/         # Use cases
+├── core/                          # Shared utilities, constants, UI components
+│   ├── auth/                      # Authentication state management
+│   ├── constants/                 # StatusConstants
+│   ├── error/                     # FleetErrorContext
+│   ├── init/                      # AppInitializer
+│   ├── mvi/                       # MVI base classes (from ijs-core-lib)
+│   ├── network/                   # Network configuration
+│   ├── ui/                        # Reusable Compose components
+│   └── util/                      # Utilities
+├── data/                          # sharedUI-specific data (Room DB, dashboard caching)
+├── di/                            # DI wiring
+│   ├── DefaultViewModelProvider   # Production ViewModel factory
+│   ├── FeatureRepositoryFactory   # Wires feature-lib repos
+│   └── ViewModelProvider          # Interface + CompositionLocal
 ├── navigation/                    # Type-safe navigation
-│   ├── FleetRoute.kt              # Route definitions
-│   └── FleetNavigation.kt         # Nav host setup
-├── presentation/{feature}/        # Presentation layer
-│   ├── {Feature}Contract.kt       # State, Intent, Effect
-│   ├── {Feature}ViewModel.kt      # MVI ViewModel
-│   └── {Feature}Screen.kt         # Compose UI
-└── theme/                         # App theming
-    ├── Color.kt                   # Color definitions
-    └── Theme.kt                   # FleetTheme, Typography
+│   ├── FleetRoute.kt             # All route definitions (@Serializable)
+│   └── FleetNavigation.kt        # NavHost setup with all NavEntries
+├── presentation/{feature}/        # Feature screens (Compose + MVI)
+│   ├── {Feature}Contract.kt      # State, Intent, Effect
+│   ├── {Feature}ViewModel.kt     # MVI ViewModel
+│   └── {Feature}Screen.kt        # Compose UI
+└── theme/                         # FleetTheme, Color, Typography
 ```
 
 ---
@@ -202,41 +342,19 @@ fun FeatureScreen(
 | `@Binds` | Bind interface to implementation |
 | `@SingleIn(Scope::class)` | Scope dependency to a lifecycle |
 
-### RootGraph (No External Dependencies)
+### DI Wiring in sharedUI
+
+The `sharedUI` module wires all feature module dependencies via:
+
+1. **`FeatureRepositoryFactory`** — Constructs repositories from feature libs using `HttpClient`, `Json`, `Settings`, `DispatcherProvider`
+2. **`DefaultViewModelProvider`** — Creates all ViewModels, injecting use cases and repositories
+3. **`ViewModelProvider`** interface — Exposed via `CompositionLocal` for Compose access
 
 ```kotlin
-@SingleIn(AppScope::class)
-@DependencyGraph
-abstract class RootGraph : NetworkModule {
-    @Provides
-    @SingleIn(AppScope::class)
-    fun provideHttpClient(json: Json): HttpClient = NetworkConfig.createHttpClient(json)
-
-    abstract val httpClient: HttpClient
-
-    companion object
-}
-```
-
-### FeatureGraph (With External Dependencies)
-
-```kotlin
-@SingleIn(FeatureScope::class)
-@DependencyGraph
-abstract class FeatureGraph {
-    @Binds
-    abstract fun bindRepository(impl: RepositoryImpl): Repository
-
-    abstract val viewModel: FeatureViewModel
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Provides httpClient: HttpClient,
-            @Provides dispatcherProvider: DispatcherProvider
-        ): FeatureGraph
-    }
-}
+// Usage in Compose
+val viewModel = rememberViewModel { dashboardViewModel() }
+// or for shared ViewModels across related screens
+val financeVM = rememberSharedViewModel("finance_$vehicleId") { vehicleFinanceViewModel() }
 ```
 
 ---
@@ -265,7 +383,6 @@ Local: http://localhost:8080/api/v2
 ```kotlin
 // UI to API (for Trip scheduling)
 fun toIsoDateTime(date: String, time: String): String {
-    // date = "04-01-2026" (DD-MM-YYYY), time = "14:30" (HH:MM)
     val (day, month, year) = date.split("-")
     return "${year}-${month}-${day}T${time}:00Z"
 }
@@ -285,8 +402,6 @@ data class TripDto(
     val vehicleId: Int,                  // camelCase for Kotlin
     @SerialName("scheduled_date")
     val scheduledDate: String? = null,
-    @SerialName("planned_start")
-    val plannedStart: String? = null,
     // ... all fields with @SerialName
 )
 ```
@@ -359,19 +474,17 @@ sealed class Result<out T> {
 ### Exception Hierarchy
 
 ```kotlin
-// From ijs-error-lib
-sealed class FleetException(message: String, cause: Throwable? = null) : Exception(message, cause)
-
-class NotAuthenticatedException(message: String = "Not authenticated") : FleetException(message)
-class ApiException(message: String, val code: Int? = null) : FleetException(message)
-class NetworkException(message: String = "Network unavailable") : FleetException(message)
-class ValidationException(message: String, val field: String? = null) : FleetException(message)
+// From ijs-error-lib (com.indusjs.error.exception)
+sealed class IjsException(message: String, cause: Throwable? = null) : Exception(message, cause)
+class ApiException(message: String, val code: Int? = null) : IjsException(message)
+class NetworkException(message: String = "Network unavailable") : IjsException(message)
+class AuthException(message: String = "Not authenticated") : IjsException(message)
+class ValidationException(message: String, val field: String? = null) : IjsException(message)
 ```
 
 ### Error Context
 
 ```kotlin
-// Use FleetErrorContext for screen-specific error handling
 ErrorContent(
     error = state.error,
     screenContext = FleetErrorContext.VEHICLES,
@@ -380,34 +493,20 @@ ErrorContent(
 ```
 
 **Available Contexts:**
-- `FleetErrorContext.DASHBOARD`
-- `FleetErrorContext.VEHICLES`
-- `FleetErrorContext.DRIVERS`
-- `FleetErrorContext.TRIPS`
-- `FleetErrorContext.COSTS`
-- `FleetErrorContext.AUTH`
-```
+`FleetErrorContext.DASHBOARD`, `VEHICLES`, `DRIVERS`, `TRIPS`, `COSTS`, `AUTH`
 
 ---
 
 ## Validation
 
-### Use ValidationUtils
+### Use ValidationUtils (from `ijs-core-lib`)
 
 ```kotlin
-// Date validation
 val dateResult = ValidationUtils.validateDate("04-01-2026")
-if (dateResult is ValidationResult.Error) {
-    showError(dateResult.message)
-}
+if (dateResult is ValidationResult.Error) { showError(dateResult.message) }
 
-// Time validation
 val timeResult = ValidationUtils.validateTime("14:30", required = true)
-
-// Email validation
 if (!isValidEmail(email)) { /* error */ }
-
-// Mobile validation
 if (!isValidMobile(mobile)) { /* error */ }
 ```
 
@@ -424,21 +523,14 @@ sealed interface FleetRoute : NavKey {
     @Serializable data object Vehicles : FleetRoute
     @Serializable data class VehicleDetail(val vehicleId: String) : FleetRoute
     @Serializable data object CreateTrip : FleetRoute
-    // ...
+    // ... 40+ routes
 }
 ```
 
 ### Navigation Usage
 
 ```kotlin
-// Navigate to detail
 sendEffect(Effect.NavigateTo(FleetRoute.VehicleDetail(vehicleId)))
-
-// In NavHost
-composable<FleetRoute.VehicleDetail> { backStackEntry ->
-    val route = backStackEntry.toRoute<FleetRoute.VehicleDetail>()
-    VehicleDetailScreen(vehicleId = route.vehicleId)
-}
 ```
 
 ---
@@ -466,7 +558,7 @@ fun FleetTheme(
 ### Color Usage
 
 ```kotlin
-// Always use MaterialTheme colors
+// Always use MaterialTheme colors — NEVER hardcode
 MaterialTheme.colorScheme.primary
 MaterialTheme.colorScheme.onSurface
 MaterialTheme.colorScheme.surfaceContainerLow
@@ -478,77 +570,20 @@ MaterialTheme.colorScheme.surfaceContainerLow
 
 ### Google Places API
 Used for location autocomplete in CreateTripScreen and EditTripScreen.
-
-```kotlin
-// Location field with autocomplete
-FleetLocationField(
-    value = state.startLocation,
-    onValueChange = { viewModel.sendIntent(Intent.UpdateStartLocation(it)) },
-    onLocationSelected = { place ->
-        viewModel.sendIntent(Intent.SetStartLocation(
-            location = place.description,
-            lat = place.lat,
-            lng = place.lng
-        ))
-    },
-    label = "Start Location"
-)
-```
+**API Key:** Stored in `local.properties` as `GOOGLE_PLACES_API_KEY`
 
 ### Google Distance Matrix API
 Used to calculate road distance between locations.
-
-```kotlin
-// Auto-calculate distance when both locations are set
-if (startLat != null && endLat != null) {
-    calculateDistance(startLat, startLng, endLat, endLng)
-}
-```
-
-**API Key:** Stored in `local.properties` as `GOOGLE_PLACES_API_KEY`
 
 ---
 
 ## Resources
 
 ### Icons (SVG in composeResources/drawable/)
-- `ic_arrow_back.xml` - Back navigation
-- `ic_menu.xml` - Hamburger menu
-- `ic_add.xml` - Add action
-- `ic_edit.xml` - Edit action
-- `ic_delete.xml` - Delete action
-- `ic_vehicle.xml`, `ic_driver.xml`, `ic_trip.xml` - Entity icons
-
-### Usage
 ```kotlin
-// Import generated resources
 import indusjs_fleet.sharedui.generated.resources.*
-
-// Use in composable
 Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "Back")
 ```
-
----
-
-## Best Practices
-
-### DO ✅
-- Use `@Inject` on class, not constructor
-- Use `Result<T>` for all async operations
-- Use `updateState { copy(...) }` for immutable state updates
-- Use `sendEffect()` for one-time events (navigation, snackbars)
-- Use core UI components for consistency
-- Convert dates to ISO 8601 before API calls
-- Add `@SerialName` with snake_case for all DTO fields
-- Handle loading, error, and empty states in every screen
-
-### DON'T ❌
-- Don't use `mutableStateOf` in ViewModels (use `MviViewModel`)
-- Don't call APIs directly from UI (use UseCase → Repository → DataSource)
-- Don't hardcode colors (use `MaterialTheme.colorScheme`)
-- Don't send DD-MM-YYYY format to API (convert to ISO 8601)
-- Don't create new TextField variants (use `FleetTextField`, `FleetDateField`, etc.)
-- Don't skip error handling in DataSource calls
 
 ---
 
@@ -589,6 +624,34 @@ Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "Back")
 
 ---
 
+## Best Practices
+
+### DO ✅
+- Use `@Inject` on class, not constructor
+- Use `Result<T>` for all async operations
+- Use `updateState { copy(...) }` for immutable state updates
+- Use `sendEffect()` for one-time events (navigation, snackbars)
+- Use core UI components for consistency
+- Convert dates to ISO 8601 before API calls
+- Add `@SerialName` with snake_case for all DTO fields
+- Handle loading, error, and empty states in every screen
+- Use `DispatcherProvider` from `ijs-dispatcher-lib` for all background work
+- Place shared DTOs in `ijs-core-lib`, feature DTOs in feature-lib modules
+- Use `FeatureRepositoryFactory` to wire repos in `sharedUI`
+
+### DON'T ❌
+- Don't use `mutableStateOf` in ViewModels (use `MviViewModel`)
+- Don't call APIs directly from UI (use UseCase → Repository → DataSource)
+- Don't hardcode colors (use `MaterialTheme.colorScheme`)
+- Don't send DD-MM-YYYY format to API (convert to ISO 8601)
+- Don't create new TextField variants (use `FleetTextField`, `FleetDateField`, etc.)
+- Don't skip error handling in DataSource calls
+- Don't set `compileSdk`/`minSdk`/`jvmTarget` in module build files (use `fleet-android-conventions.gradle`)
+- Don't add domain/data logic to `sharedUI` — put it in the appropriate feature-lib module
+- Don't use `Dispatchers.IO` directly — use `DispatcherProvider.io`
+
+---
+
 ## Application Use Cases
 
 ### Vehicle Management
@@ -626,6 +689,42 @@ Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "Back")
 | Pending Payments | `GET /dashboard/pending-payments` | Outstanding payments |
 | Alerts Status | `GET /dashboard/alerts-status` | Document/license expiry alerts |
 
+### Customer Management
+| Use Case | API | Description |
+|----------|-----|-------------|
+| Add Customer | `POST /customers` | Register company + contact + GST + address |
+| View Customer | `GET /customers/{id}` | Info, trip history, financials |
+| List Customers | `GET /customers` | Search and browse customers |
+
+### Payment Management
+| Use Case | API | Description |
+|----------|-----|-------------|
+| Add Payment | `POST /payments` | Record payment (mode, amount, reference) |
+| View Payment | `GET /payments/{id}` | Payment details |
+| Edit Payment | `PUT /payments/{id}` | Update existing payment |
+
+### Reports (Owner/GM only)
+| Use Case | API | Description |
+|----------|-----|-------------|
+| Vehicle P&L | `GET /reports/vehicle-pl` | Revenue vs expenses per vehicle |
+| Trip P&L | `GET /reports/trip-pl` | Revenue vs expenses per trip |
+| Cost Analysis | `GET /reports/cost-analysis` | Breakdown by cost type |
+| Consolidated P&L | `GET /reports/consolidated-pl` | Overall P&L statement |
+
+### Vehicle Finance
+| Use Case | API | Description |
+|----------|-----|-------------|
+| Add Purchase | `POST /vehicle-finance` | Record purchase (cash/loan) |
+| View Finance | `GET /vehicle-finance/{id}` | Purchase info, loan summary |
+| EMI Payments | `GET /vehicle-finance/{id}/payments` | EMI payment history |
+
+### Team Management
+| Use Case | API | Description |
+|----------|-----|-------------|
+| Add Member | `POST /team` | Add GM/Manager/Supervisor |
+| View Member | `GET /team/{id}` | Member details + permissions |
+| List Members | `GET /team` | All team members |
+
 ---
 
 ## Data Types Reference
@@ -652,21 +751,36 @@ electrical, ac_repair, other
 pending, partial, paid
 ```
 
+### Payment Modes
+```
+cash, upi, bank_transfer, cheque, card
+```
+
 ### Trip States
 ```
-planned → in_progress → completed
-    ↓
-cancelled
+planned → on_route → completed
+planned → cancelled
+on_route → failed
+on_route → delayed
 ```
 
 ### Vehicle States
 ```
-active, maintenance, inactive
+inactive → active → on_route → active
+                  → maintenance ←→ damaged → decommissioned
 ```
 
-### User Roles
+### Driver States
 ```
-owner, manager, supervisor, driver
+inactive → active → on_route → active
+                  → on_leave → active
+                  → suspended → active
+                  → terminated (terminal)
+```
+
+### User Roles (Hierarchical)
+```
+owner > general_manager > manager > supervisor > driver
 ```
 
 ---
@@ -675,8 +789,7 @@ owner, manager, supervisor, driver
 
 ### List Screen
 - TopAppBar with back, refresh, add actions
-- Optional search bar
-- Optional filter chips
+- Optional search bar and filter chips
 - LazyColumn with item cards
 - Empty state with add action
 - FAB for quick add
@@ -704,18 +817,6 @@ owner, manager, supervisor, driver
 
 ---
 
-## API Reference
-
-See `Fleet_Management_API_v2.postman_collection.json` for complete API documentation including:
-- Authentication (signup, login, forgot password)
-- Vehicles CRUD, location, costs
-- Drivers CRUD, availability
-- Trips CRUD, state management, costs
-- Dashboard statistics
-- Team management
-
----
-
 ## Prompts Reference
 
 See `.github/prompts/` for detailed implementation prompts:
@@ -737,17 +838,18 @@ See `.github/prompts/` for detailed implementation prompts:
 
 ## Adding a New Feature Checklist
 
-1. [ ] Add domain entity in `domain/entity/{feature}/`
-2. [ ] Add repository interface in `domain/repository/{feature}/`
-3. [ ] Add use cases in `domain/usecase/{feature}/`
-4. [ ] Add DTOs in `data/model/{feature}/`
-5. [ ] Add mapper in `data/mapper/{feature}/`
-6. [ ] Add data source in `data/datasource/{feature}/`
-7. [ ] Add repository impl in `data/repository/{feature}/`
-8. [ ] Add Contract (State, Intent, Effect) in `presentation/{feature}/`
-9. [ ] Add ViewModel in `presentation/{feature}/`
-10. [ ] Add Screen in `presentation/{feature}/`
-11. [ ] Create/update FeatureGraph in `di/`
-12. [ ] Add route in `navigation/FleetRoute.kt`
-13. [ ] Wire up in `FleetNavigation.kt`
-
+1. [ ] Add domain entity in `{feature-lib}/domain/entity/{feature}/`
+2. [ ] Add repository interface in `{feature-lib}/domain/repository/{feature}/`
+3. [ ] Add use cases in `{feature-lib}/domain/usecase/{feature}/`
+4. [ ] Add DTOs in `{feature-lib}/data/model/{feature}/`
+5. [ ] Add mapper in `{feature-lib}/data/mapper/{feature}/`
+6. [ ] Add data source in `{feature-lib}/data/datasource/{feature}/`
+7. [ ] Add repository impl in `{feature-lib}/data/repository/{feature}/`
+8. [ ] Wire repository in `sharedUI/di/FeatureRepositoryFactory.kt`
+9. [ ] Add Contract (State, Intent, Effect) in `sharedUI/presentation/{feature}/`
+10. [ ] Add ViewModel in `sharedUI/presentation/{feature}/`
+11. [ ] Add Screen in `sharedUI/presentation/{feature}/`
+12. [ ] Add ViewModel factory method in `sharedUI/di/ViewModelProvider.kt`
+13. [ ] Wire ViewModel in `sharedUI/di/DefaultViewModelProvider.kt`
+14. [ ] Add route in `sharedUI/navigation/FleetRoute.kt`
+15. [ ] Wire NavEntry in `sharedUI/navigation/FleetNavigation.kt`

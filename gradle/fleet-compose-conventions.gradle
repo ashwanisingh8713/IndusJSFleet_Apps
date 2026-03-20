@@ -1,0 +1,46 @@
+/**
+ * Fleet Compose Feature Module Conventions
+ *
+ * Standardizes Compose Multiplatform + Resources + Material 3 + Lifecycle
+ * setup for all feature modules that contain UI/presentation layers.
+ *
+ * Usage — add to any feature module's build.gradle.kts:
+ *   apply(from = rootProject.file("gradle/fleet-compose-conventions.gradle"))
+ *
+ * Prerequisites: The module must already apply these plugins:
+ *   - kotlin.multiplatform
+ *   - compose.compiler
+ *   - compose.multiplatform
+ *   - android.kmp.library
+ *
+ * This script adds commonMain dependencies for:
+ *   - Compose Runtime, UI, Foundation, Material 3, Resources
+ *   - Lifecycle ViewModel + Runtime
+ *   - ijs-ui-components-lib (shared UI components, theme, icons, fonts)
+ */
+
+// ── Add Compose + Lifecycle dependencies to commonMain ──────────
+afterEvaluate {
+    kotlin {
+        sourceSets {
+            commonMain {
+                dependencies {
+                    // Shared UI Components (icons, fonts, theme, reusable composables)
+                    implementation(project(":ijs-ui-components-lib"))
+
+                    // Compose Multiplatform
+                    implementation(libs.compose.runtime)
+                    implementation(libs.compose.ui)
+                    implementation(libs.compose.foundation)
+                    implementation(libs.compose.resources)
+                    implementation(libs.compose.material3)
+
+                    // Lifecycle (for MviViewModel)
+                    implementation(libs.androidx.lifecycle.viewmodel)
+                    implementation(libs.androidx.lifecycle.runtime)
+                }
+            }
+        }
+    }
+}
+
