@@ -19,87 +19,87 @@ Maps every ViewModel's cross-feature dependency and documents the resolution str
 
 ## Per-ViewModel Cross-Feature Dependencies
 
-### ijs-vehicle-lib
+### feat-vehicle
 
 | ViewModel | Dependency | Source Module | Type | Resolution |
 |-----------|-----------|---------------|------|------------|
-| `VehicleDetailVM` | `GetDriversUseCase` | ijs-driver-lib | ❌ Cross-feature | `VehicleExternalDeps.getDrivers() → Result<List<SelectableDriver>>` |
-| `VehicleDetailVM` | `TeamRepository` | ijs-team-lib | ❌ Cross-feature | `VehicleExternalDeps.getCaretakers() → Result<List<CaretakerInfo>>` |
+| `VehicleDetailVM` | `GetDriversUseCase` | feat-driver | ❌ Cross-feature | `VehicleExternalDeps.getDrivers() → Result<List<SelectableDriver>>` |
+| `VehicleDetailVM` | `TeamRepository` | feat-team | ❌ Cross-feature | `VehicleExternalDeps.getCaretakers() → Result<List<CaretakerInfo>>` |
 | `VehicleDetailVM` | `CostsRepository` | ijs-network-lib | ✅ Allowed | Direct access |
 | `VehicleDetailVM` | `CostTypesRepository` | ijs-network-lib | ✅ Allowed | Direct access |
-| `AddVehicleVM` | `TeamRepository` | ijs-team-lib | ❌ Cross-feature | `VehicleExternalDeps.getCaretakers() → Result<List<CaretakerInfo>>` |
-| `AddVehicleVM` | `CreateVehicleWithDocumentsUseCase` | ijs-vehicle-lib | ✅ Internal | Direct access |
-| `MaintenanceCostEntryVM` | `VehicleRepository` | ijs-vehicle-lib | ✅ Internal | Direct access |
+| `AddVehicleVM` | `TeamRepository` | feat-team | ❌ Cross-feature | `VehicleExternalDeps.getCaretakers() → Result<List<CaretakerInfo>>` |
+| `AddVehicleVM` | `CreateVehicleWithDocumentsUseCase` | feat-vehicle | ✅ Internal | Direct access |
+| `MaintenanceCostEntryVM` | `VehicleRepository` | feat-vehicle | ✅ Internal | Direct access |
 | `MaintenanceCostEntryVM` | `CostsRepository` | ijs-network-lib | ✅ Allowed | Direct access |
 | `MaintenanceCostEntryVM` | `CostTypesRepository` | ijs-network-lib | ✅ Allowed | Direct access |
-| `VehiclesVM` | `GetVehiclesUseCase`, `DeleteVehicleUseCase` | ijs-vehicle-lib | ✅ Internal | Direct access |
+| `VehiclesVM` | `GetVehiclesUseCase`, `DeleteVehicleUseCase` | feat-vehicle | ✅ Internal | Direct access |
 
-### ijs-driver-lib
+### feat-driver
 
 | ViewModel | Dependency | Source Module | Type | Resolution |
 |-----------|-----------|---------------|------|------------|
-| `DriverDetailVM` | `TeamRepository` | ijs-team-lib | ❌ Cross-feature | `DriverExternalDeps.getCaretakers() → Result<List<CaretakerInfo>>` |
+| `DriverDetailVM` | `TeamRepository` | feat-team | ❌ Cross-feature | `DriverExternalDeps.getCaretakers() → Result<List<CaretakerInfo>>` |
 | `DriverDetailVM` | `CostsRepository` | ijs-network-lib | ✅ Allowed | Direct access |
 | `DriverDetailVM` | `UserLocalDataSource` | ijs-network-lib | ✅ Allowed | Direct access |
-| `CreateDriverVM` | `TeamRepository` | ijs-team-lib | ❌ Cross-feature | `DriverExternalDeps.getCaretakers() → Result<List<CaretakerInfo>>` |
-| `DriverCostEntryVM` | `DriverRepository` | ijs-driver-lib | ✅ Internal | Direct access |
+| `CreateDriverVM` | `TeamRepository` | feat-team | ❌ Cross-feature | `DriverExternalDeps.getCaretakers() → Result<List<CaretakerInfo>>` |
+| `DriverCostEntryVM` | `DriverRepository` | feat-driver | ✅ Internal | Direct access |
 | `DriverCostEntryVM` | `CostsRepository` | ijs-network-lib | ✅ Allowed | Direct access |
-| `DriversVM` | all own | ijs-driver-lib | ✅ Internal | Direct access |
+| `DriversVM` | all own | feat-driver | ✅ Internal | Direct access |
 
-### ijs-trip-lib
+### feat-trip
 
 | ViewModel | Dependency | Source Module | Type | Resolution |
 |-----------|-----------|---------------|------|------------|
-| `CreateTripVM` | `GetAvailableVehiclesUseCase` | ijs-vehicle-lib | ❌ Cross-feature | `TripExternalDeps.getAvailableVehicles() → Result<List<SelectableVehicle>>` |
-| `CreateTripVM` | `GetAvailableDriversUseCase` | ijs-driver-lib | ❌ Cross-feature | `TripExternalDeps.getAvailableDrivers() → Result<List<SelectableDriver>>` |
-| `CreateTripVM` | `CustomerRepository` | ijs-customer-lib | ❌ Cross-feature | `TripExternalDeps.getCustomers() → Result<List<SelectableCustomer>>` |
+| `CreateTripVM` | `GetAvailableVehiclesUseCase` | feat-vehicle | ❌ Cross-feature | `TripExternalDeps.getAvailableVehicles() → Result<List<SelectableVehicle>>` |
+| `CreateTripVM` | `GetAvailableDriversUseCase` | feat-driver | ❌ Cross-feature | `TripExternalDeps.getAvailableDrivers() → Result<List<SelectableDriver>>` |
+| `CreateTripVM` | `CustomerRepository` | feat-customer | ❌ Cross-feature | `TripExternalDeps.getCustomers() → Result<List<SelectableCustomer>>` |
 | `CreateTripVM` | `GooglePlacesService` | ijs-network-lib | ✅ Allowed | `TripExternalDeps.searchPlaces()` (wrapped for decoupling) |
 | `CreateTripVM` | `UserLocalDataSource` | ijs-network-lib | ✅ Allowed | Direct access |
-| `TripDetailVM` | `GetVehiclesUseCase` | ijs-vehicle-lib | ❌ Cross-feature | `TripExternalDeps.getAvailableVehicles()` |
-| `TripDetailVM` | `GetDriversUseCase` | ijs-driver-lib | ❌ Cross-feature | `TripExternalDeps.getAvailableDrivers()` |
-| `TripDetailVM` | `CustomerRepository` | ijs-customer-lib | ❌ Cross-feature | `TripExternalDeps.getCustomers()` |
+| `TripDetailVM` | `GetVehiclesUseCase` | feat-vehicle | ❌ Cross-feature | `TripExternalDeps.getAvailableVehicles()` |
+| `TripDetailVM` | `GetDriversUseCase` | feat-driver | ❌ Cross-feature | `TripExternalDeps.getAvailableDrivers()` |
+| `TripDetailVM` | `CustomerRepository` | feat-customer | ❌ Cross-feature | `TripExternalDeps.getCustomers()` |
 | `TripDetailVM` | `CostsRepository` | ijs-network-lib | ✅ Allowed | Direct access |
 | `TripDetailVM` | `GooglePlacesService` | ijs-network-lib | ✅ Allowed | Wrapped via `TripExternalDeps.searchPlaces()` |
-| `TripCostEntryVM` | `TripRepository` | ijs-trip-lib | ✅ Internal | Direct access |
+| `TripCostEntryVM` | `TripRepository` | feat-trip | ✅ Internal | Direct access |
 | `TripCostEntryVM` | `CostsRepository` | ijs-network-lib | ✅ Allowed | Direct access |
-| `TripsVM` | all own | ijs-trip-lib | ✅ Internal | Direct access |
+| `TripsVM` | all own | feat-trip | ✅ Internal | Direct access |
 
-### ijs-customer-lib
+### feat-customer
 
 | ViewModel | Dependency | Source Module | Type | Resolution |
 |-----------|-----------|---------------|------|------------|
-| `CustomersListVM` | `CustomerRepository` | ijs-customer-lib | ✅ Internal | Direct access |
-| `CustomerDetailVM` | `CustomerRepository` | ijs-customer-lib | ✅ Internal | Direct access |
-| `CreateCustomerVM` | `CreateCustomerUseCase` | ijs-customer-lib | ✅ Internal | Direct access |
+| `CustomersListVM` | `CustomerRepository` | feat-customer | ✅ Internal | Direct access |
+| `CustomerDetailVM` | `CustomerRepository` | feat-customer | ✅ Internal | Direct access |
+| `CreateCustomerVM` | `CreateCustomerUseCase` | feat-customer | ✅ Internal | Direct access |
 
 **Zero cross-feature dependencies — safest pilot.**
 
-### ijs-payment-lib
+### feat-payment
 
 | ViewModel | Dependency | Source Module | Type | Resolution |
 |-----------|-----------|---------------|------|------------|
-| `AddPaymentVM` | `TripRepository` | ijs-trip-lib | ❌ Cross-feature | `PaymentExternalDeps.getTrips() → Result<List<SelectableTrip>>` |
+| `AddPaymentVM` | `TripRepository` | feat-trip | ❌ Cross-feature | `PaymentExternalDeps.getTrips() → Result<List<SelectableTrip>>` |
 | `PaymentDetailVM` | `UserRepository` | ijs-network-lib | ✅ Allowed | Direct access |
-| `PaymentsVM` | `TripPaymentRepository` | ijs-payment-lib | ✅ Internal | Direct access |
+| `PaymentsVM` | `TripPaymentRepository` | feat-payment | ✅ Internal | Direct access |
 
-### ijs-finance-lib
-
-| ViewModel | Dependency | Source Module | Type | Resolution |
-|-----------|-----------|---------------|------|------------|
-| `VehicleFinanceVM` | `VehicleRepository` | ijs-vehicle-lib | ❌ Cross-feature | `FinanceExternalDeps.getVehicles() → Result<List<SelectableVehicle>>` |
-| `VehicleFinanceVM` | `VehicleFinanceRepository` | ijs-finance-lib | ✅ Internal | Direct access |
-
-### ijs-reports-lib
+### feat-finance
 
 | ViewModel | Dependency | Source Module | Type | Resolution |
 |-----------|-----------|---------------|------|------------|
-| `VehiclePLVM` | `VehicleRepository` | ijs-vehicle-lib | ❌ Cross-feature | `ReportsExternalDeps.getVehicles() → Result<List<SelectableVehicle>>` |
-| `TripPLVM` | `TripRepository` | ijs-trip-lib | ❌ Cross-feature | `ReportsExternalDeps.getTrips() → Result<List<SelectableTrip>>` |
-| `ConsolidatedPLVM` | `VehicleRepository` | ijs-vehicle-lib | ❌ Cross-feature | `ReportsExternalDeps.getVehicles() → Result<List<SelectableVehicle>>` |
-| `ReportsVM` | `ReportsRepository` | ijs-reports-lib | ✅ Internal | Direct access |
-| `CostAnalysisVM` | `ReportsRepository` | ijs-reports-lib | ✅ Internal | Direct access |
+| `VehicleFinanceVM` | `VehicleRepository` | feat-vehicle | ❌ Cross-feature | `FinanceExternalDeps.getVehicles() → Result<List<SelectableVehicle>>` |
+| `VehicleFinanceVM` | `VehicleFinanceRepository` | feat-finance | ✅ Internal | Direct access |
 
-### ijs-team-lib
+### feat-report
+
+| ViewModel | Dependency | Source Module | Type | Resolution |
+|-----------|-----------|---------------|------|------------|
+| `VehiclePLVM` | `VehicleRepository` | feat-vehicle | ❌ Cross-feature | `ReportsExternalDeps.getVehicles() → Result<List<SelectableVehicle>>` |
+| `TripPLVM` | `TripRepository` | feat-trip | ❌ Cross-feature | `ReportsExternalDeps.getTrips() → Result<List<SelectableTrip>>` |
+| `ConsolidatedPLVM` | `VehicleRepository` | feat-vehicle | ❌ Cross-feature | `ReportsExternalDeps.getVehicles() → Result<List<SelectableVehicle>>` |
+| `ReportsVM` | `ReportsRepository` | feat-report | ✅ Internal | Direct access |
+| `CostAnalysisVM` | `ReportsRepository` | feat-report | ✅ Internal | Direct access |
+
+### feat-team
 
 | ViewModel | Dependency | Source Module | Type | Resolution |
 |-----------|-----------|---------------|------|------------|
@@ -115,14 +115,14 @@ Maps every ViewModel's cross-feature dependency and documents the resolution str
 
 | Feature Module | Interface | Methods |
 |---------------|-----------|---------|
-| `ijs-vehicle-lib` | `VehicleExternalDeps` | `getDrivers(): Result<List<SelectableDriver>>`, `getCaretakers(): Result<List<CaretakerInfo>>` |
-| `ijs-driver-lib` | `DriverExternalDeps` | `getCaretakers(): Result<List<CaretakerInfo>>` |
-| `ijs-trip-lib` | `TripExternalDeps` | `getAvailableVehicles()`, `getAvailableDrivers()`, `getCustomers()`, `searchPlaces()`, `getUserRole()` |
-| `ijs-payment-lib` | `PaymentExternalDeps` | `getTrips(): Result<List<SelectableTrip>>`, `getUserRole(): String` |
-| `ijs-finance-lib` | `FinanceExternalDeps` | `getVehicles(): Result<List<SelectableVehicle>>` |
-| `ijs-reports-lib` | `ReportsExternalDeps` | `getVehicles(): Result<List<SelectableVehicle>>`, `getTrips(): Result<List<SelectableTrip>>` |
-| `ijs-customer-lib` | None needed | Self-contained |
-| `ijs-team-lib` | None needed | `UserLocalDataSource` from network-lib is sufficient |
+| `feat-vehicle` | `VehicleExternalDeps` | `getDrivers(): Result<List<SelectableDriver>>`, `getCaretakers(): Result<List<CaretakerInfo>>` |
+| `feat-driver` | `DriverExternalDeps` | `getCaretakers(): Result<List<CaretakerInfo>>` |
+| `feat-trip` | `TripExternalDeps` | `getAvailableVehicles()`, `getAvailableDrivers()`, `getCustomers()`, `searchPlaces()`, `getUserRole()` |
+| `feat-payment` | `PaymentExternalDeps` | `getTrips(): Result<List<SelectableTrip>>`, `getUserRole(): String` |
+| `feat-finance` | `FinanceExternalDeps` | `getVehicles(): Result<List<SelectableVehicle>>` |
+| `feat-report` | `ReportsExternalDeps` | `getVehicles(): Result<List<SelectableVehicle>>`, `getTrips(): Result<List<SelectableTrip>>` |
+| `feat-customer` | None needed | Self-contained |
+| `feat-team` | None needed | `UserLocalDataSource` from network-lib is sufficient |
 
 ---
 

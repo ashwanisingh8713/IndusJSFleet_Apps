@@ -11,11 +11,11 @@ import com.indusjs.fleet.core.auth.AuthenticationEvent
 import com.indusjs.fleet.core.auth.AuthenticationManager
 import com.indusjs.fleet.di.DefaultViewModelProvider
 import com.indusjs.fleet.di.ProvideViewModels
-import com.indusjs.fleet.domain.entity.vehicle.DocumentType
+import com.ijs.vehicle.domain.entity.DocumentType
 import com.indusjs.fleet.navigation.FleetRoute
 import com.indusjs.fleet.navigation.fleetEntryProvider
 import com.indusjs.fleet.navigation.navigateAndClear
-import com.indusjs.fleet.theme.AppTheme
+import com.indusjs.uicomponents.theme.AppTheme
 
 /**
  * File picker request for platform-specific file selection.

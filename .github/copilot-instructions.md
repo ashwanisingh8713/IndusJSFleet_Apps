@@ -47,14 +47,19 @@ iosApp ─────→ sharedUI (via framework)
 
 sharedUI ──→ ijs-core-lib
 sharedUI ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ ijs-vehicle-lib ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ ijs-driver-lib  ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ ijs-trip-lib    ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ ijs-customer-lib──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ ijs-payment-lib ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ ijs-team-lib    ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ ijs-reports-lib ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ ijs-finance-lib ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-vehicle ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-driver  ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-trip    ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-customer──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-payment ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-team    ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-report ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-finance ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-user    ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-onboarding ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-dashboard ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-alerts  ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ feat-map     ──→ ijs-network-lib ──→ ijs-core-lib
 sharedUI ──→ ijs-datetime-picker ──→ ijs-datetime-utils
 sharedUI ──→ ijs-pdf-report  ──→ ijs-datetime-utils
 
@@ -93,14 +98,26 @@ Each feature module contains the **data layer + domain layer** for its feature, 
 
 | Module | Namespace | Description | Key Files |
 |--------|-----------|-------------|-----------|
-| **`ijs-vehicle-lib`** | `com.indusjs.fleet.vehicle` | **Vehicle feature data layer.** CRUD operations for vehicles, document management, maintenance costs, vehicle status transitions (`inactive → active → on_route → maintenance → damaged → decommissioned`). | `VehicleRemoteDataSource`, `VehicleRepositoryImpl`, `VehicleMapper`, `VehicleDto`, `Vehicle`, `VehicleDetail`, `VehicleUseCases` |
-| **`ijs-driver-lib`** | `com.indusjs.fleet.driver` | **Driver feature data layer.** CRUD for drivers, license tracking, driver cost management (salary, advance, bonus, penalty), status transitions (`inactive → active → on_route → on_leave → suspended → terminated`). | `DriverRemoteDataSource`, `DriverRepositoryImpl`, `DriverMapper`, `DriverDto`, `DriverCostModels`, `Driver`, `DriverUseCases` |
-| **`ijs-trip-lib`** | `com.indusjs.fleet.trip` | **Trip feature data layer.** Trip planning, route management, cargo tracking, scheduling, trip cost recording, state machine (`planned → on_route → completed`, or `cancelled`/`failed`/`delayed`). | `TripRemoteDataSource`, `TripRepositoryImpl`, `TripMapper`, `TripDto`, `Trip`, `TripUseCases` |
-| **`ijs-customer-lib`** | `com.indusjs.fleet.customer` | **Customer feature data layer.** Customer CRUD, company/contact/GST info, trip history by customer, financial summaries. Includes both remote and local data sources for caching. | `CustomerRemoteDataSource`, `CustomerLocalDataSource`, `CustomerRepositoryImpl`, `CustomerMapper`, `CustomerDto`, `Customer`, `CustomerUseCases` |
-| **`ijs-payment-lib`** | `com.indusjs.fleet.payment` | **Payment feature data layer.** Trip payment recording (cash, UPI, bank transfer, cheque, card), payment status tracking (`received`, `pending`, `cancelled`), payment history. | `TripPaymentRemoteDataSource`, `TripPaymentRepositoryImpl`, `TripPaymentMapper`, `TripPaymentDto`, `TripPaymentRequest`, `TripPayment`, `PaymentEnums` |
-| **`ijs-team-lib`** | `com.indusjs.fleet.team` | **Team management data layer.** Team member CRUD (General Manager, Manager, Supervisor), role-based access, member status management. Includes local data source for caching. | `TeamRemoteDataSource`, `TeamLocalDataSource`, `TeamRepositoryImpl`, `TeamMapper`, `TeamDto`, `TeamMember` |
-| **`ijs-reports-lib`** | `com.indusjs.fleet.reports` | **Reports & analytics data layer.** Profit/Loss by vehicle, by trip, cost analysis with date ranges, consolidated P&L statements. Owner/GM-only access. | `ReportsRemoteDataSource`, `ReportsRepositoryImpl`, `ProfitLossDto`, `ProfitLossRequest`, `ProfitLossEntities` |
-| **`ijs-finance-lib`** | `com.indusjs.fleet.finance` | **Vehicle finance data layer.** Vehicle purchase records, loan tracking, EMI payment history, finance status summaries. | `VehicleFinanceRemoteDataSource`, `VehicleFinanceRepositoryImpl`, `VehicleFinanceMapper`, `VehicleFinanceDto`, `VehiclePurchase`, `LoanPayment` |
+| **`feat-vehicle`** | `com.ijs.vehicle` | **Vehicle feature data layer.** CRUD operations for vehicles, document management, maintenance costs, vehicle status transitions (`inactive → active → on_route → maintenance → damaged → decommissioned`). | `VehicleRemoteDataSource`, `VehicleRepositoryImpl`, `VehicleMapper`, `VehicleDto`, `Vehicle`, `VehicleDetail`, `VehicleUseCases` |
+| **`feat-driver`** | `com.ijs.driver` | **Driver feature data layer.** CRUD for drivers, license tracking, driver cost management (salary, advance, bonus, penalty), status transitions (`inactive → active → on_route → on_leave → suspended → terminated`). | `DriverRemoteDataSource`, `DriverRepositoryImpl`, `DriverMapper`, `DriverDto`, `DriverCostModels`, `Driver`, `DriverUseCases` |
+| **`feat-trip`** | `com.ijs.trip` | **Trip feature data layer.** Trip planning, route management, cargo tracking, scheduling, trip cost recording, state machine (`planned → on_route → completed`, or `cancelled`/`failed`/`delayed`). | `TripRemoteDataSource`, `TripRepositoryImpl`, `TripMapper`, `TripDto`, `Trip`, `TripUseCases` |
+| **`feat-customer`** | `com.ijs.customer` | **Customer feature data layer.** Customer CRUD, company/contact/GST info, trip history by customer, financial summaries. Includes both remote and local data sources for caching. | `CustomerRemoteDataSource`, `CustomerLocalDataSource`, `CustomerRepositoryImpl`, `CustomerMapper`, `CustomerDto`, `Customer`, `CustomerUseCases` |
+| **`feat-payment`** | `com.ijs.payment` | **Payment feature data layer.** Trip payment recording (cash, UPI, bank transfer, cheque, card), payment status tracking (`received`, `pending`, `cancelled`), payment history. | `TripPaymentRemoteDataSource`, `TripPaymentRepositoryImpl`, `TripPaymentMapper`, `TripPaymentDto`, `TripPaymentRequest`, `TripPayment`, `PaymentEnums` |
+| **`feat-team`** | `com.ijs.team` | **Team management data layer.** Team member CRUD (General Manager, Manager, Supervisor), role-based access, member status management. Includes local data source for caching. | `TeamRemoteDataSource`, `TeamLocalDataSource`, `TeamRepositoryImpl`, `TeamMapper`, `TeamDto`, `TeamMember` |
+| **`feat-report`** | `com.ijs.reports` | **Reports & analytics data layer.** Profit/Loss by vehicle, by trip, cost analysis with date ranges, consolidated P&L statements. Owner/GM-only access. | `ReportsRemoteDataSource`, `ReportsRepositoryImpl`, `ProfitLossDto`, `ProfitLossRequest`, `ProfitLossEntities` |
+| **`feat-finance`** | `com.ijs.finance` | **Vehicle finance data layer.** Vehicle purchase records, loan tracking, EMI payment history, finance status summaries. | `VehicleFinanceRemoteDataSource`, `VehicleFinanceRepositoryImpl`, `VehicleFinanceMapper`, `VehicleFinanceDto`, `VehiclePurchase`, `LoanPayment` |
+
+### Presentation-Only Feature Modules
+
+Each presentation-only feature module contains the **presentation layer** (Contract, ViewModel, Screen, Facade) for its feature. Data layer stays in `ijs-network-lib`.
+
+| Module | Namespace | Description | Key Files |
+|--------|-----------|-------------|-----------|
+| **`feat-user`** | `com.ijs.user` | **User/Auth feature presentation.** Login, signup, forgot password, profile, change password screens. | `LoginViewModel`, `SignUpViewModel`, `ProfileViewModel`, `UserFeatureFacade` |
+| **`feat-onboarding`** | `com.ijs.onboarding` | **Onboarding feature presentation.** First-time user onboarding flow. | `OnboardingViewModel`, `OnboardingFeatureFacade` |
+| **`feat-dashboard`** | `com.ijs.dashboard` | **Dashboard feature presentation.** Main overview screen with fleet stats, cost overview, financial summary, alerts, quick actions. 6 use cases, 18+ navigation callbacks. | `DashboardViewModel`, `DashboardScreen`, `DashboardContract`, `DashboardFeatureFacade` |
+| **`feat-alerts`** | `com.ijs.alerts` | **Alerts feature presentation.** Document expiry, license expiry, maintenance due alerts list. | `AlertsListViewModel`, `AlertsListScreen`, `AlertsFeatureFacade` |
+| **`feat-map`** | `com.ijs.map` | **Maps feature presentation.** Real-time vehicle tracking on map (MQTT subscribe). Currently mock data. | `MapsViewModel`, `MapsScreen`, `MapFeatureFacade` |
 
 ### UI Component Modules
 
@@ -113,7 +130,7 @@ Each feature module contains the **data layer + domain layer** for its feature, 
 
 | Module | Namespace | Description |
 |--------|-----------|-------------|
-| **`sharedUI`** | `com.indusjs.fleet` | **Core Compose UI module.** Contains ALL presentation layer code: Screens, ViewModels (MVI), Contracts, Navigation, DI graphs, theming. Depends on all feature modules. Produces `SharedUI` iOS framework. Contains `FeatureRepositoryFactory` for wiring feature repos, `DefaultViewModelProvider` for ViewModel creation, and `FleetNavigation` for route handling. |
+| **`sharedUI`** | `com.indusjs.fleet` | **Core orchestration module.** Contains Navigation, DI wiring (ViewModelProvider, DefaultViewModelProvider, FeatureRepositoryFactory), theming, and shared utilities. **NO presentation code** — all screens/ViewModels/contracts live in their respective `feat-*` modules. Depends on all feature modules. Produces `SharedUI` iOS framework. |
 | **`androidApp`** | `com.indusjs.fleet.androidApp` | **Android entry point (thin shell).** `FleetApplication` + `AppActivity`. Firebase Crashlytics integration. |
 | **`webApp`** | N/A | **Web entry point (thin shell).** JS + WasmJS browser targets. Single `main.kt`. |
 | **`locationTracker`** | `com.indusjs.fleet.locationtracker` | **Standalone Android GPS tracking app (separate APK).** MQTT-based location publishing via HiveMQ. Contains `LocationTrackingService`, `MqttClientManager`, `TrackerPreferencesRepository`. No dependency on `sharedUI`. |
@@ -199,10 +216,10 @@ User taps button
   → UI recomposes with new data
 ```
 
-### Folder Structure (Feature Module — e.g., `ijs-vehicle-lib`)
+### Folder Structure (Feature Module — e.g., `feat-vehicle`)
 
 ```
-ijs-vehicle-lib/src/commonMain/kotlin/com/indusjs/fleet/
+feat-vehicle/src/commonMain/kotlin/com/indusjs/fleet/
 ├── data/
 │   ├── datasource/vehicle/    # VehicleRemoteDataSource + Impl
 │   ├── mapper/vehicle/        # VehicleMapper (DTO ↔ Entity)

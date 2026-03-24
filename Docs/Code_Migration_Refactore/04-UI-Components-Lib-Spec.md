@@ -56,12 +56,20 @@ values/strings.xml
 
 ## Components Inventory
 
+### sharedUI core/ui Deletion Status: ✅ COMPLETED
+
+All 15+ files deleted from `sharedUI/core/ui/`. Full 1:1 parity verified.
+`sharedUI/build.gradle.kts` now has `implementation(project(":ijs-ui-components-lib"))`.
+
+---
+
 ### Generic Input Components (`components/`)
 
 | File | Components | Dependencies |
 |------|-----------|-------------|
-| `InputComponents.kt` | `FleetTextField`, `FleetDateField`, `FleetTimeField`, `FleetMobileField`, `FleetEmailField`, `FleetPasswordField`, `FleetDropdownField` | Compose M3, resources |
-| `InputFields.kt` | `DateInputField`, `DateVisualTransformation`, `formatDateForDisplay()` | Compose M3 |
+| `InputComponents.kt` | `FleetTextField`, `FleetDateField`, `FleetTimeField`, `FleetMobileField`, `FleetEmailField`, `FleetPasswordField`, `FleetDropdownField`, `FleetPhoneField`, `FleetSearchField`, `DateVisualTransformation`, `TimeVisualTransformation`, `MobileVisualTransformation`, `filterDigitsOnly()` | Compose M3, resources |
+| `InputComponents.kt` (validators) | `isValidEmail()`, `isValidMobile()`, `isValidDateRaw()`, `isValidTimeRaw()`, `formatTimeRaw()`, `parseTimeToRaw()` | Pure Kotlin |
+| `InputFields.kt` | `DateInputField`, `TimeInputField` | Compose M3 |
 
 ### Button Components
 

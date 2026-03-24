@@ -1,0 +1,1258 @@
+package com.ijs.vehicle.presentation.detail
+
+import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.error.result.Result
+import com.ijs.team.data.model.TeamMemberDto
+import com.ijs.driver.domain.entity.Driver
+import com.ijs.vehicle.domain.entity.VehicleType
+import com.indusjs.fleet.domain.repository.costs.CostsRepository
+import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
+import com.indusjs.fleet.data.model.costs.toCostTypeGroups
+import com.ijs.team.domain.repository.TeamRepository
+import com.ijs.vehicle.domain.repository.VehicleRepository
+import com.ijs.driver.domain.usecase.GetDriversUseCase
+import com.ijs.vehicle.domain.usecase.DeleteVehicleUseCase
+import com.ijs.vehicle.domain.usecase.GetVehicleByIdUseCase
+import com.ijs.vehicle.domain.usecase.UpdateVehicleUseCase
+import com.ijs.vehicle.presentation.detail.VehicleDetailContract.Effect
+import com.ijs.vehicle.presentation.detail.VehicleDetailContract.Intent
+import com.ijs.vehicle.presentation.detail.VehicleDetailContract.State
+import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
+import kotlin.time.Clock
+
+/**
+ * ViewModel for the Vehicle Detail screen implementing MVI pattern.
+ */
+@Inject
+class VehicleDetailViewModel(
+    private val dispatcherProvider: DispatcherProvider,
+    private val getVehicleByIdUseCase: GetVehicleByIdUseCase,
+    private val updateVehicleUseCase: UpdateVehicleUseCase,
+    private val deleteVehicleUseCase: DeleteVehicleUseCase,
+    private val vehicleRepository: VehicleRepository,
+    private val getDriversUseCase: GetDriversUseCase,
+    private val costsRepository: CostsRepository,
+    private val teamRepository: TeamRepository,
+    private val costTypesRepository: CostTypesRepository? = null
+) : MviViewModel<State, Intent, Effect>(State()) {
+
+    override suspend fun handleIntent(intent: Intent) {
+        when (intent) {
+            is Intent.LoadVehicle -> loadVehicle(intent.vehicleId)
+            is Intent.Refresh -> currentState.vehicle?.let { loadVehicle(it.id) }
+
+            // Edit mode
+            is Intent.EnterEditMode -> enterEditMode()
+            is Intent.ExitEditMode -> exitEditMode()
+
+            // Field updates
+            is Intent.UpdateMake -> updateMake(intent.value)
+            is Intent.UpdateModel -> updateModel(intent.value)
+            is Intent.UpdateYear -> updateYear(intent.value)
+            is Intent.UpdateVehicleType -> updateState { copy(vehicleType = intent.type) }
+            is Intent.UpdateFuelType -> updateState { copy(fuelType = intent.value) }
+            is Intent.UpdateColor -> updateState { copy(color = intent.value) }
+            is Intent.UpdateCapacity -> updateState { copy(capacity = intent.value) }
+            is Intent.UpdateMileage -> updateState { copy(mileage = intent.value) }
+
+            // Driver assignment
+            is Intent.ToggleDriverDropdown -> updateState { copy(showDriverDropdown = !showDriverDropdown) }
+            is Intent.SelectDriver -> selectDriver(intent.driver)
+
+            // Caretaker assignment
+            is Intent.LoadCaretakers -> loadCaretakers()
+            is Intent.RefreshCaretakers -> refreshCaretakers()
+            is Intent.ToggleCaretakerDropdown -> updateState { copy(showCaretakerDropdown = !showCaretakerDropdown) }
+            is Intent.SelectCaretaker -> updateState { copy(selectedCaretaker = intent.caretaker, showCaretakerDropdown = false) }
+
+            // Actions
+            is Intent.SaveChanges -> saveChanges()
+            is Intent.DeleteVehicle -> sendEffect(Effect.ShowDeleteConfirmation)
+            is Intent.ConfirmDelete -> confirmDelete()
+
+            // Navigation & errors
+            is Intent.NavigateBack -> sendEffect(Effect.NavigateBack)
+            is Intent.ClearError -> updateState { copy(error = null) }
+
+            // Tab-specific intents
+            is Intent.SelectTab -> selectTab(intent.tabIndex)
+            is Intent.LoadTrips -> loadTrips()
+            is Intent.LoadMoreTrips -> loadMoreTrips()
+            is Intent.RefreshTrips -> refreshTrips()
+            is Intent.LoadRoute -> loadRoute()
+            is Intent.RefreshRoute -> refreshRoute()
+            is Intent.LoadDocuments -> loadDocuments()
+            is Intent.RefreshDocuments -> refreshDocuments()
+
+            // Document upload intents
+            is Intent.ShowUploadDialog -> showUploadDialog(intent.documentType, intent.documentTypeName)
+            is Intent.HideUploadDialog -> hideUploadDialog()
+            is Intent.UploadDocument -> uploadDocument(intent)
+
+            // Document preview/download intents
+            is Intent.PreviewDocument -> previewDocument(intent)
+            is Intent.DownloadDocument -> downloadDocument(intent)
+            is Intent.ReplaceDocument -> showUploadDialog(intent.documentType, intent.documentTypeName)
+
+            // Costs tab intents
+            is Intent.LoadCosts -> loadCosts()
+            is Intent.LoadCostTypes -> loadCostTypes()
+            is Intent.LoadMoreCosts -> loadMoreCosts()
+            is Intent.RefreshCosts -> refreshCosts()
+            is Intent.UpdateCostsDateRange -> updateCostsDateRange(intent.startDate, intent.endDate)
+            is Intent.ToggleCostTypeFilter -> toggleCostTypeFilter(intent.costType)
+            is Intent.ShowCostsFilterSheet -> updateState { copy(showCostsFilterSheet = true) }
+            is Intent.HideCostsFilterSheet -> updateState { copy(showCostsFilterSheet = false) }
+            is Intent.ClearAllCostFilters -> clearAllCostFilters()
+            is Intent.ApplyCostFilters -> applyCostFilters(intent.startDate, intent.endDate, intent.costTypes)
+            is Intent.DeleteCost -> showDeleteCostDialog(intent.costId, intent.costType)
+            is Intent.ConfirmDeleteCost -> confirmDeleteCost()
+            is Intent.DismissDeleteCostDialog -> updateState { copy(showDeleteCostDialog = false, costToDeleteId = null, costToDeleteType = null) }
+            is Intent.NavigateToAddMaintenanceCost -> sendEffect(Effect.NavigateToMaintenanceCost(currentState.vehicleId))
+            is Intent.ExportMaintenanceCostsPdf -> exportMaintenanceCostsToPdf()
+
+            // History tab intents
+            is Intent.LoadHistory -> loadHistory()
+            is Intent.LoadMoreHistory -> loadMoreHistory()
+            is Intent.RefreshHistory -> refreshHistory()
+
+            // State change intents
+            is Intent.ShowStateChangeDialog -> updateState { copy(showStateChangeDialog = true) }
+            is Intent.HideStateChangeDialog -> updateState { copy(showStateChangeDialog = false) }
+            is Intent.UpdateVehicleState -> updateVehicleState(intent.newState, intent.reason)
+        }
+    }
+
+    private suspend fun loadVehicle(vehicleId: String) {
+        updateState { copy(isLoading = true, error = null, vehicleId = vehicleId) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = getVehicleByIdUseCase(vehicleId)) {
+                is Result.Success -> {
+                    val vehicle = result.data
+                    updateState {
+                        copy(
+                            isLoading = false,
+                            vehicle = vehicle,
+                            // Populate editable fields
+                            registrationNumber = vehicle.registrationNumber,
+                            make = vehicle.make,
+                            model = vehicle.model,
+                            year = vehicle.year.toString(),
+                            vehicleType = vehicle.type,
+                            fuelType = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() },
+                            color = vehicle.color.replaceFirstChar { it.uppercaseChar() },
+                            capacity = vehicle.capacity.toString(),
+                            mileage = if (vehicle.mileage > 0) vehicle.mileage.toString() else ""
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoading = false,
+                            error = result.message ?: "Failed to load vehicle"
+                        )
+                    }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to load vehicle"))
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    private fun enterEditMode() {
+        updateState { copy(isEditMode = true, isLoadingDrivers = true, isLoadingCaretakers = true) }
+        // Load available drivers and caretakers
+        kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
+            loadDriversForEdit()
+            loadCaretakers()
+        }
+    }
+
+    private suspend fun loadDriversForEdit() {
+        withContext(dispatcherProvider.io) {
+            getDriversUseCase().collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        val vehicle = currentState.vehicle
+                        // Find the currently assigned driver
+                        val currentDriver = if (vehicle?.assignedDriverId != null) {
+                            result.data.find { it.id == vehicle.assignedDriverId }
+                        } else null
+
+                        updateState {
+                            copy(
+                                drivers = result.data,
+                                selectedDriver = currentDriver,
+                                isLoadingDrivers = false
+                            )
+                        }
+                    }
+                    is Result.Error -> {
+                        updateState { copy(isLoadingDrivers = false) }
+                    }
+                    is Result.Loading -> { /* Already handled */ }
+                }
+            }
+        }
+    }
+
+    private fun selectDriver(driver: Driver?) {
+        updateState { copy(selectedDriver = driver, showDriverDropdown = false) }
+    }
+
+    private fun exitEditMode() {
+        // Reset to original values
+        val vehicle = currentState.vehicle
+        if (vehicle != null) {
+            updateState {
+                copy(
+                    isEditMode = false,
+                    make = vehicle.make,
+                    model = vehicle.model,
+                    year = vehicle.year.toString(),
+                    vehicleType = vehicle.type,
+                    fuelType = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() },
+                    color = vehicle.color.replaceFirstChar { it.uppercaseChar() },
+                    capacity = vehicle.capacity.toString(),
+                    mileage = if (vehicle.mileage > 0) vehicle.mileage.toString() else "",
+                    // Reset driver selection
+                    selectedDriver = null,
+                    drivers = emptyList(),
+                    showDriverDropdown = false,
+                    // Clear errors
+                    makeError = null,
+                    modelError = null,
+                    yearError = null
+                )
+            }
+        } else {
+            updateState { copy(isEditMode = false) }
+        }
+    }
+
+    private fun updateMake(value: String) {
+        val error = if (value.isBlank()) "Make is required" else null
+        updateState { copy(make = value, makeError = error) }
+    }
+
+    private fun updateModel(value: String) {
+        val error = if (value.isBlank()) "Model is required" else null
+        updateState { copy(model = value, modelError = error) }
+    }
+
+    private fun updateYear(value: String) {
+        val error = when {
+            value.isBlank() -> "Year is required"
+            value.toIntOrNull() == null -> "Invalid year"
+            value.toInt() < 1900 || value.toInt() > 2030 -> "Year must be between 1900 and 2030"
+            else -> null
+        }
+        updateState { copy(year = value, yearError = error) }
+    }
+
+    private suspend fun saveChanges() {
+        if (!validateForm()) {
+            sendEffect(Effect.ShowSnackbar("Please fill all required fields correctly"))
+            return
+        }
+
+        val currentVehicle = currentState.vehicle ?: return
+        updateState { copy(isSaving = true) }
+
+        withContext(dispatcherProvider.io) {
+            val updatedVehicle = currentVehicle.copy(
+                make = currentState.make.trim(),
+                model = currentState.model.trim(),
+                year = currentState.year.toIntOrNull() ?: currentVehicle.year,
+                type = currentState.vehicleType,
+                fuelType = currentState.fuelType.lowercase(),
+                color = currentState.color.lowercase(),
+                capacity = currentState.capacity.toIntOrNull() ?: currentVehicle.capacity,
+                mileage = currentState.mileage.toDoubleOrNull() ?: currentVehicle.mileage,
+                assignedDriverId = currentState.selectedDriver?.id
+            )
+
+            when (val result = updateVehicleUseCase(updatedVehicle)) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isSaving = false,
+                            isEditMode = false,
+                            vehicle = result.data,
+                            make = result.data.make,
+                            model = result.data.model,
+                            year = result.data.year.toString(),
+                            vehicleType = result.data.type,
+                            fuelType = result.data.fuelType.replaceFirstChar { it.uppercaseChar() },
+                            color = result.data.color.replaceFirstChar { it.uppercaseChar() },
+                            capacity = result.data.capacity.toString()
+                        )
+                    }
+                    sendEffect(Effect.ShowSnackbar("Vehicle updated successfully"))
+                    sendEffect(Effect.VehicleUpdated)
+                }
+                is Result.Error -> {
+                    updateState { copy(isSaving = false) }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to update vehicle"))
+                }
+                is Result.Loading -> { /* Not applicable */ }
+            }
+        }
+    }
+
+    private fun validateForm(): Boolean {
+        val makeError = if (currentState.make.isBlank()) "Make is required" else null
+        val modelError = if (currentState.model.isBlank()) "Model is required" else null
+        val yearError = when {
+            currentState.year.isBlank() -> "Year is required"
+            currentState.year.toIntOrNull() == null -> "Invalid year"
+            else -> null
+        }
+
+        updateState {
+            copy(
+                makeError = makeError,
+                modelError = modelError,
+                yearError = yearError
+            )
+        }
+
+        return makeError == null && modelError == null && yearError == null
+    }
+
+    private suspend fun confirmDelete() {
+        val vehicleId = currentState.vehicle?.id ?: return
+        updateState { copy(isSaving = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = deleteVehicleUseCase(vehicleId)) {
+                is Result.Success -> {
+                    updateState { copy(isSaving = false) }
+                    sendEffect(Effect.ShowSnackbar("Vehicle deleted successfully"))
+                    sendEffect(Effect.VehicleDeleted(vehicleId))
+                    sendEffect(Effect.NavigateBack)
+                }
+                is Result.Error -> {
+                    updateState { copy(isSaving = false) }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to delete vehicle"))
+                }
+                is Result.Loading -> { /* Not applicable */ }
+            }
+        }
+    }
+
+    // ==================== Tab-specific Functions ====================
+
+    private fun selectTab(tabIndex: Int) {
+        updateState { copy(selectedTab = tabIndex) }
+
+        // Load data for the selected tab if not already loaded
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isNotEmpty()) {
+            when (tabIndex) {
+                1 -> if (currentState.tripsList.isEmpty() && !currentState.isLoadingTrips) {
+                    sendIntent(Intent.LoadTrips)
+                }
+                2 -> if (currentState.tripCosts.isEmpty() && currentState.maintenanceCosts.isEmpty() && !currentState.isLoadingCosts) {
+                    sendIntent(Intent.LoadCosts)
+                }
+                3 -> if (currentState.routeInfo == null && !currentState.isLoadingRoute) {
+                    sendIntent(Intent.LoadRoute)
+                }
+                4 -> if (currentState.documentsData == null && !currentState.isLoadingDocuments) {
+                    sendIntent(Intent.LoadDocuments)
+                }
+                5 -> if (currentState.historyItems.isEmpty() && !currentState.isLoadingHistory) {
+                    sendIntent(Intent.LoadHistory)
+                }
+            }
+        }
+    }
+
+    private suspend fun loadTrips() {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isEmpty()) return
+
+        updateState { copy(isLoadingTrips = true, tripsError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleTrips(vehicleId, 1, 10, null)) {
+                is Result.Success -> {
+                    val data = result.data
+                    updateState {
+                        copy(
+                            isLoadingTrips = false,
+                            tripsData = data,
+                            tripsList = data.trips,
+                            tripsSummary = data.summary,
+                            tripsPage = data.page,
+                            hasMoreTrips = data.hasMore
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingTrips = false,
+                            tripsError = result.message ?: "Failed to load trips"
+                        )
+                    }
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    private suspend fun loadMoreTrips() {
+        if (!currentState.hasMoreTrips || currentState.isLoadingTrips) return
+
+        val vehicleId = currentState.vehicleId
+        val nextPage = currentState.tripsPage + 1
+
+        updateState { copy(isLoadingTrips = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleTrips(vehicleId, nextPage, 10, null)) {
+                is Result.Success -> {
+                    val data = result.data
+                    updateState {
+                        copy(
+                            isLoadingTrips = false,
+                            tripsList = tripsList + data.trips,
+                            tripsPage = data.page,
+                            hasMoreTrips = data.hasMore
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState { copy(isLoadingTrips = false) }
+                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load more trips"))
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    private suspend fun refreshTrips() {
+        updateState { copy(tripsList = emptyList(), tripsPage = 1, hasMoreTrips = false) }
+        loadTrips()
+    }
+
+    private suspend fun loadRoute() {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isEmpty()) return
+
+        updateState { copy(isLoadingRoute = true, routeError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleRoute(vehicleId)) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isLoadingRoute = false,
+                            routeInfo = result.data
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingRoute = false,
+                            routeError = result.message ?: "Failed to load route"
+                        )
+                    }
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    private suspend fun refreshRoute() {
+        updateState { copy(routeInfo = null) }
+        loadRoute()
+    }
+
+    private suspend fun loadDocuments() {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isEmpty()) return
+
+        updateState { copy(isLoadingDocuments = true, documentsError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleDocumentsDetail(vehicleId)) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isLoadingDocuments = false,
+                            documentsData = result.data,
+                            documentsSummary = result.data.summary
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingDocuments = false,
+                            documentsError = result.message ?: "Failed to load documents"
+                        )
+                    }
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    private suspend fun refreshDocuments() {
+        updateState { copy(documentsData = null) }
+        loadDocuments()
+    }
+
+    // ==================== Document Upload Functions ====================
+
+    private fun showUploadDialog(documentType: String, documentTypeName: String) {
+        updateState {
+            copy(
+                isUploadDialogVisible = true,
+                selectedDocumentType = documentType,
+                selectedDocumentTypeName = documentTypeName,
+                uploadError = null
+            )
+        }
+        sendEffect(Effect.OpenFilePicker)
+    }
+
+    private fun hideUploadDialog() {
+        updateState {
+            copy(
+                isUploadDialogVisible = false,
+                selectedDocumentType = null,
+                selectedDocumentTypeName = null,
+                uploadError = null
+            )
+        }
+    }
+
+    private suspend fun uploadDocument(intent: Intent.UploadDocument) {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isEmpty()) return
+
+        updateState { copy(isUploading = true, uploadError = null) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.uploadDocument(
+                vehicleId = vehicleId,
+                documentType = intent.documentType,
+                documentName = intent.documentName,
+                fileBytes = intent.fileBytes,
+                fileName = intent.fileName,
+                mimeType = intent.mimeType,
+                documentNumber = intent.documentNumber,
+                expiryDate = intent.expiryDate
+            )) {
+                is Result.Success -> {
+                    updateState {
+                        copy(
+                            isUploading = false,
+                            isUploadDialogVisible = false,
+                            selectedDocumentType = null,
+                            selectedDocumentTypeName = null
+                        )
+                    }
+                    sendEffect(Effect.ShowSnackbar("Document uploaded successfully"))
+                    sendEffect(Effect.DocumentUploaded)
+                    // Refresh documents list
+                    loadDocuments()
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isUploading = false,
+                            uploadError = result.message ?: "Failed to upload document"
+                        )
+                    }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to upload document"))
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+
+    // ==================== Document Preview/Download Functions ====================
+
+    private suspend fun previewDocument(intent: Intent.PreviewDocument) {
+        val documentId = intent.documentId
+        if (documentId.isBlank()) {
+            sendEffect(Effect.ShowError("Document ID not available for preview"))
+            return
+        }
+
+        // Get vehicle registration number for filename prefix
+        val vehicleRegNumber = currentState.registrationNumber.ifBlank {
+            currentState.vehicle?.registrationNumber ?: ""
+        }
+        val documentNameWithPrefix = if (vehicleRegNumber.isNotBlank()) {
+            "${vehicleRegNumber}_${intent.documentName}"
+        } else {
+            intent.documentName
+        }
+
+        // Download the document and then open for preview
+        sendEffect(Effect.DocumentDownloading)
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.downloadDocument(documentId)) {
+                is Result.Success -> {
+                    sendEffect(Effect.DocumentDownloaded(
+                        documentName = documentNameWithPrefix,
+                        fileBytes = result.data,
+                        mimeType = "application/pdf" // Default to PDF, backend should provide actual type
+                    ))
+                }
+                is Result.Error -> {
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to download document for preview"))
+                }
+                is Result.Loading -> { /* Ignored */ }
+            }
+        }
+    }
+
+    private suspend fun downloadDocument(intent: Intent.DownloadDocument) {
+        val documentId = intent.documentId
+        if (documentId.isBlank()) {
+            sendEffect(Effect.ShowError("Document ID not available for download"))
+            return
+        }
+
+        // Get vehicle registration number for filename prefix
+        val vehicleRegNumber = currentState.registrationNumber.ifBlank {
+            currentState.vehicle?.registrationNumber ?: ""
+        }
+        val documentNameWithPrefix = if (vehicleRegNumber.isNotBlank()) {
+            "${vehicleRegNumber}_${intent.documentName}"
+        } else {
+            intent.documentName
+        }
+
+        // Download the document with authentication
+        sendEffect(Effect.DocumentDownloading)
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.downloadDocument(documentId)) {
+                is Result.Success -> {
+                    sendEffect(Effect.DocumentDownloaded(
+                        documentName = documentNameWithPrefix,
+                        fileBytes = result.data,
+                        mimeType = "application/pdf" // Default to PDF
+                    ))
+                }
+                is Result.Error -> {
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to download document"))
+                }
+                is Result.Loading -> { /* Ignored */ }
+            }
+        }
+    }
+
+    // ==================== Costs Tab Methods ====================
+
+    /**
+     * Get default from date (01-01-1971) for API calls when user hasn't entered a date
+     */
+    private fun getDefaultFromDate(): String = "01-01-1971"
+
+    /**
+     * Get default to date (current date + 1 week) for API calls when user hasn't entered a date
+     * Dynamically calculates based on current system date.
+     */
+    private fun getDefaultToDate(): String {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val futureDate = today.plus(7, DateTimeUnit.DAY)
+        // Format: DD-MM-YYYY
+        val day = futureDate.day.toString().padStart(2, '0')
+        val month = futureDate.month.ordinal.plus(1).toString().padStart(2, '0')
+        val year = futureDate.year.toString()
+        return "$day-$month-$year"
+    }
+
+    // Valid cost types for each API
+    private val tripCostTypes = setOf(
+        "fuel", "toll", "driver_allowance", "parking", "loading_charges", "unloading_charges",
+        "insurance", "permit", "registration_renewal", "fitness_check", "emission_test",
+        "state_permit", "national_permit", "chalan", "other"
+    )
+
+    private val maintenanceCostTypes = setOf(
+        "tyre", "battery", "oil_change", "brake_service", "engine_repair", "clutch_repair",
+        "suspension", "electrical", "body_work", "cleaning", "servicing", "other"
+    )
+
+    /**
+     * Load cost type groups from local database for the filter UI.
+     */
+    private suspend fun loadCostTypes() {
+        if (costTypesRepository == null) return
+
+        updateState { copy(isLoadingCostTypes = true) }
+
+        withContext(dispatcherProvider.io) {
+            try {
+                // Load trip cost types
+                val tripCostTypesGrouped = costTypesRepository.getTripCostTypes()
+                val tripGroups = tripCostTypesGrouped?.toCostTypeGroups() ?: emptyList()
+
+                // Load maintenance cost types
+                val maintenanceCostTypesGrouped = costTypesRepository.getMaintenanceCostTypes()
+                val maintenanceGroups = maintenanceCostTypesGrouped?.toCostTypeGroups() ?: emptyList()
+
+                updateState {
+                    copy(
+                        isLoadingCostTypes = false,
+                        tripCostTypeGroups = tripGroups,
+                        maintenanceCostTypeGroups = maintenanceGroups
+                    )
+                }
+            } catch (e: Exception) {
+                updateState { copy(isLoadingCostTypes = false) }
+            }
+        }
+    }
+
+    private suspend fun loadCosts() {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isBlank()) return
+
+        updateState { copy(isLoadingCosts = true, costsError = null, costsPage = 1) }
+
+        // Apply default dates internally if user hasn't entered any
+        val startDate = currentState.costsStartDate.takeIf { it.isNotBlank() } ?: getDefaultFromDate()
+        val endDate = currentState.costsEndDate.takeIf { it.isNotBlank() } ?: getDefaultToDate()
+
+        // Separate filters for each API based on cost type ID prefix or legacy cost types
+        // New cost type IDs: TC-xxx-xxx for trip, VMC-xxx-xxx for maintenance
+        // Legacy cost types: fuel, toll, tyre, battery, etc.
+        val selectedFilters = currentState.selectedCostTypeFilters
+
+        // Filter trip costs: either starts with "TC-" (new format) or is in legacy tripCostTypes set
+        val tripFilters = selectedFilters.filter {
+            it.startsWith("TC-") || it in tripCostTypes
+        }
+
+        // Filter maintenance costs: either starts with "VMC-" (new format) or is in legacy maintenanceCostTypes set
+        val maintenanceFilters = selectedFilters.filter {
+            it.startsWith("VMC-") || it in maintenanceCostTypes
+        }
+
+        // If user selected filters but none match a category, skip that API call
+        val hasAnyFilters = selectedFilters.isNotEmpty()
+        val shouldLoadTrips = !hasAnyFilters || tripFilters.isNotEmpty()
+        val shouldLoadMaintenance = !hasAnyFilters || maintenanceFilters.isNotEmpty()
+
+        withContext(dispatcherProvider.io) {
+            try {
+                var tripCosts = emptyList<com.indusjs.fleet.data.model.costs.TripCostDto>()
+                var maintenanceCosts = emptyList<com.indusjs.fleet.data.model.costs.MaintenanceCostDto>()
+                var tripTotal = 0.0
+                var maintenanceTotal = 0.0
+                var hasMore = false
+                var errorMessage: String? = null
+
+                // Load trip costs only if we should (no filters, or has valid trip filters)
+                if (shouldLoadTrips) {
+                    val tripCostsResult = costsRepository.getVehicleTripCosts(
+                        vehicleId = vehicleId,
+                        page = 1,
+                        perPage = 50,
+                        costType = tripFilters.takeIf { it.isNotEmpty() }?.joinToString(","),
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+
+                    when (tripCostsResult) {
+                        is Result.Success -> {
+                            tripCosts = tripCostsResult.data.costs
+                            tripTotal = tripCostsResult.data.filteredTotal ?: tripCostsResult.data.totalCost ?: 0.0
+                            hasMore = tripCostsResult.data.hasMore ?: false
+                        }
+                        is Result.Error -> {
+                            errorMessage = tripCostsResult.message
+                        }
+                        is Result.Loading -> {}
+                    }
+                }
+
+                // Load maintenance costs only if we should (no filters, or has valid maintenance filters)
+                if (shouldLoadMaintenance) {
+                    val maintenanceCostsResult = costsRepository.getVehicleMaintenanceCosts(
+                        vehicleId = vehicleId,
+                        page = 1,
+                        perPage = 50,
+                        costType = maintenanceFilters.takeIf { it.isNotEmpty() }?.joinToString(","),
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+
+                    when (maintenanceCostsResult) {
+                        is Result.Success -> {
+                            maintenanceCosts = maintenanceCostsResult.data.costs
+                            maintenanceTotal = maintenanceCostsResult.data.filteredTotal ?: maintenanceCostsResult.data.totalCost ?: 0.0
+                            hasMore = hasMore || (maintenanceCostsResult.data.hasMore ?: false)
+                        }
+                        is Result.Error -> {
+                            if (errorMessage == null) errorMessage = maintenanceCostsResult.message
+                        }
+                        is Result.Loading -> {}
+                    }
+                }
+
+                updateState {
+                    copy(
+                        tripCosts = tripCosts,
+                        maintenanceCosts = maintenanceCosts,
+                        tripCostsTotalAmount = tripTotal,
+                        maintenanceCostsTotalAmount = maintenanceTotal,
+                        costsTotalAmount = tripTotal + maintenanceTotal,
+                        isLoadingCosts = false,
+                        hasMoreCosts = hasMore,
+                        costsError = if (tripCosts.isEmpty() && maintenanceCosts.isEmpty() && errorMessage != null) errorMessage else null
+                    )
+                }
+            } catch (e: Exception) {
+                updateState {
+                    copy(
+                        isLoadingCosts = false,
+                        costsError = "Failed to load costs: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun loadMoreCosts() {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isBlank()) return
+
+        val nextPage = currentState.costsPage + 1
+        updateState { copy(isLoadingCosts = true, costsPage = nextPage) }
+
+        // Apply default dates internally if user hasn't entered any
+        val startDate = currentState.costsStartDate.takeIf { it.isNotBlank() } ?: getDefaultFromDate()
+        val endDate = currentState.costsEndDate.takeIf { it.isNotBlank() } ?: getDefaultToDate()
+
+        // Separate filters for each API based on cost type ID prefix or legacy cost types
+        // New cost type IDs: TC-xxx-xxx for trip, VMC-xxx-xxx for maintenance
+        val selectedFilters = currentState.selectedCostTypeFilters
+
+        // Filter trip costs: either starts with "TC-" (new format) or is in legacy tripCostTypes set
+        val tripFilters = selectedFilters.filter {
+            it.startsWith("TC-") || it in tripCostTypes
+        }
+
+        // Filter maintenance costs: either starts with "VMC-" (new format) or is in legacy maintenanceCostTypes set
+        val maintenanceFilters = selectedFilters.filter {
+            it.startsWith("VMC-") || it in maintenanceCostTypes
+        }
+
+        val hasAnyFilters = selectedFilters.isNotEmpty()
+        val shouldLoadTrips = !hasAnyFilters || tripFilters.isNotEmpty()
+        val shouldLoadMaintenance = !hasAnyFilters || maintenanceFilters.isNotEmpty()
+
+        withContext(dispatcherProvider.io) {
+            try {
+                var newTripCosts = emptyList<com.indusjs.fleet.data.model.costs.TripCostDto>()
+                var newMaintenanceCosts = emptyList<com.indusjs.fleet.data.model.costs.MaintenanceCostDto>()
+                var hasMore = false
+
+                if (shouldLoadTrips) {
+                    val tripCostsResult = costsRepository.getVehicleTripCosts(
+                        vehicleId = vehicleId,
+                        page = nextPage,
+                        perPage = 50,
+                        costType = tripFilters.takeIf { it.isNotEmpty() }?.joinToString(","),
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+
+                    when (tripCostsResult) {
+                        is Result.Success -> {
+                            newTripCosts = tripCostsResult.data.costs
+                            hasMore = tripCostsResult.data.hasMore ?: false
+                        }
+                        is Result.Error -> { /* Handle silently */ }
+                        is Result.Loading -> {}
+                    }
+                }
+
+                if (shouldLoadMaintenance) {
+                    val maintenanceCostsResult = costsRepository.getVehicleMaintenanceCosts(
+                        vehicleId = vehicleId,
+                        page = nextPage,
+                        perPage = 50,
+                        costType = maintenanceFilters.takeIf { it.isNotEmpty() }?.joinToString(","),
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+
+                    when (maintenanceCostsResult) {
+                        is Result.Success -> {
+                            newMaintenanceCosts = maintenanceCostsResult.data.costs
+                            hasMore = hasMore || (maintenanceCostsResult.data.hasMore ?: false)
+                        }
+                        is Result.Error -> { /* Handle silently */ }
+                        is Result.Loading -> {}
+                    }
+                }
+
+                updateState {
+                    copy(
+                        tripCosts = tripCosts + newTripCosts,
+                        maintenanceCosts = maintenanceCosts + newMaintenanceCosts,
+                        isLoadingCosts = false,
+                        hasMoreCosts = hasMore
+                    )
+                }
+            } catch (e: Exception) {
+                updateState { copy(isLoadingCosts = false) }
+            }
+        }
+    }
+
+    private fun refreshCosts() {
+        CoroutineScope(dispatcherProvider.main).launch {
+            loadCosts()
+        }
+    }
+
+    private fun updateCostsDateRange(startDate: String, endDate: String) {
+        updateState { copy(costsStartDate = startDate, costsEndDate = endDate) }
+        CoroutineScope(dispatcherProvider.main).launch {
+            loadCosts()
+        }
+    }
+
+    private fun toggleCostTypeFilter(costType: String) {
+        val currentFilters = currentState.selectedCostTypeFilters.toMutableSet()
+        if (currentFilters.contains(costType)) {
+            currentFilters.remove(costType)
+        } else {
+            currentFilters.add(costType)
+        }
+        updateState { copy(selectedCostTypeFilters = currentFilters) }
+        // Reload costs when filter is toggled (especially when removing from active filters)
+        CoroutineScope(dispatcherProvider.main).launch {
+            loadCosts()
+        }
+    }
+
+    private fun clearAllCostFilters() {
+        updateState {
+            copy(
+                selectedCostTypeFilters = emptySet(),
+                costsStartDate = "",
+                costsEndDate = "",
+                showCostsFilterSheet = false
+            )
+        }
+        CoroutineScope(dispatcherProvider.main).launch {
+            loadCosts()
+        }
+    }
+
+    private fun applyCostFilters(startDate: String, endDate: String, costTypes: Set<String>) {
+        updateState {
+            copy(
+                costsStartDate = startDate,
+                costsEndDate = endDate,
+                selectedCostTypeFilters = costTypes,
+                showCostsFilterSheet = false
+            )
+        }
+        CoroutineScope(dispatcherProvider.main).launch {
+            loadCosts()
+        }
+    }
+
+    private fun showDeleteCostDialog(costId: String, costType: String) {
+        updateState { copy(showDeleteCostDialog = true, costToDeleteId = costId, costToDeleteType = costType) }
+    }
+
+    private suspend fun confirmDeleteCost() {
+        val costId = currentState.costToDeleteId ?: return
+        val costType = currentState.costToDeleteType ?: return
+
+        updateState { copy(showDeleteCostDialog = false, isSaving = true) }
+
+        withContext(dispatcherProvider.io) {
+            val result = if (costType == "trip") {
+                costsRepository.deleteTripCost(costId)
+            } else {
+                costsRepository.deleteMaintenanceCost(costId)
+            }
+
+            when (result) {
+                is Result.Success -> {
+                    updateState { copy(isSaving = false, costToDeleteId = null, costToDeleteType = null) }
+                    sendEffect(Effect.CostDeleted(costId))
+                    sendEffect(Effect.ShowSnackbar("Cost deleted successfully"))
+                    loadCosts()
+                }
+                is Result.Error -> {
+                    updateState { copy(isSaving = false) }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to delete cost"))
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+    /**
+     * Export maintenance costs to PDF.
+     * Creates PDF data and sends an effect for the screen to handle platform-specific PDF generation.
+     */
+    private fun exportMaintenanceCostsToPdf() {
+        val state = currentState
+        val vehicle = state.vehicle
+
+        if (state.maintenanceCosts.isEmpty()) {
+            sendEffect(Effect.ShowSnackbar("No costs to export"))
+            return
+        }
+
+        if (vehicle == null) {
+            sendEffect(Effect.ShowSnackbar("Vehicle data not available"))
+            return
+        }
+
+        // Build period string from filters or use "All Time"
+        val period = if (state.costsStartDate.isNotBlank() || state.costsEndDate.isNotBlank()) {
+            val from = state.costsStartDate.ifBlank { "Start" }
+            val to = state.costsEndDate.ifBlank { "Present" }
+            "$from to $to"
+        } else {
+            "All Time"
+        }
+
+        // Convert MaintenanceCostDto to VehicleMaintenanceCostItem
+        val costItems = state.maintenanceCosts.map { cost ->
+            com.indusjs.pdfreport.model.VehicleMaintenanceCostItem(
+                id = cost.id,
+                costId = cost.effectiveCostType,
+                costLabel = cost.displayLabel,
+                amount = cost.amount,
+                date = formatDateForPdf(cost.date),
+                vendorName = cost.vendorName,
+                description = cost.description,
+                notes = cost.notes
+            )
+        }
+
+        // Group costs by type
+        val costsByType = costItems.groupBy { it.costLabel }
+
+        // Calculate totals
+        val totalAmount = state.maintenanceCostsTotalAmount
+        val entryCount = state.maintenanceCosts.size
+        val categoryCount = costsByType.size
+
+        // Generate timestamp
+        val generatedAt = com.indusjs.datetimeutils.FleetDateTime.currentDateTime()
+
+        val pdfData = com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData(
+            vehicleId = vehicle.id.toIntOrNull() ?: 0,
+            registrationNumber = vehicle.registrationNumber,
+            vehicleMake = vehicle.make,
+            vehicleModel = vehicle.model,
+            period = period,
+            costs = costItems,
+            costsByType = costsByType,
+            totalAmount = totalAmount,
+            entryCount = entryCount,
+            categoryCount = categoryCount,
+            generatedAt = generatedAt
+        )
+
+        sendEffect(Effect.ExportMaintenanceCostsPdf(pdfData))
+    }
+
+    /**
+     * Format date for PDF display (DD-MMM-YYYY format).
+     */
+    private fun formatDateForPdf(date: String?): String {
+        if (date.isNullOrBlank()) return "N/A"
+        return try {
+            com.indusjs.datetimeutils.FleetDateTime.formatAnyToDisplayDate(date)
+        } catch (e: Exception) {
+            date
+        }
+    }
+
+    // ==================== History Tab Functions ====================
+
+    private suspend fun loadHistory() {
+        val vehicleId = currentState.vehicle?.id ?: return
+
+        updateState { copy(isLoadingHistory = true, historyError = null, historyPage = 1) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleHistory(vehicleId, 1, 20)) {
+                is Result.Success -> {
+                    val data = result.data
+                    updateState {
+                        copy(
+                            isLoadingHistory = false,
+                            historyItems = data.history ?: emptyList(),
+                            historyPage = data.page,
+                            hasMoreHistory = data.page < data.totalPages,
+                            historyTotalCount = data.totalCount
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState {
+                        copy(
+                            isLoadingHistory = false,
+                            historyError = result.message ?: "Failed to load history"
+                        )
+                    }
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+    private suspend fun loadMoreHistory() {
+        val vehicleId = currentState.vehicle?.id ?: return
+        if (currentState.isLoadingHistory || !currentState.hasMoreHistory) return
+
+        val nextPage = currentState.historyPage + 1
+        updateState { copy(isLoadingHistory = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.getVehicleHistory(vehicleId, nextPage, 20)) {
+                is Result.Success -> {
+                    val data = result.data
+                    updateState {
+                        copy(
+                            isLoadingHistory = false,
+                            historyItems = historyItems + (data.history ?: emptyList()),
+                            historyPage = data.page,
+                            hasMoreHistory = data.page < data.totalPages
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    updateState { copy(isLoadingHistory = false) }
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+
+    private suspend fun refreshHistory() {
+        updateState { copy(historyItems = emptyList(), historyPage = 1, hasMoreHistory = false) }
+        loadHistory()
+    }
+
+    // ==================== Caretaker Management ====================
+
+    private suspend fun loadCaretakers() {
+        updateState { copy(isLoadingCaretakers = true) }
+
+        withContext(dispatcherProvider.io) {
+            // First try to load from cache
+            val cacheResult = teamRepository.getCaretakersFromCache()
+            cacheResult.fold(
+                onSuccess = { cachedCaretakers ->
+                    if (cachedCaretakers.isNotEmpty()) {
+                        val caretakers = cachedCaretakers.map { it.toDto() }
+                        updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
+                    } else {
+                        // Cache is empty, fetch from API
+                        fetchCaretakersFromApi()
+                    }
+                },
+                onFailure = {
+                    // Cache failed, fetch from API
+                    fetchCaretakersFromApi()
+                }
+            )
+        }
+    }
+
+    private suspend fun refreshCaretakers() {
+        updateState { copy(isLoadingCaretakers = true) }
+        withContext(dispatcherProvider.io) {
+            fetchCaretakersFromApi()
+        }
+    }
+
+    private suspend fun fetchCaretakersFromApi() {
+        val result = teamRepository.refreshTeamMembers()
+        result.fold(
+            onSuccess = { teamMembers ->
+                val caretakers = teamMembers
+                    .filter { member ->
+                        member.role.name.lowercase() in listOf("supervisor", "manager")
+                    }
+                    .map { it.toDto() }
+                updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
+            },
+            onFailure = {
+                updateState { copy(isLoadingCaretakers = false) }
+            }
+        )
+    }
+
+    private fun com.ijs.team.domain.entity.TeamMember.toDto(): TeamMemberDto {
+        return TeamMemberDto(
+            id = id.toIntOrNull() ?: 0,
+            email = email,
+            mobile = mobile,
+            firstName = firstName,
+            lastName = lastName,
+            role = role.toApiString(),
+            ownerId = ownerId.toIntOrNull() ?: 0,
+            isActive = isActive,
+            createdAt = createdAt,
+            updatedAt = updatedAt
+        )
+    }
+
+    // ==================== State Change ====================
+
+    private suspend fun updateVehicleState(newState: String, reason: String?) {
+        val vehicleId = currentState.vehicleId
+        if (vehicleId.isBlank()) return
+
+        updateState { copy(isUpdatingState = true) }
+
+        withContext(dispatcherProvider.io) {
+            when (val result = vehicleRepository.updateVehicleState(vehicleId, newState, reason)) {
+                is Result.Success -> {
+                    val updatedVehicle = result.data
+                    updateState {
+                        copy(
+                            isUpdatingState = false,
+                            showStateChangeDialog = false,
+                            vehicle = updatedVehicle
+                        )
+                    }
+                    sendEffect(Effect.StateUpdated(newState))
+                    sendEffect(Effect.ShowSnackbar("Status updated to ${com.indusjs.fleet.core.constants.StatusConstants.VehicleState.getDisplayLabel(newState)}"))
+                }
+                is Result.Error -> {
+                    updateState { copy(isUpdatingState = false) }
+                    sendEffect(Effect.ShowError(result.message ?: "Failed to update vehicle state"))
+                }
+                is Result.Loading -> { /* Already handled */ }
+            }
+        }
+    }
+}

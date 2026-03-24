@@ -63,12 +63,10 @@ class TripProviderAdapter(
     }
 
     private fun extractTimeFromIso(isoDate: String?): String? {
-        if (isoDate == null) return null
+        if (isoDate.isNullOrBlank()) return null
         return try {
-            val parsed = FleetDateTime.fromIso8601(isoDate)
-            FleetDateTime.formatDate(parsed).let { null } // Time extraction
-                ?: isoDate.substringAfter("T", "").substringBefore("Z", "")
-                    .substringBefore("+", "").take(5).ifBlank { null }
+            // Extract time portion (HH:mm) from ISO 8601 string
+            isoDate.substring(11, 16)
         } catch (_: Exception) {
             null
         }

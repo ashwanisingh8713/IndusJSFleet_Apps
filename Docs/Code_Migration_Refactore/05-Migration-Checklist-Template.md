@@ -15,6 +15,16 @@ Use this checklist for each feature module migration. Copy and track per module.
 - [ ] Confirm `ijs-ui-components-lib` is built and passing
 - [ ] Confirm shared data contracts exist in `ijs-core-lib`
 
+### Pre-Requisite: Delete sharedUI Duplicates (One-Time)
+
+- [ ] Add `implementation(project(":ijs-ui-components-lib"))` to `sharedUI/build.gradle.kts`
+- [ ] Make `AppTheme` and `LocalThemeIsDark` public in `ijs-ui-components-lib/theme/Theme.kt`
+- [ ] Delete `sharedUI/theme/` (Color.kt, Font.kt, Theme.kt) — redirect to `com.indusjs.uicomponents.theme.*`
+- [ ] Delete ALL files under `sharedUI/core/ui/` — redirect to `com.indusjs.uicomponents.components.*`
+- [ ] Delete `sharedUI/composeResources/drawable/` and `font/` — keep `values/strings.xml`
+- [ ] Rewrite ~40+ import statements in remaining `sharedUI/presentation/` files
+- [ ] Build verify: `./gradlew :androidApp:assembleDebug`
+
 ---
 
 ## Step 1: Update build.gradle.kts
@@ -100,39 +110,45 @@ Use this checklist for each feature module migration. Copy and track per module.
 
 ## Module-Specific Notes
 
-### ijs-customer-lib (Pilot)
+### feat-customer (Pilot)
 - Zero cross-feature deps — no ExternalDeps needed
 - Remove `FleetRoute` from `CustomersListContract`, `CreateCustomerContract`, `CustomerDetailContract`
 - `CustomerSelectionBottomSheet` already moved to `ijs-ui-components-lib` (uses `SelectableCustomer`)
 
-### ijs-team-lib
+### feat-team
 - `UserLocalDataSource` is from `ijs-network-lib` — direct access OK
 - `PermissionUtils` is from `ijs-core-lib` — direct access OK
 
-### ijs-vehicle-lib
+### feat-vehicle
 - Needs `VehicleExternalDeps` for drivers and caretakers
 - `StateComponents` vehicle helpers move into this module
 - File picker callbacks passed through Facade as lambdas
 
-### ijs-driver-lib
+### feat-driver
 - Needs `DriverExternalDeps` for caretakers
 - `StateComponents` driver helpers move into this module
 
-### ijs-trip-lib (Most Complex)
+### feat-trip (Most Complex)
 - Needs `TripExternalDeps` with 5+ callbacks
 - `GooglePlacesService` access via `searchPlaces()` callback
 - Customer selection via `getCustomers()` callback
 - Vehicle/Driver selection via shared contracts
 
-### ijs-payment-lib
+### feat-payment
 - Needs `PaymentExternalDeps` for trip data
 - `AddPaymentVM` uses `TripRepository` — replaced with `getTrips()` callback
 
-### ijs-finance-lib
+### feat-finance
 - Needs `FinanceExternalDeps` for vehicle data
-- Shared ViewModel pattern (finance flow) — handle within Facade
+- **ViewModel Split Required:** Current shared ViewModel pattern (`rememberSharedViewModel("vehicle_finance_flow")`) must be replaced with 4 separate ViewModels:
+  - `VehicleFinanceListViewModel` — list + filter
+  - `VehicleFinanceDetailViewModel` — single vehicle detail
+  - `AddPurchaseInfoViewModel` — create/edit purchase
+  - `EmiPaymentHistoryViewModel` — EMI payment list
+- Each screen loads data independently. Cross-screen refresh via navigation callbacks
+  (e.g., `onPurchaseCreated` navigates back, list screen reloads in `init {}`).
 
-### ijs-reports-lib
+### feat-report
 - Needs `ReportsExternalDeps` for vehicle and trip data
 - `CostBreakdownComponents.kt` uses `CostBreakdownItemDto` (now in ijs-core-lib)
 

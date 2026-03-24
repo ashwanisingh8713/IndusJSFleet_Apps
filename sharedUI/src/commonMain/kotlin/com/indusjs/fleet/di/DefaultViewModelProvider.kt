@@ -9,91 +9,91 @@ import com.indusjs.fleet.data.database.FleetDatabase
 import com.indusjs.fleet.data.datasource.costs.CostsLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
-import com.indusjs.fleet.data.datasource.team.TeamLocalDataSourceImpl
-import com.indusjs.fleet.data.datasource.customer.CustomerLocalDataSourceImpl
+import com.ijs.team.data.datasource.TeamLocalDataSourceImpl
+import com.ijs.customer.data.datasource.CustomerLocalDataSourceImpl
 import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
 // Domain repository interfaces
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
-import com.indusjs.fleet.domain.repository.customer.CustomerRepository
+import com.ijs.customer.domain.repository.CustomerRepository
 import com.indusjs.fleet.domain.repository.dashboard.DashboardRepository
-import com.indusjs.fleet.domain.repository.driver.DriverRepository
-import com.indusjs.fleet.domain.repository.finance.VehicleFinanceRepository
-import com.indusjs.fleet.domain.repository.payment.TripPaymentRepository
-import com.indusjs.fleet.domain.repository.reports.ReportsRepository
-import com.indusjs.fleet.domain.repository.team.TeamRepository
-import com.indusjs.fleet.domain.repository.trip.TripRepository
+import com.ijs.driver.domain.repository.DriverRepository
+import com.ijs.finance.domain.repository.VehicleFinanceRepository
+import com.ijs.payment.domain.repository.TripPaymentRepository
+import com.ijs.reports.domain.repository.ReportsRepository
+import com.ijs.team.domain.repository.TeamRepository
+import com.ijs.trip.domain.repository.TripRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
-import com.indusjs.fleet.domain.repository.vehicle.VehicleRepository
+import com.ijs.vehicle.domain.repository.VehicleRepository
 import com.indusjs.fleet.domain.usecase.costs.GetMaintenanceCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.GetDriverCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.GetTripCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.InitializeCostTypesUseCase
-import com.indusjs.fleet.domain.usecase.customer.CreateCustomerUseCase
-import com.indusjs.fleet.domain.usecase.customer.GetCustomersUseCase
-import com.indusjs.fleet.domain.usecase.customer.GetLocalCustomersUseCase
-import com.indusjs.fleet.domain.usecase.customer.RefreshCustomersUseCase
+import com.ijs.customer.domain.usecase.CreateCustomerUseCase
+import com.ijs.customer.domain.usecase.GetCustomersUseCase
+import com.ijs.customer.domain.usecase.GetLocalCustomersUseCase
+import com.ijs.customer.domain.usecase.RefreshCustomersUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetAlertsStatusUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetCostOverviewUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetDashboardUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.GetPendingPaymentsUseCase
 import com.indusjs.fleet.domain.usecase.dashboard.RefreshDashboardUseCase
-import com.indusjs.fleet.domain.usecase.driver.CreateDriverUseCase
-import com.indusjs.fleet.domain.usecase.driver.DeleteDriverUseCase
-import com.indusjs.fleet.domain.usecase.driver.GetAvailableDriversUseCase
-import com.indusjs.fleet.domain.usecase.driver.GetDriverByIdUseCase
-import com.indusjs.fleet.domain.usecase.driver.GetDriversUseCase
-import com.indusjs.fleet.domain.usecase.driver.ToggleDriverActiveUseCase
-import com.indusjs.fleet.domain.usecase.driver.UpdateDriverStatusUseCase
-import com.indusjs.fleet.domain.usecase.driver.UpdateDriverUseCase
-import com.indusjs.fleet.domain.usecase.trip.CancelTripUseCase
-import com.indusjs.fleet.domain.usecase.trip.CreateTripWithDataUseCase
-import com.indusjs.fleet.domain.usecase.trip.GetTripByIdUseCase
-import com.indusjs.fleet.domain.usecase.trip.GetTripsUseCase
-import com.indusjs.fleet.domain.usecase.trip.UpdateTripStatusUseCase
-import com.indusjs.fleet.domain.usecase.trip.UpdateTripUseCase
-import com.indusjs.fleet.domain.usecase.vehicle.CreateVehicleWithDocumentsUseCase
-import com.indusjs.fleet.domain.usecase.vehicle.DeleteVehicleUseCase
-import com.indusjs.fleet.domain.usecase.vehicle.GetAvailableVehiclesUseCase
-import com.indusjs.fleet.domain.usecase.vehicle.GetVehicleByIdUseCase
-import com.indusjs.fleet.domain.usecase.vehicle.GetVehiclesUseCase
-import com.indusjs.fleet.domain.usecase.vehicle.UpdateVehicleUseCase
-import com.indusjs.fleet.presentation.alerts.AlertsListViewModel
-import com.indusjs.fleet.presentation.auth.LoginViewModel
-import com.indusjs.fleet.presentation.onboarding.OnboardingViewModel
-import com.indusjs.fleet.presentation.customers.create.CreateCustomerViewModel
-import com.indusjs.fleet.presentation.customers.detail.CustomerDetailViewModel
-import com.indusjs.fleet.presentation.customers.list.CustomersListViewModel
-import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
-import com.indusjs.fleet.presentation.drivers.DriversViewModel
-import com.indusjs.fleet.presentation.drivers.cost.DriverCostEntryViewModel
-import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
-import com.indusjs.fleet.presentation.drivers.detail.DriverDetailViewModel
-import com.indusjs.fleet.presentation.finance.VehicleFinanceViewModel
-import com.indusjs.fleet.presentation.maps.MapsViewModel
-import com.indusjs.fleet.presentation.payments.AddPaymentViewModel
-import com.indusjs.fleet.presentation.payments.PaymentDetailViewModel
-import com.indusjs.fleet.presentation.payments.PaymentsViewModel
-import com.indusjs.fleet.presentation.reports.ReportsViewModel
-import com.indusjs.fleet.presentation.reports.consolidated.ConsolidatedPLViewModel
-import com.indusjs.fleet.presentation.reports.cost.CostAnalysisViewModel
-import com.indusjs.fleet.presentation.reports.trip.TripPLViewModel
-import com.indusjs.fleet.presentation.reports.vehicle.VehiclePLViewModel
-import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
-import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailViewModel
-import com.indusjs.fleet.presentation.team.list.TeamListViewModel
-import com.indusjs.fleet.presentation.trips.TripsViewModel
-import com.indusjs.fleet.presentation.trips.cost.TripCostEntryViewModel
-import com.indusjs.fleet.presentation.trips.create.CreateTripViewModel
-import com.indusjs.fleet.presentation.trips.detail.TripDetailViewModel
-import com.indusjs.fleet.presentation.user.changepassword.ChangePasswordViewModel
-import com.indusjs.fleet.presentation.user.forgotpassword.ForgotPasswordViewModel
-import com.indusjs.fleet.presentation.user.profile.ProfileViewModel
-import com.indusjs.fleet.presentation.user.signup.SignUpViewModel
-import com.indusjs.fleet.presentation.vehicles.AddVehicleViewModel
-import com.indusjs.fleet.presentation.vehicles.VehiclesViewModel
-import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryViewModel
-import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailViewModel
+import com.ijs.driver.domain.usecase.CreateDriverUseCase
+import com.ijs.driver.domain.usecase.DeleteDriverUseCase
+import com.ijs.driver.domain.usecase.GetAvailableDriversUseCase
+import com.ijs.driver.domain.usecase.GetDriverByIdUseCase
+import com.ijs.driver.domain.usecase.GetDriversUseCase
+import com.ijs.driver.domain.usecase.ToggleDriverActiveUseCase
+import com.ijs.driver.domain.usecase.UpdateDriverStatusUseCase
+import com.ijs.driver.domain.usecase.UpdateDriverUseCase
+import com.ijs.trip.domain.usecase.CancelTripUseCase
+import com.ijs.trip.domain.usecase.CreateTripWithDataUseCase
+import com.ijs.trip.domain.usecase.GetTripByIdUseCase
+import com.ijs.trip.domain.usecase.GetTripsUseCase
+import com.ijs.trip.domain.usecase.UpdateTripStatusUseCase
+import com.ijs.trip.domain.usecase.UpdateTripUseCase
+import com.ijs.vehicle.domain.usecase.CreateVehicleWithDocumentsUseCase
+import com.ijs.vehicle.domain.usecase.DeleteVehicleUseCase
+import com.ijs.vehicle.domain.usecase.GetAvailableVehiclesUseCase
+import com.ijs.vehicle.domain.usecase.GetVehicleByIdUseCase
+import com.ijs.vehicle.domain.usecase.GetVehiclesUseCase
+import com.ijs.vehicle.domain.usecase.UpdateVehicleUseCase
+import com.ijs.alerts.presentation.AlertsListViewModel
+import com.ijs.user.presentation.login.LoginViewModel
+import com.ijs.onboarding.presentation.OnboardingViewModel
+import com.ijs.customer.presentation.create.CreateCustomerViewModel
+import com.ijs.customer.presentation.detail.CustomerDetailViewModel
+import com.ijs.customer.presentation.list.CustomersListViewModel
+import com.ijs.dashboard.presentation.DashboardViewModel
+import com.ijs.driver.presentation.DriversViewModel
+import com.ijs.driver.presentation.cost.DriverCostEntryViewModel
+import com.ijs.driver.presentation.create.CreateDriverViewModel
+import com.ijs.driver.presentation.detail.DriverDetailViewModel
+import com.ijs.finance.presentation.VehicleFinanceViewModel
+import com.ijs.map.presentation.MapsViewModel
+import com.ijs.payment.presentation.AddPaymentViewModel
+import com.ijs.payment.presentation.PaymentDetailViewModel
+import com.ijs.payment.presentation.PaymentsViewModel
+import com.ijs.reports.presentation.ReportsViewModel
+import com.ijs.reports.presentation.consolidated.ConsolidatedPLViewModel
+import com.ijs.reports.presentation.cost.CostAnalysisViewModel
+import com.ijs.reports.presentation.trip.TripPLViewModel
+import com.ijs.reports.presentation.vehicle.VehiclePLViewModel
+import com.ijs.team.presentation.create.CreateTeamMemberViewModel
+import com.ijs.team.presentation.detail.TeamMemberDetailViewModel
+import com.ijs.team.presentation.list.TeamListViewModel
+import com.ijs.trip.presentation.TripsViewModel
+import com.ijs.trip.presentation.cost.TripCostEntryViewModel
+import com.ijs.trip.presentation.create.CreateTripViewModel
+import com.ijs.trip.presentation.detail.TripDetailViewModel
+import com.ijs.user.presentation.changepassword.ChangePasswordViewModel
+import com.ijs.user.presentation.forgotpassword.ForgotPasswordViewModel
+import com.ijs.user.presentation.profile.ProfileViewModel
+import com.ijs.user.presentation.signup.SignUpViewModel
+import com.ijs.vehicle.presentation.AddVehicleViewModel
+import com.ijs.vehicle.presentation.VehiclesViewModel
+import com.ijs.vehicle.presentation.costs.MaintenanceCostEntryViewModel
+import com.ijs.vehicle.presentation.detail.VehicleDetailViewModel
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
@@ -235,6 +235,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val customerRepository: CustomerRepository get() = featureRepos.customerRepository
     private val teamRepository: TeamRepository get() = featureRepos.teamRepository
     private val tripPaymentRepository: TripPaymentRepository get() = featureRepos.tripPaymentRepository
+    private val tripProviderAdapter by lazy { com.indusjs.fleet.di.adapter.TripProviderAdapter(tripRepository) }
     private val costsRepository: CostsRepository get() = networkDataGraph.costsRepository
     private val costTypesRepository: CostTypesRepository get() = networkDataGraph.costTypesRepository
     private val vehicleFinanceRepository: VehicleFinanceRepository get() = featureRepos.vehicleFinanceRepository
@@ -395,7 +396,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         getDriversUseCase,
         userLocalDataSource,
         googlePlacesService,
-        customerRepository
+        customerRepository,
+        tripPaymentRepository
     )
 
     override fun mapsViewModel() = MapsViewModel(dispatcherProvider)
@@ -460,7 +462,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     // Payment ViewModels
     override fun paymentsViewModel() = PaymentsViewModel(tripPaymentRepository)
 
-    override fun addPaymentViewModel() = AddPaymentViewModel(tripPaymentRepository, tripRepository)
+    override fun addPaymentViewModel() = AddPaymentViewModel(tripPaymentRepository, tripProviderAdapter)
 
     override fun paymentDetailViewModel() = PaymentDetailViewModel(tripPaymentRepository, userRepository)
 

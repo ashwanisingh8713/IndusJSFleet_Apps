@@ -1,8 +1,8 @@
-package com.indusjs.fleet.data.datasource.team
+package com.ijs.team.data.datasource
 
 import com.indusjs.fleet.data.database.dao.TeamMembersDao
 import com.indusjs.fleet.data.database.entity.TeamMemberEntity
-import com.indusjs.fleet.data.model.team.TeamMemberDto
+import com.ijs.team.data.model.TeamMemberDto
 import dev.zacsweers.metro.Inject
 
 /**

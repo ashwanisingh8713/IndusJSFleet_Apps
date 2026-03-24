@@ -13,14 +13,14 @@ androidApp ──→ sharedUI
 webApp ─────→ sharedUI
 iosApp ─────→ sharedUI (via framework)
 
-sharedUI ──→ ijs-vehicle-lib  ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ ijs-driver-lib   ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ ijs-trip-lib     ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ ijs-customer-lib ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ ijs-payment-lib  ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ ijs-team-lib     ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ ijs-reports-lib  ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ ijs-finance-lib  ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ feat-vehicle  ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ feat-driver   ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ feat-trip     ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ feat-customer ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ feat-payment  ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ feat-team     ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ feat-report  ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ feat-finance  ──→ ijs-network-lib + ijs-ui-components-lib
 sharedUI ──→ ijs-ui-components-lib ──→ ijs-core-lib
 
 ijs-network-lib ──→ ijs-core-lib
@@ -99,8 +99,37 @@ sharedUI/
 │   │   ├── init/                              # AppInitializer
 │   │   └── network/                           # HttpClientProvider, ApiConfig
 │   ├── data/                                  # Room database, local data sources
-│   └── theme/                                 # (MOVED to ijs-ui-components-lib)
+│   └── theme/                                 # DELETED — use ijs-ui-components-lib/theme
 ```
+
+### IMPORTANT: sharedUI Theme & core/ui Deletion
+
+- `sharedUI/theme/` (Color.kt, Font.kt, Theme.kt) — **DELETED entirely**.
+  All code uses `com.indusjs.uicomponents.theme.*` from `ijs-ui-components-lib`.
+  `AppTheme` is **public** in `ijs-ui-components-lib`, imported directly by `App.kt`.
+  `isAppInDarkTheme()` and `rememberThemeToggle()` are also public there.
+
+- `sharedUI/core/ui/` (15+ files) — **DELETED entirely**.
+  All shared UI components live in `ijs-ui-components-lib/components/`.
+  Full 1:1 parity verified: every composable, data class, and typealias exists in both.
+
+- `sharedUI/composeResources/drawable/` and `font/` — **DELETED** (duplicates of ijs-ui-components-lib).
+  Only `composeResources/values/strings.xml` retained if app-level strings exist.
+
+- `sharedUI/build.gradle.kts` must add `implementation(project(":ijs-ui-components-lib"))` (was missing).
+
+### Finance ViewModel Split
+
+The current shared-ViewModel pattern (`rememberSharedViewModel("vehicle_finance_flow")`)
+is replaced with **4 separate ViewModels** in `feat-finance`:
+- `VehicleFinanceListViewModel`
+- `VehicleFinanceDetailViewModel`
+- `AddPurchaseInfoViewModel`
+- `EmiPaymentHistoryViewModel`
+
+Each screen loads data independently. Cross-screen communication uses navigation
+callbacks (e.g., `onPurchaseCreated` triggers back-navigation; the list screen
+reloads via `init { sendIntent(LoadData) }`).
 
 ---
 
@@ -149,7 +178,7 @@ ijs-ui-components-lib/
 Each feature module exposes a single **Facade** as its public API:
 
 ```kotlin
-// In ijs-customer-lib
+// In feat-customer
 class CustomerFeatureFacade(
     private val customerRepository: CustomerRepository,
     private val dispatcherProvider: DispatcherProvider
@@ -178,7 +207,7 @@ class CustomerFeatureFacade(
 ### ExternalDeps (for cross-feature data)
 
 ```kotlin
-// In ijs-vehicle-lib
+// In feat-vehicle
 interface VehicleExternalDeps {
     suspend fun getDrivers(): Result<List<SelectableDriver>>
     suspend fun getCaretakers(): Result<List<CaretakerInfo>>
@@ -215,13 +244,13 @@ is FleetRoute.Customers -> NavEntry(route) {
 |------|--------|-------------------|------------|
 | 1 | `ijs-ui-components-lib` (new) | None — foundation | Low |
 | 2 | Common data contracts in `ijs-core-lib` | None — foundation | Low |
-| 3 | `ijs-customer-lib` (pilot) | None | Low |
-| 4 | `ijs-team-lib` | `UserLocalDataSource` (network-lib, allowed) | Low |
-| 5 | `ijs-vehicle-lib` | drivers, team (via ExternalDeps) | Medium |
-| 6 | `ijs-driver-lib` | team (via ExternalDeps) | Medium |
-| 7 | `ijs-payment-lib` | trips (via ExternalDeps) | Medium |
-| 8 | `ijs-finance-lib` | vehicles (via ExternalDeps) | Medium |
-| 9 | `ijs-trip-lib` | vehicles, drivers, customers (via ExternalDeps) | High |
-| 10 | `ijs-reports-lib` | vehicles, trips (via ExternalDeps) | Medium |
+| 3 | `feat-customer` (pilot) | None | Low |
+| 4 | `feat-team` | `UserLocalDataSource` (network-lib, allowed) | Low |
+| 5 | `feat-vehicle` | drivers, team (via ExternalDeps) | Medium |
+| 6 | `feat-driver` | team (via ExternalDeps) | Medium |
+| 7 | `feat-payment` | trips (via ExternalDeps) | Medium |
+| 8 | `feat-finance` | vehicles (via ExternalDeps) | Medium |
+| 9 | `feat-trip` | vehicles, drivers, customers (via ExternalDeps) | High |
+| 10 | `feat-report` | vehicles, trips (via ExternalDeps) | Medium |
 | 11 | `sharedUI` cleanup | N/A | Low |
 

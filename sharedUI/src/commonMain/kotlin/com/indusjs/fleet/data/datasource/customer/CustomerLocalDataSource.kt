@@ -1,10 +1,10 @@
-package com.indusjs.fleet.data.datasource.customer
+package com.ijs.customer.data.datasource
 
 import co.touchlab.kermit.Logger
 import com.indusjs.fleet.core.util.currentTimeMillis
 import com.indusjs.fleet.data.database.dao.CustomerDao
 import com.indusjs.fleet.data.database.entity.CustomerEntity
-import com.indusjs.fleet.data.model.customer.CustomerDto
+import com.ijs.customer.data.model.CustomerDto
 import dev.zacsweers.metro.Inject
 
 /**

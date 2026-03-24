@@ -8,10 +8,10 @@
 ## 1. Overview
 
 ### Problem Statement
-The original modularization plan proposed 11 separate feature libraries (`ijs-vehicle-lib`, `ijs-driver-lib`, etc.), leading to excessive module overhead for a single-team project. A simpler approach consolidates **all network-related APIs, data layer, domain layer, and use cases** into `ijs-network-lib`, making it the single **Data + Domain** module.
+The original modularization plan proposed 11 separate feature libraries (`feat-vehicle`, `feat-driver`, etc.), leading to excessive module overhead for a single-team project. A simpler approach consolidates **all network-related APIs, data layer, domain layer, and use cases** into `ijs-network-lib`, making it the single **Data + Domain** module.
 
 ### Decision
-Consolidate all data layer (DTOs, remote data sources, mappers, repository interfaces + implementations) and domain layer (entities, use cases) for **all 10 features** into `ijs-network-lib`. Fold `ijs-reports-lib` and `ijs-finance-lib` into it. Keep Room-based local data source **implementations** in `sharedUI`; move only their **interfaces** to `ijs-network-lib`.
+Consolidate all data layer (DTOs, remote data sources, mappers, repository interfaces + implementations) and domain layer (entities, use cases) for **all 10 features** into `ijs-network-lib`. Fold `feat-report` and `feat-finance` into it. Keep Room-based local data source **implementations** in `sharedUI`; move only their **interfaces** to `ijs-network-lib`.
 
 ---
 
@@ -34,8 +34,8 @@ locationTracker (standalone Android app)
 ```
 
 ### Removed Modules
-- `ijs-reports-lib` → folded into `ijs-network-lib`
-- `ijs-finance-lib` → folded into `ijs-network-lib`
+- `feat-report` → folded into `ijs-network-lib`
+- `feat-finance` → folded into `ijs-network-lib`
 
 ### Module Count: 11 → 9
 
@@ -319,15 +319,15 @@ commonMain.dependencies {
 ### sharedUI/build.gradle.kts (removals)
 ```kotlin
 // REMOVE these:
-// implementation(project(":ijs-reports-lib"))
-// implementation(project(":ijs-finance-lib"))
+// implementation(project(":feat-report"))
+// implementation(project(":feat-finance"))
 ```
 
 ### settings.gradle.kts (removals)
 ```kotlin
 // REMOVE these:
-// include(":ijs-reports-lib")
-// include(":ijs-finance-lib")
+// include(":feat-report")
+// include(":feat-finance")
 ```
 
 ---
@@ -366,8 +366,8 @@ commonMain.dependencies {
 - `domain/usecase/{feature}/` from sharedUI → ijs-network-lib
 
 ### Phase 10: Fold Reports & Finance Libs
-- Move remaining files from ijs-reports-lib → ijs-network-lib
-- Move remaining files from ijs-finance-lib → ijs-network-lib
+- Move remaining files from feat-report → ijs-network-lib
+- Move remaining files from feat-finance → ijs-network-lib
 - Remove modules from settings.gradle.kts
 
 ### Phase 11: Create AuthManager
@@ -484,7 +484,7 @@ commonMain.dependencies {
 67. `domain/usecase/trip/TripUseCases.kt`
 68. `domain/usecase/vehicle/VehicleUseCases.kt`
 
-### From ijs-reports-lib (7 files)
+### From feat-report (7 files)
 69. `data/datasource/reports/ReportsRemoteDataSource.kt`
 70. `data/mapper/reports/ProfitLossMapper.kt`
 71. `data/model/reports/ProfitLossDto.kt`
@@ -493,7 +493,7 @@ commonMain.dependencies {
 74. `domain/entity/reports/ProfitLossEntities.kt`
 75. `domain/repository/reports/ReportsRepository.kt`
 
-### From ijs-finance-lib (7 files)
+### From feat-finance (7 files)
 76. `data/datasource/finance/VehicleFinanceRemoteDataSource.kt`
 77. `data/mapper/finance/VehicleFinanceMapper.kt`
 78. `data/model/finance/VehicleFinanceDto.kt`

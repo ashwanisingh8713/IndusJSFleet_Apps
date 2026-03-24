@@ -108,6 +108,40 @@ class DashboardViewModel(
     }
 
     /**
+     * Build VehicleStatusSummary from dashboard stats.
+     */
+    private fun buildVehicleStatus(stats: com.indusjs.fleet.domain.entity.dashboard.DashboardStats) = VehicleStatusSummary(
+        onTripPlanned = stats.plannedTrips,
+        onTripInProgress = stats.ongoingTrips,
+        underMaintenance = stats.maintenanceVehicles,
+        available = stats.activeVehicles - stats.ongoingTrips,
+        inactive = stats.inactiveVehicles,
+        total = stats.totalVehicles
+    )
+
+    /**
+     * Build DriverStatusSummary from dashboard stats.
+     */
+    private fun buildDriverStatus(stats: com.indusjs.fleet.domain.entity.dashboard.DashboardStats) = DriverStatusSummary(
+        onTripPlanned = 0,
+        onTripInProgress = stats.driversOnTrip,
+        available = stats.activeDrivers - stats.driversOnTrip,
+        onLeave = stats.driversOnLeave,
+        total = stats.totalDrivers
+    )
+
+    /**
+     * Build TripSummary from dashboard stats.
+     */
+    private fun buildTripSummary(stats: com.indusjs.fleet.domain.entity.dashboard.DashboardStats) = TripSummary(
+        inProgress = stats.ongoingTrips,
+        planned = stats.plannedTrips,
+        delayed = 0,
+        completed = stats.completedTrips,
+        total = stats.totalTrips
+    )
+
+    /**
      * Load dashboard with offline-first strategy.
      */
     private suspend fun loadDashboard() {
@@ -125,32 +159,9 @@ class DashboardViewModel(
                     }
                     is Result.Success -> {
                         val data = result.data
-
-                        // Extract vehicle and driver status from fleet overview
-                        val vehicleStatus = VehicleStatusSummary(
-                            onTripPlanned = data.stats.plannedTrips,
-                            onTripInProgress = data.stats.ongoingTrips,
-                            underMaintenance = data.stats.maintenanceVehicles,
-                            available = data.stats.activeVehicles - data.stats.ongoingTrips,
-                            inactive = data.stats.inactiveVehicles,
-                            total = data.stats.totalVehicles
-                        )
-
-                        val driverStatus = DriverStatusSummary(
-                            onTripPlanned = 0, // Will be calculated from ongoing trips
-                            onTripInProgress = data.stats.driversOnTrip,
-                            available = data.stats.activeDrivers - data.stats.driversOnTrip,
-                            onLeave = data.stats.driversOnLeave,
-                            total = data.stats.totalDrivers
-                        )
-
-                        val tripSummary = TripSummary(
-                            inProgress = data.stats.ongoingTrips,
-                            planned = data.stats.plannedTrips,
-                            delayed = 0, // Need API support
-                            completed = data.stats.completedTrips,
-                            total = data.stats.totalTrips
-                        )
+                        val vehicleStatus = buildVehicleStatus(data.stats)
+                        val driverStatus = buildDriverStatus(data.stats)
+                        val tripSummary = buildTripSummary(data.stats)
 
                         if (data.isFromCache) {
                             hasCachedEmission = true
@@ -408,31 +419,9 @@ class DashboardViewModel(
             when (val result = refreshDashboardUseCase()) {
                 is Result.Success -> {
                     val data = result.data
-
-                    val vehicleStatus = VehicleStatusSummary(
-                        onTripPlanned = data.stats.plannedTrips,
-                        onTripInProgress = data.stats.ongoingTrips,
-                        underMaintenance = data.stats.maintenanceVehicles,
-                        available = data.stats.activeVehicles - data.stats.ongoingTrips,
-                        inactive = data.stats.inactiveVehicles,
-                        total = data.stats.totalVehicles
-                    )
-
-                    val driverStatus = DriverStatusSummary(
-                        onTripPlanned = 0,
-                        onTripInProgress = data.stats.driversOnTrip,
-                        available = data.stats.activeDrivers - data.stats.driversOnTrip,
-                        onLeave = data.stats.driversOnLeave,
-                        total = data.stats.totalDrivers
-                    )
-
-                    val tripSummary = TripSummary(
-                        inProgress = data.stats.ongoingTrips,
-                        planned = data.stats.plannedTrips,
-                        delayed = 0,
-                        completed = data.stats.completedTrips,
-                        total = data.stats.totalTrips
-                    )
+                    val vehicleStatus = buildVehicleStatus(data.stats)
+                    val driverStatus = buildDriverStatus(data.stats)
+                    val tripSummary = buildTripSummary(data.stats)
 
                     updateState {
                         copy(

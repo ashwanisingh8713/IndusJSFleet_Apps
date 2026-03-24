@@ -32,25 +32,31 @@
 
 ```
 IndusJSFleet/
-├── sharedUI/           # ★ CORE: Compose UI + remaining business logic (KMP)
+├── sharedUI/           # ★ CORE: Navigation, DI wiring, theming (KMP) — NO presentation code
 ├── androidApp/         # Android entry point (thin shell)
 ├── webApp/             # Web entry point (thin shell)
 ├── iosApp/             # iOS entry point (Xcode project)
 ├── ijs-core-lib/       # Foundation: MVI, constants, utilities, base contracts, shared DTOs
 ├── ijs-network-lib/    # Networking: HTTP client, auth, user data layer, dashboard, costs, location
-├── ijs-vehicle-lib/    # Vehicle feature: data layer (datasource, model, mapper, repo, entity, usecase)
-├── ijs-driver-lib/     # Driver feature: data layer
-├── ijs-trip-lib/       # Trip feature: data layer
-├── ijs-customer-lib/   # Customer feature: data layer
-├── ijs-payment-lib/    # Payment feature: data layer
-├── ijs-team-lib/       # Team feature: data layer
-├── ijs-reports-lib/    # Reports feature: P&L, cost analysis, consolidated reports
-├── ijs-finance-lib/    # Finance feature: vehicle purchase, loan tracking, EMI payments
+├── feat-vehicle/       # Vehicle feature: data + presentation (list, detail, add, maintenance cost)
+├── feat-driver/        # Driver feature: data + presentation (list, detail, create, cost)
+├── feat-trip/          # Trip feature: data + presentation (list, detail, create, cost)
+├── feat-customer/      # Customer feature: data + presentation (list, detail, create)
+├── feat-payment/       # Payment feature: data + presentation (list, detail, add, edit)
+├── feat-team/          # Team feature: data + presentation (list, detail, create)
+├── feat-report/        # Reports feature: data + presentation (hub, vehicle PL, trip PL, cost analysis, consolidated)
+├── feat-finance/       # Finance feature: data + presentation (list, detail, purchase, EMI)
+├── feat-user/          # User/Auth feature: presentation (login, signup, forgot password, profile, change password)
+├── feat-onboarding/    # Onboarding feature: presentation (onboarding flow)
+├── feat-dashboard/     # Dashboard feature: presentation (main dashboard, financial summary)
+├── feat-alerts/        # Alerts feature: presentation (alerts list)
+├── feat-map/           # Maps feature: presentation (real-time vehicle tracking)
 ├── ijs-error-lib/      # Error handling: Result<T>, exception hierarchy, ErrorHandler
 ├── ijs-dispatcher-lib/ # Coroutine dispatchers: DispatcherProvider, test helpers
 ├── ijs-datetime-utils/ # Date/time utilities: FleetDateTime object
 ├── ijs-datetime-picker/# Compose date/time picker component
 ├── ijs-pdf-report/     # PDF report generation (HTML → PDF)
+├── ijs-ui-components-lib/ # Reusable UI components, theme utilities, shared resources
 └── locationTracker/    # Android-only GPS tracking app (separate APK)
 ```
 
@@ -63,14 +69,19 @@ iosApp ─────→ sharedUI (via framework)
 
 sharedUI ──→ ijs-core-lib
 sharedUI ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ ijs-vehicle-lib ──→ ijs-network-lib
-sharedUI ──→ ijs-driver-lib  ──→ ijs-network-lib
-sharedUI ──→ ijs-trip-lib    ──→ ijs-network-lib
-sharedUI ──→ ijs-customer-lib──→ ijs-network-lib
-sharedUI ──→ ijs-payment-lib ──→ ijs-network-lib
-sharedUI ──→ ijs-team-lib    ──→ ijs-network-lib
-sharedUI ──→ ijs-reports-lib ──→ ijs-network-lib
-sharedUI ──→ ijs-finance-lib ──→ ijs-network-lib
+sharedUI ──→ feat-vehicle ──→ ijs-network-lib
+sharedUI ──→ feat-driver  ──→ ijs-network-lib
+sharedUI ──→ feat-trip    ──→ ijs-network-lib
+sharedUI ──→ feat-customer──→ ijs-network-lib
+sharedUI ──→ feat-payment ──→ ijs-network-lib
+sharedUI ──→ feat-team    ──→ ijs-network-lib
+sharedUI ──→ feat-report ──→ ijs-network-lib
+sharedUI ──→ feat-finance ──→ ijs-network-lib
+sharedUI ──→ feat-user    ──→ ijs-network-lib
+sharedUI ──→ feat-onboarding ──→ ijs-network-lib
+sharedUI ──→ feat-dashboard ──→ ijs-network-lib
+sharedUI ──→ feat-alerts  ──→ ijs-network-lib
+sharedUI ──→ feat-map     ──→ ijs-network-lib
 sharedUI ──→ ijs-datetime-picker ──→ ijs-datetime-utils
 sharedUI ──→ ijs-pdf-report ──→ ijs-datetime-utils
 

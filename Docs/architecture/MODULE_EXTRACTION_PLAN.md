@@ -70,10 +70,10 @@ ijs-datetime-utils    (standalone, depends on kotlinx-datetime)
 ijs-datetime-picker   → ijs-datetime-utils
 ijs-core-lib          → ijs-error-lib, ijs-dispatcher-lib, ijs-datetime-utils
 ijs-network-lib       → ijs-core-lib
-ijs-reports-lib       → ijs-network-lib
-ijs-finance-lib       → ijs-network-lib
+feat-report       → ijs-network-lib
+feat-finance       → ijs-network-lib
 ijs-pdf-report        → ijs-datetime-utils
-sharedUI              → ijs-core-lib, ijs-network-lib, ijs-reports-lib, ijs-finance-lib, ijs-datetime-picker, ijs-pdf-report
+sharedUI              → ijs-core-lib, ijs-network-lib, feat-report, feat-finance, ijs-datetime-picker, ijs-pdf-report
 androidApp            → sharedUI
 webApp                → sharedUI
 ```
@@ -107,7 +107,7 @@ Files extracted from `sharedUI`:
 - `core/auth/` — `AuthenticationManager`, `AuthTokenHelper`
 - Full user data layer: `UserLocalDataSource`, `UserRemoteDataSource`, `UserDto`, `UserMapper`, `UserRepositoryImpl`, `UserRepository`
 
-### Step 10: `ijs-reports-lib` — Reports Module (SEPARATE per user request)
+### Step 10: `feat-report` — Reports Module (SEPARATE per user request)
 **Status**: ✅ Created and compiling
 
 Files extracted from `sharedUI`:
@@ -118,7 +118,7 @@ Files extracted from `sharedUI`:
 - `data/datasource/reports/ReportsRemoteDataSource.kt`
 - `data/repository/reports/ReportsRepositoryImpl.kt`
 
-### Step 11: `ijs-finance-lib` — Finance Module (SEPARATE per user request)
+### Step 11: `feat-finance` — Finance Module (SEPARATE per user request)
 **Status**: ✅ Created and compiling
 
 Files extracted from `sharedUI`:
@@ -132,8 +132,8 @@ Files extracted from `sharedUI`:
 ### Verification
 - ✅ `ijs-core-lib:compileCommonMainKotlinMetadata` — BUILD SUCCESSFUL
 - ✅ `ijs-network-lib:compileCommonMainKotlinMetadata` — BUILD SUCCESSFUL
-- ✅ `ijs-reports-lib:compileCommonMainKotlinMetadata` — BUILD SUCCESSFUL
-- ✅ `ijs-finance-lib:compileCommonMainKotlinMetadata` — BUILD SUCCESSFUL
+- ✅ `feat-report:compileCommonMainKotlinMetadata` — BUILD SUCCESSFUL
+- ✅ `feat-finance:compileCommonMainKotlinMetadata` — BUILD SUCCESSFUL
 - ✅ `sharedUI:compileCommonMainKotlinMetadata` — BUILD SUCCESSFUL
 - ✅ `androidApp:assembleDebug` — BUILD SUCCESSFUL
 - ✅ `webApp:jsBrowserDevelopmentWebpack` — BUILD SUCCESSFUL
@@ -178,8 +178,8 @@ include(":webApp")
 include(":locationTracker")
 include(":ijs-core-lib")
 include(":ijs-network-lib")
-include(":ijs-reports-lib")
-include(":ijs-finance-lib")
+include(":feat-report")
+include(":feat-finance")
 include(":ijs-error-lib")
 include(":ijs-dispatcher-lib")
 include(":ijs-datetime-picker")

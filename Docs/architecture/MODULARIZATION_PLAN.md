@@ -17,14 +17,14 @@ Decompose the monolithic `sharedUI` module into **11 focused KMP library modules
 | 1 | `ijs-core-lib` | `com.indusjs.fleet.core`, `.domain`, `.data` | Base contracts, MVI, StatusConstants, utilities, cost-type data models, user entities |
 | 2 | `ijs-network-lib` | `com.indusjs.fleet.core.network`, `.core.auth`, `.data.datasource.user` | HttpClient, ApiConfig, ApiErrorHandler, AuthenticationManager, UserLocalDataSource, UserRepository |
 | 3 | `ijs-costs-lib` | `com.indusjs.fleet.data.model.costs`, `.domain.repository.costs`, `.domain.usecase.costs` | All cost DTOs, cost type caching, cost CRUD (trip/maintenance/driver costs) |
-| 4 | `ijs-vehicle-lib` | `com.indusjs.fleet.domain.entity.vehicle`, `.data.*.vehicle` | Vehicle domain entities, repository, use cases, DTOs, mapper, data sources |
-| 5 | `ijs-driver-lib` | `com.indusjs.fleet.domain.entity.driver`, `.data.*.driver` | Driver domain entities, repository, use cases, DTOs, mapper, data sources |
-| 6 | `ijs-trip-lib` | `com.indusjs.fleet.domain.entity.trip`, `.data.*.trip`, `.data.datasource.location` | Trip domain + data + GooglePlacesService |
-| 7 | `ijs-customer-lib` | `com.indusjs.fleet.domain.entity.customer`, `.data.*.customer` | Customer domain + data + offline cache |
-| 8 | `ijs-payment-lib` | `com.indusjs.fleet.domain.entity.payment`, `.data.*.payment` | Payment domain + data |
-| 9 | `ijs-team-lib` | `com.indusjs.fleet.domain.entity.team`, `.data.*.team` | Team management domain + data + offline cache |
-| 10 | `ijs-reports-lib` | `com.indusjs.fleet.domain.entity.reports`, `.data.*.reports` | P&L reports, cost analysis, consolidated reports |
-| 11 | `ijs-finance-lib` | `com.indusjs.fleet.domain.entity.finance`, `.data.*.finance` | Vehicle purchase, loan tracking, EMI payments |
+| 4 | `feat-vehicle` | `com.indusjs.fleet.domain.entity.vehicle`, `.data.*.vehicle` | Vehicle domain entities, repository, use cases, DTOs, mapper, data sources |
+| 5 | `feat-driver` | `com.indusjs.fleet.domain.entity.driver`, `.data.*.driver` | Driver domain entities, repository, use cases, DTOs, mapper, data sources |
+| 6 | `feat-trip` | `com.indusjs.fleet.domain.entity.trip`, `.data.*.trip`, `.data.datasource.location` | Trip domain + data + GooglePlacesService |
+| 7 | `feat-customer` | `com.indusjs.fleet.domain.entity.customer`, `.data.*.customer` | Customer domain + data + offline cache |
+| 8 | `feat-payment` | `com.indusjs.fleet.domain.entity.payment`, `.data.*.payment` | Payment domain + data |
+| 9 | `feat-team` | `com.indusjs.fleet.domain.entity.team`, `.data.*.team` | Team management domain + data + offline cache |
+| 10 | `feat-report` | `com.indusjs.fleet.domain.entity.reports`, `.data.*.reports` | P&L reports, cost analysis, consolidated reports |
+| 11 | `feat-finance` | `com.indusjs.fleet.domain.entity.finance`, `.data.*.finance` | Vehicle purchase, loan tracking, EMI payments |
 
 ### Existing Modules (unchanged)
 
@@ -42,15 +42,15 @@ Decompose the monolithic `sharedUI` module into **11 focused KMP library modules
 
 ```
 sharedUI (presentation + navigation + DI + theme + UI components + dashboard)
-  ├── ijs-vehicle-lib   ──→ ijs-network-lib ──→ ijs-core-lib ──→ ijs-error-lib
-  ├── ijs-driver-lib    ──→ ijs-network-lib ──→ ijs-core-lib     ijs-dispatcher-lib
-  ├── ijs-trip-lib      ──→ ijs-network-lib ──→ ijs-core-lib
-  ├── ijs-customer-lib  ──→ ijs-network-lib ──→ ijs-core-lib
-  ├── ijs-payment-lib   ──→ ijs-network-lib ──→ ijs-core-lib
-  ├── ijs-team-lib      ──→ ijs-network-lib ──→ ijs-core-lib
+  ├── feat-vehicle   ──→ ijs-network-lib ──→ ijs-core-lib ──→ ijs-error-lib
+  ├── feat-driver    ──→ ijs-network-lib ──→ ijs-core-lib     ijs-dispatcher-lib
+  ├── feat-trip      ──→ ijs-network-lib ──→ ijs-core-lib
+  ├── feat-customer  ──→ ijs-network-lib ──→ ijs-core-lib
+  ├── feat-payment   ──→ ijs-network-lib ──→ ijs-core-lib
+  ├── feat-team      ──→ ijs-network-lib ──→ ijs-core-lib
   ├── ijs-costs-lib     ──→ ijs-network-lib ──→ ijs-core-lib
-  ├── ijs-reports-lib   ──→ ijs-network-lib ──→ ijs-core-lib
-  ├── ijs-finance-lib   ──→ ijs-network-lib ──→ ijs-core-lib
+  ├── feat-report   ──→ ijs-network-lib ──→ ijs-core-lib
+  ├── feat-finance   ──→ ijs-network-lib ──→ ijs-core-lib
   ├── ijs-network-lib   ──→ ijs-core-lib
   ├── ijs-core-lib      ──→ ijs-error-lib, ijs-dispatcher-lib
   ├── ijs-datetime-*    (standalone)
@@ -151,7 +151,7 @@ sharedUI (presentation + navigation + DI + theme + UI components + dashboard)
 
 ---
 
-### 3.4 `ijs-vehicle-lib`
+### 3.4 `feat-vehicle`
 
 **Gradle namespace:** `com.indusjs.fleet.vehicle`
 
@@ -161,7 +161,7 @@ sharedUI (presentation + navigation + DI + theme + UI components + dashboard)
 
 ---
 
-### 3.5 `ijs-driver-lib`
+### 3.5 `feat-driver`
 
 **Gradle namespace:** `com.indusjs.fleet.driver`
 
@@ -171,7 +171,7 @@ sharedUI (presentation + navigation + DI + theme + UI components + dashboard)
 
 ---
 
-### 3.6 `ijs-trip-lib`
+### 3.6 `feat-trip`
 
 **Gradle namespace:** `com.indusjs.fleet.trip`
 
@@ -181,7 +181,7 @@ sharedUI (presentation + navigation + DI + theme + UI components + dashboard)
 
 ---
 
-### 3.7 `ijs-customer-lib`
+### 3.7 `feat-customer`
 
 **Gradle namespace:** `com.indusjs.fleet.customer`
 
@@ -191,7 +191,7 @@ sharedUI (presentation + navigation + DI + theme + UI components + dashboard)
 
 ---
 
-### 3.8 `ijs-payment-lib`
+### 3.8 `feat-payment`
 
 **Gradle namespace:** `com.indusjs.fleet.payment`
 
@@ -201,7 +201,7 @@ sharedUI (presentation + navigation + DI + theme + UI components + dashboard)
 
 ---
 
-### 3.9 `ijs-team-lib`
+### 3.9 `feat-team`
 
 **Gradle namespace:** `com.indusjs.fleet.team`
 
@@ -211,7 +211,7 @@ sharedUI (presentation + navigation + DI + theme + UI components + dashboard)
 
 ---
 
-### 3.10 `ijs-reports-lib`
+### 3.10 `feat-report`
 
 **Gradle namespace:** `com.indusjs.fleet.reports`
 
@@ -231,7 +231,7 @@ sharedUI (presentation + navigation + DI + theme + UI components + dashboard)
 
 ---
 
-### 3.11 `ijs-finance-lib`
+### 3.11 `feat-finance`
 
 **Gradle namespace:** `com.indusjs.fleet.finance`
 
@@ -280,14 +280,14 @@ Each step must compile before proceeding to the next.
 | 1 | `ijs-core-lib` | `./gradlew :ijs-core-lib:compileCommonMainKotlinMetadata` | ijs-error-lib, ijs-dispatcher-lib |
 | 2 | `ijs-network-lib` | `./gradlew :ijs-network-lib:compileCommonMainKotlinMetadata` | Step 1 |
 | 3 | `ijs-costs-lib` | `./gradlew :ijs-costs-lib:compileCommonMainKotlinMetadata` | Step 2 |
-| 4 | `ijs-vehicle-lib` | `./gradlew :ijs-vehicle-lib:compileCommonMainKotlinMetadata` | Step 2 |
-| 5 | `ijs-driver-lib` | `./gradlew :ijs-driver-lib:compileCommonMainKotlinMetadata` | Step 2 |
-| 6 | `ijs-trip-lib` | `./gradlew :ijs-trip-lib:compileCommonMainKotlinMetadata` | Step 2 |
-| 7 | `ijs-customer-lib` | `./gradlew :ijs-customer-lib:compileCommonMainKotlinMetadata` | Step 2 |
-| 8 | `ijs-payment-lib` | `./gradlew :ijs-payment-lib:compileCommonMainKotlinMetadata` | Step 2 |
-| 9 | `ijs-team-lib` | `./gradlew :ijs-team-lib:compileCommonMainKotlinMetadata` | Step 2 |
-| 10 | `ijs-reports-lib` | `./gradlew :ijs-reports-lib:compileCommonMainKotlinMetadata` | Step 2 |
-| 11 | `ijs-finance-lib` | `./gradlew :ijs-finance-lib:compileCommonMainKotlinMetadata` | Step 2 |
+| 4 | `feat-vehicle` | `./gradlew :feat-vehicle:compileCommonMainKotlinMetadata` | Step 2 |
+| 5 | `feat-driver` | `./gradlew :feat-driver:compileCommonMainKotlinMetadata` | Step 2 |
+| 6 | `feat-trip` | `./gradlew :feat-trip:compileCommonMainKotlinMetadata` | Step 2 |
+| 7 | `feat-customer` | `./gradlew :feat-customer:compileCommonMainKotlinMetadata` | Step 2 |
+| 8 | `feat-payment` | `./gradlew :feat-payment:compileCommonMainKotlinMetadata` | Step 2 |
+| 9 | `feat-team` | `./gradlew :feat-team:compileCommonMainKotlinMetadata` | Step 2 |
+| 10 | `feat-report` | `./gradlew :feat-report:compileCommonMainKotlinMetadata` | Step 2 |
+| 11 | `feat-finance` | `./gradlew :feat-finance:compileCommonMainKotlinMetadata` | Step 2 |
 | 12 | Update `sharedUI` | `./gradlew :sharedUI:compileCommonMainKotlinMetadata` | Steps 1-11 |
 | 13 | Full build | `./gradlew :androidApp:assembleDebug` | Step 12 |
 
@@ -302,7 +302,7 @@ Each step must compile before proceeding to the next.
 | Build order breaks | Strict sequential build verification after each module |
 | Missing platform source sets | Each module with expect/actual gets all 4 platform dirs |
 | Import path breaks | Package namespace preserved = zero import changes in presentation layer |
-| `CostsRepository` uses driver DTOs | Driver cost DTOs (`DriverCostModels.kt`) move to `ijs-costs-lib`, not `ijs-driver-lib` |
+| `CostsRepository` uses driver DTOs | Driver cost DTOs (`DriverCostModels.kt`) move to `ijs-costs-lib`, not `feat-driver` |
 | `TripCostToDriverCostMapper` references presentation class `CostEntryRow` | Refactor to use plain parameters or move `CostEntryRow` data class to `ijs-costs-lib` |
 
 ---
@@ -314,14 +314,14 @@ After full migration:
 - [ ] `./gradlew :ijs-core-lib:compileCommonMainKotlinMetadata` ✅
 - [ ] `./gradlew :ijs-network-lib:compileCommonMainKotlinMetadata` ✅
 - [ ] `./gradlew :ijs-costs-lib:compileCommonMainKotlinMetadata` ✅
-- [ ] `./gradlew :ijs-vehicle-lib:compileCommonMainKotlinMetadata` ✅
-- [ ] `./gradlew :ijs-driver-lib:compileCommonMainKotlinMetadata` ✅
-- [ ] `./gradlew :ijs-trip-lib:compileCommonMainKotlinMetadata` ✅
-- [ ] `./gradlew :ijs-customer-lib:compileCommonMainKotlinMetadata` ✅
-- [ ] `./gradlew :ijs-payment-lib:compileCommonMainKotlinMetadata` ✅
-- [ ] `./gradlew :ijs-team-lib:compileCommonMainKotlinMetadata` ✅
-- [ ] `./gradlew :ijs-reports-lib:compileCommonMainKotlinMetadata` ✅
-- [ ] `./gradlew :ijs-finance-lib:compileCommonMainKotlinMetadata` ✅
+- [ ] `./gradlew :feat-vehicle:compileCommonMainKotlinMetadata` ✅
+- [ ] `./gradlew :feat-driver:compileCommonMainKotlinMetadata` ✅
+- [ ] `./gradlew :feat-trip:compileCommonMainKotlinMetadata` ✅
+- [ ] `./gradlew :feat-customer:compileCommonMainKotlinMetadata` ✅
+- [ ] `./gradlew :feat-payment:compileCommonMainKotlinMetadata` ✅
+- [ ] `./gradlew :feat-team:compileCommonMainKotlinMetadata` ✅
+- [ ] `./gradlew :feat-report:compileCommonMainKotlinMetadata` ✅
+- [ ] `./gradlew :feat-finance:compileCommonMainKotlinMetadata` ✅
 - [ ] `./gradlew :sharedUI:compileCommonMainKotlinMetadata` ✅
 - [ ] `./gradlew :androidApp:assembleDebug` ✅
 - [ ] `./gradlew :webApp:jsBrowserDevelopmentRun` ✅
@@ -342,26 +342,26 @@ After full migration:
 |------|------|---------|
 | 15-Mar-2026 | `ijs-core-lib` created | MVI, StatusConstants, utilities, user entities, marker interfaces |
 | 15-Mar-2026 | `ijs-network-lib` created | HttpClient, ApiConfig, ApiErrorHandler, Auth, UserLocalDataSource, UserRepository |
-| 15-Mar-2026 | `ijs-reports-lib` created | P&L entities, DTOs, mapper, remote data source, repository |
-| 15-Mar-2026 | `ijs-finance-lib` created | Purchase/Loan entities, DTOs, mapper, remote data source, repository |
+| 15-Mar-2026 | `feat-report` created | P&L entities, DTOs, mapper, remote data source, repository |
+| 15-Mar-2026 | `feat-finance` created | Purchase/Loan entities, DTOs, mapper, remote data source, repository |
 | 16-Mar-2026 | Network consolidation | Moved `NetworkConfig` factory methods to `ijs-network-lib` `HttpClientProvider` (added `createJson()`, `createHttpClient(json)`) |
 | 16-Mar-2026 | `GooglePlacesService` moved | Moved from `sharedUI` to `ijs-network-lib` (data/datasource/location/) — zero import changes |
 | 16-Mar-2026 | `ApiConfig.Endpoints` expanded | Added all 50+ endpoint constants for vehicles, drivers, trips, customers, payments, team, documents, finance, reports, caretaker |
 | 16-Mar-2026 | JS/WasmJS Ktor engines | Added `ktor-client-js` to `jsMain` and `wasmJsMain` source sets in `ijs-network-lib` |
 | 16-Mar-2026 | `NetworkModule.kt` simplified | Removed duplicate `NetworkConfig` object — now delegates to `HttpClientProvider` from `ijs-network-lib` |
 | 16-Mar-2026 | `doc/` folders created | Added `doc/README.md` to all 9 modules: core, network, reports, finance, error, dispatcher, datetime-utils, datetime-picker, pdf-report |
-| 16-Mar-2026 | Full build verified | ✅ `ijs-network-lib`, `ijs-reports-lib`, `ijs-finance-lib`, `sharedUI`, `androidApp:assembleDebug` — all pass |
+| 16-Mar-2026 | Full build verified | ✅ `ijs-network-lib`, `feat-report`, `feat-finance`, `sharedUI`, `androidApp:assembleDebug` — all pass |
 
 ### Pending ⏳
 
 | Module | Status |
 |--------|--------|
 | `ijs-costs-lib` | Not started — requires extracting CostModels, DriverCostModels, CostsRemoteDataSource, repositories, use cases |
-| `ijs-vehicle-lib` | Not started |
-| `ijs-driver-lib` | Not started |
-| `ijs-trip-lib` | Not started — GooglePlacesService already moved to ijs-network-lib (shared utility) |
-| `ijs-customer-lib` | Not started |
-| `ijs-payment-lib` | Not started |
-| `ijs-team-lib` | Not started |
+| `feat-vehicle` | Not started |
+| `feat-driver` | Not started |
+| `feat-trip` | Not started — GooglePlacesService already moved to ijs-network-lib (shared utility) |
+| `feat-customer` | Not started |
+| `feat-payment` | Not started |
+| `feat-team` | Not started |
 | `settings.gradle.kts` update | Pending — needs new module includes when they're created |
 | `sharedUI` cleanup | Pending — remove files that were moved to new modules |

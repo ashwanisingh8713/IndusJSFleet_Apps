@@ -9,6 +9,11 @@ plugins {
 
 apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
 
+// Make resources (icons, fonts) accessible to dependent modules (sharedUI, feature modules)
+compose.resources {
+    publicResClass = true
+}
+
 @OptIn(ExperimentalWasmDsl::class)
 kotlin {
     android {

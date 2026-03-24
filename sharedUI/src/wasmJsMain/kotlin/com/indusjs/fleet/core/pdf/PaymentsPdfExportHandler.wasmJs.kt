@@ -1,8 +1,8 @@
 package com.indusjs.fleet.core.pdf
 
 import androidx.compose.runtime.Composable
-import com.indusjs.fleet.presentation.payments.PaymentsListPdfData
-import com.indusjs.fleet.presentation.payments.PaymentReceiptPdfData
+import com.indusjs.pdfreport.model.PaymentsListPdfData
+import com.indusjs.pdfreport.model.PaymentReceiptPdfData
 
 /**
  * WasmJs implementation of PaymentsListPdfExportHandler.

@@ -7,46 +7,21 @@ import com.indusjs.fleet.FilePickerRequest
 import com.indusjs.fleet.di.rememberViewModel
 import com.indusjs.fleet.di.rememberSharedViewModel
 import com.indusjs.fleet.di.clearSharedViewModel
-import com.indusjs.fleet.domain.entity.vehicle.DocumentType
-import com.indusjs.fleet.presentation.auth.LoginScreen
-import com.indusjs.fleet.presentation.onboarding.OnboardingScreen
-import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryScreen
-import com.indusjs.fleet.presentation.trips.cost.TripCostEntryScreen
-import com.indusjs.fleet.presentation.drivers.cost.DriverCostEntryScreen
-import com.indusjs.fleet.presentation.alerts.AlertsListScreen
-import com.indusjs.fleet.presentation.dashboard.DashboardScreen
-import com.indusjs.fleet.presentation.drivers.DriversScreen
-import com.indusjs.fleet.presentation.drivers.create.CreateDriverScreen
-import com.indusjs.fleet.presentation.drivers.detail.DriverDetailScreen
-import com.indusjs.fleet.presentation.maps.MapsScreen
-import com.indusjs.fleet.presentation.reports.ReportsScreen
-import com.indusjs.fleet.presentation.reports.consolidated.ConsolidatedPLScreen
-import com.indusjs.fleet.presentation.reports.cost.CostAnalysisScreen
-import com.indusjs.fleet.presentation.reports.trip.TripProfitLossScreen
-import com.indusjs.fleet.presentation.reports.vehicle.VehicleProfitLossScreen
-import com.indusjs.fleet.presentation.team.create.CreateTeamMemberScreen
-import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailScreen
-import com.indusjs.fleet.presentation.team.list.TeamListScreen
-import com.indusjs.fleet.presentation.trips.TripsScreen
-import com.indusjs.fleet.presentation.trips.create.CreateTripScreen
-import com.indusjs.fleet.presentation.trips.detail.TripDetailScreen
-import com.indusjs.fleet.presentation.user.changepassword.ChangePasswordScreen
-import com.indusjs.fleet.presentation.user.forgotpassword.ForgotPasswordScreen
-import com.indusjs.fleet.presentation.user.profile.ProfileScreen
-import com.indusjs.fleet.presentation.user.signup.SignUpScreen
-import com.indusjs.fleet.presentation.vehicles.AddVehicleScreen
-import com.indusjs.fleet.presentation.vehicles.VehiclesScreen
-import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailScreen
-import com.indusjs.fleet.presentation.customers.list.CustomersListScreen
-import com.indusjs.fleet.presentation.customers.detail.CustomerDetailScreen
-import com.indusjs.fleet.presentation.customers.create.CreateCustomerScreen
-import com.indusjs.fleet.presentation.payments.PaymentsScreen
-import com.indusjs.fleet.presentation.payments.PaymentDetailScreen
-import com.indusjs.fleet.presentation.payments.AddPaymentScreen
-import com.indusjs.fleet.presentation.finance.VehicleFinanceScreen
-import com.indusjs.fleet.presentation.finance.VehicleFinanceDetailScreen
-import com.indusjs.fleet.presentation.finance.AddPurchaseInfoScreen
-import com.indusjs.fleet.presentation.finance.EmiPaymentHistoryScreen
+import com.ijs.vehicle.domain.entity.DocumentType
+import com.ijs.alerts.presentation.AlertsFeatureFacade
+import com.ijs.dashboard.presentation.DashboardFeatureFacade
+import com.ijs.map.presentation.MapFeatureFacade
+// Feature module facades
+import com.ijs.user.presentation.UserFeatureFacade
+import com.ijs.onboarding.presentation.OnboardingFeatureFacade
+import com.ijs.vehicle.presentation.VehicleFeatureFacade
+import com.ijs.driver.presentation.DriverFeatureFacade
+import com.ijs.trip.presentation.TripFeatureFacade
+import com.ijs.team.presentation.TeamFeatureFacade
+import com.ijs.customer.presentation.CustomerFeatureFacade
+import com.ijs.payment.presentation.PaymentFeatureFacade
+import com.ijs.reports.presentation.ReportsFeatureFacade
+import com.ijs.finance.presentation.FinanceFeatureFacade
 
 /**
  * Navigation 3 entry provider for the Fleet Management app.
@@ -71,7 +46,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Onboarding -> NavEntry(route) {
             val viewModel = rememberViewModel { onboardingViewModel() }
-            OnboardingScreen(
+            OnboardingFeatureFacade.OnboardingEntry(
                 viewModel = viewModel,
                 onComplete = {
                     backStack.navigateAndClear(FleetRoute.Login)
@@ -83,7 +58,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Login -> NavEntry(route) {
             val viewModel = rememberViewModel { loginViewModel() }
-            LoginScreen(
+            UserFeatureFacade.LoginEntry(
                 viewModel = viewModel,
                 onLoginSuccess = {
                     backStack.navigateAndClear(FleetRoute.Dashboard)
@@ -95,7 +70,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.SignUp -> NavEntry(route) {
             val viewModel = rememberViewModel { signUpViewModel() }
-            SignUpScreen(
+            UserFeatureFacade.SignUpEntry(
                 viewModel = viewModel,
                 onSignUpSuccess = {
                     backStack.navigateAndClear(FleetRoute.Dashboard)
@@ -106,7 +81,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.ForgotPassword -> NavEntry(route) {
             val viewModel = rememberViewModel { forgotPasswordViewModel() }
-            ForgotPasswordScreen(
+            UserFeatureFacade.ForgotPasswordEntry(
                 viewModel = viewModel,
                 onNavigateToLogin = { backStack.removeLastOrNull() }
             )
@@ -116,7 +91,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Dashboard -> NavEntry(route) {
             val viewModel = rememberViewModel { dashboardViewModel() }
-            DashboardScreen(
+            DashboardFeatureFacade.DashboardEntry(
                 viewModel = viewModel,
                 onNavigateToVehicles = { backStack.add(FleetRoute.Vehicles) },
                 onNavigateToDrivers = { backStack.add(FleetRoute.Drivers) },
@@ -142,7 +117,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Profile -> NavEntry(route) {
             val viewModel = rememberViewModel { profileViewModel() }
-            ProfileScreen(
+            UserFeatureFacade.ProfileEntry(
                 viewModel = viewModel,
                 onNavigateToChangePassword = { backStack.add(FleetRoute.ChangePassword) },
                 onNavigateBack = { backStack.removeLastOrNull() },
@@ -154,7 +129,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.ChangePassword -> NavEntry(route) {
             val viewModel = rememberViewModel { changePasswordViewModel() }
-            ChangePasswordScreen(
+            UserFeatureFacade.ChangePasswordEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
@@ -164,7 +139,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Vehicles -> NavEntry(route) {
             val viewModel = rememberViewModel { vehiclesViewModel() }
-            VehiclesScreen(
+            VehicleFeatureFacade.VehiclesListEntry(
                 viewModel = viewModel,
                 onNavigateToDetail = { backStack.add(FleetRoute.VehicleDetail(it)) },
                 onNavigateToAdd = { backStack.add(FleetRoute.AddVehicle) },
@@ -174,7 +149,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.VehicleDetail -> NavEntry(route) {
             val viewModel = rememberViewModel { vehicleDetailViewModel() }
-            VehicleDetailScreen(
+            VehicleFeatureFacade.VehicleDetailEntry(
                 viewModel = viewModel,
                 vehicleId = route.vehicleId,
                 onNavigateBack = { backStack.removeLastOrNull() },
@@ -199,14 +174,13 @@ fun fleetEntryProvider(
 
         is FleetRoute.AddVehicle -> NavEntry(route) {
             val viewModel = rememberViewModel { addVehicleViewModel() }
-            AddVehicleScreen(
+            VehicleFeatureFacade.AddVehicleEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onVehicleRegistered = { vehicleId ->
                     backStack.popAndNavigate(FleetRoute.VehicleDetail(vehicleId))
                 },
                 onNavigateToCreateTeamMember = {
-                    // Exclude General Manager as only Manager/Supervisor can be caretakers
                     backStack.add(FleetRoute.CreateTeamMember(excludeGeneralManager = true))
                 },
                 onRequestFilePicker = { documentType, callback ->
@@ -219,7 +193,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Drivers -> NavEntry(route) {
             val viewModel = rememberViewModel { driversViewModel() }
-            DriversScreen(
+            DriverFeatureFacade.DriversListEntry(
                 viewModel = viewModel,
                 onNavigateToDetail = { backStack.add(FleetRoute.DriverDetail(it)) },
                 onNavigateToAdd = { backStack.add(FleetRoute.CreateDriver) },
@@ -229,7 +203,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.DriverDetail -> NavEntry(route) {
             val viewModel = rememberViewModel { driverDetailViewModel() }
-            DriverDetailScreen(
+            DriverFeatureFacade.DriverDetailEntry(
                 viewModel = viewModel,
                 driverId = route.driverId,
                 onNavigateBack = { backStack.removeLastOrNull() },
@@ -241,7 +215,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.CreateDriver -> NavEntry(route) {
             val viewModel = rememberViewModel { createDriverViewModel() }
-            CreateDriverScreen(
+            DriverFeatureFacade.CreateDriverEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onDriverCreated = { driverId ->
@@ -254,7 +228,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Trips -> NavEntry(route) {
             val viewModel = rememberViewModel { tripsViewModel() }
-            TripsScreen(
+            TripFeatureFacade.TripsListEntry(
                 viewModel = viewModel,
                 onNavigateToDetail = { backStack.add(FleetRoute.TripDetail(it)) },
                 onNavigateToCreate = { backStack.add(FleetRoute.CreateTrip) },
@@ -264,7 +238,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.TripDetail -> NavEntry(route) {
             val viewModel = rememberViewModel { tripDetailViewModel() }
-            TripDetailScreen(
+            TripFeatureFacade.TripDetailEntry(
                 viewModel = viewModel,
                 tripId = route.tripId,
                 onNavigateBack = { backStack.removeLastOrNull() },
@@ -282,7 +256,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.CreateTrip -> NavEntry(route) {
             val viewModel = rememberViewModel { createTripViewModel() }
-            CreateTripScreen(
+            TripFeatureFacade.CreateTripEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onTripCreated = { tripId ->
@@ -298,7 +272,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.TripCostEntry -> NavEntry(route) {
             val viewModel = rememberViewModel { tripCostEntryViewModel() }
-            TripCostEntryScreen(
+            TripFeatureFacade.TripCostEntryEntry(
                 viewModel = viewModel,
                 initialTripId = route.tripId,
                 onNavigateBack = { backStack.removeLastOrNull() }
@@ -307,7 +281,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.MaintenanceCostEntry -> NavEntry(route) {
             val viewModel = rememberViewModel { maintenanceCostEntryViewModel() }
-            MaintenanceCostEntryScreen(
+            VehicleFeatureFacade.MaintenanceCostEntryEntry(
                 viewModel = viewModel,
                 initialVehicleId = route.vehicleId,
                 onNavigateBack = { backStack.removeLastOrNull() }
@@ -316,7 +290,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.DriverCostEntry -> NavEntry(route) {
             val viewModel = rememberViewModel { driverCostEntryViewModel() }
-            DriverCostEntryScreen(
+            DriverFeatureFacade.DriverCostEntryEntry(
                 viewModel = viewModel,
                 initialDriverId = route.driverId,
                 onNavigateBack = { backStack.removeLastOrNull() }
@@ -325,7 +299,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.AlertsList -> NavEntry(route) {
             val viewModel = rememberViewModel { alertsListViewModel() }
-            AlertsListScreen(
+            AlertsFeatureFacade.AlertsListEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
@@ -335,7 +309,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Maps -> NavEntry(route) {
             val viewModel = rememberViewModel { mapsViewModel() }
-            MapsScreen(
+            MapFeatureFacade.MapsEntry(
                 viewModel = viewModel,
                 onNavigateToVehicleDetail = { backStack.add(FleetRoute.VehicleDetail(it)) },
                 onNavigateBack = { backStack.removeLastOrNull() }
@@ -344,7 +318,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.TeamList -> NavEntry(route) {
             val viewModel = rememberViewModel { teamListViewModel() }
-            TeamListScreen(
+            TeamFeatureFacade.TeamListEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onNavigateToCreateMember = { backStack.add(FleetRoute.CreateTeamMember()) },
@@ -354,7 +328,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.CreateTeamMember -> NavEntry(route) {
             val viewModel = rememberViewModel { createTeamMemberViewModel() }
-            CreateTeamMemberScreen(
+            TeamFeatureFacade.CreateTeamMemberEntry(
                 viewModel = viewModel,
                 excludeGeneralManager = route.excludeGeneralManager,
                 onNavigateBack = { backStack.removeLastOrNull() }
@@ -363,7 +337,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.TeamMemberDetail -> NavEntry(route) {
             val viewModel = rememberViewModel { teamMemberDetailViewModel() }
-            TeamMemberDetailScreen(
+            TeamFeatureFacade.TeamMemberDetailEntry(
                 viewModel = viewModel,
                 memberId = route.memberId,
                 onNavigateBack = { backStack.removeLastOrNull() }
@@ -374,7 +348,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Reports -> NavEntry(route) {
             val viewModel = rememberViewModel { reportsViewModel() }
-            ReportsScreen(
+            ReportsFeatureFacade.ReportsHubEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onNavigateToVehiclePL = { backStack.add(FleetRoute.VehicleProfitLoss) },
@@ -386,7 +360,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.VehicleProfitLoss -> NavEntry(route) {
             val viewModel = rememberViewModel { vehiclePLViewModel() }
-            VehicleProfitLossScreen(
+            ReportsFeatureFacade.VehicleProfitLossEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
@@ -394,7 +368,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.TripProfitLoss -> NavEntry(route) {
             val viewModel = rememberViewModel { tripPLViewModel() }
-            TripProfitLossScreen(
+            ReportsFeatureFacade.TripProfitLossEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
@@ -402,7 +376,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.CostAnalysis -> NavEntry(route) {
             val viewModel = rememberViewModel { costAnalysisViewModel() }
-            CostAnalysisScreen(
+            ReportsFeatureFacade.CostAnalysisEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
@@ -410,7 +384,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.ConsolidatedPL -> NavEntry(route) {
             val viewModel = rememberViewModel { consolidatedPLViewModel() }
-            ConsolidatedPLScreen(
+            ReportsFeatureFacade.ConsolidatedPLEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
@@ -420,22 +394,17 @@ fun fleetEntryProvider(
 
         is FleetRoute.Customers -> NavEntry(route) {
             val viewModel = rememberViewModel { customersListViewModel() }
-            CustomersListScreen(
+            CustomerFeatureFacade.CustomersListEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
-                onNavigate = { route ->
-                    when (route) {
-                        is FleetRoute.CustomerDetail -> backStack.add(route)
-                        is FleetRoute.CreateCustomer -> backStack.add(route)
-                        else -> {}
-                    }
-                }
+                onNavigateToCustomerDetail = { customerId -> backStack.add(FleetRoute.CustomerDetail(customerId)) },
+                onNavigateToCreateCustomer = { backStack.add(FleetRoute.CreateCustomer) }
             )
         }
 
         is FleetRoute.CustomerDetail -> NavEntry(route) {
             val viewModel = rememberViewModel { customerDetailViewModel() }
-            CustomerDetailScreen(
+            CustomerFeatureFacade.CustomerDetailEntry(
                 viewModel = viewModel,
                 customerId = route.customerId,
                 onNavigateBack = { backStack.removeLastOrNull() }
@@ -444,14 +413,11 @@ fun fleetEntryProvider(
 
         is FleetRoute.CreateCustomer -> NavEntry(route) {
             val viewModel = rememberViewModel { createCustomerViewModel() }
-            CreateCustomerScreen(
+            CustomerFeatureFacade.CreateCustomerEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
-                onNavigate = { navRoute ->
-                    when (navRoute) {
-                        is FleetRoute.CustomerDetail -> backStack.popAndNavigate(navRoute)
-                        else -> {}
-                    }
+                onNavigateToCustomerDetail = { customerId ->
+                    backStack.popAndNavigate(FleetRoute.CustomerDetail(customerId))
                 }
             )
         }
@@ -460,7 +426,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.Payments -> NavEntry(route) {
             val viewModel = rememberViewModel { paymentsViewModel() }
-            PaymentsScreen(
+            PaymentFeatureFacade.PaymentsListEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onNavigateToDetail = { paymentId ->
@@ -474,7 +440,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.PaymentDetail -> NavEntry(route) {
             val viewModel = rememberViewModel { paymentDetailViewModel() }
-            PaymentDetailScreen(
+            PaymentFeatureFacade.PaymentDetailEntry(
                 viewModel = viewModel,
                 paymentId = route.paymentId,
                 onNavigateBack = { backStack.removeLastOrNull() },
@@ -486,7 +452,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.AddPayment -> NavEntry(route) {
             val viewModel = rememberViewModel { addPaymentViewModel() }
-            AddPaymentScreen(
+            PaymentFeatureFacade.AddPaymentEntry(
                 viewModel = viewModel,
                 tripId = route.tripId,
                 paymentId = null,
@@ -496,7 +462,7 @@ fun fleetEntryProvider(
 
         is FleetRoute.EditPayment -> NavEntry(route) {
             val viewModel = rememberViewModel { addPaymentViewModel() }
-            AddPaymentScreen(
+            PaymentFeatureFacade.AddPaymentEntry(
                 viewModel = viewModel,
                 tripId = null,
                 paymentId = route.paymentId,
@@ -511,10 +477,9 @@ fun fleetEntryProvider(
         is FleetRoute.VehicleFinance -> NavEntry(route) {
             val financeFlowKey = "vehicle_finance_flow"
             val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
-            VehicleFinanceScreen(
+            FinanceFeatureFacade.VehicleFinanceListEntry(
                 viewModel = viewModel,
                 onNavigateBack = {
-                    // Clear shared ViewModel when leaving the finance flow completely
                     clearSharedViewModel(financeFlowKey)
                     backStack.removeLastOrNull()
                 },
@@ -526,14 +491,12 @@ fun fleetEntryProvider(
         }
 
         is FleetRoute.VehicleFinanceDetail -> NavEntry(route) {
-            // Use same shared ViewModel key as VehicleFinance list
             val financeFlowKey = "vehicle_finance_flow"
             val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
-            VehicleFinanceDetailScreen(
-                vehicleId = route.vehicleId.toIntOrNull() ?: 0,
+            FinanceFeatureFacade.VehicleFinanceDetailEntry(
                 viewModel = viewModel,
+                vehicleId = route.vehicleId.toIntOrNull() ?: 0,
                 onNavigateBack = {
-                    // Don't clear - let VehicleFinance list screen clear it when leaving
                     backStack.removeLastOrNull()
                 },
                 onNavigateToEdit = { backStack.add(FleetRoute.EditPurchaseInfo(route.vehicleId)) },
@@ -544,7 +507,7 @@ fun fleetEntryProvider(
         is FleetRoute.AddPurchaseInfo -> NavEntry(route) {
             val financeFlowKey = "vehicle_finance_flow"
             val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
-            AddPurchaseInfoScreen(
+            FinanceFeatureFacade.AddPurchaseInfoEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
@@ -553,7 +516,7 @@ fun fleetEntryProvider(
         is FleetRoute.EditPurchaseInfo -> NavEntry(route) {
             val financeFlowKey = "vehicle_finance_flow"
             val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
-            AddPurchaseInfoScreen(
+            FinanceFeatureFacade.AddPurchaseInfoEntry(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
@@ -562,9 +525,9 @@ fun fleetEntryProvider(
         is FleetRoute.EmiPaymentHistory -> NavEntry(route) {
             val financeFlowKey = "vehicle_finance_flow"
             val viewModel = rememberSharedViewModel(financeFlowKey) { vehicleFinanceViewModel() }
-            EmiPaymentHistoryScreen(
-                vehicleId = route.vehicleId.toIntOrNull() ?: 0,
+            FinanceFeatureFacade.EmiPaymentHistoryEntry(
                 viewModel = viewModel,
+                vehicleId = route.vehicleId.toIntOrNull() ?: 0,
                 onNavigateBack = { backStack.removeLastOrNull() }
             )
         }

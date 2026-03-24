@@ -6,33 +6,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.domain.repository.user.UserRepository
-import com.indusjs.fleet.presentation.auth.LoginViewModel
-import com.indusjs.fleet.presentation.onboarding.OnboardingViewModel
- import com.indusjs.fleet.presentation.vehicles.costs.MaintenanceCostEntryViewModel
-import com.indusjs.fleet.presentation.trips.cost.TripCostEntryViewModel
-import com.indusjs.fleet.presentation.dashboard.DashboardViewModel
-import com.indusjs.fleet.presentation.drivers.DriversViewModel
-import com.indusjs.fleet.presentation.drivers.create.CreateDriverViewModel
-import com.indusjs.fleet.presentation.drivers.detail.DriverDetailViewModel
-import com.indusjs.fleet.presentation.maps.MapsViewModel
-import com.indusjs.fleet.presentation.reports.ReportsViewModel
-import com.indusjs.fleet.presentation.reports.consolidated.ConsolidatedPLViewModel
-import com.indusjs.fleet.presentation.reports.cost.CostAnalysisViewModel
-import com.indusjs.fleet.presentation.reports.trip.TripPLViewModel
-import com.indusjs.fleet.presentation.reports.vehicle.VehiclePLViewModel
-import com.indusjs.fleet.presentation.team.create.CreateTeamMemberViewModel
-import com.indusjs.fleet.presentation.team.detail.TeamMemberDetailViewModel
-import com.indusjs.fleet.presentation.team.list.TeamListViewModel
-import com.indusjs.fleet.presentation.trips.TripsViewModel
-import com.indusjs.fleet.presentation.trips.create.CreateTripViewModel
-import com.indusjs.fleet.presentation.trips.detail.TripDetailViewModel
-import com.indusjs.fleet.presentation.user.changepassword.ChangePasswordViewModel
-import com.indusjs.fleet.presentation.user.forgotpassword.ForgotPasswordViewModel
-import com.indusjs.fleet.presentation.user.profile.ProfileViewModel
-import com.indusjs.fleet.presentation.user.signup.SignUpViewModel
-import com.indusjs.fleet.presentation.vehicles.AddVehicleViewModel
-import com.indusjs.fleet.presentation.vehicles.VehiclesViewModel
-import com.indusjs.fleet.presentation.vehicles.detail.VehicleDetailViewModel
+import com.ijs.user.presentation.login.LoginViewModel
+import com.ijs.onboarding.presentation.OnboardingViewModel
+ import com.ijs.vehicle.presentation.costs.MaintenanceCostEntryViewModel
+import com.ijs.trip.presentation.cost.TripCostEntryViewModel
+import com.ijs.dashboard.presentation.DashboardViewModel
+import com.ijs.driver.presentation.DriversViewModel
+import com.ijs.driver.presentation.create.CreateDriverViewModel
+import com.ijs.driver.presentation.detail.DriverDetailViewModel
+import com.ijs.map.presentation.MapsViewModel
+import com.ijs.reports.presentation.ReportsViewModel
+import com.ijs.reports.presentation.consolidated.ConsolidatedPLViewModel
+import com.ijs.reports.presentation.cost.CostAnalysisViewModel
+import com.ijs.reports.presentation.trip.TripPLViewModel
+import com.ijs.reports.presentation.vehicle.VehiclePLViewModel
+import com.ijs.team.presentation.create.CreateTeamMemberViewModel
+import com.ijs.team.presentation.detail.TeamMemberDetailViewModel
+import com.ijs.team.presentation.list.TeamListViewModel
+import com.ijs.trip.presentation.TripsViewModel
+import com.ijs.trip.presentation.create.CreateTripViewModel
+import com.ijs.trip.presentation.detail.TripDetailViewModel
+import com.ijs.user.presentation.changepassword.ChangePasswordViewModel
+import com.ijs.user.presentation.forgotpassword.ForgotPasswordViewModel
+import com.ijs.user.presentation.profile.ProfileViewModel
+import com.ijs.user.presentation.signup.SignUpViewModel
+import com.ijs.vehicle.presentation.AddVehicleViewModel
+import com.ijs.vehicle.presentation.VehiclesViewModel
+import com.ijs.vehicle.presentation.detail.VehicleDetailViewModel
 
 /**
  * Provider for all application ViewModels.
@@ -77,10 +77,10 @@ interface ViewModelProvider {
     // Cost Entry ViewModels
     fun tripCostEntryViewModel(): TripCostEntryViewModel
     fun maintenanceCostEntryViewModel(): MaintenanceCostEntryViewModel
-    fun driverCostEntryViewModel(): com.indusjs.fleet.presentation.drivers.cost.DriverCostEntryViewModel
+    fun driverCostEntryViewModel(): com.ijs.driver.presentation.cost.DriverCostEntryViewModel
 
     // Alerts ViewModels
-    fun alertsListViewModel(): com.indusjs.fleet.presentation.alerts.AlertsListViewModel
+    fun alertsListViewModel(): com.ijs.alerts.presentation.AlertsListViewModel
 
     // Reports ViewModels
     fun reportsViewModel(): ReportsViewModel
@@ -90,17 +90,17 @@ interface ViewModelProvider {
     fun consolidatedPLViewModel(): ConsolidatedPLViewModel
 
     // Customer ViewModels
-    fun customersListViewModel(): com.indusjs.fleet.presentation.customers.list.CustomersListViewModel
-    fun customerDetailViewModel(): com.indusjs.fleet.presentation.customers.detail.CustomerDetailViewModel
-    fun createCustomerViewModel(): com.indusjs.fleet.presentation.customers.create.CreateCustomerViewModel
+    fun customersListViewModel(): com.ijs.customer.presentation.list.CustomersListViewModel
+    fun customerDetailViewModel(): com.ijs.customer.presentation.detail.CustomerDetailViewModel
+    fun createCustomerViewModel(): com.ijs.customer.presentation.create.CreateCustomerViewModel
 
     // Payment ViewModels
-    fun paymentsViewModel(): com.indusjs.fleet.presentation.payments.PaymentsViewModel
-    fun addPaymentViewModel(): com.indusjs.fleet.presentation.payments.AddPaymentViewModel
-    fun paymentDetailViewModel(): com.indusjs.fleet.presentation.payments.PaymentDetailViewModel
+    fun paymentsViewModel(): com.ijs.payment.presentation.PaymentsViewModel
+    fun addPaymentViewModel(): com.ijs.payment.presentation.AddPaymentViewModel
+    fun paymentDetailViewModel(): com.ijs.payment.presentation.PaymentDetailViewModel
 
     // Vehicle Finance ViewModels
-    fun vehicleFinanceViewModel(): com.indusjs.fleet.presentation.finance.VehicleFinanceViewModel
+    fun vehicleFinanceViewModel(): com.ijs.finance.presentation.VehicleFinanceViewModel
 }
 
 /**

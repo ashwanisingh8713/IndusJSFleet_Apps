@@ -238,7 +238,7 @@ private val FleetShapes = Shapes(
 /**
  * Theme state holder for accessing dark mode across the app
  */
-internal val LocalThemeIsDark = compositionLocalOf { mutableStateOf(false) }
+val LocalThemeIsDark = compositionLocalOf { mutableStateOf(false) }
 
 /**
  * Toggle theme function accessible throughout the app
@@ -261,7 +261,7 @@ fun isAppInDarkTheme(): Boolean {
  * Main App Theme Composable
  */
 @Composable
-internal fun AppTheme(
+fun AppTheme(
     onThemeChanged: @Composable (isDark: Boolean) -> Unit = {},
     content: @Composable () -> Unit
 ) {
