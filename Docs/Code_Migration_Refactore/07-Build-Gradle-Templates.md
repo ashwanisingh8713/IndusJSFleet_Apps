@@ -77,7 +77,7 @@ commonMain.dependencies {
 
 ## Per-Module Diffs
 
-### feat-customer/build.gradle.kts
+### screen-customer/build.gradle.kts
 
 ```diff
  plugins {
@@ -102,33 +102,33 @@ commonMain.dependencies {
  }
 ```
 
-### feat-team/build.gradle.kts
+### screen-team/build.gradle.kts
 
-Same diff pattern as feat-customer.
+Same diff pattern as screen-customer.
 
-### feat-vehicle/build.gradle.kts
+### screen-vehicle/build.gradle.kts
 
 Same diff pattern. No additional dependencies needed — `ijs-network-lib` (via `api()`)
 already provides `CostsRepository`, `CostTypesRepository`, `UserLocalDataSource`.
 
-### feat-driver/build.gradle.kts
+### screen-driver/build.gradle.kts
 
-Same diff pattern as feat-vehicle.
+Same diff pattern as screen-vehicle.
 
-### feat-trip/build.gradle.kts
+### screen-trip/build.gradle.kts
 
 Same diff pattern. `GooglePlacesService` access will come through `TripExternalDeps`
 callback, not as a direct import.
 
-### feat-payment/build.gradle.kts
+### screen-payment/build.gradle.kts
 
 Same diff pattern. `UserRepository` is available via `ijs-network-lib`.
 
-### feat-finance/build.gradle.kts
+### screen-finance/build.gradle.kts
 
 Same diff pattern.
 
-### feat-report/build.gradle.kts
+### screen-report/build.gradle.kts
 
 Same diff pattern.
 
@@ -142,14 +142,14 @@ Same diff pattern.
      implementation(project(":ijs-core-lib"))
      implementation(project(":ijs-network-lib"))
 +    implementation(project(":ijs-ui-components-lib"))
-     implementation(project(":feat-driver"))
-     implementation(project(":feat-vehicle"))
-     implementation(project(":feat-trip"))
-     implementation(project(":feat-customer"))
-     implementation(project(":feat-payment"))
-     implementation(project(":feat-team"))
-     implementation(project(":feat-report"))
-     implementation(project(":feat-finance"))
+     implementation(project(":screen-driver"))
+     implementation(project(":screen-vehicle"))
+     implementation(project(":screen-trip"))
+     implementation(project(":screen-customer"))
+     implementation(project(":screen-payment"))
+     implementation(project(":screen-team"))
+     implementation(project(":screen-report"))
+     implementation(project(":screen-finance"))
 -    implementation(project(":ijs-error-lib"))        // Already transitive via ijs-network-lib
 -    implementation(project(":ijs-dispatcher-lib"))    // Already transitive via ijs-network-lib
      implementation(project(":ijs-datetime-picker"))
@@ -165,7 +165,7 @@ Same diff pattern.
 
 | Module | May depend on | Must NOT depend on |
 |--------|--------------|-------------------|
-| `feat-*` | `ijs-network-lib`, `ijs-ui-components-lib` | Any other `feat-*` module, `sharedUI` |
-| `ijs-ui-components-lib` | `ijs-core-lib` | Any `feat-*` module, `ijs-network-lib` |
-| `sharedUI` | All `feat-*`, `ijs-ui-components-lib`, `ijs-network-lib` | — |
+| `screen-*` | `ijs-network-lib`, `ijs-ui-components-lib` | Any other `screen-*` module, `sharedUI` |
+| `ijs-ui-components-lib` | `ijs-core-lib` | Any `screen-*` module, `ijs-network-lib` |
+| `sharedUI` | All `screen-*`, `ijs-ui-components-lib`, `ijs-network-lib` | — |
 

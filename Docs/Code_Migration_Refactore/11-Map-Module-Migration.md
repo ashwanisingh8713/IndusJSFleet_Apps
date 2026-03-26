@@ -4,7 +4,7 @@
 
 | Item | Details |
 |------|---------|
-| **Module** | `feat-map` |
+| **Module** | `screen-map` |
 | **Namespace** | `com.ijs.map` |
 | **Package** | `com.ijs.map.presentation` |
 | **Migration Date** | March 2026 |
@@ -12,7 +12,7 @@
 
 ## Files Migrated
 
-| Source (sharedUI) | Destination (feat-map) |
+| Source (sharedUI) | Destination (screen-map) |
 |-------------------|----------------------|
 | `presentation/maps/MapsContract.kt` | `presentation/MapsContract.kt` |
 | `presentation/maps/MapsViewModel.kt` | `presentation/MapsViewModel.kt` |

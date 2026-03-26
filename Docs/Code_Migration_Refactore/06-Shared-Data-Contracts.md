@@ -30,7 +30,7 @@ package com.indusjs.fleet.core.model.shared
 
 /**
  * Lightweight vehicle representation for cross-feature selection/display.
- * Used in feature modules that need vehicle lists without depending on feat-vehicle.
+ * Used in feature modules that need vehicle lists without depending on screen-vehicle.
  */
 data class SelectableVehicle(
     val id: String,
@@ -50,7 +50,7 @@ package com.indusjs.fleet.core.model.shared
 
 /**
  * Lightweight driver representation for cross-feature selection/display.
- * Used in feature modules that need driver lists without depending on feat-driver.
+ * Used in feature modules that need driver lists without depending on screen-driver.
  */
 data class SelectableDriver(
     val id: String,
@@ -70,7 +70,7 @@ package com.indusjs.fleet.core.model.shared
 
 /**
  * Lightweight customer representation for cross-feature selection/display.
- * Used in feature modules that need customer lists without depending on feat-customer.
+ * Used in feature modules that need customer lists without depending on screen-customer.
  */
 data class SelectableCustomer(
     val id: String,
@@ -91,7 +91,7 @@ package com.indusjs.fleet.core.model.shared
 
 /**
  * Lightweight trip representation for cross-feature selection/display.
- * Used in feature modules that need trip lists without depending on feat-trip.
+ * Used in feature modules that need trip lists without depending on screen-trip.
  */
 data class SelectableTrip(
     val id: String,
@@ -113,7 +113,7 @@ package com.indusjs.fleet.core.model.shared
 
 /**
  * Lightweight team member representation for caretaker selection.
- * Used in feature modules that need team member lists without depending on feat-team.
+ * Used in feature modules that need team member lists without depending on screen-team.
  */
 data class CaretakerInfo(
     val id: String,
@@ -134,7 +134,7 @@ These DTOs are currently duplicated or in wrong modules and need consolidation:
 
 **Current locations:**
 - `ijs-network-lib` → `data/model/dashboard/DashboardModels.kt` (simple version: costType, amount, count)
-- `feat-report` → `data/model/reports/ProfitLossDto.kt` (rich version: costId, costLabel, groupId, percentage)
+- `screen-report` → `data/model/reports/ProfitLossDto.kt` (rich version: costId, costLabel, groupId, percentage)
 
 **Action:** Keep the **rich version** (from reports-lib) in `ijs-core-lib/data/model/costs/`, make fields optional for backward compatibility. Remove duplicates.
 

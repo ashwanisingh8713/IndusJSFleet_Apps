@@ -4,7 +4,7 @@
 
 | Item | Details |
 |------|---------|
-| **Module** | `feat-alerts` |
+| **Module** | `screen-alerts` |
 | **Namespace** | `com.ijs.alerts` |
 | **Package** | `com.ijs.alerts.presentation` |
 | **Migration Date** | March 2026 |
@@ -12,7 +12,7 @@
 
 ## Files Migrated
 
-| Source (sharedUI) | Destination (feat-alerts) |
+| Source (sharedUI) | Destination (screen-alerts) |
 |-------------------|--------------------------|
 | `presentation/alerts/AlertsListContract.kt` | `presentation/AlertsListContract.kt` |
 | `presentation/alerts/AlertsListViewModel.kt` | `presentation/AlertsListViewModel.kt` |

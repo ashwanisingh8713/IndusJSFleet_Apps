@@ -9,6 +9,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.indusjs.fleet.core.auth.AuthenticationEvent
 import com.indusjs.fleet.core.auth.AuthenticationManager
+import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.di.DefaultViewModelProvider
 import com.indusjs.fleet.di.ProvideViewModels
 import com.ijs.vehicle.domain.entity.DocumentType
@@ -16,6 +17,7 @@ import com.indusjs.fleet.navigation.FleetRoute
 import com.indusjs.fleet.navigation.fleetEntryProvider
 import com.indusjs.fleet.navigation.navigateAndClear
 import com.indusjs.uicomponents.theme.AppTheme
+import com.indusjs.fleet.core.logger.initPlatformLogger
 
 /**
  * File picker request for platform-specific file selection.
@@ -44,9 +46,15 @@ fun App(
     onSaveDocument: ((documentName: String, fileBytes: ByteArray, mimeType: String) -> Unit)? = null
 ) = AppTheme(onThemeChanged) {
 
+    // Initialize platform logger (no-op on Android/iOS where it's done earlier;
+    // initializes IjsLogger with marker PlatformContext on JS/WasmJS).
+    // Idempotent — IjsLogger.init() guards against re-initialization.
+    initPlatformLogger()
+
     val snackbarHostState = remember { SnackbarHostState() }
     // Use singleton instance to ensure Settings persistence across app lifecycle
     val viewModelProvider = remember { DefaultViewModelProvider.getInstance() }
+    val fleetLogger: FleetLogger = remember { viewModelProvider.fleetLogger }
 
     // Check if user is already logged in to determine initial route
     var isCheckingAuth by remember { mutableStateOf(true) }
@@ -54,28 +62,28 @@ fun App(
 
     // Check auth status on app launch
     LaunchedEffect(Unit) {
-        co.touchlab.kermit.Logger.d("App") { "Checking app launch status..." }
+        fleetLogger.d(TAG_APP, "Checking app launch status...")
         try {
             // Check if onboarding has been completed
             val onboardingCompleted = viewModelProvider.hasCompletedOnboarding()
-            co.touchlab.kermit.Logger.d("App") { "Onboarding completed: $onboardingCompleted" }
+            fleetLogger.d(TAG_APP, "Onboarding completed: $onboardingCompleted")
 
             if (!onboardingCompleted) {
                 initialRoute = FleetRoute.Onboarding
-                co.touchlab.kermit.Logger.d("App") { "Initial route set to: Onboarding" }
+                fleetLogger.d(TAG_APP, "Initial route set to: Onboarding")
             } else {
                 val isLoggedIn = viewModelProvider.userRepository.isLoggedIn()
-                co.touchlab.kermit.Logger.d("App") { "Auth check result: isLoggedIn=$isLoggedIn" }
+                fleetLogger.d(TAG_APP, "Auth check result: isLoggedIn=$isLoggedIn")
                 initialRoute = if (isLoggedIn) FleetRoute.Dashboard else FleetRoute.Login
-                co.touchlab.kermit.Logger.d("App") { "Initial route set to: $initialRoute" }
+                fleetLogger.d(TAG_APP, "Initial route set to: $initialRoute")
             }
         } catch (e: Exception) {
-            co.touchlab.kermit.Logger.e("App", e) { "Startup check failed: ${e.message}" }
+            fleetLogger.e(TAG_APP, "Startup check failed: ${e.message}", e)
             // If check fails, default to login
             initialRoute = FleetRoute.Login
         } finally {
             isCheckingAuth = false
-            co.touchlab.kermit.Logger.d("App") { "Startup check complete, isCheckingAuth=$isCheckingAuth" }
+            fleetLogger.d(TAG_APP, "Startup check complete, isCheckingAuth=$isCheckingAuth")
         }
     }
 
@@ -96,31 +104,31 @@ fun App(
     // IMPORTANT: Use backStack as key so collector restarts when backStack is recreated
     // This fixes the issue where auth events were collected with stale backStack reference
     LaunchedEffect(backStack) {
-        co.touchlab.kermit.Logger.d("App") { "Starting auth event collector with backStack hash: ${backStack.hashCode()}" }
+        fleetLogger.d(TAG_APP, "Starting auth event collector with backStack hash: ${backStack.hashCode()}")
         AuthenticationManager.authEvents.collect { event ->
-            co.touchlab.kermit.Logger.w("App") { "Auth event received: $event" }
+            fleetLogger.w(TAG_APP, "Auth event received: $event")
             try {
                 when (event) {
                     is AuthenticationEvent.Unauthorized,
                     is AuthenticationEvent.SessionExpired -> {
-                        co.touchlab.kermit.Logger.w("App") { "Session expired/unauthorized - navigating to Login" }
+                        fleetLogger.w(TAG_APP, "Session expired/unauthorized - navigating to Login")
                         backStack.navigateAndClear(FleetRoute.Login)
-                        co.touchlab.kermit.Logger.d("App") { "Navigation to Login completed" }
+                        fleetLogger.d(TAG_APP, "Navigation to Login completed")
                         val message = when (event) {
                             is AuthenticationEvent.SessionExpired -> event.message
                             else -> "Your session has expired. Please log in again."
                         }
                         snackbarHostState.showSnackbar(message)
-                        co.touchlab.kermit.Logger.d("App") { "Snackbar shown: $message" }
+                        fleetLogger.d(TAG_APP, "Snackbar shown: $message")
                     }
                     is AuthenticationEvent.LoggedOut -> {
-                        co.touchlab.kermit.Logger.d("App") { "User logged out - navigating to Login" }
+                        fleetLogger.d(TAG_APP, "User logged out - navigating to Login")
                         backStack.navigateAndClear(FleetRoute.Login)
-                        co.touchlab.kermit.Logger.d("App") { "Navigation to Login completed (logout)" }
+                        fleetLogger.d(TAG_APP, "Navigation to Login completed (logout)")
                     }
                 }
             } catch (e: Exception) {
-                co.touchlab.kermit.Logger.e("App", e) { "Error handling auth event: ${e.message}" }
+                fleetLogger.e(TAG_APP, "Error handling auth event: ${e.message}", e)
             }
         }
     }

@@ -2,14 +2,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.window.ComposeUIViewController
 import com.indusjs.fleet.App
+import com.indusjs.logger.IjsLogger
+import com.indusjs.logger.PlatformContext
 import platform.UIKit.UIApplication
 import platform.UIKit.UIStatusBarStyleDarkContent
 import platform.UIKit.UIStatusBarStyleLightContent
 import platform.UIKit.UIViewController
 import platform.UIKit.setStatusBarStyle
 
-fun MainViewController(): UIViewController = ComposeUIViewController {
-    App(onThemeChanged = { ThemeChanged(it) })
+fun MainViewController(): UIViewController {
+    // Initialize file logger before Compose starts
+    IjsLogger.init(PlatformContext())
+
+    return ComposeUIViewController {
+        App(onThemeChanged = { ThemeChanged(it) })
+    }
 }
 
 @Composable

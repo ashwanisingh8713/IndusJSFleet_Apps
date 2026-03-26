@@ -1,6 +1,7 @@
 package com.indusjs.fleet.data.database.dao
 
-import co.touchlab.kermit.Logger
+import com.indusjs.fleet.core.logger.FleetLogger
+import com.indusjs.fleet.TAG_TEAM_MEMBERS_DAO
 import com.indusjs.fleet.core.util.currentTimeMillis
 import com.indusjs.fleet.data.database.entity.TeamMemberEntity
 import com.indusjs.fleet.data.database.entity.TeamMembersListEntity
@@ -28,10 +29,9 @@ interface TeamMembersDao {
  */
 class SettingsTeamMembersDao(
     private val settings: Settings,
-    private val json: Json
+    private val json: Json,
+    private val logger: FleetLogger
 ) : TeamMembersDao {
-
-    private val log = Logger.withTag("TeamMembersDao")
 
     companion object {
         private const val KEY_TEAM_MEMBERS = "team_members_cache"
@@ -42,7 +42,7 @@ class SettingsTeamMembersDao(
             try {
                 json.decodeFromString<TeamMembersListEntity>(cached).members
             } catch (e: Exception) {
-                log.e(e) { "Failed to decode team members cache" }
+                logger.e(TAG_TEAM_MEMBERS_DAO, "Failed to decode team members cache", e)
                 emptyList()
             }
         } ?: emptyList()
@@ -61,9 +61,9 @@ class SettingsTeamMembersDao(
                 lastUpdated = currentTimeMillis()
             )
             settings.putString(KEY_TEAM_MEMBERS, json.encodeToString(entity))
-            log.d { "Saved ${members.size} team members to cache" }
+            logger.d(TAG_TEAM_MEMBERS_DAO, "Saved ${members.size} team members to cache")
         } catch (e: Exception) {
-            log.e(e) { "Failed to save team members: ${e.message}" }
+            logger.e(TAG_TEAM_MEMBERS_DAO, "Failed to save team members: ${e.message}", e)
         }
     }
 
@@ -72,10 +72,10 @@ class SettingsTeamMembersDao(
         val existingIndex = current.indexOfFirst { it.id == member.id }
         if (existingIndex >= 0) {
             current[existingIndex] = member
-            log.d { "Updated team member: ${member.fullName}" }
+            logger.d(TAG_TEAM_MEMBERS_DAO, "Updated team member: ${member.fullName}")
         } else {
             current.add(member)
-            log.d { "Added new team member: ${member.fullName}" }
+            logger.d(TAG_TEAM_MEMBERS_DAO, "Added new team member: ${member.fullName}")
         }
         saveTeamMembers(current)
     }
@@ -85,7 +85,7 @@ class SettingsTeamMembersDao(
         val removed = current.removeAll { it.id == id }
         if (removed) {
             saveTeamMembers(current)
-            log.d { "Deleted team member with id: $id" }
+            logger.d(TAG_TEAM_MEMBERS_DAO, "Deleted team member with id: $id")
         }
     }
 
@@ -99,6 +99,6 @@ class SettingsTeamMembersDao(
 
     override suspend fun clearCache() {
         settings.remove(KEY_TEAM_MEMBERS)
-        log.d { "Cleared team members cache" }
+        logger.d(TAG_TEAM_MEMBERS_DAO, "Cleared team members cache")
     }
 }

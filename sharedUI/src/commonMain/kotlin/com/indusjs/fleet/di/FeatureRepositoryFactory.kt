@@ -1,6 +1,7 @@
 package com.indusjs.fleet.di
 
 import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.customer.data.datasource.CustomerLocalDataSource
 import com.ijs.customer.data.datasource.CustomerRemoteDataSource
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
@@ -41,7 +42,8 @@ import com.russhwolf.settings.Settings
  * Factory that constructs feature-specific repositories from their respective feature libs.
  *
  * Each feature repository is lazily constructed by wiring its data source, mapper, and
- * auth-token provider together. All repos share the same HttpClient and UserLocalDataSource.
+ * auth-token provider together. All repos share the same HttpClient, UserLocalDataSource,
+ * and FleetLogger instance.
  */
 class FeatureRepositoryFactory(
     private val httpClient: HttpClient,
@@ -49,24 +51,26 @@ class FeatureRepositoryFactory(
     private val settings: Settings,
     private val dispatcherProvider: DispatcherProvider,
     private val teamLocalDataSource: TeamLocalDataSource,
-    private val customerLocalDataSource: CustomerLocalDataSource
+    private val customerLocalDataSource: CustomerLocalDataSource,
+    private val logger: FleetLogger
 ) {
     // Shared UserLocalDataSource for auth tokens across all feature repos
-    private val userLocalDataSource by lazy { UserLocalDataSourceImpl(settings) }
+    private val userLocalDataSource by lazy { UserLocalDataSourceImpl(settings, logger) }
 
     // ── Driver (ijs-driver-lib) ──
     val driverRepository: DriverRepository by lazy {
         DriverRepositoryImpl(
-            remoteDataSource = DriverRemoteDataSourceImpl(httpClient),
+            remoteDataSource = DriverRemoteDataSourceImpl(httpClient, logger),
             userLocalDataSource = userLocalDataSource,
-            mapper = DriverMapper()
+            mapper = DriverMapper(),
+            logger = logger
         )
     }
 
     // ── Vehicle (ijs-vehicle-lib) ──
     val vehicleRepository: VehicleRepository by lazy {
         VehicleRepositoryImpl(
-            remoteDataSource = VehicleRemoteDataSourceImpl(httpClient),
+            remoteDataSource = VehicleRemoteDataSourceImpl(httpClient, logger),
             userLocalDataSource = userLocalDataSource,
             mapper = VehicleMapper()
         )
@@ -75,7 +79,7 @@ class FeatureRepositoryFactory(
     // ── Trip (ijs-trip-lib) ──
     val tripRepository: TripRepository by lazy {
         TripRepositoryImpl(
-            remoteDataSource = TripRemoteDataSourceImpl(httpClient),
+            remoteDataSource = TripRemoteDataSourceImpl(httpClient, logger),
             userLocalDataSource = userLocalDataSource,
             mapper = TripMapper(),
             stopMapper = TripStopMapper()
@@ -85,45 +89,49 @@ class FeatureRepositoryFactory(
     // ── Customer (ijs-customer-lib) ──
     val customerRepository: CustomerRepository by lazy {
         CustomerRepositoryImpl(
-            remoteDataSource = CustomerRemoteDataSource(httpClient, json),
+            remoteDataSource = CustomerRemoteDataSource(httpClient, json, logger),
             localDataSource = customerLocalDataSource,
-            userLocalDataSource = userLocalDataSource
+            userLocalDataSource = userLocalDataSource,
+            logger = logger
         )
     }
 
     // ── Payment (ijs-payment-lib) ──
     val tripPaymentRepository: TripPaymentRepository by lazy {
         TripPaymentRepositoryImpl(
-            remoteDataSource = TripPaymentRemoteDataSource(httpClient, json),
-            dashboardDataSource = DashboardRemoteDataSourceImpl(httpClient),
-            userLocalDataSource = userLocalDataSource
+            remoteDataSource = TripPaymentRemoteDataSource(httpClient, json, logger),
+            dashboardDataSource = DashboardRemoteDataSourceImpl(httpClient, logger),
+            userLocalDataSource = userLocalDataSource,
+            logger = logger
         )
     }
 
     // ── Team (ijs-team-lib) ──
     val teamRepository: TeamRepository by lazy {
         TeamRepositoryImpl(
-            remoteDataSource = TeamRemoteDataSourceImpl(httpClient),
+            remoteDataSource = TeamRemoteDataSourceImpl(httpClient, logger),
             userLocalDataSource = userLocalDataSource,
-            localDataSource = teamLocalDataSource
+            localDataSource = teamLocalDataSource,
+            logger = logger
         )
     }
 
     // ── Reports (ijs-reports-lib) ──
     val reportsRepository: ReportsRepository by lazy {
         ReportsRepositoryImpl(
-            remoteDataSource = ReportsRemoteDataSource(httpClient, json),
-            userLocalDataSource = userLocalDataSource
+            remoteDataSource = ReportsRemoteDataSource(httpClient, json, logger),
+            userLocalDataSource = userLocalDataSource,
+            logger = logger
         )
     }
 
     // ── Finance (ijs-finance-lib) ──
     val vehicleFinanceRepository: VehicleFinanceRepository by lazy {
         VehicleFinanceRepositoryImpl(
-            remoteDataSource = VehicleFinanceRemoteDataSourceImpl(httpClient, json),
+            remoteDataSource = VehicleFinanceRemoteDataSourceImpl(httpClient, json, logger),
             userLocalDataSource = userLocalDataSource,
-            dispatcherProvider = dispatcherProvider
+            dispatcherProvider = dispatcherProvider,
+            logger = logger
         )
     }
 }
-

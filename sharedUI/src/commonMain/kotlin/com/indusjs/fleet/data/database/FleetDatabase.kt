@@ -1,5 +1,6 @@
 package com.indusjs.fleet.data.database
 
+import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.data.database.dao.CostTypesDao
 import com.indusjs.fleet.data.database.dao.CustomerDao
 import com.indusjs.fleet.data.database.dao.DashboardDao
@@ -23,11 +24,12 @@ import kotlinx.serialization.json.Json
  */
 class FleetDatabase(
     settings: Settings,
-    json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true },
+    logger: FleetLogger
 ) {
     private val dashboardDaoImpl = SettingsDashboardDao(settings, json)
     private val costTypesDaoImpl = SettingsCostTypesDao(settings, json)
-    private val teamMembersDaoImpl = SettingsTeamMembersDao(settings, json)
+    private val teamMembersDaoImpl = SettingsTeamMembersDao(settings, json, logger)
     private val customerDaoImpl = SettingsCustomerDao(settings, json)
 
     /**

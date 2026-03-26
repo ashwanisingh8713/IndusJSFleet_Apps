@@ -1,6 +1,7 @@
 package com.indusjs.fleet.di
 
 import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.data.datasource.costs.CostsLocalDataSource
 import com.indusjs.fleet.data.datasource.costs.CostsRemoteDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSource
@@ -58,19 +59,20 @@ class NetworkDataGraph private constructor(
             settings: Settings,
             dispatcherProvider: DispatcherProvider,
             dashboardLocalDataSource: DashboardLocalDataSource,
-            costsLocalDataSource: CostsLocalDataSource
+            costsLocalDataSource: CostsLocalDataSource,
+            logger: FleetLogger
         ): NetworkDataGraph {
             // --- Data Sources ---
-            val userLocalDS = UserLocalDataSourceImpl(settings)
-            val userRemoteDS = UserRemoteDataSourceImpl(httpClient)
-            val dashboardRemoteDS = DashboardRemoteDataSourceImpl(httpClient)
-            val costsRemoteDS = CostsRemoteDataSourceImpl(httpClient)
+            val userLocalDS = UserLocalDataSourceImpl(settings, logger)
+            val userRemoteDS = UserRemoteDataSourceImpl(httpClient, logger)
+            val dashboardRemoteDS = DashboardRemoteDataSourceImpl(httpClient, logger)
+            val costsRemoteDS = CostsRemoteDataSourceImpl(httpClient, logger)
 
             // --- Repositories ---
-            val userRepo = UserRepositoryImpl(userRemoteDS, userLocalDS)
+            val userRepo = UserRepositoryImpl(userRemoteDS, userLocalDS, logger)
             val dashboardRepo = DashboardRepositoryImpl(dashboardRemoteDS, dashboardLocalDataSource, userLocalDS)
             val costsRepo = CostsRepositoryImpl(costsRemoteDS, userLocalDS)
-            val costTypesRepo = CostTypesRepositoryImpl(costsRemoteDS, costsLocalDataSource, userLocalDS)
+            val costTypesRepo = CostTypesRepositoryImpl(costsRemoteDS, costsLocalDataSource, userLocalDS, logger)
 
             return NetworkDataGraph(
                 userRepository = userRepo,

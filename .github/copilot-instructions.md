@@ -47,19 +47,19 @@ iosApp ─────→ sharedUI (via framework)
 
 sharedUI ──→ ijs-core-lib
 sharedUI ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-vehicle ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-driver  ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-trip    ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-customer──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-payment ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-team    ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-report ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-finance ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-user    ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-onboarding ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-dashboard ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-alerts  ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-map     ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-vehicle ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-driver  ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-trip    ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-customer──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-payment ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-team    ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-report ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-finance ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-user    ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-onboarding ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-dashboard ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-alerts  ──→ ijs-network-lib ──→ ijs-core-lib
+sharedUI ──→ screen-map     ──→ ijs-network-lib ──→ ijs-core-lib
 sharedUI ──→ ijs-datetime-picker ──→ ijs-datetime-utils
 sharedUI ──→ ijs-pdf-report  ──→ ijs-datetime-utils
 
@@ -98,14 +98,14 @@ Each feature module contains the **data layer + domain layer** for its feature, 
 
 | Module | Namespace | Description | Key Files |
 |--------|-----------|-------------|-----------|
-| **`feat-vehicle`** | `com.ijs.vehicle` | **Vehicle feature data layer.** CRUD operations for vehicles, document management, maintenance costs, vehicle status transitions (`inactive → active → on_route → maintenance → damaged → decommissioned`). | `VehicleRemoteDataSource`, `VehicleRepositoryImpl`, `VehicleMapper`, `VehicleDto`, `Vehicle`, `VehicleDetail`, `VehicleUseCases` |
-| **`feat-driver`** | `com.ijs.driver` | **Driver feature data layer.** CRUD for drivers, license tracking, driver cost management (salary, advance, bonus, penalty), status transitions (`inactive → active → on_route → on_leave → suspended → terminated`). | `DriverRemoteDataSource`, `DriverRepositoryImpl`, `DriverMapper`, `DriverDto`, `DriverCostModels`, `Driver`, `DriverUseCases` |
-| **`feat-trip`** | `com.ijs.trip` | **Trip feature data layer.** Trip planning, route management, cargo tracking, scheduling, trip cost recording, state machine (`planned → on_route → completed`, or `cancelled`/`failed`/`delayed`). | `TripRemoteDataSource`, `TripRepositoryImpl`, `TripMapper`, `TripDto`, `Trip`, `TripUseCases` |
-| **`feat-customer`** | `com.ijs.customer` | **Customer feature data layer.** Customer CRUD, company/contact/GST info, trip history by customer, financial summaries. Includes both remote and local data sources for caching. | `CustomerRemoteDataSource`, `CustomerLocalDataSource`, `CustomerRepositoryImpl`, `CustomerMapper`, `CustomerDto`, `Customer`, `CustomerUseCases` |
-| **`feat-payment`** | `com.ijs.payment` | **Payment feature data layer.** Trip payment recording (cash, UPI, bank transfer, cheque, card), payment status tracking (`received`, `pending`, `cancelled`), payment history. | `TripPaymentRemoteDataSource`, `TripPaymentRepositoryImpl`, `TripPaymentMapper`, `TripPaymentDto`, `TripPaymentRequest`, `TripPayment`, `PaymentEnums` |
-| **`feat-team`** | `com.ijs.team` | **Team management data layer.** Team member CRUD (General Manager, Manager, Supervisor), role-based access, member status management. Includes local data source for caching. | `TeamRemoteDataSource`, `TeamLocalDataSource`, `TeamRepositoryImpl`, `TeamMapper`, `TeamDto`, `TeamMember` |
-| **`feat-report`** | `com.ijs.reports` | **Reports & analytics data layer.** Profit/Loss by vehicle, by trip, cost analysis with date ranges, consolidated P&L statements. Owner/GM-only access. | `ReportsRemoteDataSource`, `ReportsRepositoryImpl`, `ProfitLossDto`, `ProfitLossRequest`, `ProfitLossEntities` |
-| **`feat-finance`** | `com.ijs.finance` | **Vehicle finance data layer.** Vehicle purchase records, loan tracking, EMI payment history, finance status summaries. | `VehicleFinanceRemoteDataSource`, `VehicleFinanceRepositoryImpl`, `VehicleFinanceMapper`, `VehicleFinanceDto`, `VehiclePurchase`, `LoanPayment` |
+| **`screen-vehicle`** | `com.ijs.vehicle` | **Vehicle feature data layer.** CRUD operations for vehicles, document management, maintenance costs, vehicle status transitions (`inactive → active → on_route → maintenance → damaged → decommissioned`). | `VehicleRemoteDataSource`, `VehicleRepositoryImpl`, `VehicleMapper`, `VehicleDto`, `Vehicle`, `VehicleDetail`, `VehicleUseCases` |
+| **`screen-driver`** | `com.ijs.driver` | **Driver feature data layer.** CRUD for drivers, license tracking, driver cost management (salary, advance, bonus, penalty), status transitions (`inactive → active → on_route → on_leave → suspended → terminated`). | `DriverRemoteDataSource`, `DriverRepositoryImpl`, `DriverMapper`, `DriverDto`, `DriverCostModels`, `Driver`, `DriverUseCases` |
+| **`screen-trip`** | `com.ijs.trip` | **Trip feature data layer.** Trip planning, route management, cargo tracking, scheduling, trip cost recording, state machine (`planned → on_route → completed`, or `cancelled`/`failed`/`delayed`). | `TripRemoteDataSource`, `TripRepositoryImpl`, `TripMapper`, `TripDto`, `Trip`, `TripUseCases` |
+| **`screen-customer`** | `com.ijs.customer` | **Customer feature data layer.** Customer CRUD, company/contact/GST info, trip history by customer, financial summaries. Includes both remote and local data sources for caching. | `CustomerRemoteDataSource`, `CustomerLocalDataSource`, `CustomerRepositoryImpl`, `CustomerMapper`, `CustomerDto`, `Customer`, `CustomerUseCases` |
+| **`screen-payment`** | `com.ijs.payment` | **Payment feature data layer.** Trip payment recording (cash, UPI, bank transfer, cheque, card), payment status tracking (`received`, `pending`, `cancelled`), payment history. | `TripPaymentRemoteDataSource`, `TripPaymentRepositoryImpl`, `TripPaymentMapper`, `TripPaymentDto`, `TripPaymentRequest`, `TripPayment`, `PaymentEnums` |
+| **`screen-team`** | `com.ijs.team` | **Team management data layer.** Team member CRUD (General Manager, Manager, Supervisor), role-based access, member status management. Includes local data source for caching. | `TeamRemoteDataSource`, `TeamLocalDataSource`, `TeamRepositoryImpl`, `TeamMapper`, `TeamDto`, `TeamMember` |
+| **`screen-report`** | `com.ijs.reports` | **Reports & analytics data layer.** Profit/Loss by vehicle, by trip, cost analysis with date ranges, consolidated P&L statements. Owner/GM-only access. | `ReportsRemoteDataSource`, `ReportsRepositoryImpl`, `ProfitLossDto`, `ProfitLossRequest`, `ProfitLossEntities` |
+| **`screen-finance`** | `com.ijs.finance` | **Vehicle finance data layer.** Vehicle purchase records, loan tracking, EMI payment history, finance status summaries. | `VehicleFinanceRemoteDataSource`, `VehicleFinanceRepositoryImpl`, `VehicleFinanceMapper`, `VehicleFinanceDto`, `VehiclePurchase`, `LoanPayment` |
 
 ### Presentation-Only Feature Modules
 
@@ -113,11 +113,11 @@ Each presentation-only feature module contains the **presentation layer** (Contr
 
 | Module | Namespace | Description | Key Files |
 |--------|-----------|-------------|-----------|
-| **`feat-user`** | `com.ijs.user` | **User/Auth feature presentation.** Login, signup, forgot password, profile, change password screens. | `LoginViewModel`, `SignUpViewModel`, `ProfileViewModel`, `UserFeatureFacade` |
-| **`feat-onboarding`** | `com.ijs.onboarding` | **Onboarding feature presentation.** First-time user onboarding flow. | `OnboardingViewModel`, `OnboardingFeatureFacade` |
-| **`feat-dashboard`** | `com.ijs.dashboard` | **Dashboard feature presentation.** Main overview screen with fleet stats, cost overview, financial summary, alerts, quick actions. 6 use cases, 18+ navigation callbacks. | `DashboardViewModel`, `DashboardScreen`, `DashboardContract`, `DashboardFeatureFacade` |
-| **`feat-alerts`** | `com.ijs.alerts` | **Alerts feature presentation.** Document expiry, license expiry, maintenance due alerts list. | `AlertsListViewModel`, `AlertsListScreen`, `AlertsFeatureFacade` |
-| **`feat-map`** | `com.ijs.map` | **Maps feature presentation.** Real-time vehicle tracking on map (MQTT subscribe). Currently mock data. | `MapsViewModel`, `MapsScreen`, `MapFeatureFacade` |
+| **`screen-user`** | `com.ijs.user` | **User/Auth feature presentation.** Login, signup, forgot password, profile, change password screens. | `LoginViewModel`, `SignUpViewModel`, `ProfileViewModel`, `UserFeatureFacade` |
+| **`screen-onboarding`** | `com.ijs.onboarding` | **Onboarding feature presentation.** First-time user onboarding flow. | `OnboardingViewModel`, `OnboardingFeatureFacade` |
+| **`screen-dashboard`** | `com.ijs.dashboard` | **Dashboard feature presentation.** Main overview screen with fleet stats, cost overview, financial summary, alerts, quick actions. 6 use cases, 18+ navigation callbacks. | `DashboardViewModel`, `DashboardScreen`, `DashboardContract`, `DashboardFeatureFacade` |
+| **`screen-alerts`** | `com.ijs.alerts` | **Alerts feature presentation.** Document expiry, license expiry, maintenance due alerts list. | `AlertsListViewModel`, `AlertsListScreen`, `AlertsFeatureFacade` |
+| **`screen-map`** | `com.ijs.map` | **Maps feature presentation.** Real-time vehicle tracking on map (MQTT subscribe). Currently mock data. | `MapsViewModel`, `MapsScreen`, `MapFeatureFacade` |
 
 ### UI Component Modules
 
@@ -130,7 +130,7 @@ Each presentation-only feature module contains the **presentation layer** (Contr
 
 | Module | Namespace | Description |
 |--------|-----------|-------------|
-| **`sharedUI`** | `com.indusjs.fleet` | **Core orchestration module.** Contains Navigation, DI wiring (ViewModelProvider, DefaultViewModelProvider, FeatureRepositoryFactory), theming, and shared utilities. **NO presentation code** — all screens/ViewModels/contracts live in their respective `feat-*` modules. Depends on all feature modules. Produces `SharedUI` iOS framework. |
+| **`sharedUI`** | `com.indusjs.fleet` | **Core orchestration module.** Contains Navigation, DI wiring (ViewModelProvider, DefaultViewModelProvider, FeatureRepositoryFactory), theming, and shared utilities. **NO presentation code** — all screens/ViewModels/contracts live in their respective `screen-*` modules. Depends on all feature modules. Produces `SharedUI` iOS framework. |
 | **`androidApp`** | `com.indusjs.fleet.androidApp` | **Android entry point (thin shell).** `FleetApplication` + `AppActivity`. Firebase Crashlytics integration. |
 | **`webApp`** | N/A | **Web entry point (thin shell).** JS + WasmJS browser targets. Single `main.kt`. |
 | **`locationTracker`** | `com.indusjs.fleet.locationtracker` | **Standalone Android GPS tracking app (separate APK).** MQTT-based location publishing via HiveMQ. Contains `LocationTrackingService`, `MqttClientManager`, `TrackerPreferencesRepository`. No dependency on `sharedUI`. |
@@ -216,10 +216,10 @@ User taps button
   → UI recomposes with new data
 ```
 
-### Folder Structure (Feature Module — e.g., `feat-vehicle`)
+### Folder Structure (Feature Module — e.g., `screen-vehicle`)
 
 ```
-feat-vehicle/src/commonMain/kotlin/com/indusjs/fleet/
+screen-vehicle/src/commonMain/kotlin/com/indusjs/fleet/
 ├── data/
 │   ├── datasource/vehicle/    # VehicleRemoteDataSource + Impl
 │   ├── mapper/vehicle/        # VehicleMapper (DTO ↔ Entity)

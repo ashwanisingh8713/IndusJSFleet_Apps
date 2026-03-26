@@ -13,14 +13,14 @@ androidApp ──→ sharedUI
 webApp ─────→ sharedUI
 iosApp ─────→ sharedUI (via framework)
 
-sharedUI ──→ feat-vehicle  ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ feat-driver   ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ feat-trip     ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ feat-customer ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ feat-payment  ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ feat-team     ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ feat-report  ──→ ijs-network-lib + ijs-ui-components-lib
-sharedUI ──→ feat-finance  ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ screen-vehicle  ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ screen-driver   ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ screen-trip     ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ screen-customer ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ screen-payment  ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ screen-team     ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ screen-report  ──→ ijs-network-lib + ijs-ui-components-lib
+sharedUI ──→ screen-finance  ──→ ijs-network-lib + ijs-ui-components-lib
 sharedUI ──→ ijs-ui-components-lib ──→ ijs-core-lib
 
 ijs-network-lib ──→ ijs-core-lib
@@ -121,7 +121,7 @@ sharedUI/
 ### Finance ViewModel Split
 
 The current shared-ViewModel pattern (`rememberSharedViewModel("vehicle_finance_flow")`)
-is replaced with **4 separate ViewModels** in `feat-finance`:
+is replaced with **4 separate ViewModels** in `screen-finance`:
 - `VehicleFinanceListViewModel`
 - `VehicleFinanceDetailViewModel`
 - `AddPurchaseInfoViewModel`
@@ -178,7 +178,7 @@ ijs-ui-components-lib/
 Each feature module exposes a single **Facade** as its public API:
 
 ```kotlin
-// In feat-customer
+// In screen-customer
 class CustomerFeatureFacade(
     private val customerRepository: CustomerRepository,
     private val dispatcherProvider: DispatcherProvider
@@ -207,7 +207,7 @@ class CustomerFeatureFacade(
 ### ExternalDeps (for cross-feature data)
 
 ```kotlin
-// In feat-vehicle
+// In screen-vehicle
 interface VehicleExternalDeps {
     suspend fun getDrivers(): Result<List<SelectableDriver>>
     suspend fun getCaretakers(): Result<List<CaretakerInfo>>
@@ -244,13 +244,13 @@ is FleetRoute.Customers -> NavEntry(route) {
 |------|--------|-------------------|------------|
 | 1 | `ijs-ui-components-lib` (new) | None — foundation | Low |
 | 2 | Common data contracts in `ijs-core-lib` | None — foundation | Low |
-| 3 | `feat-customer` (pilot) | None | Low |
-| 4 | `feat-team` | `UserLocalDataSource` (network-lib, allowed) | Low |
-| 5 | `feat-vehicle` | drivers, team (via ExternalDeps) | Medium |
-| 6 | `feat-driver` | team (via ExternalDeps) | Medium |
-| 7 | `feat-payment` | trips (via ExternalDeps) | Medium |
-| 8 | `feat-finance` | vehicles (via ExternalDeps) | Medium |
-| 9 | `feat-trip` | vehicles, drivers, customers (via ExternalDeps) | High |
-| 10 | `feat-report` | vehicles, trips (via ExternalDeps) | Medium |
+| 3 | `screen-customer` (pilot) | None | Low |
+| 4 | `screen-team` | `UserLocalDataSource` (network-lib, allowed) | Low |
+| 5 | `screen-vehicle` | drivers, team (via ExternalDeps) | Medium |
+| 6 | `screen-driver` | team (via ExternalDeps) | Medium |
+| 7 | `screen-payment` | trips (via ExternalDeps) | Medium |
+| 8 | `screen-finance` | vehicles (via ExternalDeps) | Medium |
+| 9 | `screen-trip` | vehicles, drivers, customers (via ExternalDeps) | High |
+| 10 | `screen-report` | vehicles, trips (via ExternalDeps) | Medium |
 | 11 | `sharedUI` cleanup | N/A | Low |
 

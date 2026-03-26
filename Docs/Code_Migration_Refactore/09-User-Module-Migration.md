@@ -1,10 +1,10 @@
-# 09 — User Module Migration (`feat-user`)
+# 09 — User Module Migration (`screen-user`)
 
 ## Overview
 
-Migrated all user/auth presentation code from `sharedUI/presentation/auth/` and `sharedUI/presentation/user/` into the new `feat-user` feature module.
+Migrated all user/auth presentation code from `sharedUI/presentation/auth/` and `sharedUI/presentation/user/` into the new `screen-user` feature module.
 
-- **Module:** `feat-user`
+- **Module:** `screen-user`
 - **Package:** `com.ijs.user`
 - **Namespace:** `com.ijs.user`
 
@@ -12,18 +12,18 @@ Migrated all user/auth presentation code from `sharedUI/presentation/auth/` and 
 
 | Source (deleted) | Destination | Description |
 |---|---|---|
-| `sharedUI/.../presentation/auth/LoginContract.kt` | `feat-user/.../presentation/login/LoginContract.kt` | Login MVI contract |
-| `sharedUI/.../presentation/auth/LoginViewModel.kt` | `feat-user/.../presentation/login/LoginViewModel.kt` | Login ViewModel |
-| `sharedUI/.../presentation/auth/LoginScreen.kt` | `feat-user/.../presentation/login/LoginScreen.kt` | Login UI screen |
-| `sharedUI/.../presentation/user/signup/*` | `feat-user/.../presentation/signup/*` | Sign up flow |
-| `sharedUI/.../presentation/user/profile/*` | `feat-user/.../presentation/profile/*` | User profile |
-| `sharedUI/.../presentation/user/changepassword/*` | `feat-user/.../presentation/changepassword/*` | Change password |
-| `sharedUI/.../presentation/user/forgotpassword/*` | `feat-user/.../presentation/forgotpassword/*` | Forgot/reset password |
+| `sharedUI/.../presentation/auth/LoginContract.kt` | `screen-user/.../presentation/login/LoginContract.kt` | Login MVI contract |
+| `sharedUI/.../presentation/auth/LoginViewModel.kt` | `screen-user/.../presentation/login/LoginViewModel.kt` | Login ViewModel |
+| `sharedUI/.../presentation/auth/LoginScreen.kt` | `screen-user/.../presentation/login/LoginScreen.kt` | Login UI screen |
+| `sharedUI/.../presentation/user/signup/*` | `screen-user/.../presentation/signup/*` | Sign up flow |
+| `sharedUI/.../presentation/user/profile/*` | `screen-user/.../presentation/profile/*` | User profile |
+| `sharedUI/.../presentation/user/changepassword/*` | `screen-user/.../presentation/changepassword/*` | Change password |
+| `sharedUI/.../presentation/user/forgotpassword/*` | `screen-user/.../presentation/forgotpassword/*` | Forgot/reset password |
 
 ## Architecture
 
 ```
-feat-user/
+screen-user/
 └── src/commonMain/kotlin/com/ijs/user/presentation/
     ├── UserFeatureFacade.kt         # Public facade (5 entry points)
     ├── login/
@@ -51,7 +51,7 @@ feat-user/
 ## Dependencies
 
 ```kotlin
-// feat-user/build.gradle.kts
+// screen-user/build.gradle.kts
 api(project(":ijs-network-lib"))  // UserRepository, MviViewModel, auth infra
 // Transitive: ijs-core-lib (MVI, entities), ijs-error-lib, ijs-dispatcher-lib
 // Via fleet-compose-conventions: ijs-ui-components-lib, Compose, Lifecycle

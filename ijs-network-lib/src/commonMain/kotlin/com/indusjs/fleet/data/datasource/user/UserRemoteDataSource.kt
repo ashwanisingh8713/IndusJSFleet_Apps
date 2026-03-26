@@ -31,7 +31,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import dev.zacsweers.metro.Inject
-import co.touchlab.kermit.Logger
+import com.indusjs.fleet.core.logger.FleetLogger
+import com.indusjs.fleet.network.TAG_USER_REMOTE_DS
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -58,11 +59,11 @@ interface UserRemoteDataSource : RemoteDataSource {
  */
 @Inject
 class UserRemoteDataSourceImpl(
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val logger: FleetLogger
 ) : UserRemoteDataSource {
 
     private val baseUrl = ApiConfig.BASE_URL
-    private val log = Logger.withTag("UserRemoteDataSource")
 
     private val json = Json {
         prettyPrint = true
@@ -74,76 +75,76 @@ class UserRemoteDataSourceImpl(
 
     override suspend fun signUp(request: SignUpRequest): ApiResponse<AuthResponseDto> {
         return try {
-            log.d { "Signing up user: ${request.email}" }
+            logger.d(TAG_USER_REMOTE_DS, "Signing up user: ${request.email}")
             val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.SIGNUP}") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
             handleAuthResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Sign up failed: ${e.message}" }
+            logger.e(TAG_USER_REMOTE_DS, "Sign up failed: ${e.message}", e)
             ApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }
 
     override suspend fun login(request: LoginRequest): ApiResponse<AuthResponseDto> {
         return try {
-            log.d { "Logging in user: ${request.identifier}" }
+            logger.d(TAG_USER_REMOTE_DS, "Logging in user: ${request.identifier}")
             val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.LOGIN}") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
             handleAuthResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Login failed: ${e.message}" }
+            logger.e(TAG_USER_REMOTE_DS, "Login failed: ${e.message}", e)
             ApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }
 
     override suspend fun forgotPassword(request: ForgotPasswordRequest): ApiResponse<Unit> {
         return try {
-            log.d { "Forgot password for: ${request.identifier}" }
+            logger.d(TAG_USER_REMOTE_DS, "Forgot password for: ${request.identifier}")
             val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.FORGOT_PASSWORD}") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
             handleUnitResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Forgot password failed: ${e.message}" }
+            logger.e(TAG_USER_REMOTE_DS, "Forgot password failed: ${e.message}", e)
             ApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }
 
     override suspend fun resetPassword(request: ResetPasswordRequest): ApiResponse<Unit> {
         return try {
-            log.d { "Reset password for: ${request.identifier}" }
+            logger.d(TAG_USER_REMOTE_DS, "Reset password for: ${request.identifier}")
             val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.RESET_PASSWORD}") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
             handleUnitResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Reset password failed: ${e.message}" }
+            logger.e(TAG_USER_REMOTE_DS, "Reset password failed: ${e.message}", e)
             ApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }
 
     override suspend fun getProfile(token: String): ApiResponse<UserProfileDto> {
         return try {
-            log.d { "Getting user profile" }
+            logger.d(TAG_USER_REMOTE_DS, "Getting user profile")
             val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.PROFILE}") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
             handleProfileResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Get profile failed: ${e.message}" }
+            logger.e(TAG_USER_REMOTE_DS, "Get profile failed: ${e.message}", e)
             ApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }
 
     override suspend fun updateProfile(token: String, request: UpdateProfileRequest): ApiResponse<UserDto> {
         return try {
-            log.d { "Updating user profile" }
+            logger.d(TAG_USER_REMOTE_DS, "Updating user profile")
             val response: HttpResponse = httpClient.put("$baseUrl${ApiConfig.Endpoints.PROFILE}") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
@@ -151,14 +152,14 @@ class UserRemoteDataSourceImpl(
             }
             handleUserResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Update profile failed: ${e.message}" }
+            logger.e(TAG_USER_REMOTE_DS, "Update profile failed: ${e.message}", e)
             ApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }
 
     override suspend fun changePassword(token: String, request: ChangePasswordRequest): ApiResponse<Unit> {
         return try {
-            log.d { "Changing password" }
+            logger.d(TAG_USER_REMOTE_DS, "Changing password")
             val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.CHANGE_PASSWORD}") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
@@ -166,7 +167,7 @@ class UserRemoteDataSourceImpl(
             }
             handleUnitResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Change password failed: ${e.message}" }
+            logger.e(TAG_USER_REMOTE_DS, "Change password failed: ${e.message}", e)
             ApiResponse(success = false, message = e.message ?: "Network error occurred")
         }
     }
@@ -175,15 +176,15 @@ class UserRemoteDataSourceImpl(
         val raw = try {
             response.bodyAsText()
         } catch (e: Exception) {
-            log.e(e) { "Failed to read response body" }
+            logger.e(TAG_USER_REMOTE_DS, "Failed to read response body", e)
             return ApiResponse(success = false, message = "Failed to read response body")
         }
 
-        log.d { "Auth response status: ${response.status.value}, isSuccess: ${response.status.isSuccess()}, body: $raw" }
+        logger.d(TAG_USER_REMOTE_DS, "Auth response status: ${response.status.value}, isSuccess: ${response.status.isSuccess()}, body: $raw")
 
         if (!response.status.isSuccess()) {
             val errorMsg = parseErrorMessage(response.status, raw)
-            log.e { "Auth failed with status ${response.status.value}: $errorMsg" }
+            logger.e(TAG_USER_REMOTE_DS, "Auth failed with status ${response.status.value}: $errorMsg")
             return ApiResponse(success = false, message = errorMsg)
         }
 
@@ -195,7 +196,7 @@ class UserRemoteDataSourceImpl(
                 ApiResponse(success = false, message = apiResp.message ?: "Login failed")
             }
         } catch (e: Exception) {
-            log.w(e) { "Failed to parse as ApiResponse<AuthResponseDto>, trying fallback" }
+            logger.w(TAG_USER_REMOTE_DS, "Failed to parse as ApiResponse<AuthResponseDto>, trying fallback", e)
 
             try {
                 val jsonEl = json.parseToJsonElement(raw)
@@ -215,10 +216,10 @@ class UserRemoteDataSourceImpl(
                     return ApiResponse(success = false, message = messageField ?: "Login failed")
                 }
 
-                log.e { "Could not find token/user in response: $raw" }
+                logger.e(TAG_USER_REMOTE_DS, "Could not find token/user in response: $raw")
                 ApiResponse(success = false, message = "Failed to parse login response")
             } catch (e2: Exception) {
-                log.e(e2) { "Fallback parsing also failed: $raw" }
+                logger.e(TAG_USER_REMOTE_DS, "Fallback parsing also failed: $raw", e2)
                 ApiResponse(success = false, message = "Failed to parse response: ${e2.message}")
             }
         }
@@ -228,11 +229,11 @@ class UserRemoteDataSourceImpl(
         val raw = try {
             response.bodyAsText()
         } catch (e: Exception) {
-            log.e(e) { "Failed to read response body" }
+            logger.e(TAG_USER_REMOTE_DS, "Failed to read response body", e)
             return ApiResponse(success = false, message = "Failed to read response body")
         }
 
-        log.d { "Profile response status: ${response.status}, body: $raw" }
+        logger.d(TAG_USER_REMOTE_DS, "Profile response status: ${response.status}, body: $raw")
 
         if (!response.status.isSuccess()) {
             return ApiResponse(success = false, message = parseErrorMessage(response.status, raw))
@@ -246,7 +247,7 @@ class UserRemoteDataSourceImpl(
                 ApiResponse(success = false, message = apiResp.message ?: "Failed to get profile")
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to parse profile response: $raw" }
+            logger.e(TAG_USER_REMOTE_DS, "Failed to parse profile response: $raw", e)
             ApiResponse(success = false, message = "Failed to parse response: ${e.message}")
         }
     }
@@ -255,11 +256,11 @@ class UserRemoteDataSourceImpl(
         val raw = try {
             response.bodyAsText()
         } catch (e: Exception) {
-            log.e(e) { "Failed to read response body" }
+            logger.e(TAG_USER_REMOTE_DS, "Failed to read response body", e)
             return ApiResponse(success = false, message = "Failed to read response body")
         }
 
-        log.d { "User response status: ${response.status}, body: $raw" }
+        logger.d(TAG_USER_REMOTE_DS, "User response status: ${response.status}, body: $raw")
 
         if (!response.status.isSuccess()) {
             return ApiResponse(success = false, message = parseErrorMessage(response.status, raw))
@@ -273,7 +274,7 @@ class UserRemoteDataSourceImpl(
                 ApiResponse(success = false, message = apiResp.message ?: "Failed to update profile")
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to parse user response: $raw" }
+            logger.e(TAG_USER_REMOTE_DS, "Failed to parse user response: $raw", e)
             ApiResponse(success = false, message = "Failed to parse response: ${e.message}")
         }
     }
@@ -285,7 +286,7 @@ class UserRemoteDataSourceImpl(
             return ApiResponse(success = true, message = null)
         }
 
-        log.d { "Unit response status: ${response.status}, body: $raw" }
+        logger.d(TAG_USER_REMOTE_DS, "Unit response status: ${response.status}, body: $raw")
 
         if (!response.status.isSuccess()) {
             return ApiResponse(success = false, message = parseErrorMessage(response.status, raw))
@@ -297,7 +298,7 @@ class UserRemoteDataSourceImpl(
             val apiResp = json.decodeFromString<SimpleApiResponse>(raw)
             ApiResponse(success = apiResp.success, message = apiResp.message)
         } catch (e: Exception) {
-            log.d { "Non-wrapped unit response body: $raw" }
+            logger.d(TAG_USER_REMOTE_DS, "Non-wrapped unit response body: $raw")
             ApiResponse(success = true, message = null)
         }
     }

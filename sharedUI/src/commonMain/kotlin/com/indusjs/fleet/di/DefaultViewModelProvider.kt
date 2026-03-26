@@ -2,10 +2,12 @@ package com.indusjs.fleet.di
 
 import com.indusjs.fleet.core.auth.AuthenticationManager
 import com.indusjs.fleet.core.init.AppInitializer
+import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.dispatcher.DefaultDispatcherProvider
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.network.HttpClientProvider
 import com.indusjs.fleet.data.database.FleetDatabase
+import com.indusjs.logger.IjsLogger
 import com.indusjs.fleet.data.datasource.costs.CostsLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
@@ -136,15 +138,18 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     }
 
     // Lazy-initialized database for offline caching
-    private val database: FleetDatabase by lazy { FleetDatabase(settings, json) }
+    private val database: FleetDatabase by lazy { FleetDatabase(settings, json, fleetLogger) }
 
-    private val log = co.touchlab.kermit.Logger.withTag("DefaultViewModelProvider")
+    // Single FleetLogger instance shared across the entire app
+    val fleetLogger: FleetLogger by lazy { IjsLogger.createFleetLogger() }
+
+    private val TAG = "DefaultViewModelProvider"
 
     init {
         // Register session clear callback with AuthenticationManager
         // This ensures the session is cleared before redirecting to login on 401
         AuthenticationManager.registerSessionClearCallback {
-            log.w { "Session clear callback invoked - clearing auth data only" }
+            fleetLogger.w(TAG, "Session clear callback invoked - clearing auth data only")
             // Only clear auth-related data, not all settings
             // Access networkDataGraph lazily — it's initialized on first use
             networkDataGraph.userLocalDataSource.clearSession()
@@ -190,9 +195,9 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val dashboardLocalDataSource by lazy {
         DashboardLocalDataSourceImpl(database.dashboardDao(), dashboardCacheMapper)
     }
-    private val costsLocalDataSource by lazy { CostsLocalDataSourceImpl(database.costTypesDao(), json) }
+    private val costsLocalDataSource by lazy { CostsLocalDataSourceImpl(database.costTypesDao(), json, fleetLogger) }
     private val teamLocalDataSource by lazy { TeamLocalDataSourceImpl(database.teamMembersDao()) }
-    private val customerLocalDataSource by lazy { CustomerLocalDataSourceImpl(database.customerDao()) }
+    private val customerLocalDataSource by lazy { CustomerLocalDataSourceImpl(database.customerDao(), fleetLogger) }
 
     /**
      * The NetworkDataGraph that wires shared data layer dependencies.
@@ -205,7 +210,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
             settings = settings,
             dispatcherProvider = dispatcherProvider,
             dashboardLocalDataSource = dashboardLocalDataSource,
-            costsLocalDataSource = costsLocalDataSource
+            costsLocalDataSource = costsLocalDataSource,
+            logger = fleetLogger
         )
     }
 
@@ -219,7 +225,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
             settings = settings,
             dispatcherProvider = dispatcherProvider,
             teamLocalDataSource = teamLocalDataSource,
-            customerLocalDataSource = customerLocalDataSource
+            customerLocalDataSource = customerLocalDataSource,
+            logger = fleetLogger
         )
     }
 
@@ -277,7 +284,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val getAlertsStatusUseCase by lazy { GetAlertsStatusUseCase(dashboardRepository) }
 
     // Cost Types use cases
-    private val initializeCostTypesUseCase by lazy { InitializeCostTypesUseCase(costTypesRepository) }
+    private val initializeCostTypesUseCase by lazy { InitializeCostTypesUseCase(costTypesRepository, fleetLogger) }
     private val getTripCostTypesUseCase by lazy { GetTripCostTypesUseCase(costTypesRepository) }
     private val getMaintenanceCostTypesUseCase by lazy { GetMaintenanceCostTypesUseCase(costTypesRepository) }
     private val getDriverCostTypesUseCase by lazy { GetDriverCostTypesUseCase(costTypesRepository) }
@@ -290,7 +297,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
 
     // App Initializer - handles one-time initialization tasks
     val appInitializer: AppInitializer by lazy {
-        AppInitializer(initializeCostTypesUseCase, dispatcherProvider)
+        AppInitializer(initializeCostTypesUseCase, dispatcherProvider, fleetLogger)
     }
 
     // Onboarding
@@ -382,7 +389,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         createTripWithDataUseCase,
         userLocalDataSource,
         googlePlacesService,
-        customerRepository
+        customerRepository,
+        fleetLogger
     )
 
     override fun tripDetailViewModel() = TripDetailViewModel(
@@ -397,7 +405,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         userLocalDataSource,
         googlePlacesService,
         customerRepository,
-        tripPaymentRepository
+        tripPaymentRepository,
+        fleetLogger
     )
 
     override fun mapsViewModel() = MapsViewModel(dispatcherProvider)
@@ -413,7 +422,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         tripRepository,
         costsRepository,
         costTypesRepository,
-        getTripCostTypesUseCase
+        getTripCostTypesUseCase,
+        fleetLogger
     )
 
     override fun maintenanceCostEntryViewModel() = MaintenanceCostEntryViewModel(
@@ -438,9 +448,9 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     )
 
     // Reports ViewModels
-    override fun reportsViewModel() = ReportsViewModel(reportsRepository)
+    override fun reportsViewModel() = ReportsViewModel(reportsRepository, fleetLogger)
 
-    override fun vehiclePLViewModel() = VehiclePLViewModel(reportsRepository, vehicleRepository)
+    override fun vehiclePLViewModel() = VehiclePLViewModel(reportsRepository, vehicleRepository, fleetLogger)
 
     override fun tripPLViewModel() = TripPLViewModel(reportsRepository, tripRepository)
 
@@ -455,17 +465,17 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         getLocalCustomersUseCase
     )
 
-    override fun customerDetailViewModel() = CustomerDetailViewModel(customerRepository)
+    override fun customerDetailViewModel() = CustomerDetailViewModel(customerRepository, fleetLogger)
 
     override fun createCustomerViewModel() = CreateCustomerViewModel(createCustomerUseCase)
 
     // Payment ViewModels
-    override fun paymentsViewModel() = PaymentsViewModel(tripPaymentRepository)
+    override fun paymentsViewModel() = PaymentsViewModel(tripPaymentRepository, fleetLogger)
 
-    override fun addPaymentViewModel() = AddPaymentViewModel(tripPaymentRepository, tripProviderAdapter)
+    override fun addPaymentViewModel() = AddPaymentViewModel(tripPaymentRepository, tripProviderAdapter, fleetLogger)
 
-    override fun paymentDetailViewModel() = PaymentDetailViewModel(tripPaymentRepository, userRepository)
+    override fun paymentDetailViewModel() = PaymentDetailViewModel(tripPaymentRepository, userRepository, fleetLogger)
 
     // Vehicle Finance ViewModels
-    override fun vehicleFinanceViewModel() = VehicleFinanceViewModel(vehicleRepository, vehicleFinanceRepository, dispatcherProvider)
+    override fun vehicleFinanceViewModel() = VehicleFinanceViewModel(vehicleRepository, vehicleFinanceRepository, dispatcherProvider, fleetLogger)
 }

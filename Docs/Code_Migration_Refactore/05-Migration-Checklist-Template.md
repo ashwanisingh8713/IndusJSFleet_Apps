@@ -110,35 +110,35 @@ Use this checklist for each feature module migration. Copy and track per module.
 
 ## Module-Specific Notes
 
-### feat-customer (Pilot)
+### screen-customer (Pilot)
 - Zero cross-feature deps — no ExternalDeps needed
 - Remove `FleetRoute` from `CustomersListContract`, `CreateCustomerContract`, `CustomerDetailContract`
 - `CustomerSelectionBottomSheet` already moved to `ijs-ui-components-lib` (uses `SelectableCustomer`)
 
-### feat-team
+### screen-team
 - `UserLocalDataSource` is from `ijs-network-lib` — direct access OK
 - `PermissionUtils` is from `ijs-core-lib` — direct access OK
 
-### feat-vehicle
+### screen-vehicle
 - Needs `VehicleExternalDeps` for drivers and caretakers
 - `StateComponents` vehicle helpers move into this module
 - File picker callbacks passed through Facade as lambdas
 
-### feat-driver
+### screen-driver
 - Needs `DriverExternalDeps` for caretakers
 - `StateComponents` driver helpers move into this module
 
-### feat-trip (Most Complex)
+### screen-trip (Most Complex)
 - Needs `TripExternalDeps` with 5+ callbacks
 - `GooglePlacesService` access via `searchPlaces()` callback
 - Customer selection via `getCustomers()` callback
 - Vehicle/Driver selection via shared contracts
 
-### feat-payment
+### screen-payment
 - Needs `PaymentExternalDeps` for trip data
 - `AddPaymentVM` uses `TripRepository` — replaced with `getTrips()` callback
 
-### feat-finance
+### screen-finance
 - Needs `FinanceExternalDeps` for vehicle data
 - **ViewModel Split Required:** Current shared ViewModel pattern (`rememberSharedViewModel("vehicle_finance_flow")`) must be replaced with 4 separate ViewModels:
   - `VehicleFinanceListViewModel` — list + filter
@@ -148,7 +148,7 @@ Use this checklist for each feature module migration. Copy and track per module.
 - Each screen loads data independently. Cross-screen refresh via navigation callbacks
   (e.g., `onPurchaseCreated` navigates back, list screen reloads in `init {}`).
 
-### feat-report
+### screen-report
 - Needs `ReportsExternalDeps` for vehicle and trip data
 - `CostBreakdownComponents.kt` uses `CostBreakdownItemDto` (now in ijs-core-lib)
 

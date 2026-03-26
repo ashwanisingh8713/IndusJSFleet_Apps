@@ -4,7 +4,7 @@
 
 | Item | Details |
 |------|---------|
-| **Module** | `feat-dashboard` |
+| **Module** | `screen-dashboard` |
 | **Namespace** | `com.ijs.dashboard` |
 | **Package** | `com.ijs.dashboard.presentation` |
 | **Migration Date** | March 2026 |
@@ -12,7 +12,7 @@
 
 ## Files Migrated
 
-| Source (sharedUI) | Destination (feat-dashboard) |
+| Source (sharedUI) | Destination (screen-dashboard) |
 |-------------------|------------------------------|
 | `presentation/dashboard/DashboardContract.kt` | `presentation/DashboardContract.kt` |
 | `presentation/dashboard/DashboardViewModel.kt` | `presentation/DashboardViewModel.kt` |

@@ -1,6 +1,7 @@
 package com.indusjs.fleet.core.init
 
-import co.touchlab.kermit.Logger
+import com.indusjs.fleet.core.logger.FleetLogger
+import com.indusjs.fleet.TAG_APP_INITIALIZER
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.usecase.costs.InitializeCostTypesUseCase
@@ -20,9 +21,9 @@ import kotlinx.coroutines.launch
  */
 class AppInitializer(
     private val initializeCostTypesUseCase: InitializeCostTypesUseCase,
-    private val dispatcherProvider: DispatcherProvider
+    private val dispatcherProvider: DispatcherProvider,
+    private val logger: FleetLogger
 ) {
-    private val log = Logger.withTag("AppInitializer")
 
     private var isInitialized = false
 
@@ -34,20 +35,20 @@ class AppInitializer(
      */
     fun initialize(scope: CoroutineScope) {
         if (isInitialized) {
-            log.d { "App already initialized, skipping" }
+            logger.d(TAG_APP_INITIALIZER, "App already initialized, skipping")
             return
         }
 
         scope.launch(dispatcherProvider.io) {
-            log.d { "Starting app initialization..." }
+            logger.d(TAG_APP_INITIALIZER, "Starting app initialization...")
 
             // Initialize cost types (one-time fetch and save)
             when (val result = initializeCostTypesUseCase()) {
                 is Result.Success -> {
-                    log.d { "Cost types initialization completed successfully" }
+                    logger.d(TAG_APP_INITIALIZER, "Cost types initialization completed successfully")
                 }
                 is Result.Error -> {
-                    log.w { "Cost types initialization failed: ${result.message}" }
+                    logger.w(TAG_APP_INITIALIZER, "Cost types initialization failed: ${result.message}")
                     // Don't block app - cost type screens will use fallback hardcoded types
                 }
                 is Result.Loading -> {
@@ -56,7 +57,7 @@ class AppInitializer(
             }
 
             isInitialized = true
-            log.d { "App initialization completed" }
+            logger.d(TAG_APP_INITIALIZER, "App initialization completed")
         }
     }
 
@@ -67,4 +68,3 @@ class AppInitializer(
         isInitialized = false
     }
 }
-

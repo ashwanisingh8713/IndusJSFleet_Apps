@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Adapter that bridges [TripRepository] (feat-trip) to [TripProviderForPayment] (feat-payment).
- * Breaks the circular dependency between feat-trip ↔ feat-payment.
+ * Adapter that bridges [TripRepository] (screen-trip) to [TripProviderForPayment] (screen-payment).
+ * Breaks the circular dependency between screen-trip ↔ screen-payment.
  */
 class TripProviderAdapter(
     private val tripRepository: TripRepository

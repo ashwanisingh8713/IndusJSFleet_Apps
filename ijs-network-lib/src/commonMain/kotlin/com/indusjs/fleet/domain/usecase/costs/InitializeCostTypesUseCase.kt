@@ -1,6 +1,7 @@
 package com.indusjs.fleet.domain.usecase.costs
 
-import co.touchlab.kermit.Logger
+import com.indusjs.fleet.core.logger.FleetLogger
+import com.indusjs.fleet.network.TAG_INIT_COST_TYPES
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import dev.zacsweers.metro.Inject
@@ -16,9 +17,9 @@ import dev.zacsweers.metro.Inject
  */
 @Inject
 class InitializeCostTypesUseCase(
-    private val costTypesRepository: CostTypesRepository
+    private val costTypesRepository: CostTypesRepository,
+    private val logger: FleetLogger
 ) {
-    private val log = Logger.withTag("InitializeCostTypesUseCase")
 
     /**
      * Initialize cost types if not already cached.
@@ -27,7 +28,7 @@ class InitializeCostTypesUseCase(
      * @return Result.Error only if something critical fails
      */
     suspend operator fun invoke(): Result<Unit> {
-        log.d { "Initializing cost types..." }
+        logger.d(TAG_INIT_COST_TYPES, "Initializing cost types...")
         return costTypesRepository.initializeCostTypesIfNeeded()
     }
 }

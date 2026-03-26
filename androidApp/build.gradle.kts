@@ -44,6 +44,7 @@ android {
 
 dependencies {
     implementation(project(":sharedUI"))
+    implementation(project(":ijs-logger-lib"))
     implementation(libs.androidx.activityCompose)
 
     // Firebase BOM - manages all Firebase library versions

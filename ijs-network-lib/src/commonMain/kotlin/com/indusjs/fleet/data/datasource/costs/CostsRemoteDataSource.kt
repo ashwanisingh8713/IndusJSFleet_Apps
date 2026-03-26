@@ -1,6 +1,7 @@
 package com.indusjs.fleet.data.datasource.costs
 
-import co.touchlab.kermit.Logger
+import com.indusjs.fleet.core.logger.FleetLogger
+import com.indusjs.fleet.network.TAG_COSTS_REMOTE_DS
 import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.indusjs.fleet.data.datasource.RemoteDataSource
@@ -96,11 +97,11 @@ interface CostsRemoteDataSource : RemoteDataSource {
  */
 @Inject
 class CostsRemoteDataSourceImpl(
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val logger: FleetLogger
 ) : CostsRemoteDataSource {
 
     private val baseUrl = ApiConfig.BASE_URL
-    private val log = Logger.withTag("CostsRemoteDataSource")
 
     private val json = Json {
         prettyPrint = true
@@ -112,11 +113,11 @@ class CostsRemoteDataSourceImpl(
 
     override suspend fun getTripCostTypes(): CostTypesApiResponse {
         return try {
-            log.d { "Fetching trip cost types" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Fetching trip cost types")
             val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.TRIP_COST_TYPES}")
             handleCostTypesResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to fetch trip cost types: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to fetch trip cost types: ${e.message}", e)
             CostTypesApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -126,11 +127,11 @@ class CostsRemoteDataSourceImpl(
 
     override suspend fun getMaintenanceCostTypes(): CostTypesApiResponse {
         return try {
-            log.d { "Fetching maintenance cost types" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Fetching maintenance cost types")
             val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.MAINTENANCE_COST_TYPES}")
             handleCostTypesResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to fetch maintenance cost types: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to fetch maintenance cost types: ${e.message}", e)
             CostTypesApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -140,11 +141,11 @@ class CostsRemoteDataSourceImpl(
 
     override suspend fun getDriverCostTypes(): CostTypesApiResponse {
         return try {
-            log.d { "Fetching driver cost types" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Fetching driver cost types")
             val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.DRIVER_COST_TYPES}")
             handleCostTypesResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to fetch driver cost types: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to fetch driver cost types: ${e.message}", e)
             CostTypesApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -164,14 +165,14 @@ class CostsRemoteDataSourceImpl(
                 )
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to parse cost types response: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to parse cost types response: ${e.message}", e)
             CostTypesApiResponse(success = false, message = "Failed to parse response: ${e.message}")
         }
     }
 
     override suspend fun createTripCost(token: String, request: CreateTripCostRequest): TripCostApiResponse {
         return try {
-            log.d { "Creating trip cost for trip: ${request.tripId}" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Creating trip cost for trip: ${request.tripId}")
             val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.TRIP_COSTS}") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
@@ -179,7 +180,7 @@ class CostsRemoteDataSourceImpl(
             }
             handleTripCostResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to create trip cost: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to create trip cost: ${e.message}", e)
             TripCostApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -193,7 +194,7 @@ class CostsRemoteDataSourceImpl(
         request: BulkCreateTripCostsRequest
     ): BulkTripCostsApiResponse {
         return try {
-            log.d { "Bulk creating ${request.costs.size} trip costs for trip: $tripId" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Bulk creating ${request.costs.size} trip costs for trip: $tripId")
             val response: HttpResponse = httpClient.post("$baseUrl/trips/$tripId/costs/bulk") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
@@ -201,7 +202,7 @@ class CostsRemoteDataSourceImpl(
             }
             handleBulkTripCostsResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to bulk create trip costs: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to bulk create trip costs: ${e.message}", e)
             BulkTripCostsApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -211,13 +212,13 @@ class CostsRemoteDataSourceImpl(
 
     override suspend fun getTripCosts(token: String, tripId: String): TripCostsListApiResponse {
         return try {
-            log.d { "Fetching costs for trip: $tripId" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Fetching costs for trip: $tripId")
             val response: HttpResponse = httpClient.get("$baseUrl/trips/$tripId/costs") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
             handleTripCostsListResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to fetch trip costs: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to fetch trip costs: ${e.message}", e)
             TripCostsListApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -227,13 +228,13 @@ class CostsRemoteDataSourceImpl(
 
     override suspend fun getTripCostSummary(token: String, tripId: String): TripCostSummaryApiResponse {
         return try {
-            log.d { "Fetching cost summary for trip: $tripId" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Fetching cost summary for trip: $tripId")
             val response: HttpResponse = httpClient.get("$baseUrl/trips/$tripId/costs/summary") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
             handleTripCostSummaryResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to fetch trip cost summary: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to fetch trip cost summary: ${e.message}", e)
             TripCostSummaryApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -243,7 +244,7 @@ class CostsRemoteDataSourceImpl(
 
     override suspend fun createMaintenanceCost(token: String, request: CreateMaintenanceCostRequest): MaintenanceCostApiResponse {
         return try {
-            log.d { "Creating maintenance cost for vehicle: ${request.vehicleId}" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Creating maintenance cost for vehicle: ${request.vehicleId}")
             val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.MAINTENANCE_COSTS}") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
@@ -251,7 +252,7 @@ class CostsRemoteDataSourceImpl(
             }
             handleMaintenanceCostResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to create maintenance cost: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to create maintenance cost: ${e.message}", e)
             MaintenanceCostApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -265,7 +266,7 @@ class CostsRemoteDataSourceImpl(
         request: BulkCreateMaintenanceCostsRequest
     ): BulkMaintenanceCostsApiResponse {
         return try {
-            log.d { "Bulk creating ${request.costs.size} maintenance costs for vehicle: $vehicleId" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Bulk creating ${request.costs.size} maintenance costs for vehicle: $vehicleId")
             val response: HttpResponse = httpClient.post("$baseUrl/vehicles/$vehicleId/maintenance-costs/bulk") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
@@ -273,7 +274,7 @@ class CostsRemoteDataSourceImpl(
             }
             handleBulkMaintenanceCostsResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to bulk create maintenance costs: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to bulk create maintenance costs: ${e.message}", e)
             BulkMaintenanceCostsApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -283,13 +284,13 @@ class CostsRemoteDataSourceImpl(
 
     override suspend fun getMaintenanceCosts(token: String, vehicleId: String): MaintenanceCostsListApiResponse {
         return try {
-            log.d { "Fetching maintenance costs for vehicle: $vehicleId" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Fetching maintenance costs for vehicle: $vehicleId")
             val response: HttpResponse = httpClient.get("$baseUrl/vehicles/$vehicleId/maintenance-costs") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
             handleMaintenanceCostsListResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to fetch maintenance costs: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to fetch maintenance costs: ${e.message}", e)
             MaintenanceCostsListApiResponse(
                 success = false,
                 message = e.message ?: "Network error occurred"
@@ -444,7 +445,7 @@ class CostsRemoteDataSourceImpl(
         sortOrder: String
     ): VehicleTripCostsApiResponse {
         return try {
-            log.d { "Fetching trip costs for vehicle: $vehicleId, page: $page, costId: $costType" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Fetching trip costs for vehicle: $vehicleId, page: $page, costId: $costType")
             val response: HttpResponse = httpClient.get("$baseUrl/vehicles/$vehicleId/trip-costs") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 url {
@@ -460,7 +461,7 @@ class CostsRemoteDataSourceImpl(
             }
             handleVehicleTripCostsResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to fetch vehicle trip costs: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to fetch vehicle trip costs: ${e.message}", e)
             VehicleTripCostsApiResponse(success = false, message = e.message ?: "Network error")
         }
     }
@@ -477,7 +478,7 @@ class CostsRemoteDataSourceImpl(
         sortOrder: String
     ): VehicleMaintenanceCostsApiResponse {
         return try {
-            log.d { "Fetching maintenance costs for vehicle: $vehicleId, page: $page, costId: $costType" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Fetching maintenance costs for vehicle: $vehicleId, page: $page, costId: $costType")
             val response: HttpResponse = httpClient.get("$baseUrl/vehicles/$vehicleId/maintenance-costs") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 url {
@@ -493,33 +494,33 @@ class CostsRemoteDataSourceImpl(
             }
             handleVehicleMaintenanceCostsResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to fetch vehicle maintenance costs: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to fetch vehicle maintenance costs: ${e.message}", e)
             VehicleMaintenanceCostsApiResponse(success = false, message = e.message ?: "Network error")
         }
     }
 
     override suspend fun deleteTripCost(token: String, costId: String): DeleteCostApiResponse {
         return try {
-            log.d { "Deleting trip cost: $costId" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Deleting trip cost: $costId")
             val response: HttpResponse = httpClient.delete("$baseUrl/trip-costs/$costId") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
             handleDeleteCostResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to delete trip cost: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to delete trip cost: ${e.message}", e)
             DeleteCostApiResponse(success = false, message = e.message ?: "Network error")
         }
     }
 
     override suspend fun deleteMaintenanceCost(token: String, costId: String): DeleteCostApiResponse {
         return try {
-            log.d { "Deleting maintenance cost: $costId" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Deleting maintenance cost: $costId")
             val response: HttpResponse = httpClient.delete("$baseUrl/maintenance-costs/$costId") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }
             handleDeleteCostResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to delete maintenance cost: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to delete maintenance cost: ${e.message}", e)
             DeleteCostApiResponse(success = false, message = e.message ?: "Network error")
         }
     }
@@ -585,7 +586,7 @@ class CostsRemoteDataSourceImpl(
         endDate: String?
     ): com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse {
         return try {
-            log.d { "Fetching driver costs for driver: $driverId, page: $page" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Fetching driver costs for driver: $driverId, page: $page")
             val response: HttpResponse = httpClient.get("$baseUrl/drivers/$driverId/costs") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 url {
@@ -599,7 +600,7 @@ class CostsRemoteDataSourceImpl(
             }
             handleDriverCostsResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to fetch driver costs: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to fetch driver costs: ${e.message}", e)
             com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse(
                 success = false,
                 message = e.message ?: "Network error"
@@ -619,7 +620,7 @@ class CostsRemoteDataSourceImpl(
                 )
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to parse driver costs response: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to parse driver costs response: ${e.message}", e)
             com.indusjs.fleet.data.model.driver.DriverCostsListApiResponse(
                 success = false,
                 message = "Failed to parse response: ${e.message}"
@@ -633,7 +634,7 @@ class CostsRemoteDataSourceImpl(
         request: com.indusjs.fleet.data.model.driver.CreateDriverCostRequest
     ): com.indusjs.fleet.data.model.driver.DriverCostApiResponse {
         return try {
-            log.d { "Creating driver cost for driver: $driverId, trip: ${request.tripId}" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Creating driver cost for driver: $driverId, trip: ${request.tripId}")
             val response: HttpResponse = httpClient.post("$baseUrl/drivers/$driverId/costs") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
@@ -641,7 +642,7 @@ class CostsRemoteDataSourceImpl(
             }
             handleDriverCostResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to create driver cost: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to create driver cost: ${e.message}", e)
             com.indusjs.fleet.data.model.driver.DriverCostApiResponse(
                 success = false,
                 message = e.message ?: "Network error"
@@ -661,7 +662,7 @@ class CostsRemoteDataSourceImpl(
                 )
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to parse driver cost response: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to parse driver cost response: ${e.message}", e)
             com.indusjs.fleet.data.model.driver.DriverCostApiResponse(
                 success = false,
                 message = "Failed to parse response: ${e.message}"
@@ -675,7 +676,7 @@ class CostsRemoteDataSourceImpl(
         request: com.indusjs.fleet.data.model.driver.BulkCreateDriverCostsRequest
     ): com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse {
         return try {
-            log.d { "Creating bulk driver costs for driver: $driverId" }
+            logger.d(TAG_COSTS_REMOTE_DS, "Creating bulk driver costs for driver: $driverId")
             val response: HttpResponse = httpClient.post("$baseUrl/drivers/$driverId/costs/bulk") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
@@ -683,7 +684,7 @@ class CostsRemoteDataSourceImpl(
             }
             handleBulkDriverCostsResponse(response)
         } catch (e: Exception) {
-            log.e(e) { "Failed to create bulk driver costs: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to create bulk driver costs: ${e.message}", e)
             com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse(
                 success = false,
                 message = e.message ?: "Network error"
@@ -703,7 +704,7 @@ class CostsRemoteDataSourceImpl(
                 )
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to parse bulk driver costs response: ${e.message}" }
+            logger.e(TAG_COSTS_REMOTE_DS, "Failed to parse bulk driver costs response: ${e.message}", e)
             com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse(
                 success = false,
                 message = "Failed to parse response: ${e.message}"

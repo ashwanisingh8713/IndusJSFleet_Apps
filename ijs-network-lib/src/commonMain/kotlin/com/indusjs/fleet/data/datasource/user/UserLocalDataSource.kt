@@ -1,6 +1,7 @@
 package com.indusjs.fleet.data.datasource.user
 
-import co.touchlab.kermit.Logger
+import com.indusjs.fleet.core.logger.FleetLogger
+import com.indusjs.fleet.network.TAG_USER_LOCAL_DS
 import com.indusjs.fleet.data.datasource.LocalDataSource
 import dev.zacsweers.metro.Inject
 import com.russhwolf.settings.Settings
@@ -28,10 +29,10 @@ interface UserLocalDataSource : LocalDataSource {
  */
 @Inject
 class UserLocalDataSourceImpl(
-    private val settings: Settings
+    private val settings: Settings,
+    private val logger: FleetLogger
 ) : UserLocalDataSource {
 
-    private val log = Logger.withTag("UserLocalDataSource")
 
     companion object {
         private const val KEY_AUTH_TOKEN = "auth_token"
@@ -40,21 +41,21 @@ class UserLocalDataSourceImpl(
     }
 
     override suspend fun saveAuthToken(token: String) {
-        log.d { "Saving auth token: ${token.take(20)}..." }
+        logger.d(TAG_USER_LOCAL_DS, "Saving auth token: ${token.take(20)}...")
         settings.putString(KEY_AUTH_TOKEN, token)
         // Verify it was saved
         val saved = settings.getStringOrNull(KEY_AUTH_TOKEN)
-        log.d { "Verified saved token: ${saved?.take(20)}..." }
+        logger.d(TAG_USER_LOCAL_DS, "Verified saved token: ${saved?.take(20)}...")
     }
 
     override suspend fun getAuthToken(): String? {
         val token = settings.getStringOrNull(KEY_AUTH_TOKEN)
-        log.d { "Getting auth token: ${token?.take(20) ?: "null"}" }
+        logger.d(TAG_USER_LOCAL_DS, "Getting auth token: ${token?.take(20) ?: "null"}")
         return token
     }
 
     override suspend fun saveUserRole(role: String) {
-        log.d { "Saving user role: $role" }
+        logger.d(TAG_USER_LOCAL_DS, "Saving user role: $role")
         settings.putString(KEY_USER_ROLE, role)
     }
 
@@ -63,7 +64,7 @@ class UserLocalDataSourceImpl(
     }
 
     override suspend fun saveUserId(userId: String) {
-        log.d { "Saving user id: $userId" }
+        logger.d(TAG_USER_LOCAL_DS, "Saving user id: $userId")
         settings.putString(KEY_USER_ID, userId)
     }
 
@@ -72,7 +73,7 @@ class UserLocalDataSourceImpl(
     }
 
     override suspend fun clearSession() {
-        log.d { "Clearing session - removing all auth data" }
+        logger.d(TAG_USER_LOCAL_DS, "Clearing session - removing all auth data")
         settings.remove(KEY_AUTH_TOKEN)
         settings.remove(KEY_USER_ROLE)
         settings.remove(KEY_USER_ID)
@@ -81,7 +82,7 @@ class UserLocalDataSourceImpl(
     override suspend fun isLoggedIn(): Boolean {
         val token = getAuthToken()
         val result = token != null && token.isNotBlank()
-        log.d { "isLoggedIn check: $result (token exists: ${token != null}, token not blank: ${token?.isNotBlank()})" }
+        logger.d(TAG_USER_LOCAL_DS, "isLoggedIn check: $result (token exists: ${token != null}, token not blank: ${token?.isNotBlank()})")
         return result
     }
 }

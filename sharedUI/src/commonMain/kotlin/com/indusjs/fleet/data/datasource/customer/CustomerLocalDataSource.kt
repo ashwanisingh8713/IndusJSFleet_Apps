@@ -1,6 +1,7 @@
 package com.ijs.customer.data.datasource
 
-import co.touchlab.kermit.Logger
+import com.indusjs.fleet.core.logger.FleetLogger
+import com.indusjs.fleet.TAG_CUSTOMER_LOCAL_DS
 import com.indusjs.fleet.core.util.currentTimeMillis
 import com.indusjs.fleet.data.database.dao.CustomerDao
 import com.indusjs.fleet.data.database.entity.CustomerEntity
@@ -15,10 +16,9 @@ import dev.zacsweers.metro.Inject
  */
 @Inject
 class CustomerLocalDataSourceImpl(
-    private val customerDao: CustomerDao
+    private val customerDao: CustomerDao,
+    private val logger: FleetLogger
 ) : CustomerLocalDataSource {
-
-    private val log = Logger.withTag("CustomerLocalDataSource")
 
     override suspend fun getAllCustomers(): List<CustomerDto> {
         return customerDao.getAllCustomers().map { it.toDto() }
@@ -39,18 +39,18 @@ class CustomerLocalDataSourceImpl(
     override suspend fun saveCustomer(customer: CustomerDto) {
         val entity = customer.toEntity()
         customerDao.insertCustomer(entity)
-        log.d { "Saved customer: ${customer.companyName}" }
+        logger.d(TAG_CUSTOMER_LOCAL_DS, "Saved customer: ${customer.companyName}")
     }
 
     override suspend fun saveCustomers(customers: List<CustomerDto>) {
         val entities = customers.map { it.toEntity() }
         customerDao.insertCustomers(entities)
-        log.d { "Saved ${customers.size} customers" }
+        logger.d(TAG_CUSTOMER_LOCAL_DS, "Saved ${customers.size} customers")
     }
 
     override suspend fun clearCache() {
         customerDao.deleteAllCustomers()
-        log.d { "Cleared customer cache" }
+        logger.d(TAG_CUSTOMER_LOCAL_DS, "Cleared customer cache")
     }
 
     override suspend fun getCustomerCount(): Int {

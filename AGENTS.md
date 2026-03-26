@@ -38,19 +38,19 @@ IndusJSFleet/
 ├── iosApp/             # iOS entry point (Xcode project)
 ├── ijs-core-lib/       # Foundation: MVI, constants, utilities, base contracts, shared DTOs
 ├── ijs-network-lib/    # Networking: HTTP client, auth, user data layer, dashboard, costs, location
-├── feat-vehicle/       # Vehicle feature: data + presentation (list, detail, add, maintenance cost)
-├── feat-driver/        # Driver feature: data + presentation (list, detail, create, cost)
-├── feat-trip/          # Trip feature: data + presentation (list, detail, create, cost)
-├── feat-customer/      # Customer feature: data + presentation (list, detail, create)
-├── feat-payment/       # Payment feature: data + presentation (list, detail, add, edit)
-├── feat-team/          # Team feature: data + presentation (list, detail, create)
-├── feat-report/        # Reports feature: data + presentation (hub, vehicle PL, trip PL, cost analysis, consolidated)
-├── feat-finance/       # Finance feature: data + presentation (list, detail, purchase, EMI)
-├── feat-user/          # User/Auth feature: presentation (login, signup, forgot password, profile, change password)
-├── feat-onboarding/    # Onboarding feature: presentation (onboarding flow)
-├── feat-dashboard/     # Dashboard feature: presentation (main dashboard, financial summary)
-├── feat-alerts/        # Alerts feature: presentation (alerts list)
-├── feat-map/           # Maps feature: presentation (real-time vehicle tracking)
+├── screen-vehicle/       # Vehicle feature: data + presentation (list, detail, add, maintenance cost)
+├── screen-driver/        # Driver feature: data + presentation (list, detail, create, cost)
+├── screen-trip/          # Trip feature: data + presentation (list, detail, create, cost)
+├── screen-customer/      # Customer feature: data + presentation (list, detail, create)
+├── screen-payment/       # Payment feature: data + presentation (list, detail, add, edit)
+├── screen-team/          # Team feature: data + presentation (list, detail, create)
+├── screen-report/        # Reports feature: data + presentation (hub, vehicle PL, trip PL, cost analysis, consolidated)
+├── screen-finance/       # Finance feature: data + presentation (list, detail, purchase, EMI)
+├── screen-user/          # User/Auth feature: presentation (login, signup, forgot password, profile, change password)
+├── screen-onboarding/    # Onboarding feature: presentation (onboarding flow)
+├── screen-dashboard/     # Dashboard feature: presentation (main dashboard, financial summary)
+├── screen-alerts/        # Alerts feature: presentation (alerts list)
+├── screen-map/           # Maps feature: presentation (real-time vehicle tracking)
 ├── ijs-error-lib/      # Error handling: Result<T>, exception hierarchy, ErrorHandler
 ├── ijs-dispatcher-lib/ # Coroutine dispatchers: DispatcherProvider, test helpers
 ├── ijs-datetime-utils/ # Date/time utilities: FleetDateTime object
@@ -69,19 +69,19 @@ iosApp ─────→ sharedUI (via framework)
 
 sharedUI ──→ ijs-core-lib
 sharedUI ──→ ijs-network-lib ──→ ijs-core-lib
-sharedUI ──→ feat-vehicle ──→ ijs-network-lib
-sharedUI ──→ feat-driver  ──→ ijs-network-lib
-sharedUI ──→ feat-trip    ──→ ijs-network-lib
-sharedUI ──→ feat-customer──→ ijs-network-lib
-sharedUI ──→ feat-payment ──→ ijs-network-lib
-sharedUI ──→ feat-team    ──→ ijs-network-lib
-sharedUI ──→ feat-report ──→ ijs-network-lib
-sharedUI ──→ feat-finance ──→ ijs-network-lib
-sharedUI ──→ feat-user    ──→ ijs-network-lib
-sharedUI ──→ feat-onboarding ──→ ijs-network-lib
-sharedUI ──→ feat-dashboard ──→ ijs-network-lib
-sharedUI ──→ feat-alerts  ──→ ijs-network-lib
-sharedUI ──→ feat-map     ──→ ijs-network-lib
+sharedUI ──→ screen-vehicle ──→ ijs-network-lib
+sharedUI ──→ screen-driver  ──→ ijs-network-lib
+sharedUI ──→ screen-trip    ──→ ijs-network-lib
+sharedUI ──→ screen-customer──→ ijs-network-lib
+sharedUI ──→ screen-payment ──→ ijs-network-lib
+sharedUI ──→ screen-team    ──→ ijs-network-lib
+sharedUI ──→ screen-report ──→ ijs-network-lib
+sharedUI ──→ screen-finance ──→ ijs-network-lib
+sharedUI ──→ screen-user    ──→ ijs-network-lib
+sharedUI ──→ screen-onboarding ──→ ijs-network-lib
+sharedUI ──→ screen-dashboard ──→ ijs-network-lib
+sharedUI ──→ screen-alerts  ──→ ijs-network-lib
+sharedUI ──→ screen-map     ──→ ijs-network-lib
 sharedUI ──→ ijs-datetime-picker ──→ ijs-datetime-utils
 sharedUI ──→ ijs-pdf-report ──→ ijs-datetime-utils
 

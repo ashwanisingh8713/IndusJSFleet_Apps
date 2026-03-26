@@ -1,10 +1,10 @@
-# 10 — Onboarding Module Migration (`feat-onboarding`)
+# 10 — Onboarding Module Migration (`screen-onboarding`)
 
 ## Overview
 
-Migrated onboarding presentation code from `sharedUI/presentation/onboarding/` into the new `feat-onboarding` feature module.
+Migrated onboarding presentation code from `sharedUI/presentation/onboarding/` into the new `screen-onboarding` feature module.
 
-- **Module:** `feat-onboarding`
+- **Module:** `screen-onboarding`
 - **Package:** `com.ijs.onboarding`
 - **Namespace:** `com.ijs.onboarding`
 
@@ -12,14 +12,14 @@ Migrated onboarding presentation code from `sharedUI/presentation/onboarding/` i
 
 | Source (deleted) | Destination | Description |
 |---|---|---|
-| `sharedUI/.../presentation/onboarding/OnboardingContract.kt` | `feat-onboarding/.../presentation/OnboardingContract.kt` | Onboarding MVI contract |
-| `sharedUI/.../presentation/onboarding/OnboardingViewModel.kt` | `feat-onboarding/.../presentation/OnboardingViewModel.kt` | Onboarding ViewModel |
-| `sharedUI/.../presentation/onboarding/OnboardingScreen.kt` | `feat-onboarding/.../presentation/OnboardingScreen.kt` | Onboarding UI screen |
+| `sharedUI/.../presentation/onboarding/OnboardingContract.kt` | `screen-onboarding/.../presentation/OnboardingContract.kt` | Onboarding MVI contract |
+| `sharedUI/.../presentation/onboarding/OnboardingViewModel.kt` | `screen-onboarding/.../presentation/OnboardingViewModel.kt` | Onboarding ViewModel |
+| `sharedUI/.../presentation/onboarding/OnboardingScreen.kt` | `screen-onboarding/.../presentation/OnboardingScreen.kt` | Onboarding UI screen |
 
 ## Architecture
 
 ```
-feat-onboarding/
+screen-onboarding/
 └── src/commonMain/kotlin/com/ijs/onboarding/presentation/
     ├── OnboardingFeatureFacade.kt   # Public facade (1 entry point)
     ├── OnboardingContract.kt
@@ -30,13 +30,13 @@ feat-onboarding/
 ## Dependencies
 
 ```kotlin
-// feat-onboarding/build.gradle.kts
+// screen-onboarding/build.gradle.kts
 api(project(":ijs-core-lib"))          // MviViewModel, UiState/Intent/Effect
 implementation(libs.multiplatformSettings) // Settings (onboarding completed flag)
 // Via fleet-compose-conventions: ijs-ui-components-lib, Compose, Lifecycle
 ```
 
-**Note:** `feat-onboarding` does NOT depend on `ijs-network-lib`. It uses minimal dependencies:
+**Note:** `screen-onboarding` does NOT depend on `ijs-network-lib`. It uses minimal dependencies:
 - `ijs-core-lib` for `MviViewModel` base class
 - `multiplatform-settings` for `Settings` (persisting onboarding completion)
 - `ijs-ui-components-lib` for icons/resources (via fleet-compose-conventions)

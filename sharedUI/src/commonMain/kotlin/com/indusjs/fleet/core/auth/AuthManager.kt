@@ -1,6 +1,7 @@
 package com.indusjs.fleet.core.auth
 
-import co.touchlab.kermit.Logger
+import com.indusjs.fleet.core.logger.FleetLogger
+import com.indusjs.fleet.TAG_AUTH_MANAGER
 import com.indusjs.fleet.core.auth.AuthenticationManager
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import dev.zacsweers.metro.Inject
@@ -26,10 +27,9 @@ import dev.zacsweers.metro.Inject
  */
 @Inject
 class AuthManager(
-    private val userLocalDataSource: UserLocalDataSource
+    private val userLocalDataSource: UserLocalDataSource,
+    private val logger: FleetLogger
 ) {
-    private val log = Logger.withTag("AuthManager")
-
     /**
      * Get the current auth token, or null if not logged in.
      */
@@ -54,7 +54,7 @@ class AuthManager(
      * Clear the local session (auth token, user role, user ID).
      */
     suspend fun clearSession() {
-        log.d { "Clearing session via AuthManager" }
+        logger.d(TAG_AUTH_MANAGER, "Clearing session via AuthManager")
         userLocalDataSource.clearSession()
     }
 
@@ -66,10 +66,9 @@ class AuthManager(
      * Call this once at app startup (e.g., in AppInitializer or App.kt).
      */
     fun registerSessionClearCallback() {
-        log.d { "Registering session clear callback with AuthenticationManager" }
+        logger.d(TAG_AUTH_MANAGER, "Registering session clear callback with AuthenticationManager")
         AuthenticationManager.registerSessionClearCallback {
             clearSession()
         }
     }
 }
-

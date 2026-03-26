@@ -74,7 +74,7 @@ These rewrites apply to ALL files (sharedUI + feature modules post-move):
 
 ---
 
-### Phase 1: feat-customer (Pilot — Zero Cross-Feature Deps)
+### Phase 1: screen-customer (Pilot — Zero Cross-Feature Deps)
 
 **File Inventory (9 files + 1 component subfolder):**
 ```
@@ -97,7 +97,7 @@ sharedUI/presentation/customers/
 
 **Move to:**
 ```
-feat-customer/src/commonMain/kotlin/com/ijs/customer/
+screen-customer/src/commonMain/kotlin/com/ijs/customer/
 ├── presentation/
 │   ├── list/
 │   │   ├── CustomersListContract.kt
@@ -138,7 +138,7 @@ feat-customer/src/commonMain/kotlin/com/ijs/customer/
 
 ---
 
-### Phase 2: feat-team (Zero Cross-Feature Deps)
+### Phase 2: screen-team (Zero Cross-Feature Deps)
 
 **File Inventory (9 files):**
 ```
@@ -148,7 +148,7 @@ sharedUI/presentation/team/
 └── create/  (CreateTeamMemberContract, CreateTeamMemberScreen, CreateTeamMemberViewModel)
 ```
 
-**Move to:** `feat-team/.../presentation/{list,detail,create}/`
+**Move to:** `screen-team/.../presentation/{list,detail,create}/`
 
 **Facade:** `TeamFeatureFacade` — 3 screen functions, no ExternalDeps
 
@@ -156,7 +156,7 @@ sharedUI/presentation/team/
 
 ---
 
-### Phase 3: feat-vehicle (ExternalDeps: drivers + team)
+### Phase 3: screen-vehicle (ExternalDeps: drivers + team)
 
 **File Inventory (12 files):**
 ```
@@ -195,7 +195,7 @@ class VehicleExternalDepsAdapter(
 
 ---
 
-### Phase 4: feat-driver (ExternalDeps: team)
+### Phase 4: screen-driver (ExternalDeps: team)
 
 **File Inventory (12 files):**
 ```
@@ -215,7 +215,7 @@ interface DriverExternalDeps {
 
 ---
 
-### Phase 5: feat-payment (ExternalDeps: trips)
+### Phase 5: screen-payment (ExternalDeps: trips)
 
 **File Inventory (7 files):**
 ```
@@ -236,7 +236,7 @@ interface PaymentExternalDeps {
 
 ---
 
-### Phase 6: feat-finance (ExternalDeps: vehicles) — ViewModel Split
+### Phase 6: screen-finance (ExternalDeps: vehicles) — ViewModel Split
 
 **File Inventory (5 files → becomes 4 ViewModels):**
 ```
@@ -295,7 +295,7 @@ interface FinanceExternalDeps {
 
 ---
 
-### Phase 7: feat-trip (Most Complex — ExternalDeps: vehicles + drivers + customers + places)
+### Phase 7: screen-trip (Most Complex — ExternalDeps: vehicles + drivers + customers + places)
 
 **File Inventory (9 files):**
 ```
@@ -320,13 +320,13 @@ interface TripExternalDeps {
 ```
 
 **Note:** `PlacePrediction` and `PlaceDetails` are from `ijs-network-lib` (Google Places).
-They're already accessible since feat-trip depends on `ijs-network-lib`. But
+They're already accessible since screen-trip depends on `ijs-network-lib`. But
 `GooglePlacesService` construction requires an API key that only `sharedUI` has.
 So we wrap the calls via `TripExternalDeps` callbacks.
 
 ---
 
-### Phase 8: feat-report (ExternalDeps: vehicles + trips)
+### Phase 8: screen-report (ExternalDeps: vehicles + trips)
 
 **File Inventory (12 files):**
 ```
@@ -378,7 +378,7 @@ presentation/
 - `.github/copilot-instructions.md`
 - `sharedUI/AGENTS.md`
 - `sharedUI/ARCHITECTURE.md`
-- Each `feat-*/AGENTS.md` (create if missing)
+- Each `screen-*/AGENTS.md` (create if missing)
 
 ---
 
@@ -390,10 +390,10 @@ presentation/
 ./gradlew :webApp:jsBrowserDevelopmentRun
 
 # Feature module isolation check:
-grep -r "import com.indusjs.fleet.navigation.FleetRoute" feat-*/
+grep -r "import com.indusjs.fleet.navigation.FleetRoute" screen-*/
 # Expected: 0 results
 
-grep -r "import com.ijs.vehicle\|import com.ijs.driver\|import com.ijs.trip\|import com.ijs.customer\|import com.ijs.payment\|import com.ijs.team\|import com.ijs.reports\|import com.ijs.finance" feat-*/
-# Expected: Only self-imports (e.g., feat-vehicle importing com.ijs.vehicle.*)
+grep -r "import com.ijs.vehicle\|import com.ijs.driver\|import com.ijs.trip\|import com.ijs.customer\|import com.ijs.payment\|import com.ijs.team\|import com.ijs.reports\|import com.ijs.finance" screen-*/
+# Expected: Only self-imports (e.g., screen-vehicle importing com.ijs.vehicle.*)
 ```
 

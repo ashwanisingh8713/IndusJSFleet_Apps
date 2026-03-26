@@ -5,10 +5,12 @@ import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.indusjs.fleet.androidApp.BuildConfig
+import com.indusjs.logger.IjsLogger
+import com.indusjs.logger.PlatformContext
 
 /**
  * Application class for IndusJS Fleet Android app.
- * Initializes Firebase Crashlytics for crash reporting.
+ * Initializes IjsLogger file logging and Firebase Crashlytics for crash reporting.
  */
 class FleetApplication : Application() {
 
@@ -18,7 +20,17 @@ class FleetApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        initializeLogger()
         initializeCrashlytics()
+    }
+
+    private fun initializeLogger() {
+        try {
+            IjsLogger.init(PlatformContext(this))
+            Log.d(TAG, "IjsLogger initialized successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize IjsLogger", e)
+        }
     }
 
     private fun initializeCrashlytics() {
