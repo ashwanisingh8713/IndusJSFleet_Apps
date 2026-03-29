@@ -5,54 +5,7 @@ import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.ijs.reports.domain.entity.CostBreakdownItem
 import com.ijs.reports.domain.entity.PLSummary
-
-/**
- * Report period options for filtering.
- * Matches the periods defined in report-pl-screen.prompt.md
- */
-enum class ReportPeriod(val value: String, val label: String) {
-    TODAY("today", "Today"),
-    WEEKLY("weekly", "This Week"),
-    FIFTEEN_DAYS("fifteen_days", "15 Days"),
-    MONTHLY("monthly", "This Month"),
-    QUARTERLY("quarterly", "Quarterly"),
-    HALF_YEARLY("half_yearly", "Half Year"),
-    YEARLY("yearly", "This Year"),
-    CUSTOM("custom", "Custom")
-}
-
-/**
- * Profit status thresholds as defined in report-pl-screen.prompt.md
- *
- * | Status | Profit Margin | Color Code |
- * |--------|---------------|------------|
- * | Highly Profitable | > 20% | Dark Green |
- * | Profitable | 10% - 20% | Green |
- * | Break-even | 0% - 10% | Amber |
- * | Loss | 0% to -20% | Red |
- * | Severe Loss | < -20% | Dark Red |
- */
-enum class ProfitStatus(
-    val label: String,
-    val colorHex: Long,
-    val icon: String
-) {
-    HIGHLY_PROFITABLE("Highly Profitable", 0xFF2E7D32, "📈"),
-    PROFITABLE("Profitable", 0xFF4CAF50, "📈"),
-    BREAK_EVEN("Break-even", 0xFFFFC107, "📊"),
-    LOSS("Loss", 0xFFF44336, "📉"),
-    SEVERE_LOSS("Severe Loss", 0xFFB71C1C, "📉");
-
-    companion object {
-        fun fromMargin(margin: Double): ProfitStatus = when {
-            margin > 20 -> HIGHLY_PROFITABLE
-            margin > 10 -> PROFITABLE
-            margin > 0 -> BREAK_EVEN
-            margin > -20 -> LOSS
-            else -> SEVERE_LOSS
-        }
-    }
-}
+// ReportPeriod and ProfitStatus are now in ReportEnums.kt (same package)
 
 /**
  * MVI Contract for Reports Hub Screen

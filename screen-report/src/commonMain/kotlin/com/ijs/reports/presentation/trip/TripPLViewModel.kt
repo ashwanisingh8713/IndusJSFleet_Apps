@@ -3,7 +3,7 @@ package com.ijs.reports.presentation.trip
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.ijs.reports.data.model.MultiTripPLRequest
-import com.ijs.reports.domain.repository.ReportsRepository
+import com.ijs.reports.domain.usecase.GetMultiTripPLUseCase
 import com.ijs.trip.domain.repository.TripRepository
 import com.ijs.reports.presentation.trip.TripPLContract.Effect
 import com.ijs.reports.presentation.trip.TripPLContract.Intent
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.collectLatest
  */
 @Inject
 class TripPLViewModel(
-    private val reportsRepository: ReportsRepository,
+    private val getMultiTripPLUseCase: GetMultiTripPLUseCase,
     private val tripRepository: TripRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
@@ -116,7 +116,7 @@ class TripPLViewModel(
             endDate = currentState.endDate.takeIf { it.isNotBlank() }
         )
 
-        when (val result = reportsRepository.getMultiTripPL(request)) {
+        when (val result = getMultiTripPLUseCase(request)) {
             is Result.Success -> {
                 updateState { copy(isLoading = false, results = result.data) }
                 if (result.data.isEmpty()) {

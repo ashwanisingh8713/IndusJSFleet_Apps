@@ -3,7 +3,7 @@ package com.ijs.reports.presentation.consolidated
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.ijs.reports.data.model.ConsolidatedPLRequest
-import com.ijs.reports.domain.repository.ReportsRepository
+import com.ijs.reports.domain.usecase.GetConsolidatedPLUseCase
 import com.ijs.vehicle.domain.repository.VehicleRepository
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.COST_TYPES
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.Effect
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.collectLatest
  */
 @Inject
 class ConsolidatedPLViewModel(
-    private val reportsRepository: ReportsRepository,
+    private val getConsolidatedPLUseCase: GetConsolidatedPLUseCase,
     private val vehicleRepository: VehicleRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
@@ -106,7 +106,7 @@ class ConsolidatedPLViewModel(
             groupBy = currentState.groupBy
         )
 
-        when (val result = reportsRepository.getConsolidatedPL(request)) {
+        when (val result = getConsolidatedPLUseCase(request)) {
             is Result.Success -> {
                 updateState { copy(isLoading = false, result = result.data) }
             }

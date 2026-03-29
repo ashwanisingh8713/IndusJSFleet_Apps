@@ -3,7 +3,7 @@ package com.ijs.reports.presentation.cost
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.ijs.reports.data.model.MultiCostTypePLRequest
-import com.ijs.reports.domain.repository.ReportsRepository
+import com.ijs.reports.domain.usecase.GetMultiCostTypeAnalysisUseCase
 import com.ijs.reports.presentation.cost.CostAnalysisContract.COST_TYPES
 import com.ijs.reports.presentation.cost.CostAnalysisContract.Effect
 import com.ijs.reports.presentation.cost.CostAnalysisContract.Intent
@@ -15,7 +15,7 @@ import dev.zacsweers.metro.Inject
  */
 @Inject
 class CostAnalysisViewModel(
-    private val reportsRepository: ReportsRepository
+    private val getMultiCostTypeAnalysisUseCase: GetMultiCostTypeAnalysisUseCase
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     override suspend fun handleIntent(intent: Intent) {
@@ -63,7 +63,7 @@ class CostAnalysisViewModel(
             endDate = currentState.endDate.takeIf { it.isNotBlank() }
         )
 
-        when (val result = reportsRepository.getMultiCostTypeAnalysis(request)) {
+        when (val result = getMultiCostTypeAnalysisUseCase(request)) {
             is Result.Success -> {
                 updateState { copy(isLoading = false, results = result.data) }
             }

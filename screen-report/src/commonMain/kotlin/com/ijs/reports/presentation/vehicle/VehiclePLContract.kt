@@ -4,72 +4,19 @@ import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.ijs.reports.domain.entity.VehicleProfitLoss
+import com.ijs.reports.presentation.PLStatusFilter
+import com.ijs.reports.presentation.RecentReport
+import com.ijs.reports.presentation.ReportChartType
+import com.ijs.reports.presentation.ReportExportFormat
+import com.ijs.reports.presentation.ReportViewMode
+import com.ijs.reports.presentation.VehiclePLSortOption
 import com.ijs.vehicle.domain.entity.Vehicle
 
 /**
- * MVI Contract for Vehicle P&L Screen - Enhanced with Fleet Overview mode
+ * MVI Contract for Vehicle P&L Screen - Enhanced with Fleet Overview mode.
+ * Enums are defined in ReportEnums.kt for cross-screen reuse.
  */
 object VehiclePLContract {
-
-    /**
-     * View mode for displaying results
-     */
-    enum class ViewMode(val label: String, val icon: String) {
-        SUMMARY("Summary", "📊"),
-        LIST("List", "📋"),
-        CHART("Chart", "📈")
-    }
-
-    /**
-     * Chart type for visualization
-     */
-    enum class ChartType(val label: String) {
-        BAR("Bar Chart"),
-        PIE("Pie Chart")
-    }
-
-    /**
-     * Export format options
-     */
-    enum class ExportFormat(val label: String, val icon: String, val extension: String) {
-        PDF("PDF Report", "📄", "pdf"),
-        CSV("CSV Data", "📊", "csv"),
-        EXCEL("Excel Sheet", "📗", "xlsx")
-    }
-
-    /**
-     * Sorting options for vehicle P&L results
-     */
-    enum class SortOption(val label: String) {
-        PROFIT_HIGH_LOW("Profit (High to Low)"),
-        PROFIT_LOW_HIGH("Profit (Low to High)"),
-        LOSS_HIGH_LOW("Loss (High to Low)"),
-        REVENUE_HIGH_LOW("Revenue (High to Low)"),
-        EXPENSE_HIGH_LOW("Expense (High to Low)"),
-        TRIPS_HIGH_LOW("Trips (Most to Least)")
-    }
-
-    /**
-     * Filter options for profit/loss status
-     */
-    enum class PLStatusFilter(val label: String) {
-        ALL("All"),
-        PROFITABLE("Profitable Only"),
-        LOSS_MAKING("Loss Making Only")
-    }
-
-    /**
-     * Recent report entry for quick one-tap access
-     */
-    data class RecentReport(
-        val vehicleId: String,
-        val vehicleNumber: String,
-        val vehicleMakeModel: String,
-        val period: String,
-        val profitLoss: Double,
-        val isProfit: Boolean,
-        val generatedAt: Long
-    )
 
     data class State(
         val isLoading: Boolean = false,
@@ -95,7 +42,7 @@ object VehiclePLContract {
         // Custom date range mode
         val useCustomDateRange: Boolean = false,
         // Sorting and filtering
-        val sortOption: SortOption = SortOption.PROFIT_HIGH_LOW,
+        val sortOption: VehiclePLSortOption = VehiclePLSortOption.PROFIT_HIGH_LOW,
         val plStatusFilter: PLStatusFilter = PLStatusFilter.ALL,
         val showSortMenu: Boolean = false,
         // Fleet overview mode - shows all vehicles by default
@@ -108,9 +55,9 @@ object VehiclePLContract {
         val isGeneratingExport: Boolean = false,
         val showExportOptions: Boolean = false,
         // View mode - summary/list/chart
-        val viewMode: ViewMode = ViewMode.SUMMARY,
+        val viewMode: ReportViewMode = ReportViewMode.SUMMARY,
         // Chart type for visualization
-        val chartType: ChartType = ChartType.BAR,
+        val chartType: ReportChartType = ReportChartType.BAR,
         // Current period label for display
         val currentPeriodLabel: String = "",
         // Initial load completed
@@ -144,12 +91,12 @@ object VehiclePLContract {
                 PLStatusFilter.LOSS_MAKING -> multiResults.filter { !it.isProfitable }
             }
             return when (sortOption) {
-                SortOption.PROFIT_HIGH_LOW -> filtered.sortedByDescending { it.netProfit }
-                SortOption.PROFIT_LOW_HIGH -> filtered.sortedBy { it.netProfit }
-                SortOption.LOSS_HIGH_LOW -> filtered.sortedBy { it.netProfit }
-                SortOption.REVENUE_HIGH_LOW -> filtered.sortedByDescending { it.totalRevenue }
-                SortOption.EXPENSE_HIGH_LOW -> filtered.sortedByDescending { it.totalExpenses }
-                SortOption.TRIPS_HIGH_LOW -> filtered.sortedByDescending { it.totalTrips }
+                VehiclePLSortOption.PROFIT_HIGH_LOW -> filtered.sortedByDescending { it.netProfit }
+                VehiclePLSortOption.PROFIT_LOW_HIGH -> filtered.sortedBy { it.netProfit }
+                VehiclePLSortOption.LOSS_HIGH_LOW -> filtered.sortedBy { it.netProfit }
+                VehiclePLSortOption.REVENUE_HIGH_LOW -> filtered.sortedByDescending { it.totalRevenue }
+                VehiclePLSortOption.EXPENSE_HIGH_LOW -> filtered.sortedByDescending { it.totalExpenses }
+                VehiclePLSortOption.TRIPS_HIGH_LOW -> filtered.sortedByDescending { it.totalTrips }
             }
         }
 
@@ -222,7 +169,7 @@ object VehiclePLContract {
         // Quick actions
         data class QuickReportFromRecent(val report: RecentReport) : Intent
         // Sorting and filtering
-        data class UpdateSortOption(val option: SortOption) : Intent
+        data class UpdateSortOption(val option: VehiclePLSortOption) : Intent
         data class UpdatePLStatusFilter(val filter: PLStatusFilter) : Intent
         data object ToggleSortMenu : Intent
         data object DismissSortMenu : Intent
@@ -234,16 +181,16 @@ object VehiclePLContract {
         data object ClearVehicleFilter : Intent
         data object ApplyVehicleFilter : Intent
         // View mode
-        data class UpdateViewMode(val mode: ViewMode) : Intent
-        data class UpdateChartType(val type: ChartType) : Intent
+        data class UpdateViewMode(val mode: ReportViewMode) : Intent
+        data class UpdateChartType(val type: ReportChartType) : Intent
         // Export
         data object ShowExportOptions : Intent
         data object DismissExportOptions : Intent
-        data class ExportReport(val format: ExportFormat) : Intent
+        data class ExportReport(val format: ReportExportFormat) : Intent
     }
 
     sealed interface Effect : UiEffect {
         data class ShowSnackbar(val message: String) : Effect
-        data class ExportGenerated(val fileName: String, val format: ExportFormat) : Effect
+        data class ExportGenerated(val fileName: String, val format: ReportExportFormat) : Effect
     }
 }

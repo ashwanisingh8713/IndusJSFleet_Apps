@@ -43,15 +43,15 @@ import com.ijs.reports.domain.entity.CostBreakdownItem
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.vehicle.domain.entity.VehicleStatus
-import com.ijs.reports.presentation.vehicle.VehiclePLContract.ChartType
 import com.ijs.reports.presentation.vehicle.VehiclePLContract.Effect
-import com.ijs.reports.presentation.vehicle.VehiclePLContract.ExportFormat
 import com.ijs.reports.presentation.vehicle.VehiclePLContract.Intent
-import com.ijs.reports.presentation.vehicle.VehiclePLContract.PLStatusFilter
-import com.ijs.reports.presentation.vehicle.VehiclePLContract.RecentReport
-import com.ijs.reports.presentation.vehicle.VehiclePLContract.SortOption
 import com.ijs.reports.presentation.vehicle.VehiclePLContract.State
-import com.ijs.reports.presentation.vehicle.VehiclePLContract.ViewMode
+import com.ijs.reports.presentation.PLStatusFilter
+import com.ijs.reports.presentation.RecentReport
+import com.ijs.reports.presentation.ReportChartType as ChartType
+import com.ijs.reports.presentation.ReportExportFormat as ExportFormat
+import com.ijs.reports.presentation.ReportViewMode as ViewMode
+import com.ijs.reports.presentation.VehiclePLSortOption as SortOption
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource

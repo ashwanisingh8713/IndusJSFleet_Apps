@@ -23,6 +23,12 @@ import com.ijs.driver.domain.repository.DriverRepository
 import com.ijs.finance.domain.repository.VehicleFinanceRepository
 import com.ijs.payment.domain.repository.TripPaymentRepository
 import com.ijs.reports.domain.repository.ReportsRepository
+import com.ijs.reports.domain.usecase.GetConsolidatedPLUseCase
+import com.ijs.reports.domain.usecase.GetMultiCostTypeAnalysisUseCase
+import com.ijs.reports.domain.usecase.GetMultiTripPLUseCase
+import com.ijs.reports.domain.usecase.GetMultiVehiclePLUseCase
+import com.ijs.reports.domain.usecase.GetPLSummaryUseCase
+import com.ijs.reports.domain.usecase.GetVehicleProfitLossUseCase
 import com.ijs.team.domain.repository.TeamRepository
 import com.ijs.trip.domain.repository.TripRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
@@ -250,6 +256,14 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
 
     // ==================== Use Cases (created from graph-provided repositories) ====================
 
+    // Reports use cases
+    private val getPLSummaryUseCase by lazy { GetPLSummaryUseCase(reportsRepository) }
+    private val getVehicleProfitLossUseCase by lazy { GetVehicleProfitLossUseCase(reportsRepository) }
+    private val getMultiVehiclePLUseCase by lazy { GetMultiVehiclePLUseCase(reportsRepository) }
+    private val getMultiTripPLUseCase by lazy { GetMultiTripPLUseCase(reportsRepository) }
+    private val getMultiCostTypeAnalysisUseCase by lazy { GetMultiCostTypeAnalysisUseCase(reportsRepository) }
+    private val getConsolidatedPLUseCase by lazy { GetConsolidatedPLUseCase(reportsRepository) }
+
     // Vehicle use cases
     private val getVehiclesUseCase by lazy { GetVehiclesUseCase(vehicleRepository) }
     private val getAvailableVehiclesUseCase by lazy { GetAvailableVehiclesUseCase(vehicleRepository) }
@@ -448,15 +462,17 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     )
 
     // Reports ViewModels
-    override fun reportsViewModel() = ReportsViewModel(reportsRepository, fleetLogger)
+    override fun reportsViewModel() = ReportsViewModel(getPLSummaryUseCase, fleetLogger)
 
-    override fun vehiclePLViewModel() = VehiclePLViewModel(reportsRepository, vehicleRepository, fleetLogger)
+    override fun vehiclePLViewModel() = VehiclePLViewModel(
+        getVehicleProfitLossUseCase, getMultiVehiclePLUseCase, vehicleRepository, fleetLogger
+    )
 
-    override fun tripPLViewModel() = TripPLViewModel(reportsRepository, tripRepository)
+    override fun tripPLViewModel() = TripPLViewModel(getMultiTripPLUseCase, tripRepository)
 
-    override fun costAnalysisViewModel() = CostAnalysisViewModel(reportsRepository)
+    override fun costAnalysisViewModel() = CostAnalysisViewModel(getMultiCostTypeAnalysisUseCase)
 
-    override fun consolidatedPLViewModel() = ConsolidatedPLViewModel(reportsRepository, vehicleRepository)
+    override fun consolidatedPLViewModel() = ConsolidatedPLViewModel(getConsolidatedPLUseCase, vehicleRepository)
 
     // Customer ViewModels
     override fun customersListViewModel() = CustomersListViewModel(

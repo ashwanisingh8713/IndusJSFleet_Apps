@@ -6,7 +6,7 @@ import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.util.currentTimeMillis
 import com.ijs.reports.domain.entity.CostBreakdownItem
-import com.ijs.reports.domain.repository.ReportsRepository
+import com.ijs.reports.domain.usecase.GetPLSummaryUseCase
 import com.ijs.reports.presentation.ReportsContract.Effect
 import com.ijs.reports.presentation.ReportsContract.Intent
 import com.ijs.reports.presentation.ReportsContract.State
@@ -18,7 +18,7 @@ import kotlinx.datetime.*
  */
 @Inject
 class ReportsViewModel(
-    private val reportsRepository: ReportsRepository,
+    private val getPLSummaryUseCase: GetPLSummaryUseCase,
     private val logger: FleetLogger
 ) : MviViewModel<State, Intent, Effect>(State()) {
 init {
@@ -194,7 +194,7 @@ init {
         logger.d(TAG_REPORTS_VM, "API Request: startDate=$startDate, endDate=$endDate")
 
         // Call API with start_date and end_date only (no period param)
-        when (val result = reportsRepository.getPLSummary(startDate, endDate)) {
+        when (val result = getPLSummaryUseCase(startDate, endDate)) {
             is Result.Success -> {
                 val summary = result.data
                 logger.d(TAG_REPORTS_VM, "=== API SUCCESS ===")
