@@ -3,6 +3,7 @@ package com.ijs.user.presentation.signup
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 
 /**
  * MVI Contract for the Sign Up screen.
@@ -17,13 +18,13 @@ object SignUpContract {
         val lastName: String = "",
         val email: String = "",
         val mobile: String = "",
-        val mobileError: String? = null,
+        val mobileError: UiText? = null,
         val password: String = "",
         val confirmPassword: String = "",
         val isPasswordVisible: Boolean = false,
         val isConfirmPasswordVisible: Boolean = false,
         val isLoading: Boolean = false,
-        val error: String? = null
+        val error: UiText? = null
     ) : UiState
 
     /**
@@ -47,9 +48,8 @@ object SignUpContract {
      * Side effects for the Sign Up screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data object NavigateToDashboard : Effect
         data object NavigateToLogin : Effect
     }
 }
-

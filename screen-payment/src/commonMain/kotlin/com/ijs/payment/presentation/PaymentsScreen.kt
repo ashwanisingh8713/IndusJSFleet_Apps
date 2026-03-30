@@ -36,6 +36,7 @@ import com.ijs.payment.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Data class for grouped payments by Trip.
@@ -150,12 +151,12 @@ fun PaymentsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Payments") },
+                title = { Text(stringResource(Res.string.payments_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 },

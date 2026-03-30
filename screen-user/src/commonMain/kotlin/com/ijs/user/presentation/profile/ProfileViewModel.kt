@@ -3,7 +3,9 @@ package com.ijs.user.presentation.profile
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.user.UserRepository
+import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.withContext
 
 /**
@@ -59,7 +61,7 @@ class ProfileViewModel(
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Failed to load profile"
+                                error = if (!error.message.isNullOrBlank()) UiText.Raw(error.message!!) else UiText.StringRes(Res.string.error_load_profile)
                             )
                         }
                     }
@@ -68,7 +70,7 @@ class ProfileViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to load profile"
+                        error = if (!e.message.isNullOrBlank()) UiText.Raw(e.message!!) else UiText.StringRes(Res.string.error_load_profile)
                     )
                 }
             }
@@ -110,15 +112,15 @@ class ProfileViewModel(
 
         // Validation
         if (firstName.isEmpty()) {
-            updateState { copy(updateError = "First name is required") }
+            updateState { copy(updateError = UiText.StringRes(Res.string.error_first_name_required)) }
             return
         }
         if (lastName.isEmpty()) {
-            updateState { copy(updateError = "Last name is required") }
+            updateState { copy(updateError = UiText.StringRes(Res.string.error_last_name_required)) }
             return
         }
         if (email.isEmpty()) {
-            updateState { copy(updateError = "Email is required") }
+            updateState { copy(updateError = UiText.StringRes(Res.string.error_email_required)) }
             return
         }
 
@@ -142,13 +144,13 @@ class ProfileViewModel(
                             )
                         }
                         sendEffect(ProfileContract.Effect.ProfileUpdated)
-                        sendEffect(ProfileContract.Effect.ShowSnackbar("Profile updated successfully"))
+                        sendEffect(ProfileContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_profile_updated)))
                     },
                     onFailure = { error ->
                         updateState {
                             copy(
                                 isUpdating = false,
-                                updateError = error.message ?: "Failed to update profile"
+                                updateError = if (!error.message.isNullOrBlank()) UiText.Raw(error.message!!) else UiText.StringRes(Res.string.error_update_profile)
                             )
                         }
                     }
@@ -157,7 +159,7 @@ class ProfileViewModel(
                 updateState {
                     copy(
                         isUpdating = false,
-                        updateError = e.message ?: "Failed to update profile"
+                        updateError = if (!e.message.isNullOrBlank()) UiText.Raw(e.message!!) else UiText.StringRes(Res.string.error_update_profile)
                     )
                 }
             }
@@ -170,9 +172,8 @@ class ProfileViewModel(
                 userRepository.logout()
                 sendEffect(ProfileContract.Effect.NavigateToLogin)
             } catch (_: Exception) {
-                sendEffect(ProfileContract.Effect.ShowSnackbar("Logout failed"))
+                sendEffect(ProfileContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.error_logout_failed)))
             }
         }
     }
 }
-

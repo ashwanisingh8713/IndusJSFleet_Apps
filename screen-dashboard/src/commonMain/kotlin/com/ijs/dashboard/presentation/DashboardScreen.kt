@@ -69,19 +69,24 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
-private fun getTimeBasedGreeting(): String {
+/**
+ * Returns a greeting string resource key based on time of day.
+ * Call inside a @Composable to resolve with stringResource().
+ */
+private fun getTimeBasedGreetingIndex(): Int {
     return try {
         val currentTimeMs = com.indusjs.fleet.core.util.currentTimeMillis()
         val hourOfDay = ((currentTimeMs / 3600000) % 24).toInt()
         val localHour = (hourOfDay + 5) % 24
         when {
-            localHour < 12 -> "Good Morning"
-            localHour < 17 -> "Good Afternoon"
-            else -> "Good Evening"
+            localHour < 12 -> 0  // Morning
+            localHour < 17 -> 1  // Afternoon
+            else -> 2  // Evening
         }
     } catch (e: Exception) {
-        "Hello"
+        0
     }
 }
 
@@ -169,7 +174,7 @@ fun DashboardScreen(
         ) { paddingValues ->
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 when {
-                    state.isLoading && !state.hasCachedData -> LoadingContent(message = "Loading dashboard...")
+                    state.isLoading && !state.hasCachedData -> LoadingContent(message = stringResource(Res.string.loading))
                     state.error != null && !state.hasCachedData && !state.isOffline -> ErrorContent(
                         error = state.error!!, screenContext = FleetErrorContext.DASHBOARD,
                         onRetry = { viewModel.sendIntent(DashboardContract.Intent.LoadDashboard) }
@@ -214,7 +219,12 @@ private fun DashboardTopBar(
     userName: String, lastUpdated: String?, notificationCount: Int, isRefreshing: Boolean,
     onMenuClick: () -> Unit, onNotificationsClick: () -> Unit, onRefreshClick: () -> Unit
 ) {
-    val greeting = remember { getTimeBasedGreeting() }
+    val greetingIndex = remember { getTimeBasedGreetingIndex() }
+    val greeting = when (greetingIndex) {
+        0 -> stringResource(Res.string.dashboard_greeting_morning)
+        1 -> stringResource(Res.string.dashboard_greeting_afternoon)
+        else -> stringResource(Res.string.dashboard_greeting_evening)
+    }
     TopAppBar(
         title = {
             Column(modifier = Modifier.semantics { heading() }) {

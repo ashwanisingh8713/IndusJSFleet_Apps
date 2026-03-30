@@ -22,6 +22,7 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Maps/Live Tracking Screen composable.
@@ -66,12 +67,12 @@ fun MapsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Live Tracking") },
+                title = { Text(stringResource(Res.string.maps_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
@@ -91,7 +92,7 @@ fun MapsScreen(
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh",
+                            contentDescription = stringResource(Res.string.refresh),
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
@@ -382,4 +383,3 @@ private fun VehicleStatusIndicator(status: MapVehicleStatus) {
             .background(color)
     )
 }
-

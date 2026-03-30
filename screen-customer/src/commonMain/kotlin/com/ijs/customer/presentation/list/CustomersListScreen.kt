@@ -21,6 +21,7 @@ import com.ijs.customer.presentation.list.CustomersListContract.Effect
 import com.ijs.customer.presentation.list.CustomersListContract.Intent
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
 /**
@@ -54,7 +55,7 @@ fun CustomersListScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Customers")
+                        Text(stringResource(Res.string.customers_title))
                         if (state.customers.isNotEmpty()) {
                             Text(
                                 text = "${state.customers.size} total",
@@ -68,7 +69,7 @@ fun CustomersListScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -89,7 +90,7 @@ fun CustomersListScreen(
                         IconButton(onClick = { viewModel.sendIntent(Intent.RefreshCustomers) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh",
+                                contentDescription = stringResource(Res.string.refresh),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -107,7 +108,7 @@ fun CustomersListScreen(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = "Add Customer"
+                        contentDescription = stringResource(Res.string.customers_add)
                     )
                 }
             }
@@ -131,7 +132,7 @@ fun CustomersListScreen(
             // Content
             when {
                 state.isLoading && state.customers.isEmpty() && !state.isInitialLoadComplete -> {
-                    LoadingContent(message = "Loading customers...")
+                    LoadingContent(message = stringResource(Res.string.loading))
                 }
                 state.showError -> {
                     ErrorContent(
@@ -143,14 +144,14 @@ fun CustomersListScreen(
                     EmptyContent(
                         icon = "👥",
                         title = if (state.searchQuery.isNotBlank())
-                            "No Customers Found"
+                            stringResource(Res.string.no_data_for_filter)
                         else
-                            "No Customers Yet",
+                            stringResource(Res.string.customers_empty_title),
                         message = if (state.searchQuery.isNotBlank())
                             "No customers found matching \"${state.searchQuery}\""
                         else
-                            "Add your first customer to get started",
-                        actionLabel = "Add Customer",
+                            stringResource(Res.string.customers_empty_message),
+                        actionLabel = stringResource(Res.string.customers_add),
                         onAction = { viewModel.sendIntent(Intent.OnAddCustomerClick) }
                     )
                 }
@@ -177,7 +178,7 @@ private fun SearchBar(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
-        placeholder = { Text("Search customers...") },
+        placeholder = { Text(stringResource(Res.string.customers_search_placeholder)) },
         leadingIcon = {
             Icon(
                 painter = painterResource(Res.drawable.ic_search),
@@ -327,4 +328,3 @@ private fun StatusChip(isActive: Boolean) {
         )
     }
 }
-

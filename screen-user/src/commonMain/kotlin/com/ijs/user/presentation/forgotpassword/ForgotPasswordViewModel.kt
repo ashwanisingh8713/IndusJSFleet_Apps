@@ -3,7 +3,9 @@ package com.ijs.user.presentation.forgotpassword
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.user.UserRepository
+import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.withContext
 
 /**
@@ -34,7 +36,7 @@ class ForgotPasswordViewModel(
 
         // Validation
         if (identifier.isEmpty()) {
-            updateState { copy(error = "Please enter your email or mobile number") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_identifier_required)) }
             return
         }
 
@@ -53,14 +55,14 @@ class ForgotPasswordViewModel(
                                 isResetMode = true
                             )
                         }
-                        sendEffect(ForgotPasswordContract.Effect.ShowSnackbar("Reset instructions sent. Please enter your new password."))
+                        sendEffect(ForgotPasswordContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_reset_instructions_sent)))
                         sendEffect(ForgotPasswordContract.Effect.ShowResetPassword)
                     },
                     onFailure = { error ->
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Failed to send reset instructions"
+                                error = if (!error.message.isNullOrBlank()) UiText.Raw(error.message!!) else UiText.StringRes(Res.string.error_send_reset_failed)
                             )
                         }
                     }
@@ -69,7 +71,7 @@ class ForgotPasswordViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to send reset instructions"
+                        error = if (!e.message.isNullOrBlank()) UiText.Raw(e.message!!) else UiText.StringRes(Res.string.error_send_reset_failed)
                     )
                 }
             }
@@ -83,22 +85,22 @@ class ForgotPasswordViewModel(
 
         // Validation
         if (newPassword.isEmpty()) {
-            updateState { copy(error = "Please enter a new password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_new_password_required)) }
             return
         }
 
         if (newPassword.length < 6) {
-            updateState { copy(error = "Password must be at least 6 characters") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_password_min_chars)) }
             return
         }
 
         if (confirmPassword.isEmpty()) {
-            updateState { copy(error = "Please confirm your password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_confirm_password_required)) }
             return
         }
 
         if (newPassword != confirmPassword) {
-            updateState { copy(error = "Passwords do not match") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_passwords_mismatch)) }
             return
         }
 
@@ -114,14 +116,14 @@ class ForgotPasswordViewModel(
                 result.fold(
                     onSuccess = {
                         updateState { copy(isLoading = false) }
-                        sendEffect(ForgotPasswordContract.Effect.ShowSnackbar("Password reset successfully!"))
+                        sendEffect(ForgotPasswordContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_password_reset)))
                         sendEffect(ForgotPasswordContract.Effect.NavigateToLogin)
                     },
                     onFailure = { error ->
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Failed to reset password"
+                                error = if (!error.message.isNullOrBlank()) UiText.Raw(error.message!!) else UiText.StringRes(Res.string.error_reset_password_failed)
                             )
                         }
                     }
@@ -130,11 +132,10 @@ class ForgotPasswordViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to reset password"
+                        error = if (!e.message.isNullOrBlank()) UiText.Raw(e.message!!) else UiText.StringRes(Res.string.error_reset_password_failed)
                     )
                 }
             }
         }
     }
 }
-

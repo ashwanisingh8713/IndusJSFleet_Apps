@@ -3,6 +3,7 @@ package com.ijs.user.presentation.changepassword
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 
 /**
  * MVI Contract for the Change Password screen.
@@ -20,7 +21,7 @@ object ChangePasswordContract {
         val isNewPasswordVisible: Boolean = false,
         val isConfirmPasswordVisible: Boolean = false,
         val isLoading: Boolean = false,
-        val error: String? = null
+        val error: UiText? = null
     ) : UiState
 
     /**
@@ -41,9 +42,8 @@ object ChangePasswordContract {
      * Side effects for the Change Password screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data object PasswordChanged : Effect
         data object NavigateBack : Effect
     }
 }
-

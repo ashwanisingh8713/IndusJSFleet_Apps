@@ -29,6 +29,7 @@ import com.indusjs.uicomponents.theme.isAppInDarkTheme
 import com.indusjs.uicomponents.theme.rememberThemeToggle
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Navigation Drawer Content with Quick Actions menu items.
@@ -104,7 +105,7 @@ internal fun NavigationDrawerContent(
                     }
                     Icon(
                         painter = painterResource(Res.drawable.ic_chevron_right),
-                        contentDescription = "Profile",
+                        contentDescription = stringResource(Res.string.profile_title),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
@@ -118,12 +119,12 @@ internal fun NavigationDrawerContent(
             icon = {
                 Icon(
                     painter = painterResource(Res.drawable.ic_vehicle),
-                    contentDescription = "Vehicles",
+                    contentDescription = stringResource(Res.string.nav_vehicles),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             },
-            label = { Text("Vehicles") },
+            label = { Text(stringResource(Res.string.nav_vehicles)) },
             selected = false,
             onClick = onNavigateToVehicles,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -133,12 +134,12 @@ internal fun NavigationDrawerContent(
             icon = {
                 Icon(
                     painter = painterResource(Res.drawable.ic_driver),
-                    contentDescription = "Drivers",
+                    contentDescription = stringResource(Res.string.nav_drivers),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             },
-            label = { Text("Drivers") },
+            label = { Text(stringResource(Res.string.nav_drivers)) },
             selected = false,
             onClick = onNavigateToDrivers,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -148,12 +149,12 @@ internal fun NavigationDrawerContent(
             icon = {
                 Icon(
                     painter = painterResource(Res.drawable.ic_trip),
-                    contentDescription = "Trips",
+                    contentDescription = stringResource(Res.string.nav_trips),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             },
-            label = { Text("Trips") },
+            label = { Text(stringResource(Res.string.nav_trips)) },
             selected = false,
             onClick = onNavigateToTrips,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -166,7 +167,7 @@ internal fun NavigationDrawerContent(
                     modifier = Modifier.size(24.dp)
                 )
             },
-            label = { Text("Customers") },
+            label = { Text(stringResource(Res.string.nav_customers)) },
             selected = false,
             onClick = onNavigateToCustomers,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -179,7 +180,7 @@ internal fun NavigationDrawerContent(
                     modifier = Modifier.size(24.dp)
                 )
             },
-            label = { Text("Payments") },
+            label = { Text(stringResource(Res.string.nav_payments)) },
             selected = false,
             onClick = onNavigateToPayments,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -189,12 +190,12 @@ internal fun NavigationDrawerContent(
             icon = {
                 Icon(
                     painter = painterResource(Res.drawable.ic_map),
-                    contentDescription = "Live Map",
+                    contentDescription = stringResource(Res.string.nav_live_map),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             },
-            label = { Text("Live Map") },
+            label = { Text(stringResource(Res.string.nav_live_map)) },
             selected = false,
             onClick = onNavigateToMaps,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -206,12 +207,12 @@ internal fun NavigationDrawerContent(
             icon = {
                 Icon(
                     painter = painterResource(Res.drawable.ic_team),
-                    contentDescription = "Team Members",
+                    contentDescription = stringResource(Res.string.nav_team_members),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             },
-            label = { Text("Team Members") },
+            label = { Text(stringResource(Res.string.nav_team_members)) },
             selected = false,
             onClick = onNavigateToTeam,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -226,7 +227,7 @@ internal fun NavigationDrawerContent(
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                label = { Text("Vehicle Finance") },
+                label = { Text(stringResource(Res.string.nav_vehicle_finance)) },
                 selected = false,
                 onClick = onNavigateToVehicleFinance,
                 modifier = Modifier.padding(horizontal = 12.dp)
@@ -239,7 +240,7 @@ internal fun NavigationDrawerContent(
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                label = { Text("Reports & P/L") },
+                label = { Text(stringResource(Res.string.nav_reports)) },
                 selected = false,
                 onClick = onNavigateToReports,
                 modifier = Modifier.padding(horizontal = 12.dp)
@@ -250,12 +251,12 @@ internal fun NavigationDrawerContent(
             icon = {
                 Icon(
                     painter = painterResource(Res.drawable.ic_settings),
-                    contentDescription = "Profile & Settings",
+                    contentDescription = stringResource(Res.string.nav_profile),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             },
-            label = { Text("Profile & Settings") },
+            label = { Text(stringResource(Res.string.nav_profile)) },
             selected = false,
             onClick = onNavigateToProfile,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -272,12 +273,12 @@ internal fun NavigationDrawerContent(
                     painter = painterResource(
                         if (isDarkTheme) Res.drawable.ic_sun else Res.drawable.ic_moon
                     ),
-                    contentDescription = if (isDarkTheme) "Light Mode" else "Dark Mode",
+                    contentDescription = if (isDarkTheme) stringResource(Res.string.cd_light_mode) else stringResource(Res.string.cd_dark_mode),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             },
-            label = { Text(if (isDarkTheme) "Light Mode" else "Dark Mode") },
+            label = { Text(if (isDarkTheme) stringResource(Res.string.cd_light_mode) else stringResource(Res.string.cd_dark_mode)) },
             selected = false,
             onClick = toggleTheme,
             modifier = Modifier.padding(horizontal = 12.dp)
@@ -296,4 +297,3 @@ internal fun NavigationDrawerContent(
         )
     }
 }
-

@@ -27,6 +27,7 @@ import com.indusjs.uicomponents.components.FleetMobileField
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Sign Up Screen composable.
@@ -43,12 +44,24 @@ fun SignUpScreen(
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
 
+    // Pending snackbar UiText — set from LaunchedEffect, resolved in composable scope
+    var pendingSnackbar by remember { mutableStateOf<com.indusjs.uicomponents.components.UiText?>(null) }
+
+    // Resolve pending snackbar in composable scope, then show
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
+
     // Handle side effects
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is SignUpContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is SignUpContract.Effect.NavigateToDashboard -> {
                     onSignUpSuccess()
@@ -84,7 +97,7 @@ fun SignUpScreen(
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_fleet_logo),
-                        contentDescription = "Fleet Management",
+                        contentDescription = stringResource(Res.string.app_name),
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -94,7 +107,7 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "Create Account",
+                text = stringResource(Res.string.signup_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -103,7 +116,7 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Sign up to get started with Fleet Management",
+                text = stringResource(Res.string.signup_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -120,8 +133,8 @@ fun SignUpScreen(
                     value = state.firstName,
                     onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateFirstName(it)) },
                     modifier = Modifier.weight(1f),
-                    label = { Text("First Name") },
-                    placeholder = { Text("Enter first name") },
+                    label = { Text(stringResource(Res.string.label_first_name)) },
+                    placeholder = { Text(stringResource(Res.string.placeholder_first_name)) },
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Next
                     ),
@@ -137,8 +150,8 @@ fun SignUpScreen(
                     value = state.lastName,
                     onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateLastName(it)) },
                     modifier = Modifier.weight(1f),
-                    label = { Text("Last Name") },
-                    placeholder = { Text("Enter last name") },
+                    label = { Text(stringResource(Res.string.label_last_name)) },
+                    placeholder = { Text(stringResource(Res.string.placeholder_last_name)) },
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Next
                     ),
@@ -158,8 +171,8 @@ fun SignUpScreen(
                 value = state.email,
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateEmail(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = "Email Address",
-                placeholder = "Enter your email",
+                label = stringResource(Res.string.signup_email_label),
+                placeholder = stringResource(Res.string.signup_email_placeholder),
                 enabled = !state.isLoading
             )
 
@@ -170,10 +183,10 @@ fun SignUpScreen(
                 rawValue = state.mobile,
                 onRawValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateMobile(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = "Mobile Number",
-                placeholder = "Enter 10-digit mobile",
+                label = stringResource(Res.string.signup_mobile_label),
+                placeholder = stringResource(Res.string.signup_mobile_placeholder),
                 isError = state.mobileError != null,
-                errorMessage = state.mobileError,
+                errorMessage = state.mobileError?.resolve(),
                 enabled = !state.isLoading
             )
 
@@ -184,8 +197,8 @@ fun SignUpScreen(
                 value = state.password,
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdatePassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Password") },
-                placeholder = { Text("Enter password (min 6 characters)") },
+                label = { Text(stringResource(Res.string.signup_password_label)) },
+                placeholder = { Text(stringResource(Res.string.signup_password_placeholder)) },
                 leadingIcon = {
                     Text("🔒", modifier = Modifier.padding(start = 4.dp))
                 },
@@ -212,7 +225,7 @@ fun SignUpScreen(
                 enabled = !state.isLoading,
                 supportingText = {
                     Text(
-                        "Minimum 6 characters",
+                        stringResource(Res.string.signup_password_min_chars),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -227,8 +240,8 @@ fun SignUpScreen(
                 value = state.confirmPassword,
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateConfirmPassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Confirm Password") },
-                placeholder = { Text("Re-enter password") },
+                label = { Text(stringResource(Res.string.signup_confirm_password_label)) },
+                placeholder = { Text(stringResource(Res.string.signup_confirm_password_placeholder)) },
                 leadingIcon = {
                     Text("🔒", modifier = Modifier.padding(start = 4.dp))
                 },
@@ -260,7 +273,7 @@ fun SignUpScreen(
                 supportingText = {
                     if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password) {
                         Text(
-                            "Passwords do not match",
+                            stringResource(Res.string.signup_passwords_do_not_match),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -273,7 +286,7 @@ fun SignUpScreen(
             state.error?.let { error ->
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "⚠️ $error",
+                    text = "⚠️ ${error.resolve()}",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
@@ -303,7 +316,7 @@ fun SignUpScreen(
                     )
                 } else {
                     Text(
-                        text = "Create Account",
+                        text = stringResource(Res.string.signup_create_account),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -322,7 +335,7 @@ fun SignUpScreen(
                     color = MaterialTheme.colorScheme.outlineVariant
                 )
                 Text(
-                    text = "  or  ",
+                    text = "  ${stringResource(Res.string.or)}  ",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -340,7 +353,7 @@ fun SignUpScreen(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Already have an account?",
+                    text = stringResource(Res.string.signup_already_have_account),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -348,7 +361,7 @@ fun SignUpScreen(
                     onClick = { viewModel.sendIntent(SignUpContract.Intent.NavigateToLogin) }
                 ) {
                     Text(
-                        text = "Sign In",
+                        text = stringResource(Res.string.login_sign_in),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary

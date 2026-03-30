@@ -25,6 +25,7 @@ import com.ijs.finance.domain.entity.*
 import com.ijs.finance.presentation.VehicleFinanceContract.Intent
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 // Use FinanceColors from core.ui
 private val LoanBlue = FinanceColors.LoanBlue
@@ -68,7 +69,7 @@ fun EmiPaymentHistoryScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 }

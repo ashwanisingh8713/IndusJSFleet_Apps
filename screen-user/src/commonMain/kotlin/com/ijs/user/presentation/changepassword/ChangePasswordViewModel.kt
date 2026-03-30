@@ -3,7 +3,9 @@ package com.ijs.user.presentation.changepassword
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.user.UserRepository
+import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.withContext
 
 /**
@@ -35,32 +37,32 @@ class ChangePasswordViewModel(
 
         // Validation
         if (currentPassword.isEmpty()) {
-            updateState { copy(error = "Please enter your current password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_current_password_required)) }
             return
         }
 
         if (newPassword.isEmpty()) {
-            updateState { copy(error = "Please enter a new password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_new_password_required)) }
             return
         }
 
         if (newPassword.length < 6) {
-            updateState { copy(error = "Password must be at least 6 characters") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_password_min_chars)) }
             return
         }
 
         if (confirmPassword.isEmpty()) {
-            updateState { copy(error = "Please confirm your new password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_confirm_new_password_required)) }
             return
         }
 
         if (newPassword != confirmPassword) {
-            updateState { copy(error = "Passwords do not match") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_passwords_mismatch)) }
             return
         }
 
         if (currentPassword == newPassword) {
-            updateState { copy(error = "New password must be different from current password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_password_same_as_current)) }
             return
         }
 
@@ -78,14 +80,14 @@ class ChangePasswordViewModel(
                     onSuccess = {
                         updateState { copy(isLoading = false) }
                         sendEffect(ChangePasswordContract.Effect.PasswordChanged)
-                        sendEffect(ChangePasswordContract.Effect.ShowSnackbar("Password changed successfully"))
+                        sendEffect(ChangePasswordContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_password_changed)))
                         sendEffect(ChangePasswordContract.Effect.NavigateBack)
                     },
                     onFailure = { error ->
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Failed to change password"
+                                error = if (!error.message.isNullOrBlank()) UiText.Raw(error.message!!) else UiText.StringRes(Res.string.error_change_password_failed)
                             )
                         }
                     }
@@ -94,11 +96,10 @@ class ChangePasswordViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to change password"
+                        error = if (!e.message.isNullOrBlank()) UiText.Raw(e.message!!) else UiText.StringRes(Res.string.error_change_password_failed)
                     )
                 }
             }
         }
     }
 }
-

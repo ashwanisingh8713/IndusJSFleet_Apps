@@ -1,0 +1,909 @@
+<resources>
+    <!-- ==================== Common / Shared Strings ==================== -->
+    <string name="app_name">फ्लीट प्रबंधन</string>
+    <string name="loading">लोड हो रहा है…</string>
+    <string name="retry">पुनः प्रयास करें</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="save">सहेजें</string>
+    <string name="delete">हटाएं</string>
+    <string name="edit">संपादित करें</string>
+    <string name="add">जोड़ें</string>
+    <string name="back">वापस</string>
+    <string name="close">बंद करें</string>
+    <string name="search">खोजें…</string>
+    <string name="refresh">रीफ्रेश</string>
+    <string name="submit">जमा करें</string>
+    <string name="done">हो गया</string>
+    <string name="yes">हाँ</string>
+    <string name="no">नहीं</string>
+    <string name="ok">ठीक है</string>
+    <string name="or">या</string>
+    <string name="change">बदलें</string>
+    <string name="next">अगला</string>
+    <string name="previous">पिछला</string>
+    <string name="skip">छोड़ें</string>
+    <string name="no_data">कोई डेटा नहीं</string>
+    <string name="no_data_message">यहाँ दिखाने के लिए कुछ नहीं है।</string>
+    <string name="date_entered">✓ तारीख दर्ज की गई</string>
+    <string name="enter_complete_date">पूरी तारीख दर्ज करें (8 अंक)</string>
+    <string name="time_entered">✓ समय दर्ज किया गया</string>
+    <string name="enter_complete_time">पूरा समय दर्ज करें (4 अंक)</string>
+
+    <!-- ==================== Input Fields ==================== -->
+    <string name="label_email">ईमेल</string>
+    <string name="label_password">पासवर्ड</string>
+    <string name="label_phone">फोन</string>
+    <string name="label_date">तारीख</string>
+    <string name="label_time">समय</string>
+    <string name="label_name">नाम</string>
+    <string name="label_first_name">पहला नाम</string>
+    <string name="label_last_name">अंतिम नाम</string>
+    <string name="label_mobile_number">मोबाइल नंबर</string>
+    <string name="label_description">विवरण</string>
+    <string name="label_amount">राशि</string>
+    <string name="label_notes">नोट्स</string>
+    <string name="label_address">पता</string>
+
+    <string name="placeholder_email">अपना ईमेल दर्ज करें</string>
+    <string name="placeholder_password">अपना पासवर्ड दर्ज करें</string>
+    <string name="placeholder_phone">अपना फोन नंबर दर्ज करें</string>
+    <string name="placeholder_date">DD-MM-YYYY</string>
+    <string name="placeholder_time">HH:MM</string>
+    <string name="placeholder_first_name">पहला नाम दर्ज करें</string>
+    <string name="placeholder_last_name">अंतिम नाम दर्ज करें</string>
+    <string name="placeholder_mobile">10 अंकों का मोबाइल दर्ज करें</string>
+    <string name="placeholder_search">खोजें…</string>
+    <string name="placeholder_email_or_mobile">अपना ईमेल या मोबाइल नंबर दर्ज करें</string>
+
+    <!-- ==================== State Components ==================== -->
+    <string name="current_state_label">वर्तमान: %1$s</string>
+    <string name="current_state">वर्तमान स्थिति</string>
+    <string name="not_available_from_current_state">वर्तमान स्थिति से उपलब्ध नहीं</string>
+
+    <!-- ==================== Content Descriptions ==================== -->
+    <string name="cd_switch_to_light_mode">लाइट मोड पर जाएं</string>
+    <string name="cd_switch_to_dark_mode">डार्क मोड पर जाएं</string>
+    <string name="cd_light_mode">लाइट मोड</string>
+    <string name="cd_dark_mode">डार्क मोड</string>
+
+    <!-- ==================== Auth / Login ==================== -->
+    <string name="login_title">फ्लीट प्रबंधन</string>
+    <string name="login_subtitle">जारी रखने के लिए साइन इन करें</string>
+    <string name="login_sign_in">साइन इन</string>
+    <string name="login_forgot_password">पासवर्ड भूल गए?</string>
+    <string name="login_no_account">खाता नहीं है?</string>
+    <string name="login_sign_up">साइन अप</string>
+    <string name="login_demo_hint">डेमो: कोई भी ईमेल और पासवर्ड दर्ज करें</string>
+    <string name="login_error_email_required">कृपया अपना ईमेल या मोबाइल दर्ज करें</string>
+    <string name="login_error_password_required">कृपया अपना पासवर्ड दर्ज करें</string>
+    <string name="login_error_failed">लॉगिन विफल</string>
+
+    <!-- ==================== Auth / Sign Up ==================== -->
+    <string name="signup_title">खाता बनाएं</string>
+    <string name="signup_subtitle">फ्लीट प्रबंधन शुरू करने के लिए साइन अप करें</string>
+    <string name="signup_email_label">ईमेल पता</string>
+    <string name="signup_email_placeholder">अपना ईमेल दर्ज करें</string>
+    <string name="signup_mobile_label">मोबाइल नंबर</string>
+    <string name="signup_mobile_placeholder">10 अंकों का मोबाइल दर्ज करें</string>
+    <string name="signup_password_label">पासवर्ड</string>
+    <string name="signup_password_placeholder">पासवर्ड दर्ज करें (न्यूनतम 6 अक्षर)</string>
+    <string name="signup_confirm_password_label">पासवर्ड की पुष्टि करें</string>
+    <string name="signup_confirm_password_placeholder">पासवर्ड पुनः दर्ज करें</string>
+    <string name="signup_password_min_chars">न्यूनतम 6 अक्षर</string>
+    <string name="signup_passwords_do_not_match">पासवर्ड मेल नहीं खाते</string>
+    <string name="signup_create_account">खाता बनाएं</string>
+    <string name="signup_already_have_account">पहले से खाता है?</string>
+
+    <!-- ==================== Auth / Forgot Password ==================== -->
+    <string name="forgot_password_title">पासवर्ड भूल गए</string>
+    <string name="forgot_password_heading">पासवर्ड भूल गए?</string>
+    <string name="forgot_password_description">अपना ईमेल या मोबाइल नंबर दर्ज करें और हम आपका पासवर्ड रीसेट करने में मदद करेंगे।</string>
+    <string name="forgot_password_identifier_label">ईमेल या मोबाइल</string>
+    <string name="forgot_password_identifier_placeholder">अपना ईमेल या मोबाइल नंबर दर्ज करें</string>
+    <string name="forgot_password_send_instructions">रीसेट निर्देश भेजें</string>
+    <string name="forgot_password_back_to_login">साइन इन पर वापस जाएं</string>
+
+    <!-- ==================== Auth / Reset Password ==================== -->
+    <string name="reset_password_title">पासवर्ड रीसेट करें</string>
+    <string name="reset_password_heading">नया पासवर्ड बनाएं</string>
+    <string name="reset_password_description">नीचे अपना नया पासवर्ड दर्ज करें।</string>
+    <string name="reset_password_new_label">नया पासवर्ड</string>
+    <string name="reset_password_new_placeholder">नया पासवर्ड दर्ज करें</string>
+    <string name="reset_password_confirm_label">पासवर्ड की पुष्टि करें</string>
+    <string name="reset_password_confirm_placeholder">नया पासवर्ड पुनः दर्ज करें</string>
+    <string name="reset_password_min_chars">न्यूनतम 6 अक्षर</string>
+    <string name="reset_password_mismatch">पासवर्ड मेल नहीं खाते</string>
+    <string name="reset_password_button">पासवर्ड रीसेट करें</string>
+
+    <!-- ==================== Auth / Change Password ==================== -->
+    <string name="change_password_title">पासवर्ड बदलें</string>
+    <string name="change_password_heading">अपना पासवर्ड अपडेट करें</string>
+    <string name="change_password_description">अपना वर्तमान पासवर्ड दर्ज करें और एक नया सुरक्षित पासवर्ड चुनें</string>
+    <string name="change_password_current_label">वर्तमान पासवर्ड</string>
+    <string name="change_password_current_placeholder">अपना वर्तमान पासवर्ड दर्ज करें</string>
+    <string name="change_password_new_label">नया पासवर्ड</string>
+    <string name="change_password_new_placeholder">अपना नया पासवर्ड दर्ज करें</string>
+    <string name="change_password_confirm_label">नए पासवर्ड की पुष्टि करें</string>
+    <string name="change_password_confirm_placeholder">अपना नया पासवर्ड पुनः दर्ज करें</string>
+    <string name="change_password_min_chars">पासवर्ड कम से कम 6 अक्षर का होना चाहिए</string>
+    <string name="change_password_mismatch">पासवर्ड मेल नहीं खाते</string>
+    <string name="change_password_button">पासवर्ड बदलें</string>
+
+    <!-- ==================== Auth / Profile ==================== -->
+    <string name="profile_title">मेरी प्रोफाइल</string>
+    <string name="profile_edit">प्रोफाइल संपादित करें</string>
+    <string name="profile_change_password">पासवर्ड बदलें</string>
+    <string name="profile_logout">लॉगआउट</string>
+    <string name="profile_details">प्रोफाइल विवरण</string>
+    <string name="profile_first_name">पहला नाम</string>
+    <string name="profile_last_name">अंतिम नाम</string>
+    <string name="profile_email">ईमेल</string>
+    <string name="profile_mobile">मोबाइल</string>
+    <string name="profile_role">भूमिका</string>
+    <string name="profile_organization">संगठन</string>
+    <string name="profile_save">परिवर्तन सहेजें</string>
+
+    <!-- User Roles -->
+    <string name="role_owner">मालिक</string>
+    <string name="role_general_manager">महा प्रबंधक</string>
+    <string name="role_manager">प्रबंधक</string>
+    <string name="role_supervisor">पर्यवेक्षक</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_page1_title">फ्लीट प्रबंधन</string>
+    <string name="onboarding_page1_description">एक ही डैशबोर्ड से अपने पूरे वाहन बेड़े का प्रबंधन करें। वाहन की स्थिति, रखरखाव शेड्यूल और दस्तावेज़ — सब एक जगह पर।</string>
+    <string name="onboarding_page2_title">ड्राइवर प्रबंधन</string>
+    <string name="onboarding_page2_description">अपने ड्राइवरों, उनके लाइसेंस, असाइनमेंट और खर्चों पर नज़र रखें। सुनिश्चित करें कि आपके बेड़े में हमेशा योग्य ड्राइवर हों।</string>
+    <string name="onboarding_page3_title">ट्रिप योजना</string>
+    <string name="onboarding_page3_description">रूट ऑप्टिमाइज़ेशन, कार्गो ट्रैकिंग और रियल-टाइम स्थिति अपडेट के साथ ट्रिप की योजना बनाएं और प्रबंधित करें।</string>
+    <string name="onboarding_page4_title">लागत एवं राजस्व ट्रैकिंग</string>
+    <string name="onboarding_page4_description">ईंधन, टोल, रखरखाव और सभी परिचालन लागतों को ट्रैक करें। अपने बेड़े की लाभप्रदता बढ़ाने के लिए विस्तृत लाभ-हानि रिपोर्ट प्राप्त करें।</string>
+    <string name="onboarding_get_started">शुरू करें</string>
+
+    <!-- ==================== Dashboard ==================== -->
+    <string name="dashboard_title">डैशबोर्ड</string>
+    <string name="dashboard_fleet_overview">फ्लीट अवलोकन</string>
+    <string name="dashboard_cost_overview">लागत अवलोकन</string>
+    <string name="dashboard_financial_summary">वित्तीय सारांश</string>
+    <string name="dashboard_quick_actions">त्वरित कार्य</string>
+    <string name="dashboard_alerts">सूचनाएं</string>
+    <string name="dashboard_greeting_morning">सुप्रभात</string>
+    <string name="dashboard_greeting_afternoon">नमस्ते</string>
+    <string name="dashboard_greeting_evening">शुभ संध्या</string>
+    <string name="dashboard_greeting_night">शुभ रात्रि</string>
+
+    <!-- ==================== Vehicles ==================== -->
+    <string name="vehicles_title">वाहन</string>
+    <string name="vehicles_add">वाहन जोड़ें</string>
+    <string name="vehicles_detail">वाहन विवरण</string>
+    <string name="vehicles_overview">अवलोकन</string>
+    <string name="vehicles_trips">ट्रिप्स</string>
+    <string name="vehicles_documents">दस्तावेज़</string>
+    <string name="vehicles_costs">खर्चे</string>
+    <string name="vehicles_empty_title">कोई वाहन नहीं</string>
+    <string name="vehicles_empty_message">शुरू करने के लिए अपना पहला वाहन जोड़ें।</string>
+    <string name="vehicles_search_placeholder">वाहन खोजें…</string>
+    <string name="vehicles_maintenance_cost">रखरखाव खर्च</string>
+    <string name="vehicles_registration">पंजीकरण नंबर</string>
+    <string name="vehicles_type">वाहन प्रकार</string>
+    <string name="vehicles_status">स्थिति</string>
+
+    <!-- Vehicle States -->
+    <string name="vehicle_state_inactive">निष्क्रिय</string>
+    <string name="vehicle_state_active">सक्रिय</string>
+    <string name="vehicle_state_on_route">रूट पर</string>
+    <string name="vehicle_state_maintenance">रखरखाव</string>
+    <string name="vehicle_state_damaged">क्षतिग्रस्त</string>
+    <string name="vehicle_state_decommissioned">सेवा से हटाया</string>
+
+    <!-- ==================== Drivers ==================== -->
+    <string name="drivers_title">ड्राइवर</string>
+    <string name="drivers_add">ड्राइवर जोड़ें</string>
+    <string name="drivers_detail">ड्राइवर विवरण</string>
+    <string name="drivers_empty_title">कोई ड्राइवर नहीं</string>
+    <string name="drivers_empty_message">शुरू करने के लिए अपना पहला ड्राइवर जोड़ें।</string>
+    <string name="drivers_search_placeholder">ड्राइवर खोजें…</string>
+    <string name="drivers_license">लाइसेंस</string>
+    <string name="drivers_cost">ड्राइवर खर्च</string>
+
+    <!-- Driver States -->
+    <string name="driver_state_inactive">निष्क्रिय</string>
+    <string name="driver_state_active">सक्रिय</string>
+    <string name="driver_state_on_route">रूट पर</string>
+    <string name="driver_state_on_leave">छुट्टी पर</string>
+    <string name="driver_state_suspended">निलंबित</string>
+    <string name="driver_state_terminated">सेवा समाप्त</string>
+
+    <!-- ==================== Trips ==================== -->
+    <string name="trips_title">ट्रिप्स</string>
+    <string name="trips_add">ट्रिप बनाएं</string>
+    <string name="trips_detail">ट्रिप विवरण</string>
+    <string name="trips_empty_title">कोई ट्रिप नहीं</string>
+    <string name="trips_empty_message">शुरू करने के लिए अपनी पहली ट्रिप बनाएं।</string>
+    <string name="trips_search_placeholder">ट्रिप खोजें…</string>
+    <string name="trips_cost">ट्रिप खर्च</string>
+    <string name="trips_route">रूट</string>
+    <string name="trips_cargo">कार्गो</string>
+    <string name="trips_schedule">शेड्यूल</string>
+
+    <!-- Trip States -->
+    <string name="trip_state_planned">नियोजित</string>
+    <string name="trip_state_on_route">रूट पर</string>
+    <string name="trip_state_completed">पूरा हुआ</string>
+    <string name="trip_state_cancelled">रद्द</string>
+    <string name="trip_state_failed">विफल</string>
+    <string name="trip_state_delayed">विलंबित</string>
+
+    <!-- ==================== Customers ==================== -->
+    <string name="customers_title">ग्राहक</string>
+    <string name="customers_add">ग्राहक जोड़ें</string>
+    <string name="customers_detail">ग्राहक विवरण</string>
+    <string name="customers_empty_title">कोई ग्राहक नहीं</string>
+    <string name="customers_empty_message">शुरू करने के लिए अपना पहला ग्राहक जोड़ें।</string>
+    <string name="customers_search_placeholder">ग्राहक खोजें…</string>
+
+    <!-- ==================== Payments ==================== -->
+    <string name="payments_title">भुगतान</string>
+    <string name="payments_add">भुगतान जोड़ें</string>
+    <string name="payments_detail">भुगतान विवरण</string>
+    <string name="payments_edit">भुगतान संपादित करें</string>
+    <string name="payments_empty_title">कोई भुगतान नहीं</string>
+    <string name="payments_empty_message">अभी तक कोई भुगतान दर्ज नहीं किया गया।</string>
+
+    <!-- Payment Status -->
+    <string name="payment_status_received">प्राप्त</string>
+    <string name="payment_status_pending">लंबित</string>
+    <string name="payment_status_cancelled">रद्द</string>
+
+    <!-- Payment Modes -->
+    <string name="payment_mode_cash">नकद</string>
+    <string name="payment_mode_upi">UPI</string>
+    <string name="payment_mode_bank_transfer">बैंक ट्रांसफर</string>
+    <string name="payment_mode_cheque">चेक</string>
+    <string name="payment_mode_card">कार्ड</string>
+
+    <!-- ==================== Reports ==================== -->
+    <string name="reports_title">रिपोर्ट्स</string>
+    <string name="reports_vehicle_pl">वाहन लाभ एवं हानि</string>
+    <string name="reports_trip_pl">ट्रिप लाभ एवं हानि</string>
+    <string name="reports_cost_analysis">लागत विश्लेषण</string>
+    <string name="reports_consolidated_pl">समेकित लाभ-हानि</string>
+    <string name="reports_revenue">राजस्व</string>
+    <string name="reports_expenses">खर्चे</string>
+    <string name="reports_profit">लाभ</string>
+    <string name="reports_loss">हानि</string>
+
+    <!-- Report Periods -->
+    <string name="period_today">आज</string>
+    <string name="period_weekly">साप्ताहिक</string>
+    <string name="period_15_days">15 दिन</string>
+    <string name="period_monthly">मासिक</string>
+    <string name="period_quarterly">तिमाही</string>
+    <string name="period_half_yearly">छमाही</string>
+    <string name="period_yearly">वार्षिक</string>
+    <string name="period_custom">कस्टम</string>
+
+    <!-- ==================== Team ==================== -->
+    <string name="team_title">टीम</string>
+    <string name="team_add">सदस्य जोड़ें</string>
+    <string name="team_detail">सदस्य विवरण</string>
+    <string name="team_empty_title">कोई टीम सदस्य नहीं</string>
+    <string name="team_empty_message">शुरू करने के लिए अपना पहला टीम सदस्य जोड़ें।</string>
+
+    <!-- ==================== Finance ==================== -->
+    <string name="finance_title">वाहन वित्त</string>
+    <string name="finance_detail">वित्त विवरण</string>
+    <string name="finance_add_purchase">खरीद जानकारी जोड़ें</string>
+    <string name="finance_edit_purchase">खरीद जानकारी संपादित करें</string>
+    <string name="finance_emi_history">EMI भुगतान इतिहास</string>
+    <string name="finance_loan">ऋण</string>
+    <string name="finance_emi">EMI</string>
+    <string name="finance_purchase_price">खरीद मूल्य</string>
+
+    <!-- ==================== Maps & Alerts ==================== -->
+    <string name="maps_title">लाइव ट्रैकिंग</string>
+    <string name="alerts_title">सूचनाएं</string>
+    <string name="alerts_empty_title">कोई सूचना नहीं</string>
+    <string name="alerts_empty_message">सब ठीक है! कोई लंबित सूचना नहीं।</string>
+
+    <!-- ==================== Cost Types ==================== -->
+    <string name="cost_type_fuel">ईंधन</string>
+    <string name="cost_type_toll">टोल</string>
+    <string name="cost_type_driver_allowance">ड्राइवर भत्ता</string>
+    <string name="cost_type_parking">पार्किंग</string>
+    <string name="cost_type_loading_charges">लोडिंग चार्ज</string>
+    <string name="cost_type_unloading_charges">अनलोडिंग चार्ज</string>
+    <string name="cost_type_chalan">चालान</string>
+    <string name="cost_type_permit">परमिट</string>
+    <string name="cost_type_insurance">बीमा</string>
+    <string name="cost_type_other">अन्य</string>
+
+    <!-- Maintenance Cost Types -->
+    <string name="maint_cost_type_tyre">टायर</string>
+    <string name="maint_cost_type_battery">बैटरी</string>
+    <string name="maint_cost_type_servicing">सर्विसिंग</string>
+    <string name="maint_cost_type_engine_repair">इंजन मरम्मत</string>
+    <string name="maint_cost_type_body_repair">बॉडी मरम्मत</string>
+    <string name="maint_cost_type_electrical">इलेक्ट्रिकल</string>
+    <string name="maint_cost_type_ac_repair">AC मरम्मत</string>
+    <string name="maint_cost_type_other">अन्य</string>
+
+    <!-- ==================== Organization Stats ==================== -->
+    <string name="org_stats_title">संगठन</string>
+    <string name="org_stats_vehicles">वाहन</string>
+    <string name="org_stats_drivers">ड्राइवर</string>
+    <string name="org_stats_trips">ट्रिप्स</string>
+    <string name="org_stats_members">सदस्य</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_generic">कुछ गलत हो गया। कृपया पुनः प्रयास करें।</string>
+    <string name="error_network">इंटरनेट कनेक्शन नहीं है। कृपया अपना नेटवर्क जांचें।</string>
+    <string name="error_timeout">कनेक्शन का समय समाप्त हो गया। कृपया पुनः प्रयास करें।</string>
+    <string name="error_server">सर्वर में त्रुटि हुई। कृपया बाद में पुनः प्रयास करें।</string>
+    <string name="error_auth">सत्र समाप्त हो गया। कृपया फिर से लॉगिन करें।</string>
+    <string name="error_forbidden">आपको यह कार्य करने की अनुमति नहीं है।</string>
+    <string name="error_not_found">अनुरोधित संसाधन नहीं मिला।</string>
+    <string name="error_validation">कृपया अपना इनपुट जांचें और पुनः प्रयास करें।</string>
+    <string name="error_rate_limited">बहुत अधिक अनुरोध। कृपया बाद में पुनः प्रयास करें।</string>
+    <string name="login_error_invalid_credentials">अमान्य ईमेल/मोबाइल या पासवर्ड। कृपया पुनः प्रयास करें।</string>
+
+    <!-- ==================== Validation Errors ==================== -->
+    <string name="error_first_name_required">कृपया अपना पहला नाम दर्ज करें</string>
+    <string name="error_last_name_required">कृपया अपना अंतिम नाम दर्ज करें</string>
+    <string name="error_email_required">कृपया अपना ईमेल दर्ज करें</string>
+    <string name="error_email_invalid">कृपया एक वैध ईमेल पता दर्ज करें</string>
+    <string name="error_mobile_required">कृपया अपना मोबाइल नंबर दर्ज करें</string>
+    <string name="error_mobile_invalid">कृपया एक वैध 10 अंकों का भारतीय मोबाइल नंबर दर्ज करें</string>
+    <string name="error_mobile_10_digits">10 अंकों का मोबाइल नंबर दर्ज करें</string>
+    <string name="error_mobile_start_digit">मोबाइल 6, 7, 8, या 9 से शुरू होना चाहिए</string>
+    <string name="error_password_required">कृपया पासवर्ड दर्ज करें</string>
+    <string name="error_password_min_chars">पासवर्ड कम से कम 6 अक्षर का होना चाहिए</string>
+    <string name="error_confirm_password_required">कृपया अपने पासवर्ड की पुष्टि करें</string>
+    <string name="error_passwords_mismatch">पासवर्ड मेल नहीं खाते</string>
+    <string name="error_current_password_required">कृपया अपना वर्तमान पासवर्ड दर्ज करें</string>
+    <string name="error_new_password_required">कृपया नया पासवर्ड दर्ज करें</string>
+    <string name="error_confirm_new_password_required">कृपया अपने नए पासवर्ड की पुष्टि करें</string>
+    <string name="error_password_same_as_current">नया पासवर्ड वर्तमान पासवर्ड से अलग होना चाहिए</string>
+    <string name="error_identifier_required">कृपया अपना ईमेल या मोबाइल नंबर दर्ज करें</string>
+    <string name="error_amount_required">कृपया राशि दर्ज करें</string>
+    <string name="error_valid_amount">कृपया एक वैध राशि दर्ज करें</string>
+    <string name="error_date_required">कृपया तारीख दर्ज करें</string>
+    <string name="error_company_name_required">कंपनी का नाम आवश्यक है</string>
+    <string name="error_contact_person_required">संपर्क व्यक्ति का नाम आवश्यक है</string>
+    <string name="error_primary_contact_required">प्राथमिक संपर्क आवश्यक है</string>
+    <string name="error_gst_invalid">GST नंबर 15 अक्षरों का होना चाहिए</string>
+    <string name="error_select_vehicle">कृपया वाहन चुनें</string>
+    <string name="error_select_driver">कृपया ड्राइवर चुनें</string>
+    <string name="error_select_trip">कृपया ट्रिप चुनें</string>
+    <string name="error_select_cost_type">कृपया लागत प्रकार चुनें</string>
+    <string name="error_weight_invalid">कृपया एक वैध वजन दर्ज करें</string>
+    <string name="error_price_invalid">कृपया एक वैध मूल्य दर्ज करें</string>
+    <string name="error_purchase_date_required">खरीद तारीख आवश्यक है</string>
+    <string name="error_purchase_price_required">खरीद मूल्य आवश्यक है</string>
+    <string name="error_purchase_price_invalid">कृपया एक वैध खरीद मूल्य दर्ज करें</string>
+    <string name="error_down_payment_required">डाउन पेमेंट आवश्यक है</string>
+    <string name="error_interest_rate_required">ब्याज दर आवश्यक है</string>
+    <string name="error_tenure_required">अवधि आवश्यक है</string>
+    <string name="error_financier_required">वित्तपोषक/बैंक का नाम आवश्यक है</string>
+    <string name="error_loan_start_date_required">ऋण शुरू तारीख आवश्यक है</string>
+    <string name="error_payment_amount_required">भुगतान राशि आवश्यक है</string>
+    <string name="error_payment_date_required">भुगतान तारीख आवश्यक है</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_account_created">खाता सफलतापूर्वक बनाया गया!</string>
+    <string name="success_profile_updated">प्रोफ़ाइल सफलतापूर्वक अपडेट हुई</string>
+    <string name="success_password_changed">पासवर्ड सफलतापूर्वक बदला गया</string>
+    <string name="success_password_reset">पासवर्ड सफलतापूर्वक रीसेट हुआ!</string>
+    <string name="success_reset_instructions_sent">रीसेट निर्देश भेजे गए। कृपया अपना नया पासवर्ड दर्ज करें।</string>
+    <string name="success_payment_deleted">भुगतान सफलतापूर्वक हटाया गया</string>
+    <string name="success_payment_recorded">भुगतान सफलतापूर्वक दर्ज किया गया</string>
+    <string name="success_customer_created">ग्राहक सफलतापूर्वक बनाया गया</string>
+    <string name="success_customer_updated">ग्राहक सफलतापूर्वक अपडेट हुआ</string>
+    <string name="success_customer_status">ग्राहक %1$s सफलतापूर्वक</string>
+    <string name="success_customers_synced">%1$d ग्राहक सिंक हुए</string>
+    <string name="success_purchase_saved">खरीद जानकारी सफलतापूर्वक सहेजी गई</string>
+    <string name="success_driver_created">ड्राइवर सफलतापूर्वक बनाया गया</string>
+    <string name="success_vehicle_registered">वाहन सफलतापूर्वक पंजीकृत हुआ</string>
+    <string name="success_trip_created">ट्रिप सफलतापूर्वक बनाई गई</string>
+    <string name="success_trip_cost_saved">ट्रिप खर्च सफलतापूर्वक सहेजा गया</string>
+    <string name="success_maintenance_cost_saved">रखरखाव खर्च सफलतापूर्वक सहेजा गया</string>
+    <string name="success_driver_cost_saved">ड्राइवर खर्च सफलतापूर्वक सहेजा गया</string>
+    <string name="success_team_member_created">टीम सदस्य सफलतापूर्वक बनाया गया</string>
+    <string name="success_team_member_updated">टीम सदस्य सफलतापूर्वक अपडेट हुआ</string>
+    <string name="success_team_member_deleted">टीम सदस्य सफलतापूर्वक हटाया गया</string>
+    <string name="success_team_status_toggled">स्थिति सफलतापूर्वक अपडेट हुई</string>
+    <string name="success_team_password_reset">पासवर्ड सफलतापूर्वक रीसेट हुआ</string>
+    <string name="success_alerts_refreshed">सूचनाएं रीफ्रेश हुईं</string>
+
+    <!-- ==================== Error Fallbacks ==================== -->
+    <string name="error_signup_failed">साइन अप विफल</string>
+    <string name="error_load_profile">प्रोफ़ाइल लोड करने में विफल</string>
+    <string name="error_update_profile">प्रोफ़ाइल अपडेट करने में विफल</string>
+    <string name="error_change_password_failed">पासवर्ड बदलने में विफल</string>
+    <string name="error_reset_password_failed">पासवर्ड रीसेट करने में विफल</string>
+    <string name="error_send_reset_failed">रीसेट निर्देश भेजने में विफल</string>
+    <string name="error_logout_failed">लॉगआउट विफल</string>
+    <string name="error_load_team">टीम सदस्यों को लोड करने में विफल</string>
+    <string name="error_refresh_team">टीम सदस्यों को रीफ्रेश करने में विफल</string>
+    <string name="error_create_team_member">टीम सदस्य बनाने में विफल</string>
+    <string name="error_update_team_member">टीम सदस्य अपडेट करने में विफल</string>
+    <string name="error_delete_team_member">टीम सदस्य हटाने में विफल</string>
+    <string name="error_toggle_status">स्थिति बदलने में विफल</string>
+    <string name="error_reset_member_password">पासवर्ड रीसेट करने में विफल</string>
+    <string name="error_create_driver">ड्राइवर बनाने में विफल</string>
+    <string name="error_register_vehicle">वाहन पंजीकृत करने में विफल</string>
+    <string name="error_load_map">मैप डेटा लोड करने में विफल</string>
+    <string name="error_export_pdf">PDF निर्यात करने में विफल</string>
+    <string name="error_load_data">डेटा लोड करने में विफल</string>
+    <string name="error_refresh_data">डेटा रीफ्रेश करने में विफल</string>
+    <string name="error_delete_payment">भुगतान हटाने में विफल</string>
+    <string name="error_load_customers">ग्राहकों को लोड करने में विफल</string>
+    <string name="error_create_customer">ग्राहक बनाने में विफल</string>
+    <string name="error_update_customer">ग्राहक अपडेट करने में विफल</string>
+    <string name="error_customer_feature_unavailable">ग्राहक सुविधा उपलब्ध नहीं है</string>
+
+    <!-- ==================== Report Enum Labels ==================== -->
+    <string name="report_period_today">आज</string>
+    <string name="report_period_this_week">इस सप्ताह</string>
+    <string name="report_period_15_days">15 दिन</string>
+    <string name="report_period_this_month">इस महीने</string>
+    <string name="report_period_quarterly">तिमाही</string>
+    <string name="report_period_half_year">छमाही</string>
+    <string name="report_period_this_year">इस वर्ष</string>
+    <string name="report_period_custom">कस्टम</string>
+    <string name="profit_status_highly_profitable">अत्यधिक लाभदायक</string>
+    <string name="profit_status_profitable">लाभदायक</string>
+    <string name="profit_status_break_even">सम-विच्छेद</string>
+    <string name="profit_status_loss">हानि</string>
+    <string name="profit_status_severe_loss">गंभीर हानि</string>
+    <string name="report_view_summary">सारांश</string>
+    <string name="report_view_list">सूची</string>
+    <string name="report_view_chart">चार्ट</string>
+    <string name="report_chart_bar">बार चार्ट</string>
+    <string name="report_chart_pie">पाई चार्ट</string>
+    <string name="export_format_pdf">PDF रिपोर्ट</string>
+    <string name="export_format_csv">CSV डेटा</string>
+    <string name="export_format_excel">एक्सेल शीट</string>
+    <string name="sort_profit_high_low">लाभ (अधिक से कम)</string>
+    <string name="sort_profit_low_high">लाभ (कम से अधिक)</string>
+    <string name="sort_loss_high_low">हानि (अधिक से कम)</string>
+    <string name="sort_revenue_high_low">राजस्व (अधिक से कम)</string>
+    <string name="sort_expense_high_low">खर्च (अधिक से कम)</string>
+    <string name="sort_trips_high_low">ट्रिप्स (अधिक से कम)</string>
+    <string name="sort_date_newest">तारीख (नवीनतम पहले)</string>
+    <string name="sort_date_oldest">तारीख (पुरानी पहले)</string>
+    <string name="pl_filter_all">सभी</string>
+    <string name="pl_filter_profitable">केवल लाभदायक</string>
+    <string name="pl_filter_loss_making">केवल हानि वाले</string>
+    <string name="finance_filter_all">सभी</string>
+    <string name="finance_filter_financed">वित्तपोषित</string>
+    <string name="finance_filter_cash_purchase">नकद खरीद</string>
+    <string name="finance_filter_not_recorded">दर्ज नहीं</string>
+
+    <!-- ==================== Report Validation ==================== -->
+    <string name="report_select_dates">कृपया प्रारंभ और समाप्ति दोनों तारीखें चुनें</string>
+    <string name="report_select_date_range">कृपया तारीख सीमा चुनें</string>
+    <string name="report_select_vehicles">कृपया कम से कम एक वाहन चुनें</string>
+    <string name="report_select_cost_types">कृपया कम से कम एक लागत प्रकार चुनें</string>
+    <string name="report_select_trips">कृपया कम से कम एक ट्रिप चुनें</string>
+    <string name="report_no_trips_found">कोई ट्रिप नहीं मिली</string>
+    <string name="report_no_data_export">निर्यात के लिए कोई डेटा नहीं</string>
+
+    <!-- ==================== Misc ==================== -->
+    <string name="receipt_download_coming_soon">रसीद डाउनलोड जल्द आ रही है</string>
+    <string name="offline_mode_message">ऑफ़लाइन मोड — कैश्ड डेटा दिखा रहा है</string>
+    <string name="alert_dismissed">सूचना खारिज की गई</string>
+    <string name="version_format">संस्करण %1$s</string>
+    <string name="payments_report_title">भुगतान रिपोर्ट</string>
+    <string name="payment_receipt_title">भुगतान रसीद</string>
+
+    <!-- ==================== Currency ==================== -->
+    <string name="currency_symbol">₹</string>
+    <string name="currency_format">₹%1$s</string>
+
+    <!-- ==================== Vehicle - Add Vehicle Screen ==================== -->
+    <string name="vehicle_section_info">🚗 वाहन जानकारी</string>
+    <string name="vehicle_label_registration">पंजीकरण नंबर *</string>
+    <string name="vehicle_placeholder_registration">जैसे, MH12AB1234</string>
+    <string name="vehicle_label_make">निर्माता *</string>
+    <string name="vehicle_placeholder_make">जैसे, Tata</string>
+    <string name="vehicle_label_model">मॉडल *</string>
+    <string name="vehicle_placeholder_model">जैसे, Prima</string>
+    <string name="vehicle_label_year">वर्ष *</string>
+    <string name="vehicle_placeholder_year">जैसे, 2023</string>
+    <string name="vehicle_label_color">रंग</string>
+    <string name="vehicle_placeholder_color">जैसे, सफेद</string>
+    <string name="vehicle_section_owner">👤 मालिक जानकारी</string>
+    <string name="vehicle_label_owner_name">मालिक का नाम</string>
+    <string name="vehicle_label_owner_contact">मालिक का संपर्क</string>
+    <string name="vehicle_placeholder_owner_contact">10 अंकों का मोबाइल दर्ज करें</string>
+    <string name="vehicle_btn_select_file">फ़ाइल चुनें</string>
+    <string name="vehicle_select_one_or_more">एक या अधिक चुनें</string>
+
+    <!-- ==================== Vehicle - Maintenance Cost ==================== -->
+    <string name="maint_section_select_vehicle">🚛 वाहन चुनें</string>
+    <string name="maint_label_vehicle">वाहन *</string>
+    <string name="maint_placeholder_vehicle">वाहन चुनें</string>
+    <string name="maint_section_costs">🔧 रखरखाव खर्चे</string>
+    <string name="maint_btn_add_row">पंक्ति जोड़ें</string>
+    <string name="maint_label_amount">राशि (₹) *</string>
+    <string name="maint_placeholder_amount">राशि दर्ज करें</string>
+
+    <!-- ==================== Trip - Create/Edit ==================== -->
+    <string name="trip_label_select_vehicle">वाहन चुनें *</string>
+    <string name="trip_label_select_driver">ड्राइवर चुनें *</string>
+    <string name="trip_label_cargo_type">कार्गो प्रकार</string>
+    <string name="trip_placeholder_cargo_type">कार्गो प्रकार चुनें</string>
+    <string name="trip_edit_label_vehicle">वाहन चुनें</string>
+    <string name="trip_edit_placeholder_vehicle">वाहन चुनें</string>
+    <string name="trip_edit_label_driver">ड्राइवर चुनें</string>
+    <string name="trip_edit_placeholder_driver">ड्राइवर चुनें</string>
+    <string name="trip_edit_label_trip_price">ट्रिप मूल्य (अपेक्षित) *</string>
+    <string name="trip_edit_placeholder_trip_price">ट्रिप मूल्य दर्ज करें</string>
+    <string name="trip_edit_trip_price_hint">अपेक्षित लागत + लाभ</string>
+    <string name="trip_edit_label_priority">प्राथमिकता</string>
+    <string name="trip_edit_currently_assigned">वर्तमान में नियुक्त</string>
+
+    <!-- ==================== Trip - Cost Entry ==================== -->
+    <string name="trip_cost_section_select_trip">🚛 ट्रिप चुनें</string>
+    <string name="trip_cost_label_trip">ट्रिप *</string>
+    <string name="trip_cost_placeholder_trip">ट्रिप चुनें</string>
+    <string name="trip_cost_label_cost_type_name">लागत प्रकार नाम *</string>
+    <string name="trip_cost_placeholder_custom_cost">कस्टम लागत प्रकार दर्ज करें</string>
+    <string name="trip_cost_label_date_time">तारीख और समय *</string>
+    <string name="trip_cost_label_amount">राशि (₹) *</string>
+    <string name="trip_cost_placeholder_amount">राशि दर्ज करें</string>
+    <string name="trip_cost_label_notes">नोट्स (वैकल्पिक)</string>
+    <string name="trip_cost_placeholder_notes">नोट्स दर्ज करें</string>
+    <string name="trip_cost_section_fuel">⛽ ईंधन विवरण</string>
+    <string name="trip_cost_label_fuel_type">ईंधन प्रकार</string>
+    <string name="trip_cost_placeholder_fuel_type">ऊपर ईंधन प्रकार चुनें</string>
+    <string name="trip_cost_label_fuel_quantity">मात्रा (लीटर)</string>
+    <string name="trip_cost_placeholder_fuel_quantity">लीटर</string>
+    <string name="trip_cost_label_fuel_rate">दर (₹/लीटर)</string>
+    <string name="trip_cost_placeholder_fuel_rate">प्रति लीटर</string>
+    <string name="trip_cost_label_mileage">माइलेज (किमी/लीटर)</string>
+    <string name="trip_cost_placeholder_mileage">किमी प्रति लीटर</string>
+    <string name="trip_cost_calculated_total">गणना कुल:</string>
+    <string name="trip_cost_history_title">📜 लागत इतिहास</string>
+    <string name="trip_cost_section_details">📍 ट्रिप विवरण</string>
+    <string name="trip_cost_label_vehicle">वाहन</string>
+    <string name="trip_cost_label_trip_date">ट्रिप तारीख</string>
+    <string name="trip_cost_label_route">रूट</string>
+    <string name="trip_cost_select_type">प्रकार चुनें</string>
+    <string name="trip_cost_no_date">कोई तारीख नहीं</string>
+
+    <!-- ==================== Driver - Cost Entry ==================== -->
+    <string name="driver_cost_label_driver">ड्राइवर *</string>
+    <string name="driver_cost_placeholder_driver">ड्राइवर चुनें</string>
+    <string name="driver_cost_label_custom_name">कस्टम लागत नाम</string>
+    <string name="driver_cost_placeholder_custom_name">कस्टम लागत नाम दर्ज करें</string>
+    <string name="driver_cost_label_date_time">तारीख और समय *</string>
+    <string name="driver_cost_label_amount">राशि (₹) *</string>
+    <string name="driver_cost_placeholder_amount">राशि दर्ज करें</string>
+    <string name="driver_cost_label_notes">नोट्स (वैकल्पिक)</string>
+    <string name="driver_cost_new_entry">नई लागत प्रविष्टि</string>
+    <string name="driver_cost_deduction">कटौती</string>
+    <string name="driver_cost_active">सक्रिय</string>
+    <string name="driver_cost_inactive">निष्क्रिय</string>
+
+    <!-- ==================== Customer - Create/Detail ==================== -->
+    <string name="customer_section_company">📋 कंपनी और संपर्क</string>
+    <string name="customer_label_company_name">कंपनी का नाम *</string>
+    <string name="customer_placeholder_company_name">कंपनी या फर्म का नाम</string>
+    <string name="customer_label_contact_person">संपर्क व्यक्ति *</string>
+    <string name="customer_placeholder_contact_person">कंपनी व्यक्ति का नाम</string>
+    <string name="customer_label_primary_contact">प्राथमिक *</string>
+    <string name="customer_placeholder_primary_contact">मोबाइल</string>
+    <string name="customer_label_secondary_contact">द्वितीयक</string>
+    <string name="customer_placeholder_secondary_contact">वैकल्पिक</string>
+    <string name="customer_label_email">ईमेल</string>
+    <string name="customer_placeholder_email">contact@company.com</string>
+    <string name="customer_section_business">🏢 व्यापार विवरण</string>
+    <string name="customer_label_gst">GST नंबर</string>
+    <string name="customer_placeholder_gst">22AAAAA0000A1Z5</string>
+    <string name="customer_gst_chars">%1$d/15 अक्षर</string>
+    <string name="customer_label_address">पता</string>
+    <string name="customer_placeholder_address">शहर, पिनकोड सहित पूरा पता</string>
+    <string name="customer_label_notes">नोट्स</string>
+    <string name="customer_placeholder_notes">अतिरिक्त जानकारी</string>
+    <string name="customer_search_payments">ट्रिप ID, राशि, संदर्भ से खोजें…</string>
+
+    <!-- ==================== Payment - Add/Edit ==================== -->
+    <string name="payment_section_amount">राशि विवरण</string>
+    <string name="payment_label_amount">राशि *</string>
+    <string name="payment_placeholder_amount">राशि दर्ज करें</string>
+    <string name="payment_label_tds">TDS</string>
+    <string name="payment_label_discount">छूट</string>
+    <string name="payment_label_net_amount">शुद्ध राशि</string>
+    <string name="payment_section_type">भुगतान प्रकार</string>
+    <string name="payment_label_date_time">भुगतान तारीख और समय *</string>
+    <string name="payment_section_transaction">लेनदेन विवरण</string>
+    <string name="payment_label_upi_id">UPI ID *</string>
+    <string name="payment_placeholder_upi_id">जैसे, user@upi</string>
+    <string name="payment_label_bank_name">बैंक का नाम *</string>
+    <string name="payment_placeholder_bank_name">बैंक का नाम दर्ज करें</string>
+    <string name="payment_label_account_number">खाता नंबर *</string>
+    <string name="payment_placeholder_account_number">खाता नंबर दर्ज करें</string>
+    <string name="payment_label_transaction_ref">लेनदेन संदर्भ</string>
+    <string name="payment_placeholder_transaction_ref">लेनदेन ID दर्ज करें (वैकल्पिक)</string>
+    <string name="payment_label_transaction_id">लेनदेन ID</string>
+    <string name="payment_placeholder_card_txn">कार्ड लेनदेन ID दर्ज करें</string>
+    <string name="payment_label_reference">संदर्भ (वैकल्पिक)</string>
+    <string name="payment_placeholder_reference">संदर्भ दर्ज करें</string>
+    <string name="payment_section_additional">अतिरिक्त जानकारी</string>
+    <string name="payment_label_received_by">प्राप्तकर्ता</string>
+    <string name="payment_label_location">स्थान</string>
+    <string name="payment_label_notes">नोट्स</string>
+    <string name="payment_search_trips">ट्रिप, वाहन, ग्राहक, रूट खोजें…</string>
+    <string name="payment_filter_with_pending">लंबित के साथ</string>
+    <string name="payment_filter_all">सभी</string>
+
+    <!-- ==================== Team - Create/Detail ==================== -->
+    <string name="team_label_first_name">पहला नाम</string>
+    <string name="team_placeholder_first_name">पहला नाम दर्ज करें</string>
+    <string name="team_label_last_name">अंतिम नाम</string>
+    <string name="team_placeholder_last_name">अंतिम नाम दर्ज करें</string>
+    <string name="team_label_email">ईमेल पता</string>
+    <string name="team_placeholder_email">ईमेल पता दर्ज करें</string>
+    <string name="team_label_mobile">मोबाइल नंबर</string>
+    <string name="team_placeholder_mobile">मोबाइल नंबर दर्ज करें</string>
+    <string name="team_section_password">पासवर्ड सेट करें</string>
+    <string name="team_section_password_hint">टीम सदस्य के लिए एक सुरक्षित पासवर्ड बनाएं</string>
+    <string name="team_label_password">पासवर्ड</string>
+    <string name="team_placeholder_password">पासवर्ड दर्ज करें</string>
+    <string name="team_password_min_chars">न्यूनतम 6 अक्षर</string>
+    <string name="team_label_confirm_password">पासवर्ड की पुष्टि करें</string>
+    <string name="team_placeholder_confirm_password">पासवर्ड पुनः दर्ज करें</string>
+    <string name="team_section_personal">व्यक्तिगत जानकारी</string>
+    <string name="team_section_contact">संपर्क जानकारी</string>
+    <string name="team_label_new_password">नया पासवर्ड</string>
+    <string name="team_placeholder_new_password">नया पासवर्ड दर्ज करें</string>
+    <string name="team_label_confirm_new_password">पासवर्ड की पुष्टि करें</string>
+    <string name="team_placeholder_confirm_new_password">नया पासवर्ड पुनः दर्ज करें</string>
+
+    <!-- ==================== Finance - Add Purchase ==================== -->
+    <string name="finance_section_vehicle">🚛 वाहन चुनें</string>
+    <string name="finance_placeholder_vehicle">वाहन चुनें</string>
+    <string name="finance_all_vehicles_have_purchase">सभी वाहनों में पहले से खरीद जानकारी है</string>
+    <string name="finance_dropdown_all_have_purchase">सभी वाहनों में खरीद जानकारी है</string>
+    <string name="finance_section_purchase">📝 खरीद विवरण</string>
+    <string name="finance_label_purchase_date">खरीद तारीख *</string>
+    <string name="finance_label_purchase_price">खरीद मूल्य *</string>
+    <string name="finance_placeholder_enter_amount">राशि दर्ज करें</string>
+    <string name="finance_label_vendor">विक्रेता/डीलर</string>
+    <string name="finance_placeholder_vendor">डीलर का नाम</string>
+    <string name="finance_label_invoice">चालान नंबर</string>
+    <string name="finance_placeholder_invoice">INV-XXXX</string>
+    <string name="finance_section_payment_type">💳 भुगतान प्रकार *</string>
+    <string name="finance_cash_title">नकद / पूर्ण भुगतान</string>
+    <string name="finance_cash_desc">पूर्ण भुगतान से वाहन खरीदा</string>
+    <string name="finance_loan_title">ऋण (EMI)</string>
+    <string name="finance_loan_desc">बैंक/NBFC से वित्तपोषित</string>
+    <string name="finance_section_loan">🏦 ऋण विवरण</string>
+    <string name="finance_label_down_payment">डाउन पेमेंट *</string>
+    <string name="finance_label_loan_amount">ऋण राशि (स्वतः गणना)</string>
+    <string name="finance_label_financier">वित्तपोषक/बैंक *</string>
+    <string name="finance_placeholder_financier">जैसे, HDFC बैंक</string>
+    <string name="finance_label_loan_account">ऋण खाता नंबर</string>
+    <string name="finance_placeholder_loan_account">LOAN-XXXX</string>
+    <string name="finance_label_rate">दर *</string>
+    <string name="finance_placeholder_rate">9.5</string>
+    <string name="finance_label_tenure">अवधि *</string>
+    <string name="finance_placeholder_tenure">48</string>
+    <string name="finance_label_emi_start_date">EMI शुरू तारीख *</string>
+    <string name="finance_bank_reference">बैंक खाता (भुगतान संदर्भ के लिए)</string>
+    <string name="finance_label_bank_name">बैंक का नाम</string>
+    <string name="finance_placeholder_bank_name">आपके बैंक का नाम</string>
+    <string name="finance_label_account_number">खाता नंबर</string>
+    <string name="finance_placeholder_account_number">खाता नंबर</string>
+    <string name="finance_label_ifsc">IFSC कोड</string>
+    <string name="finance_placeholder_ifsc">HDFC0001234</string>
+    <string name="finance_label_auto_debit">ऑटो-डेबिट सक्षम</string>
+    <string name="finance_section_notes">📝 नोट्स</string>
+
+    <!-- ==================== Finance - Detail / EMI ==================== -->
+    <string name="finance_label_amount_paid">भुगतान राशि *</string>
+    <string name="finance_label_payment_date">भुगतान तारीख *</string>
+    <string name="finance_label_payment_mode">भुगतान मोड</string>
+    <string name="finance_placeholder_payment_mode">मोड चुनें</string>
+    <string name="finance_label_transaction_ref">लेनदेन संदर्भ/UTR</string>
+    <string name="finance_placeholder_transaction_ref">UTR123456789</string>
+    <string name="finance_label_payment_source">भुगतान स्रोत</string>
+    <string name="finance_placeholder_payment_source">जैसे, HDFC नेटबैंकिंग</string>
+    <string name="finance_label_late_fee">विलंब शुल्क (यदि कोई हो)</string>
+    <string name="finance_placeholder_late_fee">0</string>
+    <string name="finance_label_notes">नोट्स</string>
+    <string name="finance_placeholder_notes">अतिरिक्त नोट्स…</string>
+
+    <!-- ==================== Reports - Search ==================== -->
+    <string name="reports_search_vehicles">वाहन खोजें…</string>
+    <string name="reports_search_vehicles_detailed">वाहन नंबर, निर्माता, ड्राइवर खोजें…</string>
+    <string name="reports_search_trips">ट्रिप खोजें…</string>
+    <string name="reports_select_all">सभी चुनें (%1$d)</string>
+
+    <!-- ==================== Dashboard - Section Labels ==================== -->
+    <string name="dashboard_label_critical">गंभीर</string>
+    <string name="dashboard_label_warning">चेतावनी</string>
+    <string name="dashboard_label_info">जानकारी</string>
+    <string name="dashboard_label_docs_expired">दस्तावेज़ समाप्त</string>
+    <string name="dashboard_label_docs_7d">दस्तावेज़ 7 दिन</string>
+    <string name="dashboard_label_license_expired">लाइसेंस समाप्त</string>
+    <string name="dashboard_label_license_7d">लाइसेंस 7 दिन</string>
+    <string name="dashboard_label_on_route">रूट पर</string>
+    <string name="dashboard_label_planned">नियोजित</string>
+    <string name="dashboard_label_available">उपलब्ध</string>
+    <string name="dashboard_label_active">सक्रिय</string>
+    <string name="dashboard_label_done">पूरा</string>
+    <string name="dashboard_label_expenses">खर्चे</string>
+
+    <!-- ==================== Alerts - Detail Labels ==================== -->
+    <string name="alerts_summary">अलर्ट सारांश</string>
+    <string name="alerts_total">%1$d कुल</string>
+    <string name="alerts_count_expired">%1$d समाप्त</string>
+    <string name="alerts_count_expiring_soon">%1$d जल्द समाप्त</string>
+    <string name="alerts_documents">दस्तावेज़</string>
+    <string name="alerts_licenses">लाइसेंस</string>
+    <string name="alerts_filter_all">सभी (%1$d)</string>
+    <string name="alerts_filter_critical">गंभीर (%1$d)</string>
+    <string name="alerts_filter_warning">चेतावनी (%1$d)</string>
+    <string name="alerts_no_alerts_for_filter">कोई %1$s अलर्ट नहीं</string>
+    <string name="alerts_all_clear">सब ठीक! इस समय कोई अलर्ट नहीं।</string>
+    <string name="alerts_loading">अलर्ट लोड हो रहे हैं…</string>
+    <string name="alerts_dismiss">खारिज करें</string>
+
+    <!-- ==================== Common Action Labels ==================== -->
+    <string name="action_add_cost">खर्च जोड़ें</string>
+    <string name="action_add_vehicle">वाहन जोड़ें</string>
+    <string name="action_add_driver">ड्राइवर जोड़ें</string>
+    <string name="action_create_trip">ट्रिप बनाएं</string>
+    <string name="action_record_payment">भुगतान दर्ज करें</string>
+    <string name="action_export_pdf">PDF निर्यात करें</string>
+    <string name="action_export_report_pdf">📥 रिपोर्ट PDF निर्यात करें</string>
+    <string name="action_generating_pdf">📄 PDF बन रही है…</string>
+    <string name="action_download_receipt">रसीद डाउनलोड करें</string>
+    <string name="action_filter">फ़िल्टर</string>
+    <string name="action_clear">साफ़ करें</string>
+    <string name="action_clear_all">सभी साफ़ करें</string>
+    <string name="action_apply">लागू करें</string>
+    <string name="action_reset_all">सभी रीसेट करें</string>
+    <string name="action_load_more">और लोड करें</string>
+    <string name="action_select_all">सभी</string>
+    <string name="action_exporting">निर्यात हो रहा है…</string>
+    <string name="action_exporting_pdf">PDF निर्यात हो रही है…</string>
+    <string name="action_saving">सहेजा जा रहा है…</string>
+    <string name="action_creating">बनाया जा रहा है…</string>
+    <string name="action_updating">अपडेट हो रहा है…</string>
+    <string name="action_registering">पंजीकरण हो रहा है…</string>
+    <string name="action_reset_password">पासवर्ड रीसेट करें</string>
+
+    <!-- ==================== Navigation Drawer ==================== -->
+    <string name="nav_vehicles">वाहन</string>
+    <string name="nav_drivers">ड्राइवर</string>
+    <string name="nav_trips">ट्रिप</string>
+    <string name="nav_customers">ग्राहक</string>
+    <string name="nav_payments">भुगतान</string>
+    <string name="nav_live_map">लाइव मैप</string>
+    <string name="nav_team_members">टीम सदस्य</string>
+    <string name="nav_vehicle_finance">वाहन वित्त</string>
+    <string name="nav_reports">रिपोर्ट और P/L</string>
+    <string name="nav_profile">प्रोफ़ाइल और सेटिंग्स</string>
+
+    <!-- ==================== Profile - Additional ==================== -->
+    <string name="profile_contact_info">संपर्क जानकारी</string>
+    <string name="profile_org_owner">संगठन मालिक</string>
+    <string name="profile_account_actions">खाता कार्य</string>
+
+    <!-- ==================== Vehicle Detail - Sections ==================== -->
+    <string name="vehicle_detail_delete">वाहन हटाएं</string>
+    <string name="vehicle_detail_change_status">वाहन स्थिति बदलें</string>
+    <string name="vehicle_detail_edit">वाहन संपादित करें</string>
+    <string name="vehicle_detail_info">वाहन जानकारी</string>
+    <string name="vehicle_detail_specs">विनिर्देश</string>
+    <string name="vehicle_detail_additional">अतिरिक्त जानकारी</string>
+    <string name="vehicle_detail_current_trip">वर्तमान ट्रिप</string>
+    <string name="vehicle_detail_current_location">वर्तमान स्थान</string>
+    <string name="vehicle_detail_assigned_driver">नियुक्त ड्राइवर</string>
+    <string name="vehicle_detail_upload">दस्तावेज़ अपलोड करें</string>
+
+    <!-- ==================== Driver Detail - Labels ==================== -->
+    <string name="driver_detail_delete">ड्राइवर हटाएं</string>
+    <string name="driver_detail_filter">🔍 फ़िल्टर</string>
+    <string name="driver_detail_month_filter">महीना (YYYY-MM)</string>
+    <string name="driver_detail_month_placeholder">जैसे, 2026-01</string>
+
+    <!-- ==================== Trip Detail - Labels ==================== -->
+    <string name="trip_detail_change_status">ट्रिप स्थिति बदलें</string>
+    <string name="trip_detail_cancel">ट्रिप रद्द करें</string>
+    <string name="trip_detail_cancel_confirm">क्या आप वाकई इस ट्रिप को रद्द करना चाहते हैं? यह क्रिया वापस नहीं की जा सकती।</string>
+    <string name="trip_detail_keep">रखें</string>
+    <string name="trip_detail_actual_times">वास्तविक समय</string>
+    <string name="trip_detail_cargo_customer">कार्गो और ग्राहक</string>
+    <string name="trip_detail_additional_info">अतिरिक्त जानकारी</string>
+    <string name="trip_detail_loading_vehicles">वाहन और ड्राइवर लोड हो रहे हैं…</string>
+
+    <!-- ==================== Trip Edit - Location Labels ==================== -->
+    <string name="trip_edit_start_location">शुरुआती स्थान *</string>
+    <string name="trip_edit_end_location">अंतिम स्थान *</string>
+    <string name="trip_edit_distance">दूरी (किमी)</string>
+    <string name="trip_edit_duration">अनुमानित अवधि</string>
+    <string name="trip_edit_search_location">स्थान खोजें…</string>
+
+    <!-- ==================== Create Trip - Labels ==================== -->
+    <string name="trip_create_notes_label">नोट्स</string>
+    <string name="trip_create_notes_placeholder">कोई अतिरिक्त नोट्स जोड़ें…</string>
+    <string name="trip_create_cargo_desc_label">कार्गो विवरण</string>
+    <string name="trip_create_cargo_desc_placeholder">जैसे, ऑफिस फर्नीचर</string>
+    <string name="trip_create_distance_label">अनुमानित दूरी (किमी)</string>
+    <string name="trip_create_distance_placeholder">स्वतः गणना</string>
+
+    <!-- ==================== Create Driver - Labels ==================== -->
+    <string name="driver_create_first_name">पहला नाम *</string>
+    <string name="driver_create_first_name_placeholder">जैसे, राज</string>
+    <string name="driver_create_last_name">अंतिम नाम *</string>
+    <string name="driver_create_last_name_placeholder">जैसे, कुमार</string>
+    <string name="driver_create_license">लाइसेंस नंबर *</string>
+    <string name="driver_create_license_placeholder">जैसे, DL-1234567890</string>
+    <string name="driver_create_address">पता</string>
+    <string name="driver_create_address_placeholder">जैसे, 123 मुख्य सड़क…</string>
+
+    <!-- ==================== Payment Detail - Labels ==================== -->
+    <string name="payment_detail_type">प्रकार</string>
+    <string name="payment_detail_mode">मोड</string>
+    <string name="payment_detail_transaction_id">लेनदेन ID</string>
+    <string name="payment_detail_bank">बैंक</string>
+    <string name="payment_detail_name">नाम</string>
+    <string name="payment_detail_company">कंपनी</string>
+    <string name="payment_detail_gst">GST</string>
+    <string name="payment_detail_created_by">बनाने वाला</string>
+    <string name="payment_detail_created">बनाया गया</string>
+
+    <!-- ==================== Payment Add - Labels ==================== -->
+    <string name="payment_add_select_trip">ट्रिप चुनें *</string>
+    <string name="payment_add_tap_to_select">ट्रिप चुनने के लिए टैप करें</string>
+    <string name="payment_add_trip_price">ट्रिप मूल्य</string>
+    <string name="payment_add_pending">लंबित</string>
+    <string name="payment_add_customer">ग्राहक</string>
+    <string name="payment_add_due_date">नियत तारीख (वैकल्पिक)</string>
+    <string name="payment_add_payment_mode">भुगतान मोड</string>
+
+    <!-- ==================== Maintenance Cost - Additional ==================== -->
+    <string name="maint_label_description">विवरण</string>
+    <string name="maint_placeholder_description">रखरखाव कार्य का विवरण दें</string>
+    <string name="maint_label_vendor">विक्रेता</string>
+    <string name="maint_placeholder_vendor">विक्रेता का नाम</string>
+    <string name="maint_label_invoice">चालान #</string>
+    <string name="maint_save">💾 रखरखाव खर्चे सहेजें</string>
+
+    <!-- ==================== Documents ==================== -->
+    <string name="documents_optional">📄 दस्तावेज़ (वैकल्पिक)</string>
+
+    <!-- ==================== Finance - Additional ==================== -->
+    <string name="finance_monthly_emi">मासिक EMI:</string>
+    <string name="finance_total_interest">कुल ब्याज:</string>
+    <string name="finance_total_payable">कुल देय:</string>
+    <string name="finance_save_purchase">खरीद जानकारी सहेजें</string>
+    <string name="finance_record_payment">भुगतान दर्ज करें</string>
+    <string name="finance_payment_history">भुगतान इतिहास</string>
+
+    <!-- ==================== Customer Detail - Additional ==================== -->
+    <string name="customer_not_found">ग्राहक नहीं मिला</string>
+    <string name="customer_update">ग्राहक अपडेट करें</string>
+    <string name="customer_no_trips">इस ग्राहक की कोई ट्रिप नहीं है</string>
+    <string name="customer_no_financial_data">कोई वित्तीय डेटा उपलब्ध नहीं</string>
+
+    <!-- ==================== Team Detail - Additional ==================== -->
+    <string name="team_save_changes">परिवर्तन सहेजें</string>
+
+    <!-- ==================== Report Screens ==================== -->
+    <string name="reports_analyze_costs">लागत विश्लेषण करें</string>
+    <string name="reports_generate_report">रिपोर्ट बनाएं</string>
+    <string name="reports_no_data">प्रदर्शित करने के लिए कोई डेटा नहीं</string>
+    <string name="reports_disclaimer">दस्तावेज़ लागत वास्तविक से भिन्न हो सकती है। कृपया सत्यापित करें।</string>
+
+    <!-- ==================== Misc / Shared ==================== -->
+    <string name="select_trip">ट्रिप चुनें</string>
+    <string name="no_data_for_filter">आपके फ़िल्टर से कोई डेटा मेल नहीं खाता</string>
+    <string name="adjust_search_filters">अपनी खोज या फ़िल्टर समायोजित करें</string>
+    <string name="all_filter">सभी</string>
+</resources>

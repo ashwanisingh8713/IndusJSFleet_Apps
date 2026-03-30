@@ -1,3 +1,8 @@
-- Localisation
-- OnBoarding
+- Localisation (IN PROGRESS)
+  ✅ Infrastructure: strings.xml in ijs-ui-components-lib (English default + Hindi)
+  ✅ 250+ string resources defined for all feature modules
+  ✅ Screens updated: LoginScreen, SignUpScreen, ForgotPasswordScreen, ChangePasswordScreen, ProfileScreen, OnboardingScreen
+  ✅ Components updated: StateComponents, CommonComponents, InputComponents (date/time fields)
+  ☐ Remaining screens: Dashboard, Vehicles, Drivers, Trips, Customers, Payments, Reports, Team, Finance, Maps, Alerts
+- OnBoarding ✅ (Already implemented)
 - Payment Subscription

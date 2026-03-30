@@ -27,6 +27,7 @@ import com.ijs.driver.domain.entity.DriverStatus
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Drivers List Screen composable.
@@ -61,12 +62,12 @@ fun DriversScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Drivers") },
+                title = { Text(stringResource(Res.string.drivers_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -76,7 +77,7 @@ fun DriversScreen(
                     IconButton(onClick = { viewModel.sendIntent(DriversContract.Intent.RefreshDrivers) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh",
+                            contentDescription = stringResource(Res.string.refresh),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -96,7 +97,7 @@ fun DriversScreen(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = "Add Driver",
+                        contentDescription = stringResource(Res.string.drivers_add),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -113,7 +114,7 @@ fun DriversScreen(
             FleetSearchField(
                 query = state.searchQuery,
                 onQueryChange = { viewModel.sendIntent(DriversContract.Intent.SearchDrivers(it)) },
-                placeholder = "Search drivers...",
+                placeholder = stringResource(Res.string.drivers_search_placeholder),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -127,7 +128,7 @@ fun DriversScreen(
             when {
                 state.isLoading -> {
                     // Using reusable LoadingContent component
-                    LoadingContent(message = "Loading drivers...")
+                    LoadingContent(message = stringResource(Res.string.loading))
                 }
                 state.error != null -> {
                     // Using reusable ErrorContent component
@@ -143,15 +144,15 @@ fun DriversScreen(
                     if (isFiltering) {
                         EmptyContent(
                             iconRes = Res.drawable.ic_search,
-                            title = "No drivers match your filters",
-                            message = "Try adjusting your search or filters"
+                            title = stringResource(Res.string.no_data_for_filter),
+                            message = stringResource(Res.string.adjust_search_filters)
                         )
                     } else {
                         EmptyContent(
                             iconRes = Res.drawable.ic_driver,
-                            title = "No drivers found",
-                            message = "Add your first driver to get started",
-                            actionLabel = "Add Driver",
+                            title = stringResource(Res.string.drivers_empty_title),
+                            message = stringResource(Res.string.drivers_empty_message),
+                            actionLabel = stringResource(Res.string.drivers_add),
                             onAction = { viewModel.sendIntent(DriversContract.Intent.AddDriver) }
                         )
                     }
@@ -184,7 +185,7 @@ private fun StatusFilterChips(
             FilterChip(
                 selected = selectedStatus == null,
                 onClick = { onStatusSelected(null) },
-                label = { Text("All") }
+                label = { Text(stringResource(Res.string.all_filter)) }
             )
         }
         items(DriverStatus.entries.toList()) { status ->
@@ -419,4 +420,3 @@ private fun StatusBadge(status: DriverStatus) {
         color = color
     )
 }
-

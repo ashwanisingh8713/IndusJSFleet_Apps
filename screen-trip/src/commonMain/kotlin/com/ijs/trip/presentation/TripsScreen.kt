@@ -27,6 +27,7 @@ import com.ijs.trip.domain.entity.TripStatus
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Trips List Screen composable.
@@ -59,12 +60,12 @@ fun TripsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Trips") },
+                title = { Text(stringResource(Res.string.trips_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -75,7 +76,7 @@ fun TripsScreen(
                     IconButton(onClick = { viewModel.sendIntent(TripsContract.Intent.RefreshTrips) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh",
+                            contentDescription = stringResource(Res.string.refresh),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -95,7 +96,7 @@ fun TripsScreen(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = "Create Trip",
+                        contentDescription = stringResource(Res.string.trips_add),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -112,7 +113,7 @@ fun TripsScreen(
             FleetSearchField(
                 query = state.searchQuery,
                 onQueryChange = { viewModel.sendIntent(TripsContract.Intent.SearchTrips(it)) },
-                placeholder = "Search trips...",
+                placeholder = stringResource(Res.string.trips_search_placeholder),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -126,7 +127,7 @@ fun TripsScreen(
             when {
                 state.isLoading -> {
                     // Using reusable LoadingContent component
-                    LoadingContent(message = "Loading trips...")
+                    LoadingContent(message = stringResource(Res.string.loading))
                 }
                 state.error != null -> {
                     // Using reusable ErrorContent component
@@ -142,15 +143,15 @@ fun TripsScreen(
                     if (isFiltering) {
                         EmptyContent(
                             iconRes = Res.drawable.ic_search,
-                            title = "No trips match your filters",
-                            message = "Try adjusting your search or filters"
+                            title = stringResource(Res.string.no_data_for_filter),
+                            message = stringResource(Res.string.adjust_search_filters)
                         )
                     } else {
                         EmptyContent(
                             iconRes = Res.drawable.ic_trip,
-                            title = "No trips found",
-                            message = "Create your first trip to get started",
-                            actionLabel = "Create Trip",
+                            title = stringResource(Res.string.trips_empty_title),
+                            message = stringResource(Res.string.trips_empty_message),
+                            actionLabel = stringResource(Res.string.trips_add),
                             onAction = { viewModel.sendIntent(TripsContract.Intent.CreateTrip) }
                         )
                     }
@@ -181,7 +182,7 @@ private fun StatusFilterChips(
             FilterChip(
                 selected = selectedStatus == null,
                 onClick = { onStatusSelected(null) },
-                label = { Text("All") }
+                label = { Text(stringResource(Res.string.all_filter)) }
             )
         }
         items(TripStatus.entries.toList()) { status ->

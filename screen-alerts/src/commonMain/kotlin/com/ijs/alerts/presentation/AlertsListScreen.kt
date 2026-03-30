@@ -26,6 +26,7 @@ import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Alerts List Screen - Shows all alerts with filtering options.
@@ -57,12 +58,12 @@ fun AlertsListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Alerts") },
+                title = { Text(stringResource(Res.string.alerts_title)) },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.sendIntent(AlertsListContract.Intent.NavigateBack) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -81,7 +82,7 @@ fun AlertsListScreen(
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh",
+                                contentDescription = stringResource(Res.string.refresh),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -97,7 +98,7 @@ fun AlertsListScreen(
     ) { paddingValues ->
         when {
             state.isLoading -> {
-                LoadingContent(message = "Loading alerts...")
+                LoadingContent(message = stringResource(Res.string.alerts_loading))
             }
             state.error != null && !state.hasAlerts -> {
                 ErrorContent(
@@ -131,14 +132,14 @@ fun AlertsListScreen(
                     // Alerts List
                     if (state.filteredAlerts.isEmpty()) {
                         EmptyContent(
-                            title = "No Alerts",
+                            title = stringResource(Res.string.alerts_empty_title),
                             message = when (state.selectedFilter) {
-                                AlertsListContract.AlertFilter.ALL -> "All clear! No alerts at this time."
-                                AlertsListContract.AlertFilter.CRITICAL -> "No critical alerts"
-                                AlertsListContract.AlertFilter.WARNING -> "No warning alerts"
-                                AlertsListContract.AlertFilter.INFO -> "No info alerts"
-                                AlertsListContract.AlertFilter.DOCUMENTS -> "No document expiry alerts"
-                                AlertsListContract.AlertFilter.LICENSES -> "No license expiry alerts"
+                                AlertsListContract.AlertFilter.ALL -> stringResource(Res.string.alerts_all_clear)
+                                AlertsListContract.AlertFilter.CRITICAL -> stringResource(Res.string.alerts_no_alerts_for_filter, stringResource(Res.string.dashboard_label_critical).lowercase())
+                                AlertsListContract.AlertFilter.WARNING -> stringResource(Res.string.alerts_no_alerts_for_filter, stringResource(Res.string.dashboard_label_warning).lowercase())
+                                AlertsListContract.AlertFilter.INFO -> stringResource(Res.string.alerts_no_alerts_for_filter, stringResource(Res.string.dashboard_label_info).lowercase())
+                                AlertsListContract.AlertFilter.DOCUMENTS -> stringResource(Res.string.alerts_no_alerts_for_filter, stringResource(Res.string.alerts_documents).lowercase())
+                                AlertsListContract.AlertFilter.LICENSES -> stringResource(Res.string.alerts_no_alerts_for_filter, stringResource(Res.string.alerts_licenses).lowercase())
                             },
                             icon = "✅"
                         )
@@ -190,7 +191,7 @@ private fun AlertsSummaryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Alert Summary",
+                    text = stringResource(Res.string.alerts_summary),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -199,7 +200,7 @@ private fun AlertsSummaryCard(
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
-                        text = "${summary.totalAlerts} Total",
+                        text = stringResource(Res.string.alerts_total, summary.totalAlerts),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -216,7 +217,7 @@ private fun AlertsSummaryCard(
                 if (summary.criticalAlerts > 0) {
                     SummaryChip(
                         count = summary.criticalAlerts,
-                        label = "Critical",
+                        label = stringResource(Res.string.dashboard_label_critical),
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.weight(1f)
                     )
@@ -224,7 +225,7 @@ private fun AlertsSummaryCard(
                 if (summary.warningAlerts > 0) {
                     SummaryChip(
                         count = summary.warningAlerts,
-                        label = "Warning",
+                        label = stringResource(Res.string.dashboard_label_warning),
                         color = Color(0xFFFF9800),
                         modifier = Modifier.weight(1f)
                     )
@@ -232,7 +233,7 @@ private fun AlertsSummaryCard(
                 if (summary.infoAlerts > 0) {
                     SummaryChip(
                         count = summary.infoAlerts,
-                        label = "Info",
+                        label = stringResource(Res.string.dashboard_label_info),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f)
                     )
@@ -249,20 +250,20 @@ private fun AlertsSummaryCard(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "📄 Documents",
+                            text = "📄 ${stringResource(Res.string.alerts_documents)}",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                         if (summary.documentExpired > 0) {
                             Text(
-                                text = "${summary.documentExpired} Expired",
+                                text = stringResource(Res.string.alerts_count_expired, summary.documentExpired),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
                         if (summary.documentExpiring7Days > 0) {
                             Text(
-                                text = "${summary.documentExpiring7Days} Expiring soon",
+                                text = stringResource(Res.string.alerts_count_expiring_soon, summary.documentExpiring7Days),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFFFF9800)
                             )
@@ -270,20 +271,20 @@ private fun AlertsSummaryCard(
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "📋 Licenses",
+                            text = "📋 ${stringResource(Res.string.alerts_licenses)}",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                         if (summary.licenseExpired > 0) {
                             Text(
-                                text = "${summary.licenseExpired} Expired",
+                                text = stringResource(Res.string.alerts_count_expired, summary.licenseExpired),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
                         if (summary.licenseExpiring7Days > 0) {
                             Text(
-                                text = "${summary.licenseExpiring7Days} Expiring soon",
+                                text = stringResource(Res.string.alerts_count_expiring_soon, summary.licenseExpiring7Days),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color(0xFFFF9800)
                             )
@@ -341,7 +342,7 @@ private fun AlertFilterChips(
             FilterChip(
                 selected = selectedFilter == AlertsListContract.AlertFilter.ALL,
                 onClick = { onFilterSelected(AlertsListContract.AlertFilter.ALL) },
-                label = { Text("All (${alertsSummary.totalAlerts})") },
+                label = { Text(stringResource(Res.string.alerts_filter_all, alertsSummary.totalAlerts)) },
                 leadingIcon = { Text("📋") }
             )
         }
@@ -350,7 +351,7 @@ private fun AlertFilterChips(
                 FilterChip(
                     selected = selectedFilter == AlertsListContract.AlertFilter.CRITICAL,
                     onClick = { onFilterSelected(AlertsListContract.AlertFilter.CRITICAL) },
-                    label = { Text("Critical (${alertsSummary.criticalAlerts})") },
+                    label = { Text(stringResource(Res.string.alerts_filter_critical, alertsSummary.criticalAlerts)) },
                     leadingIcon = { Text("🔴") }
                 )
             }
@@ -360,7 +361,7 @@ private fun AlertFilterChips(
                 FilterChip(
                     selected = selectedFilter == AlertsListContract.AlertFilter.WARNING,
                     onClick = { onFilterSelected(AlertsListContract.AlertFilter.WARNING) },
-                    label = { Text("Warning (${alertsSummary.warningAlerts})") },
+                    label = { Text(stringResource(Res.string.alerts_filter_warning, alertsSummary.warningAlerts)) },
                     leadingIcon = { Text("🟠") }
                 )
             }
@@ -369,7 +370,7 @@ private fun AlertFilterChips(
             FilterChip(
                 selected = selectedFilter == AlertsListContract.AlertFilter.DOCUMENTS,
                 onClick = { onFilterSelected(AlertsListContract.AlertFilter.DOCUMENTS) },
-                label = { Text("Documents") },
+                label = { Text(stringResource(Res.string.alerts_documents)) },
                 leadingIcon = { Text("📄") }
             )
         }
@@ -377,7 +378,7 @@ private fun AlertFilterChips(
             FilterChip(
                 selected = selectedFilter == AlertsListContract.AlertFilter.LICENSES,
                 onClick = { onFilterSelected(AlertsListContract.AlertFilter.LICENSES) },
-                label = { Text("Licenses") },
+                label = { Text(stringResource(Res.string.alerts_licenses)) },
                 leadingIcon = { Text("📋") }
             )
         }
@@ -507,7 +508,7 @@ private fun AlertItemCard(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_close),
-                        contentDescription = "Dismiss",
+                        contentDescription = stringResource(Res.string.alerts_dismiss),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
@@ -556,4 +557,3 @@ private fun AlertItemCard(
         }
     }
 }
-

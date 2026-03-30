@@ -3,7 +3,9 @@ package com.ijs.user.presentation.signup
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.user.UserRepository
+import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.withContext
 
 /**
@@ -35,10 +37,10 @@ class SignUpViewModel(
         // Only allow digits and limit to 10 characters
         val filteredMobile = mobile.filter { it.isDigit() }.take(10)
 
-        val mobileError = when {
+        val mobileError: UiText? = when {
             filteredMobile.isEmpty() -> null
-            filteredMobile.length < 10 -> "Enter 10-digit mobile number"
-            !isValidIndianMobile(filteredMobile) -> "Mobile must start with 6, 7, 8, or 9"
+            filteredMobile.length < 10 -> UiText.StringRes(Res.string.error_mobile_10_digits)
+            !isValidIndianMobile(filteredMobile) -> UiText.StringRes(Res.string.error_mobile_start_digit)
             else -> null
         }
 
@@ -55,52 +57,52 @@ class SignUpViewModel(
 
         // Validation
         if (firstName.isEmpty()) {
-            updateState { copy(error = "Please enter your first name") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_first_name_required)) }
             return
         }
 
         if (lastName.isEmpty()) {
-            updateState { copy(error = "Please enter your last name") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_last_name_required)) }
             return
         }
 
         if (email.isEmpty()) {
-            updateState { copy(error = "Please enter your email") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_email_required)) }
             return
         }
 
         if (!isValidEmail(email)) {
-            updateState { copy(error = "Please enter a valid email address") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_email_invalid)) }
             return
         }
 
         if (mobile.isEmpty()) {
-            updateState { copy(error = "Please enter your mobile number") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_mobile_required)) }
             return
         }
 
         if (!isValidIndianMobile(mobile)) {
-            updateState { copy(error = "Please enter a valid 10-digit Indian mobile number") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_mobile_invalid)) }
             return
         }
 
         if (password.isEmpty()) {
-            updateState { copy(error = "Please enter a password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_password_required)) }
             return
         }
 
         if (password.length < 6) {
-            updateState { copy(error = "Password must be at least 6 characters") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_password_min_chars)) }
             return
         }
 
         if (confirmPassword.isEmpty()) {
-            updateState { copy(error = "Please confirm your password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_confirm_password_required)) }
             return
         }
 
         if (password != confirmPassword) {
-            updateState { copy(error = "Passwords do not match") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_passwords_mismatch)) }
             return
         }
 
@@ -117,16 +119,16 @@ class SignUpViewModel(
                 )
 
                 result.fold(
-                    onSuccess = { authResult ->
+                    onSuccess = {
                         updateState { copy(isLoading = false) }
-                        sendEffect(SignUpContract.Effect.ShowSnackbar("Account created successfully!"))
+                        sendEffect(SignUpContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_account_created)))
                         sendEffect(SignUpContract.Effect.NavigateToDashboard)
                     },
                     onFailure = { error ->
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Sign up failed"
+                                error = if (!error.message.isNullOrBlank()) UiText.Raw(error.message!!) else UiText.StringRes(Res.string.error_signup_failed)
                             )
                         }
                     }
@@ -135,7 +137,7 @@ class SignUpViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Sign up failed"
+                        error = if (!e.message.isNullOrBlank()) UiText.Raw(e.message!!) else UiText.StringRes(Res.string.error_signup_failed)
                     )
                 }
             }

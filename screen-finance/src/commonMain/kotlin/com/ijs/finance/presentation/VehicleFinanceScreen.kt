@@ -28,6 +28,7 @@ import com.ijs.finance.presentation.VehicleFinanceContract.Effect
 import com.ijs.finance.presentation.VehicleFinanceContract.Intent
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 // Use FinanceColors from core.ui
 private val LoanBlue = FinanceColors.LoanBlue
@@ -63,12 +64,12 @@ fun VehicleFinanceScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Vehicle Finance") },
+                title = { Text(stringResource(Res.string.finance_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 },
@@ -76,13 +77,13 @@ fun VehicleFinanceScreen(
                     IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh"
+                            contentDescription = stringResource(Res.string.refresh)
                         )
                     }
                     IconButton(onClick = { viewModel.sendIntent(Intent.NavigateToAddPurchase) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = "Add"
+                            contentDescription = stringResource(Res.string.add)
                         )
                     }
                 }
@@ -100,7 +101,7 @@ fun VehicleFinanceScreen(
                         contentDescription = null
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Add Purchase Info")
+                    Text(stringResource(Res.string.finance_add_purchase))
                 }
             }
         }
@@ -857,4 +858,3 @@ private fun getNextEmiDueDate(purchase: VehiclePurchase): String {
  */
 private fun formatDueDateDisplay(dateString: String?): String =
     FleetDateTime.formatAnyToDisplayDate(dateString)
-

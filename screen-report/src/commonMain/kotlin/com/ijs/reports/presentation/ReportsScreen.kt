@@ -35,6 +35,7 @@ import com.ijs.reports.presentation.ReportsContract.Intent
 import com.ijs.reports.presentation.ReportsContract.State
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -103,7 +104,7 @@ fun ReportsScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Reports & P/L", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.reports_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         state.summary?.let {
                             Text(
                                 text = formatPeriodLabel(state.startDate, state.endDate),
@@ -115,7 +116,7 @@ fun ReportsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(painter = painterResource(Res.drawable.ic_arrow_back), contentDescription = "Back")
+                        Icon(painter = painterResource(Res.drawable.ic_arrow_back), contentDescription = stringResource(Res.string.back))
                     }
                 },
                 actions = {
@@ -126,7 +127,7 @@ fun ReportsScreen(
                         }
                     }
                     IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
-                        Icon(painter = painterResource(Res.drawable.ic_refresh), contentDescription = "Refresh")
+                        Icon(painter = painterResource(Res.drawable.ic_refresh), contentDescription = stringResource(Res.string.refresh))
                     }
                 }
             )
@@ -162,7 +163,7 @@ private fun ErrorContent(error: String, onRetry: () -> Unit) {
         Spacer(Modifier.height(8.dp))
         Text(error, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onRetry) { Text("Retry") }
+        Button(onClick = onRetry) { Text(stringResource(Res.string.retry)) }
     }
 }
 

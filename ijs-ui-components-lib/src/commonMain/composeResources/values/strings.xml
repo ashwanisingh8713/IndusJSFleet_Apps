@@ -1,7 +1,909 @@
 <resources>
-    <string name="cyclone">Cyclone</string>
-    <string name="open_github">Open github</string>
-    <string name="run">Run</string>
-    <string name="stop">Stop</string>
-    <string name="theme">Theme</string>
+    <!-- ==================== Common / Shared Strings ==================== -->
+    <string name="app_name">Fleet Management</string>
+    <string name="loading">Loading…</string>
+    <string name="retry">Retry</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="add">Add</string>
+    <string name="back">Back</string>
+    <string name="close">Close</string>
+    <string name="search">Search…</string>
+    <string name="refresh">Refresh</string>
+    <string name="submit">Submit</string>
+    <string name="done">Done</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="ok">OK</string>
+    <string name="or">or</string>
+    <string name="change">Change</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="skip">Skip</string>
+    <string name="no_data">No Data</string>
+    <string name="no_data_message">There\'s nothing to show here.</string>
+    <string name="date_entered">✓ Date entered</string>
+    <string name="enter_complete_date">Enter complete date (8 digits)</string>
+    <string name="time_entered">✓ Time entered</string>
+    <string name="enter_complete_time">Enter complete time (4 digits)</string>
+
+    <!-- ==================== Input Fields ==================== -->
+    <string name="label_email">Email</string>
+    <string name="label_password">Password</string>
+    <string name="label_phone">Phone</string>
+    <string name="label_date">Date</string>
+    <string name="label_time">Time</string>
+    <string name="label_name">Name</string>
+    <string name="label_first_name">First Name</string>
+    <string name="label_last_name">Last Name</string>
+    <string name="label_mobile_number">Mobile Number</string>
+    <string name="label_description">Description</string>
+    <string name="label_amount">Amount</string>
+    <string name="label_notes">Notes</string>
+    <string name="label_address">Address</string>
+
+    <string name="placeholder_email">Enter your email</string>
+    <string name="placeholder_password">Enter your password</string>
+    <string name="placeholder_phone">Enter your phone number</string>
+    <string name="placeholder_date">DD-MM-YYYY</string>
+    <string name="placeholder_time">HH:MM</string>
+    <string name="placeholder_first_name">Enter first name</string>
+    <string name="placeholder_last_name">Enter last name</string>
+    <string name="placeholder_mobile">Enter 10-digit mobile</string>
+    <string name="placeholder_search">Search…</string>
+    <string name="placeholder_email_or_mobile">Enter your email or mobile number</string>
+
+    <!-- ==================== State Components ==================== -->
+    <string name="current_state_label">Current: %1$s</string>
+    <string name="current_state">Current state</string>
+    <string name="not_available_from_current_state">Not available from current state</string>
+
+    <!-- ==================== Content Descriptions ==================== -->
+    <string name="cd_switch_to_light_mode">Switch to Light Mode</string>
+    <string name="cd_switch_to_dark_mode">Switch to Dark Mode</string>
+    <string name="cd_light_mode">Light Mode</string>
+    <string name="cd_dark_mode">Dark Mode</string>
+
+    <!-- ==================== Auth / Login ==================== -->
+    <string name="login_title">Fleet Management</string>
+    <string name="login_subtitle">Sign in to continue</string>
+    <string name="login_sign_in">Sign In</string>
+    <string name="login_forgot_password">Forgot Password?</string>
+    <string name="login_no_account">Don\'t have an account?</string>
+    <string name="login_sign_up">Sign Up</string>
+    <string name="login_demo_hint">Demo: Enter any email and password</string>
+    <string name="login_error_email_required">Please enter your email or mobile</string>
+    <string name="login_error_password_required">Please enter your password</string>
+    <string name="login_error_failed">Login failed</string>
+
+    <!-- ==================== Auth / Sign Up ==================== -->
+    <string name="signup_title">Create Account</string>
+    <string name="signup_subtitle">Sign up to get started with Fleet Management</string>
+    <string name="signup_email_label">Email Address</string>
+    <string name="signup_email_placeholder">Enter your email</string>
+    <string name="signup_mobile_label">Mobile Number</string>
+    <string name="signup_mobile_placeholder">Enter 10-digit mobile</string>
+    <string name="signup_password_label">Password</string>
+    <string name="signup_password_placeholder">Enter password (min 6 characters)</string>
+    <string name="signup_confirm_password_label">Confirm Password</string>
+    <string name="signup_confirm_password_placeholder">Re-enter password</string>
+    <string name="signup_password_min_chars">Minimum 6 characters</string>
+    <string name="signup_passwords_do_not_match">Passwords do not match</string>
+    <string name="signup_create_account">Create Account</string>
+    <string name="signup_already_have_account">Already have an account?</string>
+
+    <!-- ==================== Auth / Forgot Password ==================== -->
+    <string name="forgot_password_title">Forgot Password</string>
+    <string name="forgot_password_heading">Forgot Your Password?</string>
+    <string name="forgot_password_description">Enter your email or mobile number and we\'ll help you reset your password.</string>
+    <string name="forgot_password_identifier_label">Email or Mobile</string>
+    <string name="forgot_password_identifier_placeholder">Enter your email or mobile number</string>
+    <string name="forgot_password_send_instructions">Send Reset Instructions</string>
+    <string name="forgot_password_back_to_login">Back to Sign In</string>
+
+    <!-- ==================== Auth / Reset Password ==================== -->
+    <string name="reset_password_title">Reset Password</string>
+    <string name="reset_password_heading">Create New Password</string>
+    <string name="reset_password_description">Enter your new password below.</string>
+    <string name="reset_password_new_label">New Password</string>
+    <string name="reset_password_new_placeholder">Enter new password</string>
+    <string name="reset_password_confirm_label">Confirm Password</string>
+    <string name="reset_password_confirm_placeholder">Re-enter new password</string>
+    <string name="reset_password_min_chars">Minimum 6 characters</string>
+    <string name="reset_password_mismatch">Passwords do not match</string>
+    <string name="reset_password_button">Reset Password</string>
+
+    <!-- ==================== Auth / Change Password ==================== -->
+    <string name="change_password_title">Change Password</string>
+    <string name="change_password_heading">Update Your Password</string>
+    <string name="change_password_description">Enter your current password and choose a new secure password</string>
+    <string name="change_password_current_label">Current Password</string>
+    <string name="change_password_current_placeholder">Enter your current password</string>
+    <string name="change_password_new_label">New Password</string>
+    <string name="change_password_new_placeholder">Enter your new password</string>
+    <string name="change_password_confirm_label">Confirm New Password</string>
+    <string name="change_password_confirm_placeholder">Re-enter your new password</string>
+    <string name="change_password_min_chars">Password must be at least 6 characters</string>
+    <string name="change_password_mismatch">Passwords do not match</string>
+    <string name="change_password_button">Change Password</string>
+
+    <!-- ==================== Auth / Profile ==================== -->
+    <string name="profile_title">My Profile</string>
+    <string name="profile_edit">Edit Profile</string>
+    <string name="profile_change_password">Change Password</string>
+    <string name="profile_logout">Logout</string>
+    <string name="profile_details">Profile Details</string>
+    <string name="profile_first_name">First Name</string>
+    <string name="profile_last_name">Last Name</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_mobile">Mobile</string>
+    <string name="profile_role">Role</string>
+    <string name="profile_organization">Organization</string>
+    <string name="profile_save">Save Changes</string>
+
+    <!-- User Roles -->
+    <string name="role_owner">Owner</string>
+    <string name="role_general_manager">General Manager</string>
+    <string name="role_manager">Manager</string>
+    <string name="role_supervisor">Supervisor</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_page1_title">Fleet Management</string>
+    <string name="onboarding_page1_description">Manage your entire fleet of vehicles from a single dashboard. Track vehicle status, maintenance schedules, and documents — all in one place.</string>
+    <string name="onboarding_page2_title">Driver Management</string>
+    <string name="onboarding_page2_description">Keep track of your drivers, their licenses, assignments, and costs. Ensure your fleet always has qualified drivers on the road.</string>
+    <string name="onboarding_page3_title">Trip Planning</string>
+    <string name="onboarding_page3_description">Plan and manage trips with route optimization, cargo tracking, and real-time status updates. From planning to delivery — stay in control.</string>
+    <string name="onboarding_page4_title">Cost &amp; Revenue Tracking</string>
+    <string name="onboarding_page4_description">Track fuel, tolls, maintenance, and all operational costs. Get detailed profit &amp; loss reports to maximize your fleet\'s profitability.</string>
+    <string name="onboarding_get_started">Get Started</string>
+
+    <!-- ==================== Dashboard ==================== -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_fleet_overview">Fleet Overview</string>
+    <string name="dashboard_cost_overview">Cost Overview</string>
+    <string name="dashboard_financial_summary">Financial Summary</string>
+    <string name="dashboard_quick_actions">Quick Actions</string>
+    <string name="dashboard_alerts">Alerts</string>
+    <string name="dashboard_greeting_morning">Good Morning</string>
+    <string name="dashboard_greeting_afternoon">Good Afternoon</string>
+    <string name="dashboard_greeting_evening">Good Evening</string>
+    <string name="dashboard_greeting_night">Good Night</string>
+
+    <!-- ==================== Vehicles ==================== -->
+    <string name="vehicles_title">Vehicles</string>
+    <string name="vehicles_add">Add Vehicle</string>
+    <string name="vehicles_detail">Vehicle Details</string>
+    <string name="vehicles_overview">Overview</string>
+    <string name="vehicles_trips">Trips</string>
+    <string name="vehicles_documents">Documents</string>
+    <string name="vehicles_costs">Costs</string>
+    <string name="vehicles_empty_title">No Vehicles</string>
+    <string name="vehicles_empty_message">Add your first vehicle to get started.</string>
+    <string name="vehicles_search_placeholder">Search vehicles…</string>
+    <string name="vehicles_maintenance_cost">Maintenance Cost</string>
+    <string name="vehicles_registration">Registration Number</string>
+    <string name="vehicles_type">Vehicle Type</string>
+    <string name="vehicles_status">Status</string>
+
+    <!-- Vehicle States -->
+    <string name="vehicle_state_inactive">Inactive</string>
+    <string name="vehicle_state_active">Active</string>
+    <string name="vehicle_state_on_route">On Route</string>
+    <string name="vehicle_state_maintenance">Maintenance</string>
+    <string name="vehicle_state_damaged">Damaged</string>
+    <string name="vehicle_state_decommissioned">Decommissioned</string>
+
+    <!-- ==================== Drivers ==================== -->
+    <string name="drivers_title">Drivers</string>
+    <string name="drivers_add">Add Driver</string>
+    <string name="drivers_detail">Driver Details</string>
+    <string name="drivers_empty_title">No Drivers</string>
+    <string name="drivers_empty_message">Add your first driver to get started.</string>
+    <string name="drivers_search_placeholder">Search drivers…</string>
+    <string name="drivers_license">License</string>
+    <string name="drivers_cost">Driver Cost</string>
+
+    <!-- Driver States -->
+    <string name="driver_state_inactive">Inactive</string>
+    <string name="driver_state_active">Active</string>
+    <string name="driver_state_on_route">On Route</string>
+    <string name="driver_state_on_leave">On Leave</string>
+    <string name="driver_state_suspended">Suspended</string>
+    <string name="driver_state_terminated">Terminated</string>
+
+    <!-- ==================== Trips ==================== -->
+    <string name="trips_title">Trips</string>
+    <string name="trips_add">Create Trip</string>
+    <string name="trips_detail">Trip Details</string>
+    <string name="trips_empty_title">No Trips</string>
+    <string name="trips_empty_message">Create your first trip to get started.</string>
+    <string name="trips_search_placeholder">Search trips…</string>
+    <string name="trips_cost">Trip Cost</string>
+    <string name="trips_route">Route</string>
+    <string name="trips_cargo">Cargo</string>
+    <string name="trips_schedule">Schedule</string>
+
+    <!-- Trip States -->
+    <string name="trip_state_planned">Planned</string>
+    <string name="trip_state_on_route">On Route</string>
+    <string name="trip_state_completed">Completed</string>
+    <string name="trip_state_cancelled">Cancelled</string>
+    <string name="trip_state_failed">Failed</string>
+    <string name="trip_state_delayed">Delayed</string>
+
+    <!-- ==================== Customers ==================== -->
+    <string name="customers_title">Customers</string>
+    <string name="customers_add">Add Customer</string>
+    <string name="customers_detail">Customer Details</string>
+    <string name="customers_empty_title">No Customers</string>
+    <string name="customers_empty_message">Add your first customer to get started.</string>
+    <string name="customers_search_placeholder">Search customers…</string>
+
+    <!-- ==================== Payments ==================== -->
+    <string name="payments_title">Payments</string>
+    <string name="payments_add">Add Payment</string>
+    <string name="payments_detail">Payment Details</string>
+    <string name="payments_edit">Edit Payment</string>
+    <string name="payments_empty_title">No Payments</string>
+    <string name="payments_empty_message">No payments recorded yet.</string>
+
+    <!-- Payment Status -->
+    <string name="payment_status_received">Received</string>
+    <string name="payment_status_pending">Pending</string>
+    <string name="payment_status_cancelled">Cancelled</string>
+
+    <!-- Payment Modes -->
+    <string name="payment_mode_cash">Cash</string>
+    <string name="payment_mode_upi">UPI</string>
+    <string name="payment_mode_bank_transfer">Bank Transfer</string>
+    <string name="payment_mode_cheque">Cheque</string>
+    <string name="payment_mode_card">Card</string>
+
+    <!-- ==================== Reports ==================== -->
+    <string name="reports_title">Reports</string>
+    <string name="reports_vehicle_pl">Vehicle Profit &amp; Loss</string>
+    <string name="reports_trip_pl">Trip Profit &amp; Loss</string>
+    <string name="reports_cost_analysis">Cost Analysis</string>
+    <string name="reports_consolidated_pl">Consolidated P&amp;L</string>
+    <string name="reports_revenue">Revenue</string>
+    <string name="reports_expenses">Expenses</string>
+    <string name="reports_profit">Profit</string>
+    <string name="reports_loss">Loss</string>
+
+    <!-- Report Periods -->
+    <string name="period_today">Today</string>
+    <string name="period_weekly">Weekly</string>
+    <string name="period_15_days">15 Days</string>
+    <string name="period_monthly">Monthly</string>
+    <string name="period_quarterly">Quarterly</string>
+    <string name="period_half_yearly">Half Yearly</string>
+    <string name="period_yearly">Yearly</string>
+    <string name="period_custom">Custom</string>
+
+    <!-- ==================== Team ==================== -->
+    <string name="team_title">Team</string>
+    <string name="team_add">Add Member</string>
+    <string name="team_detail">Member Details</string>
+    <string name="team_empty_title">No Team Members</string>
+    <string name="team_empty_message">Add your first team member to get started.</string>
+
+    <!-- ==================== Finance ==================== -->
+    <string name="finance_title">Vehicle Finance</string>
+    <string name="finance_detail">Finance Details</string>
+    <string name="finance_add_purchase">Add Purchase Info</string>
+    <string name="finance_edit_purchase">Edit Purchase Info</string>
+    <string name="finance_emi_history">EMI Payment History</string>
+    <string name="finance_loan">Loan</string>
+    <string name="finance_emi">EMI</string>
+    <string name="finance_purchase_price">Purchase Price</string>
+
+    <!-- ==================== Maps & Alerts ==================== -->
+    <string name="maps_title">Live Tracking</string>
+    <string name="alerts_title">Alerts</string>
+    <string name="alerts_empty_title">No Alerts</string>
+    <string name="alerts_empty_message">All clear! No pending alerts.</string>
+
+    <!-- ==================== Cost Types ==================== -->
+    <string name="cost_type_fuel">Fuel</string>
+    <string name="cost_type_toll">Toll</string>
+    <string name="cost_type_driver_allowance">Driver Allowance</string>
+    <string name="cost_type_parking">Parking</string>
+    <string name="cost_type_loading_charges">Loading Charges</string>
+    <string name="cost_type_unloading_charges">Unloading Charges</string>
+    <string name="cost_type_chalan">Chalan</string>
+    <string name="cost_type_permit">Permit</string>
+    <string name="cost_type_insurance">Insurance</string>
+    <string name="cost_type_other">Other</string>
+
+    <!-- Maintenance Cost Types -->
+    <string name="maint_cost_type_tyre">Tyre</string>
+    <string name="maint_cost_type_battery">Battery</string>
+    <string name="maint_cost_type_servicing">Servicing</string>
+    <string name="maint_cost_type_engine_repair">Engine Repair</string>
+    <string name="maint_cost_type_body_repair">Body Repair</string>
+    <string name="maint_cost_type_electrical">Electrical</string>
+    <string name="maint_cost_type_ac_repair">AC Repair</string>
+    <string name="maint_cost_type_other">Other</string>
+
+    <!-- ==================== Organization Stats ==================== -->
+    <string name="org_stats_title">Organization</string>
+    <string name="org_stats_vehicles">Vehicles</string>
+    <string name="org_stats_drivers">Drivers</string>
+    <string name="org_stats_trips">Trips</string>
+    <string name="org_stats_members">Members</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_network">No internet connection. Please check your network.</string>
+    <string name="error_timeout">Connection timed out. Please try again.</string>
+    <string name="error_server">Server error occurred. Please try again later.</string>
+    <string name="error_auth">Session expired. Please login again.</string>
+    <string name="error_forbidden">You don\'t have permission to perform this action.</string>
+    <string name="error_not_found">The requested resource was not found.</string>
+    <string name="error_validation">Please check your input and try again.</string>
+    <string name="error_rate_limited">Too many requests. Please try again later.</string>
+    <string name="login_error_invalid_credentials">Invalid email/mobile or password. Please try again.</string>
+
+    <!-- ==================== Validation Errors ==================== -->
+    <string name="error_first_name_required">Please enter your first name</string>
+    <string name="error_last_name_required">Please enter your last name</string>
+    <string name="error_email_required">Please enter your email</string>
+    <string name="error_email_invalid">Please enter a valid email address</string>
+    <string name="error_mobile_required">Please enter your mobile number</string>
+    <string name="error_mobile_invalid">Please enter a valid 10-digit Indian mobile number</string>
+    <string name="error_mobile_10_digits">Enter 10-digit mobile number</string>
+    <string name="error_mobile_start_digit">Mobile must start with 6, 7, 8, or 9</string>
+    <string name="error_password_required">Please enter a password</string>
+    <string name="error_password_min_chars">Password must be at least 6 characters</string>
+    <string name="error_confirm_password_required">Please confirm your password</string>
+    <string name="error_passwords_mismatch">Passwords do not match</string>
+    <string name="error_current_password_required">Please enter your current password</string>
+    <string name="error_new_password_required">Please enter a new password</string>
+    <string name="error_confirm_new_password_required">Please confirm your new password</string>
+    <string name="error_password_same_as_current">New password must be different from current password</string>
+    <string name="error_identifier_required">Please enter your email or mobile number</string>
+    <string name="error_amount_required">Please enter an amount</string>
+    <string name="error_valid_amount">Please enter a valid amount</string>
+    <string name="error_date_required">Please enter a date</string>
+    <string name="error_company_name_required">Company name is required</string>
+    <string name="error_contact_person_required">Contact person name is required</string>
+    <string name="error_primary_contact_required">Primary contact is required</string>
+    <string name="error_gst_invalid">GST number must be 15 characters</string>
+    <string name="error_select_vehicle">Please select a vehicle</string>
+    <string name="error_select_driver">Please select a driver</string>
+    <string name="error_select_trip">Please select a trip</string>
+    <string name="error_select_cost_type">Please select a cost type</string>
+    <string name="error_weight_invalid">Please enter a valid weight</string>
+    <string name="error_price_invalid">Please enter a valid price</string>
+    <string name="error_purchase_date_required">Purchase date is required</string>
+    <string name="error_purchase_price_required">Purchase price is required</string>
+    <string name="error_purchase_price_invalid">Please enter a valid purchase price</string>
+    <string name="error_down_payment_required">Down payment is required</string>
+    <string name="error_interest_rate_required">Interest rate is required</string>
+    <string name="error_tenure_required">Tenure is required</string>
+    <string name="error_financier_required">Financier/Bank name is required</string>
+    <string name="error_loan_start_date_required">Loan start date is required</string>
+    <string name="error_payment_amount_required">Payment amount is required</string>
+    <string name="error_payment_date_required">Payment date is required</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_account_created">Account created successfully!</string>
+    <string name="success_profile_updated">Profile updated successfully</string>
+    <string name="success_password_changed">Password changed successfully</string>
+    <string name="success_password_reset">Password reset successfully!</string>
+    <string name="success_reset_instructions_sent">Reset instructions sent. Please enter your new password.</string>
+    <string name="success_payment_deleted">Payment deleted successfully</string>
+    <string name="success_payment_recorded">Payment recorded successfully</string>
+    <string name="success_customer_created">Customer created successfully</string>
+    <string name="success_customer_updated">Customer updated successfully</string>
+    <string name="success_customer_status">Customer %1$s successfully</string>
+    <string name="success_customers_synced">%1$d customers synced</string>
+    <string name="success_purchase_saved">Purchase information saved successfully</string>
+    <string name="success_driver_created">Driver created successfully</string>
+    <string name="success_vehicle_registered">Vehicle registered successfully</string>
+    <string name="success_trip_created">Trip created successfully</string>
+    <string name="success_trip_cost_saved">Trip cost saved successfully</string>
+    <string name="success_maintenance_cost_saved">Maintenance cost saved successfully</string>
+    <string name="success_driver_cost_saved">Driver cost saved successfully</string>
+    <string name="success_team_member_created">Team member created successfully</string>
+    <string name="success_team_member_updated">Team member updated successfully</string>
+    <string name="success_team_member_deleted">Team member deleted successfully</string>
+    <string name="success_team_status_toggled">Status updated successfully</string>
+    <string name="success_team_password_reset">Password reset successfully</string>
+    <string name="success_alerts_refreshed">Alerts refreshed</string>
+
+    <!-- ==================== Error Fallbacks ==================== -->
+    <string name="error_signup_failed">Sign up failed</string>
+    <string name="error_load_profile">Failed to load profile</string>
+    <string name="error_update_profile">Failed to update profile</string>
+    <string name="error_change_password_failed">Failed to change password</string>
+    <string name="error_reset_password_failed">Failed to reset password</string>
+    <string name="error_send_reset_failed">Failed to send reset instructions</string>
+    <string name="error_logout_failed">Logout failed</string>
+    <string name="error_load_team">Failed to load team members</string>
+    <string name="error_refresh_team">Failed to refresh team members</string>
+    <string name="error_create_team_member">Failed to create team member</string>
+    <string name="error_update_team_member">Failed to update team member</string>
+    <string name="error_delete_team_member">Failed to delete team member</string>
+    <string name="error_toggle_status">Failed to toggle status</string>
+    <string name="error_reset_member_password">Failed to reset password</string>
+    <string name="error_create_driver">Failed to create driver</string>
+    <string name="error_register_vehicle">Failed to register vehicle</string>
+    <string name="error_load_map">Failed to load map data</string>
+    <string name="error_export_pdf">Failed to export PDF</string>
+    <string name="error_load_data">Failed to load data</string>
+    <string name="error_refresh_data">Failed to refresh data</string>
+    <string name="error_delete_payment">Failed to delete payment</string>
+    <string name="error_load_customers">Failed to load customers</string>
+    <string name="error_create_customer">Failed to create customer</string>
+    <string name="error_update_customer">Failed to update customer</string>
+    <string name="error_customer_feature_unavailable">Customer feature not available</string>
+
+    <!-- ==================== Report Enum Labels ==================== -->
+    <string name="report_period_today">Today</string>
+    <string name="report_period_this_week">This Week</string>
+    <string name="report_period_15_days">15 Days</string>
+    <string name="report_period_this_month">This Month</string>
+    <string name="report_period_quarterly">Quarterly</string>
+    <string name="report_period_half_year">Half Year</string>
+    <string name="report_period_this_year">This Year</string>
+    <string name="report_period_custom">Custom</string>
+    <string name="profit_status_highly_profitable">Highly Profitable</string>
+    <string name="profit_status_profitable">Profitable</string>
+    <string name="profit_status_break_even">Break-even</string>
+    <string name="profit_status_loss">Loss</string>
+    <string name="profit_status_severe_loss">Severe Loss</string>
+    <string name="report_view_summary">Summary</string>
+    <string name="report_view_list">List</string>
+    <string name="report_view_chart">Chart</string>
+    <string name="report_chart_bar">Bar Chart</string>
+    <string name="report_chart_pie">Pie Chart</string>
+    <string name="export_format_pdf">PDF Report</string>
+    <string name="export_format_csv">CSV Data</string>
+    <string name="export_format_excel">Excel Sheet</string>
+    <string name="sort_profit_high_low">Profit (High to Low)</string>
+    <string name="sort_profit_low_high">Profit (Low to High)</string>
+    <string name="sort_loss_high_low">Loss (High to Low)</string>
+    <string name="sort_revenue_high_low">Revenue (High to Low)</string>
+    <string name="sort_expense_high_low">Expense (High to Low)</string>
+    <string name="sort_trips_high_low">Trips (Most to Least)</string>
+    <string name="sort_date_newest">Date (Newest First)</string>
+    <string name="sort_date_oldest">Date (Oldest First)</string>
+    <string name="pl_filter_all">All</string>
+    <string name="pl_filter_profitable">Profitable Only</string>
+    <string name="pl_filter_loss_making">Loss Making Only</string>
+    <string name="finance_filter_all">All</string>
+    <string name="finance_filter_financed">Financed</string>
+    <string name="finance_filter_cash_purchase">Cash Purchase</string>
+    <string name="finance_filter_not_recorded">Not Recorded</string>
+
+    <!-- ==================== Report Validation ==================== -->
+    <string name="report_select_dates">Please select both start and end dates</string>
+    <string name="report_select_date_range">Please select date range</string>
+    <string name="report_select_vehicles">Please select at least one vehicle</string>
+    <string name="report_select_cost_types">Please select at least one cost type</string>
+    <string name="report_select_trips">Please select at least one trip</string>
+    <string name="report_no_trips_found">No trips found</string>
+    <string name="report_no_data_export">No data to export</string>
+
+    <!-- ==================== Misc ==================== -->
+    <string name="receipt_download_coming_soon">Receipt download coming soon</string>
+    <string name="offline_mode_message">Offline mode — showing cached data</string>
+    <string name="alert_dismissed">Alert dismissed</string>
+    <string name="version_format">Version %1$s</string>
+    <string name="payments_report_title">Payments Report</string>
+    <string name="payment_receipt_title">Payment Receipt</string>
+
+    <!-- ==================== Currency ==================== -->
+    <string name="currency_symbol">₹</string>
+    <string name="currency_format">₹%1$s</string>
+
+    <!-- ==================== Vehicle - Add Vehicle Screen ==================== -->
+    <string name="vehicle_section_info">🚗 Vehicle Information</string>
+    <string name="vehicle_label_registration">Registration Number *</string>
+    <string name="vehicle_placeholder_registration">e.g., MH12AB1234</string>
+    <string name="vehicle_label_make">Make *</string>
+    <string name="vehicle_placeholder_make">e.g., Tata</string>
+    <string name="vehicle_label_model">Model *</string>
+    <string name="vehicle_placeholder_model">e.g., Prima</string>
+    <string name="vehicle_label_year">Year *</string>
+    <string name="vehicle_placeholder_year">e.g., 2023</string>
+    <string name="vehicle_label_color">Color</string>
+    <string name="vehicle_placeholder_color">e.g., White</string>
+    <string name="vehicle_section_owner">👤 Owner Information</string>
+    <string name="vehicle_label_owner_name">Owner Name</string>
+    <string name="vehicle_label_owner_contact">Owner Contact</string>
+    <string name="vehicle_placeholder_owner_contact">Enter 10-digit mobile</string>
+    <string name="vehicle_btn_select_file">Select File</string>
+    <string name="vehicle_select_one_or_more">Select one or more</string>
+
+    <!-- ==================== Vehicle - Maintenance Cost ==================== -->
+    <string name="maint_section_select_vehicle">🚛 Select Vehicle</string>
+    <string name="maint_label_vehicle">Vehicle *</string>
+    <string name="maint_placeholder_vehicle">Select a vehicle</string>
+    <string name="maint_section_costs">🔧 Maintenance Costs</string>
+    <string name="maint_btn_add_row">Add Row</string>
+    <string name="maint_label_amount">Amount (₹) *</string>
+    <string name="maint_placeholder_amount">Enter amount</string>
+
+    <!-- ==================== Trip - Create/Edit ==================== -->
+    <string name="trip_label_select_vehicle">Select Vehicle *</string>
+    <string name="trip_label_select_driver">Select Driver *</string>
+    <string name="trip_label_cargo_type">Cargo Type</string>
+    <string name="trip_placeholder_cargo_type">Select cargo type</string>
+    <string name="trip_edit_label_vehicle">Select Vehicle</string>
+    <string name="trip_edit_placeholder_vehicle">Choose a vehicle</string>
+    <string name="trip_edit_label_driver">Select Driver</string>
+    <string name="trip_edit_placeholder_driver">Choose a driver</string>
+    <string name="trip_edit_label_trip_price">Trip Price (Expected) *</string>
+    <string name="trip_edit_placeholder_trip_price">Enter trip price</string>
+    <string name="trip_edit_trip_price_hint">Expected Cost + Profit</string>
+    <string name="trip_edit_label_priority">Priority</string>
+    <string name="trip_edit_currently_assigned">Currently assigned</string>
+
+    <!-- ==================== Trip - Cost Entry ==================== -->
+    <string name="trip_cost_section_select_trip">🚛 Select Trip</string>
+    <string name="trip_cost_label_trip">Trip *</string>
+    <string name="trip_cost_placeholder_trip">Select a trip</string>
+    <string name="trip_cost_label_cost_type_name">Cost Type Name *</string>
+    <string name="trip_cost_placeholder_custom_cost">Enter custom cost type</string>
+    <string name="trip_cost_label_date_time">Date &amp; Time *</string>
+    <string name="trip_cost_label_amount">Amount (₹) *</string>
+    <string name="trip_cost_placeholder_amount">Enter amount</string>
+    <string name="trip_cost_label_notes">Notes (Optional)</string>
+    <string name="trip_cost_placeholder_notes">Enter notes</string>
+    <string name="trip_cost_section_fuel">⛽ Fuel Details</string>
+    <string name="trip_cost_label_fuel_type">Fuel Type</string>
+    <string name="trip_cost_placeholder_fuel_type">Select a fuel type above</string>
+    <string name="trip_cost_label_fuel_quantity">Quantity (L)</string>
+    <string name="trip_cost_placeholder_fuel_quantity">Liters</string>
+    <string name="trip_cost_label_fuel_rate">Rate (₹/L)</string>
+    <string name="trip_cost_placeholder_fuel_rate">Per liter</string>
+    <string name="trip_cost_label_mileage">Mileage (Km/L)</string>
+    <string name="trip_cost_placeholder_mileage">Km per liter</string>
+    <string name="trip_cost_calculated_total">Calculated Total:</string>
+    <string name="trip_cost_history_title">📜 Cost History</string>
+    <string name="trip_cost_section_details">📍 Trip Details</string>
+    <string name="trip_cost_label_vehicle">Vehicle</string>
+    <string name="trip_cost_label_trip_date">Trip Date</string>
+    <string name="trip_cost_label_route">Route</string>
+    <string name="trip_cost_select_type">Select Type</string>
+    <string name="trip_cost_no_date">No Date</string>
+
+    <!-- ==================== Driver - Cost Entry ==================== -->
+    <string name="driver_cost_label_driver">Driver *</string>
+    <string name="driver_cost_placeholder_driver">Select a driver</string>
+    <string name="driver_cost_label_custom_name">Custom Cost Name</string>
+    <string name="driver_cost_placeholder_custom_name">Enter custom cost name</string>
+    <string name="driver_cost_label_date_time">Date &amp; Time *</string>
+    <string name="driver_cost_label_amount">Amount (₹) *</string>
+    <string name="driver_cost_placeholder_amount">Enter amount</string>
+    <string name="driver_cost_label_notes">Notes (Optional)</string>
+    <string name="driver_cost_new_entry">New Cost Entry</string>
+    <string name="driver_cost_deduction">Deduction</string>
+    <string name="driver_cost_active">Active</string>
+    <string name="driver_cost_inactive">Inactive</string>
+
+    <!-- ==================== Customer - Create/Detail ==================== -->
+    <string name="customer_section_company">📋 Company &amp; Contact</string>
+    <string name="customer_label_company_name">Company Name *</string>
+    <string name="customer_placeholder_company_name">Company Or Firm Name</string>
+    <string name="customer_label_contact_person">Contact Person *</string>
+    <string name="customer_placeholder_contact_person">Company Person Name</string>
+    <string name="customer_label_primary_contact">Primary *</string>
+    <string name="customer_placeholder_primary_contact">Mobile</string>
+    <string name="customer_label_secondary_contact">Secondary</string>
+    <string name="customer_placeholder_secondary_contact">Optional</string>
+    <string name="customer_label_email">Email</string>
+    <string name="customer_placeholder_email">contact@company.com</string>
+    <string name="customer_section_business">🏢 Business Details</string>
+    <string name="customer_label_gst">GST Number</string>
+    <string name="customer_placeholder_gst">22AAAAA0000A1Z5</string>
+    <string name="customer_gst_chars">%1$d/15 characters</string>
+    <string name="customer_label_address">Address</string>
+    <string name="customer_placeholder_address">Full address with city, pincode</string>
+    <string name="customer_label_notes">Notes</string>
+    <string name="customer_placeholder_notes">Additional information</string>
+    <string name="customer_search_payments">Search by Trip ID, amount, reference…</string>
+
+    <!-- ==================== Payment - Add/Edit ==================== -->
+    <string name="payment_section_amount">Amount Details</string>
+    <string name="payment_label_amount">Amount *</string>
+    <string name="payment_placeholder_amount">Enter amount</string>
+    <string name="payment_label_tds">TDS</string>
+    <string name="payment_label_discount">Discount</string>
+    <string name="payment_label_net_amount">Net Amount</string>
+    <string name="payment_section_type">Payment Type</string>
+    <string name="payment_label_date_time">Payment Date &amp; Time *</string>
+    <string name="payment_section_transaction">Transaction Details</string>
+    <string name="payment_label_upi_id">UPI ID *</string>
+    <string name="payment_placeholder_upi_id">e.g., user@upi</string>
+    <string name="payment_label_bank_name">Bank Name *</string>
+    <string name="payment_placeholder_bank_name">Enter bank name</string>
+    <string name="payment_label_account_number">Account Number *</string>
+    <string name="payment_placeholder_account_number">Enter account number</string>
+    <string name="payment_label_transaction_ref">Transaction Reference</string>
+    <string name="payment_placeholder_transaction_ref">Enter transaction ID (optional)</string>
+    <string name="payment_label_transaction_id">Transaction ID</string>
+    <string name="payment_placeholder_card_txn">Enter card transaction ID</string>
+    <string name="payment_label_reference">Reference (Optional)</string>
+    <string name="payment_placeholder_reference">Enter reference if any</string>
+    <string name="payment_section_additional">Additional Info</string>
+    <string name="payment_label_received_by">Received By</string>
+    <string name="payment_label_location">Location</string>
+    <string name="payment_label_notes">Notes</string>
+    <string name="payment_search_trips">Search trip, vehicle, customer, route…</string>
+    <string name="payment_filter_with_pending">With Pending</string>
+    <string name="payment_filter_all">All</string>
+
+    <!-- ==================== Team - Create/Detail ==================== -->
+    <string name="team_label_first_name">First Name</string>
+    <string name="team_placeholder_first_name">Enter first name</string>
+    <string name="team_label_last_name">Last Name</string>
+    <string name="team_placeholder_last_name">Enter last name</string>
+    <string name="team_label_email">Email Address</string>
+    <string name="team_placeholder_email">Enter email address</string>
+    <string name="team_label_mobile">Mobile Number</string>
+    <string name="team_placeholder_mobile">Enter mobile number</string>
+    <string name="team_section_password">Set Password</string>
+    <string name="team_section_password_hint">Create a secure password for the team member</string>
+    <string name="team_label_password">Password</string>
+    <string name="team_placeholder_password">Enter password</string>
+    <string name="team_password_min_chars">Minimum 6 characters</string>
+    <string name="team_label_confirm_password">Confirm Password</string>
+    <string name="team_placeholder_confirm_password">Enter password again</string>
+    <string name="team_section_personal">Personal Information</string>
+    <string name="team_section_contact">Contact Information</string>
+    <string name="team_label_new_password">New Password</string>
+    <string name="team_placeholder_new_password">Enter new password</string>
+    <string name="team_label_confirm_new_password">Confirm Password</string>
+    <string name="team_placeholder_confirm_new_password">Confirm new password</string>
+
+    <!-- ==================== Finance - Add Purchase ==================== -->
+    <string name="finance_section_vehicle">🚛 Select Vehicle</string>
+    <string name="finance_placeholder_vehicle">Select a vehicle</string>
+    <string name="finance_all_vehicles_have_purchase">All vehicles already have purchase information</string>
+    <string name="finance_dropdown_all_have_purchase">All vehicles have purchase info</string>
+    <string name="finance_section_purchase">📝 Purchase Details</string>
+    <string name="finance_label_purchase_date">Purchase Date *</string>
+    <string name="finance_label_purchase_price">Purchase Price *</string>
+    <string name="finance_placeholder_enter_amount">Enter amount</string>
+    <string name="finance_label_vendor">Vendor/Dealer</string>
+    <string name="finance_placeholder_vendor">Dealer name</string>
+    <string name="finance_label_invoice">Invoice Number</string>
+    <string name="finance_placeholder_invoice">INV-XXXX</string>
+    <string name="finance_section_payment_type">💳 Payment Type *</string>
+    <string name="finance_cash_title">Cash / Full Payment</string>
+    <string name="finance_cash_desc">Vehicle purchased with full payment</string>
+    <string name="finance_loan_title">Loan (EMI)</string>
+    <string name="finance_loan_desc">Financed with bank/NBFC</string>
+    <string name="finance_section_loan">🏦 Loan Details</string>
+    <string name="finance_label_down_payment">Down Payment *</string>
+    <string name="finance_label_loan_amount">Loan Amount (auto-calculated)</string>
+    <string name="finance_label_financier">Financier/Bank *</string>
+    <string name="finance_placeholder_financier">e.g., HDFC Bank</string>
+    <string name="finance_label_loan_account">Loan Account Number</string>
+    <string name="finance_placeholder_loan_account">LOAN-XXXX</string>
+    <string name="finance_label_rate">Rate *</string>
+    <string name="finance_placeholder_rate">9.5</string>
+    <string name="finance_label_tenure">Tenure *</string>
+    <string name="finance_placeholder_tenure">48</string>
+    <string name="finance_label_emi_start_date">EMI Start Date *</string>
+    <string name="finance_bank_reference">Bank Account (for payment reference)</string>
+    <string name="finance_label_bank_name">Bank Name</string>
+    <string name="finance_placeholder_bank_name">Your bank name</string>
+    <string name="finance_label_account_number">Account Number</string>
+    <string name="finance_placeholder_account_number">Account number</string>
+    <string name="finance_label_ifsc">IFSC Code</string>
+    <string name="finance_placeholder_ifsc">HDFC0001234</string>
+    <string name="finance_label_auto_debit">Auto-debit enabled</string>
+    <string name="finance_section_notes">📝 Notes</string>
+
+    <!-- ==================== Finance - Detail / EMI ==================== -->
+    <string name="finance_label_amount_paid">Amount Paid *</string>
+    <string name="finance_label_payment_date">Payment Date *</string>
+    <string name="finance_label_payment_mode">Payment Mode</string>
+    <string name="finance_placeholder_payment_mode">Select mode</string>
+    <string name="finance_label_transaction_ref">Transaction Ref/UTR</string>
+    <string name="finance_placeholder_transaction_ref">UTR123456789</string>
+    <string name="finance_label_payment_source">Payment Source</string>
+    <string name="finance_placeholder_payment_source">e.g., HDFC NetBanking</string>
+    <string name="finance_label_late_fee">Late Fee (if any)</string>
+    <string name="finance_placeholder_late_fee">0</string>
+    <string name="finance_label_notes">Notes</string>
+    <string name="finance_placeholder_notes">Additional notes…</string>
+
+    <!-- ==================== Reports - Search ==================== -->
+    <string name="reports_search_vehicles">Search vehicles…</string>
+    <string name="reports_search_vehicles_detailed">Search vehicle number, make, driver…</string>
+    <string name="reports_search_trips">Search trips…</string>
+    <string name="reports_select_all">Select All (%1$d)</string>
+
+    <!-- ==================== Dashboard - Section Labels ==================== -->
+    <string name="dashboard_label_critical">Critical</string>
+    <string name="dashboard_label_warning">Warning</string>
+    <string name="dashboard_label_info">Info</string>
+    <string name="dashboard_label_docs_expired">Docs Expired</string>
+    <string name="dashboard_label_docs_7d">Docs 7d</string>
+    <string name="dashboard_label_license_expired">License Expired</string>
+    <string name="dashboard_label_license_7d">License 7d</string>
+    <string name="dashboard_label_on_route">On Route</string>
+    <string name="dashboard_label_planned">Planned</string>
+    <string name="dashboard_label_available">Available</string>
+    <string name="dashboard_label_active">Active</string>
+    <string name="dashboard_label_done">Done</string>
+    <string name="dashboard_label_expenses">Expenses</string>
+
+    <!-- ==================== Alerts - Detail Labels ==================== -->
+    <string name="alerts_summary">Alert Summary</string>
+    <string name="alerts_total">%1$d Total</string>
+    <string name="alerts_count_expired">%1$d Expired</string>
+    <string name="alerts_count_expiring_soon">%1$d Expiring soon</string>
+    <string name="alerts_documents">Documents</string>
+    <string name="alerts_licenses">Licenses</string>
+    <string name="alerts_filter_all">All (%1$d)</string>
+    <string name="alerts_filter_critical">Critical (%1$d)</string>
+    <string name="alerts_filter_warning">Warning (%1$d)</string>
+    <string name="alerts_no_alerts_for_filter">No %1$s alerts</string>
+    <string name="alerts_all_clear">All clear! No alerts at this time.</string>
+    <string name="alerts_loading">Loading alerts…</string>
+    <string name="alerts_dismiss">Dismiss</string>
+
+    <!-- ==================== Common Action Labels ==================== -->
+    <string name="action_add_cost">Add Cost</string>
+    <string name="action_add_vehicle">Add Vehicle</string>
+    <string name="action_add_driver">Add Driver</string>
+    <string name="action_create_trip">Create Trip</string>
+    <string name="action_record_payment">Record Payment</string>
+    <string name="action_export_pdf">Export PDF</string>
+    <string name="action_export_report_pdf">📥 Export Report as PDF</string>
+    <string name="action_generating_pdf">📄 Generating PDF…</string>
+    <string name="action_download_receipt">Download Receipt</string>
+    <string name="action_filter">Filter</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_clear_all">Clear All</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_reset_all">Reset All</string>
+    <string name="action_load_more">Load More</string>
+    <string name="action_select_all">All</string>
+    <string name="action_exporting">Exporting…</string>
+    <string name="action_exporting_pdf">Exporting to PDF…</string>
+    <string name="action_saving">Saving…</string>
+    <string name="action_creating">Creating…</string>
+    <string name="action_updating">Updating…</string>
+    <string name="action_registering">Registering…</string>
+    <string name="action_reset_password">Reset Password</string>
+
+    <!-- ==================== Navigation Drawer ==================== -->
+    <string name="nav_vehicles">Vehicles</string>
+    <string name="nav_drivers">Drivers</string>
+    <string name="nav_trips">Trips</string>
+    <string name="nav_customers">Customers</string>
+    <string name="nav_payments">Payments</string>
+    <string name="nav_live_map">Live Map</string>
+    <string name="nav_team_members">Team Members</string>
+    <string name="nav_vehicle_finance">Vehicle Finance</string>
+    <string name="nav_reports">Reports &amp; P/L</string>
+    <string name="nav_profile">Profile &amp; Settings</string>
+
+    <!-- ==================== Profile - Additional ==================== -->
+    <string name="profile_contact_info">Contact Information</string>
+    <string name="profile_org_owner">Organization Owner</string>
+    <string name="profile_account_actions">Account Actions</string>
+
+    <!-- ==================== Vehicle Detail - Sections ==================== -->
+    <string name="vehicle_detail_delete">Delete Vehicle</string>
+    <string name="vehicle_detail_change_status">Change Vehicle Status</string>
+    <string name="vehicle_detail_edit">Edit Vehicle</string>
+    <string name="vehicle_detail_info">Vehicle Information</string>
+    <string name="vehicle_detail_specs">Specifications</string>
+    <string name="vehicle_detail_additional">Additional Info</string>
+    <string name="vehicle_detail_current_trip">Current Trip</string>
+    <string name="vehicle_detail_current_location">Current Location</string>
+    <string name="vehicle_detail_assigned_driver">Assigned Driver</string>
+    <string name="vehicle_detail_upload">Upload Document</string>
+
+    <!-- ==================== Driver Detail - Labels ==================== -->
+    <string name="driver_detail_delete">Delete Driver</string>
+    <string name="driver_detail_filter">🔍 Filter</string>
+    <string name="driver_detail_month_filter">Month (YYYY-MM)</string>
+    <string name="driver_detail_month_placeholder">e.g., 2026-01</string>
+
+    <!-- ==================== Trip Detail - Labels ==================== -->
+    <string name="trip_detail_change_status">Change Trip Status</string>
+    <string name="trip_detail_cancel">Cancel Trip</string>
+    <string name="trip_detail_cancel_confirm">Are you sure you want to cancel this trip? This action cannot be undone.</string>
+    <string name="trip_detail_keep">Keep</string>
+    <string name="trip_detail_actual_times">Actual Times</string>
+    <string name="trip_detail_cargo_customer">Cargo &amp; Customer</string>
+    <string name="trip_detail_additional_info">Additional Info</string>
+    <string name="trip_detail_loading_vehicles">Loading vehicles and drivers…</string>
+
+    <!-- ==================== Trip Edit - Location Labels ==================== -->
+    <string name="trip_edit_start_location">Start Location *</string>
+    <string name="trip_edit_end_location">End Location *</string>
+    <string name="trip_edit_distance">Distance (km)</string>
+    <string name="trip_edit_duration">Est. Duration</string>
+    <string name="trip_edit_search_location">Search for a location…</string>
+
+    <!-- ==================== Create Trip - Labels ==================== -->
+    <string name="trip_create_notes_label">Notes</string>
+    <string name="trip_create_notes_placeholder">Add any additional notes…</string>
+    <string name="trip_create_cargo_desc_label">Cargo Description</string>
+    <string name="trip_create_cargo_desc_placeholder">e.g., Office furniture</string>
+    <string name="trip_create_distance_label">Estimated Distance (km)</string>
+    <string name="trip_create_distance_placeholder">Auto-calculated</string>
+
+    <!-- ==================== Create Driver - Labels ==================== -->
+    <string name="driver_create_first_name">First Name *</string>
+    <string name="driver_create_first_name_placeholder">e.g., Raj</string>
+    <string name="driver_create_last_name">Last Name *</string>
+    <string name="driver_create_last_name_placeholder">e.g., Kumar</string>
+    <string name="driver_create_license">License Number *</string>
+    <string name="driver_create_license_placeholder">e.g., DL-1234567890</string>
+    <string name="driver_create_address">Address</string>
+    <string name="driver_create_address_placeholder">e.g., 123 Main St…</string>
+
+    <!-- ==================== Payment Detail - Labels ==================== -->
+    <string name="payment_detail_type">Type</string>
+    <string name="payment_detail_mode">Mode</string>
+    <string name="payment_detail_transaction_id">Transaction ID</string>
+    <string name="payment_detail_bank">Bank</string>
+    <string name="payment_detail_name">Name</string>
+    <string name="payment_detail_company">Company</string>
+    <string name="payment_detail_gst">GST</string>
+    <string name="payment_detail_created_by">Created By</string>
+    <string name="payment_detail_created">Created</string>
+
+    <!-- ==================== Payment Add - Labels ==================== -->
+    <string name="payment_add_select_trip">Select Trip *</string>
+    <string name="payment_add_tap_to_select">Tap to select a trip</string>
+    <string name="payment_add_trip_price">Trip Price</string>
+    <string name="payment_add_pending">Pending</string>
+    <string name="payment_add_customer">Customer</string>
+    <string name="payment_add_due_date">Due Date (Optional)</string>
+    <string name="payment_add_payment_mode">Payment Mode</string>
+
+    <!-- ==================== Maintenance Cost - Additional ==================== -->
+    <string name="maint_label_description">Description</string>
+    <string name="maint_placeholder_description">Describe the maintenance work</string>
+    <string name="maint_label_vendor">Vendor</string>
+    <string name="maint_placeholder_vendor">Vendor name</string>
+    <string name="maint_label_invoice">Invoice #</string>
+    <string name="maint_save">💾 Save Maintenance Costs</string>
+
+    <!-- ==================== Documents ==================== -->
+    <string name="documents_optional">📄 Documents (Optional)</string>
+
+    <!-- ==================== Finance - Additional ==================== -->
+    <string name="finance_monthly_emi">Monthly EMI:</string>
+    <string name="finance_total_interest">Total Interest:</string>
+    <string name="finance_total_payable">Total Payable:</string>
+    <string name="finance_save_purchase">Save Purchase Information</string>
+    <string name="finance_record_payment">Record Payment</string>
+    <string name="finance_payment_history">Payment History</string>
+
+    <!-- ==================== Customer Detail - Additional ==================== -->
+    <string name="customer_not_found">Customer not found</string>
+    <string name="customer_update">Update Customer</string>
+    <string name="customer_no_trips">This customer has no trips yet</string>
+    <string name="customer_no_financial_data">No financial data available</string>
+
+    <!-- ==================== Team Detail - Additional ==================== -->
+    <string name="team_save_changes">Save Changes</string>
+
+    <!-- ==================== Report Screens ==================== -->
+    <string name="reports_analyze_costs">Analyze Costs</string>
+    <string name="reports_generate_report">Generate Report</string>
+    <string name="reports_no_data">No data to display</string>
+    <string name="reports_disclaimer">Document costs may vary from actual. Please verify.</string>
+
+    <!-- ==================== Misc / Shared ==================== -->
+    <string name="select_trip">Select Trip</string>
+    <string name="no_data_for_filter">No data matches your filters</string>
+    <string name="adjust_search_filters">Try adjusting your search or filters</string>
+    <string name="all_filter">All</string>
 </resources>

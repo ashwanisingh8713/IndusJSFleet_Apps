@@ -18,7 +18,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Forgot Password Screen composable.
@@ -33,12 +35,22 @@ fun ForgotPasswordScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
 
+    var pendingSnackbar by remember { mutableStateOf<com.indusjs.uicomponents.components.UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
+
     // Handle side effects
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is ForgotPasswordContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is ForgotPasswordContract.Effect.NavigateToLogin -> {
                     onNavigateToLogin()
@@ -54,7 +66,7 @@ fun ForgotPasswordScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isResetMode) "Reset Password" else "Forgot Password") },
+                title = { Text(if (state.isResetMode) stringResource(Res.string.reset_password_title) else stringResource(Res.string.forgot_password_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateToLogin) {
                         Text("←", style = MaterialTheme.typography.titleLarge)
@@ -104,7 +116,7 @@ fun ForgotPasswordScreen(
 private fun ForgotPasswordContent(
     identifier: String,
     isLoading: Boolean,
-    error: String?,
+    error: com.indusjs.uicomponents.components.UiText?,
     onIdentifierChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onNavigateToLogin: () -> Unit,
@@ -119,7 +131,7 @@ private fun ForgotPasswordContent(
     Spacer(modifier = Modifier.height(16.dp))
 
     Text(
-        text = "Forgot Your Password?",
+        text = stringResource(Res.string.forgot_password_heading),
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold
     )
@@ -127,7 +139,7 @@ private fun ForgotPasswordContent(
     Spacer(modifier = Modifier.height(8.dp))
 
     Text(
-        text = "Enter your email or mobile number and we'll help you reset your password.",
+        text = stringResource(Res.string.forgot_password_description),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
@@ -140,8 +152,8 @@ private fun ForgotPasswordContent(
         value = identifier,
         onValueChange = onIdentifierChange,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text("Email or Mobile") },
-        placeholder = { Text("Enter your email or mobile number") },
+        label = { Text(stringResource(Res.string.forgot_password_identifier_label)) },
+        placeholder = { Text(stringResource(Res.string.forgot_password_identifier_placeholder)) },
         leadingIcon = { Text("📧") },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
@@ -158,10 +170,10 @@ private fun ForgotPasswordContent(
     )
 
     // Error Message
-    error?.let { errorMessage ->
+    error?.let { errorUiText ->
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = errorMessage,
+            text = errorUiText.resolve(),
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center,
@@ -186,7 +198,7 @@ private fun ForgotPasswordContent(
                 strokeWidth = 2.dp
             )
         } else {
-            Text("Send Reset Instructions")
+            Text(stringResource(Res.string.forgot_password_send_instructions))
         }
     }
 
@@ -194,7 +206,7 @@ private fun ForgotPasswordContent(
 
     // Back to Login Link
     TextButton(onClick = onNavigateToLogin) {
-        Text("Back to Sign In")
+        Text(stringResource(Res.string.forgot_password_back_to_login))
     }
 }
 
@@ -205,7 +217,7 @@ private fun ResetPasswordContent(
     isPasswordVisible: Boolean,
     isConfirmPasswordVisible: Boolean,
     isLoading: Boolean,
-    error: String?,
+    error: com.indusjs.uicomponents.components.UiText?,
     onNewPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
@@ -222,7 +234,7 @@ private fun ResetPasswordContent(
     Spacer(modifier = Modifier.height(16.dp))
 
     Text(
-        text = "Create New Password",
+        text = stringResource(Res.string.reset_password_heading),
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold
     )
@@ -230,7 +242,7 @@ private fun ResetPasswordContent(
     Spacer(modifier = Modifier.height(8.dp))
 
     Text(
-        text = "Enter your new password below.",
+        text = stringResource(Res.string.reset_password_description),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
@@ -243,8 +255,8 @@ private fun ResetPasswordContent(
         value = newPassword,
         onValueChange = onNewPasswordChange,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text("New Password") },
-        placeholder = { Text("Enter new password") },
+        label = { Text(stringResource(Res.string.reset_password_new_label)) },
+        placeholder = { Text(stringResource(Res.string.reset_password_new_placeholder)) },
         leadingIcon = { Text("🔑") },
         trailingIcon = {
             IconButton(onClick = onTogglePasswordVisibility) {
@@ -266,7 +278,7 @@ private fun ResetPasswordContent(
         singleLine = true,
         enabled = !isLoading,
         supportingText = {
-            Text("Minimum 6 characters")
+            Text(stringResource(Res.string.reset_password_min_chars))
         }
     )
 
@@ -277,8 +289,8 @@ private fun ResetPasswordContent(
         value = confirmPassword,
         onValueChange = onConfirmPasswordChange,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text("Confirm Password") },
-        placeholder = { Text("Re-enter new password") },
+        label = { Text(stringResource(Res.string.reset_password_confirm_label)) },
+        placeholder = { Text(stringResource(Res.string.reset_password_confirm_placeholder)) },
         leadingIcon = { Text("🔑") },
         trailingIcon = {
             IconButton(onClick = onToggleConfirmPasswordVisibility) {
@@ -305,16 +317,16 @@ private fun ResetPasswordContent(
         isError = confirmPassword.isNotEmpty() && confirmPassword != newPassword,
         supportingText = {
             if (confirmPassword.isNotEmpty() && confirmPassword != newPassword) {
-                Text("Passwords do not match", color = MaterialTheme.colorScheme.error)
+                Text(stringResource(Res.string.reset_password_mismatch), color = MaterialTheme.colorScheme.error)
             }
         }
     )
 
     // Error Message
-    error?.let { errorMessage ->
+    error?.let { errorUiText ->
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = errorMessage,
+            text = errorUiText.resolve(),
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center,
@@ -339,7 +351,7 @@ private fun ResetPasswordContent(
                 strokeWidth = 2.dp
             )
         } else {
-            Text("Reset Password")
+            Text(stringResource(Res.string.reset_password_button))
         }
     }
 }

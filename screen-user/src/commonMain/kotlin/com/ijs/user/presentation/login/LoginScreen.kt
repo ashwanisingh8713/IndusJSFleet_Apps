@@ -21,6 +21,7 @@ import com.indusjs.uicomponents.theme.rememberThemeToggle
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Login Screen composable.
@@ -41,12 +42,22 @@ fun LoginScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
 
+    var pendingSnackbar by remember { mutableStateOf<com.indusjs.uicomponents.components.UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is LoginContract.Effect.NavigateToDashboard -> onLoginSuccess()
                 is LoginContract.Effect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
             }
         }
@@ -73,7 +84,7 @@ fun LoginScreen(
                     painter = painterResource(
                         if (isDarkTheme) Res.drawable.ic_sun else Res.drawable.ic_moon
                     ),
-                    contentDescription = if (isDarkTheme) "Switch to Light Mode" else "Switch to Dark Mode",
+                    contentDescription = if (isDarkTheme) stringResource(Res.string.cd_switch_to_light_mode) else stringResource(Res.string.cd_switch_to_dark_mode),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(24.dp)
                 )
@@ -115,7 +126,7 @@ private fun SplashContent() {
     ) {
         Icon(
             painter = painterResource(Res.drawable.ic_fleet_logo),
-            contentDescription = "Fleet Management",
+            contentDescription = stringResource(Res.string.login_title),
             modifier = Modifier.size(72.dp),
             tint = MaterialTheme.colorScheme.primary
         )
@@ -123,7 +134,7 @@ private fun SplashContent() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Fleet Management",
+            text = stringResource(Res.string.login_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
@@ -138,7 +149,7 @@ private fun SplashContent() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Loading...",
+            text = stringResource(Res.string.loading),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -168,19 +179,19 @@ private fun LoginFormContent(
         // App Logo/Title
         Icon(
             painter = painterResource(Res.drawable.ic_fleet_logo),
-            contentDescription = "Fleet Management",
+            contentDescription = stringResource(Res.string.login_title),
             modifier = Modifier.size(72.dp),
             tint = MaterialTheme.colorScheme.primary
         )
 
         Text(
-            text = "Fleet Management",
+            text = stringResource(Res.string.login_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "Sign in to continue",
+            text = stringResource(Res.string.login_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -191,6 +202,8 @@ private fun LoginFormContent(
         FleetEmailField(
             value = state.email,
             onValueChange = onEmailChange,
+            label = stringResource(Res.string.label_email),
+            placeholder = stringResource(Res.string.placeholder_email),
             enabled = !state.isLoading,
             keyboardActions = KeyboardActions(
                 onNext = { focusManager.moveFocus(FocusDirection.Down) }
@@ -201,6 +214,8 @@ private fun LoginFormContent(
         FleetPasswordField(
             value = state.password,
             onValueChange = onPasswordChange,
+            label = stringResource(Res.string.label_password),
+            placeholder = stringResource(Res.string.placeholder_password),
             enabled = !state.isLoading,
             keyboardActions = KeyboardActions(
                 onDone = {
@@ -213,7 +228,7 @@ private fun LoginFormContent(
         // Error Message
         state.error?.let { error ->
             Text(
-                text = error,
+                text = error.resolve(),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
@@ -225,14 +240,14 @@ private fun LoginFormContent(
 
         // Forgot Password Link - using reusable component
         FleetTextButton(
-            text = "Forgot Password?",
+            text = stringResource(Res.string.login_forgot_password),
             onClick = onForgotPassword,
             modifier = Modifier.align(Alignment.End)
         )
 
         // Login Button - using reusable component
         FleetPrimaryButton(
-            text = "Sign In",
+            text = stringResource(Res.string.login_sign_in),
             onClick = onLogin,
             isLoading = state.isLoading,
             enabled = !state.isLoading
@@ -245,19 +260,19 @@ private fun LoginFormContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Don't have an account?",
+                text = stringResource(Res.string.login_no_account),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             FleetTextButton(
-                text = "Sign Up",
+                text = stringResource(Res.string.login_sign_up),
                 onClick = onSignUp
             )
         }
 
         // Demo hint
         Text(
-            text = "Demo: Enter any email and password",
+            text = stringResource(Res.string.login_demo_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )

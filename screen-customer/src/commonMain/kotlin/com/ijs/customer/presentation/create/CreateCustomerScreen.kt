@@ -18,6 +18,7 @@ import com.ijs.customer.presentation.create.CreateCustomerContract.Intent
 import com.ijs.customer.presentation.create.CreateCustomerContract.State
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
 /**
@@ -49,7 +50,7 @@ fun CreateCustomerScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Add Customer")
+                        Text(stringResource(Res.string.customers_add))
                         // Progress indicator
                         if (state.formCompletionPercentage > 0) {
                             LinearProgressIndicator(
@@ -72,7 +73,7 @@ fun CreateCustomerScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -102,9 +103,9 @@ fun CreateCustomerScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Creating...")
+                        Text(stringResource(Res.string.action_creating))
                     } else {
-                        Text("✅ Create Customer", fontWeight = FontWeight.SemiBold)
+                        Text("✅ ${stringResource(Res.string.customers_add)}", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -143,15 +144,15 @@ fun CreateCustomerScreen(
 
             // Company & Contact Card (consolidated)
             CompactSectionCard(
-                title = "📋 Company & Contact",
+                title = stringResource(Res.string.customer_section_company),
                 icon = null
             ) {
                 // Company Name
                 OutlinedTextField(
                     value = state.companyName,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateCompanyName(it)) },
-                    label = { Text("Company Name *") },
-                    placeholder = { Text("Company Or Firm Name") },
+                    label = { Text(stringResource(Res.string.customer_label_company_name)) },
+                    placeholder = { Text(stringResource(Res.string.customer_placeholder_company_name)) },
                     isError = state.companyNameError != null,
                     supportingText = state.companyNameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
@@ -163,8 +164,8 @@ fun CreateCustomerScreen(
                 OutlinedTextField(
                     value = state.personName,
                     onValueChange = { viewModel.sendIntent(Intent.UpdatePersonName(it)) },
-                    label = { Text("Contact Person *") },
-                    placeholder = { Text("Company Person Name") },
+                    label = { Text(stringResource(Res.string.customer_label_contact_person)) },
+                    placeholder = { Text(stringResource(Res.string.customer_placeholder_contact_person)) },
                     isError = state.personNameError != null,
                     supportingText = state.personNameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     singleLine = true,
@@ -180,8 +181,8 @@ fun CreateCustomerScreen(
                     FleetMobileField(
                         rawValue = state.primaryContact,
                         onRawValueChange = { viewModel.sendIntent(Intent.UpdatePrimaryContact(it)) },
-                        label = "Primary *",
-                        placeholder = "Mobile",
+                        label = stringResource(Res.string.customer_label_primary_contact),
+                        placeholder = stringResource(Res.string.customer_placeholder_primary_contact),
                         isError = state.primaryContactError != null,
                         errorMessage = state.primaryContactError,
                         modifier = Modifier.weight(1f)
@@ -189,8 +190,8 @@ fun CreateCustomerScreen(
                     FleetMobileField(
                         rawValue = state.secondaryContact,
                         onRawValueChange = { viewModel.sendIntent(Intent.UpdateSecondaryContact(it)) },
-                        label = "Secondary",
-                        placeholder = "Optional",
+                        label = stringResource(Res.string.customer_label_secondary_contact),
+                        placeholder = stringResource(Res.string.customer_placeholder_secondary_contact),
                         isError = state.secondaryContactError != null,
                         errorMessage = state.secondaryContactError,
                         modifier = Modifier.weight(1f)
@@ -201,8 +202,8 @@ fun CreateCustomerScreen(
                 FleetEmailField(
                     value = state.email,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateEmail(it)) },
-                    label = "Email",
-                    placeholder = "contact@company.com",
+                    label = stringResource(Res.string.customer_label_email),
+                    placeholder = stringResource(Res.string.customer_placeholder_email),
                     isError = state.emailError != null,
                     errorMessage = state.emailError
                 )
@@ -210,20 +211,20 @@ fun CreateCustomerScreen(
 
             // Business & Address Card (consolidated)
             CompactSectionCard(
-                title = "🏢 Business Details",
+                title = stringResource(Res.string.customer_section_business),
                 icon = null
             ) {
                 // GST Number with validation hint
                 OutlinedTextField(
                     value = state.gstNumber,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateGstNumber(it)) },
-                    label = { Text("GST Number") },
-                    placeholder = { Text("22AAAAA0000A1Z5") },
+                    label = { Text(stringResource(Res.string.customer_label_gst)) },
+                    placeholder = { Text(stringResource(Res.string.customer_placeholder_gst)) },
                     isError = state.gstNumberError != null,
                     supportingText = if (state.gstNumberError != null) {
                         { Text(state.gstNumberError!!, color = MaterialTheme.colorScheme.error) }
                     } else if (state.gstNumber.isNotBlank() && state.gstNumber.length < 15) {
-                        { Text("${state.gstNumber.length}/15 characters", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        { Text(stringResource(Res.string.customer_gst_chars, state.gstNumber.length), color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     } else null,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -234,8 +235,8 @@ fun CreateCustomerScreen(
                 OutlinedTextField(
                     value = state.companyAddress,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateCompanyAddress(it)) },
-                    label = { Text("Address") },
-                    placeholder = { Text("Full address with city, pincode") },
+                    label = { Text(stringResource(Res.string.customer_label_address)) },
+                    placeholder = { Text(stringResource(Res.string.customer_placeholder_address)) },
                     minLines = 2,
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth(),
@@ -246,8 +247,8 @@ fun CreateCustomerScreen(
                 OutlinedTextField(
                     value = state.notes,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateNotes(it)) },
-                    label = { Text("Notes") },
-                    placeholder = { Text("Additional information") },
+                    label = { Text(stringResource(Res.string.customer_label_notes)) },
+                    placeholder = { Text(stringResource(Res.string.customer_placeholder_notes)) },
                     minLines = 2,
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth(),

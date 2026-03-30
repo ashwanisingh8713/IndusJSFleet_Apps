@@ -23,6 +23,7 @@ import com.indusjs.uicomponents.theme.rememberThemeToggle
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * User Profile Screen composable.
@@ -38,12 +39,22 @@ fun ProfileScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    var pendingSnackbar by remember { mutableStateOf<com.indusjs.uicomponents.components.UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
+
     // Handle side effects
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is ProfileContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is ProfileContract.Effect.NavigateToChangePassword -> {
                     onNavigateToChangePassword()
@@ -62,12 +73,12 @@ fun ProfileScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("My Profile") },
+                title = { Text(stringResource(Res.string.profile_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -82,7 +93,7 @@ fun ProfileScreen(
                             painter = painterResource(
                                 if (isDarkTheme) Res.drawable.ic_sun else Res.drawable.ic_moon
                             ),
-                            contentDescription = if (isDarkTheme) "Light Mode" else "Dark Mode",
+                            contentDescription = if (isDarkTheme) stringResource(Res.string.cd_light_mode) else stringResource(Res.string.cd_dark_mode),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -90,13 +101,13 @@ fun ProfileScreen(
 
                     if (state.isEditing) {
                         TextButton(onClick = { viewModel.sendIntent(ProfileContract.Intent.CancelEditing) }) {
-                            Text("Cancel", color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(Res.string.cancel), color = MaterialTheme.colorScheme.primary)
                         }
                     } else {
                         IconButton(onClick = { viewModel.sendIntent(ProfileContract.Intent.RefreshProfile) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh",
+                                contentDescription = stringResource(Res.string.refresh),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -123,7 +134,7 @@ fun ProfileScreen(
                 }
                 state.error != null -> {
                     ErrorContent(
-                        error = state.error!!,
+                        error = state.error!!.resolve(),
                         onRetry = { viewModel.sendIntent(ProfileContract.Intent.LoadProfile) },
                         modifier = Modifier.align(Alignment.Center)
                     )
@@ -718,7 +729,7 @@ private fun EditProfileContent(
     email: String,
     mobile: String,
     isUpdating: Boolean,
-    error: String?,
+    error: com.indusjs.uicomponents.components.UiText?,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
@@ -873,7 +884,7 @@ private fun EditProfileContent(
                                 Text("⚠️", style = MaterialTheme.typography.bodyMedium)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = it,
+                                    text = it.resolve(),
                                     color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.bodySmall
                                 )

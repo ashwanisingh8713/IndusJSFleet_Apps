@@ -22,13 +22,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Data class representing a single onboarding page.
  */
 private data class OnboardingPage(
-    val title: String,
-    val description: String,
+    val titleRes: StringResource,
+    val descriptionRes: StringResource,
     val iconRes: Any // Res.drawable reference
 )
 
@@ -54,23 +56,23 @@ fun OnboardingScreen(
     val pages = remember {
         listOf(
             OnboardingPage(
-                title = "Fleet Management",
-                description = "Manage your entire fleet of vehicles from a single dashboard. Track vehicle status, maintenance schedules, and documents — all in one place.",
+                titleRes = Res.string.onboarding_page1_title,
+                descriptionRes = Res.string.onboarding_page1_description,
                 iconRes = Res.drawable.ic_vehicle
             ),
             OnboardingPage(
-                title = "Driver Management",
-                description = "Keep track of your drivers, their licenses, assignments, and costs. Ensure your fleet always has qualified drivers on the road.",
+                titleRes = Res.string.onboarding_page2_title,
+                descriptionRes = Res.string.onboarding_page2_description,
                 iconRes = Res.drawable.ic_driver
             ),
             OnboardingPage(
-                title = "Trip Planning",
-                description = "Plan and manage trips with route optimization, cargo tracking, and real-time status updates. From planning to delivery — stay in control.",
+                titleRes = Res.string.onboarding_page3_title,
+                descriptionRes = Res.string.onboarding_page3_description,
                 iconRes = Res.drawable.ic_trip
             ),
             OnboardingPage(
-                title = "Cost & Revenue Tracking",
-                description = "Track fuel, tolls, maintenance, and all operational costs. Get detailed profit & loss reports to maximize your fleet's profitability.",
+                titleRes = Res.string.onboarding_page4_title,
+                descriptionRes = Res.string.onboarding_page4_description,
                 iconRes = Res.drawable.ic_cost
             )
         )
@@ -149,7 +151,7 @@ private fun OnboardingTopBar(
         if (!isLastPage) {
             TextButton(onClick = onSkip) {
                 Text(
-                    text = "Skip",
+                    text = stringResource(Res.string.skip),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -182,7 +184,7 @@ private fun OnboardingPageContent(
             @Suppress("UNCHECKED_CAST")
             Icon(
                 painter = painterResource(page.iconRes as org.jetbrains.compose.resources.DrawableResource),
-                contentDescription = page.title,
+                contentDescription = stringResource(page.titleRes),
                 modifier = Modifier.size(80.dp),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -192,7 +194,7 @@ private fun OnboardingPageContent(
 
         // Title
         Text(
-            text = page.title,
+            text = stringResource(page.titleRes),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -203,7 +205,7 @@ private fun OnboardingPageContent(
 
         // Description
         Text(
-            text = page.description,
+            text = stringResource(page.descriptionRes),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -247,7 +249,7 @@ private fun OnboardingBottomSection(
             )
         ) {
             Text(
-                text = if (isLastPage) "Get Started" else "Next",
+                text = if (isLastPage) stringResource(Res.string.onboarding_get_started) else stringResource(Res.string.next),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )

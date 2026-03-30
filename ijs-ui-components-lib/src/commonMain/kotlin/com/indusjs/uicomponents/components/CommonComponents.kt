@@ -24,8 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.indusjs.error.handler.toErrorInfo
 import com.indusjs.fleet.core.error.FleetErrorContext
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Common UI Components for consistent look and feel across the app.
@@ -249,8 +251,8 @@ fun <T> ScreenContent(
             error != null -> ErrorContent(error = error, onRetry = onRetry)
             data == null || (data is Collection<*> && data.isEmpty()) -> {
                 emptyStateContent?.invoke() ?: EmptyContent(
-                    title = "No Data",
-                    message = "There's nothing to show here."
+                    title = stringResource(Res.string.no_data),
+                    message = stringResource(Res.string.no_data_message)
                 )
             }
             else -> content(data)

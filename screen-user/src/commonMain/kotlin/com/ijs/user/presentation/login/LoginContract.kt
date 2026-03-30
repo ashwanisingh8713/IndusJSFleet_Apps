@@ -3,6 +3,7 @@ package com.ijs.user.presentation.login
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 
 /**
  * MVI Contract for the Login screen.
@@ -17,7 +18,7 @@ object LoginContract {
         val password: String = "",
         val isLoading: Boolean = false,
         val isCheckingAuth: Boolean = true, // Initially checking auth status
-        val error: String? = null,
+        val error: UiText? = null,
         val isPasswordVisible: Boolean = false
     ) : UiState
 
@@ -38,7 +39,6 @@ object LoginContract {
      */
     sealed interface Effect : UiEffect {
         data object NavigateToDashboard : Effect
-        data class ShowError(val message: String) : Effect
+        data class ShowError(val message: UiText) : Effect
     }
 }
-

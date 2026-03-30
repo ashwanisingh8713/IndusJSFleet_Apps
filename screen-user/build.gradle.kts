@@ -28,6 +28,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":ijs-network-lib"))
+            implementation(project(":ijs-ui-components-lib"))
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)

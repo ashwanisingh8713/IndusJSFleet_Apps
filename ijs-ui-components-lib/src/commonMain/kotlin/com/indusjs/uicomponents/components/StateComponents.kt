@@ -17,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Data class representing a state option for display.
@@ -62,7 +64,7 @@ fun StateChangeDialog(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Current: $currentStateLabel",
+                    text = stringResource(Res.string.current_state_label, currentStateLabel),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -96,7 +98,7 @@ fun StateChangeDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss, enabled = !isLoading) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
@@ -149,13 +151,13 @@ private fun StateOptionItem(
                 )
                 if (option.isCurrentState) {
                     Text(
-                        text = "Current state",
+                        text = stringResource(Res.string.current_state),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
                 } else if (!option.isValidTransition) {
                     Text(
-                        text = "Not available from current state",
+                        text = stringResource(Res.string.not_available_from_current_state),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     )
@@ -215,7 +217,7 @@ fun StateChipWithAction(
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = "Change",
+                    text = stringResource(Res.string.change),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )

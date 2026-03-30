@@ -27,6 +27,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Styled input components for consistent UI across the app.
@@ -474,8 +476,8 @@ fun FleetDateField(
         supportingText = when {
             isError && errorMessage != null -> {{ Text(errorMessage, color = MaterialTheme.colorScheme.error) }}
             supportingText != null -> supportingText
-            rawValue.length == 8 -> {{ Text("✓ Date entered", color = MaterialTheme.colorScheme.primary) }}
-            rawValue.isNotEmpty() -> {{ Text("Enter complete date (8 digits)", color = MaterialTheme.colorScheme.onSurfaceVariant) }}
+            rawValue.length == 8 -> {{ Text(stringResource(Res.string.date_entered), color = MaterialTheme.colorScheme.primary) }}
+            rawValue.isNotEmpty() -> {{ Text(stringResource(Res.string.enter_complete_date), color = MaterialTheme.colorScheme.onSurfaceVariant) }}
             else -> null
         },
         enabled = enabled,
@@ -529,8 +531,8 @@ fun FleetTimeField(
         supportingText = when {
             isError && errorMessage != null -> {{ Text(errorMessage, color = MaterialTheme.colorScheme.error) }}
             supportingText != null -> supportingText
-            rawValue.length == 4 -> {{ Text("✓ Time entered", color = MaterialTheme.colorScheme.primary) }}
-            rawValue.isNotEmpty() -> {{ Text("Enter complete time (4 digits)", color = MaterialTheme.colorScheme.onSurfaceVariant) }}
+            rawValue.length == 4 -> {{ Text(stringResource(Res.string.time_entered), color = MaterialTheme.colorScheme.primary) }}
+            rawValue.isNotEmpty() -> {{ Text(stringResource(Res.string.enter_complete_time), color = MaterialTheme.colorScheme.onSurfaceVariant) }}
             else -> null
         },
         enabled = enabled,

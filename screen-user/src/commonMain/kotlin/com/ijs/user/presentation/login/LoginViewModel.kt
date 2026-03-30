@@ -2,12 +2,16 @@ package com.ijs.user.presentation.login
 
 import androidx.lifecycle.viewModelScope
 import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.error.handler.ErrorClassifier
+import com.indusjs.error.handler.ErrorType
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.user.UserRepository
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.user.presentation.login.LoginContract.Effect
 import com.ijs.user.presentation.login.LoginContract.Intent
 import com.ijs.user.presentation.login.LoginContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -52,7 +56,7 @@ class LoginViewModel(
                     // User is already logged in, navigate to dashboard
                     sendEffect(Effect.NavigateToDashboard)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // If check fails, just show login screen
                 // User will need to login manually
             } finally {
@@ -67,11 +71,11 @@ class LoginViewModel(
 
         // Validate inputs
         if (email.isEmpty()) {
-            updateState { copy(error = "Please enter your email or mobile") }
+            updateState { copy(error = UiText.StringRes(Res.string.login_error_email_required)) }
             return
         }
         if (password.isEmpty()) {
-            updateState { copy(error = "Please enter your password") }
+            updateState { copy(error = UiText.StringRes(Res.string.login_error_password_required)) }
             return
         }
 
@@ -85,15 +89,15 @@ class LoginViewModel(
                 )
 
                 result.fold(
-                    onSuccess = { authResult ->
+                    onSuccess = {
                         updateState { copy(isLoading = false) }
                         sendEffect(Effect.NavigateToDashboard)
                     },
-                    onFailure = { error ->
+                    onFailure = { throwable ->
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Login failed"
+                                error = classifyError(throwable)
                             )
                         }
                     }
@@ -102,11 +106,35 @@ class LoginViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Login failed"
+                        error = classifyError(e)
                     )
                 }
             }
         }
     }
-}
 
+    /**
+     * Maps a [Throwable] to a [UiText] using [ErrorClassifier].
+     */
+    private fun classifyError(throwable: Throwable): UiText {
+        val errorType = ErrorClassifier.classifyFromException(throwable)
+        return when (errorType) {
+            ErrorType.AUTHENTICATION -> UiText.StringRes(Res.string.login_error_invalid_credentials)
+            ErrorType.NETWORK_CONNECTION -> UiText.StringRes(Res.string.error_network)
+            ErrorType.NETWORK_TIMEOUT -> UiText.StringRes(Res.string.error_timeout)
+            ErrorType.SERVER_ERROR -> UiText.StringRes(Res.string.error_server)
+            ErrorType.AUTHORIZATION -> UiText.StringRes(Res.string.error_forbidden)
+            ErrorType.NOT_FOUND -> UiText.StringRes(Res.string.error_not_found)
+            ErrorType.RATE_LIMITED -> UiText.StringRes(Res.string.error_rate_limited)
+            ErrorType.VALIDATION -> UiText.StringRes(Res.string.login_error_invalid_credentials)
+            ErrorType.UNKNOWN -> {
+                val msg = throwable.message
+                if (!msg.isNullOrBlank()) {
+                    UiText.Raw(msg)
+                } else {
+                    UiText.StringRes(Res.string.error_generic)
+                }
+            }
+        }
+    }
+}

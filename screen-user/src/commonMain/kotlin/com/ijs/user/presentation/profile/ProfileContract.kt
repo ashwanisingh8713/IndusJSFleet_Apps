@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.fleet.domain.entity.user.UserProfile
+import com.indusjs.uicomponents.components.UiText
 
 /**
  * MVI Contract for the User Profile screen.
@@ -16,14 +17,14 @@ object ProfileContract {
     data class State(
         val isLoading: Boolean = false,
         val profile: UserProfile? = null,
-        val error: String? = null,
+        val error: UiText? = null,
         val isEditing: Boolean = false,
         val editFirstName: String = "",
         val editLastName: String = "",
         val editEmail: String = "",
         val editMobile: String = "",
         val isUpdating: Boolean = false,
-        val updateError: String? = null
+        val updateError: UiText? = null
     ) : UiState
 
     /**
@@ -48,10 +49,9 @@ object ProfileContract {
      * Side effects for the Profile screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data object NavigateToChangePassword : Effect
         data object NavigateToLogin : Effect
         data object ProfileUpdated : Effect
     }
 }
-

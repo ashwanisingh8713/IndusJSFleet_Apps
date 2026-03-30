@@ -3,6 +3,7 @@ package com.ijs.user.presentation.forgotpassword
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 
 /**
  * MVI Contract for the Forgot Password screen.
@@ -15,7 +16,7 @@ object ForgotPasswordContract {
     data class State(
         val identifier: String = "",
         val isLoading: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         val isSuccess: Boolean = false,
         // Reset Password fields
         val isResetMode: Boolean = false,
@@ -44,9 +45,8 @@ object ForgotPasswordContract {
      * Side effects for the Forgot Password screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data object NavigateToLogin : Effect
         data object ShowResetPassword : Effect
     }
 }
-

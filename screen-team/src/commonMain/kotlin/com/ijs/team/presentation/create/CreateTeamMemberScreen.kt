@@ -26,6 +26,7 @@ import com.ijs.team.domain.entity.TeamMemberRole
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Create Team Member Screen composable.
@@ -74,12 +75,12 @@ fun CreateTeamMemberScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Add Team Member") },
+                title = { Text(stringResource(Res.string.team_add)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
@@ -129,7 +130,7 @@ fun CreateTeamMemberScreen(
 
             // Personal Information Section
             SectionCard(
-                title = "Personal Information",
+                title = stringResource(Res.string.team_section_personal),
                 subtitle = "Enter the team member's details"
             ) {
                 Column(
@@ -144,8 +145,8 @@ fun CreateTeamMemberScreen(
                             value = state.firstName,
                             onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateFirstName(it)) },
                             modifier = Modifier.weight(1f),
-                            label = { Text("First Name") },
-                            placeholder = { Text("Enter first name") },
+                            label = { Text(stringResource(Res.string.team_label_first_name)) },
+                            placeholder = { Text(stringResource(Res.string.team_placeholder_first_name)) },
                             keyboardOptions = KeyboardOptions(
                                 imeAction = ImeAction.Next
                             ),
@@ -160,8 +161,8 @@ fun CreateTeamMemberScreen(
                             value = state.lastName,
                             onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateLastName(it)) },
                             modifier = Modifier.weight(1f),
-                            label = { Text("Last Name") },
-                            placeholder = { Text("Enter last name") },
+                            label = { Text(stringResource(Res.string.team_label_last_name)) },
+                            placeholder = { Text(stringResource(Res.string.team_placeholder_last_name)) },
                             keyboardOptions = KeyboardOptions(
                                 imeAction = ImeAction.Next
                             ),
@@ -178,8 +179,8 @@ fun CreateTeamMemberScreen(
                         value = state.email,
                         onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateEmail(it)) },
                         modifier = Modifier.fillMaxWidth(),
-                        label = "Email Address",
-                        placeholder = "Enter email address",
+                        label = stringResource(Res.string.team_label_email),
+                        placeholder = stringResource(Res.string.team_placeholder_email),
                         enabled = !state.isLoading
                     )
 
@@ -188,8 +189,8 @@ fun CreateTeamMemberScreen(
                         rawValue = state.mobile,
                         onRawValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateMobile(it)) },
                         modifier = Modifier.fillMaxWidth(),
-                        label = "Mobile Number",
-                        placeholder = "Enter mobile number",
+                        label = stringResource(Res.string.team_label_mobile),
+                        placeholder = stringResource(Res.string.team_placeholder_mobile),
                         enabled = !state.isLoading
                     )
                 }
@@ -197,8 +198,8 @@ fun CreateTeamMemberScreen(
 
             // Password Section
             SectionCard(
-                title = "Set Password",
-                subtitle = "Create a secure password for the team member"
+                title = stringResource(Res.string.team_section_password),
+                subtitle = stringResource(Res.string.team_section_password_hint)
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -208,8 +209,8 @@ fun CreateTeamMemberScreen(
                         value = state.password,
                         onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdatePassword(it)) },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Password") },
-                        placeholder = { Text("Enter password") },
+                        label = { Text(stringResource(Res.string.team_label_password)) },
+                        placeholder = { Text(stringResource(Res.string.team_placeholder_password)) },
                         leadingIcon = { Text("🔒") },
                         trailingIcon = {
                             IconButton(
@@ -233,7 +234,7 @@ fun CreateTeamMemberScreen(
                         singleLine = true,
                         enabled = !state.isLoading,
                         supportingText = {
-                            Text("Minimum 6 characters", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(Res.string.team_password_min_chars), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     )
 
@@ -242,8 +243,8 @@ fun CreateTeamMemberScreen(
                         value = state.confirmPassword,
                         onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateConfirmPassword(it)) },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Confirm Password") },
-                        placeholder = { Text("Enter password again") },
+                        label = { Text(stringResource(Res.string.team_label_confirm_password)) },
+                        placeholder = { Text(stringResource(Res.string.team_placeholder_confirm_password)) },
                         leadingIcon = { Text("🔒") },
                         trailingIcon = {
                             IconButton(

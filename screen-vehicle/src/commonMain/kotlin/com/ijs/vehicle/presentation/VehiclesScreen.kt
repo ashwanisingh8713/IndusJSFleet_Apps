@@ -27,6 +27,7 @@ import com.ijs.vehicle.domain.entity.VehicleType
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Vehicles List Screen composable.
@@ -58,12 +59,12 @@ fun VehiclesScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Vehicles") },
+                title = { Text(stringResource(Res.string.vehicles_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -73,7 +74,7 @@ fun VehiclesScreen(
                     IconButton(onClick = { viewModel.sendIntent(VehiclesContract.Intent.RefreshVehicles) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh",
+                            contentDescription = stringResource(Res.string.refresh),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -93,7 +94,7 @@ fun VehiclesScreen(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = "Add Vehicle",
+                        contentDescription = stringResource(Res.string.vehicles_add),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -110,7 +111,7 @@ fun VehiclesScreen(
             FleetSearchField(
                 query = state.searchQuery,
                 onQueryChange = { viewModel.sendIntent(VehiclesContract.Intent.SearchVehicles(it)) },
-                placeholder = "Search vehicles...",
+                placeholder = stringResource(Res.string.vehicles_search_placeholder),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
@@ -124,7 +125,7 @@ fun VehiclesScreen(
             when {
                 state.isLoading -> {
                     // Using reusable LoadingContent component
-                    LoadingContent(message = "Loading vehicles...")
+                    LoadingContent(message = stringResource(Res.string.loading))
                 }
                 state.error != null -> {
                     // Using reusable ErrorContent component
@@ -140,15 +141,15 @@ fun VehiclesScreen(
                     if (isFiltering) {
                         EmptyContent(
                             iconRes = Res.drawable.ic_search,
-                            title = "No vehicles match your filters",
-                            message = "Try adjusting your search or filters"
+                            title = stringResource(Res.string.no_data_for_filter),
+                            message = stringResource(Res.string.adjust_search_filters)
                         )
                     } else {
                         EmptyContent(
                             iconRes = Res.drawable.ic_vehicle,
-                            title = "No vehicles found",
-                            message = "Add your first vehicle to get started",
-                            actionLabel = "Add Vehicle",
+                            title = stringResource(Res.string.vehicles_empty_title),
+                            message = stringResource(Res.string.vehicles_empty_message),
+                            actionLabel = stringResource(Res.string.vehicles_add),
                             onAction = { viewModel.sendIntent(VehiclesContract.Intent.AddVehicle) }
                         )
                     }

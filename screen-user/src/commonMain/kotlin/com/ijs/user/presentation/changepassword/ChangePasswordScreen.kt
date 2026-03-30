@@ -17,7 +17,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Change Password Screen composable.
@@ -32,12 +34,22 @@ fun ChangePasswordScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
 
+    var pendingSnackbar by remember { mutableStateOf<com.indusjs.uicomponents.components.UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
+
     // Handle side effects
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is ChangePasswordContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is ChangePasswordContract.Effect.PasswordChanged -> {
                     // Password changed successfully
@@ -53,7 +65,7 @@ fun ChangePasswordScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Change Password") },
+                title = { Text(stringResource(Res.string.change_password_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Text("←", style = MaterialTheme.typography.titleLarge)
@@ -82,7 +94,7 @@ fun ChangePasswordScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Update Your Password",
+                    text = stringResource(Res.string.change_password_heading),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -90,7 +102,7 @@ fun ChangePasswordScreen(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Enter your current password and choose a new secure password",
+                    text = stringResource(Res.string.change_password_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -104,8 +116,8 @@ fun ChangePasswordScreen(
                 value = state.currentPassword,
                 onValueChange = { viewModel.sendIntent(ChangePasswordContract.Intent.UpdateCurrentPassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Current Password") },
-                placeholder = { Text("Enter your current password") },
+                label = { Text(stringResource(Res.string.change_password_current_label)) },
+                placeholder = { Text(stringResource(Res.string.change_password_current_placeholder)) },
                 leadingIcon = { Text("🔒") },
                 trailingIcon = {
                     IconButton(
@@ -135,8 +147,8 @@ fun ChangePasswordScreen(
                 value = state.newPassword,
                 onValueChange = { viewModel.sendIntent(ChangePasswordContract.Intent.UpdateNewPassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("New Password") },
-                placeholder = { Text("Enter your new password") },
+                label = { Text(stringResource(Res.string.change_password_new_label)) },
+                placeholder = { Text(stringResource(Res.string.change_password_new_placeholder)) },
                 leadingIcon = { Text("🔑") },
                 trailingIcon = {
                     IconButton(
@@ -160,7 +172,7 @@ fun ChangePasswordScreen(
                 singleLine = true,
                 enabled = !state.isLoading,
                 supportingText = {
-                    Text("Password must be at least 6 characters")
+                    Text(stringResource(Res.string.change_password_min_chars))
                 }
             )
 
@@ -169,8 +181,8 @@ fun ChangePasswordScreen(
                 value = state.confirmPassword,
                 onValueChange = { viewModel.sendIntent(ChangePasswordContract.Intent.UpdateConfirmPassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Confirm New Password") },
-                placeholder = { Text("Re-enter your new password") },
+                label = { Text(stringResource(Res.string.change_password_confirm_label)) },
+                placeholder = { Text(stringResource(Res.string.change_password_confirm_placeholder)) },
                 leadingIcon = { Text("🔑") },
                 trailingIcon = {
                     IconButton(
@@ -199,7 +211,7 @@ fun ChangePasswordScreen(
                 isError = state.confirmPassword.isNotEmpty() && state.confirmPassword != state.newPassword,
                 supportingText = {
                     if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.newPassword) {
-                        Text("Passwords do not match", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(Res.string.change_password_mismatch), color = MaterialTheme.colorScheme.error)
                     }
                 }
             )
@@ -207,7 +219,7 @@ fun ChangePasswordScreen(
             // Error Message
             state.error?.let { error ->
                 Text(
-                    text = error,
+                    text = error.resolve(),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
@@ -232,7 +244,7 @@ fun ChangePasswordScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Change Password")
+                    Text(stringResource(Res.string.change_password_button))
                 }
             }
         }
