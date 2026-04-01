@@ -49,9 +49,9 @@ internal fun calculateFleetHealth(vehicleStatus: VehicleStatusSummary): Int {
 @Composable
 internal fun getFleetHealthColor(percentage: Int): Color {
     return when {
-        percentage >= 80 -> Color(0xFF4CAF50) // Green
-        percentage >= 60 -> Color(0xFFFFA726) // Orange
-        else -> Color(0xFFEF5350) // Red
+        percentage >= 80 -> com.indusjs.uicomponents.theme.FleetStatusColors.HealthGood
+        percentage >= 60 -> com.indusjs.uicomponents.theme.FleetStatusColors.HealthWarning
+        else -> com.indusjs.uicomponents.theme.FleetStatusColors.HealthCritical
     }
 }
 
@@ -224,7 +224,7 @@ private fun FleetStatusRatioBar(vehicleStatus: VehicleStatusSummary) {
                     modifier = Modifier
                         .weight(onRouteFraction.coerceAtLeast(0.01f))
                         .fillMaxHeight()
-                        .background(Color(0xFF4CAF50))
+                        .background(com.indusjs.uicomponents.theme.FleetStatusColors.FleetOnRoute)
                 )
             }
             if (plannedFraction > 0) {
@@ -232,7 +232,7 @@ private fun FleetStatusRatioBar(vehicleStatus: VehicleStatusSummary) {
                     modifier = Modifier
                         .weight(plannedFraction.coerceAtLeast(0.01f))
                         .fillMaxHeight()
-                        .background(Color(0xFF2196F3))
+                        .background(com.indusjs.uicomponents.theme.FleetStatusColors.FleetPlanned)
                 )
             }
             if (availableFraction > 0) {
@@ -240,7 +240,7 @@ private fun FleetStatusRatioBar(vehicleStatus: VehicleStatusSummary) {
                     modifier = Modifier
                         .weight(availableFraction.coerceAtLeast(0.01f))
                         .fillMaxHeight()
-                        .background(Color(0xFF009688))
+                        .background(com.indusjs.uicomponents.theme.FleetStatusColors.FleetAvailable)
                 )
             }
             if (maintenanceFraction > 0) {
@@ -248,7 +248,7 @@ private fun FleetStatusRatioBar(vehicleStatus: VehicleStatusSummary) {
                     modifier = Modifier
                         .weight(maintenanceFraction.coerceAtLeast(0.01f))
                         .fillMaxHeight()
-                        .background(Color(0xFFFF9800))
+                        .background(com.indusjs.uicomponents.theme.FleetStatusColors.FleetMaintenance)
                 )
             }
             if (inactiveFraction > 0) {
@@ -256,7 +256,7 @@ private fun FleetStatusRatioBar(vehicleStatus: VehicleStatusSummary) {
                     modifier = Modifier
                         .weight(inactiveFraction.coerceAtLeast(0.01f))
                         .fillMaxHeight()
-                        .background(Color(0xFF9E9E9E))
+                        .background(com.indusjs.uicomponents.theme.FleetStatusColors.FleetInactive)
                 )
             }
         }
@@ -267,19 +267,19 @@ private fun FleetStatusRatioBar(vehicleStatus: VehicleStatusSummary) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (onRouteCount > 0) {
-                RatioLegendItem(color = Color(0xFF4CAF50), label = stringResource(Res.string.dashboard_label_route), count = onRouteCount)
+                RatioLegendItem(color = com.indusjs.uicomponents.theme.FleetStatusColors.FleetOnRoute, label = stringResource(Res.string.dashboard_label_route), count = onRouteCount)
             }
             if (plannedCount > 0) {
-                RatioLegendItem(color = Color(0xFF2196F3), label = stringResource(Res.string.dashboard_label_planned), count = plannedCount)
+                RatioLegendItem(color = com.indusjs.uicomponents.theme.FleetStatusColors.FleetPlanned, label = stringResource(Res.string.dashboard_label_planned), count = plannedCount)
             }
             if (availableCount > 0) {
-                RatioLegendItem(color = Color(0xFF009688), label = stringResource(Res.string.dashboard_label_available), count = availableCount)
+                RatioLegendItem(color = com.indusjs.uicomponents.theme.FleetStatusColors.FleetAvailable, label = stringResource(Res.string.dashboard_label_available), count = availableCount)
             }
             if (maintenanceCount > 0) {
-                RatioLegendItem(color = Color(0xFFFF9800), label = stringResource(Res.string.dashboard_label_maintenance), count = maintenanceCount)
+                RatioLegendItem(color = com.indusjs.uicomponents.theme.FleetStatusColors.FleetMaintenance, label = stringResource(Res.string.dashboard_label_maintenance), count = maintenanceCount)
             }
             if (inactiveCount > 0) {
-                RatioLegendItem(color = Color(0xFF9E9E9E), label = stringResource(Res.string.dashboard_label_inactive), count = inactiveCount)
+                RatioLegendItem(color = com.indusjs.uicomponents.theme.FleetStatusColors.FleetInactive, label = stringResource(Res.string.dashboard_label_inactive), count = inactiveCount)
             }
         }
     }

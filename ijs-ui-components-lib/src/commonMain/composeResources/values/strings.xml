@@ -1016,6 +1016,70 @@
     <string name="reports_no_data">No data to display</string>
     <string name="reports_disclaimer">Document costs may vary from actual. Please verify.</string>
 
+    <!-- Vehicle P&L - Fleet Summary -->
+    <string name="reports_fleet_summary">Fleet Summary</string>
+    <string name="reports_net_profit_badge">NET PROFIT</string>
+    <string name="reports_net_loss_badge">NET LOSS</string>
+    <string name="reports_total">Total</string>
+    <string name="reports_profitable">Profitable</string>
+    <string name="reports_loss_making">Loss Making</string>
+    <string name="reports_total_revenue">Total Revenue</string>
+    <string name="reports_total_expenses">Total Expenses</string>
+    <string name="reports_net_profit_label">Net Profit</string>
+    <string name="reports_net_loss_label">Net Loss</string>
+    <string name="reports_vehicle_count">%1$d vehicle(s)</string>
+    <string name="reports_vehicle_id_fallback">Vehicle #%1$s</string>
+    <string name="reports_trips_count">%1$d trips</string>
+    <string name="reports_margin">Margin</string>
+
+    <!-- Vehicle P&L - KPI / Summary -->
+    <string name="reports_fleet_financial_summary">Fleet Financial Summary</string>
+    <string name="reports_vehicles_count_label">%1$d Vehicles</string>
+    <string name="reports_avg_per_vehicle">Avg/Vehicle</string>
+    <string name="reports_top_performer">Top Performer</string>
+    <string name="reports_needs_attention">Needs Attention</string>
+    <string name="reports_pl_chart_top_10">P&amp;L Chart (Top 10)</string>
+
+    <!-- Vehicle P&L - Result -->
+    <string name="reports_new_report">New Report</string>
+    <string name="reports_margin_value">Margin: %1$s</string>
+    <string name="reports_cost_breakdown">Cost Breakdown</string>
+    <string name="reports_hide">Hide ▲</string>
+    <string name="reports_show">Show ▼</string>
+
+    <!-- Payment - List/Group/Filter -->
+    <string name="payment_summary">Payment Summary</string>
+    <string name="payment_count">%1$d payments</string>
+    <string name="payment_grouped_by_trip">Grouped by Trip: %1$d trips</string>
+    <string name="payment_trip_id">Trip #%1$s</string>
+    <string name="payment_no_customer">No Customer</string>
+    <string name="payment_paid_date">Paid: %1$s</string>
+    <string name="payment_depart">Depart: %1$s</string>
+    <string name="payment_arrive">Arrive: %1$s</string>
+    <string name="payment_unknown">Unknown</string>
+    <string name="payment_no_results">No Results Found</string>
+    <string name="payment_no_results_message">No payments match your current filters.\nTry adjusting your filters or clear them to see all payments.</string>
+    <string name="payment_clear_filters">Clear Filters</string>
+    <string name="payment_unable_to_load">Unable to Load Payments</string>
+    <string name="payment_unable_to_load_message">We couldn\'t load the payments. Please check your connection and try again.</string>
+    <string name="payment_add_new">Add New Payment</string>
+    <string name="payment_count_label">%1$d payment%2$s</string>
+    <string name="payment_filter_title">Filter Payments</string>
+    <string name="payment_filter_type">Payment Type</string>
+    <string name="payment_filter_mode">Payment Mode</string>
+    <string name="payment_filter_status">Status</string>
+    <string name="payment_filter_date_range">Date Range</string>
+    <string name="payment_filter_quick_select">Quick Select</string>
+    <string name="payment_filter_this_month">This Month</string>
+    <string name="payment_filter_last_month">Last Month</string>
+    <string name="payment_filter_last_7_days">Last 7 Days</string>
+    <string name="payment_filter_last_30_days">Last 30 Days</string>
+    <string name="payment_filter_apply">Apply Filters</string>
+    <string name="payment_filter_received">Received</string>
+    <string name="payment_filter_pending">Pending</string>
+    <string name="payment_this_month">This Month</string>
+    <string name="payment_filters_label">Filters:</string>
+
     <!-- ==================== Discard Changes Dialog ==================== -->
     <string name="discard_changes_title">Discard Changes?</string>
     <string name="discard_changes_message">You have unsaved changes. Are you sure you want to leave? Your changes will be lost.</string>
@@ -1049,4 +1113,145 @@
     <string name="no_data_for_filter">No data matches your filters</string>
     <string name="adjust_search_filters">Try adjusting your search or filters</string>
     <string name="all_filter">All</string>
+
+    <!-- ==================== Vehicle Detail - Costs Tab ==================== -->
+    <string name="vehicle_costs_filters">Filters</string>
+    <string name="vehicle_costs_date_range">Date Range</string>
+    <string name="vehicle_costs_cost_types">Cost Types</string>
+    <string name="vehicle_costs_select_types">Select one or more</string>
+    <string name="vehicle_costs_trip_costs">Trip Costs</string>
+    <string name="vehicle_costs_maintenance_costs">Maintenance Costs</string>
+    <string name="vehicle_costs_apply_filters">Apply Filters</string>
+    <string name="vehicle_costs_add_cost">+ Add Cost</string>
+    <string name="vehicle_costs_no_maintenance">No maintenance costs</string>
+    <string name="vehicle_costs_maint_hint">Vehicle maintenance expenses appear here</string>
+    <string name="vehicle_costs_add_maint">+ Add Maintenance Cost</string>
+    <string name="vehicle_costs_load_more">Load More</string>
+    <string name="vehicle_costs_delete_title">Delete Cost</string>
+    <string name="vehicle_costs_delete_message">Delete this cost entry?</string>
+    <string name="vehicle_costs_entries">%1$d entries</string>
+    <string name="vehicle_costs_trip_label">Trip</string>
+    <string name="vehicle_costs_maint_label">Maint</string>
+
+    <!-- ==================== Vehicle Detail - Documents Tab ==================== -->
+    <string name="vehicle_docs_attention">Attention Required</string>
+    <string name="vehicle_docs_all">All Documents</string>
+    <string name="vehicle_docs_no_docs">No documents found</string>
+    <string name="vehicle_docs_upload_title">Upload %1$s</string>
+    <string name="vehicle_docs_upload_message">You are about to upload a document for:</string>
+    <string name="vehicle_docs_required">This is a required document.</string>
+    <string name="vehicle_docs_ensure_readable">Please ensure the document is clear and readable.</string>
+    <string name="vehicle_docs_select_file">Select File</string>
+    <string name="vehicle_docs_expired">Expired</string>
+    <string name="vehicle_docs_expires_in">Expires in %1$d days</string>
+    <string name="vehicle_docs_valid_till">Valid till %1$s</string>
+    <string name="vehicle_docs_uploaded">Uploaded</string>
+    <string name="vehicle_docs_not_uploaded">Not uploaded</string>
+    <string name="vehicle_docs_upload">Upload</string>
+    <string name="vehicle_docs_preview">Preview</string>
+    <string name="vehicle_docs_download">Download</string>
+    <string name="vehicle_docs_replace">Replace</string>
+    <string name="vehicle_docs_doc_number">Doc #: %1$s</string>
+    <string name="vehicle_docs_uploaded_at">Uploaded: %1$s</string>
+
+    <!-- ==================== Vehicle Detail - Edit Tab ==================== -->
+    <string name="vehicle_edit_info">Vehicle Information</string>
+    <string name="vehicle_edit_specs">Specifications</string>
+    <string name="vehicle_edit_fuel_type">Fuel Type</string>
+    <string name="vehicle_edit_color">Color</string>
+    <string name="vehicle_edit_color_placeholder">e.g., Silver</string>
+    <string name="vehicle_edit_capacity">Capacity</string>
+    <string name="vehicle_edit_capacity_placeholder">e.g., 7</string>
+    <string name="vehicle_edit_assigned_driver">Assigned Driver</string>
+    <string name="vehicle_edit_loading_drivers">Loading drivers…</string>
+    <string name="vehicle_edit_no_driver">No driver (Unassign)</string>
+    <string name="vehicle_edit_vehicle_type">Vehicle Type</string>
+    <string name="vehicle_edit_mileage">Mileage (km)</string>
+    <string name="vehicle_edit_mileage_placeholder">e.g., 50000</string>
+
+    <!-- ==================== Vehicle Detail - Route Tab ==================== -->
+    <string name="vehicle_route_active_trip">Active Trip</string>
+    <string name="vehicle_route_trip_id">Trip #%1$s</string>
+    <string name="vehicle_route_origin">Origin</string>
+    <string name="vehicle_route_destination">Destination</string>
+    <string name="vehicle_route_progress">Progress</string>
+    <string name="vehicle_route_eta">ETA</string>
+    <string name="vehicle_route_na">N/A</string>
+    <string name="vehicle_route_distance_left">Distance Left</string>
+    <string name="vehicle_route_km">%1$s km</string>
+    <string name="vehicle_route_stops">Route Stops</string>
+    <string name="vehicle_route_no_trip">No Active Trip</string>
+    <string name="vehicle_route_no_trip_message">This vehicle is not currently on a trip</string>
+    <string name="vehicle_route_done">Done</string>
+    <string name="vehicle_route_now">Now</string>
+    <string name="vehicle_route_pending">Pending</string>
+
+    <!-- ==================== Vehicle Detail - Trips Tab ==================== -->
+    <string name="vehicle_trips_no_trips">No trips found</string>
+    <string name="vehicle_trips_no_trips_message">This vehicle hasn\'t completed any trips yet</string>
+    <string name="vehicle_trips_history">Trips History</string>
+    <string name="vehicle_trips_trip_id">Trip #%1$s</string>
+    <string name="vehicle_trips_km">%1$d km</string>
+
+    <!-- ==================== Vehicle Detail - Overview ==================== -->
+    <string name="vehicle_overview_delete">Delete Vehicle</string>
+    <string name="vehicle_overview_location_lat">Lat: %1$s</string>
+    <string name="vehicle_overview_location_lng">Lng: %1$s</string>
+    <string name="vehicle_overview_updated_recently">Last updated: Recently</string>
+    <string name="vehicle_overview_view_map">View Map</string>
+    <string name="vehicle_overview_location_unavailable">Location not available</string>
+    <string name="vehicle_overview_view">View</string>
+
+    <!-- ==================== Driver Detail - Costs ==================== -->
+    <string name="driver_costs_loading">Loading costs…</string>
+    <string name="driver_costs_error">An error occurred</string>
+    <string name="driver_costs_no_costs">No costs recorded</string>
+    <string name="driver_costs_hint">Driver cost entries will appear here</string>
+    <string name="driver_costs_add">Add Driver Cost</string>
+    <string name="driver_costs_breakdown">Cost Breakdown</string>
+    <string name="driver_costs_collapse_all">Collapse All</string>
+    <string name="driver_costs_expand_all">Expand All</string>
+    <string name="driver_costs_summary">Cost Summary</string>
+    <string name="driver_costs_export">Export</string>
+    <string name="driver_costs_earnings">Earnings</string>
+    <string name="driver_costs_deductions">Deductions</string>
+    <string name="driver_costs_net">Net</string>
+    <string name="driver_costs_net_amount">Net Amount</string>
+    <string name="driver_costs_filter_title">Filter Costs</string>
+    <string name="driver_costs_month_label">Month (YYYY-MM)</string>
+    <string name="driver_costs_month_placeholder">e.g., 2026-01</string>
+    <string name="driver_costs_or_separator">— OR —</string>
+    <string name="driver_costs_earning">Earning</string>
+
+    <!-- ==================== Driver Detail - Edit ==================== -->
+    <string name="driver_edit_basic_info">Basic Information</string>
+    <string name="driver_edit_license_details">License Details</string>
+    <string name="driver_edit_license_number">License Number</string>
+    <string name="driver_edit_license_type">License Type</string>
+    <string name="driver_edit_personal_details">Personal Details</string>
+    <string name="driver_edit_blood_group">Blood Group</string>
+    <string name="driver_edit_address">Address</string>
+
+    <!-- ==================== Driver Detail - Overview ==================== -->
+    <string name="driver_overview_delete">Delete Driver</string>
+    <string name="driver_overview_rating">Rating</string>
+    <string name="driver_overview_trips">Trips</string>
+    <string name="driver_overview_license">License</string>
+    <string name="driver_overview_contact_info">Contact Information</string>
+    <string name="driver_overview_email">Email</string>
+    <string name="driver_overview_emergency_contact">Emergency Contact</string>
+    <string name="driver_overview_address">Address</string>
+    <string name="driver_overview_license_details">License Details</string>
+    <string name="driver_overview_license_number">License Number</string>
+    <string name="driver_overview_license_type">License Type</string>
+    <string name="driver_overview_expiry_date">Expiry Date</string>
+    <string name="driver_overview_personal_details">Personal Details</string>
+    <string name="driver_overview_dob">Date of Birth</string>
+    <string name="driver_overview_blood_group">Blood Group</string>
+    <string name="driver_overview_joining_date">Joining Date</string>
+    <string name="driver_overview_additional_info">Additional Info</string>
+    <string name="driver_overview_driver_id">Driver ID</string>
+    <string name="driver_overview_added_by">Added by</string>
+    <string name="driver_overview_created_on">Created on</string>
+    <string name="driver_overview_last_updated">Last Updated</string>
 </resources>

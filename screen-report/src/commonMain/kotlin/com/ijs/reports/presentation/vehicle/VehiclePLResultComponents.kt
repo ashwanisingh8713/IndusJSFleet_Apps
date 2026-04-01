@@ -20,6 +20,9 @@ import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.reports.domain.entity.CostBreakdownItem
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.RecentReport
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ResultHeaderCard(
@@ -46,7 +49,12 @@ internal fun ResultHeaderCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("🚛", style = MaterialTheme.typography.headlineSmall)
+                Icon(
+                    painter = painterResource(Res.drawable.ic_truck),
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
                 Column {
                     Text(
                         text = vehicleNumber,
@@ -63,7 +71,7 @@ internal fun ResultHeaderCard(
 
             TextButton(onClick = onNewReport) {
                 Text(
-                    text = "New Report",
+                    text = stringResource(Res.string.reports_new_report),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -85,7 +93,6 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
     val expenseColor = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Main KPI - Net Profit/Loss
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -105,7 +112,7 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = if (isProfit) "Net Profit" else "Net Loss",
+                        text = if (isProfit) stringResource(Res.string.reports_net_profit_label) else stringResource(Res.string.reports_net_loss_label),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -115,7 +122,7 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                                 else lossColor.copy(alpha = 0.2f)
                     ) {
                         Text(
-                            text = "${result.totalTrips} trips",
+                            text = stringResource(Res.string.reports_trips_count, result.totalTrips),
                             style = MaterialTheme.typography.labelSmall,
                             color = if (isProfit) profitColor else lossColor,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
@@ -131,14 +138,13 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Margin: ${formatPercentage(result.profitMargin)}",
+                    text = stringResource(Res.string.reports_margin_value, formatPercentage(result.profitMargin)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        // Revenue & Expenses Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -154,10 +160,15 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("📈", style = MaterialTheme.typography.titleMedium)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_trending_up),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = profitColor
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Revenue",
+                        text = stringResource(Res.string.reports_revenue),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -181,10 +192,15 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("💸", style = MaterialTheme.typography.titleMedium)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_trending_down),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = expenseColor
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Expenses",
+                        text = stringResource(Res.string.reports_expenses),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -225,12 +241,12 @@ internal fun PLCostBreakdownCard(costs: List<CostBreakdownItem>) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Cost Breakdown",
+                    text = stringResource(Res.string.reports_cost_breakdown),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = if (expanded) "Hide ▲" else "Show ▼",
+                    text = if (expanded) stringResource(Res.string.reports_hide) else stringResource(Res.string.reports_show),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -274,7 +290,7 @@ internal fun PLCostBreakdownCard(costs: List<CostBreakdownItem>) {
 }
 
 // ============================================================================
-// Sticky Vehicle Header - Always visible at top with Change button (LEGACY - REMOVE)
+// Recent Report Card
 // ============================================================================
 
 
@@ -331,5 +347,4 @@ internal fun RecentReportCard(
 // ============================================================================
 // Multi Vehicle Summary Card
 // ============================================================================
-
 

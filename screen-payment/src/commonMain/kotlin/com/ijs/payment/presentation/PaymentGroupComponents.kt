@@ -24,6 +24,7 @@ import com.ijs.payment.domain.entity.PaymentType
 import com.ijs.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun EmptyFilteredContent(
@@ -46,7 +47,7 @@ internal fun EmptyFilteredContent(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "No Results Found",
+                text = stringResource(Res.string.payment_no_results),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -54,14 +55,14 @@ internal fun EmptyFilteredContent(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "No payments match your current filters.\nTry adjusting your filters or clear them to see all payments.",
+                text = stringResource(Res.string.payment_no_results_message),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(24.dp))
             OutlinedButton(onClick = onClearFilters) {
-                Text("Clear Filters")
+                Text(stringResource(Res.string.payment_clear_filters))
             }
         }
     }
@@ -86,13 +87,15 @@ internal fun PaymentsErrorContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(horizontal = 32.dp)
         ) {
-            Text(
-                text = "💳",
-                style = MaterialTheme.typography.displayMedium
+            Icon(
+                painter = painterResource(Res.drawable.ic_cost),
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Unable to Load Payments",
+                text = stringResource(Res.string.payment_unable_to_load),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -100,7 +103,7 @@ internal fun PaymentsErrorContent(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "We couldn't load the payments. Please check your connection and try again.",
+                text = stringResource(Res.string.payment_unable_to_load_message),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -108,11 +111,11 @@ internal fun PaymentsErrorContent(
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onRetry) {
-                Text("Retry")
+                Text(stringResource(Res.string.retry))
             }
             Spacer(modifier = Modifier.height(8.dp))
             TextButton(onClick = onAddPayment) {
-                Text("Add New Payment")
+                Text(stringResource(Res.string.payment_add_new))
             }
         }
     }
@@ -174,7 +177,7 @@ internal fun CollapsibleTripGroupCard(
                                 color = MaterialTheme.colorScheme.primaryContainer
                             ) {
                                 Text(
-                                    text = "Trip #${group.tripId}",
+                                    text = stringResource(Res.string.payment_trip_id, group.tripId),
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
@@ -204,7 +207,7 @@ internal fun CollapsibleTripGroupCard(
                                 color = MaterialTheme.colorScheme.tertiaryContainer
                             ) {
                                 Text(
-                                    text = "${group.paymentCount} payment${if (group.paymentCount > 1) "s" else ""}",
+                                    text = stringResource(Res.string.payment_count_label, group.paymentCount, if (group.paymentCount > 1) "s" else ""),
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -216,8 +219,9 @@ internal fun CollapsibleTripGroupCard(
 
                         // Route
                         group.tripInfo?.let { tripInfo ->
+                            val unknownLabel = stringResource(Res.string.payment_unknown)
                             Text(
-                                text = "${tripInfo.startLocation ?: "Unknown"} → ${tripInfo.endLocation ?: "Unknown"}",
+                                text = "${tripInfo.startLocation ?: unknownLabel} → ${tripInfo.endLocation ?: unknownLabel}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,

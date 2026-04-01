@@ -21,6 +21,7 @@ import com.ijs.payment.domain.entity.PaymentType
 import com.ijs.payment.domain.entity.TripPaymentFilter
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +58,7 @@ internal fun PaymentFilterBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Filter Payments",
+                    text = stringResource(Res.string.payment_filter_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -66,7 +67,7 @@ internal fun PaymentFilterBottomSheet(
                     endDate = ""
                     onReset()
                 }) {
-                    Text("Reset All")
+                    Text(stringResource(Res.string.action_reset_all))
                 }
             }
 
@@ -74,7 +75,7 @@ internal fun PaymentFilterBottomSheet(
 
             // Payment Type Section
             Text(
-                text = "Payment Type",
+                text = stringResource(Res.string.payment_filter_type),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -86,7 +87,7 @@ internal fun PaymentFilterBottomSheet(
                 FilterChip(
                     selected = filter.paymentType == null,
                     onClick = { onUpdateType(null) },
-                    label = { Text("All", style = MaterialTheme.typography.bodySmall) }
+                    label = { Text(stringResource(Res.string.action_select_all), style = MaterialTheme.typography.bodySmall) }
                 )
                 PaymentType.entries.forEach { type ->
                     FilterChip(
@@ -103,7 +104,7 @@ internal fun PaymentFilterBottomSheet(
 
             // Payment Mode Section
             Text(
-                text = "Payment Mode",
+                text = stringResource(Res.string.payment_filter_mode),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -115,7 +116,7 @@ internal fun PaymentFilterBottomSheet(
                 FilterChip(
                     selected = filter.paymentMode == null,
                     onClick = { onUpdateMode(null) },
-                    label = { Text("All", style = MaterialTheme.typography.bodySmall) }
+                    label = { Text(stringResource(Res.string.action_select_all), style = MaterialTheme.typography.bodySmall) }
                 )
                 PaymentMode.entries.forEach { mode ->
                     FilterChip(
@@ -132,7 +133,7 @@ internal fun PaymentFilterBottomSheet(
 
             // Payment Status Section
             Text(
-                text = "Status",
+                text = stringResource(Res.string.payment_filter_status),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -144,7 +145,7 @@ internal fun PaymentFilterBottomSheet(
                 FilterChip(
                     selected = filter.paymentStatus == null,
                     onClick = { onUpdateStatus(null) },
-                    label = { Text("All", style = MaterialTheme.typography.bodySmall) }
+                    label = { Text(stringResource(Res.string.action_select_all), style = MaterialTheme.typography.bodySmall) }
                 )
                 PaymentStatus.entries.forEach { status ->
                     FilterChip(
@@ -161,7 +162,7 @@ internal fun PaymentFilterBottomSheet(
 
             // Date Range Section
             Text(
-                text = "📅 Date Range",
+                text = stringResource(Res.string.payment_filter_date_range),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -202,7 +203,7 @@ internal fun PaymentFilterBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Quick Select",
+                text = stringResource(Res.string.payment_filter_quick_select),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 4.dp)
@@ -227,10 +228,9 @@ internal fun PaymentFilterBottomSheet(
                         endDate = todayFormatted
                         onUpdateDateRange(startOfMonth, todayFormatted)
                     },
-                    label = { Text("This Month", style = MaterialTheme.typography.labelSmall) }
+                    label = { Text(stringResource(Res.string.payment_filter_this_month), style = MaterialTheme.typography.labelSmall) }
                 )
 
-                // Last Month
                 AssistChip(
                     onClick = {
                         val lastMonthYear = if (todayValue.month == 1) todayValue.year - 1 else todayValue.year
@@ -244,10 +244,9 @@ internal fun PaymentFilterBottomSheet(
                         endDate = endOfLastMonth
                         onUpdateDateRange(startOfLastMonth, endOfLastMonth)
                     },
-                    label = { Text("Last Month", style = MaterialTheme.typography.labelSmall) }
+                    label = { Text(stringResource(Res.string.payment_filter_last_month), style = MaterialTheme.typography.labelSmall) }
                 )
 
-                // Last 7 Days
                 AssistChip(
                     onClick = {
                         // Use FleetDateTime.addDays with date string format
@@ -256,10 +255,9 @@ internal fun PaymentFilterBottomSheet(
                         endDate = todayFormatted
                         onUpdateDateRange(last7Formatted, todayFormatted)
                     },
-                    label = { Text("Last 7 Days", style = MaterialTheme.typography.labelSmall) }
+                    label = { Text(stringResource(Res.string.payment_filter_last_7_days), style = MaterialTheme.typography.labelSmall) }
                 )
 
-                // Last 30 Days
                 AssistChip(
                     onClick = {
                         // Use FleetDateTime.addDays with date string format
@@ -268,7 +266,7 @@ internal fun PaymentFilterBottomSheet(
                         endDate = todayFormatted
                         onUpdateDateRange(last30Formatted, todayFormatted)
                     },
-                    label = { Text("Last 30 Days", style = MaterialTheme.typography.labelSmall) }
+                    label = { Text(stringResource(Res.string.payment_filter_last_30_days), style = MaterialTheme.typography.labelSmall) }
                 )
             }
 
@@ -279,7 +277,7 @@ internal fun PaymentFilterBottomSheet(
                 onClick = onApply,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Apply Filters")
+                Text(stringResource(Res.string.payment_filter_apply))
             }
         }
     }

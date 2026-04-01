@@ -24,6 +24,7 @@ import com.ijs.payment.domain.entity.TripPayment
 import com.ijs.payment.domain.entity.TripPaymentFilter
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun FilterChipRow(
@@ -35,8 +36,14 @@ internal fun FilterChipRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        Icon(
+            painter = painterResource(Res.drawable.ic_filter),
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
         Text(
-            text = "🔍 Filters:",
+            text = stringResource(Res.string.payment_filters_label),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(end = 4.dp)
@@ -74,7 +81,6 @@ internal fun FilterChipRow(
                 label = {
                     Text(
                         text = buildString {
-                            append("📅 ")
                             filter.startDate?.let { append(it) }
                             append(" - ")
                             filter.endDate?.let { append(it) }
@@ -88,7 +94,7 @@ internal fun FilterChipRow(
         Spacer(modifier = Modifier.weight(1f))
 
         TextButton(onClick = onClear) {
-            Text("Clear", style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(Res.string.action_clear), style = MaterialTheme.typography.labelMedium)
         }
     }
 }
@@ -130,7 +136,7 @@ internal fun PaymentSummaryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Payment Summary",
+                    text = stringResource(Res.string.payment_summary),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -141,7 +147,7 @@ internal fun PaymentSummaryCard(
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = "$paymentCount payments",
+                            text = stringResource(Res.string.payment_count, paymentCount),
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Medium,
@@ -160,7 +166,7 @@ internal fun PaymentSummaryCard(
                 // Received Card
                 SummaryItemCard(
                     value = totalReceived,
-                    label = "Received",
+                    label = stringResource(Res.string.payment_filter_received),
                     valueColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived,
                     backgroundColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived.copy(alpha = 0.1f),
                     modifier = Modifier.weight(1f)
@@ -171,7 +177,7 @@ internal fun PaymentSummaryCard(
                 // Pending Card
                 SummaryItemCard(
                     value = totalPending,
-                    label = "Pending",
+                    label = stringResource(Res.string.payment_filter_pending),
                     valueColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending,
                     backgroundColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending.copy(alpha = 0.1f),
                     modifier = Modifier.weight(1f)
@@ -182,7 +188,7 @@ internal fun PaymentSummaryCard(
                 // This Month Card
                 SummaryItemCard(
                     value = thisMonth,
-                    label = "This Month",
+                    label = stringResource(Res.string.payment_this_month),
                     valueColor = MaterialTheme.colorScheme.primary,
                     backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     modifier = Modifier.weight(1f)
@@ -195,7 +201,7 @@ internal fun PaymentSummaryCard(
                 Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Grouped by Trip: $tripCount trips",
+                    text = stringResource(Res.string.payment_grouped_by_trip, tripCount),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -290,7 +296,7 @@ internal fun PaymentCard(
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = "Trip #${payment.tripId}",
+                            text = stringResource(Res.string.payment_trip_id, payment.tripId),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
@@ -359,8 +365,9 @@ internal fun PaymentCard(
                             Spacer(modifier = Modifier.width(8.dp))
                         }
                         // Route with better visibility
+                        val unknownLabel = stringResource(Res.string.payment_unknown)
                         Text(
-                            text = "${tripInfo.startLocation ?: "Unknown"} → ${tripInfo.endLocation ?: "Unknown"}",
+                            text = "${tripInfo.startLocation ?: unknownLabel} → ${tripInfo.endLocation ?: unknownLabel}",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -378,13 +385,13 @@ internal fun PaymentCard(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Depart: ${tripInfo.startDateTimeDisplay}",
+                                text = stringResource(Res.string.payment_depart, tripInfo.startDateTimeDisplay),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = "Arrive: ${tripInfo.endDateTimeDisplay}",
+                                text = stringResource(Res.string.payment_arrive, tripInfo.endDateTimeDisplay),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.tertiary
@@ -405,14 +412,15 @@ internal fun PaymentCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Customer name - prioritize customerName, fallback to customerCompany
+                val noCustomerLabel = stringResource(Res.string.payment_no_customer)
                 val customerDisplayName = payment.customerName?.takeIf { it.isNotBlank() }
                     ?: payment.customerCompany?.takeIf { it.isNotBlank() }
-                    ?: "No Customer"
+                    ?: noCustomerLabel
                 Text(
                     text = customerDisplayName,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (customerDisplayName != "No Customer")
+                    color = if (customerDisplayName != noCustomerLabel)
                         MaterialTheme.colorScheme.onSurface
                     else
                         MaterialTheme.colorScheme.onSurfaceVariant,
@@ -428,7 +436,7 @@ internal fun PaymentCard(
                         color = MaterialTheme.colorScheme.tertiaryContainer
                     ) {
                         Text(
-                            text = "Paid: ${formatPaymentDate(date)}",
+                            text = stringResource(Res.string.payment_paid_date, formatPaymentDate(date)),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Medium,
@@ -447,10 +455,10 @@ internal fun PaymentCard(
 
 internal fun getPaymentTypeColor(type: PaymentType): Color {
     return when (type) {
-        PaymentType.ADVANCE -> Color(0xFF1976D2)  // Blue
-        PaymentType.PARTIAL -> Color(0xFFFFA000)  // Orange
-        PaymentType.FINAL -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived    // Green
-        PaymentType.REFUND -> Color(0xFFD32F2F)   // Red
+        PaymentType.ADVANCE -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentAdvance
+        PaymentType.PARTIAL -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPartial
+        PaymentType.FINAL -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
+        PaymentType.REFUND -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentRefund
     }
 }
 
@@ -461,9 +469,9 @@ internal fun PaymentStatusBadge(
     modifier: Modifier = Modifier
 ) {
     val (backgroundColor, textColor) = when (status) {
-        PaymentStatus.RECEIVED -> Color(0xFFE8F5E9) to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
-        PaymentStatus.PENDING -> Color(0xFFFFF3E0) to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
-        PaymentStatus.CANCELLED -> Color(0xFFFFEBEE) to Color(0xFFC62828)
+        PaymentStatus.RECEIVED -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceivedBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
+        PaymentStatus.PENDING -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPendingBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
+        PaymentStatus.CANCELLED -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentCancelledBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentCancelled
     }
 
     Surface(

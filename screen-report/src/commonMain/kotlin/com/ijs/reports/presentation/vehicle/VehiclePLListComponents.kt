@@ -19,6 +19,7 @@ import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.VehiclePLSortOption
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MultiVehicleSummaryCard(
@@ -50,7 +51,7 @@ fun MultiVehicleSummaryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Fleet Summary",
+                    text = stringResource(Res.string.reports_fleet_summary),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -60,7 +61,7 @@ fun MultiVehicleSummaryCard(
                     else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.2f)
                 ) {
                     Text(
-                        text = if (isOverallProfit) "NET PROFIT" else "NET LOSS",
+                        text = if (isOverallProfit) stringResource(Res.string.reports_net_profit_badge) else stringResource(Res.string.reports_net_loss_badge),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = if (isOverallProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
@@ -74,7 +75,12 @@ fun MultiVehicleSummaryCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🚛", style = MaterialTheme.typography.titleSmall)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_truck),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                     Text(
                         text = "$totalVehicles",
                         style = MaterialTheme.typography.titleLarge,
@@ -82,13 +88,18 @@ fun MultiVehicleSummaryCard(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Total",
+                        text = stringResource(Res.string.reports_total),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("✅", style = MaterialTheme.typography.titleSmall)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_check_circle),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+                    )
                     Text(
                         text = "$profitableCount",
                         style = MaterialTheme.typography.titleLarge,
@@ -96,13 +107,18 @@ fun MultiVehicleSummaryCard(
                         color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
                     )
                     Text(
-                        text = "Profitable",
+                        text = stringResource(Res.string.reports_profitable),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("⚠️", style = MaterialTheme.typography.titleSmall)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_warning),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
+                    )
                     Text(
                         text = "$lossMakingCount",
                         style = MaterialTheme.typography.titleLarge,
@@ -110,7 +126,7 @@ fun MultiVehicleSummaryCard(
                         color = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                     )
                     Text(
-                        text = "Loss Making",
+                        text = stringResource(Res.string.reports_loss_making),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -125,7 +141,7 @@ fun MultiVehicleSummaryCard(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Total Revenue",
+                        text = stringResource(Res.string.reports_total_revenue),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -138,7 +154,7 @@ fun MultiVehicleSummaryCard(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Total Expenses",
+                        text = stringResource(Res.string.reports_total_expenses),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -151,7 +167,7 @@ fun MultiVehicleSummaryCard(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = if (isOverallProfit) "Net Profit" else "Net Loss",
+                        text = if (isOverallProfit) stringResource(Res.string.reports_net_profit_label) else stringResource(Res.string.reports_net_loss_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -197,7 +213,7 @@ fun SortingFilterSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "$resultCount vehicle(s)",
+                    text = stringResource(Res.string.reports_vehicle_count, resultCount),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -241,6 +257,7 @@ fun SortingFilterSection(
 @Composable
 internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
     val isProfit = result.netProfit >= 0
+    val vehicleFallback = stringResource(Res.string.reports_vehicle_id_fallback, result.vehicleId)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -263,15 +280,20 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("🚛", style = MaterialTheme.typography.titleMedium)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_truck),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                     Column {
                         Text(
-                            text = result.vehicleNumber ?: "Vehicle #${result.vehicleId}",
+                            text = result.vehicleNumber ?: vehicleFallback,
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "${result.totalTrips} trips",
+                            text = stringResource(Res.string.reports_trips_count, result.totalTrips),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -299,7 +321,7 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Revenue",
+                        text = stringResource(Res.string.reports_revenue),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -312,7 +334,7 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Expenses",
+                        text = stringResource(Res.string.reports_expenses),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -325,7 +347,7 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Margin",
+                        text = stringResource(Res.string.reports_margin),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -340,4 +362,3 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
         }
     }
 }
-

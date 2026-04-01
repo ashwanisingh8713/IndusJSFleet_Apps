@@ -86,6 +86,38 @@ object FleetStatusColors {
     /** Trip failed / cancelled red (Material Red-700) */
     val TripFailed = Color(0xFFD32F2F)
 
+    // ==================== Vehicle Fleet Status Colors ====================
+
+    /** On-route green for fleet bar chart (Material Green-500) */
+    val FleetOnRoute = Color(0xFF4CAF50)
+
+    /** Planned blue (Material Blue-500) */
+    val FleetPlanned = Color(0xFF2196F3)
+
+    /** Available teal (Material Teal-500) */
+    val FleetAvailable = Color(0xFF009688)
+
+    /** Maintenance orange (Material Orange-500) */
+    val FleetMaintenance = Color(0xFFFF9800)
+
+    /** Inactive gray (Material Gray-500) */
+    val FleetInactive = Color(0xFF9E9E9E)
+
+    /** Health excellent green — same as FleetOnRoute */
+    val HealthGood = FleetOnRoute
+
+    /** Health warning orange — same as FleetMaintenance */
+    val HealthWarning = FleetMaintenance
+
+    /** Health critical red (Material Red-400) */
+    val HealthCritical = Color(0xFFEF5350)
+
+    /** Advance payment blue (Material Blue-700) */
+    val PaymentAdvance = Color(0xFF1976D2)
+
+    /** Refund payment red (Material Red-700) */
+    val PaymentRefund = Color(0xFFD32F2F)
+
     // ==================== Utility ====================
 
     /**
