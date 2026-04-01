@@ -242,9 +242,9 @@ private fun formatCompactAmount(amount: Double): String {
  * Predefined colors for expense categories.
  */
 object PieChartColors {
-    val Fuel = Color(0xFF3B82F6) // Blue
+    val Fuel = com.indusjs.uicomponents.theme.FleetStatusColors.InfoBlue // Blue
     val Toll = Color(0xFF10B981) // Green
-    val Maintenance = Color(0xFFF59E0B) // Amber
+    val Maintenance = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber // Amber
     val DriverAllowance = Color(0xFF8B5CF6) // Purple
     val Parking = Color(0xFFEC4899) // Pink
     val Loading = Color(0xFF06B6D4) // Cyan

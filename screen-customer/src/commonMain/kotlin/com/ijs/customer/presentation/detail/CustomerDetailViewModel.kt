@@ -4,6 +4,8 @@ import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.customer.TAG_CUSTOMER_DETAIL_VM
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.util.ValidationUtils
+import com.indusjs.fleet.core.util.PermissionUtils
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.customer.domain.entity.FinancialPeriod
 import com.ijs.customer.presentation.detail.CustomerDetailContract.CustomerDetailTab
@@ -21,6 +23,7 @@ import dev.zacsweers.metro.Inject
 @Inject
 class CustomerDetailViewModel(
     private val customerRepository: CustomerRepository,
+    private val userLocalDataSource: UserLocalDataSource,
     private val logger: FleetLogger
 ) : MviViewModel<State, Intent, Effect>(State()) {
 private var customerId: String = ""
@@ -114,6 +117,9 @@ private var customerId: String = ""
         when (val result = customerRepository.getCustomer(id)) {
             is Result.Success -> {
                 val customer = result.data
+                val userRole = try {
+                    userLocalDataSource.getUserRole() ?: "supervisor"
+                } catch (_: Exception) { "supervisor" }
                 updateState {
                     copy(
                         isLoading = false,
@@ -126,7 +132,7 @@ private var customerId: String = ""
                         email = customer.email ?: "",
                         gstNumber = customer.gstNumber ?: "",
                         notes = customer.notes ?: "",
-                        canViewFinancials = true // TODO: Check user role
+                        canViewFinancials = PermissionUtils.canViewFinancials(userRole)
                     )
                 }
                 if (state.value.canViewFinancials) {

@@ -38,6 +38,7 @@ fun ProfileScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showLogoutConfirmation by remember { mutableStateOf(false) }
 
     var pendingSnackbar by remember { mutableStateOf<com.indusjs.uicomponents.components.UiText?>(null) }
 
@@ -133,7 +134,7 @@ fun ProfileScreen(
                     )
                 }
                 state.error != null -> {
-                    ErrorContent(
+                    com.indusjs.uicomponents.components.ErrorContent(
                         error = state.error!!.resolve(),
                         onRetry = { viewModel.sendIntent(ProfileContract.Intent.LoadProfile) },
                         modifier = Modifier.align(Alignment.Center)
@@ -161,12 +162,35 @@ fun ProfileScreen(
                             ownerInfo = state.profile!!.ownerInfo,
                             onEditProfile = { viewModel.sendIntent(ProfileContract.Intent.StartEditing) },
                             onChangePassword = { viewModel.sendIntent(ProfileContract.Intent.NavigateToChangePassword) },
-                            onLogout = { viewModel.sendIntent(ProfileContract.Intent.Logout) }
+                            onLogout = { showLogoutConfirmation = true }
                         )
                     }
                 }
             }
         }
+    }
+
+    // Logout confirmation dialog
+    if (showLogoutConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirmation = false },
+            title = { Text(stringResource(Res.string.logout_confirmation_title)) },
+            text = { Text(stringResource(Res.string.logout_confirmation_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutConfirmation = false
+                        viewModel.sendIntent(ProfileContract.Intent.Logout)
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text(stringResource(Res.string.confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirmation = false }) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            }
+        )
     }
 }
 
@@ -930,77 +954,6 @@ private fun EditProfileContent(
     }
 }
 
-@Composable
-private fun ErrorContent(
-    error: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.padding(32.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Surface(
-                modifier = Modifier.size(72.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "😕",
-                        style = MaterialTheme.typography.displaySmall
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Oops! Something went wrong",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = error,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.error
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = onRetry,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🔄", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Try Again",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-    }
-}
-
 private fun formatDate(isoDate: String): String {
     // Convert ISO date (YYYY-MM-DD) to DD-MM-YYYY format
     return try {
@@ -1015,4 +968,3 @@ private fun formatDate(isoDate: String): String {
         isoDate
     }
 }
-

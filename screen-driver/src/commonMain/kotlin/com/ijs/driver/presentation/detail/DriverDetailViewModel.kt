@@ -132,12 +132,12 @@ class DriverDetailViewModel(
         // Load tab data if needed (0 = Overview, 1 = Costs, 2 = History)
         when (tabIndex) {
             1 -> if (currentState.costs.isEmpty() && !currentState.isLoadingCosts) {
-                kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
+                viewModelScope.launch {
                     loadCosts()
                 }
             }
             2 -> if (currentState.historyItems.isEmpty() && !currentState.isLoadingHistory) {
-                kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
+                viewModelScope.launch {
                     loadHistory()
                 }
             }
@@ -187,7 +187,7 @@ class DriverDetailViewModel(
     private fun enterEditMode() {
         updateState { copy(isEditMode = true, isLoadingCaretakers = true) }
         // Load caretakers
-        kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
+        viewModelScope.launch {
             loadCaretakers()
         }
     }

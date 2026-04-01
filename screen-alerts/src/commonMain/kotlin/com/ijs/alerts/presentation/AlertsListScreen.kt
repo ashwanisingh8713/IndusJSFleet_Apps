@@ -486,10 +486,10 @@ private fun AlertItemCard(
                                 else -> MaterialTheme.colorScheme.primary
                             }
                             val badgeText = when {
-                                days < 0 -> "${-days} days overdue"
-                                days == 0 -> "Expires today"
-                                days == 1 -> "Expires tomorrow"
-                                else -> "$days days left"
+                                days < 0 -> stringResource(Res.string.alerts_days_overdue_long, -days)
+                                days == 0 -> stringResource(Res.string.alerts_expires_today)
+                                days == 1 -> stringResource(Res.string.alerts_expires_tomorrow)
+                                else -> stringResource(Res.string.alerts_days_left_long, days)
                             }
                             Text(
                                 text = badgeText,

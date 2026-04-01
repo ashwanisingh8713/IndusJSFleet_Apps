@@ -21,7 +21,9 @@ object VehiclesContract {
         val error: String? = null,
         val searchQuery: String = "",
         val selectedStatusFilter: VehicleStatus? = null,
-        val isRefreshing: Boolean = false
+        val isRefreshing: Boolean = false,
+        val vehicleToDelete: String? = null,
+        val showDeleteConfirmation: Boolean = false
     ) : UiState
 
     /**
@@ -34,6 +36,8 @@ object VehiclesContract {
         data class FilterByStatus(val status: VehicleStatus?) : Intent
         data class SelectVehicle(val vehicleId: String) : Intent
         data class DeleteVehicle(val vehicleId: String) : Intent
+        data object ConfirmDelete : Intent
+        data object DismissDelete : Intent
         data object AddVehicle : Intent
         data object ClearFilters : Intent
     }

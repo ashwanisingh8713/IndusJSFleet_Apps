@@ -42,6 +42,7 @@ import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Get date range string for the selected filter.
@@ -102,9 +103,9 @@ internal fun CostOverviewSection(
     onCreateTripClick: () -> Unit
 ) {
     val hasNoFleet = vehicleStatus.total == 0 && tripSummary.total == 0
-    val profitColor = Color(0xFF10B981)
-    val lossColor = Color(0xFFEF4444)
-    val expenseColor = Color(0xFFF59E0B)
+    val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+    val lossColor = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
+    val expenseColor = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
 
     val dateRangeText = remember(selectedFilter) { getDateRangeForFilter(selectedFilter) }
 
@@ -134,7 +135,7 @@ internal fun CostOverviewSection(
                             .background(
                                 brush = Brush.linearGradient(
                                     colors = if (costOverview.isProfit)
-                                        listOf(Color(0xFF10B981), Color(0xFF059669))
+                                        listOf(com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen, com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreenDark)
                                     else
                                         listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
                                 )
@@ -149,7 +150,7 @@ internal fun CostOverviewSection(
                     Spacer(modifier = Modifier.width(14.dp))
                     Column {
                         Text(
-                            text = "Financial Overview",
+                            text = stringResource(Res.string.dashboard_financial_overview),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -157,9 +158,9 @@ internal fun CostOverviewSection(
                         if (!hasNoFleet) {
                             Text(
                                 text = when (selectedFilter) {
-                                    CostOverviewFilter.TODAY -> "Today's summary"
-                                    CostOverviewFilter.WEEKLY -> "This week's summary"
-                                    CostOverviewFilter.MONTHLY -> "This month's summary"
+                                    CostOverviewFilter.TODAY -> stringResource(Res.string.dashboard_summary_today)
+                                    CostOverviewFilter.WEEKLY -> stringResource(Res.string.dashboard_summary_weekly)
+                                    CostOverviewFilter.MONTHLY -> stringResource(Res.string.dashboard_summary_monthly)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -185,9 +186,9 @@ internal fun CostOverviewSection(
                         CostOverviewFilter.entries.forEach { filter ->
                             val isSelected = selectedFilter == filter
                             val label = when (filter) {
-                                CostOverviewFilter.TODAY -> "Today"
-                                CostOverviewFilter.WEEKLY -> "This Week"
-                                CostOverviewFilter.MONTHLY -> "This Month"
+                                CostOverviewFilter.TODAY -> stringResource(Res.string.dashboard_filter_today)
+                                CostOverviewFilter.WEEKLY -> stringResource(Res.string.dashboard_filter_this_week)
+                                CostOverviewFilter.MONTHLY -> stringResource(Res.string.dashboard_filter_this_month)
                             }
                             Box(
                                 modifier = Modifier
@@ -265,12 +266,12 @@ internal fun CostOverviewSection(
                             Text(text = "🚀", style = MaterialTheme.typography.headlineMedium)
                         }
                         Text(
-                            text = "Get Started",
+                            text = stringResource(Res.string.dashboard_get_started),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Add vehicles and create trips to track your finances",
+                            text = stringResource(Res.string.dashboard_get_started_message),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -289,7 +290,7 @@ internal fun CostOverviewSection(
                             FinancialStatCard(
                                 modifier = Modifier.weight(1f),
                                 icon = "💸",
-                                label = "Expenses",
+                                label = stringResource(Res.string.dashboard_label_expenses),
                                 value = formatCurrency(costOverview.totalExpenses),
                                 backgroundColor = expenseColor.copy(alpha = 0.1f),
                                 valueColor = expenseColor
@@ -297,7 +298,7 @@ internal fun CostOverviewSection(
                             FinancialStatCard(
                                 modifier = Modifier.weight(1f),
                                 icon = if (costOverview.isProfit) "📈" else "📉",
-                                label = if (costOverview.isProfit) "Profit" else "Loss",
+                                label = if (costOverview.isProfit) stringResource(Res.string.reports_profit) else stringResource(Res.string.reports_loss),
                                 value = formatCurrency(kotlin.math.abs(costOverview.profitLoss)),
                                 backgroundColor = if (costOverview.isProfit) profitColor.copy(alpha = 0.1f) else lossColor.copy(alpha = 0.1f),
                                 valueColor = if (costOverview.isProfit) profitColor else lossColor
@@ -318,7 +319,7 @@ internal fun CostOverviewSection(
                                 Text(text = "🚛", style = MaterialTheme.typography.titleMedium)
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = "Completed Trips",
+                                    text = stringResource(Res.string.dashboard_completed_trips),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -357,7 +358,7 @@ internal fun CostOverviewSection(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Add Vehicle", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(Res.string.action_add_vehicle), fontWeight = FontWeight.SemiBold)
                     }
 
                     OutlinedButton(
@@ -374,7 +375,7 @@ internal fun CostOverviewSection(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Create Trip", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(Res.string.action_create_trip), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -421,4 +422,3 @@ private fun FinancialStatCard(
         )
     }
 }
-

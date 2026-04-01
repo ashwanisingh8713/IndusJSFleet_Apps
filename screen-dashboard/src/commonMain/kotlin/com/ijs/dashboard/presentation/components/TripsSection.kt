@@ -34,6 +34,7 @@ import com.indusjs.fleet.domain.entity.dashboard.OngoingTrip
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Trips Status Section - Enhanced UI.
@@ -83,12 +84,12 @@ internal fun TripsStatusSection(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Trips",
+                            text = stringResource(Res.string.org_stats_trips),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "${tripSummary.total} total",
+                            text = stringResource(Res.string.dashboard_count_total, tripSummary.total),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -96,7 +97,7 @@ internal fun TripsStatusSection(
                 }
                 TextButton(onClick = onClick) {
                     Text(
-                        text = "View All",
+                        text = stringResource(Res.string.action_view_all),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
@@ -114,9 +115,9 @@ internal fun TripsStatusSection(
             if (tripSummary.total == 0) {
                 SectionEmptyState(
                     iconRes = Res.drawable.ic_trip,
-                    title = "No trips yet",
-                    message = "Create your first trip to start",
-                    actionLabel = "Create",
+                    title = stringResource(Res.string.dashboard_no_trips_yet),
+                    message = stringResource(Res.string.dashboard_create_trip_message),
+                    actionLabel = stringResource(Res.string.add),
                     onAction = onCreateTripClick
                 )
             } else {
@@ -126,19 +127,19 @@ internal fun TripsStatusSection(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     EnhancedStatusChip(
-                        label = "Active",
+                        label = stringResource(Res.string.dashboard_label_active),
                         count = tripSummary.inProgress,
                         color = Color(0xFF4CAF50),
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
-                        label = "Planned",
+                        label = stringResource(Res.string.dashboard_label_planned),
                         count = tripSummary.planned,
                         color = Color(0xFF2196F3),
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
-                        label = "Done",
+                        label = stringResource(Res.string.dashboard_label_done),
                         count = tripSummary.completed,
                         color = MaterialTheme.colorScheme.outline,
                         modifier = Modifier.weight(1f)
@@ -152,7 +153,7 @@ internal fun TripsStatusSection(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
                     Text(
-                        text = "Active Trips",
+                        text = stringResource(Res.string.dashboard_active_trips),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -178,7 +179,7 @@ internal fun TripsStatusSection(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Create Trip", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(Res.string.action_create_trip), style = MaterialTheme.typography.labelSmall)
                     }
                     OutlinedButton(
                         onClick = onAddTripCostClick,
@@ -191,7 +192,7 @@ internal fun TripsStatusSection(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Cost", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -236,7 +237,7 @@ private fun OngoingTripItem(trip: OngoingTrip) {
                 color = Color(0xFF4CAF50).copy(alpha = 0.15f)
             ) {
                 Text(
-                    text = "On Route",
+                    text = stringResource(Res.string.dashboard_label_on_route),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF4CAF50),
@@ -246,4 +247,3 @@ private fun OngoingTripItem(trip: OngoingTrip) {
         }
     }
 }
-

@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +49,7 @@ fun VehicleFinanceScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val pullRefreshState = rememberPullToRefreshState()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -106,24 +109,32 @@ fun VehicleFinanceScreen(
             }
         }
     ) { paddingValues ->
-        when {
-            state.isLoading && state.vehicles.isEmpty() -> LoadingContent()
-            state.error != null && state.vehicles.isEmpty() -> ErrorContent(
-                error = state.error ?: "Something went wrong",
-                onRetry = { viewModel.sendIntent(Intent.LoadData) }
-            )
-            else -> VehicleFinanceContent(
-                state = state,
-                onFilterSelect = { viewModel.sendIntent(Intent.SetFilter(it)) },
-                onSearchChange = { viewModel.sendIntent(Intent.UpdateSearch(it)) },
-                onVehicleClick = { viewModel.sendIntent(Intent.NavigateToDetail(it)) },
-                onAddPurchaseClick = { viewModel.sendIntent(Intent.NavigateToAddPurchase) },
-                onRecordEmiClick = { vehicleId ->
-                    viewModel.sendIntent(Intent.SelectVehicle(vehicleId))
-                    viewModel.sendIntent(Intent.ShowRecordPaymentSheet)
-                },
-                modifier = Modifier.padding(paddingValues)
-            )
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { viewModel.sendIntent(Intent.Refresh) },
+            state = pullRefreshState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when {
+                state.isLoading && state.vehicles.isEmpty() -> LoadingContent()
+                state.error != null && state.vehicles.isEmpty() -> ErrorContent(
+                    error = state.error ?: "Something went wrong",
+                    onRetry = { viewModel.sendIntent(Intent.LoadData) }
+                )
+                else -> VehicleFinanceContent(
+                    state = state,
+                    onFilterSelect = { viewModel.sendIntent(Intent.SetFilter(it)) },
+                    onSearchChange = { viewModel.sendIntent(Intent.UpdateSearch(it)) },
+                    onVehicleClick = { viewModel.sendIntent(Intent.NavigateToDetail(it)) },
+                    onAddPurchaseClick = { viewModel.sendIntent(Intent.NavigateToAddPurchase) },
+                    onRecordEmiClick = { vehicleId ->
+                        viewModel.sendIntent(Intent.SelectVehicle(vehicleId))
+                        viewModel.sendIntent(Intent.ShowRecordPaymentSheet)
+                    }
+                )
+            }
         }
     }
 }

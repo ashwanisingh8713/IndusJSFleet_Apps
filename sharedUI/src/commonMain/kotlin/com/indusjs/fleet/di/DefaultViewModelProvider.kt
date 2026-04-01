@@ -481,7 +481,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         getLocalCustomersUseCase
     )
 
-    override fun customerDetailViewModel() = CustomerDetailViewModel(customerRepository, fleetLogger)
+    override fun customerDetailViewModel() = CustomerDetailViewModel(customerRepository, userLocalDataSource, fleetLogger)
 
     override fun createCustomerViewModel() = CreateCustomerViewModel(createCustomerUseCase)
 

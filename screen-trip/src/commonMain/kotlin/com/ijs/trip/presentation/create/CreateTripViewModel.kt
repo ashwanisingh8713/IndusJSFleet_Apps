@@ -22,7 +22,6 @@ import com.ijs.trip.presentation.create.CreateTripContract.Intent
 import com.ijs.trip.presentation.create.CreateTripContract.State
 import dev.zacsweers.metro.Inject
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -468,7 +467,7 @@ private var startLocationSearchJob: Job? = null
 
         updateState { copy(isSearchingStartLocation = true, showStartLocationDropdown = true) }
 
-        startLocationSearchJob = CoroutineScope(dispatcherProvider.main).launch {
+        startLocationSearchJob = viewModelScope.launch {
             delay(300) // Debounce
             withContext(dispatcherProvider.io) {
                 googlePlacesService.searchPlaces(query).fold(
@@ -515,7 +514,7 @@ private var startLocationSearchJob: Job? = null
 
         updateState { copy(isSearchingEndLocation = true, showEndLocationDropdown = true) }
 
-        endLocationSearchJob = CoroutineScope(dispatcherProvider.main).launch {
+        endLocationSearchJob = viewModelScope.launch {
             delay(300) // Debounce
             withContext(dispatcherProvider.io) {
                 googlePlacesService.searchPlaces(query).fold(
@@ -629,7 +628,7 @@ private var startLocationSearchJob: Job? = null
         if (startLat != null && startLng != null && endLat != null && endLng != null) {
             // Use Google Distance Matrix API for road distance
             if (googlePlacesService != null) {
-                CoroutineScope(dispatcherProvider.main).launch {
+                viewModelScope.launch {
                     updateState { copy(isCalculatingDistance = true) }
                     withContext(dispatcherProvider.io) {
                         googlePlacesService.getRoadDistance(startLat, startLng, endLat, endLng).fold(

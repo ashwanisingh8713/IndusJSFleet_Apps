@@ -19,7 +19,7 @@ import com.ijs.vehicle.presentation.detail.VehicleDetailContract.Effect
 import com.ijs.vehicle.presentation.detail.VehicleDetailContract.Intent
 import com.ijs.vehicle.presentation.detail.VehicleDetailContract.State
 import dev.zacsweers.metro.Inject
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.DateTimeUnit
@@ -172,7 +172,7 @@ class VehicleDetailViewModel(
     private fun enterEditMode() {
         updateState { copy(isEditMode = true, isLoadingDrivers = true, isLoadingCaretakers = true) }
         // Load available drivers and caretakers
-        kotlinx.coroutines.CoroutineScope(dispatcherProvider.main).launch {
+        viewModelScope.launch {
             loadDriversForEdit()
             loadCaretakers()
         }
@@ -251,10 +251,11 @@ class VehicleDetailViewModel(
     }
 
     private fun updateYear(value: String) {
+        val currentYear = Clock.System.todayIn(TimeZone.currentSystemDefault()).year
         val error = when {
             value.isBlank() -> "Year is required"
             value.toIntOrNull() == null -> "Invalid year"
-            value.toInt() < 1900 || value.toInt() > 2030 -> "Year must be between 1900 and 2030"
+            value.toInt() < 1900 || value.toInt() > currentYear + 1 -> "Year must be between 1900 and ${currentYear + 1}"
             else -> null
         }
         updateState { copy(year = value, yearError = error) }
@@ -925,14 +926,14 @@ class VehicleDetailViewModel(
     }
 
     private fun refreshCosts() {
-        CoroutineScope(dispatcherProvider.main).launch {
+        viewModelScope.launch {
             loadCosts()
         }
     }
 
     private fun updateCostsDateRange(startDate: String, endDate: String) {
         updateState { copy(costsStartDate = startDate, costsEndDate = endDate) }
-        CoroutineScope(dispatcherProvider.main).launch {
+        viewModelScope.launch {
             loadCosts()
         }
     }
@@ -946,7 +947,7 @@ class VehicleDetailViewModel(
         }
         updateState { copy(selectedCostTypeFilters = currentFilters) }
         // Reload costs when filter is toggled (especially when removing from active filters)
-        CoroutineScope(dispatcherProvider.main).launch {
+        viewModelScope.launch {
             loadCosts()
         }
     }
@@ -960,7 +961,7 @@ class VehicleDetailViewModel(
                 showCostsFilterSheet = false
             )
         }
-        CoroutineScope(dispatcherProvider.main).launch {
+        viewModelScope.launch {
             loadCosts()
         }
     }
@@ -974,7 +975,7 @@ class VehicleDetailViewModel(
                 showCostsFilterSheet = false
             )
         }
-        CoroutineScope(dispatcherProvider.main).launch {
+        viewModelScope.launch {
             loadCosts()
         }
     }

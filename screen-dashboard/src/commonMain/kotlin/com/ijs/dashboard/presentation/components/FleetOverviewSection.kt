@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 // ============ Helper Functions ============
 
@@ -79,15 +81,16 @@ internal fun FleetOverviewHeroCard(
     onDriversClick: () -> Unit,
     onTripsClick: () -> Unit
 ) {
+    val fleetOverviewDesc = stringResource(Res.string.cd_fleet_overview_summary)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .semantics { contentDescription = "Fleet overview summary" },
+            .semantics { contentDescription = fleetOverviewDesc },
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Section Title
         Text(
-            text = "Fleet Overview",
+            text = stringResource(Res.string.dashboard_fleet_overview),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -101,8 +104,8 @@ internal fun FleetOverviewHeroCard(
             FleetMetricCard(
                 icon = "🚛",
                 value = vehicleStatus.total,
-                label = "Vehicles",
-                subLabel = "${vehicleStatus.available} available",
+                label = stringResource(Res.string.org_stats_vehicles),
+                subLabel = stringResource(Res.string.dashboard_count_available, vehicleStatus.available),
                 onClick = onVehiclesClick,
                 modifier = Modifier.weight(1f),
                 accentColor = MaterialTheme.colorScheme.primary
@@ -110,8 +113,8 @@ internal fun FleetOverviewHeroCard(
             FleetMetricCard(
                 icon = "👨‍✈️",
                 value = driverStatus.total,
-                label = "Drivers",
-                subLabel = "${driverStatus.available} available",
+                label = stringResource(Res.string.org_stats_drivers),
+                subLabel = stringResource(Res.string.dashboard_count_available, driverStatus.available),
                 onClick = onDriversClick,
                 modifier = Modifier.weight(1f),
                 accentColor = MaterialTheme.colorScheme.secondary
@@ -119,8 +122,8 @@ internal fun FleetOverviewHeroCard(
             FleetMetricCard(
                 icon = "🗺️",
                 value = tripSummary.total,
-                label = "Trips",
-                subLabel = "${tripSummary.inProgress} active",
+                label = stringResource(Res.string.org_stats_trips),
+                subLabel = stringResource(Res.string.dashboard_count_active, tripSummary.inProgress),
                 onClick = onTripsClick,
                 modifier = Modifier.weight(1f),
                 accentColor = MaterialTheme.colorScheme.tertiary
@@ -264,19 +267,19 @@ private fun FleetStatusRatioBar(vehicleStatus: VehicleStatusSummary) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (onRouteCount > 0) {
-                RatioLegendItem(color = Color(0xFF4CAF50), label = "Route", count = onRouteCount)
+                RatioLegendItem(color = Color(0xFF4CAF50), label = stringResource(Res.string.dashboard_label_route), count = onRouteCount)
             }
             if (plannedCount > 0) {
-                RatioLegendItem(color = Color(0xFF2196F3), label = "Planned", count = plannedCount)
+                RatioLegendItem(color = Color(0xFF2196F3), label = stringResource(Res.string.dashboard_label_planned), count = plannedCount)
             }
             if (availableCount > 0) {
-                RatioLegendItem(color = Color(0xFF009688), label = "Available", count = availableCount)
+                RatioLegendItem(color = Color(0xFF009688), label = stringResource(Res.string.dashboard_label_available), count = availableCount)
             }
             if (maintenanceCount > 0) {
-                RatioLegendItem(color = Color(0xFFFF9800), label = "Maint.", count = maintenanceCount)
+                RatioLegendItem(color = Color(0xFFFF9800), label = stringResource(Res.string.dashboard_label_maintenance), count = maintenanceCount)
             }
             if (inactiveCount > 0) {
-                RatioLegendItem(color = Color(0xFF9E9E9E), label = "Inactive", count = inactiveCount)
+                RatioLegendItem(color = Color(0xFF9E9E9E), label = stringResource(Res.string.dashboard_label_inactive), count = inactiveCount)
             }
         }
     }
@@ -314,4 +317,3 @@ private fun RatioLegendItem(
         )
     }
 }
-

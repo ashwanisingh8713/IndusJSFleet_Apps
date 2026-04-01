@@ -63,9 +63,9 @@ fun ConsolidatedPLScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
@@ -356,9 +356,9 @@ private fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (report.isProfitable)
-                Color(0xFF4CAF50).copy(alpha = 0.1f)
+                com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
             else
-                Color(0xFFF44336).copy(alpha = 0.1f)
+                com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f)
         )
     ) {
         Column(
@@ -402,7 +402,7 @@ private fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
                         text = "${if (report.isProfitable) "▲" else "▼"} ${formatCurrency(kotlin.math.abs(report.netProfit))}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = if (report.isProfitable) Color(0xFF4CAF50) else Color(0xFFF44336)
+                        color = if (report.isProfitable) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                     )
                     if (report.profitMargin > 0) {
                         Text(
@@ -491,7 +491,7 @@ private fun PeriodBreakdownCard(period: PeriodBreakdown) {
                     text = "${if (period.isProfitable) "▲" else "▼"} ${formatCurrency(kotlin.math.abs(period.profit))}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (period.isProfitable) Color(0xFF4CAF50) else Color(0xFFF44336)
+                    color = if (period.isProfitable) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                 )
                 Text(
                     text = "Rev: ${formatCurrency(period.revenue)}",
@@ -543,7 +543,7 @@ private fun VehicleSummaryCard(
                     text = "${if (isProfitable) "▲" else "▼"} ${formatCurrency(kotlin.math.abs(profit))}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (isProfitable) Color(0xFF4CAF50) else Color(0xFFF44336)
+                    color = if (isProfitable) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                 )
             }
 

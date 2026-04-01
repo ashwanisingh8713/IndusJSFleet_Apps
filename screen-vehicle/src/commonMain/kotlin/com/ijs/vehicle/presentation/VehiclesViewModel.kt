@@ -36,7 +36,17 @@ class VehiclesViewModel(
             is Intent.SearchVehicles -> searchVehicles(intent.query)
             is Intent.FilterByStatus -> filterByStatus(intent.status)
             is Intent.SelectVehicle -> sendEffect(Effect.NavigateToVehicleDetail(intent.vehicleId))
-            is Intent.DeleteVehicle -> deleteVehicle(intent.vehicleId)
+            is Intent.DeleteVehicle -> updateState {
+                copy(vehicleToDelete = intent.vehicleId, showDeleteConfirmation = true)
+            }
+            is Intent.ConfirmDelete -> {
+                val id = currentState.vehicleToDelete
+                updateState { copy(showDeleteConfirmation = false, vehicleToDelete = null) }
+                if (id != null) deleteVehicle(id)
+            }
+            is Intent.DismissDelete -> updateState {
+                copy(showDeleteConfirmation = false, vehicleToDelete = null)
+            }
             is Intent.AddVehicle -> sendEffect(Effect.NavigateToAddVehicle)
             is Intent.ClearFilters -> clearFilters()
         }

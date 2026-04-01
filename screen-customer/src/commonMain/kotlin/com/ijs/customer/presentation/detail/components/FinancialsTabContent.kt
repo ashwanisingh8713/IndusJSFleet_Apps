@@ -18,6 +18,8 @@ import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.customer.domain.entity.*
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.ReportType
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
@@ -168,7 +170,11 @@ private fun PeriodSelector(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("📄", style = MaterialTheme.typography.titleMedium)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_download),
+                        contentDescription = "Export",
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }

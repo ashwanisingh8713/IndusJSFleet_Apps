@@ -143,7 +143,7 @@ fun DashboardScreen(
         drawerContent = {
             ModalDrawerSheet(modifier = Modifier.width(280.dp)) {
                 NavigationDrawerContent(
-                    userName = state.userName.ifEmpty { "User" },
+                    userName = state.userName.ifEmpty { stringResource(Res.string.dashboard_default_user) },
                     userRole = state.userRole,
                     hasFinancialAccess = state.hasFinancialAccess,
                     onNavigateToVehicles = { scope.launch { drawerState.close() }; onNavigateToVehicles() },
@@ -181,7 +181,7 @@ fun DashboardScreen(
                     )
                     else -> Column(modifier = Modifier.fillMaxSize()) {
                         if (state.isOffline && state.hasCachedData) {
-                            OfflineBanner(message = state.error ?: "You're offline", lastUpdated = state.lastUpdated,
+                            OfflineBanner(message = state.error ?: stringResource(Res.string.dashboard_offline_default), lastUpdated = state.lastUpdated,
                                 onRetry = { viewModel.sendIntent(DashboardContract.Intent.RetryConnection) },
                                 onDismiss = { viewModel.sendIntent(DashboardContract.Intent.DismissOfflineBanner) })
                         }
@@ -234,12 +234,13 @@ private fun DashboardTopBar(
                         modifier = Modifier.semantics { contentDescription = "$greeting $userName" })
                 }
                 if (lastUpdated != null) {
-                    Text(text = "Updated: ${formatLastUpdated(lastUpdated)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                    Text(text = stringResource(Res.string.dashboard_updated, formatLastUpdated(lastUpdated)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                 }
             }
         },
         navigationIcon = {
-            IconButton(onClick = onMenuClick, modifier = Modifier.semantics { contentDescription = "Open navigation menu" }) {
+            val menuDesc = stringResource(Res.string.cd_open_navigation_menu)
+            IconButton(onClick = onMenuClick, modifier = Modifier.semantics { contentDescription = menuDesc }) {
                 Icon(painter = painterResource(Res.drawable.ic_menu), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
             }
         },
@@ -249,15 +250,17 @@ private fun DashboardTopBar(
                     Text(text = if (notificationCount > 99) "99+" else notificationCount.toString(), style = MaterialTheme.typography.labelSmall)
                 }
             }) {
+                val notifDesc = if (notificationCount > 0) stringResource(Res.string.cd_notifications_count, notificationCount) else stringResource(Res.string.cd_notifications)
                 IconButton(onClick = onNotificationsClick, modifier = Modifier.semantics {
-                    contentDescription = if (notificationCount > 0) "$notificationCount notifications" else "Notifications"
+                    contentDescription = notifDesc
                 }) {
                     Icon(painter = painterResource(Res.drawable.ic_notifications), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                 }
             }
             var isRefreshPressed by remember { mutableStateOf(false) }
             val rotationAngle by animateFloatAsState(targetValue = if (isRefreshing) 360f else 0f, animationSpec = tween(durationMillis = 1000), finishedListener = { isRefreshPressed = false })
-            IconButton(onClick = { isRefreshPressed = true; onRefreshClick() }, modifier = Modifier.semantics { contentDescription = "Refresh dashboard" }) {
+            val refreshDesc = stringResource(Res.string.cd_refresh_dashboard)
+            IconButton(onClick = { isRefreshPressed = true; onRefreshClick() }, modifier = Modifier.semantics { contentDescription = refreshDesc }) {
                 Icon(painter = painterResource(Res.drawable.ic_refresh), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp).rotate(if (isRefreshing) rotationAngle else 0f))
             }
         },

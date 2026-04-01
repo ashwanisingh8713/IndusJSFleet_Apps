@@ -200,13 +200,24 @@ fun SignUpScreen(
                 label = { Text(stringResource(Res.string.signup_password_label)) },
                 placeholder = { Text(stringResource(Res.string.signup_password_placeholder)) },
                 leadingIcon = {
-                    Text("🔒", modifier = Modifier.padding(start = 4.dp))
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_lock),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
                 },
                 trailingIcon = {
                     IconButton(
                         onClick = { viewModel.sendIntent(SignUpContract.Intent.TogglePasswordVisibility) }
                     ) {
-                        Text(if (state.isPasswordVisible) "🙈" else "👁️")
+                        Icon(
+                            painter = painterResource(
+                                if (state.isPasswordVisible) Res.drawable.ic_visibility_off
+                                else Res.drawable.ic_visibility
+                            ),
+                            contentDescription = if (state.isPasswordVisible) "Hide password" else "Show password",
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 },
                 visualTransformation = if (state.isPasswordVisible) {
@@ -243,13 +254,24 @@ fun SignUpScreen(
                 label = { Text(stringResource(Res.string.signup_confirm_password_label)) },
                 placeholder = { Text(stringResource(Res.string.signup_confirm_password_placeholder)) },
                 leadingIcon = {
-                    Text("🔒", modifier = Modifier.padding(start = 4.dp))
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_lock),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
                 },
                 trailingIcon = {
                     IconButton(
                         onClick = { viewModel.sendIntent(SignUpContract.Intent.ToggleConfirmPasswordVisibility) }
                     ) {
-                        Text(if (state.isConfirmPasswordVisible) "🙈" else "👁️")
+                        Icon(
+                            painter = painterResource(
+                                if (state.isConfirmPasswordVisible) Res.drawable.ic_visibility_off
+                                else Res.drawable.ic_visibility
+                            ),
+                            contentDescription = if (state.isConfirmPasswordVisible) "Hide password" else "Show password",
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 },
                 visualTransformation = if (state.isConfirmPasswordVisible) {

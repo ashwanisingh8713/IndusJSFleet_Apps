@@ -3,6 +3,7 @@ package com.ijs.reports.data.datasource
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.reports.TAG_REPORTS_REMOTE_DS
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.error.exception.ApiException
 import com.ijs.reports.data.model.*
 import dev.zacsweers.metro.Inject
 import io.ktor.client.*
@@ -12,7 +13,9 @@ import io.ktor.http.*
 import kotlinx.serialization.json.Json
 
 /**
- * Remote data source for Profit & Loss APIs
+ * Remote data source for Profit & Loss APIs.
+ * All methods throw [ApiException] on failure instead of returning null,
+ * so callers get meaningful error messages from the API response.
  */
 @Inject
 class ReportsRemoteDataSource(
@@ -20,6 +23,18 @@ class ReportsRemoteDataSource(
     private val json: Json,
     private val logger: FleetLogger
 ) {
+
+    /**
+     * Extracts a user-friendly error message from an API error response body.
+     */
+    private fun extractErrorMessage(body: String, fallback: String): String {
+        return try {
+            val errorResponse = json.decodeFromString<ProfitLossResponse<Unit?>>(body)
+            errorResponse.message.ifBlank { fallback }
+        } catch (_: Exception) {
+            fallback
+        }
+    }
 
     /**
      * Get single trip profit/loss
@@ -35,13 +50,13 @@ class ReportsRemoteDataSource(
         val body = response.bodyAsText()
         logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
 
-        return if (response.status.isSuccess()) {
-            val result = json.decodeFromString<ProfitLossResponse<TripProfitLossDto>>(body)
-            result.data
-        } else {
-            logger.e(TAG_REPORTS_REMOTE_DS, "Failed to fetch trip P&L: ${response.status}")
-            null
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch trip P&L (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
         }
+        val result = json.decodeFromString<ProfitLossResponse<TripProfitLossDto>>(body)
+        return result.data
     }
 
     /**
@@ -59,13 +74,13 @@ class ReportsRemoteDataSource(
         val body = response.bodyAsText()
         logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
 
-        return if (response.status.isSuccess()) {
-            val result = json.decodeFromString<ProfitLossResponse<VehicleProfitLossDto>>(body)
-            result.data
-        } else {
-            logger.e(TAG_REPORTS_REMOTE_DS, "Failed to fetch vehicle P&L: ${response.status}")
-            null
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch vehicle P&L (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
         }
+        val result = json.decodeFromString<ProfitLossResponse<VehicleProfitLossDto>>(body)
+        return result.data
     }
 
     /**
@@ -90,13 +105,13 @@ class ReportsRemoteDataSource(
         val body = response.bodyAsText()
         logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
 
-        return if (response.status.isSuccess()) {
-            val result = json.decodeFromString<ProfitLossResponse<FleetProfitLossDto>>(body)
-            result.data
-        } else {
-            logger.e(TAG_REPORTS_REMOTE_DS, "Failed to fetch fleet P&L: ${response.status}")
-            null
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch fleet P&L (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
         }
+        val result = json.decodeFromString<ProfitLossResponse<FleetProfitLossDto>>(body)
+        return result.data
     }
 
     /**
@@ -115,20 +130,14 @@ class ReportsRemoteDataSource(
         val body = response.bodyAsText()
         logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
 
-        return if (response.status.isSuccess()) {
-            try {
-                // Parse using the new wrapper DTO that matches the actual API structure
-                val result = json.decodeFromString<ProfitLossResponse<MultiVehiclePLResponseDto>>(body)
-                logger.d(TAG_REPORTS_REMOTE_DS, "Parsed vehicles: ${result.data?.vehicles?.size ?: 0}")
-                result.data?.vehicles
-            } catch (e: Exception) {
-                logger.e(TAG_REPORTS_REMOTE_DS, "Failed to parse multi-vehicle P&L response: ${e.message}")
-                null
-            }
-        } else {
-            logger.e(TAG_REPORTS_REMOTE_DS, "Failed to fetch multi-vehicle P&L: ${response.status}")
-            null
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch multi-vehicle P&L (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
         }
+        val result = json.decodeFromString<ProfitLossResponse<MultiVehiclePLResponseDto>>(body)
+        logger.d(TAG_REPORTS_REMOTE_DS, "Parsed vehicles: ${result.data?.vehicles?.size ?: 0}")
+        return result.data?.vehicles
     }
 
     /**
@@ -147,13 +156,13 @@ class ReportsRemoteDataSource(
         val body = response.bodyAsText()
         logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
 
-        return if (response.status.isSuccess()) {
-            val result = json.decodeFromString<ProfitLossResponse<List<TripProfitLossDto>>>(body)
-            result.data
-        } else {
-            logger.e(TAG_REPORTS_REMOTE_DS, "Failed to fetch multi-trip P&L: ${response.status}")
-            null
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch multi-trip P&L (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
         }
+        val result = json.decodeFromString<ProfitLossResponse<List<TripProfitLossDto>>>(body)
+        return result.data
     }
 
     /**
@@ -177,13 +186,13 @@ class ReportsRemoteDataSource(
         val body = response.bodyAsText()
         logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
 
-        return if (response.status.isSuccess()) {
-            val result = json.decodeFromString<ProfitLossResponse<CostTypeAnalysisDto>>(body)
-            result.data
-        } else {
-            logger.e(TAG_REPORTS_REMOTE_DS, "Failed to fetch cost type analysis: ${response.status}")
-            null
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch cost type analysis (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
         }
+        val result = json.decodeFromString<ProfitLossResponse<CostTypeAnalysisDto>>(body)
+        return result.data
     }
 
     /**
@@ -202,13 +211,13 @@ class ReportsRemoteDataSource(
         val body = response.bodyAsText()
         logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
 
-        return if (response.status.isSuccess()) {
-            val result = json.decodeFromString<ProfitLossResponse<List<CostTypeAnalysisDto>>>(body)
-            result.data
-        } else {
-            logger.e(TAG_REPORTS_REMOTE_DS, "Failed to fetch multi cost type analysis: ${response.status}")
-            null
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch multi cost type analysis (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
         }
+        val result = json.decodeFromString<ProfitLossResponse<List<CostTypeAnalysisDto>>>(body)
+        return result.data
     }
 
     /**
@@ -227,13 +236,13 @@ class ReportsRemoteDataSource(
         val body = response.bodyAsText()
         logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
 
-        return if (response.status.isSuccess()) {
-            val result = json.decodeFromString<ProfitLossResponse<ConsolidatedPLDto>>(body)
-            result.data
-        } else {
-            logger.e(TAG_REPORTS_REMOTE_DS, "Failed to fetch consolidated P&L: ${response.status}")
-            null
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch consolidated P&L (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
         }
+        val result = json.decodeFromString<ProfitLossResponse<ConsolidatedPLDto>>(body)
+        return result.data
     }
 
     /**
@@ -246,54 +255,23 @@ class ReportsRemoteDataSource(
         endDate: String? = null
     ): PLSummaryDto? {
         val url = "${ApiConfig.BASE_URL}/reports/profit-loss/summary"
-        logger.d(TAG_REPORTS_REMOTE_DS, "=== getPLSummary API CALL ===")
-        logger.d(TAG_REPORTS_REMOTE_DS, "URL: $url")
-        logger.d(TAG_REPORTS_REMOTE_DS, "Params: start_date=$startDate, end_date=$endDate")
-        logger.d(TAG_REPORTS_REMOTE_DS, "Token present: ${token.isNotBlank()}")
+        logger.d(TAG_REPORTS_REMOTE_DS, "Fetching P&L summary: start_date=$startDate, end_date=$endDate")
 
-        return try {
-            val response: HttpResponse = httpClient.get(url) {
-                header(HttpHeaders.Authorization, "Bearer $token")
-                startDate?.let {
-                    logger.d(TAG_REPORTS_REMOTE_DS, "Adding start_date parameter: $it")
-                    parameter("start_date", it)
-                }
-                endDate?.let {
-                    logger.d(TAG_REPORTS_REMOTE_DS, "Adding end_date parameter: $it")
-                    parameter("end_date", it)
-                }
-            }
-            val body = response.bodyAsText()
-            logger.d(TAG_REPORTS_REMOTE_DS, "Response status: ${response.status}")
-            logger.d(TAG_REPORTS_REMOTE_DS, "Response body length: ${body.length} chars")
-            logger.d(TAG_REPORTS_REMOTE_DS, "Response body: $body")
-
-            if (response.status.isSuccess()) {
-                try {
-                    logger.d(TAG_REPORTS_REMOTE_DS, "Parsing response...")
-                    val result = json.decodeFromString<ProfitLossResponse<PLSummaryDto>>(body)
-                    logger.d(TAG_REPORTS_REMOTE_DS, "Parse success: success=${result.success}, message=${result.message}")
-                    logger.d(TAG_REPORTS_REMOTE_DS, "Data present: ${result.data != null}")
-                    if (result.data != null) {
-                        logger.d(TAG_REPORTS_REMOTE_DS, "Data overview: totalRevenue=${result.data.overview?.totalRevenue}, totalExpenses=${result.data.overview?.totalExpenses}")
-                        logger.d(TAG_REPORTS_REMOTE_DS, "Data period: startDate=${result.data.period?.startDate}, endDate=${result.data.period?.endDate}")
-                    }
-                    result.data
-                } catch (e: Exception) {
-                    logger.e(TAG_REPORTS_REMOTE_DS, "Failed to parse P&L summary response: ${e.message}")
-                    logger.e(TAG_REPORTS_REMOTE_DS, "Exception type: ${e::class.simpleName}")
-                    logger.e(TAG_REPORTS_REMOTE_DS, "Response was: $body")
-                    null
-                }
-            } else {
-                logger.e(TAG_REPORTS_REMOTE_DS, "API failed with status: ${response.status}")
-                logger.e(TAG_REPORTS_REMOTE_DS, "Error body: $body")
-                null
-            }
-        } catch (e: Exception) {
-            logger.e(TAG_REPORTS_REMOTE_DS, "Network error fetching P&L summary: ${e.message}")
-            logger.e(TAG_REPORTS_REMOTE_DS, "Exception type: ${e::class.simpleName}")
-            null
+        val response: HttpResponse = httpClient.get(url) {
+            header(HttpHeaders.Authorization, "Bearer $token")
+            startDate?.let { parameter("start_date", it) }
+            endDate?.let { parameter("end_date", it) }
         }
+        val body = response.bodyAsText()
+        logger.d(TAG_REPORTS_REMOTE_DS, "Response status: ${response.status}, body length: ${body.length}")
+
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch P&L summary (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
+        }
+        val result = json.decodeFromString<ProfitLossResponse<PLSummaryDto>>(body)
+        logger.d(TAG_REPORTS_REMOTE_DS, "Parsed P&L summary: success=${result.success}")
+        return result.data
     }
 }

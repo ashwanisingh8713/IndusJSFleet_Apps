@@ -288,7 +288,7 @@ internal fun NavigationDrawerContent(
 
         // Footer
         Text(
-            text = "IndusJS Fleet v1.0",
+            text = stringResource(Res.string.app_version_label),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier

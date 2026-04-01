@@ -28,6 +28,7 @@ import com.ijs.team.domain.entity.TeamMemberRole
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Team Member Detail Screen - displays detailed information about a team member with edit capability.

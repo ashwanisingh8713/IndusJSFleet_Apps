@@ -12,6 +12,9 @@ import com.ijs.finance.presentation.VehicleFinanceContract.Effect
 import com.ijs.finance.presentation.VehicleFinanceContract.Intent
 import com.ijs.finance.presentation.VehicleFinanceContract.State
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
 
 @Inject
@@ -122,10 +125,16 @@ init {
         var totalPaidAmount = 0.0
         var totalOutstandingAmount = 0.0
 
-        for (vehicleId in vehicleIds) {
-            if (vehicleId <= 0) continue
+        // Parallelize purchase info loading instead of sequential N+1 requests
+        val validIds = vehicleIds.filter { it > 0 }
+        val results = coroutineScope {
+            validIds.map { vehicleId ->
+                async { vehicleId to financeRepository.getPurchase(vehicleId) }
+            }.awaitAll()
+        }
 
-            when (val result = financeRepository.getPurchase(vehicleId)) {
+        for ((vehicleId, result) in results) {
+            when (result) {
                 is Result.Success -> {
                     val purchase = result.data
                     purchasesMap[vehicleId] = purchase

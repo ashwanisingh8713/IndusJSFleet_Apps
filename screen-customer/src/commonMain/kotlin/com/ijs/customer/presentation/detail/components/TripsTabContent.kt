@@ -23,6 +23,8 @@ import com.ijs.customer.domain.entity.CustomerTrip
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.TripStateFilter
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Trips Tab Content with integrated pending payment info.
@@ -168,7 +170,11 @@ private fun TripsSummaryCard(
                     if (isExporting) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("📄", style = MaterialTheme.typography.bodyLarge)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_download),
+                            contentDescription = "Export",
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }

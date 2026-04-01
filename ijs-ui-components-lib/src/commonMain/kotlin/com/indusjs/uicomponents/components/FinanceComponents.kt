@@ -28,17 +28,17 @@ import kotlin.math.pow
 // ==================== Finance Colors ====================
 
 object FinanceColors {
-    val LoanBlue = Color(0xFF3B82F6)
-    val LoanBlueDark = Color(0xFF1D4ED8)
-    val CashGreen = Color(0xFF10B981)
-    val CashGreenDark = Color(0xFF059669)
-    val WarningOrange = Color(0xFFF59E0B)
-    val WarningOrangeDark = Color(0xFFD97706)
-    val CriticalRed = Color(0xFFEF4444)
-    val CriticalRedDark = Color(0xFFDC2626)
-    val NeutralGray = Color(0xFF9CA3AF)
-    val SuccessGreen = Color(0xFF22C55E)
-    val PurpleAccent = Color(0xFF8B5CF6)
+    val LoanBlue = com.indusjs.uicomponents.theme.FleetStatusColors.InfoBlue
+    val LoanBlueDark = com.indusjs.uicomponents.theme.FleetStatusColors.InfoBlueDark
+    val CashGreen = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+    val CashGreenDark = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreenDark
+    val WarningOrange = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
+    val WarningOrangeDark = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmberDark
+    val CriticalRed = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
+    val CriticalRedDark = com.indusjs.uicomponents.theme.FleetStatusColors.LossRedDark
+    val NeutralGray = com.indusjs.uicomponents.theme.FleetStatusColors.NeutralGray
+    val SuccessGreen = com.indusjs.uicomponents.theme.FleetStatusColors.SuccessGreen
+    val PurpleAccent = com.indusjs.uicomponents.theme.FleetStatusColors.AccentPurple
 }
 
 // ==================== Circular Progress Indicator ====================

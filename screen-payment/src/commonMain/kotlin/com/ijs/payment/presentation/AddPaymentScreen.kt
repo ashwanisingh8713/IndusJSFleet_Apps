@@ -24,6 +24,7 @@ import com.indusjs.datetimepicker.PickerMode
 import com.ijs.payment.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Add/Edit Payment Screen.
@@ -65,7 +66,7 @@ fun AddPaymentScreen(
                     IconButton(onClick = { viewModel.sendIntent(AddPaymentContract.Intent.Cancel) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 },
@@ -82,7 +83,7 @@ fun AddPaymentScreen(
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_check),
-                                contentDescription = "Save"
+                                contentDescription = stringResource(Res.string.save)
                             )
                         }
                     }
@@ -181,7 +182,7 @@ fun AddPaymentScreen(
                             viewModel.sendIntent(AddPaymentContract.Intent.UpdateDueDate(date))
                         },
                         mode = PickerMode.DATE_ONLY,
-                        label = "Due Date (Optional)",
+                        label = stringResource(Res.string.payment_add_due_date),
                         isError = false,
                         minDate = minPaymentDate  // Due date must be after trip start date
                     )
@@ -189,7 +190,7 @@ fun AddPaymentScreen(
 
                 // Payment Mode Section
                 Text(
-                    text = "Payment Mode",
+                    text = stringResource(Res.string.payment_add_payment_mode),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -260,7 +261,7 @@ fun AddPaymentScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text(if (state.isEditMode) "Update Payment" else "Record Payment")
+                    Text(if (state.isEditMode) stringResource(Res.string.payment_action_update) else stringResource(Res.string.payment_action_record))
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -289,7 +290,7 @@ private fun TripSelectionSection(
 ) {
     Column {
         Text(
-            text = "Select Trip *",
+            text = stringResource(Res.string.payment_add_select_trip),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary
         )
@@ -326,7 +327,7 @@ private fun TripSelectionSection(
                     }
                 } else {
                     Text(
-                        text = "Tap to select a trip",
+                        text = stringResource(Res.string.payment_add_tap_to_select),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -370,7 +371,7 @@ private fun SelectedTripInfoCard(trip: TripSummaryForPayment, startDateTimeDispl
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Trip Price",
+                        text = stringResource(Res.string.payment_add_trip_price),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -390,7 +391,7 @@ private fun SelectedTripInfoCard(trip: TripSummaryForPayment, startDateTimeDispl
                         text = trip.pendingDisplay,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (trip.hasPendingAmount) Color(0xFFE65100) else Color(0xFF2E7D32)
+                        color = if (trip.hasPendingAmount) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending else com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -906,9 +907,9 @@ private fun TripSelectorBottomSheet(
                         label = { Text(label, style = MaterialTheme.typography.labelSmall) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = if (value == "pending")
-                                Color(0xFFE65100).copy(alpha = 0.2f)
+                                com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending.copy(alpha = 0.2f)
                             else
-                                Color(0xFFFFA000).copy(alpha = 0.2f)
+                                com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPartial.copy(alpha = 0.2f)
                         )
                     )
                 }
@@ -973,16 +974,16 @@ private fun EnhancedTripCard(
     onSelect: () -> Unit
 ) {
     val paymentStatusColor = when {
-        trip.isFullyPaid -> Color(0xFF2E7D32) // Green
-        trip.paidAmount > 0 -> Color(0xFFFFA000) // Orange - Partial
-        else -> Color(0xFFE65100) // Red-Orange - Pending
+        trip.isFullyPaid -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived // Green
+        trip.paidAmount > 0 -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPartial // Orange - Partial
+        else -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending // Red-Orange - Pending
     }
 
     val tripStateColor = when (trip.state?.lowercase()) {
-        "completed" -> Color(0xFF2E7D32)
-        "on_route" -> Color(0xFF1976D2)
-        "planned" -> Color(0xFF7B1FA2)
-        "cancelled", "failed" -> Color(0xFFD32F2F)
+        "completed" -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
+        "on_route" -> com.indusjs.uicomponents.theme.FleetStatusColors.TripOnRoute
+        "planned" -> com.indusjs.uicomponents.theme.FleetStatusColors.TripPlanned
+        "cancelled", "failed" -> com.indusjs.uicomponents.theme.FleetStatusColors.TripFailed
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -1110,7 +1111,7 @@ private fun EnhancedTripCard(
                         text = trip.paidAmountDisplay,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF2E7D32)
+                        color = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
                     )
                 }
                 // Pending - highlighted

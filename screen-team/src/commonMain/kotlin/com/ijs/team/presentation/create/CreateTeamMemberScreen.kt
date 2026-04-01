@@ -211,12 +211,25 @@ fun CreateTeamMemberScreen(
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text(stringResource(Res.string.team_label_password)) },
                         placeholder = { Text(stringResource(Res.string.team_placeholder_password)) },
-                        leadingIcon = { Text("🔒") },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_lock),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
                         trailingIcon = {
                             IconButton(
                                 onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.TogglePasswordVisibility) }
                             ) {
-                                Text(if (state.isPasswordVisible) "👁️" else "👁️‍🗨️")
+                                Icon(
+                                    painter = painterResource(
+                                        if (state.isPasswordVisible) Res.drawable.ic_visibility_off
+                                        else Res.drawable.ic_visibility
+                                    ),
+                                    contentDescription = if (state.isPasswordVisible) "Hide password" else "Show password",
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         },
                         visualTransformation = if (state.isPasswordVisible) {
@@ -245,12 +258,25 @@ fun CreateTeamMemberScreen(
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text(stringResource(Res.string.team_label_confirm_password)) },
                         placeholder = { Text(stringResource(Res.string.team_placeholder_confirm_password)) },
-                        leadingIcon = { Text("🔒") },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_lock),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
                         trailingIcon = {
                             IconButton(
                                 onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.ToggleConfirmPasswordVisibility) }
                             ) {
-                                Text(if (state.isConfirmPasswordVisible) "👁️" else "👁️‍🗨️")
+                                Icon(
+                                    painter = painterResource(
+                                        if (state.isConfirmPasswordVisible) Res.drawable.ic_visibility_off
+                                        else Res.drawable.ic_visibility
+                                    ),
+                                    contentDescription = if (state.isConfirmPasswordVisible) "Hide password" else "Show password",
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         },
                         visualTransformation = if (state.isConfirmPasswordVisible) {

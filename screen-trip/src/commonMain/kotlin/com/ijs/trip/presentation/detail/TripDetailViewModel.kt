@@ -22,6 +22,7 @@ import com.ijs.trip.presentation.detail.TripDetailContract.Effect
 import com.ijs.trip.presentation.detail.TripDetailContract.Intent
 import com.ijs.trip.presentation.detail.TripDetailContract.State
 import dev.zacsweers.metro.Inject
+import androidx.lifecycle.viewModelScope
 
 /**
  * ViewModel for the Trip Detail screen implementing MVI pattern.
@@ -58,6 +59,7 @@ class TripDetailViewModel(
     private val dataLoader = TripDetailDataLoader(
         stateManager = this,
         dispatcherProvider = dispatcherProvider,
+        scope = viewModelScope,
         getTripByIdUseCase = getTripByIdUseCase,
         costsRepository = costsRepository,
         getVehiclesUseCase = getVehiclesUseCase,
@@ -71,6 +73,7 @@ class TripDetailViewModel(
     private val locationHandler = TripDetailLocationHandler(
         stateManager = this,
         dispatcherProvider = dispatcherProvider,
+        scope = viewModelScope,
         googlePlacesService = googlePlacesService
     )
 

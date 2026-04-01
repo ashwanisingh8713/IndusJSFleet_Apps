@@ -179,7 +179,11 @@ private fun TripPLContent(
                 enabled = state.canLoadTrips && !state.isLoadingTrips,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("🔍", style = MaterialTheme.typography.titleSmall)
+                Icon(
+                    painter = painterResource(Res.drawable.ic_search),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = if (state.tripsLoaded) "Reload Trips" else "Load Trips",
@@ -250,7 +254,7 @@ private fun TripPLContent(
                     )
                     // Summary
                     val totalProfit = state.results.sumOf { it.netProfit }
-                    val profitColor = if (totalProfit >= 0) Color(0xFF10B981) else Color(0xFFEF4444)
+                    val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.profitLossColor(totalProfit)
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = profitColor.copy(alpha = 0.15f)
@@ -418,7 +422,13 @@ private fun TripSelectionCard(
                     value = searchQuery,
                     onValueChange = onSearchChange,
                     placeholder = { Text("Search trips...", style = MaterialTheme.typography.bodySmall) },
-                    leadingIcon = { Text("🔍", modifier = Modifier.padding(start = 4.dp)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_search),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp),
@@ -531,13 +541,7 @@ private fun TripSelectionItem(
             // State badge
             val statusStr = TripStatus.getDisplayLabel(trip.status)
             val colorScheme = TripStatus.getColorScheme(trip.status)
-            val stateColor = when (colorScheme) {
-                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> Color(0xFF10B981)
-                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> Color(0xFFF59E0B)
-                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> Color(0xFF3B82F6)
-                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> Color(0xFFEF4444)
-                com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.onSurfaceVariant
-            }
+            val stateColor = com.indusjs.uicomponents.components.stateColorSchemeToColor(colorScheme)
             Surface(
                 shape = RoundedCornerShape(6.dp),
                 color = stateColor.copy(alpha = 0.15f)
@@ -588,7 +592,7 @@ private fun ErrorCard(error: String) {
 @Composable
 private fun TripPLResultCard(result: TripProfitLoss) {
     val isProfit = result.isProfitable
-    val profitColor = if (isProfit) Color(0xFF10B981) else Color(0xFFEF4444)
+    val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.profitLossColor(result.netProfit)
 
     Card(
         modifier = Modifier
@@ -656,12 +660,12 @@ private fun TripPLResultCard(result: TripProfitLoss) {
                 MiniKPI(
                     label = "Revenue",
                     value = formatCurrency(result.sellingValue),
-                    color = Color(0xFF10B981)
+                    color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
                 )
                 MiniKPI(
                     label = "Expenses",
                     value = formatCurrency(result.totalExpenses),
-                    color = Color(0xFFF59E0B)
+                    color = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
                 )
                 MiniKPI(
                     label = "Net Profit",

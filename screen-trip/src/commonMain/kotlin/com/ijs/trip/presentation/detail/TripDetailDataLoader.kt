@@ -28,6 +28,7 @@ import kotlinx.coroutines.withContext
 internal class TripDetailDataLoader(
     private val stateManager: TripDetailStateManager,
     private val dispatcherProvider: DispatcherProvider,
+    private val scope: CoroutineScope,
     private val getTripByIdUseCase: GetTripByIdUseCase,
     private val costsRepository: CostsRepository,
     private val getVehiclesUseCase: GetVehiclesUseCase,
@@ -287,7 +288,7 @@ suspend fun loadTrip(tripId: String) {
             return
         }
 
-        CoroutineScope(dispatcherProvider.main).launch {
+        scope.launch {
             stateManager.updateTripState { copy(isRefreshingCustomers = true) }
             try {
                 when (val result = repository.refreshCustomers()) {
@@ -313,7 +314,8 @@ suspend fun loadTrip(tripId: String) {
 
     /**
      * Parses schedule date/time from ISO format or separate date/time fields.
-     * Returns a Pair of (date in DDMMYYYY raw format, time in HHMM raw format).
+     * Returns a Pair of (date in DD-MM-YYYY format, time in HH:MM format).
+     * FleetDateTimePicker expects DD-MM-YYYY and HH:MM with delimiters.
      */
     fun parseScheduleDateTime(
         isoDateTime: String?,
@@ -329,11 +331,13 @@ suspend fun loadTrip(tripId: String) {
 
                     val dateComponents = datePart.split("-")
                     if (dateComponents.size == 3) {
-                        val rawDate = "${dateComponents[2]}${dateComponents[1]}${dateComponents[0]}"
+                        // Return DD-MM-YYYY (with hyphens)
+                        val formattedDate = "${dateComponents[2]}-${dateComponents[1]}-${dateComponents[0]}"
                         val timeComponents = timePart.split(":")
                         if (timeComponents.size >= 2) {
-                            val rawTime = "${timeComponents[0]}${timeComponents[1]}"
-                            return Pair(rawDate, rawTime)
+                            // Return HH:MM (with colon)
+                            val formattedTime = "${timeComponents[0]}:${timeComponents[1]}"
+                            return Pair(formattedDate, formattedTime)
                         }
                     }
                 }
@@ -342,9 +346,10 @@ suspend fun loadTrip(tripId: String) {
             }
         }
 
-        val rawDate = date?.replace("-", "")?.filter { it.isDigit() }?.take(8) ?: ""
-        val rawTime = time?.replace(":", "")?.filter { it.isDigit() }?.take(4) ?: ""
-        return Pair(rawDate, rawTime)
+        // Fallback: preserve delimiters from the original date/time fields
+        val fallbackDate = date?.trim() ?: ""
+        val fallbackTime = time?.trim() ?: ""
+        return Pair(fallbackDate, fallbackTime)
     }
 }
 

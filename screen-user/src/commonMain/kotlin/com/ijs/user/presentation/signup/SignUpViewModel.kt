@@ -145,7 +145,9 @@ class SignUpViewModel(
     }
 
     private fun isValidEmail(email: String): Boolean {
-        return email.contains("@") && email.contains(".")
+        if (email.isBlank()) return false
+        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
+        return emailRegex.matches(email)
     }
 
     /**

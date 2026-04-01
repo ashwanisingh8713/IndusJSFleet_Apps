@@ -40,7 +40,9 @@ class DriversViewModel(
             is Intent.SearchDrivers -> searchDrivers(intent.query)
             is Intent.FilterByStatus -> filterByStatus(intent.status)
             is Intent.SelectDriver -> selectDriver(intent.driverId)
-            is Intent.DeleteDriver -> deleteDriver(intent.driverId)
+            is Intent.DeleteDriver -> requestDeleteDriver(intent.driverId)
+            is Intent.ConfirmDelete -> confirmDeleteDriver()
+            is Intent.DismissDelete -> dismissDeleteDriver()
             is Intent.UpdateDriverStatus -> updateDriverStatus(intent.driverId, intent.status)
             is Intent.ToggleDriverActive -> toggleDriverActive(intent.driverId)
             is Intent.AddDriver -> sendEffect(Effect.NavigateToAddDriver)
@@ -125,6 +127,20 @@ class DriversViewModel(
             matchesSearch && matchesStatus
         }
         updateState { copy(filteredDrivers = filtered) }
+    }
+
+    private fun requestDeleteDriver(driverId: String) {
+        updateState { copy(driverToDelete = driverId, showDeleteConfirmation = true) }
+    }
+
+    private suspend fun confirmDeleteDriver() {
+        val driverId = currentState.driverToDelete ?: return
+        updateState { copy(showDeleteConfirmation = false, driverToDelete = null) }
+        deleteDriver(driverId)
+    }
+
+    private fun dismissDeleteDriver() {
+        updateState { copy(showDeleteConfirmation = false, driverToDelete = null) }
     }
 
     private suspend fun deleteDriver(driverId: String) {

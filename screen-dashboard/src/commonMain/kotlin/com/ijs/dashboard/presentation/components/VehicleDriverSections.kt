@@ -34,6 +34,7 @@ import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Offline banner shown when displaying cached data due to network error.
@@ -73,13 +74,13 @@ internal fun OfflineBanner(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Offline Mode",
+                    text = stringResource(Res.string.dashboard_offline_mode),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
                 Text(
-                    text = if (lastUpdated != null) "Last updated: $lastUpdated" else "Showing cached data",
+                    text = if (lastUpdated != null) stringResource(Res.string.dashboard_last_updated, lastUpdated) else stringResource(Res.string.dashboard_showing_cached),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
                 )
@@ -91,7 +92,7 @@ internal fun OfflineBanner(
                 )
             ) {
                 Text(
-                    text = "Retry",
+                    text = stringResource(Res.string.retry),
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -101,7 +102,7 @@ internal fun OfflineBanner(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_close),
-                    contentDescription = "Dismiss",
+                    contentDescription = stringResource(Res.string.cd_dismiss),
                     tint = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.size(18.dp)
                 )
@@ -193,12 +194,12 @@ internal fun VehicleStatusSection(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Vehicles",
+                            text = stringResource(Res.string.org_stats_vehicles),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "${vehicleStatus.total} total",
+                            text = stringResource(Res.string.dashboard_count_total, vehicleStatus.total),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -206,7 +207,7 @@ internal fun VehicleStatusSection(
                 }
                 TextButton(onClick = onClick) {
                     Text(
-                        text = "View All",
+                        text = stringResource(Res.string.action_view_all),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
@@ -224,9 +225,9 @@ internal fun VehicleStatusSection(
             if (vehicleStatus.total == 0) {
                 SectionEmptyState(
                     iconRes = Res.drawable.ic_vehicle,
-                    title = "No vehicles yet",
-                    message = "Add your first vehicle to start tracking",
-                    actionLabel = "Add",
+                    title = stringResource(Res.string.dashboard_no_vehicles_yet),
+                    message = stringResource(Res.string.dashboard_add_vehicle_message),
+                    actionLabel = stringResource(Res.string.add),
                     onAction = onAddVehicleClick
                 )
             } else {
@@ -235,19 +236,19 @@ internal fun VehicleStatusSection(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     EnhancedStatusChip(
-                        label = "On Route",
+                        label = stringResource(Res.string.dashboard_label_on_route),
                         count = vehicleStatus.onTripInProgress,
                         color = Color(0xFF4CAF50),
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
-                        label = "Planned",
+                        label = stringResource(Res.string.dashboard_label_planned),
                         count = vehicleStatus.onTripPlanned,
                         color = Color(0xFF2196F3),
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
-                        label = "Available",
+                        label = stringResource(Res.string.dashboard_label_available),
                         count = vehicleStatus.available,
                         color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.weight(1f)
@@ -269,7 +270,7 @@ internal fun VehicleStatusSection(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Vehicle", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(Res.string.action_add_vehicle), style = MaterialTheme.typography.labelSmall)
                     }
                     OutlinedButton(
                         onClick = onAddMaintenanceCostClick,
@@ -282,7 +283,7 @@ internal fun VehicleStatusSection(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Cost", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -337,12 +338,12 @@ internal fun DriversStatusSection(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Drivers",
+                            text = stringResource(Res.string.org_stats_drivers),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "${driverStatus.total} total",
+                            text = stringResource(Res.string.dashboard_count_total, driverStatus.total),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -350,7 +351,7 @@ internal fun DriversStatusSection(
                 }
                 TextButton(onClick = onClick) {
                     Text(
-                        text = "View All",
+                        text = stringResource(Res.string.action_view_all),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
@@ -368,9 +369,9 @@ internal fun DriversStatusSection(
             if (driverStatus.total == 0) {
                 SectionEmptyState(
                     iconRes = Res.drawable.ic_driver,
-                    title = "No drivers yet",
-                    message = "Add your first driver to get started",
-                    actionLabel = "Add",
+                    title = stringResource(Res.string.dashboard_no_drivers_yet),
+                    message = stringResource(Res.string.dashboard_add_driver_message),
+                    actionLabel = stringResource(Res.string.add),
                     onAction = onAddDriverClick
                 )
             } else {
@@ -379,19 +380,19 @@ internal fun DriversStatusSection(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     EnhancedStatusChip(
-                        label = "On Route",
+                        label = stringResource(Res.string.dashboard_label_on_route),
                         count = driverStatus.onTripInProgress,
                         color = Color(0xFF4CAF50),
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
-                        label = "Planned",
+                        label = stringResource(Res.string.dashboard_label_planned),
                         count = driverStatus.onTripPlanned,
                         color = Color(0xFF2196F3),
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
-                        label = "Available",
+                        label = stringResource(Res.string.dashboard_label_available),
                         count = driverStatus.available,
                         color = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.weight(1f)
@@ -413,7 +414,7 @@ internal fun DriversStatusSection(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Driver", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(Res.string.action_add_driver), style = MaterialTheme.typography.labelSmall)
                     }
                     OutlinedButton(
                         onClick = onAddDriverCostClick,
@@ -426,11 +427,10 @@ internal fun DriversStatusSection(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Cost", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
         }
     }
 }
-

@@ -171,18 +171,18 @@ private fun MapPlaceholder(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Map View",
+                text = stringResource(Res.string.maps_map_view),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Integration with map SDK required",
+                text = stringResource(Res.string.maps_sdk_required),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Supports: Google Maps, MapBox, OpenStreetMap",
+                text = stringResource(Res.string.maps_sdk_supports),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
@@ -229,24 +229,24 @@ private fun VehicleListBottomSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Vehicles",
+                    text = stringResource(Res.string.org_stats_vehicles),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     VehicleStatusCount(
                         count = vehicles.count { it.status == MapVehicleStatus.MOVING },
-                        label = "Moving",
+                        label = stringResource(Res.string.maps_moving),
                         color = MaterialTheme.colorScheme.primary
                     )
                     VehicleStatusCount(
                         count = vehicles.count { it.status == MapVehicleStatus.IDLE || it.status == MapVehicleStatus.STOPPED },
-                        label = "Stopped",
+                        label = stringResource(Res.string.maps_stopped),
                         color = MaterialTheme.colorScheme.secondary
                     )
                     VehicleStatusCount(
                         count = vehicles.count { it.status == MapVehicleStatus.OFFLINE },
-                        label = "Offline",
+                        label = stringResource(Res.string.maps_offline),
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -332,7 +332,7 @@ private fun MapVehicleItem(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = vehicle.driverName ?: "No driver",
+                    text = vehicle.driverName ?: stringResource(Res.string.maps_no_driver),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

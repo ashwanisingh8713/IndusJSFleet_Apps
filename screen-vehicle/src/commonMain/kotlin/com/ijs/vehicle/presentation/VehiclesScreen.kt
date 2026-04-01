@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +44,7 @@ fun VehiclesScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val pullRefreshState = rememberPullToRefreshState()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
@@ -101,12 +104,19 @@ fun VehiclesScreen(
             }
         }
     ) { paddingValues ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { viewModel.sendIntent(VehiclesContract.Intent.RefreshVehicles) },
+            state = pullRefreshState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
             // Search Bar - using reusable component
             FleetSearchField(
                 query = state.searchQuery,
@@ -163,10 +173,29 @@ fun VehiclesScreen(
                 }
             }
         }
+        }
+    }
+
+    // Delete confirmation dialog
+    if (state.showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { viewModel.sendIntent(VehiclesContract.Intent.DismissDelete) },
+            title = { Text(stringResource(Res.string.delete_confirmation_title)) },
+            text = { Text(stringResource(Res.string.vehicle_delete_confirmation_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.sendIntent(VehiclesContract.Intent.ConfirmDelete) },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text(stringResource(Res.string.delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.sendIntent(VehiclesContract.Intent.DismissDelete) }) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            }
+        )
     }
 }
-
-
 @Composable
 private fun StatusFilterChips(
     selectedStatus: VehicleStatus?,
@@ -388,13 +417,7 @@ private fun VehicleInfoItem(
 @Composable
 private fun StatusBadge(status: VehicleStatus) {
     val colorScheme = VehicleStatus.getColorScheme(status)
-    val color = when (colorScheme) {
-        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.primary
-        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> MaterialTheme.colorScheme.secondary
-        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
-        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.tertiary
-        com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
-    }
+    val color = com.indusjs.uicomponents.components.stateColorSchemeToColor(colorScheme)
     val text = VehicleStatus.getDisplayLabel(status)
 
     // Using reusable FleetStatusBadge component

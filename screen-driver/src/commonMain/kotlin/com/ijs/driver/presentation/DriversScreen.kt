@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +44,7 @@ fun DriversScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val pullRefreshState = rememberPullToRefreshState()
 
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
@@ -104,12 +107,19 @@ fun DriversScreen(
             }
         }
     ) { paddingValues ->
-        Column(
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { viewModel.sendIntent(DriversContract.Intent.RefreshDrivers) },
+            state = pullRefreshState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
             // Search Bar - using reusable component
             FleetSearchField(
                 query = state.searchQuery,
@@ -166,6 +176,27 @@ fun DriversScreen(
                 }
             }
         }
+        }
+    }
+
+    // Delete confirmation dialog
+    if (state.showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { viewModel.sendIntent(DriversContract.Intent.DismissDelete) },
+            title = { Text(stringResource(Res.string.delete_confirmation_title)) },
+            text = { Text(stringResource(Res.string.driver_delete_confirmation_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.sendIntent(DriversContract.Intent.ConfirmDelete) },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text(stringResource(Res.string.delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.sendIntent(DriversContract.Intent.DismissDelete) }) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            }
+        )
     }
 }
 

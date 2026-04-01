@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 internal class TripDetailLocationHandler(
     private val stateManager: TripDetailStateManager,
     private val dispatcherProvider: DispatcherProvider,
+    private val scope: CoroutineScope,
     private val googlePlacesService: GooglePlacesService?
 ) {
     private var startLocationSearchJob: Job? = null
@@ -43,7 +44,7 @@ internal class TripDetailLocationHandler(
             copy(isSearchingStartLocation = true, showStartLocationDropdown = true)
         }
 
-        startLocationSearchJob = CoroutineScope(dispatcherProvider.main).launch {
+        startLocationSearchJob = scope.launch {
             delay(300) // Debounce
             withContext(dispatcherProvider.io) {
                 googlePlacesService.searchPlaces(query).fold(
@@ -92,7 +93,7 @@ internal class TripDetailLocationHandler(
             copy(isSearchingEndLocation = true, showEndLocationDropdown = true)
         }
 
-        endLocationSearchJob = CoroutineScope(dispatcherProvider.main).launch {
+        endLocationSearchJob = scope.launch {
             delay(300) // Debounce
             withContext(dispatcherProvider.io) {
                 googlePlacesService.searchPlaces(query).fold(
@@ -189,7 +190,7 @@ internal class TripDetailLocationHandler(
 
         if (startLat != null && startLng != null && endLat != null && endLng != null) {
             if (googlePlacesService != null) {
-                CoroutineScope(dispatcherProvider.main).launch {
+                scope.launch {
                     stateManager.updateTripState { copy(isCalculatingDistance = true) }
                     withContext(dispatcherProvider.io) {
                         googlePlacesService.getRoadDistance(startLat, startLng, endLat, endLng).fold(

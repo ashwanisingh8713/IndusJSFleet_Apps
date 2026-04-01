@@ -265,9 +265,9 @@ fun StateActionButton(
 fun getColorForScheme(colorScheme: StateColorScheme): Color {
     return when (colorScheme) {
         StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.primary
-        StateColorScheme.WARNING -> Color(0xFFF59E0B)
+        StateColorScheme.WARNING -> com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
         StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
-        StateColorScheme.INFO -> Color(0xFF3B82F6)
+        StateColorScheme.INFO -> com.indusjs.uicomponents.theme.FleetStatusColors.InfoBlue
         StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
     }
 }

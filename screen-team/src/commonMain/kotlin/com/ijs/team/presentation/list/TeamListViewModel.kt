@@ -51,8 +51,8 @@ class TeamListViewModel(
             try {
                 // Load current user info
                 val userRole = try {
-                    userLocalDataSource.getUserRole() ?: "owner"
-                } catch (e: Exception) { "owner" }
+                    userLocalDataSource.getUserRole() ?: "supervisor"
+                } catch (e: Exception) { "supervisor" }
 
                 val userId = try {
                     userLocalDataSource.getUserId() ?: ""
@@ -131,8 +131,8 @@ class TeamListViewModel(
             try {
                 // Load current user info
                 val userRole = try {
-                    userLocalDataSource.getUserRole() ?: "owner"
-                } catch (e: Exception) { "owner" }
+                    userLocalDataSource.getUserRole() ?: "supervisor"
+                } catch (e: Exception) { "supervisor" }
 
                 val userId = try {
                     userLocalDataSource.getUserId() ?: ""

@@ -1,0 +1,513 @@
+package com.ijs.vehicle.presentation.detail
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import com.indusjs.pdfreport.handler.VehicleMaintenanceCostsPdfHandler
+import com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData
+import com.indusjs.uicomponents.components.DateInputField
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+internal fun CostsTabContent(
+    state: VehicleDetailContract.State,
+    viewModel: VehicleDetailViewModel,
+    modifier: Modifier = Modifier
+) {
+    // Temp filter values for bottom sheet
+    var tempStartDate by remember { mutableStateOf(state.costsStartDate) }
+    var tempEndDate by remember { mutableStateOf(state.costsEndDate) }
+    var tempSelectedFilters by remember { mutableStateOf(state.selectedCostTypeFilters) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Sync temp values when sheet opens
+    LaunchedEffect(state.showCostsFilterSheet) {
+        if (state.showCostsFilterSheet) {
+            tempStartDate = state.costsStartDate
+            tempEndDate = state.costsEndDate
+            tempSelectedFilters = state.selectedCostTypeFilters
+            // Load cost types from local database when filter sheet opens
+            viewModel.sendIntent(VehicleDetailContract.Intent.LoadCostTypes)
+        }
+    }
+
+    // Load costs on first composition
+    LaunchedEffect(Unit) {
+        // Only check maintenance costs since Vehicle Costs tab shows only maintenance costs
+        if (state.maintenanceCosts.isEmpty() && !state.isLoadingCosts) {
+            viewModel.sendIntent(VehicleDetailContract.Intent.LoadCosts)
+        }
+    }
+
+    // Filter Bottom Sheet
+    if (state.showCostsFilterSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.sendIntent(VehicleDetailContract.Intent.HideCostsFilterSheet) },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 24.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Filters", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = {
+                        tempStartDate = ""
+                        tempEndDate = ""
+                        tempSelectedFilters = emptySet()
+                    }) {
+                        Text("Clear All")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Date Range Section
+                Text("Date Range", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    DateInputField(
+                        value = tempStartDate,
+                        onValueChange = { tempStartDate = it },
+                        label = "From",
+                        modifier = Modifier.weight(1f)
+                    )
+                    DateInputField(
+                        value = tempEndDate,
+                        onValueChange = { tempEndDate = it },
+                        label = "To",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Cost Types Section (Multi-select)
+                Text("Cost Types", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text("Select one or more", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Loading indicator for cost types
+                if (state.isLoadingCostTypes) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+                } else {
+                    // Trip Cost Types - from local database
+                    if (state.tripCostTypeGroups.isNotEmpty()) {
+                        Text("Trip Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        state.tripCostTypeGroups.forEach { group ->
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                group.items.forEach { item ->
+                                    FilterChip(
+                                        selected = tempSelectedFilters.contains(item.id),
+                                        onClick = {
+                                            tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
+                                                tempSelectedFilters - item.id
+                                            } else {
+                                                tempSelectedFilters + item.id
+                                            }
+                                        },
+                                        label = { Text(item.label) },
+                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
+                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                        } else null
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    } else {
+                        // Fallback to static cost types from TripCostTypes object
+                        Text("Trip Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        com.indusjs.fleet.data.model.costs.TripCostTypes.groups.forEach { group ->
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                group.items.forEach { item ->
+                                    FilterChip(
+                                        selected = tempSelectedFilters.contains(item.id),
+                                        onClick = {
+                                            tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
+                                                tempSelectedFilters - item.id
+                                            } else {
+                                                tempSelectedFilters + item.id
+                                            }
+                                        },
+                                        label = { Text(item.label) },
+                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
+                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                        } else null
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Maintenance Cost Types - from local database
+                    if (state.maintenanceCostTypeGroups.isNotEmpty()) {
+                        Text("Maintenance Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        state.maintenanceCostTypeGroups.forEach { group ->
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                group.items.forEach { item ->
+                                    FilterChip(
+                                        selected = tempSelectedFilters.contains(item.id),
+                                        onClick = {
+                                            tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
+                                                tempSelectedFilters - item.id
+                                            } else {
+                                                tempSelectedFilters + item.id
+                                            }
+                                        },
+                                        label = { Text(item.label) },
+                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
+                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                        } else null
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    } else {
+                        // Fallback to static cost types from MaintenanceCostTypes object
+                        Text("Maintenance Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        com.indusjs.fleet.data.model.costs.MaintenanceCostTypes.groups.forEach { group ->
+                            Text(
+                                text = group.groupName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                group.items.forEach { item ->
+                                    FilterChip(
+                                        selected = tempSelectedFilters.contains(item.id),
+                                        onClick = {
+                                            tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
+                                                tempSelectedFilters - item.id
+                                            } else {
+                                                tempSelectedFilters + item.id
+                                            }
+                                        },
+                                        label = { Text(item.label) },
+                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
+                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                        } else null
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Action Buttons
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(
+                        onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.HideCostsFilterSheet) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            viewModel.sendIntent(
+                                VehicleDetailContract.Intent.ApplyCostFilters(tempStartDate, tempEndDate, tempSelectedFilters)
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Apply Filters")
+                    }
+                }
+            }
+        }
+    }
+
+    // Show only Maintenance Costs (Vehicle Maintenance Costs per costs-README.md)
+    // Trip costs are shown in Trip Detail screen, not here
+    val allCosts = state.maintenanceCosts.map { CostDisplayItem.fromMaintenanceCost(it) }
+        .sortedByDescending { it.date }
+    val groupedByDate = allCosts.groupBy { it.dateLabel }
+    val activeFilterCount = state.selectedCostTypeFilters.size +
+        (if (state.costsStartDate.isNotBlank() || state.costsEndDate.isNotBlank()) 1 else 0)
+
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Compact Summary Header with Filter Button and Add Cost Button
+        item(key = "header") {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Maintenance Costs",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "₹${formatAmount(state.maintenanceCostsTotalAmount)}",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = "${state.maintenanceCosts.size} entries",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Export Button
+                        if (state.maintenanceCosts.isNotEmpty()) {
+                            FilledTonalIconButton(
+                                onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ExportMaintenanceCostsPdf) }
+                            ) {
+                                Text("📄", style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+
+                        // Add Cost Button
+                        FilledTonalButton(
+                            onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.NavigateToAddMaintenanceCost) },
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Text("+ Add Cost", style = MaterialTheme.typography.labelMedium)
+                        }
+
+                        // Filter Button with Badge
+                        BadgedBox(
+                            badge = {
+                                if (activeFilterCount > 0) {
+                                    Badge { Text("$activeFilterCount") }
+                                }
+                            }
+                        ) {
+                            FilledTonalIconButton(
+                                onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ShowCostsFilterSheet) }
+                            ) {
+                                Text("🔍", style = MaterialTheme.typography.titleMedium)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Active Filters Chips (dismissable)
+        if (activeFilterCount > 0) {
+            item(key = "active_filters") {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    state.selectedCostTypeFilters.forEach { filter ->
+                        InputChip(
+                            selected = true,
+                            onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ToggleCostTypeFilter(filter)) },
+                            label = { Text(getCostTypeLabel(filter), style = MaterialTheme.typography.labelSmall) },
+                            trailingIcon = { Text("✕", style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                    if (state.costsStartDate.isNotBlank() || state.costsEndDate.isNotBlank()) {
+                        InputChip(
+                            selected = true,
+                            onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateCostsDateRange("", "")) },
+                            label = {
+                                Text(
+                                    "${state.costsStartDate.ifBlank { "..." }} → ${state.costsEndDate.ifBlank { "..." }}",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            },
+                            trailingIcon = { Text("✕", style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Loading
+        if (state.isLoadingCosts && allCosts.isEmpty()) {
+            item(key = "loading") {
+                Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                }
+            }
+        }
+
+        // Error
+        state.costsError?.let { error ->
+            item(key = "error") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshCosts) }) { Text("Retry") }
+                    }
+                }
+            }
+        }
+
+        // Empty State - Updated for maintenance costs only
+        if (allCosts.isEmpty() && !state.isLoadingCosts && state.costsError == null) {
+            item(key = "empty") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("🔧", style = MaterialTheme.typography.displaySmall)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("No maintenance costs", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text("Vehicle maintenance expenses appear here", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Button(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.NavigateToAddMaintenanceCost) }) {
+                            Text("+ Add Maintenance Cost")
+                        }
+                    }
+                }
+            }
+        }
+
+        // Grouped Costs by Date
+        groupedByDate.forEach { (dateLabel, costs) ->
+            item(key = "date_$dateLabel") {
+                val dateTotal = costs.sumOf { it.amount }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = RoundedCornerShape(4.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+                            Text("📅", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall)
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(dateLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text(" (${costs.size})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text("₹${formatAmount(dateTotal)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+            costs.forEach { cost ->
+                item(key = "cost_${cost.category}_${cost.id}") {
+                    CompactCostCard(cost = cost, onDelete = { viewModel.sendIntent(VehicleDetailContract.Intent.DeleteCost(cost.id, cost.category)) })
+                }
+            }
+        }
+
+        // Load More
+        if (state.hasMoreCosts) {
+            item(key = "load_more") {
+                Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
+                    if (state.isLoadingCosts) CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    else TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.LoadMoreCosts) }) { Text("Load More") }
+                }
+            }
+        }
+    }
+
+    // Delete Dialog
+    if (state.showDeleteCostDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.sendIntent(VehicleDetailContract.Intent.DismissDeleteCostDialog) },
+            title = { Text("Delete Cost") },
+            text = { Text("Delete this cost entry?") },
+            confirmButton = { TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ConfirmDeleteCost) }) { Text("Delete", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.DismissDeleteCostDialog) }) { Text("Cancel") } }
+        )
+    }
+}
+

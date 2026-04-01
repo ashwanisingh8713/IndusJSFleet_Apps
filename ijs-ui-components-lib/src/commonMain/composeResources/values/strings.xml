@@ -13,6 +13,14 @@
     <string name="search">Search…</string>
     <string name="refresh">Refresh</string>
     <string name="submit">Submit</string>
+    <string name="confirm">Confirm</string>
+
+    <!-- Confirmation Dialogs -->
+    <string name="delete_confirmation_title">Confirm Delete</string>
+    <string name="vehicle_delete_confirmation_message">Are you sure you want to delete this vehicle? This action cannot be undone.</string>
+    <string name="driver_delete_confirmation_message">Are you sure you want to delete this driver? This action cannot be undone.</string>
+    <string name="logout_confirmation_title">Confirm Logout</string>
+    <string name="logout_confirmation_message">Are you sure you want to logout?</string>
     <string name="done">Done</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -65,6 +73,18 @@
     <string name="cd_switch_to_dark_mode">Switch to Dark Mode</string>
     <string name="cd_light_mode">Light Mode</string>
     <string name="cd_dark_mode">Dark Mode</string>
+    <string name="cd_open_navigation_menu">Open navigation menu</string>
+    <string name="cd_notifications">Notifications</string>
+    <string name="cd_notifications_count">%1$d notifications</string>
+    <string name="cd_refresh_dashboard">Refresh dashboard</string>
+    <string name="cd_fleet_overview_summary">Fleet overview summary</string>
+    <string name="cd_dismiss">Dismiss</string>
+
+    <!-- ==================== Fleet Health ==================== -->
+    <string name="fleet_health_excellent">Excellent</string>
+    <string name="fleet_health_good">Good</string>
+    <string name="fleet_health_fair">Fair</string>
+    <string name="fleet_health_needs_attention">Needs Attention</string>
 
     <!-- ==================== Auth / Login ==================== -->
     <string name="login_title">Fleet Management</string>
@@ -171,6 +191,32 @@
     <string name="dashboard_greeting_afternoon">Good Afternoon</string>
     <string name="dashboard_greeting_evening">Good Evening</string>
     <string name="dashboard_greeting_night">Good Night</string>
+    <string name="dashboard_default_user">User</string>
+    <string name="dashboard_offline_default">You\'re offline</string>
+    <string name="dashboard_updated">Updated: %1$s</string>
+    <string name="dashboard_financial_overview">Financial Overview</string>
+    <string name="dashboard_summary_today">Today\'s summary</string>
+    <string name="dashboard_summary_weekly">This week\'s summary</string>
+    <string name="dashboard_summary_monthly">This month\'s summary</string>
+    <string name="dashboard_filter_today">Today</string>
+    <string name="dashboard_filter_this_week">This Week</string>
+    <string name="dashboard_filter_this_month">This Month</string>
+    <string name="dashboard_get_started">Get Started</string>
+    <string name="dashboard_get_started_message">Add vehicles and create trips to track your finances</string>
+    <string name="dashboard_completed_trips">Completed Trips</string>
+    <string name="dashboard_count_total">%1$d total</string>
+    <string name="dashboard_count_available">%1$d available</string>
+    <string name="dashboard_count_active">%1$d active</string>
+    <string name="dashboard_active_trips">Active Trips</string>
+    <string name="dashboard_offline_mode">Offline Mode</string>
+    <string name="dashboard_last_updated">Last updated: %1$s</string>
+    <string name="dashboard_showing_cached">Showing cached data</string>
+    <string name="dashboard_no_vehicles_yet">No vehicles yet</string>
+    <string name="dashboard_add_vehicle_message">Add your first vehicle to start tracking</string>
+    <string name="dashboard_no_drivers_yet">No drivers yet</string>
+    <string name="dashboard_add_driver_message">Add your first driver to get started</string>
+    <string name="dashboard_no_trips_yet">No trips yet</string>
+    <string name="dashboard_create_trip_message">Create your first trip to start</string>
 
     <!-- ==================== Vehicles ==================== -->
     <string name="vehicles_title">Vehicles</string>
@@ -285,10 +331,32 @@
 
     <!-- ==================== Team ==================== -->
     <string name="team_title">Team</string>
+    <string name="team_members_title">Team Members</string>
+    <string name="team_members_count">%1$d member%2$s</string>
     <string name="team_add">Add Member</string>
     <string name="team_detail">Member Details</string>
     <string name="team_empty_title">No Team Members</string>
     <string name="team_empty_message">Add your first team member to get started.</string>
+    <string name="team_search_placeholder">Search by name, email, or role…</string>
+    <string name="team_loading">Loading team members…</string>
+    <string name="team_no_results">No results found</string>
+    <string name="team_no_members_yet">No team members yet</string>
+    <string name="team_no_results_message">Try adjusting your search or filters</string>
+    <string name="team_empty_description">Add managers and supervisors to help\nmanage your fleet operations</string>
+    <string name="team_add_member">Add Team Member</string>
+    <string name="team_filter_all">All</string>
+    <string name="team_filter_gm">GM</string>
+    <string name="team_filter_managers">Managers</string>
+    <string name="team_filter_supervisors">Supervisors</string>
+    <string name="team_label_total">Total</string>
+    <string name="team_status_active">Active</string>
+    <string name="team_status_inactive">Inactive</string>
+    <string name="team_action_disable">Disable</string>
+    <string name="team_action_enable">Enable</string>
+    <string name="team_action_actions">Actions</string>
+    <string name="team_delete_title">Delete Team Member</string>
+    <string name="team_delete_message">Are you sure you want to remove %1$s from your team? This action cannot be undone.</string>
+    <string name="team_reset_password_title">Reset Password</string>
 
     <!-- ==================== Finance ==================== -->
     <string name="finance_title">Vehicle Finance</string>
@@ -302,9 +370,20 @@
 
     <!-- ==================== Maps & Alerts ==================== -->
     <string name="maps_title">Live Tracking</string>
+    <string name="maps_map_view">Map View</string>
+    <string name="maps_sdk_required">Integration with map SDK required</string>
+    <string name="maps_sdk_supports">Supports: Google Maps, MapBox, OpenStreetMap</string>
+    <string name="maps_moving">Moving</string>
+    <string name="maps_stopped">Stopped</string>
+    <string name="maps_offline">Offline</string>
+    <string name="maps_no_driver">No driver</string>
     <string name="alerts_title">Alerts</string>
     <string name="alerts_empty_title">No Alerts</string>
     <string name="alerts_empty_message">All clear! No pending alerts.</string>
+    <string name="alerts_days_overdue_long">%1$d days overdue</string>
+    <string name="alerts_expires_today">Expires today</string>
+    <string name="alerts_expires_tomorrow">Expires tomorrow</string>
+    <string name="alerts_days_left_long">%1$d days left</string>
 
     <!-- ==================== Cost Types ==================== -->
     <string name="cost_type_fuel">Fuel</string>
@@ -494,6 +573,7 @@
     <string name="offline_mode_message">Offline mode — showing cached data</string>
     <string name="alert_dismissed">Alert dismissed</string>
     <string name="version_format">Version %1$s</string>
+    <string name="app_version_label">IndusJS Fleet v1.0</string>
     <string name="payments_report_title">Payments Report</string>
     <string name="payment_receipt_title">Payment Receipt</string>
 
@@ -721,6 +801,21 @@
     <string name="reports_search_vehicles_detailed">Search vehicle number, make, driver…</string>
     <string name="reports_search_trips">Search trips…</string>
     <string name="reports_select_all">Select All (%1$d)</string>
+    <string name="vehicle_pl_analysis_title">Profit &amp; Loss Analysis</string>
+    <string name="vehicle_pl_filter_vehicles">Filter Vehicles</string>
+    <string name="vehicle_pl_selected_count">%1$d selected</string>
+    <string name="vehicle_pl_results_count">%1$d result%2$s found</string>
+    <string name="vehicle_pl_recent">Recent</string>
+    <string name="vehicle_pl_vehicle_fallback">Vehicle</string>
+    <string name="vehicle_pl_select_report_period">Select Report Period</string>
+    <string name="vehicle_pl_report_label">Report</string>
+    <string name="vehicle_pl_analyze_performance">Analyze financial performance of your vehicles</string>
+    <string name="vehicle_pl_select_vehicle">Select Vehicle</string>
+    <string name="vehicle_pl_no_data_available">No P&amp;L Data Available</string>
+    <string name="vehicle_pl_fleet_count">%1$d vehicle%2$s in your fleet</string>
+    <string name="vehicle_pl_tips_title">Tips to get started:</string>
+    <string name="vehicle_pl_tips_body">• Create trips for your vehicles\n• Record trip costs (fuel, toll, etc.)\n• Add maintenance costs</string>
+    <string name="vehicle_pl_error_loading">Unable to Load P&amp;L Data</string>
 
     <!-- ==================== Dashboard - Section Labels ==================== -->
     <string name="dashboard_label_critical">Critical</string>
@@ -737,6 +832,11 @@
     <string name="dashboard_label_done">Done</string>
     <string name="dashboard_label_expenses">Expenses</string>
 
+    <!-- Fleet Status Ratio Labels -->
+    <string name="dashboard_label_route">Route</string>
+    <string name="dashboard_label_maintenance">Maint.</string>
+    <string name="dashboard_label_inactive">Inactive</string>
+
     <!-- ==================== Alerts - Detail Labels ==================== -->
     <string name="alerts_summary">Alert Summary</string>
     <string name="alerts_total">%1$d Total</string>
@@ -749,10 +849,23 @@
     <string name="alerts_filter_warning">Warning (%1$d)</string>
     <string name="alerts_no_alerts_for_filter">No %1$s alerts</string>
     <string name="alerts_all_clear">All clear! No alerts at this time.</string>
+    <string name="alerts_all_clear_title">All clear!</string>
+    <string name="alerts_all_clear_message">No alerts at this time</string>
     <string name="alerts_loading">Loading alerts…</string>
     <string name="alerts_dismiss">Dismiss</string>
+    <string name="alerts_missing_documents">Missing Documents</string>
+    <string name="alerts_vehicles_need_docs">%1$d vehicle(s) need documents uploaded</string>
+    <string name="alerts_vehicles_missing_docs">Some vehicles are missing required documents</string>
+    <string name="alerts_documents_expired">Documents Expired</string>
+    <string name="alerts_documents_expiring">Documents Expiring Soon</string>
+    <string name="alerts_expired_count">%1$d expired</string>
+    <string name="alerts_expiring_count">%1$d expiring soon</string>
+    <string name="alerts_days_overdue">%1$dd overdue</string>
+    <string name="alerts_today">Today</string>
+    <string name="alerts_days_left">%1$dd left</string>
 
     <!-- ==================== Common Action Labels ==================== -->
+    <string name="action_view_all">View All</string>
     <string name="action_add_cost">Add Cost</string>
     <string name="action_add_vehicle">Add Vehicle</string>
     <string name="action_add_driver">Add Driver</string>
@@ -866,6 +979,8 @@
     <string name="payment_add_customer">Customer</string>
     <string name="payment_add_due_date">Due Date (Optional)</string>
     <string name="payment_add_payment_mode">Payment Mode</string>
+    <string name="payment_action_record">Record Payment</string>
+    <string name="payment_action_update">Update Payment</string>
 
     <!-- ==================== Maintenance Cost - Additional ==================== -->
     <string name="maint_label_description">Description</string>
@@ -900,6 +1015,34 @@
     <string name="reports_generate_report">Generate Report</string>
     <string name="reports_no_data">No data to display</string>
     <string name="reports_disclaimer">Document costs may vary from actual. Please verify.</string>
+
+    <!-- ==================== Discard Changes Dialog ==================== -->
+    <string name="discard_changes_title">Discard Changes?</string>
+    <string name="discard_changes_message">You have unsaved changes. Are you sure you want to leave? Your changes will be lost.</string>
+    <string name="discard">Discard</string>
+    <string name="keep_editing">Keep Editing</string>
+
+    <!-- ==================== Delete / Status Dialogs ==================== -->
+    <string name="delete_entity_confirmation_message">Are you sure you want to delete this %1$s (%2$s)? This action cannot be undone.</string>
+    <string name="delete_generic_confirmation_message">Are you sure you want to delete this %1$s? This action cannot be undone.</string>
+    <string name="deactivate">Deactivate</string>
+    <string name="activate">Activate</string>
+    <string name="status_toggle_confirmation_message">Are you sure you want to %1$s this %2$s?</string>
+
+    <!-- ==================== Search Bar ==================== -->
+    <string name="search_hint">Search…</string>
+    <string name="clear_search">Clear search</string>
+
+    <!-- ==================== Password Strength ==================== -->
+    <string name="password_strength_weak">Weak</string>
+    <string name="password_strength_fair">Fair</string>
+    <string name="password_strength_good">Good</string>
+    <string name="password_strength_strong">Strong</string>
+    <string name="password_strength_label">Password Strength</string>
+
+    <!-- ==================== Step Indicator ==================== -->
+    <string name="step_label">Step %1$d of %2$d</string>
+    <string name="step_completed">Step %1$d completed</string>
 
     <!-- ==================== Misc / Shared ==================== -->
     <string name="select_trip">Select Trip</string>

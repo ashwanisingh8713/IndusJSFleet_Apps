@@ -17,6 +17,9 @@ import com.ijs.vehicle.presentation.AddVehicleContract.State
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import kotlin.time.Clock
 
 /**
  * ViewModel for the Add/Register Vehicle screen implementing MVI pattern.
@@ -99,11 +102,12 @@ class AddVehicleViewModel(
     }
 
     private fun updateYear(value: String) {
+        val currentYear = Clock.System.todayIn(TimeZone.currentSystemDefault()).year
         val error = when {
             value.isBlank() -> "Year is required"
             value.toIntOrNull() == null -> "Invalid year"
             value.toInt() < 1990 -> "Year must be 1990 or later"
-            value.toInt() > 2026 -> "Year cannot be in the future"
+            value.toInt() > currentYear + 1 -> "Year cannot be in the future"
             else -> null
         }
         updateState { copy(year = value, yearError = error) }

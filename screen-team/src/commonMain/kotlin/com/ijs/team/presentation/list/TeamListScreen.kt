@@ -27,6 +27,7 @@ import com.ijs.team.domain.entity.TeamMemberRole
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Team Members List Screen composable.
@@ -67,7 +68,7 @@ fun TeamListScreen(
                 title = {
                     Column {
                         Text(
-                            "Team Members",
+                            stringResource(Res.string.team_members_title),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -84,7 +85,7 @@ fun TeamListScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
@@ -103,7 +104,7 @@ fun TeamListScreen(
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh",
+                                contentDescription = stringResource(Res.string.refresh),
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -130,7 +131,7 @@ fun TeamListScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Add Member", fontWeight = FontWeight.Medium)
+                    Text(stringResource(Res.string.team_add), fontWeight = FontWeight.Medium)
                 }
             }
         }
@@ -165,19 +166,19 @@ fun TeamListScreen(
                 FleetSearchField(
                     query = state.searchQuery,
                     onQueryChange = { viewModel.sendIntent(TeamListContract.Intent.UpdateSearchQuery(it)) },
-                    placeholder = "Search by name, email, or role...",
+                    placeholder = stringResource(Res.string.team_search_placeholder),
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
 
                 // Content
                 when {
                     state.isLoading -> {
-                        LoadingContent(message = "Loading team members...")
+                        LoadingContent(message = stringResource(Res.string.team_loading))
                     }
 
                     state.error != null -> {
                         ErrorContent(
-                            error = state.error ?: "Something went wrong",
+                            error = state.error ?: stringResource(Res.string.error_generic),
                             screenContext = FleetErrorContext.TEAM,
                             onRetry = { viewModel.sendIntent(TeamListContract.Intent.LoadTeamMembers) }
                         )
@@ -267,7 +268,7 @@ private fun TeamStatsSection(
             StatItem(
                 icon = "🎯",
                 count = generalManagersCount,
-                label = "GM",
+                label = stringResource(Res.string.team_filter_gm),
                 color = MaterialTheme.colorScheme.tertiary
             )
 
@@ -282,7 +283,7 @@ private fun TeamStatsSection(
             StatItem(
                 icon = "👔",
                 count = managersCount,
-                label = "Managers",
+                label = stringResource(Res.string.team_filter_managers),
                 color = MaterialTheme.colorScheme.primary
             )
 
@@ -297,7 +298,7 @@ private fun TeamStatsSection(
             StatItem(
                 icon = "👷",
                 count = supervisorsCount,
-                label = "Supervisors",
+                label = stringResource(Res.string.team_filter_supervisors),
                 color = MaterialTheme.colorScheme.secondary
             )
 
@@ -312,7 +313,7 @@ private fun TeamStatsSection(
             StatItem(
                 icon = "👥",
                 count = totalCount,
-                label = "Total",
+                label = stringResource(Res.string.team_label_total),
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -369,10 +370,10 @@ private fun EnhancedFilterTabs(
                 label = {
                     Text(
                         text = when (filter) {
-                            TeamListContract.FilterType.ALL -> "All"
-                            TeamListContract.FilterType.GENERAL_MANAGERS -> "GM"
-                            TeamListContract.FilterType.MANAGERS -> "Managers"
-                            TeamListContract.FilterType.SUPERVISORS -> "Supervisors"
+                            TeamListContract.FilterType.ALL -> stringResource(Res.string.team_filter_all)
+                            TeamListContract.FilterType.GENERAL_MANAGERS -> stringResource(Res.string.team_filter_gm)
+                            TeamListContract.FilterType.MANAGERS -> stringResource(Res.string.team_filter_managers)
+                            TeamListContract.FilterType.SUPERVISORS -> stringResource(Res.string.team_filter_supervisors)
                         },
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                     )
@@ -430,9 +431,9 @@ private fun EmptyTeamContent(
 
         Text(
             text = if (searchQuery.isNotEmpty()) {
-                "No results found"
+                stringResource(Res.string.team_no_results)
             } else {
-                "No team members yet"
+                stringResource(Res.string.team_no_members_yet)
             },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
@@ -443,9 +444,9 @@ private fun EmptyTeamContent(
 
         Text(
             text = if (searchQuery.isNotEmpty()) {
-                "Try adjusting your search or filters"
+                stringResource(Res.string.team_no_results_message)
             } else {
-                "Add managers and supervisors to help\nmanage your fleet operations"
+                stringResource(Res.string.team_empty_description)
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -465,7 +466,7 @@ private fun EmptyTeamContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Add Team Member")
+                Text(stringResource(Res.string.team_add_member))
             }
         }
     }
@@ -637,7 +638,7 @@ private fun EnhancedTeamMemberCard(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = if (member.isActive) "Active" else "Inactive",
+                            text = if (member.isActive) stringResource(Res.string.team_status_active) else stringResource(Res.string.team_status_inactive),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = if (member.isActive) {
@@ -664,7 +665,7 @@ private fun EnhancedTeamMemberCard(
                     } else {
                         Icon(
                             painter = painterResource(Res.drawable.ic_more_vert),
-                            contentDescription = "Actions",
+                            contentDescription = stringResource(Res.string.team_action_actions),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -679,7 +680,7 @@ private fun EnhancedTeamMemberCard(
                     if (canToggleActive) {
                         DropdownMenuItem(
                             text = {
-                                Text(if (member.isActive) "Disable" else "Enable")
+                                Text(if (member.isActive) stringResource(Res.string.team_action_disable) else stringResource(Res.string.team_action_enable))
                             },
                             onClick = {
                                 showActionsMenu = false
@@ -694,7 +695,7 @@ private fun EnhancedTeamMemberCard(
                     // Reset Password
                     if (canResetPassword) {
                         DropdownMenuItem(
-                            text = { Text("Reset Password") },
+                            text = { Text(stringResource(Res.string.team_reset_password_title)) },
                             onClick = {
                                 showActionsMenu = false
                                 onResetPassword()
@@ -709,7 +710,7 @@ private fun EnhancedTeamMemberCard(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    "Delete",
+                                    stringResource(Res.string.delete),
                                     color = MaterialTheme.colorScheme.error
                                 )
                             },
@@ -746,13 +747,13 @@ private fun EnhancedTeamMemberCard(
             },
             title = {
                 Text(
-                    "Delete Team Member",
+                    stringResource(Res.string.team_delete_title),
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Text(
-                    "Are you sure you want to remove ${member.fullName} from your team? This action cannot be undone.",
+                    stringResource(Res.string.team_delete_message, member.fullName),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -766,12 +767,12 @@ private fun EnhancedTeamMemberCard(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(Res.string.delete))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             },
             shape = RoundedCornerShape(16.dp)

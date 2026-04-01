@@ -127,7 +127,11 @@ internal fun PaymentSummaryCard(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("📄", style = MaterialTheme.typography.bodyLarge)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_download),
+                                contentDescription = "Export",
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }

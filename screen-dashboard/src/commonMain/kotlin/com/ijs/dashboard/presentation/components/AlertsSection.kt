@@ -31,6 +31,7 @@ import com.indusjs.fleet.domain.entity.dashboard.DocumentStats
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 
 /**
@@ -68,7 +69,7 @@ internal fun AlertsSection(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Alerts",
+                        text = stringResource(Res.string.dashboard_alerts),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -94,7 +95,7 @@ internal fun AlertsSection(
                     }
                     TextButton(onClick = onViewAllClick) {
                         Text(
-                            text = "View All",
+                            text = stringResource(Res.string.action_view_all),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary
@@ -119,21 +120,21 @@ internal fun AlertsSection(
                     if (alertsSummary.criticalAlerts > 0) {
                         AlertCountBadge(
                             count = alertsSummary.criticalAlerts,
-                            label = "Critical",
+                            label = stringResource(Res.string.dashboard_label_critical),
                             color = MaterialTheme.colorScheme.error
                         )
                     }
                     if (alertsSummary.warningAlerts > 0) {
                         AlertCountBadge(
                             count = alertsSummary.warningAlerts,
-                            label = "Warning",
+                            label = stringResource(Res.string.dashboard_label_warning),
                             color = MaterialTheme.colorScheme.tertiary
                         )
                     }
                     if (alertsSummary.infoAlerts > 0) {
                         AlertCountBadge(
                             count = alertsSummary.infoAlerts,
-                            label = "Info",
+                            label = stringResource(Res.string.dashboard_label_info),
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -150,7 +151,7 @@ internal fun AlertsSection(
                             ExpiryInfoChip(
                                 icon = "📄",
                                 count = alertsSummary.documentExpired,
-                                label = "Docs Expired",
+                                label = stringResource(Res.string.dashboard_label_docs_expired),
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
@@ -158,7 +159,7 @@ internal fun AlertsSection(
                             ExpiryInfoChip(
                                 icon = "📄",
                                 count = alertsSummary.documentExpiring7Days,
-                                label = "Docs 7d",
+                                label = stringResource(Res.string.dashboard_label_docs_7d),
                                 color = MaterialTheme.colorScheme.tertiary
                             )
                         }
@@ -166,7 +167,7 @@ internal fun AlertsSection(
                             ExpiryInfoChip(
                                 icon = "📋",
                                 count = alertsSummary.licenseExpired,
-                                label = "License Expired",
+                                label = stringResource(Res.string.dashboard_label_license_expired),
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
@@ -174,7 +175,7 @@ internal fun AlertsSection(
                             ExpiryInfoChip(
                                 icon = "📋",
                                 count = alertsSummary.licenseExpiring7Days,
-                                label = "License 7d",
+                                label = stringResource(Res.string.dashboard_label_license_7d),
                                 color = MaterialTheme.colorScheme.tertiary
                             )
                         }
@@ -191,7 +192,7 @@ internal fun AlertsSection(
                             Text(text = "📄", style = MaterialTheme.typography.labelMedium)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${documentStats.expiredDocuments} Expired",
+                                text = stringResource(Res.string.alerts_count_expired, documentStats.expiredDocuments),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.error
@@ -203,7 +204,7 @@ internal fun AlertsSection(
                             Text(text = "⏰", style = MaterialTheme.typography.labelMedium)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${documentStats.expiringDocuments} Expiring Soon",
+                                text = stringResource(Res.string.alerts_count_expiring_soon, documentStats.expiringDocuments),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.tertiary
@@ -232,8 +233,8 @@ internal fun AlertsSection(
             if (hasNoAlerts) {
                 SectionEmptyState(
                     iconRes = Res.drawable.ic_check,
-                    title = "All clear!",
-                    message = "No alerts at this time",
+                    title = stringResource(Res.string.alerts_all_clear_title),
+                    message = stringResource(Res.string.alerts_all_clear_message),
                     successStyle = true
                 )
             } else {
@@ -241,11 +242,11 @@ internal fun AlertsSection(
                 if (hasMissingDocuments) {
                     AlertWarningBanner(
                         icon = "📄",
-                        title = "Missing Documents",
+                        title = stringResource(Res.string.alerts_missing_documents),
                         message = if (vehiclesWithoutDocs > 0)
-                            "$vehiclesWithoutDocs vehicle(s) need documents uploaded"
+                            stringResource(Res.string.alerts_vehicles_need_docs, vehiclesWithoutDocs)
                         else
-                            "Some vehicles are missing required documents",
+                            stringResource(Res.string.alerts_vehicles_missing_docs),
                         isError = true
                     )
                 }
@@ -254,11 +255,11 @@ internal fun AlertsSection(
                 if (!hasMissingDocuments && hasDocumentIssues) {
                     AlertWarningBanner(
                         icon = if (expiredDocs > 0) "⚠️" else "⏰",
-                        title = if (expiredDocs > 0) "Documents Expired" else "Documents Expiring Soon",
+                        title = if (expiredDocs > 0) stringResource(Res.string.alerts_documents_expired) else stringResource(Res.string.alerts_documents_expiring),
                         message = buildString {
-                            if (expiredDocs > 0) append("$expiredDocs expired")
+                            if (expiredDocs > 0) append(stringResource(Res.string.alerts_expired_count, expiredDocs))
                             if (expiredDocs > 0 && expiringDocs > 0) append(", ")
-                            if (expiringDocs > 0) append("$expiringDocs expiring soon")
+                            if (expiringDocs > 0) append(stringResource(Res.string.alerts_expiring_count, expiringDocs))
                         },
                         isError = expiredDocs > 0
                     )
@@ -382,9 +383,9 @@ private fun CleanAlertItem(
                         else -> MaterialTheme.colorScheme.primary
                     }
                     val badgeText = when {
-                        days < 0 -> "${-days}d overdue"
-                        days == 0 -> "Today"
-                        else -> "${days}d left"
+                        days < 0 -> stringResource(Res.string.alerts_days_overdue, -days)
+                        days == 0 -> stringResource(Res.string.alerts_today)
+                        else -> stringResource(Res.string.alerts_days_left, days)
                     }
                     Surface(
                         shape = RoundedCornerShape(4.dp),
@@ -431,7 +432,7 @@ private fun CleanAlertItem(
         ) {
             Icon(
                 painter = painterResource(Res.drawable.ic_close),
-                contentDescription = "Dismiss",
+                contentDescription = stringResource(Res.string.cd_dismiss),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(16.dp)
             )
@@ -495,4 +496,3 @@ private fun ExpiryInfoChip(
         )
     }
 }
-
