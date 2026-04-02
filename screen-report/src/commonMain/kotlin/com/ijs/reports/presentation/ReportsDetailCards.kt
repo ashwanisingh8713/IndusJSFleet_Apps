@@ -305,7 +305,7 @@ internal fun DetailedReportsSection(
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             ReportCard(Modifier.weight(1f), "👨‍✈️", "Driver Costs", "Salary & more", ReportsColors.Teal, onDriverCostClick)
-            ReportCard(Modifier.weight(1f), "💰", "All Costs", "Full breakdown", Color(0xFFF97316), onCostAnalysisClick)
+            ReportCard(Modifier.weight(1f), "💰", "All Costs", "Full breakdown", ReportsColors.WarningAmber, onCostAnalysisClick)
         }
     }
 }

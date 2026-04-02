@@ -3,7 +3,6 @@ package com.ijs.alerts.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -18,7 +17,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FilterDefinition
+import com.indusjs.uicomponents.components.FleetFilterBar
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertPriority
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
@@ -119,11 +121,57 @@ fun AlertsListScreen(
                         modifier = Modifier.padding(16.dp)
                     )
 
-                    // Filter Chips
-                    AlertFilterChips(
-                        selectedFilter = state.selectedFilter,
-                        alertsSummary = state.alertsSummary,
-                        onFilterSelected = { viewModel.sendIntent(AlertsListContract.Intent.ChangeFilter(it)) },
+                    val alertFilters = buildList {
+                        val summary = state.alertsSummary
+                        if (summary.criticalAlerts > 0) {
+                            add(
+                                FilterDefinition(
+                                    id = AlertsListContract.AlertFilter.CRITICAL,
+                                    label = stringResource(Res.string.dashboard_label_critical),
+                                    count = summary.criticalAlerts
+                                )
+                            )
+                        }
+                        if (summary.warningAlerts > 0) {
+                            add(
+                                FilterDefinition(
+                                    id = AlertsListContract.AlertFilter.WARNING,
+                                    label = stringResource(Res.string.dashboard_label_warning),
+                                    count = summary.warningAlerts
+                                )
+                            )
+                        }
+                        add(
+                            FilterDefinition(
+                                id = AlertsListContract.AlertFilter.DOCUMENTS,
+                                label = stringResource(Res.string.alerts_documents)
+                            )
+                        )
+                        add(
+                            FilterDefinition(
+                                id = AlertsListContract.AlertFilter.LICENSES,
+                                label = stringResource(Res.string.alerts_licenses)
+                            )
+                        )
+                    }
+                    FleetFilterBar(
+                        filters = alertFilters,
+                        selectedFilterId = when (state.selectedFilter) {
+                            AlertsListContract.AlertFilter.ALL -> null
+                            else -> state.selectedFilter
+                        },
+                        onFilterSelected = { id ->
+                            viewModel.sendIntent(
+                                AlertsListContract.Intent.ChangeFilter(
+                                    id ?: AlertsListContract.AlertFilter.ALL
+                                )
+                            )
+                        },
+                        allLabel = stringResource(
+                            Res.string.alerts_filter_all,
+                            state.alertsSummary.totalAlerts
+                        ),
+                        allCount = null,
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
 
@@ -226,7 +274,7 @@ private fun AlertsSummaryCard(
                     SummaryChip(
                         count = summary.warningAlerts,
                         label = stringResource(Res.string.dashboard_label_warning),
-                        color = Color(0xFFFF9800),
+                        color = FleetStatusColors.FleetMaintenance,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -265,7 +313,7 @@ private fun AlertsSummaryCard(
                             Text(
                                 text = stringResource(Res.string.alerts_count_expiring_soon, summary.documentExpiring7Days),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFFF9800)
+                                color = FleetStatusColors.FleetMaintenance
                             )
                         }
                     }
@@ -286,7 +334,7 @@ private fun AlertsSummaryCard(
                             Text(
                                 text = stringResource(Res.string.alerts_count_expiring_soon, summary.licenseExpiring7Days),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFFF9800)
+                                color = FleetStatusColors.FleetMaintenance
                             )
                         }
                     }
@@ -328,64 +376,6 @@ private fun SummaryChip(
 }
 
 @Composable
-private fun AlertFilterChips(
-    selectedFilter: AlertsListContract.AlertFilter,
-    alertsSummary: AlertsSummary,
-    onFilterSelected: (AlertsListContract.AlertFilter) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LazyRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            FilterChip(
-                selected = selectedFilter == AlertsListContract.AlertFilter.ALL,
-                onClick = { onFilterSelected(AlertsListContract.AlertFilter.ALL) },
-                label = { Text(stringResource(Res.string.alerts_filter_all, alertsSummary.totalAlerts)) },
-                leadingIcon = { Text("📋") }
-            )
-        }
-        if (alertsSummary.criticalAlerts > 0) {
-            item {
-                FilterChip(
-                    selected = selectedFilter == AlertsListContract.AlertFilter.CRITICAL,
-                    onClick = { onFilterSelected(AlertsListContract.AlertFilter.CRITICAL) },
-                    label = { Text(stringResource(Res.string.alerts_filter_critical, alertsSummary.criticalAlerts)) },
-                    leadingIcon = { Text("🔴") }
-                )
-            }
-        }
-        if (alertsSummary.warningAlerts > 0) {
-            item {
-                FilterChip(
-                    selected = selectedFilter == AlertsListContract.AlertFilter.WARNING,
-                    onClick = { onFilterSelected(AlertsListContract.AlertFilter.WARNING) },
-                    label = { Text(stringResource(Res.string.alerts_filter_warning, alertsSummary.warningAlerts)) },
-                    leadingIcon = { Text("🟠") }
-                )
-            }
-        }
-        item {
-            FilterChip(
-                selected = selectedFilter == AlertsListContract.AlertFilter.DOCUMENTS,
-                onClick = { onFilterSelected(AlertsListContract.AlertFilter.DOCUMENTS) },
-                label = { Text(stringResource(Res.string.alerts_documents)) },
-                leadingIcon = { Text("📄") }
-            )
-        }
-        item {
-            FilterChip(
-                selected = selectedFilter == AlertsListContract.AlertFilter.LICENSES,
-                onClick = { onFilterSelected(AlertsListContract.AlertFilter.LICENSES) },
-                label = { Text(stringResource(Res.string.alerts_licenses)) },
-                leadingIcon = { Text("📋") }
-            )
-        }
-    }
-}
-
-@Composable
 private fun AlertItemCard(
     alert: Alert,
     onDismiss: () -> Unit
@@ -411,7 +401,7 @@ private fun AlertItemCard(
 
     val priorityColor = when (alert.priority) {
         AlertPriority.CRITICAL -> MaterialTheme.colorScheme.error
-        AlertPriority.WARNING -> Color(0xFFFF9800)
+        AlertPriority.WARNING -> FleetStatusColors.FleetMaintenance
         AlertPriority.INFO -> MaterialTheme.colorScheme.primary
     }
 
@@ -482,7 +472,7 @@ private fun AlertItemCard(
                         alert.daysUntilExpiry?.let { days ->
                             val badgeColor = when {
                                 days < 0 -> MaterialTheme.colorScheme.error
-                                days <= 7 -> Color(0xFFFF9800)
+                                days <= 7 -> FleetStatusColors.FleetMaintenance
                                 else -> MaterialTheme.colorScheme.primary
                             }
                             val badgeText = when {

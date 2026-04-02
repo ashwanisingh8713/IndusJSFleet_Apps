@@ -3,23 +3,19 @@ package com.ijs.customer.presentation.detail.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
-import org.jetbrains.compose.resources.painterResource
-import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
 /**
  * Received Payments Tab Content.
@@ -63,9 +59,11 @@ fun PaymentsTabContent(
     Column(modifier = modifier.fillMaxSize()) {
         // Search Bar (collapsible)
         if (isSearchVisible) {
-            PaymentSearchBar(
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it }
+            FleetSearchField(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = "Search by Trip ID, amount, reference..."
             )
         }
 
@@ -122,42 +120,6 @@ fun PaymentsTabContent(
             }
         }
     }
-}
-
-@Composable
-private fun PaymentSearchBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit
-) {
-    OutlinedTextField(
-        value = searchQuery,
-        onValueChange = onSearchQueryChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        placeholder = { Text("Search by Trip ID, amount, reference...") },
-        leadingIcon = {
-            Icon(
-                painter = painterResource(Res.drawable.ic_search),
-                contentDescription = "Search",
-                modifier = Modifier.size(20.dp)
-            )
-        },
-        trailingIcon = {
-            if (searchQuery.isNotEmpty()) {
-                IconButton(onClick = { onSearchQueryChange("") }) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_close),
-                        contentDescription = "Clear",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        shape = RoundedCornerShape(12.dp)
-    )
 }
 
 @Composable

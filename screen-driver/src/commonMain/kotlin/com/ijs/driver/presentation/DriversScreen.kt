@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +20,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FilterDefinition
+import com.indusjs.uicomponents.components.FleetFilterBar
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.LoadingContent
@@ -128,11 +129,27 @@ fun DriversScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            // Status Filter Chips
-            StatusFilterChips(
-                selectedStatus = state.selectedStatusFilter,
-                onStatusSelected = { viewModel.sendIntent(DriversContract.Intent.FilterByStatus(it)) },
-                modifier = Modifier.padding(horizontal = 16.dp)
+            val driverStatusFilters = DriverStatus.entries.map { status ->
+                FilterDefinition(
+                    id = status,
+                    label = DriverStatus.getDisplayLabel(status),
+                    count = state.drivers.count { it.status == status }
+                )
+            }
+            FleetFilterBar(
+                filters = driverStatusFilters,
+                selectedFilterId = state.selectedStatusFilter,
+                onFilterSelected = { id ->
+                    when {
+                        id == null -> viewModel.sendIntent(DriversContract.Intent.FilterByStatus(null))
+                        id == state.selectedStatusFilter ->
+                            viewModel.sendIntent(DriversContract.Intent.FilterByStatus(null))
+                        else -> viewModel.sendIntent(DriversContract.Intent.FilterByStatus(id))
+                    }
+                },
+                allLabel = stringResource(Res.string.all_filter),
+                allCount = state.drivers.size,
+                modifier = Modifier.padding(vertical = 8.dp)
             )
 
             when {
@@ -198,39 +215,6 @@ fun DriversScreen(
             }
         )
     }
-}
-
-
-@Composable
-private fun StatusFilterChips(
-    selectedStatus: DriverStatus?,
-    onStatusSelected: (DriverStatus?) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 8.dp)
-    ) {
-        item {
-            FilterChip(
-                selected = selectedStatus == null,
-                onClick = { onStatusSelected(null) },
-                label = { Text(stringResource(Res.string.all_filter)) }
-            )
-        }
-        items(DriverStatus.entries.toList()) { status ->
-            FilterChip(
-                selected = selectedStatus == status,
-                onClick = { onStatusSelected(if (selectedStatus == status) null else status) },
-                label = { Text(getStatusDisplayName(status)) }
-            )
-        }
-    }
-}
-
-private fun getStatusDisplayName(status: DriverStatus): String {
-    return DriverStatus.getDisplayLabel(status)
 }
 
 @Composable

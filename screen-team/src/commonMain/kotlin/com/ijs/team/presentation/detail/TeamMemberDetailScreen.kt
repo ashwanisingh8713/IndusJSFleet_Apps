@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,6 +22,7 @@ import com.indusjs.uicomponents.components.FleetMobileField
 import com.indusjs.uicomponents.components.FleetTextField
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.ClickablePhoneRow
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -259,7 +259,7 @@ private fun ViewMemberContent(
         Surface(
             shape = RoundedCornerShape(8.dp),
             color = if (member.isActive) {
-                Color(0xFF4CAF50).copy(alpha = 0.15f)
+                FleetStatusColors.FleetOnRoute.copy(alpha = 0.15f)
             } else {
                 MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
             }
@@ -273,7 +273,7 @@ private fun ViewMemberContent(
                         .size(8.dp)
                         .clip(CircleShape)
                         .background(
-                            if (member.isActive) Color(0xFF4CAF50)
+                            if (member.isActive) FleetStatusColors.FleetOnRoute
                             else MaterialTheme.colorScheme.error
                         )
                 )
@@ -282,7 +282,7 @@ private fun ViewMemberContent(
                     text = if (member.isActive) "Active" else "Inactive",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium,
-                    color = if (member.isActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
+                    color = if (member.isActive) FleetStatusColors.FleetOnRoute else MaterialTheme.colorScheme.error
                 )
             }
         }

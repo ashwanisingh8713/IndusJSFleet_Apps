@@ -40,6 +40,7 @@ import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -103,9 +104,9 @@ internal fun CostOverviewSection(
     onCreateTripClick: () -> Unit
 ) {
     val hasNoFleet = vehicleStatus.total == 0 && tripSummary.total == 0
-    val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
-    val lossColor = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
-    val expenseColor = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
+    val profitColor = FleetStatusColors.ProfitGreen
+    val lossColor = FleetStatusColors.LossRed
+    val expenseColor = FleetStatusColors.ExpenseAmber
 
     val dateRangeText = remember(selectedFilter) { getDateRangeForFilter(selectedFilter) }
 
@@ -135,9 +136,9 @@ internal fun CostOverviewSection(
                             .background(
                                 brush = Brush.linearGradient(
                                     colors = if (costOverview.isProfit)
-                                        listOf(com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen, com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreenDark)
+                                        listOf(FleetStatusColors.ProfitGreen, FleetStatusColors.ProfitGreenDark)
                                     else
-                                        listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
+                                        listOf(FleetStatusColors.InfoBlueDark, FleetStatusColors.AccentPurple)
                                 )
                             ),
                         contentAlignment = Alignment.Center

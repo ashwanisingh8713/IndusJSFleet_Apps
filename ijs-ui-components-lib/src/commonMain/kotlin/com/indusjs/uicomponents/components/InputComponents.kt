@@ -396,39 +396,7 @@ fun FleetPhoneField(
     )
 }
 
-/**
- * Search input field.
- */
-@Composable
-fun FleetSearchField(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    placeholder: String = "Search...",
-    enabled: Boolean = true,
-    onSearch: () -> Unit = {}
-) {
-    FleetTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = placeholder,
-        leadingIcon = { Text("🔍") },
-        trailingIcon = if (query.isNotEmpty()) {
-            {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Text("✕")
-                }
-            }
-        } else null,
-        enabled = enabled,
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Text,
-            imeAction = ImeAction.Search
-        ),
-        keyboardActions = KeyboardActions(onSearch = { onSearch() })
-    )
-}
+// FleetSearchField removed — canonical version lives in FleetSearchField.kt
 
 // ============================================
 // Date and Time Input Components

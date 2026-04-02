@@ -33,9 +33,10 @@ kotlin {
             implementation(project(":screen-vehicle"))
             implementation(project(":screen-trip"))
 
-            // PDF report generation + date/time picker
+            // PDF report generation + date/time picker + shared dialogs
             implementation(project(":ijs-pdf-report"))
             implementation(project(":ijs-datetime-picker"))
+            implementation(project(":ijs-ui-components-lib"))
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)

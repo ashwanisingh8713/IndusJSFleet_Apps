@@ -22,6 +22,7 @@ import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -618,7 +619,7 @@ private fun EnhancedTeamMemberCard(
                 Surface(
                     shape = RoundedCornerShape(6.dp),
                     color = if (member.isActive) {
-                        Color(0xFF4CAF50).copy(alpha = 0.15f)
+                        FleetStatusColors.FleetOnRoute.copy(alpha = 0.15f)
                     } else {
                         MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
                     }
@@ -632,7 +633,7 @@ private fun EnhancedTeamMemberCard(
                                 .size(6.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    if (member.isActive) Color(0xFF4CAF50)
+                                    if (member.isActive) FleetStatusColors.FleetOnRoute
                                     else MaterialTheme.colorScheme.error
                                 )
                         )
@@ -642,7 +643,7 @@ private fun EnhancedTeamMemberCard(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = if (member.isActive) {
-                                Color(0xFF4CAF50)
+                                FleetStatusColors.FleetOnRoute
                             } else {
                                 MaterialTheme.colorScheme.error
                             }

@@ -26,12 +26,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.domain.entity.dashboard.OngoingTrip
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -129,13 +129,13 @@ internal fun TripsStatusSection(
                     EnhancedStatusChip(
                         label = stringResource(Res.string.dashboard_label_active),
                         count = tripSummary.inProgress,
-                        color = Color(0xFF4CAF50),
+                        color = FleetStatusColors.FleetOnRoute,
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
                         label = stringResource(Res.string.dashboard_label_planned),
                         count = tripSummary.planned,
-                        color = Color(0xFF2196F3),
+                        color = FleetStatusColors.FleetPlanned,
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
@@ -234,13 +234,13 @@ private fun OngoingTripItem(trip: OngoingTrip) {
             // Status badge
             Surface(
                 shape = RoundedCornerShape(4.dp),
-                color = Color(0xFF4CAF50).copy(alpha = 0.15f)
+                color = FleetStatusColors.FleetOnRoute.copy(alpha = 0.15f)
             ) {
                 Text(
                     text = stringResource(Res.string.dashboard_label_on_route),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF4CAF50),
+                    color = FleetStatusColors.FleetOnRoute,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }

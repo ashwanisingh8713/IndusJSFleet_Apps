@@ -15,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,6 +25,8 @@ import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.uicomponents.components.CostTypeGroup
 import com.indusjs.uicomponents.components.CostTypeSelection
 import com.indusjs.uicomponents.components.CostTypeTwoLevelSelector
+import com.indusjs.uicomponents.theme.FleetColors
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.ijs.trip.domain.entity.Trip
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -360,10 +361,10 @@ private fun TripDetailsCard(
     trip: Trip
 ) {
     val statusColor = when (trip.status.name.lowercase()) {
-        "completed" -> Color(0xFF4CAF50)
-        "in_progress", "ongoing" -> Color(0xFF2196F3)
-        "scheduled", "planned" -> Color(0xFFFF9800)
-        "cancelled" -> Color(0xFFF44336)
+        "completed" -> FleetStatusColors.FleetOnRoute
+        "in_progress", "ongoing" -> FleetStatusColors.FleetPlanned
+        "scheduled", "planned" -> FleetStatusColors.FleetMaintenance
+        "cancelled" -> FleetColors.tripCancelled
         else -> MaterialTheme.colorScheme.primary
     }
 
@@ -470,7 +471,7 @@ private fun TripDetailsCard(
                     // Start location
                     Surface(
                         shape = RoundedCornerShape(4.dp),
-                        color = Color(0xFF4CAF50).copy(alpha = 0.15f)
+                        color = FleetStatusColors.FleetOnRoute.copy(alpha = 0.15f)
                     ) {
                         Text(
                             text = "📍",
@@ -508,7 +509,7 @@ private fun TripDetailsCard(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(4.dp),
-                        color = Color(0xFFF44336).copy(alpha = 0.15f)
+                        color = FleetColors.tripCancelled.copy(alpha = 0.15f)
                     ) {
                         Text(
                             text = "🏁",

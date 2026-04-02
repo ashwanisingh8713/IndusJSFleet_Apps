@@ -20,7 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -53,7 +53,7 @@ internal fun SectionEmptyState(
                 .size(48.dp)
                 .clip(CircleShape)
                 .background(
-                    if (successStyle) Color(0xFF4CAF50).copy(alpha = 0.1f)
+                    if (successStyle) FleetStatusColors.FleetOnRoute.copy(alpha = 0.1f)
                     else MaterialTheme.colorScheme.surfaceVariant
                 ),
             contentAlignment = Alignment.Center
@@ -62,7 +62,7 @@ internal fun SectionEmptyState(
                 painter = painterResource(iconRes),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = if (successStyle) Color(0xFF4CAF50)
+                tint = if (successStyle) FleetStatusColors.FleetOnRoute
                        else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -74,7 +74,7 @@ internal fun SectionEmptyState(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = if (successStyle) Color(0xFF4CAF50)
+                color = if (successStyle) FleetStatusColors.FleetOnRoute
                         else MaterialTheme.colorScheme.onSurface
             )
             if (message != null) {

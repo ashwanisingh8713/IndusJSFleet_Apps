@@ -14,7 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.uicomponents.components.FleetDateRangePickerDialog
 import com.indusjs.uicomponents.components.LoadingContent
+import kotlinx.datetime.LocalDate
 import com.ijs.reports.presentation.ReportsContract.Effect
 import com.ijs.reports.presentation.ReportsContract.Intent
 import com.ijs.reports.presentation.ReportsContract.State
@@ -39,6 +42,16 @@ fun ReportsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    var pickerStartDdMm by remember { mutableStateOf("") }
+    var pickerEndDdMm by remember { mutableStateOf("") }
+
+    LaunchedEffect(state.showDateRangePicker) {
+        if (state.showDateRangePicker) {
+            pickerStartDdMm = apiDateToDdMmForPicker(state.startDate).ifBlank { FleetDateTime.today() }
+            pickerEndDdMm = apiDateToDdMmForPicker(state.endDate).ifBlank { FleetDateTime.today() }
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -57,11 +70,19 @@ fun ReportsScreen(
         }
     }
 
-    ReportsDateRangePickerDialog(
+    FleetDateRangePickerDialog(
         isVisible = state.showDateRangePicker,
-        startDate = state.startDate,
-        endDate = state.endDate,
-        onApply = { start, end -> viewModel.sendIntent(Intent.SetCustomDateRange(start, end)) },
+        startDate = pickerStartDdMm,
+        endDate = pickerEndDdMm,
+        onStartDateChange = { pickerStartDdMm = it },
+        onEndDateChange = { pickerEndDdMm = it },
+        onApply = { startDdMm, endDdMm ->
+            val startIso = ddMmToIsoApi(startDdMm)
+            val endIso = ddMmToIsoApi(endDdMm)
+            if (startIso != null && endIso != null) {
+                viewModel.sendIntent(Intent.SetCustomDateRange(startIso, endIso))
+            }
+        },
         onDismiss = { viewModel.sendIntent(Intent.HideDateRangePicker) }
     )
 
@@ -205,6 +226,21 @@ private fun formatPeriodLabel(startDate: String, endDate: String): String {
         val start = formatDateDisplay(startDate); val end = formatDateDisplay(endDate)
         if (start == end) start else "$start - $end"
     } catch (_: Exception) { "$startDate - $endDate" }
+}
+
+/** Hub state uses YYYY-MM-DD for API; picker uses DD-MM-YYYY. */
+private fun apiDateToDdMmForPicker(api: String): String {
+    if (api.isBlank()) return ""
+    if (api.matches(Regex("""\d{4}-\d{2}-\d{2}"""))) {
+        val ld = LocalDate.parse(api)
+        return FleetDateTime.formatDateParts(ld.dayOfMonth, ld.monthNumber, ld.year)
+    }
+    return api
+}
+
+private fun ddMmToIsoApi(ddMm: String): String? {
+    val v = FleetDateTime.parseDate(ddMm) ?: return null
+    return v.toLocalDate().toString()
 }
 
 private fun formatDateDisplay(date: String): String = try {

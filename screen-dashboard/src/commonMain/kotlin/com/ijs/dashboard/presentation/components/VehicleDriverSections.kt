@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -238,13 +239,13 @@ internal fun VehicleStatusSection(
                     EnhancedStatusChip(
                         label = stringResource(Res.string.dashboard_label_on_route),
                         count = vehicleStatus.onTripInProgress,
-                        color = Color(0xFF4CAF50),
+                        color = FleetStatusColors.FleetOnRoute,
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
                         label = stringResource(Res.string.dashboard_label_planned),
                         count = vehicleStatus.onTripPlanned,
-                        color = Color(0xFF2196F3),
+                        color = FleetStatusColors.FleetPlanned,
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
@@ -382,13 +383,13 @@ internal fun DriversStatusSection(
                     EnhancedStatusChip(
                         label = stringResource(Res.string.dashboard_label_on_route),
                         count = driverStatus.onTripInProgress,
-                        color = Color(0xFF4CAF50),
+                        color = FleetStatusColors.FleetOnRoute,
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(
                         label = stringResource(Res.string.dashboard_label_planned),
                         count = driverStatus.onTripPlanned,
-                        color = Color(0xFF2196F3),
+                        color = FleetStatusColors.FleetPlanned,
                         modifier = Modifier.weight(1f)
                     )
                     EnhancedStatusChip(

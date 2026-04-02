@@ -33,6 +33,12 @@ kotlin {
             // Foundation — exposes shared DTOs, MVI base, error types, StatusConstants
             api(project(":ijs-core-lib"))
 
+            // Logging — FleetLogger interface + KermitFleetLogger impl
+            implementation(project(":ijs-logger-lib"))
+
+            // Dispatchers — DispatcherProvider for async operations in components
+            implementation(project(":ijs-dispatcher-lib"))
+
             // Date range dialog uses FleetDateTimePicker (ijs-datetime-picker)
             implementation(project(":ijs-datetime-picker"))
 
@@ -46,6 +52,7 @@ kotlin {
             // Utilities
             implementation(libs.kermit)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.coroutines.core)
         }
 
         commonTest.dependencies {

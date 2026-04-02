@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -21,6 +20,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FilterDefinition
+import com.indusjs.uicomponents.components.FleetFilterBar
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.LoadingContent
@@ -46,6 +47,14 @@ fun TripsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val pullRefreshState = rememberPullToRefreshState()
+    val tripStatusFilters = TripStatus.entries.map { status ->
+        val countForStatus = state.trips.count { it.status == status }
+        FilterDefinition(
+            id = status,
+            label = TripStatus.getDisplayLabel(status),
+            count = countForStatus.takeIf { it > 0 }
+        )
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
@@ -127,11 +136,19 @@ fun TripsScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            // Status Filter Chips
-            StatusFilterChips(
-                selectedStatus = state.selectedStatusFilter,
-                onStatusSelected = { viewModel.sendIntent(TripsContract.Intent.FilterByStatus(it)) },
-                modifier = Modifier.padding(horizontal = 16.dp)
+            FleetFilterBar(
+                filters = tripStatusFilters,
+                selectedFilterId = state.selectedStatusFilter,
+                onFilterSelected = { id ->
+                    when {
+                        id == null -> viewModel.sendIntent(TripsContract.Intent.FilterByStatus(null))
+                        id == state.selectedStatusFilter ->
+                            viewModel.sendIntent(TripsContract.Intent.FilterByStatus(null))
+                        else -> viewModel.sendIntent(TripsContract.Intent.FilterByStatus(id))
+                    }
+                },
+                allLabel = stringResource(Res.string.all_filter),
+                modifier = Modifier.padding(vertical = 8.dp)
             )
 
             when {
@@ -174,34 +191,6 @@ fun TripsScreen(
                 }
             }
         }
-        }
-    }
-}
-
-@Composable
-private fun StatusFilterChips(
-    selectedStatus: TripStatus?,
-    onStatusSelected: (TripStatus?) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 8.dp)
-    ) {
-        item {
-            FilterChip(
-                selected = selectedStatus == null,
-                onClick = { onStatusSelected(null) },
-                label = { Text(stringResource(Res.string.all_filter)) }
-            )
-        }
-        items(TripStatus.entries.toList()) { status ->
-            FilterChip(
-                selected = selectedStatus == status,
-                onClick = { onStatusSelected(if (selectedStatus == status) null else status) },
-                label = { Text(getStatusDisplayName(status)) }
-            )
         }
     }
 }

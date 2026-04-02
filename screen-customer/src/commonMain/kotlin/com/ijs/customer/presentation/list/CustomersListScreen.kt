@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.customer.domain.entity.Customer
 import com.ijs.customer.presentation.list.CustomersListContract.Effect
@@ -129,13 +130,11 @@ fun CustomersListScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-            // Search Bar
-            SearchBar(
+            FleetSearchField(
                 query = state.searchQuery,
                 onQueryChange = { viewModel.sendIntent(Intent.UpdateSearchQuery(it)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = stringResource(Res.string.customers_search_placeholder)
             )
 
             // Content
@@ -176,31 +175,6 @@ fun CustomersListScreen(
         }
         }
     }
-}
-
-@Composable
-private fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text(stringResource(Res.string.customers_search_placeholder)) },
-        leadingIcon = {
-            Icon(
-                painter = painterResource(Res.drawable.ic_search),
-                contentDescription = null
-            )
-        },
-        singleLine = true,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface
-        )
-    )
 }
 
 @Composable

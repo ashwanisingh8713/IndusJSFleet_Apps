@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.FleetSearchField
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.vehicle.domain.entity.VehicleStatus
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -382,11 +383,11 @@ internal fun VehicleSelectorContent(
                                 // Status dot
                                 val colorScheme = VehicleStatus.getColorScheme(vehicle.status)
                                 val statusColor = when (colorScheme) {
-                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
-                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
-                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
-                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> com.indusjs.uicomponents.theme.FleetStatusColors.InfoBlue
-                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> Color(0xFF6B7280)
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> FleetStatusColors.ProfitGreen
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.WARNING -> FleetStatusColors.ExpenseAmber
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.ERROR -> FleetStatusColors.LossRed
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> FleetStatusColors.InfoBlue
+                                    com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> FleetStatusColors.NeutralGray
                                 }
                                 Box(
                                     modifier = Modifier
