@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.model.shared.SelectableCustomer
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Reusable Customer Details Section Card.
@@ -47,7 +48,7 @@ fun CustomerDetailsSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "👤 Customer Details",
+                    text = "👤 ${stringResource(Res.string.customer_section_details)}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -67,7 +68,7 @@ fun CustomerDetailsSection(
                     } else {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh customers",
+                            contentDescription = stringResource(Res.string.customer_refresh),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
@@ -125,10 +126,10 @@ private fun CustomerDetailsSectionContent(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 TextButton(onClick = onSelectClick) {
-                    Text("🔄 Change Customer")
+                    Text("🔄 ${stringResource(Res.string.customer_change)}", maxLines = 1)
                 }
                 TextButton(onClick = onAddNewClick) {
-                    Text("+ Add New Customer")
+                    Text("+ ${stringResource(Res.string.customer_add_new)}", maxLines = 1)
                 }
             }
         }
@@ -140,7 +141,7 @@ private fun CustomerDetailsSectionContent(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("👤", modifier = Modifier.padding(end = 8.dp))
-                Text(text = "Select Customer", fontWeight = FontWeight.Medium)
+                Text(text = stringResource(Res.string.customer_select), fontWeight = FontWeight.Medium)
             }
 
             if (validationError != null) {
@@ -157,7 +158,7 @@ private fun CustomerDetailsSectionContent(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onAddNewClick) {
-                    Text("+ Add New Customer")
+                    Text("+ ${stringResource(Res.string.customer_add_new)}", maxLines = 1)
                 }
             }
         }
@@ -175,12 +176,12 @@ private fun EmptyCustomerState(
     ) {
         Text(text = "👤", style = MaterialTheme.typography.displaySmall)
         Text(
-            text = "No customers found",
+            text = stringResource(Res.string.customer_no_customers),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = "Add a customer to associate with this trip.",
+            text = stringResource(Res.string.customer_add_trip_hint),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -191,7 +192,7 @@ private fun EmptyCustomerState(
             onClick = onAddNewClick,
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("➕ Add New Customer")
+            Text("➕ ${stringResource(Res.string.customer_add_new_button)}")
         }
     }
 }

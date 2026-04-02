@@ -16,6 +16,8 @@ import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Received Payments Tab Content.
@@ -31,6 +33,7 @@ fun PaymentsTabContent(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var isSearchVisible by remember { mutableStateOf(false) }
+    val unknownMonthLabel = stringResource(Res.string.payment_unknown)
 
     // Filter payments by search query
     val filteredPayments = remember(state.receivedPayments, searchQuery) {
@@ -48,11 +51,11 @@ fun PaymentsTabContent(
     }
 
     // Group payments by month for better navigation
-    val groupedPayments = remember(filteredPayments) {
+    val groupedPayments = remember(filteredPayments, unknownMonthLabel) {
         filteredPayments.groupBy { payment ->
             payment.date?.let { date ->
                 FleetDateTime.formatIsoToMonthYear(date)
-            } ?: "Unknown"
+            } ?: unknownMonthLabel
         }
     }
 
@@ -63,7 +66,7 @@ fun PaymentsTabContent(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = "Search by Trip ID, amount, reference..."
+                placeholder = stringResource(Res.string.customer_search_payments)
             )
         }
 
@@ -98,14 +101,14 @@ fun PaymentsTabContent(
             filteredPayments.isEmpty() -> {
                 if (searchQuery.isNotEmpty()) {
                     EmptyContent(
-                        title = "No results found",
-                        message = "Try a different search term",
+                        title = stringResource(Res.string.payment_no_results),
+                        message = stringResource(Res.string.customer_payment_search_empty_hint),
                         icon = "🔍"
                     )
                 } else {
                     EmptyContent(
-                        title = "No payments recorded",
-                        message = "No payments received from this customer yet",
+                        title = stringResource(Res.string.customer_no_payments_title),
+                        message = stringResource(Res.string.customer_no_payments_message),
                         icon = "💳"
                     )
                 }
@@ -162,7 +165,7 @@ private fun PaymentsList(
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     } else {
                         TextButton(onClick = onLoadMore) {
-                            Text("Load More")
+                            Text(stringResource(Res.string.action_load_more))
                         }
                     }
                 }

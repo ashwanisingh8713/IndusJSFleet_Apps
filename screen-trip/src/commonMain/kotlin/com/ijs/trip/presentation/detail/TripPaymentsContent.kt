@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.TripPayment
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Trip Payments Section — displays payment history and summary for a trip.
@@ -38,7 +40,7 @@ internal fun TripPaymentsSection(
     onPaymentClick: (String) -> Unit
 ) {
     EnhancedSectionCard(
-        title = "Payments",
+        title = stringResource(Res.string.payments_title),
         icon = "💳"
     ) {
         when {
@@ -65,14 +67,14 @@ internal fun TripPaymentsSection(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("+ Record Payment", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(Res.string.trip_payment_record_plus), fontWeight = FontWeight.SemiBold)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Payment History Header
                 Text(
-                    text = "Payment History",
+                    text = stringResource(Res.string.trip_payment_history),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -118,7 +120,7 @@ private fun PaymentSummaryHeader(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Trip Price",
+                        text = stringResource(Res.string.payment_add_trip_price),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -150,7 +152,7 @@ private fun PaymentSummaryHeader(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Received ($paymentCount)",
+                        text = stringResource(Res.string.trip_payment_received_count, paymentCount),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -183,7 +185,7 @@ private fun PaymentSummaryHeader(
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Pending",
+                            text = stringResource(Res.string.payment_status_pending),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -217,7 +219,10 @@ private fun PaymentSummaryHeader(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${(progress * 100).toInt()}% collected",
+                        text = stringResource(
+                            Res.string.trip_payment_percent_collected,
+                            (progress * 100).toInt()
+                        ),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -365,13 +370,13 @@ private fun PaymentsEmptyContent(onAddPayment: () -> Unit) {
     ) {
         Text(text = "💳", style = MaterialTheme.typography.displaySmall)
         Text(
-            text = "No payments recorded",
+            text = stringResource(Res.string.trip_payments_empty_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            text = "Payments for this trip will appear here",
+            text = stringResource(Res.string.trip_payments_empty_message),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
@@ -380,7 +385,7 @@ private fun PaymentsEmptyContent(onAddPayment: () -> Unit) {
             onClick = onAddPayment,
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("+ Record Payment")
+            Text(stringResource(Res.string.trip_payment_record_plus))
         }
     }
 }

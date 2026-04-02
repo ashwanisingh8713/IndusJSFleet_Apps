@@ -12,17 +12,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FinanceColors
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetDropdown
+import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
-import com.indusjs.uicomponents.components.FleetTextField
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.finance.domain.entity.*
@@ -34,6 +35,7 @@ import com.indusjs.pdfreport.model.EmiPaymentPdfItem
 import com.indusjs.pdfreport.model.VehicleFinancePdfData
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 // Use FinanceColors from core.ui
 private val LoanBlue = FinanceColors.LoanBlue
@@ -83,13 +85,14 @@ fun VehicleFinanceDetailScreen(
 
     val purchase = state.selectedPurchase
     val vehicle = state.vehicles.find { (it.id.toIntOrNull() ?: 0) == vehicleId }
+    val notAvailableLabel = stringResource(Res.string.not_applicable_short)
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Finance Details")
+                        Text(stringResource(Res.string.finance_detail))
                         vehicle?.let {
                             Text(
                                 text = "${it.registrationNumber} - ${it.make} ${it.model}",
@@ -102,7 +105,7 @@ fun VehicleFinanceDetailScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 },
@@ -119,7 +122,7 @@ fun VehicleFinanceDetailScreen(
                         ) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_download),
-                                contentDescription = "Export PDF"
+                                contentDescription = stringResource(Res.string.export_pdf)
                             )
                         }
                     }
@@ -138,7 +141,7 @@ fun VehicleFinanceDetailScreen(
             state.isLoading -> LoadingContent(modifier = Modifier.padding(paddingValues))
             !hasDataForThisVehicle -> LoadingContent(modifier = Modifier.padding(paddingValues))
             state.error != null -> ErrorContent(
-                error = state.error ?: "Something went wrong",
+                error = state.error ?: stringResource(Res.string.finance_error_generic),
                 onRetry = { viewModel.sendIntent(Intent.SelectVehicle(vehicleId)) },
                 modifier = Modifier.padding(paddingValues)
             )
@@ -150,6 +153,7 @@ fun VehicleFinanceDetailScreen(
                 purchase = purchase,
                 loanSummary = state.loanSummary,
                 payments = state.loanPayments,
+                notAvailableLabel = notAvailableLabel,
                 onRecordPaymentClick = { viewModel.sendIntent(Intent.ShowRecordPaymentSheet) },
                 onViewHistoryClick = onNavigateToHistory,
                 onPaymentClick = { payment -> viewModel.sendIntent(Intent.ShowPaymentDetail(payment)) },
@@ -208,16 +212,16 @@ private fun NoPurchaseInfoContent(
         ) {
             Text("⚪", style = MaterialTheme.typography.displayLarge)
             Text(
-                text = "No purchase information",
+                text = stringResource(Res.string.finance_no_purchase_detail_title),
                 style = MaterialTheme.typography.titleLarge
             )
             Text(
-                text = "Add purchase details to track this vehicle's finance",
+                text = stringResource(Res.string.finance_no_purchase_detail_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(onClick = onAddClick) {
-                Text("Add Purchase Info")
+                Text(stringResource(Res.string.finance_add_purchase))
             }
         }
     }
@@ -228,6 +232,7 @@ private fun FinanceDetailContent(
     purchase: VehiclePurchase,
     loanSummary: LoanSummary?,
     payments: List<LoanPayment>,
+    notAvailableLabel: String,
     onRecordPaymentClick: () -> Unit,
     onViewHistoryClick: () -> Unit,
     onPaymentClick: (LoanPayment) -> Unit,
@@ -240,15 +245,21 @@ private fun FinanceDetailContent(
     ) {
         // Purchase Summary
         item {
-            FleetSectionCard(title = "💰 Purchase Summary") {
+            FleetSectionCard(title = stringResource(Res.string.finance_purchase_summary_section)) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DetailRow("Purchase Date", purchase.purchaseDate)
-                    DetailRow("Purchase Price", formatCurrency(purchase.purchasePrice))
-                    purchase.vendorName?.let { DetailRow("Vendor", it) }
-                    purchase.invoiceNumber?.let { DetailRow("Invoice", it) }
+                    DetailRow(stringResource(Res.string.finance_row_purchase_date), purchase.purchaseDate)
+                    DetailRow(stringResource(Res.string.finance_purchase_price), formatCurrency(purchase.purchasePrice))
+                    purchase.vendorName?.let { DetailRow(stringResource(Res.string.finance_label_vendor), it) }
+                    purchase.invoiceNumber?.let {
+                        DetailRow(stringResource(Res.string.finance_row_invoice_short), it)
+                    }
                     DetailRow(
-                        "Payment Type",
-                        if (purchase.isFinanced) "🏦 Loan" else "💵 Cash"
+                        stringResource(Res.string.finance_row_payment_type),
+                        if (purchase.isFinanced) {
+                            stringResource(Res.string.finance_payment_type_loan_label)
+                        } else {
+                            stringResource(Res.string.finance_payment_type_cash_label)
+                        }
                     )
                 }
             }
@@ -257,26 +268,52 @@ private fun FinanceDetailContent(
         // Loan Details (only for financed vehicles)
         if (purchase.isFinanced) {
             item {
-                FleetSectionCard(title = "🏦 Loan Details") {
+                FleetSectionCard(title = stringResource(Res.string.finance_section_loan)) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DetailRow("Financier", purchase.financierName ?: "N/A")
-                        purchase.loanAccountNumber?.let { DetailRow("Account Number", it) }
+                        DetailRow(
+                            stringResource(Res.string.finance_row_financier),
+                            purchase.financierName ?: notAvailableLabel
+                        )
+                        purchase.loanAccountNumber?.let {
+                            DetailRow(stringResource(Res.string.finance_label_account_number), it)
+                        }
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                        DetailRow("Down Payment", "${formatCurrency(purchase.downPayment)} (${purchase.downPaymentPercent}%)")
-                        DetailRow("Loan Amount", formatCurrency(purchase.loanAmount))
-                        DetailRow("Interest Rate", "${purchase.interestRate}% per annum")
-                        DetailRow("Tenure", "${purchase.tenureMonths} months")
-                        DetailRow("Monthly EMI", formatCurrency(purchase.emiAmount), valueColor = LoanBlue)
+                        DetailRow(
+                            stringResource(Res.string.finance_row_down_payment),
+                            "${formatCurrency(purchase.downPayment)} (${purchase.downPaymentPercent}%)"
+                        )
+                        DetailRow(stringResource(Res.string.finance_row_loan_amount), formatCurrency(purchase.loanAmount))
+                        DetailRow(
+                            stringResource(Res.string.finance_row_interest_rate),
+                            stringResource(Res.string.finance_row_interest_rate_annum, purchase.interestRate.toString())
+                        )
+                        DetailRow(
+                            stringResource(Res.string.finance_row_tenure_plain),
+                            stringResource(Res.string.finance_row_tenure_months, purchase.tenureMonths)
+                        )
+                        DetailRow(
+                            stringResource(Res.string.finance_row_monthly_emi_plain),
+                            formatCurrency(purchase.emiAmount),
+                            valueColor = LoanBlue
+                        )
                         HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                        DetailRow("Total Interest", formatCurrency(purchase.totalInterest), valueColor = CriticalRed)
-                        DetailRow("Total Payable", formatCurrency(purchase.totalPayable), valueColor = MaterialTheme.colorScheme.primary)
+                        DetailRow(
+                            stringResource(Res.string.finance_row_total_interest_plain),
+                            formatCurrency(purchase.totalInterest),
+                            valueColor = CriticalRed
+                        )
+                        DetailRow(
+                            stringResource(Res.string.finance_row_total_payable_plain),
+                            formatCurrency(purchase.totalPayable),
+                            valueColor = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
 
             // Loan Progress
             item {
-                FleetSectionCard(title = "📊 Loan Progress") {
+                FleetSectionCard(title = stringResource(Res.string.finance_loan_progress_section)) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         // Progress bar
                         Column {
@@ -285,12 +322,19 @@ private fun FinanceDetailContent(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "${purchase.loanProgressPercent}% Complete",
+                                    text = stringResource(
+                                        Res.string.finance_percent_complete,
+                                        purchase.loanProgressPercent.toInt()
+                                    ),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = LoanBlue
                                 )
                                 Text(
-                                    text = "${purchase.emisPaid}/${purchase.tenureMonths} EMIs",
+                                    text = stringResource(
+                                        Res.string.finance_emis_slash,
+                                        purchase.emisPaid,
+                                        purchase.tenureMonths
+                                    ),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -314,19 +358,19 @@ private fun FinanceDetailContent(
                         ) {
                             StatItem(
                                 value = purchase.emisPaid.toString(),
-                                label = "EMIs Paid",
+                                label = stringResource(Res.string.finance_stat_emis_paid),
                                 subValue = formatCurrency(purchase.totalPaid),
                                 color = CashGreen
                             )
                             StatItem(
                                 value = purchase.emisRemaining.toString(),
-                                label = "Remaining",
-                                subValue = "EMIs",
+                                label = stringResource(Res.string.finance_stat_remaining),
+                                subValue = stringResource(Res.string.finance_stat_emis_sub),
                                 color = WarningOrange
                             )
                             StatItem(
                                 value = formatCurrency(purchase.outstandingBalance),
-                                label = "Outstanding",
+                                label = stringResource(Res.string.finance_outstanding_label),
                                 color = CriticalRed
                             )
                         }
@@ -336,14 +380,14 @@ private fun FinanceDetailContent(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Start
                         ) {
-                            val (statusColor, statusLabel) = when (purchase.loanStatus) {
-                                LoanStatus.ACTIVE -> CashGreen to "🟢 Active"
-                                LoanStatus.CLOSED -> LoanBlue to "✅ Closed"
-                                LoanStatus.DEFAULTED -> CriticalRed to "🔴 Defaulted"
-                                else -> Color.Gray to "N/A"
+                            val statusLabel = when (purchase.loanStatus) {
+                                LoanStatus.ACTIVE -> stringResource(Res.string.finance_loan_status_active)
+                                LoanStatus.CLOSED -> stringResource(Res.string.finance_loan_status_closed)
+                                LoanStatus.DEFAULTED -> stringResource(Res.string.finance_loan_status_defaulted)
+                                else -> notAvailableLabel
                             }
                             Text(
-                                text = "Loan Status: $statusLabel",
+                                text = stringResource(Res.string.finance_loan_status_line, statusLabel),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
@@ -378,7 +422,7 @@ private fun FinanceDetailContent(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text(
-                                        text = "Next EMI",
+                                        text = stringResource(Res.string.finance_next_emi_header),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -394,12 +438,12 @@ private fun FinanceDetailContent(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text(
-                                        text = "Due Date",
+                                        text = stringResource(Res.string.finance_row_due_date),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        text = getNextEmiDueDate(purchase),
+                                        text = getNextEmiDueDate(purchase, notAvailableLabel),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -410,7 +454,7 @@ private fun FinanceDetailContent(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text(
-                                        text = "Amount",
+                                        text = stringResource(Res.string.label_amount),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -429,7 +473,7 @@ private fun FinanceDetailContent(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
-                                Text("Record Payment")
+                                Text(stringResource(Res.string.record_payment))
                             }
                         }
                     }
@@ -441,9 +485,13 @@ private fun FinanceDetailContent(
                 val paidPayments = payments.filter { it.isPaid }
 
                 FleetSectionCard(
-                    title = "Payment History",
+                    title = stringResource(Res.string.finance_payment_history),
                     trailingAction = if (paidPayments.isNotEmpty()) {
-                        { TextButton(onClick = onViewHistoryClick) { Text("View All (${paidPayments.size})") } }
+                        {
+                            TextButton(onClick = onViewHistoryClick) {
+                                Text(stringResource(Res.string.view_all_count, paidPayments.size))
+                            }
+                        }
                     } else null
                 ) {
                     if (paidPayments.isEmpty()) {
@@ -455,12 +503,12 @@ private fun FinanceDetailContent(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "No payments recorded yet",
+                                text = stringResource(Res.string.finance_no_payments_yet),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "Record your first EMI payment to track history",
+                                text = stringResource(Res.string.finance_record_first_emi_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -483,14 +531,24 @@ private fun FinanceDetailContent(
         // Bank Details (if available)
         if (purchase.bankName != null || purchase.bankAccountNumber != null) {
             item {
-                FleetSectionCard(title = "🏦 Bank Details") {
+                FleetSectionCard(title = stringResource(Res.string.finance_bank_details_section)) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        purchase.bankName?.let { DetailRow("Bank Name", it) }
-                        purchase.bankAccountNumber?.let { DetailRow("Account Number", it) }
-                        purchase.bankIfsc?.let { DetailRow("IFSC Code", it) }
+                        purchase.bankName?.let {
+                            DetailRow(stringResource(Res.string.finance_label_bank_name), it)
+                        }
+                        purchase.bankAccountNumber?.let {
+                            DetailRow(stringResource(Res.string.finance_label_account_number), it)
+                        }
+                        purchase.bankIfsc?.let {
+                            DetailRow(stringResource(Res.string.finance_label_ifsc), it)
+                        }
                         DetailRow(
-                            "Auto-debit",
-                            if (purchase.autoDebitEnabled) "✅ Enabled" else "❌ Disabled"
+                            stringResource(Res.string.finance_row_auto_debit),
+                            if (purchase.autoDebitEnabled) {
+                                stringResource(Res.string.finance_auto_debit_enabled_label)
+                            } else {
+                                stringResource(Res.string.finance_auto_debit_disabled_label)
+                            }
                         )
                     }
                 }
@@ -501,7 +559,7 @@ private fun FinanceDetailContent(
         purchase.notes?.let { notes ->
             if (notes.isNotBlank()) {
                 item {
-                    FleetSectionCard(title = "📝 Notes") {
+                    FleetSectionCard(title = stringResource(Res.string.finance_section_notes)) {
                         Text(notes)
                     }
                 }
@@ -515,7 +573,7 @@ private fun FinanceDetailContent(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("📄 Export PDF Report")
+                Text(stringResource(Res.string.finance_export_pdf_report))
             }
         }
 
@@ -637,8 +695,6 @@ private fun RecordPaymentBottomSheet(
     onRecord: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var showModeDropdown by remember { mutableStateOf(false) }
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -650,7 +706,7 @@ private fun RecordPaymentBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Record EMI Payment",
+                text = stringResource(Res.string.finance_record_emi_payment_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -664,12 +720,17 @@ private fun RecordPaymentBottomSheet(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = "🚛 ${purchase.vehicle?.registrationNumber ?: "Vehicle"}",
+                        text = "🚛 ${purchase.vehicle?.registrationNumber ?: stringResource(Res.string.finance_vehicle_fallback)}",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "EMI #${purchase.emisPaid + 1}  |  Due: ${formatDueDateDisplay(purchase.nextEmiDueDate)}  |  Amount: ${formatCurrency(purchase.emiAmount)}",
+                        text = stringResource(
+                            Res.string.finance_emi_due_amount_line,
+                            purchase.emisPaid + 1,
+                            formatDueDateDisplay(purchase.nextEmiDueDate),
+                            formatCurrency(purchase.emiAmount)
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -679,13 +740,13 @@ private fun RecordPaymentBottomSheet(
             HorizontalDivider()
 
             // Amount
-            FleetTextField(
+            FleetInputField(
                 value = amount,
                 onValueChange = onAmountChange,
-                label = "Amount Paid *",
+                fieldType = FieldType.NUMBER,
+                label = stringResource(Res.string.finance_label_amount_paid),
                 placeholder = purchase.emiAmount.toString(),
                 leadingIcon = { Text("₹") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = amountError != null,
                 errorMessage = amountError
             )
@@ -696,84 +757,64 @@ private fun RecordPaymentBottomSheet(
                 time = "",
                 onDateTimeChange = { newDate, _ -> onDateChange(newDate) },
                 mode = PickerMode.DATE_ONLY,
-                label = "Payment Date *",
+                label = stringResource(Res.string.finance_label_payment_date),
                 isError = dateError != null,
                 errorMessage = dateError
             )
 
             // Payment Mode
-            ExposedDropdownMenuBox(
-                expanded = showModeDropdown,
-                onExpandedChange = { showModeDropdown = it }
-            ) {
-                OutlinedTextField(
-                    value = mode?.label ?: "",
-                    onValueChange = {},
-                    label = { Text("Payment Mode") },
-                    placeholder = { Text("Select mode") },
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showModeDropdown) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor(),
-                    shape = RoundedCornerShape(12.dp)
-                )
-
-                ExposedDropdownMenu(
-                    expanded = showModeDropdown,
-                    onDismissRequest = { showModeDropdown = false }
-                ) {
-                    PaymentMode.entries.forEach { paymentMode ->
-                        DropdownMenuItem(
-                            text = { Text(paymentMode.label) },
-                            onClick = {
-                                onModeChange(paymentMode)
-                                showModeDropdown = false
-                            }
-                        )
-                    }
-                }
-            }
+            FleetDropdown(
+                label = stringResource(Res.string.finance_label_payment_mode),
+                options = PaymentMode.entries.map { paymentMode ->
+                    DropdownOption(id = paymentMode, label = paymentMode.label)
+                },
+                selectedOptionId = mode,
+                onOptionSelected = onModeChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = stringResource(Res.string.finance_placeholder_payment_mode)
+            )
 
             // Transaction Ref
-            FleetTextField(
+            FleetInputField(
                 value = transactionRef,
                 onValueChange = onRefChange,
-                label = "Transaction Ref/UTR",
-                placeholder = "UTR123456789"
+                fieldType = FieldType.DEFAULT,
+                label = stringResource(Res.string.finance_label_transaction_ref),
+                placeholder = stringResource(Res.string.finance_placeholder_transaction_ref)
             )
 
             // Payment Source
-            FleetTextField(
+            FleetInputField(
                 value = source,
                 onValueChange = onSourceChange,
-                label = "Payment Source",
-                placeholder = "e.g., HDFC NetBanking"
+                fieldType = FieldType.DEFAULT,
+                label = stringResource(Res.string.finance_label_payment_source),
+                placeholder = stringResource(Res.string.finance_placeholder_payment_source)
             )
 
             // Late Fee
-            FleetTextField(
+            FleetInputField(
                 value = lateFee,
                 onValueChange = onLateFeeChange,
-                label = "Late Fee (if any)",
-                placeholder = "0",
-                leadingIcon = { Text("₹") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                fieldType = FieldType.NUMBER,
+                label = stringResource(Res.string.finance_label_late_fee),
+                placeholder = stringResource(Res.string.finance_placeholder_late_fee),
+                leadingIcon = { Text("₹") }
             )
 
             // Notes
             OutlinedTextField(
                 value = notes,
                 onValueChange = onNotesChange,
-                label = { Text("Notes") },
-                placeholder = { Text("Additional notes...") },
+                label = { Text(stringResource(Res.string.finance_label_notes)) },
+                placeholder = { Text(stringResource(Res.string.finance_placeholder_additional_notes)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
 
             // Info text
             Text(
-                text = "ℹ️ This records a payment you've already made to the bank",
+                text = stringResource(Res.string.finance_payment_recorded_bank_info),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -788,7 +829,7 @@ private fun RecordPaymentBottomSheet(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
 
                 Button(
@@ -804,7 +845,7 @@ private fun RecordPaymentBottomSheet(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Record Payment")
+                        Text(stringResource(Res.string.record_payment))
                     }
                 }
             }
@@ -820,7 +861,7 @@ private fun RecordPaymentBottomSheet(
  * Always calculates from loanStartDate + emisPaid months to ensure accuracy.
  * The API's nextEmiDueDate might contain stale data.
  */
-private fun getNextEmiDueDate(purchase: VehiclePurchase): String {
+private fun getNextEmiDueDate(purchase: VehiclePurchase, notAvailableLabel: String): String {
     // Calculate from loanStartDate + emisPaid months
     val loanStartDate = purchase.loanStartDate
     if (!loanStartDate.isNullOrBlank()) {
@@ -839,7 +880,7 @@ private fun getNextEmiDueDate(purchase: VehiclePurchase): String {
         return formatDueDateDisplay(purchase.nextEmiDueDate)
     }
 
-    return "N/A"
+    return notAvailableLabel
 }
 
 /**
@@ -866,7 +907,7 @@ private fun PaymentDetailBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Payment Details",
+                text = stringResource(Res.string.finance_sheet_payment_details),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -903,31 +944,44 @@ private fun PaymentDetailBottomSheet(
 
             // Payment Details
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DetailRow("Payment Date", formatDueDateDisplay(payment.paymentDate))
+                DetailRow(
+                    stringResource(Res.string.finance_row_payment_date),
+                    formatDueDateDisplay(payment.paymentDate)
+                )
                 payment.dueDate?.let {
-                    DetailRow("Due Date", formatDueDateDisplay(it))
+                    DetailRow(stringResource(Res.string.finance_row_due_date), formatDueDateDisplay(it))
                 }
                 payment.paymentMode?.let {
-                    DetailRow("Payment Mode", it.label)
+                    DetailRow(stringResource(Res.string.finance_label_payment_mode), it.label)
                 }
                 payment.transactionRef?.let {
-                    DetailRow("Transaction Ref", it)
+                    DetailRow(stringResource(Res.string.finance_label_transaction_ref), it)
                 }
                 payment.paymentSource?.let {
-                    DetailRow("Payment Source", it)
+                    DetailRow(stringResource(Res.string.finance_label_payment_source), it)
                 }
 
                 if (payment.lateFee > 0) {
-                    DetailRow("Late Fee", formatCurrency(payment.lateFee), valueColor = CriticalRed)
+                    DetailRow(
+                        stringResource(Res.string.finance_label_late_fee),
+                        formatCurrency(payment.lateFee),
+                        valueColor = CriticalRed
+                    )
                 }
 
                 if (payment.principalAmount > 0 || payment.interestAmount > 0) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     if (payment.principalAmount > 0) {
-                        DetailRow("Principal", formatCurrency(payment.principalAmount))
+                        DetailRow(
+                            stringResource(Res.string.finance_row_principal),
+                            formatCurrency(payment.principalAmount)
+                        )
                     }
                     if (payment.interestAmount > 0) {
-                        DetailRow("Interest", formatCurrency(payment.interestAmount))
+                        DetailRow(
+                            stringResource(Res.string.finance_row_interest),
+                            formatCurrency(payment.interestAmount)
+                        )
                     }
                 }
             }
@@ -938,7 +992,7 @@ private fun PaymentDetailBottomSheet(
                     HorizontalDivider()
                     Column {
                         Text(
-                            text = "Notes",
+                            text = stringResource(Res.string.finance_label_notes),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -958,7 +1012,7 @@ private fun PaymentDetailBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Close")
+                Text(stringResource(Res.string.close))
             }
 
             Spacer(modifier = Modifier.height(16.dp))

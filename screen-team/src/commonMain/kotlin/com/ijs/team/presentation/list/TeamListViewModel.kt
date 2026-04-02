@@ -2,11 +2,14 @@ package com.ijs.team.presentation.list
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
 import com.ijs.team.domain.repository.TeamRepository
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.withContext
 
 /**
@@ -186,7 +189,7 @@ class TeamListViewModel(
                                 filteredMembers = applyFilters(updatedMembers, selectedFilter, searchQuery)
                             )
                         }
-                        sendEffect(TeamListContract.Effect.ShowSnackbar("Team member deleted successfully"))
+                        sendEffect(TeamListContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_team_member_deleted)))
                     },
                     onFailure = { error ->
                         updateState {
@@ -227,17 +230,33 @@ class TeamListViewModel(
                                 filteredMembers = applyFilters(updatedMembers, selectedFilter, searchQuery)
                             )
                         }
-                        val statusText = if (updatedMember.isActive) "enabled" else "disabled"
-                        sendEffect(TeamListContract.Effect.ShowSnackbar("${updatedMember.fullName} has been $statusText"))
+                        sendEffect(
+                            TeamListContract.Effect.ShowSnackbar(
+                                if (updatedMember.isActive) {
+                                    UiText.StringRes(Res.string.team_member_enabled_toast, listOf(updatedMember.fullName))
+                                } else {
+                                    UiText.StringRes(Res.string.team_member_disabled_toast, listOf(updatedMember.fullName))
+                                }
+                            )
+                        )
                     },
                     onFailure = { error ->
                         updateState { copy(isTogglingActive = null) }
-                        sendEffect(TeamListContract.Effect.ShowSnackbar(error.message ?: "Failed to toggle status"))
+                        sendEffect(
+                            TeamListContract.Effect.ShowSnackbar(
+                                error.message?.let { UiText.Raw(it) }
+                                    ?: UiText.StringRes(Res.string.error_toggle_status)
+                            )
+                        )
                     }
                 )
             } catch (e: Exception) {
                 updateState { copy(isTogglingActive = null) }
-                sendEffect(TeamListContract.Effect.ShowSnackbar(e.message ?: "Failed to toggle status"))
+                sendEffect(
+                    TeamListContract.Effect.ShowSnackbar(
+                        e.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.error_toggle_status)
+                    )
+                )
             }
         }
     }
@@ -260,16 +279,25 @@ class TeamListViewModel(
                 result.fold(
                     onSuccess = {
                         updateState { copy(isResettingPassword = null) }
-                        sendEffect(TeamListContract.Effect.ShowSnackbar("Password reset successfully"))
+                        sendEffect(TeamListContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_team_password_reset)))
                     },
                     onFailure = { error ->
                         updateState { copy(isResettingPassword = null) }
-                        sendEffect(TeamListContract.Effect.ShowSnackbar(error.message ?: "Failed to reset password"))
+                        sendEffect(
+                            TeamListContract.Effect.ShowSnackbar(
+                                error.message?.let { UiText.Raw(it) }
+                                    ?: UiText.StringRes(Res.string.error_reset_member_password)
+                            )
+                        )
                     }
                 )
             } catch (e: Exception) {
                 updateState { copy(isResettingPassword = null) }
-                sendEffect(TeamListContract.Effect.ShowSnackbar(e.message ?: "Failed to reset password"))
+                sendEffect(
+                    TeamListContract.Effect.ShowSnackbar(
+                        e.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.error_reset_member_password)
+                    )
+                )
             }
         }
     }

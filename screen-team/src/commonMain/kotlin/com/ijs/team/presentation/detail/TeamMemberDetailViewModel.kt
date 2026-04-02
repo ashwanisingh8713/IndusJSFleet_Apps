@@ -1,13 +1,26 @@
 package com.ijs.team.presentation.detail
 
 import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.util.PermissionUtils
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
+import com.ijs.team.TAG_TEAM_DETAIL_VM
 import com.ijs.team.domain.entity.TeamMemberRole
 import com.indusjs.fleet.domain.entity.user.UserRole
 import com.ijs.team.domain.repository.TeamRepository
+import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_email_invalid_team
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_email_required_team
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_first_name_required_team
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_last_name_required_team
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_team_member
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_invalid_team
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_required_team
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_update_team_member
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_team_member_updated
 import kotlinx.coroutines.withContext
 
 /**
@@ -17,7 +30,8 @@ import kotlinx.coroutines.withContext
 class TeamMemberDetailViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val teamRepository: TeamRepository,
-    private val userLocalDataSource: UserLocalDataSource
+    private val userLocalDataSource: UserLocalDataSource,
+    private val logger: FleetLogger
 ) : MviViewModel<TeamMemberDetailContract.State, TeamMemberDetailContract.Intent, TeamMemberDetailContract.Effect>(
     TeamMemberDetailContract.State()
 ) {
@@ -56,16 +70,18 @@ class TeamMemberDetailViewModel(
 
         withContext(dispatcherProvider.io) {
             try {
-                // Load current user info
                 val userRole = try {
                     userLocalDataSource.getUserRole() ?: "owner"
-                } catch (e: Exception) { "owner" }
+                } catch (e: Exception) {
+                    "owner"
+                }
 
                 val userId = try {
                     userLocalDataSource.getUserId() ?: ""
-                } catch (e: Exception) { "" }
+                } catch (e: Exception) {
+                    ""
+                }
 
-                // Get available roles based on current user role
                 val creatableRoles = PermissionUtils.getCreatableRoles(userRole)
                 val availableTeamRoles = creatableRoles.mapNotNull {
                     when (it) {
@@ -80,27 +96,24 @@ class TeamMemberDetailViewModel(
 
                 result.fold(
                     onSuccess = { member ->
-                        // Determine if user can edit this member
                         val canEditMember = when {
-                            member.id == userId -> false  // Cannot edit self
+                            member.id == userId -> false
                             userRole.lowercase() == "owner" -> true
                             userRole.lowercase() == "general_manager" ->
                                 member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
                             else -> false
                         }
 
-                        // Determine if user can change this member's role
                         val canChangeRoleForMember = when {
-                            member.id == userId -> false  // Cannot change own role
+                            member.id == userId -> false
                             userRole.lowercase() == "owner" -> true
                             userRole.lowercase() == "general_manager" ->
                                 member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
                             else -> false
                         }
 
-                        // Determine if user can toggle this member's active status
                         val canToggleActiveMember = when {
-                            member.id == userId -> false  // Cannot toggle own status
+                            member.id == userId -> false
                             userRole.lowercase() == "owner" -> true
                             userRole.lowercase() == "general_manager" ->
                                 member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
@@ -117,7 +130,6 @@ class TeamMemberDetailViewModel(
                                 canEdit = canEditMember,
                                 canChangeRole = canChangeRoleForMember,
                                 canToggleActive = canToggleActiveMember,
-                                // Initialize edit fields with current values
                                 editFirstName = member.firstName,
                                 editLastName = member.lastName,
                                 editEmail = member.email,
@@ -131,16 +143,19 @@ class TeamMemberDetailViewModel(
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Failed to load team member"
+                                error = error.message?.let { UiText.Raw(it) }
+                                    ?: UiText.StringRes(Res.string.error_load_team_member)
                             )
                         }
                     }
                 )
             } catch (e: Exception) {
+                logger.e(TAG_TEAM_DETAIL_VM, "loadMember failed", e)
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to load team member"
+                        error = e.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_load_team_member)
                     )
                 }
             }
@@ -165,7 +180,6 @@ class TeamMemberDetailViewModel(
                 editMobile = member.mobile,
                 editRole = member.role,
                 editIsActive = member.isActive,
-                // Clear any previous errors
                 firstNameError = null,
                 lastNameError = null,
                 emailError = null,
@@ -179,7 +193,6 @@ class TeamMemberDetailViewModel(
     }
 
     private suspend fun saveChanges() {
-        // Validate fields
         if (!validateFields()) return
 
         updateState { copy(isSaving = true) }
@@ -189,11 +202,11 @@ class TeamMemberDetailViewModel(
                 val state = currentState
                 val roleToUpdate = if (state.canChangeRole && !state.isSelf) state.editRole else null
 
-                // Debug logging
-                println("TeamMemberDetailVM: Saving changes for member ${state.memberId}")
-                println("TeamMemberDetailVM: canChangeRole=${state.canChangeRole}, isSelf=${state.isSelf}")
-                println("TeamMemberDetailVM: editRole=${state.editRole}, roleToUpdate=$roleToUpdate")
-                println("TeamMemberDetailVM: currentUserRole=${state.currentUserRole}")
+                logger.d(
+                    TAG_TEAM_DETAIL_VM,
+                    "Saving member=${state.memberId} canChangeRole=${state.canChangeRole} isSelf=${state.isSelf} " +
+                        "editRole=${state.editRole} roleToUpdate=$roleToUpdate currentUserRole=${state.currentUserRole}"
+                )
 
                 val result = teamRepository.updateTeamMember(
                     id = state.memberId,
@@ -220,17 +233,32 @@ class TeamMemberDetailViewModel(
                                 editIsActive = updatedMember.isActive
                             )
                         }
-                        sendEffect(TeamMemberDetailContract.Effect.ShowSnackbar("Team member updated successfully"))
+                        sendEffect(
+                            TeamMemberDetailContract.Effect.ShowSnackbar(
+                                UiText.StringRes(Res.string.success_team_member_updated)
+                            )
+                        )
                         sendEffect(TeamMemberDetailContract.Effect.MemberUpdated)
                     },
                     onFailure = { error ->
                         updateState { copy(isSaving = false) }
-                        sendEffect(TeamMemberDetailContract.Effect.ShowSnackbar(error.message ?: "Failed to update team member"))
+                        sendEffect(
+                            TeamMemberDetailContract.Effect.ShowSnackbar(
+                                error.message?.let { UiText.Raw(it) }
+                                    ?: UiText.StringRes(Res.string.error_update_team_member)
+                            )
+                        )
                     }
                 )
             } catch (e: Exception) {
+                logger.e(TAG_TEAM_DETAIL_VM, "saveChanges failed", e)
                 updateState { copy(isSaving = false) }
-                sendEffect(TeamMemberDetailContract.Effect.ShowSnackbar(e.message ?: "Failed to update team member"))
+                sendEffect(
+                    TeamMemberDetailContract.Effect.ShowSnackbar(
+                        e.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_update_team_member)
+                    )
+                )
             }
         }
     }
@@ -240,28 +268,28 @@ class TeamMemberDetailViewModel(
         val state = currentState
 
         if (state.editFirstName.isBlank()) {
-            updateState { copy(firstNameError = "First name is required") }
+            updateState { copy(firstNameError = UiText.StringRes(Res.string.error_first_name_required_team)) }
             isValid = false
         }
 
         if (state.editLastName.isBlank()) {
-            updateState { copy(lastNameError = "Last name is required") }
+            updateState { copy(lastNameError = UiText.StringRes(Res.string.error_last_name_required_team)) }
             isValid = false
         }
 
         if (state.editEmail.isBlank()) {
-            updateState { copy(emailError = "Email is required") }
+            updateState { copy(emailError = UiText.StringRes(Res.string.error_email_required_team)) }
             isValid = false
         } else if (!isValidEmail(state.editEmail)) {
-            updateState { copy(emailError = "Invalid email format") }
+            updateState { copy(emailError = UiText.StringRes(Res.string.error_email_invalid_team)) }
             isValid = false
         }
 
         if (state.editMobile.isBlank()) {
-            updateState { copy(mobileError = "Mobile is required") }
+            updateState { copy(mobileError = UiText.StringRes(Res.string.error_mobile_required_team)) }
             isValid = false
         } else if (!isValidMobile(state.editMobile)) {
-            updateState { copy(mobileError = "Invalid mobile number") }
+            updateState { copy(mobileError = UiText.StringRes(Res.string.error_mobile_invalid_team)) }
             isValid = false
         }
 
@@ -279,4 +307,3 @@ class TeamMemberDetailViewModel(
         return digitsOnly.length >= 10
     }
 }
-

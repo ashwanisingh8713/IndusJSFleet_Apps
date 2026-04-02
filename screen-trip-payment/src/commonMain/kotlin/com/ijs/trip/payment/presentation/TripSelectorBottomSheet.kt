@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.ijs.trip.payment.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Bottom sheet for selecting a trip when adding a payment.
@@ -77,12 +78,12 @@ internal fun TripSelectorBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Select Trip",
+                    text = stringResource(Res.string.payment_select_trip_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${filteredTrips.size} trips",
+                    text = stringResource(Res.string.payment_trips_count, filteredTrips.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -94,7 +95,7 @@ internal fun TripSelectorBottomSheet(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearch,
-                placeholder = { Text("Search trip, vehicle, customer, route...") },
+                placeholder = { Text(stringResource(Res.string.payment_search_trips)) },
                 leadingIcon = {
                     Icon(
                         painter = painterResource(Res.drawable.ic_search),
@@ -169,6 +170,8 @@ private fun TripFilterChips(
     onStatusFilterChange: (String?) -> Unit,
     onPaymentFilterChange: (String?) -> Unit
 ) {
+    val unpaidLabel = stringResource(Res.string.payment_trip_payment_unpaid)
+    val partialLabel = stringResource(Res.string.payment_trip_payment_partial_label)
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -177,25 +180,25 @@ private fun TripFilterChips(
         FilterChip(
             selected = showOnlyWithPending,
             onClick = onTogglePending,
-            label = { Text("With Pending", style = MaterialTheme.typography.labelSmall) },
+            label = { Text(stringResource(Res.string.payment_filter_with_pending), style = MaterialTheme.typography.labelSmall) },
             leadingIcon = if (showOnlyWithPending) {
                 { Text("✓", style = MaterialTheme.typography.labelSmall) }
             } else null
         )
 
         // Trip Status filters
-        listOf("on_route" to "On Route", "completed" to "Completed", "planned" to "Planned").forEach { (value, label) ->
+        listOf("on_route", "completed", "planned").forEach { value ->
             FilterChip(
                 selected = selectedStatusFilter == value,
                 onClick = {
                     onStatusFilterChange(if (selectedStatusFilter == value) null else value)
                 },
-                label = { Text(label, style = MaterialTheme.typography.labelSmall) }
+                label = { Text(tripStateFilterLabel(value), style = MaterialTheme.typography.labelSmall) }
             )
         }
 
         // Payment Status filters
-        listOf("pending" to "Unpaid", "partial" to "Partial").forEach { (value, label) ->
+        listOf("pending" to unpaidLabel, "partial" to partialLabel).forEach { (value, label) ->
             FilterChip(
                 selected = selectedPaymentFilter == value,
                 onClick = {
@@ -228,13 +231,17 @@ private fun TripSelectorEmptyContent(
             Text("📋", style = MaterialTheme.typography.displayMedium)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (searchQuery.isBlank()) "No trips available" else "No matching trips",
+                text = if (searchQuery.isBlank()) {
+                    stringResource(Res.string.payment_no_trips_available)
+                } else {
+                    stringResource(Res.string.payment_no_matching_trips)
+                },
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (showOnlyWithPending) {
                 TextButton(onClick = onShowAll) {
-                    Text("Show all trips")
+                    Text(stringResource(Res.string.payment_show_all_trips))
                 }
             }
         }
@@ -310,7 +317,7 @@ internal fun EnhancedTripCard(
                     color = tripStateColor.copy(alpha = 0.15f)
                 ) {
                     Text(
-                        text = trip.tripStateLabel,
+                        text = tripCardStateLabel(trip.state),
                         style = MaterialTheme.typography.labelSmall,
                         color = tripStateColor,
                         fontWeight = FontWeight.Medium,
@@ -366,7 +373,7 @@ internal fun EnhancedTripCard(
             ) {
                 Column(horizontalAlignment = Alignment.Start) {
                     Text(
-                        text = "Trip Price",
+                        text = stringResource(Res.string.payment_add_trip_price),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -378,7 +385,7 @@ internal fun EnhancedTripCard(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Received",
+                        text = stringResource(Res.string.payment_status_received),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -391,7 +398,7 @@ internal fun EnhancedTripCard(
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Pending",
+                        text = stringResource(Res.string.payment_add_pending),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

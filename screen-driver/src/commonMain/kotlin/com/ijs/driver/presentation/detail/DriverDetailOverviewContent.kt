@@ -15,18 +15,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ijs.driver.domain.entity.Driver
 import com.ijs.driver.domain.entity.DriverStatus
-import com.ijs.driver.domain.entity.LicenseType
+import com.ijs.driver.presentation.driverLicenseTypeShort
+import com.ijs.driver.presentation.driverStatusLabel
 import com.ijs.team.presentation.toCaretakerInfo
 import com.indusjs.uicomponents.components.CaretakerInfoCard
 import com.indusjs.uicomponents.components.ClickablePhoneRow
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun DriverOverviewContent(
     state: DriverDetailContract.State,
     viewModel: DriverDetailViewModel,
+    driverStatusLabels: Map<String, String>,
     onStatusClick: () -> Unit = {}
 ) {
     LazyColumn(
@@ -39,6 +42,7 @@ internal fun DriverOverviewContent(
         item {
             DriverHeader(
                 driver = state.driver!!,
+                driverStatusLabels = driverStatusLabels,
                 onStatusClick = onStatusClick
             )
         }
@@ -71,7 +75,7 @@ internal fun DriverOverviewContent(
                     contentColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text("🗑️ Delete Driver")
+                Text(stringResource(Res.string.driver_overview_delete_with_icon))
             }
         }
 
@@ -92,6 +96,7 @@ internal fun DriverOverviewContent(
 @Composable
 internal fun DriverHeader(
     driver: Driver,
+    driverStatusLabels: Map<String, String>,
     onStatusClick: () -> Unit = {}
 ) {
     Card(
@@ -164,7 +169,7 @@ internal fun DriverHeader(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     FleetStatusBadge(
-                        status = getStatusDisplayName(driver.status),
+                        status = driverStatusLabel(driver.status, driverStatusLabels),
                         color = getStatusColor(driver.status)
                     )
                     Text(
@@ -193,7 +198,7 @@ internal fun DriverHeader(
                 QuickStatItem(
                     icon = "⭐",
                     value = "${driver.rating}",
-                    label = "Rating"
+                    label = stringResource(Res.string.driver_overview_rating)
                 )
 
                 VerticalDivider(
@@ -204,7 +209,7 @@ internal fun DriverHeader(
                 QuickStatItem(
                     icon = "🛣️",
                     value = "${driver.totalTrips}",
-                    label = "Trips"
+                    label = stringResource(Res.string.driver_overview_trips)
                 )
 
                 VerticalDivider(
@@ -214,8 +219,8 @@ internal fun DriverHeader(
 
                 QuickStatItem(
                     icon = "🪪",
-                    value = driver.licenseType.name,
-                    label = "License"
+                    value = driverLicenseTypeShort(driver.licenseType),
+                    label = stringResource(Res.string.driver_overview_license)
                 )
             }
         }
@@ -258,36 +263,39 @@ internal fun QuickStatItem(
 
 @Composable
 internal fun ContactSection(driver: Driver) {
-    SectionCard(title = "📞 Contact Information") {
+    SectionCard(title = stringResource(Res.string.driver_section_contact)) {
         // Mobile with call icon
         ClickablePhoneRow(
             phoneNumber = driver.mobile,
-            label = "Mobile",
+            label = stringResource(Res.string.driver_label_mobile),
             icon = "📱"
         )
         if (driver.email.isNotBlank()) {
-            InfoRow(label = "Email", value = driver.email)
+            InfoRow(label = stringResource(Res.string.driver_overview_email), value = driver.email)
         }
         // Emergency Contact with call icon
         driver.emergencyContact?.let {
             ClickablePhoneRow(
                 phoneNumber = it,
-                label = "Emergency Contact",
+                label = stringResource(Res.string.driver_overview_emergency_contact),
                 icon = "🆘"
             )
         }
-        driver.address?.let { InfoRow(label = "Address", value = it) }
+        driver.address?.let { InfoRow(label = stringResource(Res.string.driver_overview_address), value = it) }
     }
 }
 
 
 @Composable
 internal fun LicenseSection(driver: Driver) {
-    SectionCard(title = "🪪 License Details") {
-        InfoRow(label = "License Number", value = driver.licenseNumber)
-        InfoRow(label = "License Type", value = getLicenseTypeLabel(driver.licenseType))
+    SectionCard(title = stringResource(Res.string.driver_section_license)) {
+        InfoRow(label = stringResource(Res.string.driver_overview_license_number), value = driver.licenseNumber)
+        InfoRow(label = stringResource(Res.string.driver_overview_license_type), value = driverLicenseTypeShort(driver.licenseType))
         if (driver.licenseExpiry > 0) {
-            InfoRow(label = "Expiry Date", value = formatDate(driver.licenseExpiry))
+            InfoRow(
+                label = stringResource(Res.string.driver_overview_expiry_date),
+                value = formatDate(driver.licenseExpiry, stringResource(Res.string.not_applicable_short))
+            )
         }
     }
 }
@@ -298,10 +306,11 @@ internal fun PersonalSection(driver: Driver) {
     val hasPersonalInfo = driver.dateOfBirth != null || driver.bloodGroup != null || driver.joiningDate != null
 
     if (hasPersonalInfo) {
-        SectionCard(title = "👤 Personal Details") {
-            driver.dateOfBirth?.let { InfoRow(label = "Date of Birth", value = formatDate(it)) }
-            driver.bloodGroup?.let { InfoRow(label = "Blood Group", value = it) }
-            driver.joiningDate?.let { InfoRow(label = "Joining Date", value = formatDate(it)) }
+        SectionCard(title = stringResource(Res.string.driver_section_personal)) {
+            val na = stringResource(Res.string.not_applicable_short)
+            driver.dateOfBirth?.let { InfoRow(label = stringResource(Res.string.driver_overview_dob), value = formatDate(it, na)) }
+            driver.bloodGroup?.let { InfoRow(label = stringResource(Res.string.driver_overview_blood_group), value = it) }
+            driver.joiningDate?.let { InfoRow(label = stringResource(Res.string.driver_overview_joining_date), value = formatDate(it, na)) }
         }
     }
 }
@@ -309,16 +318,17 @@ internal fun PersonalSection(driver: Driver) {
 
 @Composable
 internal fun MetadataSection(driver: Driver) {
-    SectionCard(title = "ℹ️ Additional Info") {
-        InfoRow(label = "Driver ID", value = "#${driver.id}")
+    val na = stringResource(Res.string.not_applicable_short)
+    SectionCard(title = stringResource(Res.string.driver_section_additional)) {
+        InfoRow(label = stringResource(Res.string.driver_overview_driver_id), value = "#${driver.id}")
         driver.owner?.let { owner ->
             val ownerName = "${owner.firstName ?: ""} ${owner.lastName ?: ""}".trim()
             if (ownerName.isNotBlank()) {
-                InfoRow(label = "Added by", value = ownerName)
+                InfoRow(label = stringResource(Res.string.driver_overview_added_by), value = ownerName)
             }
         }
-        driver.createdAt?.let { InfoRow(label = "Created on", value = formatDate(it)) }
-        driver.updatedAt?.let { InfoRow(label = "Last Updated", value = formatDate(it)) }
+        driver.createdAt?.let { InfoRow(label = stringResource(Res.string.driver_overview_created_on), value = formatDate(it, na)) }
+        driver.updatedAt?.let { InfoRow(label = stringResource(Res.string.driver_overview_last_updated), value = formatDate(it, na)) }
     }
 }
 
@@ -391,20 +401,8 @@ internal fun getStatusColor(status: DriverStatus): androidx.compose.ui.graphics.
 }
 
 
-internal fun getStatusDisplayName(status: DriverStatus): String =
-    DriverStatus.getDisplayLabel(status)
-
-
-internal fun getLicenseTypeLabel(type: LicenseType): String = when (type) {
-    LicenseType.LMV -> "LMV"
-    LicenseType.HMV -> "HMV"
-    LicenseType.MCWG -> "MCWG"
-    LicenseType.MCWOG -> "MCWOG"
-}
-
-
-internal fun formatDate(timestamp: Long): String {
-    if (timestamp <= 0) return "N/A"
+internal fun formatDate(timestamp: Long, naLabel: String): String {
+    if (timestamp <= 0) return naLabel
     return try {
         val days = timestamp / (24 * 60 * 60 * 1000)
         val years = (days / 365.25).toInt() + 1970
@@ -415,7 +413,7 @@ internal fun formatDate(timestamp: Long): String {
         val dayStr = dayOfMonth.coerceIn(1, 28).toString().padStart(2, '0')
         "$dayStr-$monthStr-$years" // DD-MM-YYYY format
     } catch (_: Exception) {
-        "N/A"
+        naLabel
     }
 }
 

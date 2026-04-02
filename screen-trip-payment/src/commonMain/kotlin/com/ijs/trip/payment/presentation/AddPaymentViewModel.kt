@@ -5,10 +5,13 @@ import com.ijs.trip.payment.TAG_ADD_PAYMENT_VM
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 import com.ijs.trip.payment.domain.repository.TripPaymentRepository
 import com.ijs.trip.payment.domain.repository.TripProviderForPayment
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
 /**
  * ViewModel for Add/Edit Payment Screen.
@@ -207,17 +210,17 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
         val currentState = state.value
 
         if (currentState.selectedTrip == null) {
-            updateState { copy(tripError = "Please select a trip") }
+            updateState { copy(tripError = UiText.StringRes(Res.string.error_select_trip)) }
             hasError = true
         }
 
         if (currentState.amount.isBlank() || currentState.amount.toDoubleOrNull()?.let { it <= 0 } == true) {
-            updateState { copy(amountError = "Enter a valid amount") }
+            updateState { copy(amountError = UiText.StringRes(Res.string.error_valid_amount)) }
             hasError = true
         }
 
         if (currentState.paymentDate.isBlank()) {
-            updateState { copy(dateError = "Select payment date") }
+            updateState { copy(dateError = UiText.StringRes(Res.string.error_payment_date_required)) }
             hasError = true
         }
 
@@ -274,14 +277,27 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
         when (result) {
             is Result.Success -> {
                 updateState { copy(isSaving = false) }
-                sendEffect(AddPaymentContract.Effect.ShowSnackbar(if (currentState.isEditMode) "Payment updated" else "Payment recorded"))
+                sendEffect(
+                    AddPaymentContract.Effect.ShowSnackbar(
+                        if (currentState.isEditMode) {
+                            UiText.StringRes(Res.string.success_payment_updated)
+                        } else {
+                            UiText.StringRes(Res.string.success_payment_recorded)
+                        }
+                    )
+                )
                 sendEffect(AddPaymentContract.Effect.PaymentSaved)
                 sendEffect(AddPaymentContract.Effect.NavigateBack)
             }
             is Result.Error -> {
                 logger.e(TAG_ADD_PAYMENT_VM, "Failed to save payment", result.exception)
                 updateState { copy(isSaving = false, error = result.message) }
-                sendEffect(AddPaymentContract.Effect.ShowError(result.message ?: "Failed to save payment"))
+                sendEffect(
+                    AddPaymentContract.Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_generic)
+                    )
+                )
             }
             is Result.Loading -> { /* Already handled */ }
         }

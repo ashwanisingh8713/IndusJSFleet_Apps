@@ -14,10 +14,13 @@ import com.indusjs.pdfreport.handler.PaymentReceiptPdfHandler
 import com.indusjs.pdfreport.model.PaymentReceiptPdfData
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Payment Detail Screen.
@@ -35,6 +38,16 @@ fun PaymentDetailScreen(
     val scrollState = rememberScrollState()
     var showMenu by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val receiptExportedMessage = stringResource(Res.string.payment_receipt_exported)
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // PDF Export state
     var pdfExportData by remember { mutableStateOf<PaymentReceiptPdfData?>(null) }
@@ -47,12 +60,12 @@ fun PaymentDetailScreen(
 
     // Handle effects
     LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
+        viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is PaymentDetailContract.Effect.NavigateBack -> onNavigateBack()
                 is PaymentDetailContract.Effect.NavigateToEdit -> onNavigateToEdit(effect.paymentId)
-                is PaymentDetailContract.Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
-                is PaymentDetailContract.Effect.ShowError -> snackbarHostState.showSnackbar(effect.message)
+                is PaymentDetailContract.Effect.ShowSnackbar -> pendingSnackbar = effect.message
+                is PaymentDetailContract.Effect.ShowError -> pendingSnackbar = effect.message
                 is PaymentDetailContract.Effect.PaymentDeleted -> { /* Handled in NavigateBack */ }
             }
         }
@@ -65,7 +78,7 @@ fun PaymentDetailScreen(
             isExportingPdf = false
             pdfExportData = null
             scope.launch {
-                snackbarHostState.showSnackbar("Receipt exported successfully!")
+                snackbarHostState.showSnackbar(receiptExportedMessage)
             }
         },
         onExportError = { error ->
@@ -109,7 +122,7 @@ fun PaymentDetailScreen(
                 }
                 state.error != null -> {
                     ErrorContent(
-                        error = state.error ?: "Something went wrong",
+                        error = state.error ?: stringResource(Res.string.error_generic),
                         onRetry = { viewModel.sendIntent(PaymentDetailContract.Intent.Refresh) }
                     )
                 }
@@ -148,12 +161,12 @@ private fun PaymentDetailTopBar(
     onDelete: () -> Unit
 ) {
     TopAppBar(
-        title = { Text("Payment Details") },
+        title = { Text(stringResource(Res.string.payments_detail)) },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_arrow_back),
-                    contentDescription = "Back"
+                    contentDescription = stringResource(Res.string.back)
                 )
             }
         },
@@ -183,7 +196,7 @@ private fun PaymentDetailTopBar(
                     IconButton(onClick = onShowMenu) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_more_vert),
-                            contentDescription = "More options"
+                            contentDescription = stringResource(Res.string.payment_more_options)
                         )
                     }
                     DropdownMenu(
@@ -193,7 +206,7 @@ private fun PaymentDetailTopBar(
                         // Download Receipt option in menu
                         state.payment?.let { payment ->
                             DropdownMenuItem(
-                                text = { Text("Download Receipt") },
+                                text = { Text(stringResource(Res.string.payment_cd_download_receipt)) },
                                 leadingIcon = {
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_download),
@@ -209,7 +222,7 @@ private fun PaymentDetailTopBar(
 
                         if (state.canEdit) {
                             DropdownMenuItem(
-                                text = { Text("Edit") },
+                                text = { Text(stringResource(Res.string.edit)) },
                                 leadingIcon = {
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_edit),
@@ -224,7 +237,7 @@ private fun PaymentDetailTopBar(
                         }
                         if (state.canDelete) {
                             DropdownMenuItem(
-                                text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                                text = { Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error) },
                                 leadingIcon = {
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_delete),
@@ -277,9 +290,14 @@ private fun DeletePaymentDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Delete Payment") },
+        title = { Text(stringResource(Res.string.payment_delete_title)) },
         text = {
-            Text("Are you sure you want to delete this payment of ${amountDisplay ?: ""}? This action cannot be undone.")
+            Text(
+                stringResource(
+                    Res.string.payment_delete_message_irreversible,
+                    amountDisplay.orEmpty()
+                )
+            )
         },
         confirmButton = {
             TextButton(
@@ -289,13 +307,13 @@ private fun DeletePaymentDialog(
                 if (isDeleting) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp))
                 } else {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error)
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         }
     )

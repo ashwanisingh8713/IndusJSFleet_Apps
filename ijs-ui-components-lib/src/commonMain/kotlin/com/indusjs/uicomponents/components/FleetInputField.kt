@@ -3,8 +3,11 @@ package com.indusjs.uicomponents.components
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -22,7 +25,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Classification of every text input in the application.
@@ -131,7 +138,15 @@ fun FleetInputField(
         fieldType == FieldType.PASSWORD -> {
             {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Text(if (passwordVisible) "👁️" else "👁️‍🗨️")
+                    Icon(
+                        painter = painterResource(
+                            if (passwordVisible) Res.drawable.ic_visibility
+                            else Res.drawable.ic_visibility_off
+                        ),
+                        contentDescription = stringResource(if (passwordVisible) Res.string.cd_hide_password else Res.string.cd_show_password),
+                        modifier = Modifier.size(FleetTokens.IconSize.Default),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -145,20 +160,20 @@ fun FleetInputField(
         Modifier
     }
 
-    BoxWithConstraints {
+    BoxWithConstraints(modifier = modifier) {
         val bp = rememberFleetBreakpoint()
         val widthModifier = when (bp) {
             FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
-            else -> modifier
+            else -> Modifier
         }
 
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = widthModifier
+            modifier = Modifier
+                .then(widthModifier)
                 .then(semanticsModifier)
-                .imePadding()
-                .then(modifier),
+                .imePadding(),
             label = label?.let { { Text(it) } },
             placeholder = placeholder?.let { { Text(it) } },
             leadingIcon = leadingIcon,
@@ -171,6 +186,7 @@ fun FleetInputField(
             readOnly = readOnly,
             singleLine = isSingleLine,
             maxLines = maxLines,
+            shape = RoundedCornerShape(FleetTokens.Radius.L),
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType,
                 imeAction = imeAction

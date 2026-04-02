@@ -316,7 +316,7 @@ private fun VehicleCard(
                 VehicleInfoItem(
                     icon = "⛽",
                     value = "${vehicle.fuelLevel}%",
-                    label = "Fuel"
+                    label = stringResource(Res.string.vehicle_list_label_fuel)
                 )
 
                 VerticalDivider(
@@ -326,8 +326,8 @@ private fun VehicleCard(
 
                 VehicleInfoItem(
                     icon = "📏",
-                    value = "${vehicle.mileage.toInt()} km",
-                    label = "Mileage"
+                    value = stringResource(Res.string.vehicle_trips_km, vehicle.mileage.toInt()),
+                    label = stringResource(Res.string.vehicle_list_label_mileage)
                 )
 
                 VerticalDivider(
@@ -362,7 +362,7 @@ private fun VehicleCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = location.address ?: "Unknown location",
+                        text = location.address ?: stringResource(Res.string.vehicle_list_unknown_location),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1

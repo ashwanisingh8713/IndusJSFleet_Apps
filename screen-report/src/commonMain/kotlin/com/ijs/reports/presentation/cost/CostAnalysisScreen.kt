@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,7 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.uicomponents.components.FleetDateField
+import com.indusjs.uicomponents.components.DateVisualTransformation
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
 import com.ijs.reports.domain.entity.CostTypeAnalysis
@@ -173,20 +177,27 @@ private fun DateRangeSection(
     onStartDateChange: (String) -> Unit,
     onEndDateChange: (String) -> Unit
 ) {
+    val dateVisualTransformation = remember { DateVisualTransformation() }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        FleetDateField(
-            rawValue = startDate,
-            onRawValueChange = onStartDateChange,
+        FleetInputField(
+            value = startDate,
+            onValueChange = { onStartDateChange(filterDigitsOnly(it, 8)) },
+            fieldType = FieldType.NUMBER,
             label = "From",
+            placeholder = "DD-MM-YYYY",
+            visualTransformation = dateVisualTransformation,
             modifier = Modifier.weight(1f)
         )
-        FleetDateField(
-            rawValue = endDate,
-            onRawValueChange = onEndDateChange,
+        FleetInputField(
+            value = endDate,
+            onValueChange = { onEndDateChange(filterDigitsOnly(it, 8)) },
+            fieldType = FieldType.NUMBER,
             label = "To",
+            placeholder = "DD-MM-YYYY",
+            visualTransformation = dateVisualTransformation,
             modifier = Modifier.weight(1f)
         )
     }

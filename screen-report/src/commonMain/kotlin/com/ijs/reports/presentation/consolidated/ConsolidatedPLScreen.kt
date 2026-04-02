@@ -16,7 +16,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.uicomponents.components.FleetDateField
+import com.indusjs.uicomponents.components.DateVisualTransformation
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
 import com.ijs.reports.domain.entity.ConsolidatedPL
@@ -225,16 +228,23 @@ private fun FiltersCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                FleetDateField(
-                    rawValue = startDate,
-                    onRawValueChange = onStartDateChange,
+                val dateVisualTransformation = remember { DateVisualTransformation() }
+                FleetInputField(
+                    value = startDate,
+                    onValueChange = { onStartDateChange(filterDigitsOnly(it, 8)) },
+                    fieldType = FieldType.NUMBER,
                     label = "From",
+                    placeholder = "DD-MM-YYYY",
+                    visualTransformation = dateVisualTransformation,
                     modifier = Modifier.weight(1f)
                 )
-                FleetDateField(
-                    rawValue = endDate,
-                    onRawValueChange = onEndDateChange,
+                FleetInputField(
+                    value = endDate,
+                    onValueChange = { onEndDateChange(filterDigitsOnly(it, 8)) },
+                    fieldType = FieldType.NUMBER,
                     label = "To",
+                    placeholder = "DD-MM-YYYY",
+                    visualTransformation = dateVisualTransformation,
                     modifier = Modifier.weight(1f)
                 )
             }

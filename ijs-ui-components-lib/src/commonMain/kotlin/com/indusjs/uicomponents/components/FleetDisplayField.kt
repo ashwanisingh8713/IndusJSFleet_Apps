@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.indusjs.uicomponents.theme.FleetTokens
@@ -40,6 +41,7 @@ fun FleetDisplayField(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .focusProperties { canFocus = false }
             .padding(vertical = FleetTokens.Spacing.S)
             .semantics { contentDescription = "$label: $value" }
     ) {

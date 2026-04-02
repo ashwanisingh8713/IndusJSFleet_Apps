@@ -93,7 +93,7 @@ internal fun PaymentFilterBottomSheet(
                     FilterChip(
                         selected = filter.paymentType == type,
                         onClick = { onUpdateType(type) },
-                        label = { Text(type.displayName, style = MaterialTheme.typography.bodySmall) }
+                        label = { Text(type.localizedDisplayName(), style = MaterialTheme.typography.bodySmall) }
                     )
                 }
             }
@@ -122,7 +122,7 @@ internal fun PaymentFilterBottomSheet(
                     FilterChip(
                         selected = filter.paymentMode == mode,
                         onClick = { onUpdateMode(mode) },
-                        label = { Text("${mode.icon} ${mode.displayName}", style = MaterialTheme.typography.bodySmall) }
+                        label = { Text("${mode.icon} ${mode.localizedDisplayName()}", style = MaterialTheme.typography.bodySmall) }
                     )
                 }
             }
@@ -151,7 +151,7 @@ internal fun PaymentFilterBottomSheet(
                     FilterChip(
                         selected = filter.paymentStatus == status,
                         onClick = { onUpdateStatus(status) },
-                        label = { Text("${status.icon} ${status.displayName}", style = MaterialTheme.typography.bodySmall) }
+                        label = { Text("${status.icon} ${status.localizedDisplayName()}", style = MaterialTheme.typography.bodySmall) }
                     )
                 }
             }
@@ -181,7 +181,7 @@ internal fun PaymentFilterBottomSheet(
                     },
                     modifier = Modifier.weight(1f),
                     mode = PickerMode.DATE_ONLY,
-                    label = "From Date",
+                    label = stringResource(Res.string.payment_label_from_date),
                     maxDate = endDate.ifEmpty { null }
                 )
 
@@ -194,7 +194,7 @@ internal fun PaymentFilterBottomSheet(
                     },
                     modifier = Modifier.weight(1f),
                     mode = PickerMode.DATE_ONLY,
-                    label = "To Date",
+                    label = stringResource(Res.string.payment_label_to_date),
                     minDate = startDate.ifEmpty { null }
                 )
             }

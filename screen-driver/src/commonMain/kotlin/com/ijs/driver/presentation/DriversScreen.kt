@@ -44,6 +44,7 @@ fun DriversScreen(
     onNavigateBack: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val driverStatusLabels = driverStatusLabelsByApi()
     val snackbarHostState = remember { SnackbarHostState() }
     val pullRefreshState = rememberPullToRefreshState()
 
@@ -132,7 +133,7 @@ fun DriversScreen(
             val driverStatusFilters = DriverStatus.entries.map { status ->
                 FilterDefinition(
                     id = status,
-                    label = DriverStatus.getDisplayLabel(status),
+                    label = driverStatusLabel(status, driverStatusLabels),
                     count = state.drivers.count { it.status == status }
                 )
             }
@@ -187,6 +188,7 @@ fun DriversScreen(
                 else -> {
                     DriverList(
                         drivers = state.filteredDrivers,
+                        driverStatusLabels = driverStatusLabels,
                         onDriverClick = { viewModel.sendIntent(DriversContract.Intent.SelectDriver(it)) },
                         onDeleteClick = { viewModel.sendIntent(DriversContract.Intent.DeleteDriver(it)) }
                     )
@@ -220,6 +222,7 @@ fun DriversScreen(
 @Composable
 private fun DriverList(
     drivers: List<Driver>,
+    driverStatusLabels: Map<String, String>,
     onDriverClick: (String) -> Unit,
     onDeleteClick: (String) -> Unit
 ) {
@@ -231,6 +234,7 @@ private fun DriverList(
         items(drivers, key = { it.id }) { driver ->
             DriverCard(
                 driver = driver,
+                driverStatusLabels = driverStatusLabels,
                 onClick = { onDriverClick(driver.id) },
                 onDeleteClick = { onDeleteClick(driver.id) }
             )
@@ -241,6 +245,7 @@ private fun DriverList(
 @Composable
 private fun DriverCard(
     driver: Driver,
+    driverStatusLabels: Map<String, String>,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -308,7 +313,7 @@ private fun DriverCard(
                     }
                 }
 
-                StatusBadge(status = driver.status)
+                StatusBadge(status = driver.status, driverStatusLabels = driverStatusLabels)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -327,7 +332,7 @@ private fun DriverCard(
                 DriverInfoItem(
                     icon = "⭐",
                     value = "${driver.rating}",
-                    label = "Rating"
+                    label = stringResource(Res.string.driver_overview_rating)
                 )
 
                 VerticalDivider(
@@ -338,7 +343,7 @@ private fun DriverCard(
                 DriverInfoItem(
                     icon = "🛣️",
                     value = "${driver.totalTrips}",
-                    label = "Trips"
+                    label = stringResource(Res.string.driver_overview_trips)
                 )
 
                 VerticalDivider(
@@ -349,7 +354,7 @@ private fun DriverCard(
                 DriverInfoItem(
                     icon = "🪪",
                     value = driver.licenseNumber.take(10),
-                    label = "License"
+                    label = stringResource(Res.string.drivers_license)
                 )
             }
 
@@ -371,7 +376,7 @@ private fun DriverCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = location.address ?: "Unknown location",
+                        text = location.address ?: stringResource(Res.string.driver_unknown_location),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1
@@ -418,7 +423,7 @@ private fun DriverInfoItem(
 }
 
 @Composable
-private fun StatusBadge(status: DriverStatus) {
+private fun StatusBadge(status: DriverStatus, driverStatusLabels: Map<String, String>) {
     val colorScheme = DriverStatus.getColorScheme(status)
     val color = when (colorScheme) {
         com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.primary
@@ -427,7 +432,7 @@ private fun StatusBadge(status: DriverStatus) {
         com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.tertiary
         com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
     }
-    val text = DriverStatus.getDisplayLabel(status)
+    val text = driverStatusLabel(status, driverStatusLabels)
 
     // Using reusable FleetStatusBadge component
     FleetStatusBadge(

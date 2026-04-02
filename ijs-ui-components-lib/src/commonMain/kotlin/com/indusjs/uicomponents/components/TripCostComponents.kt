@@ -17,6 +17,8 @@ import com.indusjs.fleet.core.util.formatCostTime
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.fleet.core.util.getCostTypeColorComposable
 import com.indusjs.fleet.data.model.costs.TripCostDto
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Reusable UI components for displaying trip and vehicle costs.
@@ -45,7 +47,7 @@ fun TotalCostHeader(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Total Expenses",
+                text = stringResource(Res.string.total_expenses),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
             )
@@ -96,7 +98,7 @@ fun ExportPdfButton(
     ) {
         Text("📄", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.width(8.dp))
-        Text("Export to PDF", fontWeight = FontWeight.SemiBold)
+        Text(stringResource(Res.string.export_pdf), fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -291,7 +293,7 @@ fun CostDetailDialog(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Cost Details",
+                            text = stringResource(Res.string.cost_details),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -314,7 +316,7 @@ fun CostDetailDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Amount",
+                            text = stringResource(Res.string.label_amount),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -336,14 +338,14 @@ fun CostDetailDialog(
                     // Date & Time
                     DetailRow(
                         icon = "📅",
-                        label = "Date",
+                        label = stringResource(Res.string.label_date),
                         value = formatDateToHumanReadable(cost.date, shortMonth = false)
                     )
 
                     cost.time?.takeIf { it.isNotBlank() }?.let { time ->
                         DetailRow(
                             icon = "🕐",
-                            label = "Time",
+                            label = stringResource(Res.string.label_time),
                             value = formatCostTime(time)
                         )
                     }
@@ -352,7 +354,7 @@ fun CostDetailDialog(
                     cost.notes?.takeIf { it.isNotBlank() }?.let { notes ->
                         DetailRow(
                             icon = "📝",
-                            label = "Description",
+                            label = stringResource(Res.string.label_description),
                             value = notes
                         )
                     }
@@ -363,7 +365,7 @@ fun CostDetailDialog(
                             DetailRow(
                                 icon = "⛽",
                                 label = "Fuel Quantity",
-                                value = "$qty Liters"
+                                value = "$qty ${stringResource(Res.string.trip_cost_placeholder_fuel_quantity)}"
                             )
                         }
                         cost.fuelRate?.let { rate ->
@@ -384,7 +386,7 @@ fun CostDetailDialog(
                         cost.fuelType?.takeIf { it.isNotBlank() }?.let { fuelType ->
                             DetailRow(
                                 icon = "🛢️",
-                                label = "Fuel Type",
+                                label = stringResource(Res.string.trip_cost_label_fuel_type),
                                 value = fuelType.replaceFirstChar { it.uppercaseChar() }
                             )
                         }
@@ -399,7 +401,7 @@ fun CostDetailDialog(
                         }
                         DetailRow(
                             icon = "👤",
-                            label = "Added by",
+                            label = stringResource(Res.string.driver_overview_added_by),
                             value = addedByText
                         )
                     }
@@ -426,7 +428,7 @@ fun CostDetailDialog(
                     )
                 ) {
                     Text(
-                        text = "Close",
+                        text = stringResource(Res.string.close),
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(vertical = 4.dp)
                     )
@@ -503,12 +505,12 @@ fun FuelDetailsCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Fuel Filled",
+                            text = stringResource(Res.string.fuel_filled),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "${fuelQuantity ?: 0} Liters",
+                            text = "${fuelQuantity ?: 0} ${stringResource(Res.string.trip_cost_placeholder_fuel_quantity)}",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF2E7D32)
@@ -518,7 +520,7 @@ fun FuelDetailsCard(
                 fuelRate?.let { rate ->
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "Rate",
+                            text = stringResource(Res.string.label_rate),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -429,7 +429,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
 
     override fun createTeamMemberViewModel() = CreateTeamMemberViewModel(dispatcherProvider, teamRepository, userLocalDataSource)
 
-    override fun teamMemberDetailViewModel() = TeamMemberDetailViewModel(dispatcherProvider, teamRepository, userLocalDataSource)
+    override fun teamMemberDetailViewModel() =
+        TeamMemberDetailViewModel(dispatcherProvider, teamRepository, userLocalDataSource, fleetLogger)
 
     override fun tripCostEntryViewModel() = TripCostEntryViewModel(
         dispatcherProvider,

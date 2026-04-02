@@ -3,6 +3,7 @@ package com.ijs.trip.payment.presentation
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 
 /**
@@ -140,8 +141,8 @@ object PaymentsContract {
         data class NavigateToDetail(val paymentId: String) : Effect
         data object NavigateToAddPayment : Effect
         data class NavigateToAddPaymentForTrip(val tripId: String) : Effect
-        data class ShowSnackbar(val message: String) : Effect
-        data class ShowError(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
+        data class ShowError(val message: UiText) : Effect
         data object PaymentDeleted : Effect
         data object PdfExportStarted : Effect
         data object PdfExportCompleted : Effect

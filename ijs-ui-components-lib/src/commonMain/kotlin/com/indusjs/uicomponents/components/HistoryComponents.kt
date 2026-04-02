@@ -19,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.data.model.history.HistoryItemDto
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Reusable History UI Components.
@@ -141,7 +143,7 @@ fun HistoryItemCard(
                 ) {
                     item.performedBy?.let { performer ->
                         Text(
-                            text = "by ${performer.fullName}",
+                            text = stringResource(Res.string.by_performer, performer.fullName),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -167,7 +169,7 @@ fun HistoryTimeline(
     isLoading: Boolean = false,
     hasMore: Boolean = false,
     onLoadMore: () -> Unit = {},
-    emptyMessage: String = "No history available"
+    emptyMessage: String = ""
 ) {
     val listState = rememberLazyListState()
 
@@ -185,6 +187,7 @@ fun HistoryTimeline(
         }
     }
 
+    val resolvedEmptyMessage = emptyMessage.ifBlank { stringResource(Res.string.no_history_available) }
     if (items.isEmpty() && !isLoading) {
         // Empty state
         Box(
@@ -202,7 +205,7 @@ fun HistoryTimeline(
                     style = MaterialTheme.typography.displayMedium
                 )
                 Text(
-                    text = emptyMessage,
+                    text = resolvedEmptyMessage,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -266,7 +269,7 @@ fun HistoryTabContent(
                     ) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading history...",
+                            text = stringResource(Res.string.loading_history),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -294,7 +297,7 @@ fun HistoryTabContent(
                             color = MaterialTheme.colorScheme.error
                         )
                         OutlinedButton(onClick = onRetry) {
-                            Text("Retry")
+                            Text(stringResource(Res.string.retry))
                         }
                     }
                 }
@@ -350,13 +353,13 @@ fun HistorySummaryCard(
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "Recent Activity",
+                        text = stringResource(Res.string.recent_activity),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 }
                 TextButton(onClick = onViewAll) {
-                    Text("View All ($totalCount)")
+                    Text(stringResource(Res.string.view_all_count, totalCount))
                 }
             }
 
@@ -364,7 +367,7 @@ fun HistorySummaryCard(
 
             if (recentItems.isEmpty()) {
                 Text(
-                    text = "No recent activity",
+                    text = stringResource(Res.string.no_recent_activity),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 8.dp)

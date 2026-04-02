@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 private val LightColorScheme = lightColorScheme(
@@ -92,129 +91,110 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 /**
- * Fleet Font Family - Uses system sans-serif for best cross-platform compatibility
- * with enhanced typography styling for a professional, modern look
+ * Builds the Fleet typography scale using the given [fontFamily].
+ * Called inside [AppTheme] so `@Composable` font loading (Poppins) works.
  */
-private val FleetFontFamily = FontFamily.SansSerif
-
-/**
- * Custom Typography for Fleet Management App
- * Sharp, crunchy, and impressive typography with:
- * - Tighter letter spacing for crisp appearance
- * - Bold/ExtraBold weights for headings
- * - Medium weights for body text
- * - Optimized line heights for readability
- */
-private val FleetTypography = Typography(
-    // Display styles - for hero sections
+private fun fleetTypography(fontFamily: FontFamily) = Typography(
     displayLarge = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 52.sp,
         lineHeight = 56.sp,
-        letterSpacing = (-1.5).sp  // Tight for impact
+        letterSpacing = (-1.5).sp
     ),
     displayMedium = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 42.sp,
         lineHeight = 48.sp,
         letterSpacing = (-1).sp
     ),
     displaySmall = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 34.sp,
         lineHeight = 40.sp,
         letterSpacing = (-0.5).sp
     ),
-
-    // Headline styles - for section headers
     headlineLarge = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.ExtraBold,
         fontSize = 30.sp,
         lineHeight = 36.sp,
         letterSpacing = (-0.5).sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 26.sp,
         lineHeight = 32.sp,
         letterSpacing = (-0.3).sp
     ),
     headlineSmall = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 22.sp,
         lineHeight = 28.sp,
         letterSpacing = (-0.2).sp
     ),
-
-    // Title styles - for card titles, list items
     titleLarge = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 20.sp,
         lineHeight = 26.sp,
         letterSpacing = (-0.1).sp
     ),
     titleMedium = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
         lineHeight = 22.sp,
         letterSpacing = 0.sp
     ),
     titleSmall = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 18.sp,
         letterSpacing = 0.sp
     ),
-
-    // Body styles - for content text
     bodyLarge = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.1.sp
     ),
     bodyMedium = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp
     ),
     bodySmall = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.2.sp
     ),
-
-    // Label styles - for buttons, chips, badges
     labelLarge = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
         lineHeight = 18.sp,
         letterSpacing = 0.2.sp
     ),
     labelMedium = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.3.sp
     ),
     labelSmall = TextStyle(
-        fontFamily = FleetFontFamily,
+        fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 10.sp,
         lineHeight = 14.sp,
@@ -223,16 +203,12 @@ private val FleetTypography = Typography(
 )
 
 
-/**
- * Custom Shapes for Fleet Management App
- * Less curvy, more professional corners
- */
 private val FleetShapes = Shapes(
-    extraSmall = RoundedCornerShape(2.dp),
-    small = RoundedCornerShape(4.dp),
-    medium = RoundedCornerShape(8.dp),
-    large = RoundedCornerShape(10.dp),
-    extraLarge = RoundedCornerShape(12.dp)
+    extraSmall = RoundedCornerShape(FleetTokens.Radius.XS),
+    small = RoundedCornerShape(FleetTokens.Radius.S),
+    medium = RoundedCornerShape(FleetTokens.Radius.M),
+    large = RoundedCornerShape(FleetTokens.Radius.ML),
+    extraLarge = RoundedCornerShape(FleetTokens.Radius.L)
 )
 
 /**
@@ -268,16 +244,18 @@ fun AppTheme(
     val systemIsDark = isSystemInDarkTheme()
     val isDarkState = remember(systemIsDark) { mutableStateOf(systemIsDark) }
 
+    val poppins = FleetFonts.poppinsFontFamily()
+    val typography = remember(poppins) { fleetTypography(poppins) }
+
     CompositionLocalProvider(
         LocalThemeIsDark provides isDarkState
     ) {
         val isDark by isDarkState
-        // Pass actual isDark value to platforms for status bar configuration
         onThemeChanged(isDark)
 
         MaterialTheme(
             colorScheme = if (isDark) DarkColorScheme else LightColorScheme,
-            typography = FleetTypography,
+            typography = typography,
             shapes = FleetShapes,
             content = { Surface(content = content) }
         )

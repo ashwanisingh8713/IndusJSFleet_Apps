@@ -3,6 +3,7 @@ package com.ijs.trip.payment.presentation
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.TripPayment
 
 /**
@@ -38,8 +39,8 @@ object PaymentDetailContract {
     sealed interface Effect : UiEffect {
         data class NavigateToEdit(val paymentId: String) : Effect
         data object NavigateBack : Effect
-        data class ShowSnackbar(val message: String) : Effect
-        data class ShowError(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
+        data class ShowError(val message: UiText) : Effect
         data object PaymentDeleted : Effect
     }
 }

@@ -11,8 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.uicomponents.components.FleetEmailField
-import com.indusjs.uicomponents.components.FleetMobileField
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.presentation.create.CreateCustomerContract.Effect
 import com.ijs.customer.presentation.create.CreateCustomerContract.Intent
 import com.ijs.customer.presentation.create.CreateCustomerContract.State
@@ -142,66 +144,55 @@ fun CreateCustomerScreen(
                 }
             }
 
-            // Company & Contact Card (consolidated)
+            // Company & Contact Card
             CompactSectionCard(
                 title = stringResource(Res.string.customer_section_company),
                 icon = null
             ) {
-                // Company Name
-                OutlinedTextField(
+                FleetInputField(
                     value = state.companyName,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateCompanyName(it)) },
-                    label = { Text(stringResource(Res.string.customer_label_company_name)) },
-                    placeholder = { Text(stringResource(Res.string.customer_placeholder_company_name)) },
+                    label = stringResource(Res.string.customer_label_company_name),
+                    placeholder = stringResource(Res.string.customer_placeholder_company_name),
                     isError = state.companyNameError != null,
-                    supportingText = state.companyNameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
+                    errorMessage = state.companyNameError
                 )
 
-                // Contact Person
-                OutlinedTextField(
+                FleetInputField(
                     value = state.personName,
                     onValueChange = { viewModel.sendIntent(Intent.UpdatePersonName(it)) },
-                    label = { Text(stringResource(Res.string.customer_label_contact_person)) },
-                    placeholder = { Text(stringResource(Res.string.customer_placeholder_contact_person)) },
+                    label = stringResource(Res.string.customer_label_contact_person),
+                    placeholder = stringResource(Res.string.customer_placeholder_contact_person),
                     isError = state.personNameError != null,
-                    supportingText = state.personNameError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
+                    errorMessage = state.personNameError
                 )
 
-                // Primary & Secondary Contact in Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FleetMobileField(
-                        rawValue = state.primaryContact,
-                        onRawValueChange = { viewModel.sendIntent(Intent.UpdatePrimaryContact(it)) },
-                        label = stringResource(Res.string.customer_label_primary_contact),
-                        placeholder = stringResource(Res.string.customer_placeholder_primary_contact),
-                        isError = state.primaryContactError != null,
-                        errorMessage = state.primaryContactError,
-                        modifier = Modifier.weight(1f)
-                    )
-                    FleetMobileField(
-                        rawValue = state.secondaryContact,
-                        onRawValueChange = { viewModel.sendIntent(Intent.UpdateSecondaryContact(it)) },
-                        label = stringResource(Res.string.customer_label_secondary_contact),
-                        placeholder = stringResource(Res.string.customer_placeholder_secondary_contact),
-                        isError = state.secondaryContactError != null,
-                        errorMessage = state.secondaryContactError,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                // Primary Contact (full width)
+                FleetInputField(
+                    value = state.primaryContact,
+                    onValueChange = { viewModel.sendIntent(Intent.UpdatePrimaryContact(filterDigitsOnly(it, 10))) },
+                    fieldType = FieldType.PHONE,
+                    label = stringResource(Res.string.customer_label_primary_contact),
+                    placeholder = stringResource(Res.string.customer_placeholder_primary_contact),
+                    isError = state.primaryContactError != null,
+                    errorMessage = state.primaryContactError
+                )
 
-                // Email
-                FleetEmailField(
+                // Secondary Contact (full width)
+                FleetInputField(
+                    value = state.secondaryContact,
+                    onValueChange = { viewModel.sendIntent(Intent.UpdateSecondaryContact(filterDigitsOnly(it, 10))) },
+                    fieldType = FieldType.PHONE,
+                    label = stringResource(Res.string.customer_label_secondary_contact),
+                    placeholder = stringResource(Res.string.customer_placeholder_secondary_contact),
+                    isError = state.secondaryContactError != null,
+                    errorMessage = state.secondaryContactError
+                )
+
+                FleetInputField(
                     value = state.email,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateEmail(it)) },
+                    fieldType = FieldType.EMAIL,
                     label = stringResource(Res.string.customer_label_email),
                     placeholder = stringResource(Res.string.customer_placeholder_email),
                     isError = state.emailError != null,
@@ -209,50 +200,34 @@ fun CreateCustomerScreen(
                 )
             }
 
-            // Business & Address Card (consolidated)
+            // Business & Address Card
             CompactSectionCard(
                 title = stringResource(Res.string.customer_section_business),
                 icon = null
             ) {
-                // GST Number with validation hint
-                OutlinedTextField(
+                FleetInputField(
                     value = state.gstNumber,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateGstNumber(it)) },
-                    label = { Text(stringResource(Res.string.customer_label_gst)) },
-                    placeholder = { Text(stringResource(Res.string.customer_placeholder_gst)) },
+                    label = stringResource(Res.string.customer_label_gst),
+                    placeholder = stringResource(Res.string.customer_placeholder_gst),
                     isError = state.gstNumberError != null,
-                    supportingText = if (state.gstNumberError != null) {
-                        { Text(state.gstNumberError!!, color = MaterialTheme.colorScheme.error) }
-                    } else if (state.gstNumber.isNotBlank() && state.gstNumber.length < 15) {
-                        { Text(stringResource(Res.string.customer_gst_chars, state.gstNumber.length), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    } else null,
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
+                    errorMessage = state.gstNumberError
                 )
 
-                // Address (compact)
-                OutlinedTextField(
+                FleetInputField(
                     value = state.companyAddress,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateCompanyAddress(it)) },
-                    label = { Text(stringResource(Res.string.customer_label_address)) },
-                    placeholder = { Text(stringResource(Res.string.customer_placeholder_address)) },
-                    minLines = 2,
-                    maxLines = 3,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
+                    fieldType = FieldType.ADDRESS,
+                    label = stringResource(Res.string.customer_label_address),
+                    placeholder = stringResource(Res.string.customer_placeholder_address)
                 )
 
-                // Notes (compact)
-                OutlinedTextField(
+                FleetInputField(
                     value = state.notes,
                     onValueChange = { viewModel.sendIntent(Intent.UpdateNotes(it)) },
-                    label = { Text(stringResource(Res.string.customer_label_notes)) },
-                    placeholder = { Text(stringResource(Res.string.customer_placeholder_notes)) },
-                    minLines = 2,
-                    maxLines = 3,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
+                    fieldType = FieldType.NOTES,
+                    label = stringResource(Res.string.customer_label_notes),
+                    placeholder = stringResource(Res.string.customer_placeholder_notes)
                 )
             }
 

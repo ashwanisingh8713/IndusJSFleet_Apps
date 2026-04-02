@@ -11,6 +11,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.ijs.customer.presentation.toSelectableCustomer
+import com.indusjs.uicomponents.components.DropdownOption
+import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.customer.CustomerDetailsSection
 
 /**
@@ -198,7 +200,6 @@ private fun CargoTypeDropdown(
 /**
  * Cargo weight input with unit dropdown.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CargoWeightRow(
     state: TripDetailContract.State,
@@ -225,37 +226,14 @@ private fun CargoWeightRow(
             shape = RoundedCornerShape(12.dp)
         )
 
-        var showWeightUnitDropdown by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(
-            expanded = showWeightUnitDropdown,
-            onExpandedChange = { showWeightUnitDropdown = it },
+        FleetDropdown(
+            label = "Unit",
+            options = state.weightUnitOptions.map { DropdownOption(id = it, label = it) },
+            selectedOptionId = state.weightUnit.takeIf { it.isNotBlank() },
+            onOptionSelected = { viewModel.sendIntent(TripDetailContract.Intent.UpdateWeightUnit(it)) },
+            placeholder = "Unit",
             modifier = Modifier.weight(0.6f)
-        ) {
-            OutlinedTextField(
-                value = state.weightUnit.ifBlank { "KG" },
-                onValueChange = {},
-                label = { Text("Unit") },
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showWeightUnitDropdown) },
-                modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true),
-                shape = RoundedCornerShape(12.dp),
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-            )
-            ExposedDropdownMenu(
-                expanded = showWeightUnitDropdown,
-                onDismissRequest = { showWeightUnitDropdown = false }
-            ) {
-                state.weightUnitOptions.forEach { unit ->
-                    DropdownMenuItem(
-                        text = { Text(unit) },
-                        onClick = {
-                            viewModel.sendIntent(TripDetailContract.Intent.UpdateWeightUnit(unit))
-                            showWeightUnitDropdown = false
-                        }
-                    )
-                }
-            }
-        }
+        )
     }
 }
 

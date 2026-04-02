@@ -3,6 +3,7 @@ package com.ijs.trip.payment.presentation
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 
 /**
@@ -58,9 +59,9 @@ object AddPaymentContract {
 
         // Errors
         val error: String? = null,
-        val amountError: String? = null,
-        val tripError: String? = null,
-        val dateError: String? = null
+        val amountError: UiText? = null,
+        val tripError: UiText? = null,
+        val dateError: UiText? = null
     ) : UiState {
 
         val netAmount: Double
@@ -162,8 +163,8 @@ object AddPaymentContract {
 
     sealed interface Effect : UiEffect {
         data object NavigateBack : Effect
-        data class ShowSnackbar(val message: String) : Effect
-        data class ShowError(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
+        data class ShowError(val message: UiText) : Effect
         data object PaymentSaved : Effect
     }
 }
@@ -217,25 +218,6 @@ data class TripSummaryForPayment(
     val hasPendingAmount: Boolean
         get() = pendingAmount > 0
 
-    val tripStateLabel: String
-        get() = when (state?.lowercase()) {
-            "planned" -> "Planned"
-            "on_route" -> "On Route"
-            "completed" -> "Completed"
-            "cancelled" -> "Cancelled"
-            "failed" -> "Failed"
-            "delayed" -> "Delayed"
-            else -> state?.replaceFirstChar { it.uppercase() } ?: "Unknown"
-        }
-
-    val paymentStatusLabel: String
-        get() = when (paymentStatus?.lowercase()) {
-            "pending" -> "Pending"
-            "partial" -> "Partial"
-            "paid" -> "Paid"
-            else -> "Pending"
-        }
-
     val isFullyPaid: Boolean
         get() = pendingAmount <= 0 || paymentStatus?.lowercase() == "paid"
 
@@ -250,7 +232,7 @@ data class TripSummaryForPayment(
     /** Display formatted end date & time */
     val endDateTimeDisplay: String
         get() {
-            val date = tripEndDate ?: return "N/A"
+            val date = tripEndDate ?: return ""
             val time = tripEndTime ?: ""
             return if (time.isNotBlank()) "$date $time" else date
         }

@@ -12,6 +12,8 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.util.rememberPhoneDialer
 import com.ijs.trip.payment.domain.entity.TripPayment
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Customer details card with contact calling functionality.
@@ -48,13 +50,13 @@ internal fun CustomerDetailsCard(payment: TripPayment) {
             Spacer(modifier = Modifier.height(8.dp))
 
             payment.customerName?.let {
-                CompactDetailRow(label = "Name", value = it)
+                CompactDetailRow(label = stringResource(Res.string.payment_detail_name), value = it)
             }
 
             payment.customerCompany?.let {
                 // Only show if different from name
                 if (it != payment.customerName) {
-                    CompactDetailRow(label = "Company", value = it)
+                    CompactDetailRow(label = stringResource(Res.string.payment_detail_company), value = it)
                 }
             }
 
@@ -75,7 +77,7 @@ internal fun CustomerDetailsCard(payment: TripPayment) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Contact",
+                        text = stringResource(Res.string.payment_section_contact),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -100,7 +102,7 @@ internal fun CustomerDetailsCard(payment: TripPayment) {
             }
 
             payment.customerGst?.let {
-                CompactDetailRow(label = "GST", value = it)
+                CompactDetailRow(label = stringResource(Res.string.payment_detail_gst), value = it)
             }
         }
     }
@@ -130,7 +132,7 @@ internal fun FinancialInfoCard(payment: TripPayment) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Financial Info",
+                text = stringResource(Res.string.payment_section_financial_info),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
@@ -142,14 +144,14 @@ internal fun FinancialInfoCard(payment: TripPayment) {
             ) {
                 payment.financialYear?.let {
                     Text(
-                        text = "FY: $it",
+                        text = stringResource(Res.string.payment_label_fy, it),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 payment.financialMonth?.let {
                     Text(
-                        text = "Month: $it",
+                        text = stringResource(Res.string.payment_label_month, it),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -183,7 +185,7 @@ internal fun AdditionalInfoCard(payment: TripPayment) {
                 .padding(12.dp)
         ) {
             Text(
-                text = "Additional Info",
+                text = stringResource(Res.string.payment_section_additional_info),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
@@ -192,7 +194,7 @@ internal fun AdditionalInfoCard(payment: TripPayment) {
             Spacer(modifier = Modifier.height(8.dp))
 
             payment.notes?.let {
-                CompactDetailRow(label = "Notes", value = it)
+                CompactDetailRow(label = stringResource(Res.string.payment_label_notes), value = it)
             }
 
             payment.receivedBy?.let {
@@ -200,15 +202,15 @@ internal fun AdditionalInfoCard(payment: TripPayment) {
             }
 
             payment.receivedAtLocation?.let {
-                CompactDetailRow(label = "Location", value = it)
+                CompactDetailRow(label = stringResource(Res.string.payment_label_location), value = it)
             }
 
             payment.createdByName?.let {
-                CompactDetailRow(label = "Created By", value = it)
+                CompactDetailRow(label = stringResource(Res.string.payment_detail_created_by), value = it)
             }
 
             payment.createdAt?.let {
-                CompactDetailRow(label = "Created", value = formatDisplayDate(it))
+                CompactDetailRow(label = stringResource(Res.string.payment_detail_created), value = formatDisplayDate(it))
             }
         }
     }

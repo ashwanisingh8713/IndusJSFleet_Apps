@@ -19,6 +19,8 @@ import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.vehicle.domain.entity.RouteInfo
 import com.ijs.vehicle.domain.entity.RouteStop
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun RouteTabContent(
@@ -29,7 +31,7 @@ internal fun RouteTabContent(
 ) {
     when {
         isLoading && routeInfo == null -> {
-            LoadingContent(message = "Loading route...")
+            LoadingContent(message = stringResource(Res.string.vehicle_route_loading))
         }
         error != null && routeInfo == null -> {
             ErrorContent(
@@ -63,13 +65,16 @@ internal fun RouteTabContent(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "🚀 Active Trip",
+                                        text = stringResource(Res.string.vehicle_route_active_trip_title),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.tertiary
                                     )
                                     Text(
-                                        text = routeInfo.tripNumber ?: "Trip #${routeInfo.tripId}",
+                                        text = routeInfo.tripNumber ?: stringResource(
+                                            Res.string.vehicle_route_trip_id,
+                                            routeInfo.tripId.orEmpty()
+                                        ),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -78,11 +83,13 @@ internal fun RouteTabContent(
                                 // Route origin -> destination
                                 if (routeInfo.origin != null || routeInfo.destination != null) {
                                     Spacer(modifier = Modifier.height(8.dp))
+                                    val originFallback = stringResource(Res.string.vehicle_route_origin)
+                                    val destinationFallback = stringResource(Res.string.vehicle_route_destination)
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text("📍", style = MaterialTheme.typography.bodyMedium)
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text(
-                                            text = "${routeInfo.origin ?: "Origin"} → ${routeInfo.destination ?: "Destination"}",
+                                            text = "${routeInfo.origin ?: originFallback} → ${routeInfo.destination ?: destinationFallback}",
                                             style = MaterialTheme.typography.bodyMedium
                                         )
                                     }
@@ -109,7 +116,7 @@ internal fun RouteTabContent(
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
                                             Text(
-                                                text = "Progress",
+                                                text = stringResource(Res.string.vehicle_route_progress),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -140,24 +147,27 @@ internal fun RouteTabContent(
                                     ) {
                                         Column {
                                             Text(
-                                                text = "ETA",
+                                                text = stringResource(Res.string.vehicle_route_eta),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                             Text(
-                                                text = progress.eta ?: "N/A",
+                                                text = progress.eta ?: stringResource(Res.string.vehicle_route_na),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.SemiBold
                                             )
                                         }
                                         Column(horizontalAlignment = Alignment.End) {
                                             Text(
-                                                text = "Distance Left",
+                                                text = stringResource(Res.string.vehicle_route_distance_left),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                             Text(
-                                                text = "${progress.distanceRemaining.toInt()} km",
+                                                text = stringResource(
+                                                    Res.string.vehicle_route_km,
+                                                    progress.distanceRemaining.toInt().toString()
+                                                ),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.SemiBold
                                             )
@@ -172,7 +182,7 @@ internal fun RouteTabContent(
                     if (stops.isNotEmpty()) {
                         item {
                             Text(
-                                text = "Route Stops",
+                                text = stringResource(Res.string.vehicle_route_stops),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(top = 8.dp)
@@ -206,12 +216,12 @@ internal fun RouteTabContent(
                                 Text("🛣️", style = MaterialTheme.typography.displaySmall)
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    text = "No Active Trip",
+                                    text = stringResource(Res.string.vehicle_route_no_trip),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "This vehicle is not currently on a trip",
+                                    text = stringResource(Res.string.vehicle_route_no_trip_message),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -327,10 +337,13 @@ internal fun StopItemWithTimeline(
 
 @Composable
 internal fun StopStatusBadge(status: String) {
+    val done = stringResource(Res.string.vehicle_route_done)
+    val now = stringResource(Res.string.vehicle_route_now)
+    val pending = stringResource(Res.string.vehicle_route_pending)
     val (text, color) = when (status) {
-        "Completed" -> "✓ Done" to MaterialTheme.colorScheme.primary
-        "Current" -> "● Now" to MaterialTheme.colorScheme.tertiary
-        else -> "○ Pending" to MaterialTheme.colorScheme.outline
+        "Completed" -> "✓ $done" to MaterialTheme.colorScheme.primary
+        "Current" -> "● $now" to MaterialTheme.colorScheme.tertiary
+        else -> "○ $pending" to MaterialTheme.colorScheme.outline
     }
 
     Text(

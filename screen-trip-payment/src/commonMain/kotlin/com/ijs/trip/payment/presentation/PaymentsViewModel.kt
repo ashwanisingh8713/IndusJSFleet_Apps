@@ -4,9 +4,12 @@ import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.trip.payment.TAG_PAYMENTS_VM
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 import com.ijs.trip.payment.domain.repository.TripPaymentRepository
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
 /**
  * ViewModel for Payments List Screen.
@@ -128,7 +131,12 @@ init {
             is Result.Error -> {
                 logger.e(TAG_PAYMENTS_VM, "Failed to refresh payments", result.exception)
                 updateState { copy(isRefreshing = false) }
-                sendEffect(PaymentsContract.Effect.ShowError(result.message ?: "Failed to refresh"))
+                sendEffect(
+                    PaymentsContract.Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_refresh_data)
+                    )
+                )
             }
             is Result.Loading -> { /* Already handled */ }
         }
@@ -199,13 +207,18 @@ init {
                         payments = payments.filter { it.id != payment.id }
                     )
                 }
-                sendEffect(PaymentsContract.Effect.ShowSnackbar("Payment deleted successfully"))
+                sendEffect(PaymentsContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_payment_deleted)))
                 sendEffect(PaymentsContract.Effect.PaymentDeleted)
             }
             is Result.Error -> {
                 logger.e(TAG_PAYMENTS_VM, "Failed to delete payment", result.exception)
                 updateState { copy(isDeleting = false) }
-                sendEffect(PaymentsContract.Effect.ShowError(result.message ?: "Failed to delete payment"))
+                sendEffect(
+                    PaymentsContract.Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_delete_payment)
+                    )
+                )
             }
             is Result.Loading -> { /* Already handled */ }
         }

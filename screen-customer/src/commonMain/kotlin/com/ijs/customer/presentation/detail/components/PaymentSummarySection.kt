@@ -16,6 +16,7 @@ import com.ijs.customer.domain.entity.CustomerPaymentSummary
 import com.ijs.customer.domain.entity.PaymentByMode
 import com.ijs.customer.domain.entity.PaymentMode
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
 /**
@@ -45,7 +46,7 @@ internal fun PaymentModeFilterChips(
                 FilterChip(
                     selected = selectedMode == null,
                     onClick = { onModeSelected(null) },
-                    label = { Text("All") },
+                    label = { Text(stringResource(Res.string.filter_all)) },
                     shape = RoundedCornerShape(20.dp)
                 )
             }
@@ -65,7 +66,7 @@ internal fun PaymentModeFilterChips(
         IconButton(onClick = onSearchToggle) {
             Icon(
                 painter = painterResource(Res.drawable.ic_search),
-                contentDescription = "Search",
+                contentDescription = stringResource(Res.string.customer_cd_search),
                 modifier = Modifier.size(20.dp),
                 tint = if (isSearchActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -102,7 +103,7 @@ internal fun PaymentSummaryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "💰 Total Received",
+                    text = stringResource(Res.string.customer_total_received_title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium
                 )
@@ -129,7 +130,7 @@ internal fun PaymentSummaryCard(
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_download),
-                                contentDescription = "Export",
+                                contentDescription = stringResource(Res.string.cd_export_pdf),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -142,7 +143,7 @@ internal fun PaymentSummaryCard(
 
                 // Payment Mode Breakdown
                 Text(
-                    text = "Payment Breakdown",
+                    text = stringResource(Res.string.customer_payment_breakdown),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium
                 )

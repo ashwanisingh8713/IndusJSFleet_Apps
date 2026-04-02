@@ -2,11 +2,7 @@ package com.indusjs.uicomponents.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.uicomponents.theme.FleetTokens
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The single, authoritative implementation of date range selection
@@ -33,7 +31,8 @@ import com.indusjs.uicomponents.theme.FleetTokens
  *
  * ### Validation
  * The Confirm button is disabled until both a start and end date are
- * selected and the start is not after the end.
+ * selected, the start is not after the end, and the range does not
+ * exceed [maxRangeDays].
  *
  * ### State ownership
  * Dialog open/close state lives in the caller. The component receives
@@ -46,6 +45,7 @@ import com.indusjs.uicomponents.theme.FleetTokens
  * @param onEndDateChange Callback when end date changes.
  * @param onApply Callback with (startDate, endDate) when confirmed.
  * @param onDismiss Callback when dialog is dismissed.
+ * @param maxRangeDays Maximum allowed range in days. Defaults to 365.
  */
 @Composable
 fun FleetDateRangePickerDialog(
@@ -55,29 +55,36 @@ fun FleetDateRangePickerDialog(
     onStartDateChange: (String) -> Unit,
     onEndDateChange: (String) -> Unit,
     onApply: (String, String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    maxRangeDays: Int = 365
 ) {
     if (!isVisible) return
+
+    val rangeExceededMsg = stringResource(Res.string.date_range_error_exceeded, maxRangeDays)
 
     val startDateError = remember(startDate) {
         if (startDate.length == 10) validateDateRange(startDate) else null
     }
-    val endDateError = remember(startDate, endDate) {
+    val endDateError = remember(startDate, endDate, maxRangeDays) {
         when {
             endDate.length != 10 -> null
             validateDateRange(endDate) != null -> validateDateRange(endDate)
-            else -> validateEndAfterStart(startDate, endDate)
+            validateEndAfterStart(startDate, endDate) != null ->
+                validateEndAfterStart(startDate, endDate)
+            else -> validateMaxRange(startDate, endDate, maxRangeDays, rangeExceededMsg)
         }
     }
 
     val canApply = startDate.length == 10 && endDate.length == 10 &&
-        validateDateRange(startDate) == null && validateEndAfterStart(startDate, endDate) == null
+        validateDateRange(startDate) == null &&
+        validateEndAfterStart(startDate, endDate) == null &&
+        validateMaxRange(startDate, endDate, maxRangeDays, rangeExceededMsg) == null
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Select Date Range",
+                text = stringResource(Res.string.date_range_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -91,7 +98,7 @@ fun FleetDateRangePickerDialog(
                     date = startDate,
                     time = "",
                     onDateTimeChange = { newDate, _ -> onStartDateChange(newDate) },
-                    label = "Start Date",
+                    label = stringResource(Res.string.date_range_start_date),
                     mode = PickerMode.DATE_ONLY,
                     isError = startDateError != null,
                     errorMessage = startDateError,
@@ -102,7 +109,7 @@ fun FleetDateRangePickerDialog(
                     date = endDate,
                     time = "",
                     onDateTimeChange = { newDate, _ -> onEndDateChange(newDate) },
-                    label = "End Date",
+                    label = stringResource(Res.string.date_range_end_date),
                     mode = PickerMode.DATE_ONLY,
                     minDate = startDate.ifBlank { null },
                     isError = endDateError != null,
@@ -117,7 +124,7 @@ fun FleetDateRangePickerDialog(
                 enabled = canApply
             ) {
                 Text(
-                    text = "Apply",
+                    text = stringResource(Res.string.action_apply),
                     fontWeight = FontWeight.SemiBold,
                     color = if (canApply) {
                         MaterialTheme.colorScheme.primary
@@ -129,7 +136,10 @@ fun FleetDateRangePickerDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "Cancel", fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = stringResource(Res.string.cancel),
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     )
@@ -179,4 +189,31 @@ private fun validateEndAfterStart(startDate: String, endDate: String): String? {
     if (endValue < startValue) return "End date must be after start date"
 
     return null
+}
+
+private fun validateMaxRange(
+    startDate: String,
+    endDate: String,
+    maxRangeDays: Int,
+    errorMessage: String
+): String? {
+    if (startDate.length != 10 || endDate.length != 10) return null
+
+    val startParts = startDate.split("-")
+    val endParts = endDate.split("-")
+    if (startParts.size != 3 || endParts.size != 3) return null
+
+    val startDay = startParts[0].toIntOrNull() ?: return null
+    val startMonth = startParts[1].toIntOrNull() ?: return null
+    val startYear = startParts[2].toIntOrNull() ?: return null
+
+    val endDay = endParts[0].toIntOrNull() ?: return null
+    val endMonth = endParts[1].toIntOrNull() ?: return null
+    val endYear = endParts[2].toIntOrNull() ?: return null
+
+    val approxStartDays = startYear * 365L + startMonth * 30L + startDay
+    val approxEndDays = endYear * 365L + endMonth * 30L + endDay
+    val diff = approxEndDays - approxStartDays
+
+    return if (diff > maxRangeDays) errorMessage else null
 }

@@ -18,6 +18,8 @@ import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.vehicle.domain.entity.TripsSummary
 import com.ijs.vehicle.domain.entity.VehicleTripItem
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun TripsTabContent(
@@ -31,7 +33,7 @@ internal fun TripsTabContent(
 ) {
     when {
         isLoading && tripsList.isEmpty() -> {
-            LoadingContent(message = "Loading trips...")
+            LoadingContent(message = stringResource(Res.string.vehicle_trips_loading))
         }
         error != null && tripsList.isEmpty() -> {
             ErrorContent(
@@ -50,12 +52,12 @@ internal fun TripsTabContent(
                     Text("🚀", style = MaterialTheme.typography.displayMedium)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "No trips found",
+                        text = stringResource(Res.string.vehicle_trips_no_trips),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "This vehicle hasn't completed any trips yet",
+                        text = stringResource(Res.string.vehicle_trips_no_trips_message),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -84,22 +86,22 @@ internal fun TripsTabContent(
                         ) {
                             TripStatItem(
                                 count = tripsSummary.total.toString(),
-                                label = "Total",
+                                label = stringResource(Res.string.team_label_total),
                                 color = MaterialTheme.colorScheme.primary
                             )
                             TripStatItem(
                                 count = tripsSummary.inProgress.toString(),
-                                label = "Active",
+                                label = stringResource(Res.string.vehicle_trips_stat_active),
                                 color = MaterialTheme.colorScheme.tertiary
                             )
                             TripStatItem(
                                 count = tripsSummary.completed.toString(),
-                                label = "Completed",
+                                label = stringResource(Res.string.trip_state_completed),
                                 color = MaterialTheme.colorScheme.secondary
                             )
                             TripStatItem(
                                 count = tripsSummary.planned.toString(),
-                                label = "Planned",
+                                label = stringResource(Res.string.trip_state_planned),
                                 color = MaterialTheme.colorScheme.outline
                             )
                         }
@@ -109,7 +111,7 @@ internal fun TripsTabContent(
                 // Trip List Header
                 item {
                     Text(
-                        text = "Trips History",
+                        text = stringResource(Res.string.vehicle_trips_history),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -182,11 +184,11 @@ internal fun TripItemCard(trip: VehicleTripItem) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = trip.tripNumber ?: "Trip #${trip.id}",
+                    text = trip.tripNumber ?: stringResource(Res.string.vehicle_trips_trip_id, trip.id),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                TripStatusChip(status = trip.stateLabel.ifEmpty { trip.state })
+                TripStatusChip(stateCode = trip.state, displayFallback = trip.stateLabel.ifEmpty { trip.state })
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -225,7 +227,7 @@ internal fun TripItemCard(trip: VehicleTripItem) {
                 )
                 trip.distance?.let { distance ->
                     Text(
-                        text = "${distance.toInt()} km",
+                        text = stringResource(Res.string.vehicle_trips_km, distance.toInt()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -246,12 +248,32 @@ internal fun TripItemCard(trip: VehicleTripItem) {
 }
 
 @Composable
-internal fun TripStatusChip(status: String) {
-    val (color, bgColor) = when (status) {
-        "Completed" -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-        "In Progress" -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
-        "Planned" -> MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
+internal fun TripStatusChip(stateCode: String, displayFallback: String) {
+    val key = stateCode.lowercase()
+    val (color, bgColor) = when (key) {
+        "completed" -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+        "in_progress" -> MaterialTheme.colorScheme.tertiary to MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
+        "planned" -> MaterialTheme.colorScheme.secondary to MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
         else -> MaterialTheme.colorScheme.outline to MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+    }
+
+    val completed = stringResource(Res.string.trip_state_completed)
+    val inProgress = stringResource(Res.string.vehicle_trip_state_in_progress)
+    val planned = stringResource(Res.string.trip_state_planned)
+    val cancelled = stringResource(Res.string.trip_state_cancelled)
+    val failed = stringResource(Res.string.trip_state_failed)
+    val delayed = stringResource(Res.string.trip_state_delayed)
+    val onRoute = stringResource(Res.string.trip_state_on_route)
+
+    val label = when (key) {
+        "completed" -> completed
+        "in_progress" -> inProgress
+        "planned" -> planned
+        "cancelled" -> cancelled
+        "failed" -> failed
+        "delayed" -> delayed
+        "on_route" -> onRoute
+        else -> displayFallback
     }
 
     Surface(
@@ -259,7 +281,7 @@ internal fun TripStatusChip(status: String) {
         color = bgColor
     ) {
         Text(
-            text = status,
+            text = label,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
             color = color,

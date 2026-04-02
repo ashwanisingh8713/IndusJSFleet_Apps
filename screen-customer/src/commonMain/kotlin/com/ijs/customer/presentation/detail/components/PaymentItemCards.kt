@@ -13,6 +13,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.datetimeutils.FleetDateTime
 import com.ijs.customer.domain.entity.CustomerPayment
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Basic payment item card (simple layout).
@@ -57,7 +59,7 @@ fun PaymentItem(
 
                 Column {
                     Text(
-                        text = "${payment.modeDisplay} Payment",
+                        text = stringResource(Res.string.customer_payment_mode_line, payment.modeDisplay),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -80,7 +82,7 @@ fun PaymentItem(
                     }
                     payment.referenceNumber?.takeIf { it.isNotBlank() }?.let { ref ->
                         Text(
-                            text = "Ref: $ref",
+                            text = stringResource(Res.string.customer_payment_ref_line, ref),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -189,7 +191,7 @@ fun EnhancedPaymentItem(
                 }
 
                 // Payment Type Badge
-                PaymentTypeBadge(type = payment.paymentType ?: "payment")
+                PaymentTypeBadge(type = payment.paymentType.orEmpty().ifBlank { "payment" })
             }
 
             // Row 3: Receipt/Reference (if available)
@@ -204,7 +206,7 @@ fun EnhancedPaymentItem(
                 ) {
                     payment.receiptNumber?.takeIf { it.isNotBlank() }?.let { receipt ->
                         Text(
-                            text = "Receipt: $receipt",
+                            text = stringResource(Res.string.customer_payment_receipt_line, receipt),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -214,7 +216,7 @@ fun EnhancedPaymentItem(
                     }
                     payment.referenceNumber?.takeIf { it.isNotBlank() }?.let { ref ->
                         Text(
-                            text = "Ref: $ref",
+                            text = stringResource(Res.string.customer_payment_ref_line, ref),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -237,22 +239,27 @@ internal fun PaymentTypeBadge(type: String) {
         "advance" -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            "Advance"
+            stringResource(Res.string.customer_payment_type_advance)
         )
         "partial" -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
-            "Partial"
+            stringResource(Res.string.customer_payment_type_partial)
         )
         "final" -> Triple(
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer,
-            "Final"
+            stringResource(Res.string.customer_payment_type_final)
         )
         "refund" -> Triple(
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer,
-            "Refund"
+            stringResource(Res.string.customer_payment_type_refund)
+        )
+        "payment" -> Triple(
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            stringResource(Res.string.customer_payment_type_generic)
         )
         else -> Triple(
             MaterialTheme.colorScheme.surfaceVariant,

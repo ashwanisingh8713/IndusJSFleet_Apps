@@ -3,6 +3,7 @@ package com.indusjs.uicomponents.components
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -118,6 +119,7 @@ fun FleetButton(
         val baseModifier = modifier
             .then(widthModifier)
             .height(heightDp)
+            .defaultMinSize(minHeight = FleetTokens.Height.MinTouchTarget)
             .then(semanticsModifier)
 
         val effectiveEnabled = enabled && !isLoading

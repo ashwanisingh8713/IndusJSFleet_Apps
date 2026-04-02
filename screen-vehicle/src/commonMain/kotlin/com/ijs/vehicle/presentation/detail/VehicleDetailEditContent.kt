@@ -18,7 +18,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.CaretakerSectionCard
-import com.indusjs.uicomponents.components.DateInputField
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
 import com.ijs.vehicle.domain.entity.Vehicle

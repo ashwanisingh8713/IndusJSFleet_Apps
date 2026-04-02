@@ -3,17 +3,11 @@ package com.indusjs.uicomponents.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,9 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
 import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.FlowPreview
@@ -37,9 +28,8 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * The canonical search field for the entire application.
  *
- * Built as a specialised composition of [OutlinedTextField] with search
- * semantics. Not a separate standalone component from scratch — it follows
- * the same styling as the library's input fields.
+ * Built on [FleetInputField] with [FieldType.SEARCH], inheriting its
+ * adaptive width, [imePadding], and single-line enforcement.
  *
  * ### Search icon
  * Always present as the leading icon. Not configurable.
@@ -54,7 +44,7 @@ import org.jetbrains.compose.resources.stringResource
  * debounced values and should not implement debounce themselves.
  *
  * ### Single-line
- * Always enforced. Search is never multiline.
+ * Always enforced via [FieldType.SEARCH].
  *
  * @param query Current search query (external state).
  * @param onQueryChange Debounced callback when the query changes.
@@ -71,8 +61,9 @@ fun FleetSearchField(
     modifier: Modifier = Modifier,
     placeholder: String = stringResource(Res.string.search_hint),
     onSearch: (() -> Unit)? = null,
-    accessibilityLabel: String = "Search"
+    accessibilityLabel: String = ""
 ) {
+    val resolvedAccessibilityLabel = accessibilityLabel.ifBlank { stringResource(Res.string.search) }
     val focusManager = LocalFocusManager.current
 
     var localQuery by remember(query) { mutableStateOf(query) }
@@ -86,20 +77,12 @@ fun FleetSearchField(
             }
     }
 
-    OutlinedTextField(
+    FleetInputField(
         value = localQuery,
         onValueChange = { localQuery = it },
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = FleetTokens.Spacing.L, vertical = FleetTokens.Spacing.S)
-            .semantics { contentDescription = accessibilityLabel },
-        placeholder = {
-            Text(
-                text = placeholder,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
+        fieldType = FieldType.SEARCH,
+        modifier = modifier,
+        placeholder = placeholder,
         leadingIcon = {
             Icon(
                 painter = painterResource(Res.drawable.ic_search),
@@ -129,21 +112,12 @@ fun FleetSearchField(
                 }
             }
         },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(
             onSearch = {
                 onSearch?.invoke()
                 focusManager.clearFocus()
             }
         ),
-        shape = MaterialTheme.shapes.medium,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        textStyle = MaterialTheme.typography.bodyMedium
+        accessibilityLabel = resolvedAccessibilityLabel
     )
 }

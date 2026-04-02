@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.model.shared.CaretakerInfo
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Reusable Caretaker UI Components.
@@ -36,14 +38,15 @@ fun CaretakerDropdownField(
     onCaretakerSelected: (CaretakerInfo?) -> Unit,
     isLoading: Boolean = false,
     enabled: Boolean = true,
-    label: String = "Assign Caretaker",
+    label: String = "",
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
 
+    val resolvedLabel = label.ifBlank { stringResource(Res.string.assign_caretaker) }
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = label,
+            text = resolvedLabel,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 4.dp)
@@ -78,15 +81,16 @@ fun CaretakerDropdownField(
                             strokeWidth = 2.dp
                         )
                         Text(
-                            text = "Loading...",
+                            text = stringResource(Res.string.loading),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
                         Column {
+                            val selectText = stringResource(Res.string.select_a_caretaker)
                             Text(
-                                text = selectedCaretaker?.name?.ifBlank { "Select a caretaker" }
-                                    ?: "Select a caretaker",
+                                text = selectedCaretaker?.name?.ifBlank { selectText }
+                                    ?: selectText,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (selectedCaretaker != null) {
                                     MaterialTheme.colorScheme.onSurface
@@ -136,7 +140,7 @@ fun CaretakerDropdownField(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = "Clear Selection",
+                            text = stringResource(Res.string.clear_selection),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -156,7 +160,7 @@ fun CaretakerDropdownField(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = "No team members available",
+                            text = stringResource(Res.string.no_team_members_available),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -167,17 +171,18 @@ fun CaretakerDropdownField(
             } else {
                 caretakers.forEach { caretaker ->
                     val isSelected = selectedCaretaker?.id == caretaker.id
-
+                    val unknownText = stringResource(Res.string.unknown)
+                    val teamMemberText = stringResource(Res.string.team_member)
                     DropdownMenuItem(
                         text = {
                             Column {
                                 Text(
-                                    text = caretaker.name.ifBlank { "Unknown" },
+                                    text = caretaker.name.ifBlank { unknownText },
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
                                 Text(
-                                    text = caretaker.role.replaceFirstChar { it.uppercase() }.ifBlank { "Team Member" },
+                                    text = caretaker.role.replaceFirstChar { it.uppercase() }.ifBlank { teamMemberText },
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -239,12 +244,12 @@ fun CaretakerSectionCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Caretaker Assignment",
+                        text = stringResource(Res.string.caretaker_assignment),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "Optional • Assign a Manager or Supervisor",
+                        text = stringResource(Res.string.caretaker_assignment_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -255,7 +260,7 @@ fun CaretakerSectionCard(
                         onClick = onRefresh,
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        Text("Refresh", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(Res.string.refresh), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -277,7 +282,7 @@ fun CaretakerSectionCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Loading...",
+                            text = stringResource(Res.string.loading),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -290,7 +295,7 @@ fun CaretakerSectionCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "No team members available",
+                            text = stringResource(Res.string.no_team_members_available),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f)
@@ -300,7 +305,7 @@ fun CaretakerSectionCard(
                                 onClick = onCreateTeamMember,
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                Text("+ Add", style = MaterialTheme.typography.labelMedium)
+                                Text("+ ${stringResource(Res.string.add)}", style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }
@@ -359,12 +364,13 @@ fun CaretakerInfoCard(
 
                 Column {
                     Text(
-                        text = "Caretaker",
+                        text = stringResource(Res.string.caretaker),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    val notAssignedText = stringResource(Res.string.not_assigned)
                     Text(
-                        text = caretaker?.name?.ifBlank { "Not Assigned" } ?: "Not Assigned",
+                        text = caretaker?.name?.ifBlank { notAssignedText } ?: notAssignedText,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -380,7 +386,7 @@ fun CaretakerInfoCard(
 
             onChangeCaretaker?.let {
                 TextButton(onClick = it) {
-                    Text(if (caretaker != null) "Change" else "Assign")
+                    Text(stringResource(if (caretaker != null) Res.string.change else Res.string.assign))
                 }
             }
         }

@@ -28,8 +28,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
-import com.indusjs.uicomponents.components.DateInputField
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetTab
+import com.indusjs.uicomponents.components.FleetTabBar
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.ClickablePhoneRow
 import com.indusjs.uicomponents.components.CaretakerInfoCard
@@ -54,17 +55,37 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Tab definitions for Vehicle Detail Screen
  */
-private enum class VehicleDetailTab(val title: String, val icon: String) {
-    OVERVIEW("Overview", "📊"),
-    TRIPS("Trips", "🚀"),
-    COSTS("Costs", "💰"),
-    ROUTE("Route & Stops", "📍"),
-    DOCUMENTS("Documents", "📄"),
-    HISTORY("History", "📋")
+private enum class VehicleDetailTab(val icon: String) {
+    OVERVIEW("📊"),
+    TRIPS("🚀"),
+    COSTS("💰"),
+    ROUTE("📍"),
+    DOCUMENTS("📄"),
+    HISTORY("📋")
+}
+
+@Composable
+private fun VehicleDetailTab.titleText(): String = when (this) {
+    VehicleDetailTab.OVERVIEW -> stringResource(Res.string.vehicles_overview)
+    VehicleDetailTab.TRIPS -> stringResource(Res.string.vehicles_trips)
+    VehicleDetailTab.COSTS -> stringResource(Res.string.vehicles_costs)
+    VehicleDetailTab.ROUTE -> stringResource(Res.string.vehicle_detail_tab_route)
+    VehicleDetailTab.DOCUMENTS -> stringResource(Res.string.vehicles_documents)
+    VehicleDetailTab.HISTORY -> stringResource(Res.string.vehicle_detail_tab_history)
+}
+
+private fun applySnackbarFormat(template: String, vararg args: Any): String {
+    var result = template
+    args.forEachIndexed { index, arg ->
+        val n = index + 1
+        result = result.replace("%${n}\$s", arg.toString()).replace("%${n}\$d", arg.toString())
+    }
+    return result
 }
 
 /**
@@ -92,13 +113,25 @@ fun VehicleDetailScreen(
     var pdfExportData by remember { mutableStateOf<VehicleMaintenanceCostsPdfData?>(null) }
     var isExportingPdf by remember { mutableStateOf(false) }
 
+    val snackbarPreviewFmt = stringResource(Res.string.vehicle_snackbar_preview)
+    val snackbarDownloadFmt = stringResource(Res.string.vehicle_snackbar_download)
+    val snackbarDownloading = stringResource(Res.string.vehicle_snackbar_downloading)
+    val snackbarDownloadedFmt = stringResource(Res.string.vehicle_snackbar_downloaded)
+    val snackbarDownloadedBytesFmt = stringResource(Res.string.vehicle_snackbar_downloaded_bytes)
+
     // Load vehicle on first composition
     LaunchedEffect(vehicleId) {
         viewModel.sendIntent(VehicleDetailContract.Intent.LoadVehicle(vehicleId))
     }
 
     // Handle effects
-    LaunchedEffect(Unit) {
+    LaunchedEffect(
+        snackbarPreviewFmt,
+        snackbarDownloadFmt,
+        snackbarDownloading,
+        snackbarDownloadedFmt,
+        snackbarDownloadedBytesFmt
+    ) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is VehicleDetailContract.Effect.ShowSnackbar -> {
@@ -145,27 +178,39 @@ fun VehicleDetailScreen(
                     if (onOpenDocumentPreview != null) {
                         onOpenDocumentPreview(effect.documentName, effect.fileUrl)
                     } else {
-                        snackbarHostState.showSnackbar("Preview: ${effect.documentName}\nURL: ${effect.fileUrl}")
+                        snackbarHostState.showSnackbar(
+                            applySnackbarFormat(snackbarPreviewFmt, effect.documentName, effect.fileUrl)
+                        )
                     }
                 }
                 is VehicleDetailContract.Effect.DownloadDocumentFile -> {
                     if (onDownloadDocument != null) {
                         onDownloadDocument(effect.documentName, effect.fileUrl)
                     } else {
-                        snackbarHostState.showSnackbar("Download: ${effect.documentName}\nURL: ${effect.fileUrl}")
+                        snackbarHostState.showSnackbar(
+                            applySnackbarFormat(snackbarDownloadFmt, effect.documentName, effect.fileUrl)
+                        )
                     }
                 }
                 is VehicleDetailContract.Effect.DocumentDownloading -> {
                     isDownloading = true
-                    snackbarHostState.showSnackbar("Downloading document...")
+                    snackbarHostState.showSnackbar(snackbarDownloading)
                 }
                 is VehicleDetailContract.Effect.DocumentDownloaded -> {
                     isDownloading = false
                     if (onSaveDocument != null) {
                         onSaveDocument(effect.documentName, effect.fileBytes, effect.mimeType)
-                        snackbarHostState.showSnackbar("Downloaded ${effect.documentName}")
+                        snackbarHostState.showSnackbar(
+                            applySnackbarFormat(snackbarDownloadedFmt, effect.documentName)
+                        )
                     } else {
-                        snackbarHostState.showSnackbar("Document downloaded: ${effect.documentName} (${effect.fileBytes.size} bytes)")
+                        snackbarHostState.showSnackbar(
+                            applySnackbarFormat(
+                                snackbarDownloadedBytesFmt,
+                                effect.documentName,
+                                effect.fileBytes.size
+                            )
+                        )
                     }
                 }
                 is VehicleDetailContract.Effect.CostDeleted -> {
@@ -205,8 +250,16 @@ fun VehicleDetailScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Vehicle") },
-            text = { Text("Are you sure you want to delete ${state.vehicle?.registrationNumber}? This action cannot be undone.") },
+            title = { Text(stringResource(Res.string.vehicle_detail_delete)) },
+            text = {
+                Text(
+                    stringResource(
+                        Res.string.delete_entity_confirmation_message,
+                        stringResource(Res.string.vehicle_entity_singular),
+                        state.vehicle?.registrationNumber.orEmpty()
+                    )
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -217,12 +270,12 @@ fun VehicleDetailScreen(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(Res.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -231,7 +284,7 @@ fun VehicleDetailScreen(
     // State Change Dialog
     if (state.showStateChangeDialog && state.vehicle != null) {
         StateChangeDialog(
-            title = "Change Vehicle Status",
+            title = stringResource(Res.string.vehicle_detail_change_status),
             currentStateLabel = VehicleStatus.getDisplayLabel(state.vehicle!!.status),
             stateOptions = getVehicleStateOptions(state.vehicle!!.status),
             onStateSelected = { newState ->
@@ -250,11 +303,11 @@ fun VehicleDetailScreen(
             TopAppBar(
                 title = {
                     if (state.isEditMode) {
-                        Text("Edit Vehicle")
+                        Text(stringResource(Res.string.vehicle_detail_edit))
                     } else {
                         Column {
                             Text(
-                                text = vehicle?.registrationNumber ?: "Vehicle Details",
+                                text = vehicle?.registrationNumber ?: stringResource(Res.string.vehicles_detail),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -280,7 +333,11 @@ fun VehicleDetailScreen(
                     ) {
                         Icon(
                             painter = painterResource(if (state.isEditMode) Res.drawable.ic_close else Res.drawable.ic_arrow_back),
-                            contentDescription = if (state.isEditMode) "Cancel" else "Back",
+                            contentDescription = if (state.isEditMode) {
+                                stringResource(Res.string.cancel)
+                            } else {
+                                stringResource(Res.string.back)
+                            },
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -301,7 +358,7 @@ fun VehicleDetailScreen(
                         IconButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.EnterEditMode) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_edit),
-                                contentDescription = "Edit",
+                                contentDescription = stringResource(Res.string.edit),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -331,7 +388,7 @@ fun VehicleDetailScreen(
                             onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ExitEditMode) },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Cancel")
+                            Text(stringResource(Res.string.cancel))
                         }
 
                         Button(
@@ -347,7 +404,13 @@ fun VehicleDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
-                            Text(if (state.isSaving) "Saving..." else "Save Changes")
+                            Text(
+                                if (state.isSaving) {
+                                    stringResource(Res.string.action_saving)
+                                } else {
+                                    stringResource(Res.string.vehicle_detail_save_changes)
+                                }
+                            )
                         }
                     }
                 }
@@ -356,7 +419,7 @@ fun VehicleDetailScreen(
     ) { padding ->
         when {
             state.isLoading -> {
-                LoadingContent(message = "Loading vehicle details...")
+                LoadingContent(message = stringResource(Res.string.vehicle_detail_loading))
             }
             state.error != null && state.vehicle == null -> {
                 ErrorContent(
@@ -408,7 +471,7 @@ fun VehicleDetailScreen(
                     ) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Saving...")
+                        Text(stringResource(Res.string.action_saving))
                     }
                 }
             }
@@ -416,6 +479,7 @@ fun VehicleDetailScreen(
 
         // Uploading document overlay
         if (state.isUploading) {
+            val uploadingDocName = state.selectedDocumentTypeName ?: stringResource(Res.string.vehicle_detail_document)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -432,7 +496,7 @@ fun VehicleDetailScreen(
                     ) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Uploading ${state.selectedDocumentTypeName ?: "document"}...")
+                        Text(stringResource(Res.string.vehicle_detail_uploading, uploadingDocName))
                     }
                 }
             }
@@ -451,6 +515,12 @@ private fun VehicleDetailTabbedContent(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val tabs = VehicleDetailTab.entries
+    val fleetTabs = tabs.map { tab ->
+        FleetTab(
+            id = tab,
+            label = "${tab.icon} ${tab.titleText()}"
+        )
+    }
     val pagerState = rememberPagerState(initialPage = 0) { tabs.size }
     val scope = rememberCoroutineScope()
 
@@ -465,48 +535,15 @@ private fun VehicleDetailTabbedContent(
             .background(MaterialTheme.colorScheme.background)
     ) {
 
-        // Tab Row
-        ScrollableTabRow(
-            selectedTabIndex = pagerState.currentPage,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary,
-            edgePadding = 16.dp,
-            divider = {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    thickness = 1.dp
-                )
+        FleetTabBar(
+            tabs = fleetTabs,
+            selectedTabId = tabs[pagerState.currentPage],
+            onTabSelected = { tab ->
+                scope.launch {
+                    pagerState.animateScrollToPage(tabs.indexOf(tab))
+                }
             }
-        ) {
-            tabs.forEachIndexed { index, tab ->
-                Tab(
-                    selected = pagerState.currentPage == index,
-                    onClick = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
-                    },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = tab.icon,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Text(
-                                text = tab.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (pagerState.currentPage == index) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
-                    },
-                    selectedContentColor = MaterialTheme.colorScheme.primary,
-                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        )
 
         // Tab Content with Pager
         HorizontalPager(

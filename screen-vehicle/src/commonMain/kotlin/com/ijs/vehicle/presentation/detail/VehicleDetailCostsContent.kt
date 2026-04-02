@@ -22,10 +22,15 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.indusjs.pdfreport.handler.VehicleMaintenanceCostsPdfHandler
 import com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData
-import com.indusjs.uicomponents.components.DateInputField
+import com.indusjs.uicomponents.components.DateVisualTransformation
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
+import com.indusjs.uicomponents.components.formatToDdMmYyyy
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -35,16 +40,16 @@ internal fun CostsTabContent(
     modifier: Modifier = Modifier
 ) {
     // Temp filter values for bottom sheet
-    var tempStartDate by remember { mutableStateOf(state.costsStartDate) }
-    var tempEndDate by remember { mutableStateOf(state.costsEndDate) }
+    var tempStartDate by remember { mutableStateOf(state.costsStartDate.replace("-", "")) }
+    var tempEndDate by remember { mutableStateOf(state.costsEndDate.replace("-", "")) }
     var tempSelectedFilters by remember { mutableStateOf(state.selectedCostTypeFilters) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Sync temp values when sheet opens
     LaunchedEffect(state.showCostsFilterSheet) {
         if (state.showCostsFilterSheet) {
-            tempStartDate = state.costsStartDate
-            tempEndDate = state.costsEndDate
+            tempStartDate = state.costsStartDate.replace("-", "")
+            tempEndDate = state.costsEndDate.replace("-", "")
             tempSelectedFilters = state.selectedCostTypeFilters
             // Load cost types from local database when filter sheet opens
             viewModel.sendIntent(VehicleDetailContract.Intent.LoadCostTypes)
@@ -79,32 +84,39 @@ internal fun CostsTabContent(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Filters", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.vehicle_costs_filters), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     TextButton(onClick = {
                         tempStartDate = ""
                         tempEndDate = ""
                         tempSelectedFilters = emptySet()
                     }) {
-                        Text("Clear All")
+                        Text(stringResource(Res.string.action_clear_all))
                     }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // Date Range Section
-                Text("Date Range", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(Res.string.vehicle_costs_date_range), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(10.dp))
+                val dateTransformation = remember { DateVisualTransformation() }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    DateInputField(
+                    FleetInputField(
                         value = tempStartDate,
-                        onValueChange = { tempStartDate = it },
-                        label = "From",
+                        onValueChange = { tempStartDate = filterDigitsOnly(it, 8) },
+                        fieldType = FieldType.NUMBER,
+                        label = stringResource(Res.string.vehicle_label_date_from),
+                        placeholder = stringResource(Res.string.placeholder_date),
+                        visualTransformation = dateTransformation,
                         modifier = Modifier.weight(1f)
                     )
-                    DateInputField(
+                    FleetInputField(
                         value = tempEndDate,
-                        onValueChange = { tempEndDate = it },
-                        label = "To",
+                        onValueChange = { tempEndDate = filterDigitsOnly(it, 8) },
+                        fieldType = FieldType.NUMBER,
+                        label = stringResource(Res.string.vehicle_label_date_to),
+                        placeholder = stringResource(Res.string.placeholder_date),
+                        visualTransformation = dateTransformation,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -112,8 +124,8 @@ internal fun CostsTabContent(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Cost Types Section (Multi-select)
-                Text("Cost Types", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text("Select one or more", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.vehicle_costs_cost_types), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(Res.string.vehicle_costs_select_types), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Loading indicator for cost types
@@ -127,7 +139,7 @@ internal fun CostsTabContent(
                 } else {
                     // Trip Cost Types - from local database
                     if (state.tripCostTypeGroups.isNotEmpty()) {
-                        Text("Trip Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(Res.string.vehicle_costs_trip_costs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(6.dp))
 
                         state.tripCostTypeGroups.forEach { group ->
@@ -162,7 +174,7 @@ internal fun CostsTabContent(
                         }
                     } else {
                         // Fallback to static cost types from TripCostTypes object
-                        Text("Trip Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(Res.string.vehicle_costs_trip_costs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(6.dp))
                         com.indusjs.fleet.data.model.costs.TripCostTypes.groups.forEach { group ->
                             Text(
@@ -200,7 +212,7 @@ internal fun CostsTabContent(
 
                     // Maintenance Cost Types - from local database
                     if (state.maintenanceCostTypeGroups.isNotEmpty()) {
-                        Text("Maintenance Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
+                        Text(stringResource(Res.string.vehicle_costs_maintenance_costs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
                         Spacer(modifier = Modifier.height(6.dp))
 
                         state.maintenanceCostTypeGroups.forEach { group ->
@@ -235,7 +247,7 @@ internal fun CostsTabContent(
                         }
                     } else {
                         // Fallback to static cost types from MaintenanceCostTypes object
-                        Text("Maintenance Costs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
+                        Text(stringResource(Res.string.vehicle_costs_maintenance_costs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
                         Spacer(modifier = Modifier.height(6.dp))
                         com.indusjs.fleet.data.model.costs.MaintenanceCostTypes.groups.forEach { group ->
                             Text(
@@ -278,17 +290,17 @@ internal fun CostsTabContent(
                         onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.HideCostsFilterSheet) },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(Res.string.cancel))
                     }
                     Button(
                         onClick = {
                             viewModel.sendIntent(
-                                VehicleDetailContract.Intent.ApplyCostFilters(tempStartDate, tempEndDate, tempSelectedFilters)
+                                VehicleDetailContract.Intent.ApplyCostFilters(formatToDdMmYyyy(tempStartDate), formatToDdMmYyyy(tempEndDate), tempSelectedFilters)
                             )
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Apply Filters")
+                        Text(stringResource(Res.string.vehicle_costs_apply_filters))
                     }
                 }
             }
@@ -325,7 +337,7 @@ internal fun CostsTabContent(
                 ) {
                     Column {
                         Text(
-                            text = "Maintenance Costs",
+                            text = stringResource(Res.string.vehicle_costs_maintenance_costs),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -336,7 +348,7 @@ internal fun CostsTabContent(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "${state.maintenanceCosts.size} entries",
+                            text = stringResource(Res.string.vehicle_costs_entries, state.maintenanceCosts.size),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -360,7 +372,7 @@ internal fun CostsTabContent(
                             onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.NavigateToAddMaintenanceCost) },
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                         ) {
-                            Text("+ Add Cost", style = MaterialTheme.typography.labelMedium)
+                            Text(stringResource(Res.string.vehicle_costs_add_cost), style = MaterialTheme.typography.labelMedium)
                         }
 
                         // Filter Button with Badge
@@ -433,7 +445,7 @@ internal fun CostsTabContent(
                 ) {
                     Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.weight(1f))
-                        TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshCosts) }) { Text("Retry") }
+                        TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshCosts) }) { Text(stringResource(Res.string.retry)) }
                     }
                 }
             }
@@ -450,11 +462,11 @@ internal fun CostsTabContent(
                     Column(modifier = Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("🔧", style = MaterialTheme.typography.displaySmall)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text("No maintenance costs", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Text("Vehicle maintenance expenses appear here", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(Res.string.vehicle_costs_no_maintenance), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(Res.string.vehicle_costs_maint_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.height(10.dp))
                         Button(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.NavigateToAddMaintenanceCost) }) {
-                            Text("+ Add Maintenance Cost")
+                            Text(stringResource(Res.string.vehicle_costs_add_maint))
                         }
                     }
                 }
@@ -493,7 +505,7 @@ internal fun CostsTabContent(
             item(key = "load_more") {
                 Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
                     if (state.isLoadingCosts) CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                    else TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.LoadMoreCosts) }) { Text("Load More") }
+                    else TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.LoadMoreCosts) }) { Text(stringResource(Res.string.vehicle_costs_load_more)) }
                 }
             }
         }
@@ -503,10 +515,10 @@ internal fun CostsTabContent(
     if (state.showDeleteCostDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.sendIntent(VehicleDetailContract.Intent.DismissDeleteCostDialog) },
-            title = { Text("Delete Cost") },
-            text = { Text("Delete this cost entry?") },
-            confirmButton = { TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ConfirmDeleteCost) }) { Text("Delete", color = MaterialTheme.colorScheme.error) } },
-            dismissButton = { TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.DismissDeleteCostDialog) }) { Text("Cancel") } }
+            title = { Text(stringResource(Res.string.vehicle_costs_delete_title)) },
+            text = { Text(stringResource(Res.string.vehicle_costs_delete_message)) },
+            confirmButton = { TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ConfirmDeleteCost) }) { Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.DismissDeleteCostDialog) }) { Text(stringResource(Res.string.cancel)) } }
         )
     }
 }

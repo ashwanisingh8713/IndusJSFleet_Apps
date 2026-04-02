@@ -25,6 +25,7 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Trip Detail Screen composable with Edit functionality.
@@ -113,7 +114,7 @@ fun TripDetailScreen(
     // Status change dialog
     if (showStatusDialog && state.trip != null) {
         StateChangeDialog(
-            title = "Change Trip Status",
+            title = stringResource(Res.string.trip_detail_change_status),
             currentStateLabel = TripStatus.getDisplayLabel(state.trip!!.status),
             stateOptions = getTripStateOptions(state.trip!!.status),
             onStateSelected = { newState ->
@@ -171,7 +172,7 @@ fun TripDetailScreen(
     ) { padding ->
         when {
             state.isLoading -> {
-                LoadingContent(message = "Loading trip details...")
+                LoadingContent(message = stringResource(Res.string.trip_detail_loading_trip))
             }
             state.error != null && state.trip == null -> {
                 ErrorContent(
@@ -192,12 +193,20 @@ fun TripDetailScreen(
 
         // Saving overlay
         if (state.isSaving) {
-            ProgressOverlay(padding = padding, title = "Saving Changes...", subtitle = "Please wait")
+            ProgressOverlay(
+                padding = padding,
+                title = stringResource(Res.string.action_saving),
+                subtitle = stringResource(Res.string.trip_detail_please_wait)
+            )
         }
 
         // PDF Export overlay
         if (isExportingPdf) {
-            ProgressOverlay(padding = padding, title = "📄 Generating PDF...", subtitle = "Please wait while we prepare your report")
+            ProgressOverlay(
+                padding = padding,
+                title = stringResource(Res.string.action_generating_pdf),
+                subtitle = stringResource(Res.string.trip_detail_pdf_preparing)
+            )
         }
     }
 
@@ -228,12 +237,18 @@ private fun TripDetailTopBar(
     onEditClick: () -> Unit
 ) {
     TopAppBar(
-        title = { Text(if (isEditMode) "Edit Trip" else "Trip Details") },
+        title = {
+            Text(
+                if (isEditMode) stringResource(Res.string.trip_detail_edit_title)
+                else stringResource(Res.string.trips_detail)
+            )
+        },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     painter = painterResource(if (isEditMode) Res.drawable.ic_close else Res.drawable.ic_arrow_back),
-                    contentDescription = if (isEditMode) "Cancel" else "Back",
+                    contentDescription = if (isEditMode) stringResource(Res.string.cancel)
+                    else stringResource(Res.string.back),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -244,7 +259,7 @@ private fun TripDetailTopBar(
                 IconButton(onClick = onEditClick) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_edit),
-                        contentDescription = "Edit",
+                        contentDescription = stringResource(Res.string.edit),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -283,7 +298,7 @@ private fun EditModeBottomBar(
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(text = "Cancel", fontWeight = FontWeight.SemiBold)
+                Text(text = stringResource(Res.string.cancel), fontWeight = FontWeight.SemiBold)
             }
 
             Button(
@@ -303,7 +318,8 @@ private fun EditModeBottomBar(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(
-                    text = if (isSaving) "Saving..." else "💾 Save Changes",
+                    text = if (isSaving) stringResource(Res.string.action_saving)
+                    else stringResource(Res.string.team_save_changes),
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -318,8 +334,8 @@ private fun CancelTripDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Cancel Trip") },
-        text = { Text("Are you sure you want to cancel this trip? This action cannot be undone.") },
+        title = { Text(stringResource(Res.string.trip_detail_cancel)) },
+        text = { Text(stringResource(Res.string.trip_detail_cancel_confirm)) },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
@@ -327,12 +343,12 @@ private fun CancelTripDialog(
                     contentColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text("Cancel Trip")
+                Text(stringResource(Res.string.trip_detail_cancel))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Keep")
+                Text(stringResource(Res.string.trip_detail_keep))
             }
         }
     )
@@ -428,7 +444,10 @@ private fun TripDetailContent(
                         ) {
                             Text("❌", style = MaterialTheme.typography.bodyLarge)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Cancel Trip", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = stringResource(Res.string.trip_detail_cancel),
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }

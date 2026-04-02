@@ -17,11 +17,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.ErrorContent
-import com.indusjs.uicomponents.components.FleetEmailField
-import com.indusjs.uicomponents.components.FleetMobileField
-import com.indusjs.uicomponents.components.FleetTextField
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.ClickablePhoneRow
+import com.ijs.team.presentation.localizedDisplayName
 import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
@@ -42,6 +44,15 @@ fun TeamMemberDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // Load member on first composition
     LaunchedEffect(memberId) {
@@ -53,7 +64,7 @@ fun TeamMemberDetailScreen(
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is TeamMemberDetailContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is TeamMemberDetailContract.Effect.NavigateBack -> {
                     onNavigateBack()
@@ -71,7 +82,11 @@ fun TeamMemberDetailScreen(
             TopAppBar(
                 title = {
                     Text(
-                        if (state.isEditMode) "Edit Member" else "Member Details",
+                        if (state.isEditMode) {
+                            stringResource(Res.string.team_edit_member)
+                        } else {
+                            stringResource(Res.string.team_detail)
+                        },
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -85,7 +100,11 @@ fun TeamMemberDetailScreen(
                     }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = if (state.isEditMode) "Cancel" else "Back",
+                            contentDescription = if (state.isEditMode) {
+                                stringResource(Res.string.cancel)
+                            } else {
+                                stringResource(Res.string.back)
+                            },
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
@@ -98,7 +117,7 @@ fun TeamMemberDetailScreen(
                         }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_edit),
-                                contentDescription = "Edit",
+                                contentDescription = stringResource(Res.string.edit),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -114,11 +133,11 @@ fun TeamMemberDetailScreen(
     ) { paddingValues ->
         when {
             state.isLoading -> {
-                LoadingContent(message = "Loading team member...")
+                LoadingContent(message = stringResource(Res.string.team_loading_member))
             }
             state.error != null -> {
                 ErrorContent(
-                    error = state.error ?: "Something went wrong",
+                    error = state.error?.resolve() ?: stringResource(Res.string.error_generic),
                     screenContext = FleetErrorContext.TEAM,
                     onRetry = { viewModel.sendIntent(TeamMemberDetailContract.Intent.RefreshMember) }
                 )
@@ -154,12 +173,12 @@ fun TeamMemberDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Member Details") },
+                title = { Text(stringResource(Res.string.team_detail)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
@@ -175,7 +194,7 @@ fun TeamMemberDetailScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Member ID: $memberId\n\nViewModel not provided.\nPlease use the overload with ViewModel.",
+                text = stringResource(Res.string.team_detail_viewmodel_required, memberId),
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -241,7 +260,7 @@ private fun ViewMemberContent(
             }
         ) {
             Text(
-                text = member.roleDisplayName,
+                text = member.role.localizedDisplayName(),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium,
                 color = when (member.role) {
@@ -279,7 +298,11 @@ private fun ViewMemberContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (member.isActive) "Active" else "Inactive",
+                    text = if (member.isActive) {
+                        stringResource(Res.string.team_status_active)
+                    } else {
+                        stringResource(Res.string.team_status_inactive)
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Medium,
                     color = if (member.isActive) FleetStatusColors.FleetOnRoute else MaterialTheme.colorScheme.error
@@ -301,19 +324,23 @@ private fun ViewMemberContent(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Contact Information",
+                    text = stringResource(Res.string.team_section_contact_information),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                DetailRow(icon = "✉️", label = "Email", value = member.email)
+                DetailRow(
+                    icon = "✉️",
+                    label = stringResource(Res.string.team_label_email),
+                    value = member.email
+                )
 
                 // Mobile with call icon
                 ClickablePhoneRow(
                     phoneNumber = member.mobile,
-                    label = "Mobile",
+                    label = stringResource(Res.string.team_label_mobile),
                     icon = "📱"
                 )
             }
@@ -333,15 +360,23 @@ private fun ViewMemberContent(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Additional Info",
+                    text = stringResource(Res.string.team_section_additional_info),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                DetailRow(icon = "🆔", label = "Member ID", value = member.id)
-                DetailRow(icon = "📅", label = "Created on", value = formatDate(member.createdAt))
+                DetailRow(
+                    icon = "🆔",
+                    label = stringResource(Res.string.team_label_member_id),
+                    value = member.id
+                )
+                DetailRow(
+                    icon = "📅",
+                    label = stringResource(Res.string.team_label_created_on),
+                    value = formatDate(member.createdAt)
+                )
             }
         }
     }
@@ -371,35 +406,35 @@ private fun EditMemberContent(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Personal Information",
+                    text = stringResource(Res.string.team_section_personal_information),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                FleetTextField(
+                FleetInputField(
                     value = state.editFirstName,
                     onValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateFirstName(it)) },
-                    label = "First Name",
-                    placeholder = "Enter first name",
+                    fieldType = FieldType.DEFAULT,
+                    label = stringResource(Res.string.team_label_first_name),
+                    placeholder = stringResource(Res.string.team_placeholder_first_name),
                     isError = state.firstNameError != null,
-                    errorMessage = state.firstNameError,
-                    enabled = !state.isSaving,
-                    modifier = Modifier.fillMaxWidth()
+                    errorMessage = state.firstNameError?.resolve(),
+                    enabled = !state.isSaving
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                FleetTextField(
+                FleetInputField(
                     value = state.editLastName,
                     onValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateLastName(it)) },
-                    label = "Last Name",
-                    placeholder = "Enter last name",
+                    fieldType = FieldType.DEFAULT,
+                    label = stringResource(Res.string.team_label_last_name),
+                    placeholder = stringResource(Res.string.team_placeholder_last_name),
                     isError = state.lastNameError != null,
-                    errorMessage = state.lastNameError,
-                    enabled = !state.isSaving,
-                    modifier = Modifier.fillMaxWidth()
+                    errorMessage = state.lastNameError?.resolve(),
+                    enabled = !state.isSaving
                 )
             }
         }
@@ -418,35 +453,39 @@ private fun EditMemberContent(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Contact Information",
+                    text = stringResource(Res.string.team_section_contact_information),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                FleetEmailField(
+                FleetInputField(
                     value = state.editEmail,
                     onValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateEmail(it)) },
-                    label = "Email",
-                    placeholder = "Enter email address",
+                    fieldType = FieldType.EMAIL,
+                    label = stringResource(Res.string.team_label_email),
+                    placeholder = stringResource(Res.string.team_placeholder_email),
                     isError = state.emailError != null,
-                    errorMessage = state.emailError,
-                    enabled = !state.isSaving,
-                    modifier = Modifier.fillMaxWidth()
+                    errorMessage = state.emailError?.resolve(),
+                    enabled = !state.isSaving
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                FleetMobileField(
-                    rawValue = state.editMobile,
-                    onRawValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateMobile(it)) },
-                    label = "Mobile",
-                    placeholder = "Enter mobile number",
+                FleetInputField(
+                    value = state.editMobile,
+                    onValueChange = {
+                        viewModel.sendIntent(
+                            TeamMemberDetailContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
+                        )
+                    },
+                    fieldType = FieldType.PHONE,
+                    label = stringResource(Res.string.team_label_mobile),
+                    placeholder = stringResource(Res.string.team_placeholder_mobile),
                     isError = state.mobileError != null,
-                    errorMessage = state.mobileError,
-                    enabled = !state.isSaving,
-                    modifier = Modifier.fillMaxWidth()
+                    errorMessage = state.mobileError?.resolve(),
+                    enabled = !state.isSaving
                 )
             }
         }
@@ -465,7 +504,7 @@ private fun EditMemberContent(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Role & Status",
+                    text = stringResource(Res.string.team_section_role_status),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -475,7 +514,7 @@ private fun EditMemberContent(
                 // Role Selection (based on permissions and not editing self)
                 if (state.canChangeRole && state.availableRoles.isNotEmpty() && !state.isSelf) {
                     Text(
-                        text = "Role",
+                        text = stringResource(Res.string.team_label_role),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -525,12 +564,16 @@ private fun EditMemberContent(
                 ) {
                     Column {
                         Text(
-                            text = "Active Status",
+                            text = stringResource(Res.string.team_label_active_status),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = if (state.editIsActive) "Member can access the app" else "Member access is disabled",
+                            text = if (state.editIsActive) {
+                                stringResource(Res.string.team_access_enabled_hint)
+                            } else {
+                                stringResource(Res.string.team_access_disabled_hint)
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -564,7 +607,7 @@ private fun EditMemberContent(
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
-                Text("Save Changes", fontWeight = FontWeight.Medium)
+                Text(stringResource(Res.string.team_save_changes), fontWeight = FontWeight.Medium)
             }
         }
 
@@ -579,7 +622,7 @@ private fun EditMemberContent(
             shape = RoundedCornerShape(12.dp),
             enabled = !state.isSaving
         ) {
-            Text("Cancel", fontWeight = FontWeight.Medium)
+            Text(stringResource(Res.string.cancel), fontWeight = FontWeight.Medium)
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -629,11 +672,12 @@ private fun RoleFilterChip(
     enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val (icon, label) = when (role) {
-        TeamMemberRole.GENERAL_MANAGER -> "👨‍💼" to "General Manager"
-        TeamMemberRole.MANAGER -> "👔" to "Manager"
-        TeamMemberRole.SUPERVISOR -> "👷" to "Supervisor"
+    val icon = when (role) {
+        TeamMemberRole.GENERAL_MANAGER -> "👨‍💼"
+        TeamMemberRole.MANAGER -> "👔"
+        TeamMemberRole.SUPERVISOR -> "👷"
     }
+    val label = role.localizedDisplayName()
     FilterChip(
         selected = isSelected,
         onClick = onClick,

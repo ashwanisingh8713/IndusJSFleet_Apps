@@ -12,12 +12,12 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.uicomponents.components.FleetEmailField
-import com.indusjs.uicomponents.components.FleetPasswordField
-import com.indusjs.uicomponents.components.FleetPrimaryButton
-import com.indusjs.uicomponents.components.FleetTextButton
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.isAppInDarkTheme
 import com.indusjs.uicomponents.theme.rememberThemeToggle
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -80,7 +80,7 @@ fun LoginScreen(
                 onClick = toggleTheme,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(16.dp)
+                    .padding(FleetTokens.Spacing.L)
             ) {
                 Icon(
                     painter = painterResource(
@@ -88,7 +88,7 @@ fun LoginScreen(
                     ),
                     contentDescription = if (isDarkTheme) stringResource(Res.string.cd_switch_to_light_mode) else stringResource(Res.string.cd_switch_to_dark_mode),
                     tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(FleetTokens.IconSize.Default)
                 )
             }
 
@@ -129,11 +129,11 @@ private fun SplashContent() {
         Icon(
             painter = painterResource(Res.drawable.ic_fleet_logo),
             contentDescription = stringResource(Res.string.login_title),
-            modifier = Modifier.size(72.dp),
+            modifier = Modifier.size(FleetTokens.IconSize.XXL),
             tint = MaterialTheme.colorScheme.primary
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
         Text(
             text = stringResource(Res.string.login_title),
@@ -141,14 +141,14 @@ private fun SplashContent() {
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
 
         CircularProgressIndicator(
-            modifier = Modifier.size(32.dp),
-            strokeWidth = 3.dp
+            modifier = Modifier.size(FleetTokens.IconSize.L),
+            strokeWidth = FleetTokens.Height.ProgressStroke
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
         Text(
             text = stringResource(Res.string.loading),
@@ -175,15 +175,14 @@ private fun LoginFormContent(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(32.dp),
+            .padding(FleetTokens.Spacing.XXL),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
     ) {
-        // App Logo/Title
         Icon(
             painter = painterResource(Res.drawable.ic_fleet_logo),
             contentDescription = stringResource(Res.string.login_title),
-            modifier = Modifier.size(72.dp),
+            modifier = Modifier.size(FleetTokens.IconSize.XXL),
             tint = MaterialTheme.colorScheme.primary
         )
 
@@ -199,12 +198,12 @@ private fun LoginFormContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
 
-        // Email Field - using reusable component
-        FleetEmailField(
+        FleetInputField(
             value = state.email,
             onValueChange = onEmailChange,
+            fieldType = FieldType.EMAIL,
             label = stringResource(Res.string.label_email),
             placeholder = stringResource(Res.string.placeholder_email),
             enabled = !state.isLoading,
@@ -213,10 +212,10 @@ private fun LoginFormContent(
             )
         )
 
-        // Password Field - using reusable component
-        FleetPasswordField(
+        FleetInputField(
             value = state.password,
             onValueChange = onPasswordChange,
+            fieldType = FieldType.PASSWORD,
             label = stringResource(Res.string.label_password),
             placeholder = stringResource(Res.string.placeholder_password),
             enabled = !state.isLoading,
@@ -228,7 +227,6 @@ private fun LoginFormContent(
             )
         )
 
-        // Error Message
         state.error?.let { error ->
             Text(
                 text = error.resolve(),
@@ -239,26 +237,25 @@ private fun LoginFormContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
-        // Forgot Password Link - using reusable component
-        FleetTextButton(
+        FleetButton(
             text = stringResource(Res.string.login_forgot_password),
             onClick = onForgotPassword,
+            variant = ButtonVariant.GHOST,
             modifier = Modifier.align(Alignment.End)
         )
 
-        // Login Button - using reusable component
-        FleetPrimaryButton(
+        FleetButton(
             text = stringResource(Res.string.login_sign_in),
             onClick = onLogin,
+            variant = ButtonVariant.PRIMARY,
             isLoading = state.isLoading,
             enabled = !state.isLoading
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
-        // Sign Up Link
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -267,13 +264,13 @@ private fun LoginFormContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            FleetTextButton(
+            FleetButton(
                 text = stringResource(Res.string.login_sign_up),
-                onClick = onSignUp
+                onClick = onSignUp,
+                variant = ButtonVariant.GHOST
             )
         }
 
-        // Demo hint
         Text(
             text = stringResource(Res.string.login_demo_hint),
             style = MaterialTheme.typography.bodySmall,

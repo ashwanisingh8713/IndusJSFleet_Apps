@@ -42,6 +42,7 @@ object FleetTokens {
         val XS: Dp = 2.dp
         val S: Dp = 4.dp
         val M: Dp = 8.dp
+        val ML: Dp = 10.dp
         val L: Dp = 12.dp
         val XL: Dp = 16.dp
         val XXL: Dp = 20.dp

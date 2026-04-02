@@ -263,7 +263,8 @@ private fun TripCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = trip.tripNumber ?: "Trip #${trip.id}",
+                            text = trip.tripNumber
+                                ?: stringResource(Res.string.payment_trip_id, trip.id),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -272,13 +273,14 @@ private fun TripCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_car),
-                                contentDescription = "Vehicle",
+                                contentDescription = stringResource(Res.string.trip_list_cd_vehicle),
                                 modifier = Modifier.size(14.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = trip.vehicleNumber ?: "Vehicle",
+                                text = trip.vehicleNumber
+                                    ?: stringResource(Res.string.trip_list_vehicle_placeholder),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -292,7 +294,8 @@ private fun TripCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = trip.driverName ?: "Driver",
+                                text = trip.driverName
+                                    ?: stringResource(Res.string.trip_list_driver_placeholder),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -354,27 +357,28 @@ private fun TripCard(
                 if (trip.displayInfo.hasCosts) {
                     TripInfoItem(
                         value = trip.displayInfo.totalCostLabel,
-                        label = "Trip Cost"
+                        label = stringResource(Res.string.trips_cost)
                     )
                 } else {
                     val cargoLabel = trip.displayInfo.cargoTypeLabel
                     if (!cargoLabel.isNullOrBlank()) {
                         TripInfoItem(
                             value = cargoLabel.take(10),
-                            label = "Cargo"
+                            label = stringResource(Res.string.trips_cargo)
                         )
                     } else {
                         // Fallback: Show estimated distance for Planned state
                         if (trip.status == TripStatus.PLANNED) {
                             TripInfoItem(
-                                value = trip.displayInfo.estimatedDistance?.let { "${it.toInt()} km" } ?: "NA",
-                                label = "Est. Total",
+                                value = trip.displayInfo.estimatedDistance?.let { "${it.toInt()} km" }
+                                    ?: stringResource(Res.string.vehicle_route_na),
+                                label = stringResource(Res.string.trip_list_est_total),
                                 isNA = trip.displayInfo.estimatedDistance == null
                             )
                         } else {
                             TripInfoItem(
                                 value = getStatusDisplayName(trip.status).take(10),
-                                label = "Status"
+                                label = stringResource(Res.string.trip_list_status)
                             )
                         }
                     }
@@ -406,13 +410,16 @@ private fun TripProgressIndicator(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Progress: $progressPercent%",
+                text = stringResource(Res.string.trip_list_progress_percent, progressPercent),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
             )
             if (remainingDistance != null) {
                 Text(
-                    text = "${remainingDistance.toInt()} km remaining",
+                    text = stringResource(
+                        Res.string.trip_list_km_remaining,
+                        remainingDistance.toInt()
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -456,12 +463,12 @@ private fun RouteSection(trip: Trip) {
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "From",
+                    text = stringResource(Res.string.trip_list_from),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = trip.startLocation?.address ?: "N/A",
+                    text = trip.startLocation?.address ?: stringResource(Res.string.vehicle_route_na),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -493,7 +500,7 @@ private fun RouteSection(trip: Trip) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Current",
+                        text = stringResource(Res.string.trip_list_current),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.tertiary
                     )
@@ -518,12 +525,12 @@ private fun RouteSection(trip: Trip) {
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "To",
+                    text = stringResource(Res.string.trip_list_to),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = trip.endLocation?.address ?: "N/A",
+                    text = trip.endLocation?.address ?: stringResource(Res.string.vehicle_route_na),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,

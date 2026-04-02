@@ -23,6 +23,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.indusjs.uicomponents.theme.FleetBreakpoint
 import com.indusjs.uicomponents.theme.FleetTokens
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 
 /**
@@ -80,13 +82,14 @@ fun <T> FleetDropdown(
     selectedOptionId: T?,
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Select option",
+    placeholder: String = "",
     isError: Boolean = false,
     errorMessage: String? = null,
     enabled: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null,
     accessibilityLabel: String? = label
 ) {
+    val resolvedPlaceholder = placeholder.ifBlank { stringResource(Res.string.placeholder_select_option) }
     var isExpanded by remember { mutableStateOf(false) }
     val selectedLabel = options.find { it.id == selectedOptionId }?.label ?: ""
 
@@ -96,25 +99,27 @@ fun <T> FleetDropdown(
         Modifier
     }
 
-    BoxWithConstraints {
+    BoxWithConstraints(modifier = modifier) {
         val bp = rememberFleetBreakpoint()
         val widthModifier = when (bp) {
             FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
-            else -> modifier
+            else -> Modifier
         }
 
         ExposedDropdownMenuBox(
             expanded = isExpanded && enabled,
             onExpandedChange = { if (enabled) isExpanded = !isExpanded },
-            modifier = widthModifier.then(semanticsModifier)
+            modifier = Modifier
+                .then(widthModifier)
+                .then(semanticsModifier)
         ) {
             OutlinedTextField(
                 value = selectedLabel,
                 onValueChange = {},
                 label = { Text(label) },
-                placeholder = { Text(placeholder) },
+                placeholder = { Text(resolvedPlaceholder) },
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .then(widthModifier)
                     .menuAnchor(),
                 readOnly = true,
                 enabled = enabled,
@@ -127,6 +132,7 @@ fun <T> FleetDropdown(
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded && enabled)
                 },
+                shape = RoundedCornerShape(FleetTokens.Radius.L),
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface
                 ),

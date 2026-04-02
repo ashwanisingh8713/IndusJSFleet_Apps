@@ -30,7 +30,9 @@ import com.ijs.customer.presentation.detail.CustomerDetailContract.ReportType
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import com.ijs.customer.presentation.detail.components.*
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
 /**
@@ -38,6 +40,15 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
  * Shows customer info, trips, pending payments, received payments, and financial report.
  * Pending, Payments, and Financials tabs are only visible to Owner/GM.
  */
+private sealed interface CustomerDetailPendingSnackbar {
+    data class Resource(
+        val res: StringResource,
+        val formatArgs: List<Any> = emptyList()
+    ) : CustomerDetailPendingSnackbar
+
+    data class Raw(val message: String) : CustomerDetailPendingSnackbar
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerDetailScreen(
@@ -48,7 +59,24 @@ fun CustomerDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    var pendingSnackbar by remember { mutableStateOf<CustomerDetailPendingSnackbar?>(null) }
+
+    pendingSnackbar?.let { pending ->
+        val message = when (pending) {
+            is CustomerDetailPendingSnackbar.Resource -> {
+                if (pending.formatArgs.isEmpty()) {
+                    stringResource(pending.res)
+                } else {
+                    stringResource(pending.res, *pending.formatArgs.toTypedArray())
+                }
+            }
+            is CustomerDetailPendingSnackbar.Raw -> pending.message
+        }
+        LaunchedEffect(pending) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // PDF export state
     var tripsPdfData by remember { mutableStateOf<CustomerTripsPdfData?>(null) }
@@ -63,12 +91,23 @@ fun CustomerDetailScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is Effect.NavigateBack -> onNavigateBack()
-                is Effect.ShowSnackbar -> scope.launch { snackbarHostState.showSnackbar(effect.message) }
-                is Effect.PdfExported -> scope.launch { snackbarHostState.showSnackbar("Report exported: ${effect.filePath}") }
-                is Effect.PdfExportError -> scope.launch { snackbarHostState.showSnackbar(effect.message) }
+                is Effect.ShowSnackbar -> {
+                    pendingSnackbar = CustomerDetailPendingSnackbar.Raw(effect.message)
+                }
+                is Effect.PdfExported -> {
+                    pendingSnackbar = CustomerDetailPendingSnackbar.Resource(
+                        Res.string.customer_snackbar_report_exported,
+                        listOf(effect.filePath)
+                    )
+                }
+                is Effect.PdfExportError -> {
+                    pendingSnackbar = CustomerDetailPendingSnackbar.Raw(effect.message)
+                }
                 is Effect.ExportHtml -> {
-                    // Handle HTML export - show message for now
-                    scope.launch { snackbarHostState.showSnackbar("Report ready: ${effect.fileName}") }
+                    pendingSnackbar = CustomerDetailPendingSnackbar.Resource(
+                        Res.string.customer_snackbar_report_ready,
+                        listOf(effect.fileName)
+                    )
                 }
                 is Effect.ExportTripsPdf -> {
                     tripsPdfData = effect.pdfData
@@ -91,7 +130,7 @@ fun CustomerDetailScreen(
         },
         onExportError = { error ->
             tripsPdfData = null
-            scope.launch { snackbarHostState.showSnackbar(error) }
+            pendingSnackbar = CustomerDetailPendingSnackbar.Raw(error)
         }
     )
 
@@ -103,7 +142,7 @@ fun CustomerDetailScreen(
         },
         onExportError = { error ->
             paymentsPdfData = null
-            scope.launch { snackbarHostState.showSnackbar(error) }
+            pendingSnackbar = CustomerDetailPendingSnackbar.Raw(error)
         }
     )
 
@@ -112,18 +151,26 @@ fun CustomerDetailScreen(
         pdfData = financialsPdfData,
         onExportComplete = {
             financialsPdfData = null
-            scope.launch { snackbarHostState.showSnackbar("Financial report exported successfully!") }
+            pendingSnackbar = CustomerDetailPendingSnackbar.Resource(Res.string.customer_snackbar_financial_export_success)
         },
         onExportError = { error ->
             financialsPdfData = null
-            scope.launch { snackbarHostState.showSnackbar(error) }
+            pendingSnackbar = CustomerDetailPendingSnackbar.Raw(error)
         }
     )
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isEditMode) "Edit Customer" else "Customer Details") },
+                title = {
+                    Text(
+                        if (state.isEditMode) {
+                            stringResource(Res.string.customer_edit)
+                        } else {
+                            stringResource(Res.string.customers_detail)
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = {
                         if (state.isEditMode) {
@@ -134,7 +181,11 @@ fun CustomerDetailScreen(
                     }) {
                         Icon(
                             painter = painterResource(if (state.isEditMode) Res.drawable.ic_close else Res.drawable.ic_arrow_back),
-                            contentDescription = if (state.isEditMode) "Cancel" else "Back",
+                            contentDescription = if (state.isEditMode) {
+                                stringResource(Res.string.cancel)
+                            } else {
+                                stringResource(Res.string.back)
+                            },
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -145,7 +196,7 @@ fun CustomerDetailScreen(
                         IconButton(onClick = { viewModel.sendIntent(Intent.ToggleEditMode) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_edit),
-                                contentDescription = "Edit",
+                                contentDescription = stringResource(Res.string.edit),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -173,7 +224,7 @@ fun CustomerDetailScreen(
                 onRetry = { viewModel.sendIntent(Intent.LoadCustomer(customerId)) }
             )
             state.customer == null -> EmptyContent(
-                title = "Customer not found",
+                title = stringResource(Res.string.customer_not_found),
                 icon = "🏢"
             )
             state.isEditMode -> EditCustomerContent(
@@ -214,32 +265,18 @@ private fun CustomerDetailTabbedContent(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Tab Row
-        ScrollableTabRow(
-            selectedTabIndex = pagerState.currentPage,
-            edgePadding = 8.dp,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary,
-            divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
-        ) {
-            visibleTabs.forEachIndexed { index, tab ->
-                Tab(
-                    selected = pagerState.currentPage == index,
-                    onClick = {
-                        scope.launch { pagerState.animateScrollToPage(index) }
-                    },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(tab.icon)
-                            Text(tab.title)
-                        }
-                    }
+        FleetTabBar(
+            tabs = visibleTabs.mapIndexed { index, tab ->
+                FleetTab(
+                    id = index,
+                    label = "${tab.icon} ${tab.title}"
                 )
+            },
+            selectedTabId = pagerState.currentPage,
+            onTabSelected = { index ->
+                scope.launch { pagerState.animateScrollToPage(index) }
             }
-        }
+        )
 
         // Pager Content
         HorizontalPager(
@@ -394,7 +431,11 @@ private fun StatusChip(
             CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
         } else {
             Text(
-                text = if (isActive) "● Active" else "● Inactive",
+                text = if (isActive) {
+                    stringResource(Res.string.customer_status_bullet_active)
+                } else {
+                    stringResource(Res.string.customer_status_bullet_inactive)
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = textColor,
                 fontWeight = FontWeight.SemiBold
@@ -417,7 +458,7 @@ private fun CustomerContactCard(customer: Customer) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "📞 Contact Details",
+                text = stringResource(Res.string.customer_section_contact_details),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -425,13 +466,13 @@ private fun CustomerContactCard(customer: Customer) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             ClickablePhoneRow(
-                label = "Primary",
+                label = stringResource(Res.string.customer_phone_label_primary),
                 phoneNumber = customer.primaryContact
             )
 
             customer.secondaryContact?.takeIf { it.isNotBlank() }?.let { secondary ->
                 ClickablePhoneRow(
-                    label = "Secondary",
+                    label = stringResource(Res.string.customer_phone_label_secondary),
                     phoneNumber = secondary
                 )
             }
@@ -463,7 +504,7 @@ private fun CustomerBusinessCard(customer: Customer) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "🏢 Business Details",
+                text = stringResource(Res.string.customer_section_business),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -471,20 +512,20 @@ private fun CustomerBusinessCard(customer: Customer) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             customer.gstNumber?.takeIf { it.isNotBlank() }?.let { gst ->
-                DetailRow("GST Number", gst)
+                DetailRow(stringResource(Res.string.customer_label_gst), gst)
             }
 
             customer.companyAddress?.takeIf { it.isNotBlank() }?.let { address ->
-                DetailRow("Address", address)
+                DetailRow(stringResource(Res.string.customer_label_address), address)
             }
 
             customer.notes?.takeIf { it.isNotBlank() }?.let { notes ->
-                DetailRow("Notes", notes)
+                DetailRow(stringResource(Res.string.customer_label_notes), notes)
             }
 
             if (customer.gstNumber.isNullOrBlank() && customer.companyAddress.isNullOrBlank() && customer.notes.isNullOrBlank()) {
                 Text(
-                    text = "No additional business details",
+                    text = stringResource(Res.string.customer_no_extra_business),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -532,7 +573,7 @@ private fun EditModeBottomBar(
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Cancel", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(Res.string.cancel), fontWeight = FontWeight.SemiBold)
             }
 
             Button(
@@ -550,9 +591,9 @@ private fun EditModeBottomBar(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Updating...")
+                    Text(stringResource(Res.string.action_updating))
                 } else {
-                    Text("Update Customer", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(Res.string.customer_update), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -587,7 +628,7 @@ private fun EditCustomerContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "🏢 Company Details",
+                    text = stringResource(Res.string.customer_section_company_card),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -597,7 +638,7 @@ private fun EditCustomerContent(
                 OutlinedTextField(
                     value = state.companyName,
                     onValueChange = { onIntent(Intent.UpdateCompanyName(it)) },
-                    label = { Text("Company Name *") },
+                    label = { Text(stringResource(Res.string.customer_label_company_name)) },
                     isError = state.companyNameError != null,
                     supportingText = state.companyNameError?.let { { Text(it) } },
                     singleLine = true,
@@ -608,7 +649,7 @@ private fun EditCustomerContent(
                 OutlinedTextField(
                     value = state.personName,
                     onValueChange = { onIntent(Intent.UpdatePersonName(it)) },
-                    label = { Text("Contact Person *") },
+                    label = { Text(stringResource(Res.string.customer_label_contact_person)) },
                     isError = state.personNameError != null,
                     supportingText = state.personNameError?.let { { Text(it) } },
                     singleLine = true,
@@ -630,33 +671,36 @@ private fun EditCustomerContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "📞 Contact Details",
+                    text = stringResource(Res.string.customer_section_contact_details),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-                FleetMobileField(
-                    rawValue = state.primaryContact,
-                    onRawValueChange = { onIntent(Intent.UpdatePrimaryContact(it)) },
-                    label = "Primary Mobile *",
+                FleetInputField(
+                    value = state.primaryContact,
+                    onValueChange = { onIntent(Intent.UpdatePrimaryContact(filterDigitsOnly(it, 10))) },
+                    fieldType = FieldType.PHONE,
+                    label = stringResource(Res.string.customer_label_primary_mobile),
                     isError = state.primaryContactError != null,
                     errorMessage = state.primaryContactError
                 )
 
-                FleetMobileField(
-                    rawValue = state.secondaryContact,
-                    onRawValueChange = { onIntent(Intent.UpdateSecondaryContact(it)) },
-                    label = "Secondary Mobile",
+                FleetInputField(
+                    value = state.secondaryContact,
+                    onValueChange = { onIntent(Intent.UpdateSecondaryContact(filterDigitsOnly(it, 10))) },
+                    fieldType = FieldType.PHONE,
+                    label = stringResource(Res.string.customer_label_secondary_contact),
                     isError = state.secondaryContactError != null,
                     errorMessage = state.secondaryContactError
                 )
 
-                FleetEmailField(
+                FleetInputField(
                     value = state.email,
                     onValueChange = { onIntent(Intent.UpdateEmail(it)) },
-                    label = "Email",
+                    fieldType = FieldType.EMAIL,
+                    label = stringResource(Res.string.customer_label_email),
                     isError = state.emailError != null,
                     errorMessage = state.emailError
                 )
@@ -675,7 +719,7 @@ private fun EditCustomerContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "📋 Business Details",
+                    text = stringResource(Res.string.customer_section_business),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -685,8 +729,8 @@ private fun EditCustomerContent(
                 OutlinedTextField(
                     value = state.gstNumber,
                     onValueChange = { onIntent(Intent.UpdateGstNumber(it)) },
-                    label = { Text("GST Number") },
-                    placeholder = { Text("22AAAAA0000A1Z5") },
+                    label = { Text(stringResource(Res.string.customer_label_gst)) },
+                    placeholder = { Text(stringResource(Res.string.customer_placeholder_gst)) },
                     isError = state.gstNumberError != null,
                     supportingText = state.gstNumberError?.let { { Text(it) } },
                     singleLine = true,
@@ -697,7 +741,7 @@ private fun EditCustomerContent(
                 OutlinedTextField(
                     value = state.companyAddress,
                     onValueChange = { onIntent(Intent.UpdateCompanyAddress(it)) },
-                    label = { Text("Address") },
+                    label = { Text(stringResource(Res.string.customer_label_address)) },
                     minLines = 2,
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth(),
@@ -707,7 +751,7 @@ private fun EditCustomerContent(
                 OutlinedTextField(
                     value = state.notes,
                     onValueChange = { onIntent(Intent.UpdateNotes(it)) },
-                    label = { Text("Notes") },
+                    label = { Text(stringResource(Res.string.customer_label_notes)) },
                     minLines = 2,
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth(),
@@ -732,12 +776,16 @@ private fun EditCustomerContent(
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        text = "Customer Status",
+                        text = stringResource(Res.string.customer_status_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = if (state.customer?.isActive == true) "Currently active" else "Currently inactive",
+                        text = if (state.customer?.isActive == true) {
+                            stringResource(Res.string.customer_status_subtitle_active)
+                        } else {
+                            stringResource(Res.string.customer_status_subtitle_inactive)
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

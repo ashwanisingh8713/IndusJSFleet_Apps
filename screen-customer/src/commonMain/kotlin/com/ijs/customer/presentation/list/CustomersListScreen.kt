@@ -62,7 +62,7 @@ fun CustomersListScreen(
                         Text(stringResource(Res.string.customers_title))
                         if (state.customers.isNotEmpty()) {
                             Text(
-                                text = "${state.customers.size} total",
+                                text = stringResource(Res.string.customers_total_count, state.customers.size),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -130,49 +130,51 @@ fun CustomersListScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-            FleetSearchField(
-                query = state.searchQuery,
-                onQueryChange = { viewModel.sendIntent(Intent.UpdateSearchQuery(it)) },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = stringResource(Res.string.customers_search_placeholder)
-            )
+                FleetSearchField(
+                    query = state.searchQuery,
+                    onQueryChange = { viewModel.sendIntent(Intent.UpdateSearchQuery(it)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = stringResource(Res.string.customers_search_placeholder)
+                )
 
-            // Content
-            when {
-                state.isLoading && state.customers.isEmpty() && !state.isInitialLoadComplete -> {
-                    LoadingContent(message = stringResource(Res.string.loading))
-                }
-                state.showError -> {
-                    ErrorContent(
-                        error = state.error ?: "Unable to load customers",
-                        onRetry = { viewModel.sendIntent(Intent.RefreshCustomers) }
-                    )
-                }
-                state.isEmpty -> {
-                    EmptyContent(
-                        icon = "👥",
-                        title = if (state.searchQuery.isNotBlank())
-                            stringResource(Res.string.no_data_for_filter)
-                        else
-                            stringResource(Res.string.customers_empty_title),
-                        message = if (state.searchQuery.isNotBlank())
-                            "No customers found matching \"${state.searchQuery}\""
-                        else
-                            stringResource(Res.string.customers_empty_message),
-                        actionLabel = stringResource(Res.string.customers_add),
-                        onAction = { viewModel.sendIntent(Intent.OnAddCustomerClick) }
-                    )
-                }
-                else -> {
-                    CustomersList(
-                        customers = state.displayedCustomers,
-                        isLoading = state.isLoading,
-                        onCustomerClick = { viewModel.sendIntent(Intent.OnCustomerClick(it)) },
-                        onLoadMore = { viewModel.sendIntent(Intent.LoadMore) }
-                    )
+                // Content
+                when {
+                    state.isLoading && state.customers.isEmpty() && !state.isInitialLoadComplete -> {
+                        LoadingContent(message = stringResource(Res.string.loading))
+                    }
+                    state.showError -> {
+                        ErrorContent(
+                            error = state.error ?: stringResource(Res.string.customers_unable_to_load),
+                            onRetry = { viewModel.sendIntent(Intent.RefreshCustomers) }
+                        )
+                    }
+                    state.isEmpty -> {
+                        EmptyContent(
+                            icon = "👥",
+                            title = if (state.searchQuery.isNotBlank())
+                                stringResource(Res.string.no_data_for_filter)
+                            else
+                                stringResource(Res.string.customers_empty_title),
+                            message = if (state.searchQuery.isNotBlank())
+                                stringResource(Res.string.no_data_for_filter)
+                            else
+                                stringResource(Res.string.customers_empty_message),
+                            actionLabel = stringResource(Res.string.customers_add),
+                            onAction = { viewModel.sendIntent(Intent.OnAddCustomerClick) }
+                        )
+                    }
+                    else -> {
+                        CustomersList(
+                            customers = state.displayedCustomers,
+                            isLoading = state.isLoading,
+                            onCustomerClick = { viewModel.sendIntent(Intent.OnCustomerClick(it)) },
+                            onLoadMore = { viewModel.sendIntent(Intent.LoadMore) }
+                        )
+                    }
                 }
             }
-        }
         }
     }
 }
@@ -265,7 +267,7 @@ private fun CustomerCard(
 
             // Contact Person
             Text(
-                text = "Contact: ${customer.personName}",
+                text = stringResource(Res.string.customer_label_contact, customer.personName),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -283,7 +285,7 @@ private fun CustomerCard(
             customer.gstNumber?.let { gst ->
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "GST: $gst",
+                    text = stringResource(Res.string.customer_label_gst_prefix, gst),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -302,7 +304,7 @@ private fun StatusChip(isActive: Boolean) {
             MaterialTheme.colorScheme.errorContainer
     ) {
         Text(
-            text = if (isActive) "Active" else "Inactive",
+            text = stringResource(if (isActive) Res.string.customer_status_active else Res.string.customer_status_inactive),
             style = MaterialTheme.typography.labelSmall,
             color = if (isActive)
                 MaterialTheme.colorScheme.onPrimaryContainer

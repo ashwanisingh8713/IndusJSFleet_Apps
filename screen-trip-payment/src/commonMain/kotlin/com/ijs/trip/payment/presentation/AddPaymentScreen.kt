@@ -11,8 +11,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -31,6 +33,16 @@ fun AddPaymentScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
+    val notApplicableLabel = stringResource(Res.string.label_not_applicable)
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // Initialize
     LaunchedEffect(tripId, paymentId) {
@@ -39,11 +51,11 @@ fun AddPaymentScreen(
 
     // Handle effects
     LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
+        viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is AddPaymentContract.Effect.NavigateBack -> onNavigateBack()
-                is AddPaymentContract.Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
-                is AddPaymentContract.Effect.ShowError -> snackbarHostState.showSnackbar(effect.message)
+                is AddPaymentContract.Effect.ShowSnackbar -> pendingSnackbar = effect.message
+                is AddPaymentContract.Effect.ShowError -> pendingSnackbar = effect.message
                 is AddPaymentContract.Effect.PaymentSaved -> { /* Handled in NavigateBack */ }
             }
         }
@@ -52,7 +64,15 @@ fun AddPaymentScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.title) },
+                title = {
+                    Text(
+                        if (state.isEditMode) {
+                            stringResource(Res.string.payments_edit)
+                        } else {
+                            stringResource(Res.string.payments_add)
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.sendIntent(AddPaymentContract.Intent.Cancel) }) {
                         Icon(
@@ -108,14 +128,14 @@ fun AddPaymentScreen(
                     com.indusjs.datetimeutils.FleetDateTime.getMinDateForTripCost(it)
                 }
                 val time = trip.tripStartTime
-                if (date != null && time != null) "$date $time" else date ?: "N/A"
-            } ?: "N/A"
+                if (date != null && time != null) "$date $time" else date ?: notApplicableLabel
+            } ?: notApplicableLabel
 
             val tripEndDateTimeDisplay = state.selectedTrip?.let { trip ->
                 val date = trip.tripEndDate ?: trip.scheduledDate
                 val time = trip.tripEndTime
-                if (date != null && time != null) "$date $time" else date ?: "N/A"
-            } ?: "N/A"
+                if (date != null && time != null) "$date $time" else date ?: notApplicableLabel
+            } ?: notApplicableLabel
 
             Column(
                 modifier = Modifier

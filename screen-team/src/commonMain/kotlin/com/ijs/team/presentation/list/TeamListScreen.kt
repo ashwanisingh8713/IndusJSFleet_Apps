@@ -20,11 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
+import com.ijs.team.presentation.localizedDisplayName
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -44,13 +46,22 @@ fun TeamListScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val pullRefreshState = rememberPullToRefreshState()
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // Handle side effects
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is TeamListContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is TeamListContract.Effect.NavigateToCreateMember -> {
                     onNavigateToCreateMember()
@@ -75,7 +86,11 @@ fun TeamListScreen(
                         )
                         if (state.teamMembers.isNotEmpty()) {
                             Text(
-                                "${state.teamMembers.size} member${if (state.teamMembers.size != 1) "s" else ""}",
+                                stringResource(
+                                    Res.string.team_members_count,
+                                    state.teamMembers.size,
+                                    if (state.teamMembers.size != 1) "s" else ""
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -566,7 +581,7 @@ private fun EnhancedTeamMemberCard(
                         }
                     ) {
                         Text(
-                            text = member.roleDisplayName,
+                            text = member.role.localizedDisplayName(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = when (member.role) {
@@ -845,20 +860,20 @@ private fun ResetPasswordDialog(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<UiText?>(null) }
 
     AlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = {
             Text(
-                "Reset Password",
+                stringResource(Res.string.team_reset_password_title),
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
             Column {
                 Text(
-                    "Set a new password for $memberName",
+                    stringResource(Res.string.team_reset_password_subtitle, memberName),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -871,8 +886,8 @@ private fun ResetPasswordDialog(
                         password = it
                         passwordError = null
                     },
-                    label = { Text("New Password") },
-                    placeholder = { Text("Enter new password") },
+                    label = { Text(stringResource(Res.string.team_label_new_password)) },
+                    placeholder = { Text(stringResource(Res.string.team_placeholder_new_password)) },
                     singleLine = true,
                     isError = passwordError != null,
                     enabled = !isLoading,
@@ -887,18 +902,18 @@ private fun ResetPasswordDialog(
                         confirmPassword = it
                         passwordError = null
                     },
-                    label = { Text("Confirm Password") },
-                    placeholder = { Text("Confirm new password") },
+                    label = { Text(stringResource(Res.string.team_label_confirm_new_password)) },
+                    placeholder = { Text(stringResource(Res.string.team_placeholder_confirm_new_password)) },
                     singleLine = true,
                     isError = passwordError != null,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                if (passwordError != null) {
+                passwordError?.let { err ->
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = passwordError!!,
+                        text = err.resolve(),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -910,10 +925,10 @@ private fun ResetPasswordDialog(
                 onClick = {
                     when {
                         password.length < 6 -> {
-                            passwordError = "Password must be at least 6 characters"
+                            passwordError = UiText.StringRes(Res.string.error_password_min_chars)
                         }
                         password != confirmPassword -> {
-                            passwordError = "Passwords do not match"
+                            passwordError = UiText.StringRes(Res.string.error_passwords_mismatch)
                         }
                         else -> {
                             onConfirm(password)
@@ -929,7 +944,7 @@ private fun ResetPasswordDialog(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Reset Password")
+                    Text(stringResource(Res.string.team_reset_password_title))
                 }
             }
         },
@@ -938,7 +953,7 @@ private fun ResetPasswordDialog(
                 onClick = onDismiss,
                 enabled = !isLoading
             ) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         },
         shape = RoundedCornerShape(16.dp)

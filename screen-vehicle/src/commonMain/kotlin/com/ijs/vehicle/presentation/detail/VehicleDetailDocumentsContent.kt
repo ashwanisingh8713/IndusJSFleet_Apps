@@ -24,6 +24,7 @@ import com.ijs.vehicle.domain.entity.DocumentTypeDetail
 import com.ijs.vehicle.domain.entity.VehicleDocumentsData
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun DocumentsTabContent(
@@ -38,7 +39,7 @@ internal fun DocumentsTabContent(
 ) {
     when {
         isLoading && documentsData == null -> {
-            LoadingContent(message = "Loading documents...")
+            LoadingContent(message = stringResource(Res.string.vehicle_docs_loading))
         }
         error != null && documentsData == null -> {
             ErrorContent(
@@ -74,17 +75,17 @@ internal fun DocumentsTabContent(
                             ) {
                                 DocumentStatItem(
                                     count = summary.uploaded.toString(),
-                                    label = "Uploaded",
+                                    label = stringResource(Res.string.vehicle_docs_stat_uploaded),
                                     icon = "📄"
                                 )
                                 DocumentStatItem(
                                     count = summary.notUploaded.toString(),
-                                    label = "Missing",
+                                    label = stringResource(Res.string.vehicle_docs_stat_missing),
                                     icon = "⚠️"
                                 )
                                 DocumentStatItem(
                                     count = summary.expiringSoon.toString(),
-                                    label = "Expiring",
+                                    label = stringResource(Res.string.vehicle_docs_stat_expiring),
                                     icon = "⏰"
                                 )
                             }
@@ -103,7 +104,7 @@ internal fun DocumentsTabContent(
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
-                                    text = "⚠️ Attention Required",
+                                    text = "⚠️ ${stringResource(Res.string.vehicle_docs_attention)}",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.error
@@ -129,7 +130,7 @@ internal fun DocumentsTabContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "All Documents",
+                            text = stringResource(Res.string.vehicle_docs_all),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -159,7 +160,7 @@ internal fun DocumentsTabContent(
                 } else {
                     item {
                         Text(
-                            text = "No documents found",
+                            text = stringResource(Res.string.vehicle_docs_no_docs),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(16.dp)
@@ -213,10 +214,10 @@ internal fun DocumentTypeCard(
         AlertDialog(
             onDismissRequest = { showUploadConfirmDialog = false },
             icon = { Text("📤", style = MaterialTheme.typography.headlineMedium) },
-            title = { Text("Upload ${doc.typeName}") },
+            title = { Text(stringResource(Res.string.vehicle_docs_upload_title, doc.typeName)) },
             text = {
                 Column {
-                    Text("You are about to upload a document for:")
+                    Text(stringResource(Res.string.vehicle_docs_upload_message))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = doc.typeName,
@@ -226,14 +227,14 @@ internal fun DocumentTypeCard(
                     if (doc.isRequired) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "This is a required document.",
+                            text = stringResource(Res.string.vehicle_docs_required),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Please ensure the document is clear and readable.",
+                        text = stringResource(Res.string.vehicle_docs_ensure_readable),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -244,12 +245,12 @@ internal fun DocumentTypeCard(
                     showUploadConfirmDialog = false
                     onUploadClick()
                 }) {
-                    Text("Select File")
+                    Text(stringResource(Res.string.vehicle_docs_select_file))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showUploadConfirmDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -370,10 +371,10 @@ internal fun DocumentTypeCard(
                             ) {
                                 Text(
                                     text = when {
-                                        isExpired -> "⚠️ Expired"
-                                        isExpiringSoon -> "⏰ Expires in $daysLeft days"
-                                        docInfo?.expiryDate != null -> "✓ Valid till ${formatIsoDateToDisplay(docInfo.expiryDate)}"
-                                        else -> "✓ ${docInfo?.statusLabel ?: "Uploaded"}"
+                                        isExpired -> "⚠️ ${stringResource(Res.string.vehicle_docs_expired)}"
+                                        isExpiringSoon -> "⏰ ${stringResource(Res.string.vehicle_docs_expires_in, daysLeft)}"
+                                        docInfo?.expiryDate != null -> "✓ ${stringResource(Res.string.vehicle_docs_valid_till, formatIsoDateToDisplay(docInfo.expiryDate))}"
+                                        else -> "✓ ${docInfo?.statusLabel ?: stringResource(Res.string.vehicle_docs_uploaded)}"
                                     },
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Medium,
@@ -397,7 +398,7 @@ internal fun DocumentTypeCard(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Doc #: ${doc.document?.documentNumber}",
+                                    text = stringResource(Res.string.vehicle_docs_doc_number, doc.document?.documentNumber.orEmpty()),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -414,7 +415,7 @@ internal fun DocumentTypeCard(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Uploaded: $uploadedAt",
+                                    text = stringResource(Res.string.vehicle_docs_uploaded_at, uploadedAt),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -427,7 +428,7 @@ internal fun DocumentTypeCard(
                         IconButton(onClick = { showOptionsMenu = true }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_more_vert),
-                                contentDescription = "More options",
+                                contentDescription = stringResource(Res.string.cd_more_options),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -440,7 +441,7 @@ internal fun DocumentTypeCard(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text("👁️", modifier = Modifier.padding(end = 8.dp))
-                                        Text("Preview")
+                                        Text(stringResource(Res.string.vehicle_docs_preview))
                                     }
                                 },
                                 onClick = {
@@ -452,7 +453,7 @@ internal fun DocumentTypeCard(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text("⬇️", modifier = Modifier.padding(end = 8.dp))
-                                        Text("Download")
+                                        Text(stringResource(Res.string.vehicle_docs_download))
                                     }
                                 },
                                 onClick = {
@@ -465,7 +466,7 @@ internal fun DocumentTypeCard(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text("🔄", modifier = Modifier.padding(end = 8.dp))
-                                        Text("Replace")
+                                        Text(stringResource(Res.string.vehicle_docs_replace))
                                     }
                                 },
                                 onClick = {
@@ -505,7 +506,7 @@ internal fun DocumentTypeCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            "Preview",
+                            stringResource(Res.string.vehicle_docs_preview),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -527,7 +528,7 @@ internal fun DocumentTypeCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            "Download",
+                            stringResource(Res.string.vehicle_docs_download),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.secondary
                         )
@@ -549,7 +550,7 @@ internal fun DocumentTypeCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            "Replace",
+                            stringResource(Res.string.vehicle_docs_replace),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.tertiary
                         )
@@ -604,7 +605,7 @@ internal fun DocumentTypeCard(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Not uploaded",
+                        text = stringResource(Res.string.vehicle_docs_not_uploaded),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -623,7 +624,7 @@ internal fun DocumentTypeCard(
                     )
                 ) {
                     Text(
-                        "Upload",
+                        stringResource(Res.string.vehicle_docs_upload),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold
                     )

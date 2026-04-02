@@ -15,7 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimeutils.FleetDateTime
-import com.indusjs.uicomponents.components.FleetMobileField
+import com.indusjs.uicomponents.components.DropdownOption
+import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.customer.CustomerDetailsSection
 import com.indusjs.uicomponents.customer.CustomerSelectionBottomSheet
@@ -26,6 +27,7 @@ import com.ijs.customer.domain.entity.Customer
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Create Trip Screen composable.
@@ -68,7 +70,7 @@ fun CreateTripScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Create Trip")
+                        Text(stringResource(Res.string.trip_create_title))
                         // Form completion progress indicator
                         LinearProgressIndicator(
                             progress = { state.formCompletionPercentage / 100f },
@@ -84,7 +86,10 @@ fun CreateTripScreen(
                             trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                         Text(
-                            text = "${state.formCompletionPercentage}% complete",
+                            text = stringResource(
+                                Res.string.trip_create_percent_complete,
+                                state.formCompletionPercentage
+                            ),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -96,7 +101,7 @@ fun CreateTripScreen(
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -153,7 +158,7 @@ fun CreateTripScreen(
                             onClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateBack) },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Cancel")
+                            Text(stringResource(Res.string.cancel))
                         }
 
                         Button(
@@ -169,7 +174,10 @@ fun CreateTripScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
-                            Text(if (state.isSaving) "Creating..." else "Create Trip")
+                            Text(
+                                if (state.isSaving) stringResource(Res.string.action_creating)
+                                else stringResource(Res.string.trip_create_title)
+                            )
                         }
                     }
                 }
@@ -177,7 +185,7 @@ fun CreateTripScreen(
         }
     ) { padding ->
         if (state.isLoadingData) {
-            LoadingContent(message = "Loading vehicles and drivers...")
+            LoadingContent(message = stringResource(Res.string.trip_detail_loading_vehicles))
         } else {
             LazyColumn(
                 modifier = Modifier
@@ -188,14 +196,14 @@ fun CreateTripScreen(
             ) {
                 // Schedule Section - First (when is the trip?)
                 item {
-                    SectionCard(title = "📅 Schedule") {
+                    SectionCard(title = stringResource(Res.string.trip_create_section_schedule)) {
                         ScheduleSection(state = state, viewModel = viewModel)
                     }
                 }
 
                 // Vehicle & Driver Selection
                 item {
-                    SectionCard(title = "🚚 Vehicle & Driver") {
+                    SectionCard(title = stringResource(Res.string.trip_create_section_vehicle_driver)) {
                         VehicleDriverSelectionSection(
                             state = state,
                             viewModel = viewModel
@@ -205,21 +213,21 @@ fun CreateTripScreen(
 
                 // Route Section
                 item {
-                    SectionCard(title = "📍 Route") {
+                    SectionCard(title = stringResource(Res.string.trip_create_section_route)) {
                         RouteSection(state = state, viewModel = viewModel)
                     }
                 }
 
                 // Cargo Section
                 item {
-                    SectionCard(title = "📦 Cargo Details") {
+                    SectionCard(title = stringResource(Res.string.trip_create_section_cargo)) {
                         CargoSection(state = state, viewModel = viewModel)
                     }
                 }
 
                 // Priority Section (above Customer Details)
                 item {
-                    SectionCard(title = "🎯 Priority") {
+                    SectionCard(title = stringResource(Res.string.trip_create_section_priority)) {
                         PrioritySection(state = state, viewModel = viewModel)
                     }
                 }
@@ -249,12 +257,12 @@ fun CreateTripScreen(
 
                 // Notes Section
                 item {
-                    SectionCard(title = "📝 Notes") {
+                    SectionCard(title = stringResource(Res.string.trip_create_section_notes)) {
                         OutlinedTextField(
                             value = state.notes,
                             onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateNotes(it)) },
-                            label = { Text("Notes") },
-                            placeholder = { Text("Add any additional notes...") },
+                            label = { Text(stringResource(Res.string.trip_create_notes_label)) },
+                            placeholder = { Text(stringResource(Res.string.trip_create_notes_placeholder)) },
                             singleLine = false,
                             maxLines = 4,
                             modifier = Modifier.fillMaxWidth()
@@ -283,7 +291,7 @@ fun CreateTripScreen(
                     ) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Creating trip...")
+                        Text(stringResource(Res.string.trip_create_creating_trip))
                     }
                 }
             }
@@ -353,8 +361,8 @@ private fun VehicleDriverSelectionSection(
             OutlinedTextField(
                 value = state.selectedVehicle?.let { "${it.registrationNumber} - ${it.make} ${it.model}" } ?: "",
                 onValueChange = {},
-                label = { Text("Select Vehicle *") },
-                placeholder = { Text("Choose a vehicle") },
+                label = { Text(stringResource(Res.string.trip_label_select_vehicle)) },
+                placeholder = { Text(stringResource(Res.string.trip_edit_placeholder_vehicle)) },
                 readOnly = true,
                 isError = state.vehicleError != null,
                 supportingText = state.vehicleError?.let { { Text(it) } },
@@ -394,7 +402,7 @@ private fun VehicleDriverSelectionSection(
                                                 color = MaterialTheme.colorScheme.errorContainer
                                             ) {
                                                 Text(
-                                                    text = "OCCUPIED",
+                                                    text = stringResource(Res.string.trip_create_vehicle_occupied),
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = MaterialTheme.colorScheme.error,
                                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -411,7 +419,7 @@ private fun VehicleDriverSelectionSection(
                                         val assignment = vehicle.tripAssignment
                                         if (assignment != null) {
                                         Text(
-                                            text = "🕐 ${assignment.plannedStart ?: "N/A"} - ${assignment.plannedEnd ?: "N/A"}",
+                                            text = "🕐 ${assignment.plannedStart ?: stringResource(Res.string.vehicle_route_na)} - ${assignment.plannedEnd ?: stringResource(Res.string.vehicle_route_na)}",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.error
                                         )
@@ -435,8 +443,8 @@ private fun VehicleDriverSelectionSection(
             OutlinedTextField(
                 value = state.selectedDriver?.let { "${it.firstName} ${it.lastName} - ${it.mobile}" } ?: "",
                 onValueChange = {},
-                label = { Text("Select Driver *") },
-                placeholder = { Text("Choose a driver") },
+                label = { Text(stringResource(Res.string.trip_label_select_driver)) },
+                placeholder = { Text(stringResource(Res.string.trip_edit_placeholder_driver)) },
                 readOnly = true,
                 isError = state.driverError != null,
                 supportingText = state.driverError?.let { { Text(it) } },
@@ -476,7 +484,7 @@ private fun VehicleDriverSelectionSection(
                                                 color = MaterialTheme.colorScheme.errorContainer
                                             ) {
                                                 Text(
-                                                    text = "OCCUPIED",
+                                                    text = stringResource(Res.string.trip_create_vehicle_occupied),
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = MaterialTheme.colorScheme.error,
                                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -493,7 +501,7 @@ private fun VehicleDriverSelectionSection(
                                         val assignment = driver.tripAssignment
                                         if (assignment != null) {
                                         Text(
-                                            text = "🕐 ${assignment.plannedStart ?: "N/A"} - ${assignment.plannedEnd ?: "N/A"}",
+                                            text = "🕐 ${assignment.plannedStart ?: stringResource(Res.string.vehicle_route_na)} - ${assignment.plannedEnd ?: stringResource(Res.string.vehicle_route_na)}",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.error
                                         )
@@ -522,8 +530,8 @@ private fun RouteSection(
         LocationSearchField(
             value = state.startLocation,
             onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.SearchStartLocation(it)) },
-            label = "Start Location *",
-            placeholder = "Search for a location...",
+            label = stringResource(Res.string.trip_edit_start_location),
+            placeholder = stringResource(Res.string.trip_edit_search_location),
             leadingEmoji = "🟢",
             isError = state.startLocationError != null,
             errorText = state.startLocationError,
@@ -565,8 +573,8 @@ private fun RouteSection(
             OutlinedTextField(
                 value = state.estimatedDistance,
                 onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateEstimatedDistance(it)) },
-                label = { Text("Estimated Distance (km)") },
-                placeholder = { Text("Auto-calculated") },
+                label = { Text(stringResource(Res.string.trip_create_distance_label)) },
+                placeholder = { Text(stringResource(Res.string.trip_create_distance_placeholder)) },
                 leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 12.dp)) },
                 trailingIcon = {
                     if (state.isCalculatingDistance) {
@@ -583,25 +591,28 @@ private fun RouteSection(
                     when {
                         state.isCalculatingDistance -> {
                             Text(
-                                text = "🔄 Calculating road distance...",
+                                text = stringResource(Res.string.trip_create_calculating_distance),
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
                         state.estimatedDistance.isNotBlank() && state.estimatedDuration.isNotBlank() -> {
                             Text(
-                                text = "✓ Road distance | Est. travel time: ${state.estimatedDuration}",
+                                text = stringResource(
+                                    Res.string.trip_create_distance_travel_time,
+                                    state.estimatedDuration
+                                ),
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
                         state.estimatedDistance.isNotBlank() -> {
                             Text(
-                                text = "✓ Distance calculated",
+                                text = stringResource(Res.string.trip_create_distance_calculated),
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
                         else -> {
                             Text(
-                                text = "Select both locations to auto-calculate",
+                                text = stringResource(Res.string.trip_create_select_both_locations),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -710,7 +721,7 @@ private fun ScheduleSection(
                 viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureDate(newDate))
                 viewModel.sendIntent(CreateTripContract.Intent.UpdateDepartureTime(newTime))
             },
-            label = "Departure Date & Time *",
+            label = stringResource(Res.string.trip_create_departure_label),
             isError = state.departureDateError != null || state.departureTimeError != null,
             errorMessage = state.departureDateError ?: state.departureTimeError,
             minDate = FleetDateTime.today()
@@ -724,7 +735,7 @@ private fun ScheduleSection(
                 viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalDate(newDate))
                 viewModel.sendIntent(CreateTripContract.Intent.UpdateArrivalTime(newTime))
             },
-            label = "Expected Arrival Date & Time",
+            label = stringResource(Res.string.trip_create_arrival_label),
             isError = state.arrivalDateError != null,
             errorMessage = state.arrivalDateError,
             minDate = state.departureDate.ifBlank { FleetDateTime.today() }
@@ -732,56 +743,34 @@ private fun ScheduleSection(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CargoSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
-    var showCargoTypeDropdown by remember { mutableStateOf(false) }
-    var showWeightUnitDropdown by remember { mutableStateOf(false) }
-
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Cargo Type Dropdown with error support
-        ExposedDropdownMenuBox(
-            expanded = showCargoTypeDropdown,
-            onExpandedChange = { showCargoTypeDropdown = it }
-        ) {
-            OutlinedTextField(
-                value = if (state.cargoType.isNotBlank()) state.cargoType.replaceFirstChar { it.uppercaseChar() } else "",
-                onValueChange = {},
-                label = { Text("Cargo Type *") },
-                placeholder = { Text("Select cargo type") },
-                readOnly = true,
-                isError = state.cargoTypeError != null,
-                supportingText = state.cargoTypeError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCargoTypeDropdown) },
-                modifier = Modifier.fillMaxWidth().menuAnchor()
-            )
-            ExposedDropdownMenu(
-                expanded = showCargoTypeDropdown,
-                onDismissRequest = { showCargoTypeDropdown = false },
-                containerColor = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                state.cargoTypeOptions.forEach { cargo ->
-                    DropdownMenuItem(
-                        text = { Text(cargo.replaceFirstChar { it.uppercaseChar() }) },
-                        onClick = {
-                            viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoType(cargo))
-                            showCargoTypeDropdown = false
-                        }
-                    )
-                }
-            }
-        }
+        FleetDropdown(
+            label = stringResource(Res.string.trip_create_cargo_type_required),
+            options = state.cargoTypeOptions.map { cargo ->
+                DropdownOption(
+                    id = cargo,
+                    label = cargo.replaceFirstChar { it.uppercaseChar() }
+                )
+            },
+            selectedOptionId = state.cargoType.takeIf { it.isNotBlank() },
+            onOptionSelected = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoType(it)) },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = stringResource(Res.string.trip_placeholder_cargo_type),
+            isError = state.cargoTypeError != null,
+            errorMessage = state.cargoTypeError
+        )
 
         // Cargo Description - single line
         OutlinedTextField(
             value = state.cargoDescription,
             onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoDescription(it)) },
-            label = { Text("Cargo Description") },
-            placeholder = { Text("e.g., Office furniture") },
+            label = { Text(stringResource(Res.string.trip_create_cargo_desc_label)) },
+            placeholder = { Text(stringResource(Res.string.trip_create_cargo_desc_placeholder)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -801,8 +790,8 @@ private fun CargoSection(
                         viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoWeight(newValue))
                     }
                 },
-                label = { Text("Cargo Weight *") },
-                placeholder = { Text("e.g., 500") },
+                label = { Text(stringResource(Res.string.trip_create_cargo_weight_required)) },
+                placeholder = { Text(stringResource(Res.string.trip_create_cargo_weight_placeholder)) },
                 isError = state.cargoWeightError != null,
                 supportingText = state.cargoWeightError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -810,39 +799,16 @@ private fun CargoSection(
                 modifier = Modifier.weight(1f)
             )
 
-            // Weight Unit Dropdown - NOW REQUIRED
-            ExposedDropdownMenuBox(
-                expanded = showWeightUnitDropdown,
-                onExpandedChange = { showWeightUnitDropdown = it },
-                modifier = Modifier.weight(0.6f)
-            ) {
-                OutlinedTextField(
-                    value = state.weightUnit,
-                    onValueChange = {},
-                    label = { Text("Unit *") },
-                    placeholder = { Text("Select") },
-                    readOnly = true,
-                    isError = state.weightUnitError != null,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showWeightUnitDropdown) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
-                )
-                ExposedDropdownMenu(
-                    expanded = showWeightUnitDropdown,
-                    onDismissRequest = { showWeightUnitDropdown = false },
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    state.weightUnitOptions.forEach { unit ->
-                        DropdownMenuItem(
-                            text = { Text(unit) },
-                            onClick = {
-                                viewModel.sendIntent(CreateTripContract.Intent.UpdateWeightUnit(unit))
-                                showWeightUnitDropdown = false
-                            }
-                        )
-                    }
-                }
-            }
+            FleetDropdown(
+                label = stringResource(Res.string.trip_create_unit_required),
+                options = state.weightUnitOptions.map { DropdownOption(id = it, label = it) },
+                selectedOptionId = state.weightUnit.takeIf { it.isNotBlank() },
+                onOptionSelected = { viewModel.sendIntent(CreateTripContract.Intent.UpdateWeightUnit(it)) },
+                modifier = Modifier.weight(0.6f),
+                placeholder = stringResource(Res.string.trip_create_select_placeholder),
+                isError = state.weightUnitError != null,
+                errorMessage = state.weightUnitError
+            )
         }
     }
 }
@@ -896,7 +862,7 @@ private fun PricingSection(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Trip Pricing (Expected) *",
+                        text = stringResource(Res.string.trip_create_pricing_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -907,7 +873,7 @@ private fun PricingSection(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
                     Text(
-                        text = "Cost + Profit (Can be edited later)",
+                        text = stringResource(Res.string.trip_create_pricing_subtitle),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
@@ -926,8 +892,8 @@ private fun PricingSection(
                         viewModel.sendIntent(CreateTripContract.Intent.UpdateTripPrice(newValue))
                     }
                 },
-                label = { Text("Total Amount (₹) *") },
-                placeholder = { Text("e.g., 25000") },
+                label = { Text(stringResource(Res.string.trip_create_total_amount_inr)) },
+                placeholder = { Text(stringResource(Res.string.trip_edit_placeholder_trip_price)) },
                 singleLine = true,
                 isError = state.tripPriceError != null,
                 supportingText = if (state.tripPriceError != null) {
@@ -963,7 +929,7 @@ private fun PricingSection(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Pricing helps track Profit & Loss in financial reports",
+                        text = stringResource(Res.string.trip_create_pricing_banner),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

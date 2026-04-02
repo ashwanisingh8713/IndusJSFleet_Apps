@@ -32,6 +32,7 @@ import com.ijs.trip.domain.entity.Trip
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Trip Cost Entry Screen with multi-row cost entries.
@@ -47,6 +48,8 @@ fun TripCostEntryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var costsSavedCount by remember { mutableStateOf<Int?>(null) }
+    val tripCostBatchSavedTemplate = stringResource(Res.string.trip_cost_batch_saved)
 
     // Pre-select trip if initialTripId is provided
     LaunchedEffect(initialTripId) {
@@ -67,10 +70,18 @@ fun TripCostEntryScreen(
                 }
                 is TripCostEntryContract.Effect.NavigateBack -> onNavigateBack()
                 is TripCostEntryContract.Effect.CostsSaved -> {
-                    snackbarHostState.showSnackbar("${effect.count} cost(s) saved successfully")
+                    costsSavedCount = effect.count
                 }
             }
         }
+    }
+
+    LaunchedEffect(costsSavedCount, tripCostBatchSavedTemplate) {
+        val count = costsSavedCount ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(
+            tripCostBatchSavedTemplate.replace("%1\$d", count.toString())
+        )
+        costsSavedCount = null
     }
 
     // History dialog
@@ -86,12 +97,12 @@ fun TripCostEntryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Trip Cost") },
+                title = { Text(stringResource(Res.string.trip_cost_screen_title)) },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.sendIntent(TripCostEntryContract.Intent.NavigateBack) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -111,7 +122,7 @@ fun TripCostEntryScreen(
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh Cost Types",
+                                contentDescription = stringResource(Res.string.trip_cost_cd_refresh_types),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -124,7 +135,7 @@ fun TripCostEntryScreen(
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_history),
-                            contentDescription = "History",
+                            contentDescription = stringResource(Res.string.trip_cost_cd_history),
                             tint = if (state.selectedTrip != null)
                                 MaterialTheme.colorScheme.primary
                             else
@@ -179,7 +190,7 @@ fun TripCostEntryScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "💰 Cost Entries",
+                            text = stringResource(Res.string.trip_cost_section_entries),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -188,11 +199,11 @@ fun TripCostEntryScreen(
                         ) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_add),
-                                contentDescription = "Add",
+                                contentDescription = stringResource(Res.string.cd_add),
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Add New Cost")
+                            Text(stringResource(Res.string.trip_cost_add_new))
                         }
                     }
                 }
@@ -266,7 +277,7 @@ fun TripCostEntryScreen(
                             )
                         } else {
                             Text(
-                                "💾 Save Trip Cost(s)",
+                                stringResource(Res.string.trip_cost_save_trips),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -289,6 +300,8 @@ private fun TripSelectionCard(
     onToggleDropdown: () -> Unit,
     onSelectTrip: (Trip) -> Unit
 ) {
+    val unknownRoute = stringResource(Res.string.payment_unknown)
+    val notAvailable = stringResource(Res.string.vehicle_route_na)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -300,7 +313,7 @@ private fun TripSelectionCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "🚛 Select Trip",
+                text = stringResource(Res.string.trip_cost_section_select_trip),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -311,13 +324,13 @@ private fun TripSelectionCard(
             ) {
                 OutlinedTextField(
                     value = state.selectedTrip?.let {
-                        val start = it.startLocation?.address ?: "Unknown"
-                        val end = it.endLocation?.address ?: "Unknown"
+                        val start = it.startLocation?.address ?: unknownRoute
+                        val end = it.endLocation?.address ?: unknownRoute
                         "$start → $end"
                     } ?: "",
                     onValueChange = {},
-                    label = { Text("Trip *") },
-                    placeholder = { Text("Select a trip") },
+                    label = { Text(stringResource(Res.string.trip_cost_label_trip)) },
+                    placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_trip)) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                     readOnly = true,
                     isError = state.tripError != null,
@@ -336,12 +349,16 @@ private fun TripSelectionCard(
                             text = {
                                 Column {
                                     Text(
-                                        "${trip.startLocation?.address ?: "Unknown"} → ${trip.endLocation?.address ?: "Unknown"}",
+                                        "${trip.startLocation?.address ?: unknownRoute} → ${trip.endLocation?.address ?: unknownRoute}",
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        "Vehicle: ${trip.vehicleNumber ?: "N/A"} | ${trip.scheduledStartTime ?: ""}",
+                                        stringResource(
+                                            Res.string.trip_cost_vehicle_line,
+                                            trip.vehicleNumber ?: notAvailable,
+                                            trip.scheduledStartTime.orEmpty()
+                                        ),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -360,6 +377,8 @@ private fun TripSelectionCard(
 private fun TripDetailsCard(
     trip: Trip
 ) {
+    val notAvailable = stringResource(Res.string.vehicle_route_na)
+    val unknownRoute = stringResource(Res.string.payment_unknown)
     val statusColor = when (trip.status.name.lowercase()) {
         "completed" -> FleetStatusColors.FleetOnRoute
         "in_progress", "ongoing" -> FleetStatusColors.FleetPlanned
@@ -397,7 +416,7 @@ private fun TripDetailsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "📍 Trip Details",
+                    text = stringResource(Res.string.trip_cost_section_details),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -427,12 +446,12 @@ private fun TripDetailsCard(
                 // Vehicle Number
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Vehicle",
+                        text = stringResource(Res.string.trip_cost_label_vehicle),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = trip.vehicleNumber ?: "N/A",
+                        text = trip.vehicleNumber ?: notAvailable,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
@@ -442,12 +461,12 @@ private fun TripDetailsCard(
                 // Trip Date
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Trip Date",
+                        text = stringResource(Res.string.trip_cost_label_trip_date),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = trip.scheduledStartTime?.take(10) ?: trip.createdAt?.take(10) ?: "N/A",
+                        text = trip.scheduledStartTime?.take(10) ?: trip.createdAt?.take(10) ?: notAvailable,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -457,7 +476,7 @@ private fun TripDetailsCard(
             // Row 2: Route (Start → End)
             Column {
                 Text(
-                    text = "Route",
+                    text = stringResource(Res.string.trip_cost_label_route),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -481,7 +500,7 @@ private fun TripDetailsCard(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = trip.startLocation?.address ?: "Unknown",
+                        text = trip.startLocation?.address ?: unknownRoute,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f),
                         maxLines = 1,
@@ -519,7 +538,7 @@ private fun TripDetailsCard(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = trip.endLocation?.address ?: "Unknown",
+                        text = trip.endLocation?.address ?: unknownRoute,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.weight(1f),
                         maxLines = 1,
@@ -556,6 +575,9 @@ private fun CostEntryRowCard(
     onFuelRateChange: (String) -> Unit,
     onKmPerLiterChange: (String) -> Unit
 ) {
+    val selectTypeLabel = stringResource(Res.string.trip_cost_select_type)
+    val noDateLabel = stringResource(Res.string.trip_cost_no_date)
+    val fuelTypePlaceholder = stringResource(Res.string.trip_cost_placeholder_fuel_type)
     val borderColor = if (entry.isValid) {
         MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
     } else {
@@ -601,13 +623,13 @@ private fun CostEntryRowCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = entry.costTypeLabel.ifBlank { "Select Type" },
+                            text = if (entry.costTypeLabel.isBlank()) selectTypeLabel else entry.costTypeLabel,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
                         if (entry.amount.isNotBlank()) {
                             Text(
-                                text = "₹${entry.amount} | ${entry.date.ifBlank { "No Date" }}",
+                                text = "₹${entry.amount} | ${if (entry.date.isBlank()) noDateLabel else entry.date}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -619,7 +641,7 @@ private fun CostEntryRowCard(
                         IconButton(onClick = onDelete) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_delete),
-                                contentDescription = "Delete",
+                                contentDescription = stringResource(Res.string.delete),
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -627,7 +649,11 @@ private fun CostEntryRowCard(
                     }
                     Icon(
                         painter = painterResource(Res.drawable.ic_chevron_right),
-                        contentDescription = if (entry.isExpanded) "Collapse" else "Expand",
+                        contentDescription = if (entry.isExpanded) {
+                            stringResource(Res.string.trip_cost_cd_collapse)
+                        } else {
+                            stringResource(Res.string.trip_cost_cd_expand)
+                        },
                         modifier = Modifier
                             .size(24.dp)
                             .graphicsLayer {
@@ -668,8 +694,8 @@ private fun CostEntryRowCard(
                         OutlinedTextField(
                             value = entry.customCostTypeName,
                             onValueChange = onCustomCostTypeChange,
-                            label = { Text("Cost Type Name *") },
-                            placeholder = { Text("Enter custom cost type") },
+                            label = { Text(stringResource(Res.string.trip_cost_label_cost_type_name)) },
+                            placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_custom_cost)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -683,7 +709,7 @@ private fun CostEntryRowCard(
                             onDateChange(newDate)
                             onTimeChange(newTime)
                         },
-                        label = "Date & Time *",
+                        label = stringResource(Res.string.trip_cost_label_date_time),
                         isError = entry.dateError != null,
                         errorMessage = entry.dateError,
                         minDate = tripStartDate,  // Cost date must be >= Trip start date
@@ -694,8 +720,8 @@ private fun CostEntryRowCard(
                     OutlinedTextField(
                         value = entry.amount,
                         onValueChange = onAmountChange,
-                        label = { Text("Amount (₹) *") },
-                        placeholder = { Text("Enter amount") },
+                        label = { Text(stringResource(Res.string.trip_cost_label_amount)) },
+                        placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_amount)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -709,16 +735,16 @@ private fun CostEntryRowCard(
                     if (entry.isFuelCostType) {
                         HorizontalDivider()
                         Text(
-                            text = "⛽ Fuel Details",
+                            text = stringResource(Res.string.trip_cost_section_fuel),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Medium
                         )
 
                         // Fuel Type - read-only, auto-populated from selected Cost Type
                         OutlinedTextField(
-                            value = entry.costTypeLabel.ifBlank { "Select a fuel type above" },
+                            value = if (entry.costTypeLabel.isBlank()) fuelTypePlaceholder else entry.costTypeLabel,
                             onValueChange = {},
-                            label = { Text("Fuel Type") },
+                            label = { Text(stringResource(Res.string.trip_cost_label_fuel_type)) },
                             modifier = Modifier.fillMaxWidth(),
                             readOnly = true,
                             enabled = false,
@@ -737,8 +763,8 @@ private fun CostEntryRowCard(
                             OutlinedTextField(
                                 value = entry.fuelQuantity,
                                 onValueChange = onFuelQuantityChange,
-                                label = { Text("Quantity (L)") },
-                                placeholder = { Text("Liters") },
+                                label = { Text(stringResource(Res.string.trip_cost_label_fuel_quantity)) },
+                                placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_fuel_quantity)) },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -747,8 +773,8 @@ private fun CostEntryRowCard(
                             OutlinedTextField(
                                 value = entry.fuelRate,
                                 onValueChange = onFuelRateChange,
-                                label = { Text("Rate (₹/L)") },
-                                placeholder = { Text("Per liter") },
+                                label = { Text(stringResource(Res.string.trip_cost_label_fuel_rate)) },
+                                placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_fuel_rate)) },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -759,8 +785,8 @@ private fun CostEntryRowCard(
                         OutlinedTextField(
                             value = entry.kmPerLiter,
                             onValueChange = onKmPerLiterChange,
-                            label = { Text("Mileage (Km/L)") },
-                            placeholder = { Text("Km per liter") },
+                            label = { Text(stringResource(Res.string.trip_cost_label_mileage)) },
+                            placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_mileage)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -780,7 +806,10 @@ private fun CostEntryRowCard(
                                     modifier = Modifier.padding(12.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Calculated Total:", fontWeight = FontWeight.Medium)
+                                    Text(
+                                        stringResource(Res.string.trip_cost_calculated_total),
+                                        fontWeight = FontWeight.Medium
+                                    )
                                     Text(
                                         "₹${((calculatedTotal * 100).toLong() / 100.0)}",
                                         fontWeight = FontWeight.Bold,
@@ -795,8 +824,8 @@ private fun CostEntryRowCard(
                     OutlinedTextField(
                         value = entry.notes,
                         onValueChange = onNotesChange,
-                        label = { Text("Notes (Optional)") },
-                        placeholder = { Text("Enter notes") },
+                        label = { Text(stringResource(Res.string.trip_cost_label_notes)) },
+                        placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_notes)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -817,7 +846,7 @@ private fun CostHistoryDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text("📜 Cost History")
+                Text(stringResource(Res.string.trip_cost_history_title))
                 if (tripInfo.isNotEmpty()) {
                     Text(
                         text = tripInfo,
@@ -839,7 +868,7 @@ private fun CostHistoryDialog(
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 } else if (costs.isEmpty()) {
                     Text(
-                        "No costs recorded for this trip yet.",
+                        stringResource(Res.string.trip_cost_no_costs_yet),
                         modifier = Modifier.align(Alignment.Center),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -856,7 +885,10 @@ private fun CostHistoryDialog(
                                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Total:", fontWeight = FontWeight.Bold)
+                                Text(
+                                    stringResource(Res.string.trip_cost_total_label),
+                                    fontWeight = FontWeight.Bold
+                                )
                                 Text(
                                     "₹${costs.sumOf { it.amount }.toLong()}",
                                     fontWeight = FontWeight.Bold,
@@ -870,7 +902,7 @@ private fun CostHistoryDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(Res.string.close))
             }
         }
     )

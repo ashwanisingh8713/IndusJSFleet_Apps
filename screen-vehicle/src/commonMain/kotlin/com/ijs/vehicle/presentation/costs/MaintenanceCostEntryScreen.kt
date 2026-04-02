@@ -21,13 +21,24 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.uicomponents.components.CostTypeGroup
 import com.indusjs.uicomponents.components.CostTypeSelection
 import com.indusjs.uicomponents.components.CostTypeTwoLevelSelector
-import com.indusjs.uicomponents.components.FleetDropdownField
+import com.indusjs.uicomponents.components.DropdownOption
+import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+
+private fun applySnackbarFormat(template: String, vararg args: Any): String {
+    var result = template
+    args.forEachIndexed { index, arg ->
+        val n = index + 1
+        result = result.replace("%${n}\$s", arg.toString()).replace("%${n}\$d", arg.toString())
+    }
+    return result
+}
 
 /**
  * Maintenance Cost Entry Screen with multi-row support.
@@ -43,6 +54,7 @@ fun MaintenanceCostEntryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val maintCostsSavedFmt = stringResource(Res.string.vehicle_maint_costs_saved)
 
     // Pre-select vehicle if initialVehicleId is provided
     LaunchedEffect(initialVehicleId) {
@@ -52,7 +64,7 @@ fun MaintenanceCostEntryScreen(
     }
 
     // Handle side effects
-    LaunchedEffect(Unit) {
+    LaunchedEffect(maintCostsSavedFmt) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is MaintenanceCostEntryContract.Effect.ShowSnackbar -> {
@@ -63,7 +75,7 @@ fun MaintenanceCostEntryScreen(
                 }
                 is MaintenanceCostEntryContract.Effect.NavigateBack -> onNavigateBack()
                 is MaintenanceCostEntryContract.Effect.CostsSaved -> {
-                    snackbarHostState.showSnackbar("${effect.count} maintenance cost(s) saved successfully")
+                    snackbarHostState.showSnackbar(applySnackbarFormat(maintCostsSavedFmt, effect.count))
                 }
             }
         }
@@ -82,12 +94,12 @@ fun MaintenanceCostEntryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Maintenance Costs") },
+                title = { Text(stringResource(Res.string.vehicle_maint_screen_title)) },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.NavigateBack) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -107,7 +119,7 @@ fun MaintenanceCostEntryScreen(
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh Cost Types",
+                                contentDescription = stringResource(Res.string.cd_refresh_cost_types),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -120,7 +132,7 @@ fun MaintenanceCostEntryScreen(
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_history),
-                            contentDescription = "History",
+                            contentDescription = stringResource(Res.string.cd_history),
                             tint = if (state.selectedVehicle != null)
                                 MaterialTheme.colorScheme.primary
                             else
@@ -153,25 +165,25 @@ fun MaintenanceCostEntryScreen(
             ) {
                 // Section 1: Vehicle Selection
                 item {
-                    FleetSectionCard(title = "🚛 Select Vehicle") {
-                        FleetDropdownField(
-                            label = "Vehicle *",
-                            value = state.selectedVehicle?.let { "${it.registrationNumber} - ${it.make} ${it.model}" } ?: "",
-                            placeholder = "Select a vehicle",
-                            isExpanded = state.showVehicleDropdown,
-                            error = state.vehicleError,
-                            onToggle = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ToggleVehicleDropdown) },
-                            onDismiss = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.ToggleVehicleDropdown) }
-                        ) {
-                            state.vehicles.forEach { vehicle ->
-                                DropdownMenuItem(
-                                    text = { Text("${vehicle.registrationNumber} - ${vehicle.make} ${vehicle.model}") },
-                                    onClick = {
-                                        viewModel.sendIntent(MaintenanceCostEntryContract.Intent.SelectVehicle(vehicle))
-                                    }
+                    FleetSectionCard(title = stringResource(Res.string.maint_section_select_vehicle)) {
+                        FleetDropdown(
+                            label = stringResource(Res.string.maint_label_vehicle),
+                            options = state.vehicles.map {
+                                DropdownOption(
+                                    id = it.id,
+                                    label = "${it.registrationNumber} - ${it.make} ${it.model}"
                                 )
-                            }
-                        }
+                            },
+                            selectedOptionId = state.selectedVehicle?.id,
+                            onOptionSelected = { vehicleId ->
+                                state.vehicles.find { it.id == vehicleId }?.let { vehicle ->
+                                    viewModel.sendIntent(MaintenanceCostEntryContract.Intent.SelectVehicle(vehicle))
+                                }
+                            },
+                            placeholder = stringResource(Res.string.maint_placeholder_vehicle),
+                            isError = state.vehicleError != null,
+                            errorMessage = state.vehicleError
+                        )
                     }
                 }
 
@@ -183,7 +195,7 @@ fun MaintenanceCostEntryScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "🔧 Maintenance Costs",
+                            text = stringResource(Res.string.vehicle_maint_costs_section),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -193,11 +205,11 @@ fun MaintenanceCostEntryScreen(
                         ) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_add),
-                                contentDescription = "Add",
+                                contentDescription = stringResource(Res.string.cd_add),
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Add Row")
+                            Text(stringResource(Res.string.maint_btn_add_row))
                         }
                     }
                 }
@@ -257,19 +269,23 @@ fun MaintenanceCostEntryScreen(
                             ) {
                                 Column {
                                     Text(
-                                        text = "Summary",
+                                        text = stringResource(Res.string.vehicle_maint_summary),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
-                                        text = "$validCount valid entr${if (validCount == 1) "y" else "ies"}",
+                                        text = if (validCount == 1) {
+                                            stringResource(Res.string.vehicle_maint_valid_entry_one)
+                                        } else {
+                                            stringResource(Res.string.vehicle_maint_valid_entries_count, validCount)
+                                        },
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text(
-                                        text = "Total Amount",
+                                        text = stringResource(Res.string.vehicle_maint_total_amount),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -302,7 +318,7 @@ fun MaintenanceCostEntryScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("💾 Save Maintenance Costs", fontWeight = FontWeight.Bold)
+                            Text(stringResource(Res.string.vehicle_maint_save_button), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -383,7 +399,7 @@ private fun MaintenanceCostRowCard(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = row.costTypeDisplayLabel.ifBlank { "New Entry" },
+                        text = row.costTypeDisplayLabel.ifBlank { stringResource(Res.string.vehicle_maint_new_entry) },
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -408,7 +424,11 @@ private fun MaintenanceCostRowCard(
                                 if (row.isExpanded) Res.drawable.ic_chevron_right
                                 else Res.drawable.ic_chevron_right
                             ),
-                            contentDescription = if (row.isExpanded) "Collapse" else "Expand",
+                            contentDescription = if (row.isExpanded) {
+                                stringResource(Res.string.cd_collapse)
+                            } else {
+                                stringResource(Res.string.cd_expand)
+                            },
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -417,7 +437,7 @@ private fun MaintenanceCostRowCard(
                         IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_delete),
-                                contentDescription = "Delete",
+                                contentDescription = stringResource(Res.string.delete),
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -468,7 +488,7 @@ private fun MaintenanceCostRowCard(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Text(
-                                    text = "⛽ Fuel Details",
+                                    text = stringResource(Res.string.trip_cost_section_fuel),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
@@ -476,9 +496,9 @@ private fun MaintenanceCostRowCard(
 
                                 // Fuel Type - read-only, auto-populated from selected Cost Type
                                 OutlinedTextField(
-                                    value = row.costTypeLabel.ifBlank { "Select a fuel type above" },
+                                    value = row.costTypeLabel.ifBlank { stringResource(Res.string.trip_cost_placeholder_fuel_type) },
                                     onValueChange = {},
-                                    label = { Text("Fuel Type") },
+                                    label = { Text(stringResource(Res.string.trip_cost_label_fuel_type)) },
                                     modifier = Modifier.fillMaxWidth(),
                                     readOnly = true,
                                     enabled = false,
@@ -497,8 +517,8 @@ private fun MaintenanceCostRowCard(
                                     OutlinedTextField(
                                         value = row.fuelQuantity,
                                         onValueChange = onUpdateFuelQuantity,
-                                        label = { Text("Quantity (L)") },
-                                        placeholder = { Text("Liters") },
+                                        label = { Text(stringResource(Res.string.trip_cost_label_fuel_quantity)) },
+                                        placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_fuel_quantity)) },
                                         modifier = Modifier.weight(1f),
                                         singleLine = true,
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -507,8 +527,8 @@ private fun MaintenanceCostRowCard(
                                     OutlinedTextField(
                                         value = row.fuelRate,
                                         onValueChange = onUpdateFuelRate,
-                                        label = { Text("Rate (₹/L)") },
-                                        placeholder = { Text("Per liter") },
+                                        label = { Text(stringResource(Res.string.trip_cost_label_fuel_rate)) },
+                                        placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_fuel_rate)) },
                                         modifier = Modifier.weight(1f),
                                         singleLine = true,
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -519,8 +539,8 @@ private fun MaintenanceCostRowCard(
                                 OutlinedTextField(
                                     value = row.kmPerLiter,
                                     onValueChange = onUpdateKmPerLiter,
-                                    label = { Text("Mileage (Km/L)") },
-                                    placeholder = { Text("Km per liter") },
+                                    label = { Text(stringResource(Res.string.trip_cost_label_mileage)) },
+                                    placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_mileage)) },
                                     modifier = Modifier.fillMaxWidth(),
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -540,7 +560,7 @@ private fun MaintenanceCostRowCard(
                                             modifier = Modifier.padding(12.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
-                                            Text("Calculated Total:", fontWeight = FontWeight.Medium)
+                                            Text(stringResource(Res.string.trip_cost_calculated_total), fontWeight = FontWeight.Medium)
                                             Text(
                                                 "₹${((calculatedTotal * 100).toLong() / 100.0)}",
                                                 fontWeight = FontWeight.Bold,
@@ -561,7 +581,7 @@ private fun MaintenanceCostRowCard(
                             onUpdateDate(newDate)
                             onUpdateTime(newTime)
                         },
-                        label = "Date & Time *",
+                        label = stringResource(Res.string.trip_cost_label_date_time),
                         isError = row.dateError != null,
                         errorMessage = row.dateError,
                         minDate = minDate,
@@ -572,8 +592,8 @@ private fun MaintenanceCostRowCard(
                     OutlinedTextField(
                         value = row.amount,
                         onValueChange = onUpdateAmount,
-                        label = { Text("Amount (₹) *") },
-                        placeholder = { Text("Enter amount") },
+                        label = { Text(stringResource(Res.string.trip_cost_label_amount)) },
+                        placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_amount)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -586,8 +606,8 @@ private fun MaintenanceCostRowCard(
                     OutlinedTextField(
                         value = row.description,
                         onValueChange = onUpdateDescription,
-                        label = { Text("Description") },
-                        placeholder = { Text("Describe the maintenance work") },
+                        label = { Text(stringResource(Res.string.label_description)) },
+                        placeholder = { Text(stringResource(Res.string.vehicle_maint_describe_work)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2,
                         maxLines = 3
@@ -595,7 +615,7 @@ private fun MaintenanceCostRowCard(
 
                     // Optional fields section
                     Text(
-                        text = "Vendor Details (Optional)",
+                        text = stringResource(Res.string.vehicle_maint_vendor_section),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -607,8 +627,8 @@ private fun MaintenanceCostRowCard(
                         OutlinedTextField(
                             value = row.vendorName,
                             onValueChange = onUpdateVendorName,
-                            label = { Text("Vendor") },
-                            placeholder = { Text("Vendor name") },
+                            label = { Text(stringResource(Res.string.vehicle_maint_vendor)) },
+                            placeholder = { Text(stringResource(Res.string.vehicle_maint_vendor_name_placeholder)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
@@ -616,8 +636,8 @@ private fun MaintenanceCostRowCard(
                         OutlinedTextField(
                             value = row.invoiceNo,
                             onValueChange = onUpdateInvoiceNo,
-                            label = { Text("Invoice #") },
-                            placeholder = { Text("Invoice no.") },
+                            label = { Text(stringResource(Res.string.vehicle_maint_invoice)) },
+                            placeholder = { Text(stringResource(Res.string.vehicle_maint_invoice_placeholder)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
@@ -626,8 +646,8 @@ private fun MaintenanceCostRowCard(
                     OutlinedTextField(
                         value = row.notes,
                         onValueChange = onUpdateNotes,
-                        label = { Text("Notes") },
-                        placeholder = { Text("Additional notes") },
+                        label = { Text(stringResource(Res.string.label_notes)) },
+                        placeholder = { Text(stringResource(Res.string.vehicle_maint_notes_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -649,7 +669,7 @@ private fun MaintenanceHistoryDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text("🔧 Maintenance History")
+                Text(stringResource(Res.string.vehicle_maint_history_title))
                 if (vehicleInfo.isNotEmpty()) {
                     Text(
                         text = vehicleInfo,
@@ -669,7 +689,7 @@ private fun MaintenanceHistoryDialog(
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 } else if (costs.isEmpty()) {
                     Text(
-                        "No maintenance records for this vehicle yet.",
+                        stringResource(Res.string.vehicle_maint_no_records),
                         modifier = Modifier.align(Alignment.Center),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -686,7 +706,7 @@ private fun MaintenanceHistoryDialog(
                                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Total:", fontWeight = FontWeight.Bold)
+                                Text(stringResource(Res.string.vehicle_maint_total_label), fontWeight = FontWeight.Bold)
                                 Text(
                                     "₹${costs.sumOf { it.amount }.toLong()}",
                                     fontWeight = FontWeight.Bold,
@@ -700,7 +720,7 @@ private fun MaintenanceHistoryDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(Res.string.close))
             }
         }
     )
@@ -740,7 +760,7 @@ private fun MaintenanceHistoryItem(cost: MaintenanceCostDto) {
                 }
                 if (!cost.vendorName.isNullOrBlank()) {
                     Text(
-                        text = "Vendor: ${cost.vendorName}",
+                        text = stringResource(Res.string.vehicle_maint_vendor_prefix, cost.vendorName.orEmpty()),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

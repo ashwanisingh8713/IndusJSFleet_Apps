@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.model.shared.SelectableCustomer
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Reusable card showing the selected customer with option to clear.
@@ -21,7 +23,8 @@ fun SelectedCustomerCard(
     customerContact: String = "",
     onClear: () -> Unit
 ) {
-    val displayName = customer?.companyName ?: customerName.ifBlank { "Customer Selected" }
+    val fallbackName = stringResource(Res.string.customer_selected_fallback)
+    val displayName = customer?.companyName ?: customerName.ifBlank { fallbackName }
     val displayPerson = customer?.personName ?: ""
     val displayContact = customer?.primaryContact ?: customerContact
 

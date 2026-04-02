@@ -11,6 +11,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.TripPayment
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Hero section showing payment amount, status, receipt, mode, date, and type.
@@ -44,7 +46,7 @@ internal fun HeroSection(payment: TripPayment) {
                     )
                     if (payment.hasTds || payment.hasDiscount) {
                         Text(
-                            text = "Net: ${payment.netAmountDisplay}",
+                            text = stringResource(Res.string.payment_net_prefix, payment.netAmountDisplay),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -87,7 +89,7 @@ internal fun HeroSection(payment: TripPayment) {
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = payment.modeDisplay,
+                        text = payment.paymentMode.localizedDisplayName(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
@@ -120,6 +122,7 @@ internal fun HeroSection(payment: TripPayment) {
 @Composable
 internal fun TripInfoCard(payment: TripPayment) {
     val tripInfo = payment.tripInfo ?: return
+    val na = stringResource(Res.string.label_not_applicable)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -133,7 +136,7 @@ internal fun TripInfoCard(payment: TripPayment) {
                 .padding(12.dp)
         ) {
             Text(
-                text = "Trip Information",
+                text = stringResource(Res.string.payment_section_trip_information),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
@@ -149,7 +152,7 @@ internal fun TripInfoCard(payment: TripPayment) {
                 tripInfo.vehicleRegistration?.let { vehicle ->
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Vehicle",
+                            text = stringResource(Res.string.payment_label_vehicle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -166,7 +169,7 @@ internal fun TripInfoCard(payment: TripPayment) {
                         horizontalAlignment = Alignment.End
                     ) {
                         Text(
-                            text = "Driver",
+                            text = stringResource(Res.string.payment_label_driver),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -188,7 +191,7 @@ internal fun TripInfoCard(payment: TripPayment) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = tripInfo.startLocation?.take(20) ?: "N/A",
+                        text = tripInfo.startLocation?.take(20) ?: na,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.weight(1f),
                         maxLines = 1,
@@ -218,7 +221,7 @@ internal fun TripInfoCard(payment: TripPayment) {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Trip Price",
+                            text = stringResource(Res.string.payment_add_trip_price),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -252,7 +255,7 @@ internal fun PaymentDetailsCard(payment: TripPayment) {
                 .padding(12.dp)
         ) {
             Text(
-                text = "Payment Details",
+                text = stringResource(Res.string.payment_section_payment_details),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
@@ -260,33 +263,39 @@ internal fun PaymentDetailsCard(payment: TripPayment) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            CompactDetailRow(label = "Amount", value = payment.amountDisplay)
+            CompactDetailRow(label = stringResource(Res.string.label_amount), value = payment.amountDisplay)
 
             if (payment.hasTds) {
-                CompactDetailRow(label = "TDS Deducted", value = payment.tdsDisplay)
+                CompactDetailRow(label = stringResource(Res.string.payment_label_tds_deducted), value = payment.tdsDisplay)
             }
 
             if (payment.hasDiscount) {
-                CompactDetailRow(label = "Discount", value = payment.discountDisplay)
+                CompactDetailRow(label = stringResource(Res.string.payment_label_discount), value = payment.discountDisplay)
             }
 
             CompactDetailRow(
-                label = "Net Amount",
+                label = stringResource(Res.string.payment_label_net_amount),
                 value = payment.netAmountDisplay,
                 isHighlighted = true
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-            CompactDetailRow(label = "Type", value = "${payment.paymentType.icon} ${payment.typeDisplay}")
-            CompactDetailRow(label = "Mode", value = "${payment.modeIcon} ${payment.modeDisplay}")
+            CompactDetailRow(
+                label = stringResource(Res.string.payment_detail_type),
+                value = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()}"
+            )
+            CompactDetailRow(
+                label = stringResource(Res.string.payment_detail_mode),
+                value = "${payment.modeIcon} ${payment.paymentMode.localizedDisplayName()}"
+            )
 
             payment.transactionId?.let {
-                CompactDetailRow(label = "Transaction ID", value = it)
+                CompactDetailRow(label = stringResource(Res.string.payment_detail_transaction_id), value = it)
             }
 
             payment.bankName?.let {
-                CompactDetailRow(label = "Bank", value = it)
+                CompactDetailRow(label = stringResource(Res.string.payment_detail_bank), value = it)
             }
         }
     }
@@ -312,7 +321,7 @@ internal fun DetailPaymentStatusBadge(
         color = backgroundColor
     ) {
         Text(
-            text = status.displayName,
+            text = status.localizedDisplayName(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall,
             color = textColor

@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.model.shared.SelectableCustomer
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Reusable Customer Selection Bottom Sheet.
@@ -61,12 +62,12 @@ fun CustomerSelectionBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Select Customer",
+                    text = stringResource(Res.string.customer_select),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${filteredCustomers.size} customers",
+                    text = stringResource(Res.string.customers_count, filteredCustomers.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -78,7 +79,7 @@ fun CustomerSelectionBottomSheet(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
-                placeholder = { Text("Search by name, company, or phone...") },
+                placeholder = { Text(stringResource(Res.string.customer_search_sheet_placeholder)) },
                 leadingIcon = {
                     Icon(
                         painter = painterResource(Res.drawable.ic_search),
@@ -110,7 +111,7 @@ fun CustomerSelectionBottomSheet(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("➕", modifier = Modifier.padding(end = 8.dp))
-                Text("Add New Customer", fontWeight = FontWeight.Medium)
+                Text(stringResource(Res.string.customer_add_new_button), fontWeight = FontWeight.Medium)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -128,7 +129,7 @@ fun CustomerSelectionBottomSheet(
                             CircularProgressIndicator(modifier = Modifier.size(40.dp))
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Loading customers...",
+                                text = stringResource(Res.string.customers_loading),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -146,7 +147,7 @@ fun CustomerSelectionBottomSheet(
                         ) {
                             Text(text = "👤", style = MaterialTheme.typography.displayMedium)
                             Text(
-                                text = if (searchQuery.isNotBlank()) "No customers match your search" else "No customers found",
+                                text = stringResource(if (searchQuery.isNotBlank()) Res.string.customers_no_search_match else Res.string.customer_no_customers),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
@@ -154,7 +155,7 @@ fun CustomerSelectionBottomSheet(
                             if (searchQuery.isBlank()) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Button(onClick = { onDismiss(); onAddNewCustomer() }) {
-                                    Text("➕ Add New Customer")
+                                    Text("➕ ${stringResource(Res.string.customer_add_new_button)}")
                                 }
                             }
                         }

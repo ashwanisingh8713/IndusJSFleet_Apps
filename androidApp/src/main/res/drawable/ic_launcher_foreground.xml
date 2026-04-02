@@ -1,0 +1,54 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Shield white border — centered in 108x108 adaptive icon safe zone -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,24L36,30.5v11c0,11.2 7.6,21.7 18,24.3c10.4,-2.6 18,-13.1 18,-24.3v-11L54,24z"/>
+    <!-- Shield inner blue fill -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M54,27L39,32.5v8.5c0,9.6 6.3,18.5 15,20.8c8.7,-2.3 15,-11.2 15,-20.8v-8.5L54,27z"/>
+    <!-- IJS text - I -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M47,35h2.4v8H47z"/>
+    <!-- IJS text - J -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M51.5,35h2.4v6.4c0,1.2 -1,2.1 -2.1,2.1h-1v-2.1h0.7V35z"/>
+    <!-- IJS text - S -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M56,35h3.4v2.1H56v0.9h2.3c0.6,0 1.1,0.5 1.1,1.1v2c0,0.6 -0.5,1.1 -1.1,1.1H56v-2.1h3.4v-0.9h-2.3c-0.6,0 -1.1,-0.5 -1.1,-1.1v-2c0,-0.6 0.5,-1.1 1.1,-1.1z"/>
+    <!-- Mini truck cargo body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,48h9.5v5.5H46z"/>
+    <!-- Mini truck cabin -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55.5,50h3.5l2.2,2v1.5h-5.7z"/>
+    <!-- Cabin window cutout -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M56,50.5h2.2l1.3,1.5H56z"/>
+    <!-- Front wheel -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M49,53.5m-1.7,0a1.7,1.7 0,1 1,3.4 0a1.7,1.7 0,1 1,-3.4 0"/>
+    <!-- Front wheel hub -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M49,53.5m-0.6,0a0.6,0.6 0,1 1,1.2 0a0.6,0.6 0,1 1,-1.2 0"/>
+    <!-- Rear wheel -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M57.5,53.5m-1.7,0a1.7,1.7 0,1 1,3.4 0a1.7,1.7 0,1 1,-3.4 0"/>
+    <!-- Rear wheel hub -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M57.5,53.5m-0.6,0a0.6,0.6 0,1 1,1.2 0a0.6,0.6 0,1 1,-1.2 0"/>
+</vector>

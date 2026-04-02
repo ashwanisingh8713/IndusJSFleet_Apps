@@ -20,6 +20,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import com.indusjs.uicomponents.theme.FleetTokens
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Definition of a single filter in a [FleetFilterBar].
@@ -77,7 +79,7 @@ fun <T> FleetFilterBar(
     selectedFilterId: T?,
     onFilterSelected: (T?) -> Unit,
     onDateRangeConfirmed: (startDate: String, endDate: String) -> Unit = { _, _ -> },
-    allLabel: String = "All",
+    allLabel: String = "",
     allCount: Int? = null,
     modifier: Modifier = Modifier,
     initialStartDate: String = "",
@@ -87,6 +89,7 @@ fun <T> FleetFilterBar(
     var startDate by remember(initialStartDate) { mutableStateOf(initialStartDate) }
     var endDate by remember(initialEndDate) { mutableStateOf(initialEndDate) }
 
+    val resolvedAllLabel = allLabel.ifBlank { stringResource(Res.string.filter_all) }
     Row(
         modifier = modifier
             .horizontalScroll(rememberScrollState())
@@ -95,7 +98,7 @@ fun <T> FleetFilterBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         FleetFilterChipItem(
-            label = allLabel,
+            label = resolvedAllLabel,
             count = allCount,
             isSelected = selectedFilterId == null,
             onClick = { onFilterSelected(null) }

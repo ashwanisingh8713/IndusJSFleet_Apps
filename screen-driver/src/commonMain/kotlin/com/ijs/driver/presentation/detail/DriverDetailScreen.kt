@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -20,18 +19,17 @@ import com.indusjs.datetimepicker.FleetDatePicker
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.ErrorContent
-import com.indusjs.uicomponents.components.FleetDateField
-import com.indusjs.uicomponents.components.FleetEmailField
-import com.indusjs.uicomponents.components.FleetMobileField
+import com.indusjs.uicomponents.components.FleetTab
+import com.indusjs.uicomponents.components.FleetTabBar
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.ClickablePhoneRow
 import com.indusjs.uicomponents.components.CaretakerInfoCard
 import com.indusjs.uicomponents.components.CaretakerSectionCard
-import com.indusjs.uicomponents.components.convertDdMmYyyyToIso
-import com.indusjs.uicomponents.components.convertIsoToDdMmYyyyRaw
 import com.indusjs.uicomponents.components.HistoryTabContent
 import com.indusjs.uicomponents.components.StateChangeDialog
+import com.ijs.driver.presentation.driverStatusLabel
+import com.ijs.driver.presentation.driverStatusLabelsByApi
 import com.ijs.driver.presentation.getDriverStateOptions
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
@@ -44,7 +42,9 @@ import com.indusjs.pdfreport.model.DriverCostsPdfData
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Driver Detail Screen composable with Edit functionality.
@@ -59,6 +59,7 @@ fun DriverDetailScreen(
     onNavigateToTripDetail: (Int) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val driverStatusLabels = driverStatusLabelsByApi()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -131,8 +132,15 @@ fun DriverDetailScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Driver") },
-            text = { Text("Are you sure you want to delete ${state.driver?.fullName}? This action cannot be undone.") },
+            title = { Text(stringResource(Res.string.driver_detail_delete)) },
+            text = {
+                Text(
+                    stringResource(
+                        Res.string.driver_delete_confirmation_named,
+                        state.driver?.fullName.orEmpty()
+                    )
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -143,12 +151,12 @@ fun DriverDetailScreen(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Delete")
+                    Text(stringResource(Res.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )
@@ -157,9 +165,11 @@ fun DriverDetailScreen(
     // Status change dialog - use new StateChangeDialog
     if (showStatusDialog && state.driver != null) {
         StateChangeDialog(
-            title = "Change Driver Status",
-            currentStateLabel = DriverStatus.getDisplayLabel(state.driver!!.status),
-            stateOptions = getDriverStateOptions(state.driver!!.status),
+            title = stringResource(Res.string.driver_change_status_title),
+            currentStateLabel = driverStatusLabel(state.driver!!.status, driverStatusLabels),
+            stateOptions = getDriverStateOptions(state.driver!!.status).map { opt ->
+                opt.copy(label = driverStatusLabels[opt.value] ?: opt.label)
+            },
             onStateSelected = { newStatus ->
                 showStatusDialog = false
                 viewModel.sendIntent(DriverDetailContract.Intent.UpdateDriverState(newStatus))
@@ -172,7 +182,12 @@ fun DriverDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (state.isEditMode) "Edit Driver" else "Driver Details") },
+                title = {
+                    Text(
+                        if (state.isEditMode) stringResource(Res.string.driver_detail_edit_title)
+                        else stringResource(Res.string.drivers_detail)
+                    )
+                },
                 navigationIcon = {
                     IconButton(
                         onClick = {
@@ -185,7 +200,11 @@ fun DriverDetailScreen(
                     ) {
                         Icon(
                             painter = painterResource(if (state.isEditMode) Res.drawable.ic_close else Res.drawable.ic_arrow_back),
-                            contentDescription = if (state.isEditMode) "Cancel" else "Back",
+                            contentDescription = if (state.isEditMode) {
+                                stringResource(Res.string.cancel)
+                            } else {
+                                stringResource(Res.string.back)
+                            },
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -196,7 +215,7 @@ fun DriverDetailScreen(
                         IconButton(onClick = { viewModel.sendIntent(DriverDetailContract.Intent.EnterEditMode) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_edit),
-                                contentDescription = "Edit",
+                                contentDescription = stringResource(Res.string.edit),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -226,7 +245,7 @@ fun DriverDetailScreen(
                             onClick = { viewModel.sendIntent(DriverDetailContract.Intent.ExitEditMode) },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("Cancel")
+                            Text(stringResource(Res.string.cancel))
                         }
 
                         Button(
@@ -242,7 +261,10 @@ fun DriverDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
-                            Text(if (state.isSaving) "Saving..." else "Save Changes")
+                            Text(
+                                if (state.isSaving) stringResource(Res.string.action_saving)
+                                else stringResource(Res.string.driver_save_changes)
+                            )
                         }
                     }
                 }
@@ -251,7 +273,7 @@ fun DriverDetailScreen(
     ) { padding ->
         when {
             state.isLoading -> {
-                LoadingContent(message = "Loading driver details...")
+                LoadingContent(message = stringResource(Res.string.driver_loading_details))
             }
             state.error != null && state.driver == null -> {
                 ErrorContent(
@@ -283,6 +305,7 @@ fun DriverDetailScreen(
                         DriverDetailTabs(
                             state = state,
                             viewModel = viewModel,
+                            driverStatusLabels = driverStatusLabels,
                             onStatusClick = { showStatusDialog = true }
                         )
                     }
@@ -308,7 +331,7 @@ fun DriverDetailScreen(
                     ) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Saving...")
+                        Text(stringResource(Res.string.action_saving))
                     }
                 }
             }
@@ -332,7 +355,7 @@ fun DriverDetailScreen(
                     ) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Exporting to PDF...")
+                        Text(stringResource(Res.string.action_exporting_pdf))
                     }
                 }
             }
@@ -343,10 +366,10 @@ fun DriverDetailScreen(
 /**
  * Tab definitions for Driver Detail Screen
  */
-private enum class DriverDetailTab(val title: String, val icon: String) {
-    OVERVIEW("Overview", "📋"),
-    COSTS("Costs", "💰"),
-    HISTORY("History", "📜")
+private enum class DriverDetailTab(val title: StringResource, val icon: String) {
+    OVERVIEW(Res.string.driver_tab_overview, "📋"),
+    COSTS(Res.string.driver_tab_costs, "💰"),
+    HISTORY(Res.string.driver_tab_history, "📜")
 }
 
 /**
@@ -356,6 +379,7 @@ private enum class DriverDetailTab(val title: String, val icon: String) {
 private fun DriverDetailTabs(
     state: DriverDetailContract.State,
     viewModel: DriverDetailViewModel,
+    driverStatusLabels: Map<String, String>,
     onStatusClick: () -> Unit = {}
 ) {
     // Filter out Costs tab if user doesn't have permission
@@ -364,45 +388,36 @@ private fun DriverDetailTabs(
     } else {
         DriverDetailTab.entries.filter { it != DriverDetailTab.COSTS }
     }
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableStateOf(DriverDetailTab.OVERVIEW.ordinal) }
 
-    // Load history when switching to history tab
+    LaunchedEffect(state.canViewCosts) {
+        if (!state.canViewCosts && selectedTab == DriverDetailTab.COSTS.ordinal) {
+            selectedTab = DriverDetailTab.OVERVIEW.ordinal
+        }
+    }
+
+    // Load history when switching to history tab (indices: 0 Overview, 1 Costs, 2 History)
     LaunchedEffect(selectedTab) {
         viewModel.sendIntent(DriverDetailContract.Intent.SelectTab(selectedTab))
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Tab Row
-        TabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary
-        ) {
-            tabs.forEachIndexed { index, tab ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(tab.icon)
-                            Text(
-                                text = tab.title,
-                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
-                    }
-                )
-            }
-        }
+    val fleetTabs = tabs.map { tab ->
+        FleetTab(id = tab.ordinal, label = "${tab.icon} ${stringResource(tab.title)}")
+    }
 
-        // Tab Content
-        when (tabs.getOrNull(selectedTab) ?: DriverDetailTab.OVERVIEW) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        FleetTabBar(
+            tabs = fleetTabs,
+            selectedTabId = selectedTab,
+            onTabSelected = { selectedTab = it }
+        )
+
+        val activeTab = DriverDetailTab.entries.find { it.ordinal == selectedTab } ?: DriverDetailTab.OVERVIEW
+        when (activeTab) {
             DriverDetailTab.OVERVIEW -> DriverOverviewContent(
                 state = state,
                 viewModel = viewModel,
+                driverStatusLabels = driverStatusLabels,
                 onStatusClick = onStatusClick
             )
             DriverDetailTab.COSTS -> DriverCostsTabContent(

@@ -19,8 +19,10 @@ import com.indusjs.pdfreport.model.PaymentsListPdfData
 import com.indusjs.pdfreport.model.PaymentListItem
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -54,6 +56,16 @@ fun PaymentsScreen(
     val listState = rememberLazyListState()
     val pullRefreshState = rememberPullToRefreshState()
     val scope = rememberCoroutineScope()
+    val notApplicableLabel = stringResource(Res.string.label_not_applicable)
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // PDF Export state
     var pdfExportData by remember { mutableStateOf<PaymentsListPdfData?>(null) }
@@ -87,13 +99,13 @@ fun PaymentsScreen(
 
     // Handle effects
     LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
+        viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is PaymentsContract.Effect.NavigateToDetail -> onNavigateToDetail(effect.paymentId)
                 is PaymentsContract.Effect.NavigateToAddPayment -> onNavigateToAddPayment(null)
                 is PaymentsContract.Effect.NavigateToAddPaymentForTrip -> onNavigateToAddPayment(effect.tripId)
-                is PaymentsContract.Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
-                is PaymentsContract.Effect.ShowError -> snackbarHostState.showSnackbar(effect.message)
+                is PaymentsContract.Effect.ShowSnackbar -> pendingSnackbar = effect.message
+                is PaymentsContract.Effect.ShowError -> pendingSnackbar = effect.message
                 is PaymentsContract.Effect.PaymentDeleted -> { /* Handled in list update */ }
                 is PaymentsContract.Effect.PdfExportStarted -> {
                     isExportingPdf = true
@@ -156,7 +168,11 @@ fun PaymentsScreen(
                             painter = painterResource(
                                 if (isGroupedView) Res.drawable.ic_menu else Res.drawable.ic_dashboard
                             ),
-                            contentDescription = if (isGroupedView) "Switch to Flat View" else "Switch to Grouped View",
+                            contentDescription = if (isGroupedView) {
+                                stringResource(Res.string.payment_cd_switch_flat)
+                            } else {
+                                stringResource(Res.string.payment_cd_switch_grouped)
+                            },
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -166,7 +182,7 @@ fun PaymentsScreen(
                         IconButton(onClick = { showOptionsMenu = true }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_more_vert),
-                                contentDescription = "More options",
+                                contentDescription = stringResource(Res.string.payment_more_options),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -176,7 +192,7 @@ fun PaymentsScreen(
                         ) {
                             // Export PDF
                             DropdownMenuItem(
-                                text = { Text("Export PDF") },
+                                text = { Text(stringResource(Res.string.export_pdf)) },
                                 leadingIcon = {
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_download),
@@ -200,8 +216,8 @@ fun PaymentsScreen(
                                             PaymentListItem(
                                                 paymentId = payment.id.toIntOrNull() ?: 0,
                                                 tripId = payment.tripId.toIntOrNull() ?: 0,
-                                                vehicleNumber = payment.tripInfo?.vehicleRegistration ?: "N/A",
-                                                customerName = payment.customerName ?: "N/A",
+                                                vehicleNumber = payment.tripInfo?.vehicleRegistration ?: notApplicableLabel,
+                                                customerName = payment.customerName ?: notApplicableLabel,
                                                 amount = payment.amount,
                                                 paymentType = payment.typeDisplay,
                                                 paymentMode = payment.modeDisplay,
@@ -230,7 +246,7 @@ fun PaymentsScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Text("Filter")
+                                        Text(stringResource(Res.string.payment_menu_filter))
                                         if (state.hasFilters) {
                                             Badge(
                                                 containerColor = MaterialTheme.colorScheme.error,
@@ -254,7 +270,7 @@ fun PaymentsScreen(
 
                             // Refresh
                             DropdownMenuItem(
-                                text = { Text("Refresh") },
+                                text = { Text(stringResource(Res.string.refresh)) },
                                 leadingIcon = {
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_refresh),
@@ -273,7 +289,15 @@ fun PaymentsScreen(
                                 HorizontalDivider()
                                 val allExpanded = expandedTrips.size == groupedPayments.size
                                 DropdownMenuItem(
-                                    text = { Text(if (allExpanded) "Collapse All" else "Expand All") },
+                                    text = {
+                                        Text(
+                                            if (allExpanded) {
+                                                stringResource(Res.string.payment_collapse_all)
+                                            } else {
+                                                stringResource(Res.string.payment_expand_all)
+                                            }
+                                        )
+                                    },
                                     leadingIcon = {
                                         Text(
                                             text = if (allExpanded) "▲" else "▼",
@@ -303,7 +327,7 @@ fun PaymentsScreen(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = "Add Payment"
+                        contentDescription = stringResource(Res.string.payments_add)
                     )
                 }
             }
@@ -335,9 +359,9 @@ fun PaymentsScreen(
                     } else {
                         // No payments exist - show empty state with Add Payment
                         EmptyContent(
-                            title = "No Payments Yet",
-                            message = "Record your first payment to get started",
-                            actionLabel = "Add Payment",
+                            title = stringResource(Res.string.payments_empty_title),
+                            message = stringResource(Res.string.payments_empty_message),
+                            actionLabel = stringResource(Res.string.payments_add),
                             onAction = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToAddPayment) }
                         )
                     }
@@ -468,9 +492,14 @@ fun PaymentsScreen(
     if (state.showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { viewModel.sendIntent(PaymentsContract.Intent.HideDeleteConfirmation) },
-            title = { Text("Delete Payment") },
+            title = { Text(stringResource(Res.string.payment_delete_title)) },
             text = {
-                Text("Are you sure you want to delete this payment of ${state.paymentToDelete?.amountDisplay}?")
+                Text(
+                    stringResource(
+                        Res.string.payment_delete_message,
+                        state.paymentToDelete?.amountDisplay.orEmpty()
+                    )
+                )
             },
             confirmButton = {
                 TextButton(
@@ -480,13 +509,13 @@ fun PaymentsScreen(
                     if (state.isDeleting) {
                         CircularProgressIndicator(modifier = Modifier.size(16.dp))
                     } else {
-                        Text("Delete", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error)
                     }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.sendIntent(PaymentsContract.Intent.HideDeleteConfirmation) }) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         )

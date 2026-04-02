@@ -12,8 +12,10 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
-import com.indusjs.uicomponents.components.ClickablePhoneRow
+import com.indusjs.uicomponents.components.PhoneChip
 import com.ijs.trip.domain.entity.Trip
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Actual Times Section - Shows actual start/end times for in-progress/completed trips.
@@ -21,7 +23,7 @@ import com.ijs.trip.domain.entity.Trip
 @Composable
 internal fun ActualTimesSection(trip: Trip) {
     EnhancedSectionCard(
-        title = "Actual Times",
+        title = stringResource(Res.string.trip_detail_actual_times),
         icon = "⏱️"
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -45,7 +47,7 @@ internal fun ActualTimesSection(trip: Trip) {
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Started",
+                                text = stringResource(Res.string.trip_detail_started),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -87,7 +89,7 @@ internal fun ActualTimesSection(trip: Trip) {
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Completed",
+                                text = stringResource(Res.string.trip_state_completed),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -113,7 +115,7 @@ internal fun ActualTimesSection(trip: Trip) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "⏱️ Actual Duration",
+                        text = "⏱️ " + stringResource(Res.string.trip_detail_actual_duration),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -146,7 +148,7 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
 
     if (hasCargo) {
         EnhancedSectionCard(
-            title = "Cargo & Customer",
+            title = stringResource(Res.string.trip_detail_cargo_customer),
             icon = "📦"
         ) {
             if (trip.cargoType != null || trip.cargoLoadingWeight != null) {
@@ -166,38 +168,85 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
                 }
 
                 if (cargoTypeValue.isNotBlank() && weightValue != null) {
-                    EnhancedInfoRow(icon = "📋", label = "Cargo", value = "$cargoTypeValue • $weightValue")
+                    EnhancedInfoRow(
+                        icon = "📋",
+                        label = stringResource(Res.string.trips_cargo),
+                        value = "$cargoTypeValue • $weightValue"
+                    )
                 } else if (cargoTypeValue.isNotBlank()) {
-                    EnhancedInfoRow(icon = "📋", label = "Cargo Type", value = cargoTypeValue)
+                    EnhancedInfoRow(
+                        icon = "📋",
+                        label = stringResource(Res.string.trip_label_cargo_type),
+                        value = cargoTypeValue
+                    )
                 } else if (weightValue != null) {
-                    EnhancedInfoRow(icon = "⚖️", label = "Weight", value = weightValue)
+                    EnhancedInfoRow(
+                        icon = "⚖️",
+                        label = stringResource(Res.string.trip_detail_weight),
+                        value = weightValue
+                    )
                 }
             }
 
             trip.cargoDescription?.let {
-                EnhancedInfoRow(icon = "📝", label = "Description", value = it)
+                EnhancedInfoRow(
+                    icon = "📝",
+                    label = stringResource(Res.string.label_description),
+                    value = it
+                )
             }
             trip.customerName?.let {
-                EnhancedInfoRow(icon = "👤", label = "Customer", value = it)
+                EnhancedInfoRow(
+                    icon = "👤",
+                    label = stringResource(Res.string.trip_detail_customer),
+                    value = it
+                )
             }
             trip.customerContact?.let { contact ->
                 if (contact.isNotBlank()) {
-                    ClickablePhoneRow(
-                        phoneNumber = contact,
-                        label = "Customer Contact",
-                        icon = "📞"
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(0.4f)
+                        ) {
+                            Text("📞", style = MaterialTheme.typography.bodyMedium)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(Res.string.trip_detail_contact),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        PhoneChip(
+                            phoneNumber = contact,
+                            modifier = Modifier.weight(0.6f)
+                        )
+                    }
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        thickness = 0.5.dp
                     )
                 }
             }
             if (canViewTripPrice) {
                 trip.tripPrice?.let {
-                    EnhancedInfoRow(icon = "💰", label = "Trip Price", value = formatCurrency(it))
+                    EnhancedInfoRow(
+                        icon = "💰",
+                        label = stringResource(Res.string.payment_add_trip_price),
+                        value = formatCurrency(it)
+                    )
                 }
             }
             trip.priority?.let {
                 EnhancedInfoRow(
                     icon = "",
-                    label = "Priority",
+                    label = stringResource(Res.string.trip_edit_label_priority),
                     value = it.replaceFirstChar { c -> c.uppercaseChar() },
                     isLast = true
                 )
@@ -212,15 +261,28 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
 @Composable
 internal fun AdditionalInfoSection(trip: Trip) {
     EnhancedSectionCard(
-        title = "Additional Info",
+        title = stringResource(Res.string.trip_detail_additional_info),
         icon = "ℹ️"
     ) {
-        EnhancedInfoRow(icon = "🆔", label = "Trip ID", value = "#${trip.id}")
+        EnhancedInfoRow(
+            icon = "🆔",
+            label = stringResource(Res.string.trip_detail_trip_id_label),
+            value = "#${trip.id}"
+        )
         trip.notes?.let {
-            EnhancedInfoRow(icon = "📝", label = "Notes", value = it)
+            EnhancedInfoRow(
+                icon = "📝",
+                label = stringResource(Res.string.trip_detail_notes),
+                value = it
+            )
         }
         trip.createdAt?.let {
-            EnhancedInfoRow(icon = "📅", label = "Created on", value = formatDateToHumanReadable(it, shortMonth = true), isLast = true)
+            EnhancedInfoRow(
+                icon = "📅",
+                label = stringResource(Res.string.trip_detail_created_on),
+                value = formatDateToHumanReadable(it, shortMonth = true),
+                isLast = true
+            )
         }
     }
 }

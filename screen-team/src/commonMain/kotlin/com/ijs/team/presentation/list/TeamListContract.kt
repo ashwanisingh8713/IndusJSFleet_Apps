@@ -3,6 +3,7 @@ package com.ijs.team.presentation.list
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
 
@@ -112,7 +113,7 @@ object TeamListContract {
      * Side effects for Team Members List screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data object NavigateToCreateMember : Effect
         data class NavigateToMemberDetail(val id: String) : Effect
     }

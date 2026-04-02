@@ -2,6 +2,7 @@ package com.ijs.user.presentation.forgotpassword
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -20,8 +21,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -71,7 +74,11 @@ fun ForgotPasswordScreen(
                 title = { Text(if (state.isResetMode) stringResource(Res.string.reset_password_title) else stringResource(Res.string.forgot_password_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateToLogin) {
-                        Text("←", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             )
@@ -169,7 +176,8 @@ private fun ForgotPasswordContent(
             }
         ),
         singleLine = true,
-        enabled = !isLoading
+        enabled = !isLoading,
+        shape = RoundedCornerShape(FleetTokens.Radius.L)
     )
 
     // Error Message
@@ -263,7 +271,14 @@ private fun ResetPasswordContent(
         leadingIcon = { Text("🔑") },
         trailingIcon = {
             IconButton(onClick = onTogglePasswordVisibility) {
-                Text(if (isPasswordVisible) "👁️" else "👁️‍🗨️")
+                Icon(
+                    painter = painterResource(
+                        if (isPasswordVisible) Res.drawable.ic_visibility_off
+                        else Res.drawable.ic_visibility
+                    ),
+                    contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
+                    modifier = Modifier.size(20.dp)
+                )
             }
         },
         visualTransformation = if (isPasswordVisible) {
@@ -280,6 +295,7 @@ private fun ResetPasswordContent(
         ),
         singleLine = true,
         enabled = !isLoading,
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
         supportingText = {
             Text(stringResource(Res.string.reset_password_min_chars))
         }
@@ -297,7 +313,14 @@ private fun ResetPasswordContent(
         leadingIcon = { Text("🔑") },
         trailingIcon = {
             IconButton(onClick = onToggleConfirmPasswordVisibility) {
-                Text(if (isConfirmPasswordVisible) "👁️" else "👁️‍🗨️")
+                Icon(
+                    painter = painterResource(
+                        if (isConfirmPasswordVisible) Res.drawable.ic_visibility_off
+                        else Res.drawable.ic_visibility
+                    ),
+                    contentDescription = if (isConfirmPasswordVisible) "Hide password" else "Show password",
+                    modifier = Modifier.size(20.dp)
+                )
             }
         },
         visualTransformation = if (isConfirmPasswordVisible) {
@@ -318,6 +341,7 @@ private fun ResetPasswordContent(
         singleLine = true,
         enabled = !isLoading,
         isError = confirmPassword.isNotEmpty() && confirmPassword != newPassword,
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
         supportingText = {
             if (confirmPassword.isNotEmpty() && confirmPassword != newPassword) {
                 Text(stringResource(Res.string.reset_password_mismatch), color = MaterialTheme.colorScheme.error)

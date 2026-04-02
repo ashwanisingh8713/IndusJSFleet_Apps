@@ -16,6 +16,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.util.formatCostAmount
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun DriverCostGroupSection(
@@ -78,7 +81,11 @@ internal fun DriverCostGroupSection(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "${costs.size} ${if (costs.size == 1) "entry" else "entries"}",
+                                text = if (costs.size == 1) {
+                                    stringResource(Res.string.driver_costs_one_entry, costs.size)
+                                } else {
+                                    stringResource(Res.string.driver_costs_n_entries, costs.size)
+                                },
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -200,7 +207,7 @@ internal fun EnhancedDriverCostItem(
                                 color = MaterialTheme.colorScheme.tertiaryContainer
                             ) {
                                 Text(
-                                    text = "🚚 Trip #$tripId",
+                                    text = stringResource(Res.string.driver_costs_trip_link, tripId),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -263,7 +270,7 @@ internal fun DriverCostsSummaryCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Net Amount",
+                    text = stringResource(Res.string.driver_costs_net_amount),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
@@ -275,7 +282,7 @@ internal fun DriverCostsSummaryCard(
                             else MaterialTheme.colorScheme.error
                 )
                 Text(
-                    text = "$costCount entries",
+                    text = stringResource(Res.string.driver_costs_n_entries, costCount),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
                 )
@@ -290,7 +297,7 @@ internal fun DriverCostsSummaryCard(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "💰 Earnings",
+                        text = "💰 ${stringResource(Res.string.driver_costs_earnings)}",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -304,7 +311,7 @@ internal fun DriverCostsSummaryCard(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "📉 Deductions",
+                        text = "📉 ${stringResource(Res.string.driver_costs_deductions)}",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                     )
@@ -395,7 +402,11 @@ internal fun DriverCostItem(cost: com.indusjs.fleet.data.model.driver.DriverCost
                             else MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
-                        text = if (isDeduction) "Deduction" else "Earning",
+                        text = if (isDeduction) {
+                            stringResource(Res.string.driver_cost_deduction)
+                        } else {
+                            stringResource(Res.string.driver_costs_earning)
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isDeduction) MaterialTheme.colorScheme.onErrorContainer
                                 else MaterialTheme.colorScheme.onPrimaryContainer,

@@ -3,29 +3,57 @@
     android:height="48dp"
     android:viewportWidth="48"
     android:viewportHeight="48">
-    <!-- Fleet Management Logo - Truck with location pin -->
-    <!-- Truck body -->
+    <!-- Background rounded square -->
     <path
         android:fillColor="#1976D2"
-        android:pathData="M40,16h-6V8H6c-2.2,0 -4,1.8 -4,4v22h4c0,3.32 2.68,6 6,6s6,-2.68 6,-6h12c0,3.32 2.68,6 6,6s6,-2.68 6,-6h4v-10l-6,-8z"/>
-    <!-- Truck cabin window -->
+        android:pathData="M4,12C4,7.58 7.58,4 12,4h24c4.42,0 8,3.58 8,8v24c0,4.42 -3.58,8 -8,8H12c-4.42,0 -8,-3.58 -8,-8V12z"/>
+    <!-- Shield outline (white border) — inset from edges -->
     <path
-        android:fillColor="#BBDEFB"
-        android:pathData="M39,19l3.92,5H34v-5h5z"/>
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,9L13,14v7c0,7.2 4.7,13.9 11,15.8c6.3,-1.9 11,-8.6 11,-15.8V14L24,9z"/>
+    <!-- Shield inner fill -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M24,11L15,15.2v5.8c0,6.2 3.9,12 9,13.8c5.1,-1.8 9,-7.6 9,-13.8V15.2L24,11z"/>
+    <!-- IJS text - I -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M19,17h1.8v6H19z"/>
+    <!-- IJS text - J -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M22.5,17h1.8v4.8c0,0.9 -0.7,1.6 -1.6,1.6h-0.8v-1.6h0.6V17z"/>
+    <!-- IJS text - S -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26.5,17h2.5v1.6h-2.5v0.7h1.7c0.44,0 0.8,0.36 0.8,0.8v1.5c0,0.44 -0.36,0.8 -0.8,0.8h-2.5v-1.6h2.5v-0.7h-1.7c-0.44,0 -0.8,-0.36 -0.8,-0.8v-1.5c0,-0.44 0.36,-0.8 0.8,-0.8z"/>
+    <!-- Mini truck cargo body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,27h7v4h-7z"/>
+    <!-- Mini truck cabin -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M25,28.5h2.5l1.8,1.5v1h-4.3z"/>
+    <!-- Cabin window cutout -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M25.5,29h1.6l1,1H25.5z"/>
     <!-- Front wheel -->
     <path
-        android:fillColor="#37474F"
-        android:pathData="M12,37m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
+        android:fillColor="#FFFFFF"
+        android:pathData="M20.5,31m-1.3,0a1.3,1.3 0,1 1,2.6 0a1.3,1.3 0,1 1,-2.6 0"/>
+    <!-- Front wheel hub -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M20.5,31m-0.5,0a0.5,0.5 0,1 1,1 0a0.5,0.5 0,1 1,-1 0"/>
     <!-- Rear wheel -->
     <path
-        android:fillColor="#37474F"
-        android:pathData="M36,37m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
-    <!-- Wheel centers -->
+        android:fillColor="#FFFFFF"
+        android:pathData="M27,31m-1.3,0a1.3,1.3 0,1 1,2.6 0a1.3,1.3 0,1 1,-2.6 0"/>
+    <!-- Rear wheel hub -->
     <path
-        android:fillColor="#ECEFF1"
-        android:pathData="M12,37m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"/>
-    <path
-        android:fillColor="#ECEFF1"
-        android:pathData="M36,37m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"/>
+        android:fillColor="#1976D2"
+        android:pathData="M27,31m-0.5,0a0.5,0.5 0,1 1,1 0a0.5,0.5 0,1 1,-1 0"/>
 </vector>
 

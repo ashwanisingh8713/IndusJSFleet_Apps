@@ -5,9 +5,12 @@ import com.ijs.trip.payment.TAG_PAYMENT_DETAIL_VM
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.entity.user.UserRole
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.repository.TripPaymentRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
 /**
  * ViewModel for Payment Detail Screen.
@@ -82,14 +85,19 @@ override suspend fun handleIntent(intent: PaymentDetailContract.Intent) {
         when (val result = repository.deletePayment(payment.id)) {
             is Result.Success -> {
                 updateState { copy(isDeleting = false, showDeleteConfirmation = false) }
-                sendEffect(PaymentDetailContract.Effect.ShowSnackbar("Payment deleted"))
+                sendEffect(PaymentDetailContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_payment_deleted)))
                 sendEffect(PaymentDetailContract.Effect.PaymentDeleted)
                 sendEffect(PaymentDetailContract.Effect.NavigateBack)
             }
             is Result.Error -> {
                 logger.e(TAG_PAYMENT_DETAIL_VM, "Failed to delete payment", result.exception)
                 updateState { copy(isDeleting = false) }
-                sendEffect(PaymentDetailContract.Effect.ShowError(result.message ?: "Failed to delete"))
+                sendEffect(
+                    PaymentDetailContract.Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_delete_payment)
+                    )
+                )
             }
             is Result.Loading -> { /* Already handled */ }
         }
@@ -97,6 +105,6 @@ override suspend fun handleIntent(intent: PaymentDetailContract.Intent) {
 
     private fun downloadReceipt() {
         // TODO: Implement receipt download/generation
-        sendEffect(PaymentDetailContract.Effect.ShowSnackbar("Receipt download coming soon"))
+        sendEffect(PaymentDetailContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.receipt_download_coming_soon)))
     }
 }

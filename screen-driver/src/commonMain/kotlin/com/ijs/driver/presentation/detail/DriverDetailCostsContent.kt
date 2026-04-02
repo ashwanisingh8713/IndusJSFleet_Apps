@@ -23,6 +23,7 @@ import com.indusjs.pdfreport.model.DriverCostsPdfData
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import com.indusjs.datetimepicker.FleetDatePicker
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.util.formatCostAmount
@@ -32,6 +33,12 @@ internal fun DriverCostsTabContent(
     state: DriverDetailContract.State,
     viewModel: DriverDetailViewModel
 ) {
+    val costGroupNames = mapOf(
+        "DC-G-001" to stringResource(Res.string.driver_costs_group_salary),
+        "DC-G-002" to stringResource(Res.string.driver_costs_group_incentives),
+        "DC-G-003" to stringResource(Res.string.driver_costs_deductions),
+        "DC-G-004" to stringResource(Res.string.driver_costs_group_other)
+    )
     Box(modifier = Modifier.fillMaxSize()) {
         when {
             // Initial loading
@@ -46,7 +53,7 @@ internal fun DriverCostsTabContent(
                     ) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Loading costs...",
+                            text = stringResource(Res.string.driver_costs_loading),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -69,12 +76,12 @@ internal fun DriverCostsTabContent(
                             style = MaterialTheme.typography.displayMedium
                         )
                         Text(
-                            text = state.costsError ?: "An error occurred",
+                            text = state.costsError ?: stringResource(Res.string.driver_costs_error),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error
                         )
                         OutlinedButton(onClick = { viewModel.sendIntent(DriverDetailContract.Intent.LoadCosts) }) {
-                            Text("Retry")
+                            Text(stringResource(Res.string.retry))
                         }
                     }
                 }
@@ -96,13 +103,13 @@ internal fun DriverCostsTabContent(
                             style = MaterialTheme.typography.displayLarge
                         )
                         Text(
-                            text = "No costs recorded",
+                            text = stringResource(Res.string.driver_costs_no_costs),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Driver cost entries will appear here",
+                            text = stringResource(Res.string.driver_costs_hint),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -110,7 +117,7 @@ internal fun DriverCostsTabContent(
                         Button(
                             onClick = { viewModel.sendIntent(DriverDetailContract.Intent.NavigateToAddDriverCost) }
                         ) {
-                            Text("Add Driver Cost")
+                            Text(stringResource(Res.string.driver_costs_add))
                         }
                     }
                 }
@@ -143,7 +150,7 @@ internal fun DriverCostsTabContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Cost Breakdown",
+                                text = stringResource(Res.string.driver_costs_breakdown),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -165,7 +172,11 @@ internal fun DriverCostsTabContent(
                                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                                     ) {
                                         Text(
-                                            text = if (allExpanded) "Collapse All" else "Expand All",
+                                            text = if (allExpanded) {
+                                                stringResource(Res.string.driver_costs_collapse_all)
+                                            } else {
+                                                stringResource(Res.string.driver_costs_expand_all)
+                                            },
                                             style = MaterialTheme.typography.labelMedium
                                         )
                                     }
@@ -174,7 +185,7 @@ internal fun DriverCostsTabContent(
                                     onClick = { viewModel.sendIntent(DriverDetailContract.Intent.ShowCostsFilterSheet) },
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
-                                    Text("🔍 Filter")
+                                    Text(stringResource(Res.string.driver_detail_filter))
                                 }
                             }
                         }
@@ -194,12 +205,6 @@ internal fun DriverCostsTabContent(
 
                     // Cost Groups (Collapsible Sections)
                     val groupOrder = listOf("DC-G-001", "DC-G-002", "DC-G-003", "DC-G-004")
-                    val groupNames = mapOf(
-                        "DC-G-001" to "Salary & Wages",
-                        "DC-G-002" to "Incentives & Bonuses",
-                        "DC-G-003" to "Deductions",
-                        "DC-G-004" to "Other"
-                    )
                     val groupIcons = mapOf(
                         "DC-G-001" to "💼",
                         "DC-G-002" to "🏆",
@@ -213,7 +218,8 @@ internal fun DriverCostsTabContent(
                             item(key = "group_$groupId") {
                                 DriverCostGroupSection(
                                     groupId = groupId,
-                                    groupName = groupNames[groupId] ?: "Other",
+                                    groupName = costGroupNames[groupId]
+                                        ?: stringResource(Res.string.driver_costs_group_other),
                                     groupIcon = groupIcons[groupId] ?: "📋",
                                     costs = groupCosts,
                                     totalAmount = state.groupTotals[groupId] ?: 0.0,
@@ -271,7 +277,7 @@ internal fun DriverCostsTabContent(
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_add),
-                    contentDescription = "Add Driver Cost",
+                    contentDescription = stringResource(Res.string.driver_costs_add),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -315,7 +321,7 @@ internal fun DriverCostsHeroCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Cost Summary",
+                        text = stringResource(Res.string.driver_costs_summary),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -325,9 +331,13 @@ internal fun DriverCostsHeroCard(
                         shape = RoundedCornerShape(8.dp),
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
-                        val entryText = if (entryCount == 1) "entry" else "entries"
+                        val entryText = if (entryCount == 1) {
+                            stringResource(Res.string.driver_costs_one_entry, entryCount)
+                        } else {
+                            stringResource(Res.string.driver_costs_n_entries, entryCount)
+                        }
                         Text(
-                            text = "$entryCount $entryText",
+                            text = entryText,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -364,7 +374,7 @@ internal fun DriverCostsHeroCard(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Earnings",
+                            text = stringResource(Res.string.driver_costs_earnings),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -388,7 +398,7 @@ internal fun DriverCostsHeroCard(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Deductions",
+                            text = stringResource(Res.string.driver_costs_deductions),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -412,7 +422,7 @@ internal fun DriverCostsHeroCard(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Net",
+                            text = stringResource(Res.string.driver_costs_net),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
@@ -461,18 +471,22 @@ internal fun ActiveFiltersRow(
                 )
                 Text(
                     text = when {
-                        month.isNotBlank() -> "Month: $month"
-                        startDate.isNotBlank() && endDate.isNotBlank() -> "$startDate to $endDate"
-                        startDate.isNotBlank() -> "From: $startDate"
-                        endDate.isNotBlank() -> "To: $endDate"
-                        else -> "Filtered"
+                        month.isNotBlank() -> stringResource(Res.string.driver_costs_filter_month, month)
+                        startDate.isNotBlank() && endDate.isNotBlank() -> stringResource(
+                            Res.string.driver_costs_filter_range,
+                            startDate,
+                            endDate
+                        )
+                        startDate.isNotBlank() -> stringResource(Res.string.driver_costs_filter_from, startDate)
+                        endDate.isNotBlank() -> stringResource(Res.string.driver_costs_filter_to, endDate)
+                        else -> stringResource(Res.string.driver_costs_filter_active)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
             TextButton(onClick = onClear) {
-                Text("Clear", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(Res.string.action_clear), style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -508,7 +522,7 @@ internal fun CostsFilterSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Filter Costs",
+                text = stringResource(Res.string.driver_costs_filter_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -524,8 +538,8 @@ internal fun CostsFilterSheet(
                         localEndDate = ""
                     }
                 },
-                label = { Text("Month (YYYY-MM)") },
-                placeholder = { Text("e.g., 2026-01") },
+                label = { Text(stringResource(Res.string.driver_costs_month_label)) },
+                placeholder = { Text(stringResource(Res.string.driver_costs_month_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -545,7 +559,7 @@ internal fun CostsFilterSheet(
                     // Clear month if date range is used
                     if (it.isNotBlank()) localMonth = ""
                 },
-                label = "Start Date",
+                label = stringResource(Res.string.date_range_start_date),
                 maxDate = today  // Can't select future dates for cost filtering
             )
 
@@ -555,7 +569,7 @@ internal fun CostsFilterSheet(
                     localEndDate = it
                     if (it.isNotBlank()) localMonth = ""
                 },
-                label = "End Date",
+                label = stringResource(Res.string.date_range_end_date),
                 minDate = localStartDate.takeIf { it.isNotBlank() },  // End date must be after start date
                 maxDate = today  // Can't select future dates
             )
@@ -575,14 +589,14 @@ internal fun CostsFilterSheet(
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Clear All")
+                    Text(stringResource(Res.string.action_clear_all))
                 }
 
                 Button(
                     onClick = { onApply(localStartDate, localEndDate, localMonth) },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Apply")
+                    Text(stringResource(Res.string.action_apply))
                 }
             }
 

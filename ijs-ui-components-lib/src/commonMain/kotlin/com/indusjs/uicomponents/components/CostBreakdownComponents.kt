@@ -11,8 +11,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.data.model.costs.CostBreakdownItemDto
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlin.math.abs
 import kotlin.math.round
+import org.jetbrains.compose.resources.stringResource
 
 // ============================================
 // Cost Breakdown UI Components
@@ -90,8 +92,9 @@ fun CostBreakdownSection(
     modifier: Modifier = Modifier,
     currencySymbol: String = "₹",
     showTotal: Boolean = true,
-    emptyMessage: String = "No costs recorded"
+    emptyMessage: String = ""
 ) {
+    val resolvedEmptyMessage = emptyMessage.ifBlank { stringResource(Res.string.no_costs_recorded) }
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -136,7 +139,7 @@ fun CostBreakdownSection(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = emptyMessage,
+                        text = resolvedEmptyMessage,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -272,8 +275,9 @@ fun FinancialSummaryCard(
     modifier: Modifier = Modifier,
     currencySymbol: String = "₹",
     profitMargin: Double? = null,
-    title: String = "Financial Summary"
+    title: String = ""
 ) {
+    val resolvedTitle = title.ifBlank { stringResource(Res.string.financial_summary) }
     val isProfitable = netProfit >= 0
     val profitColor = if (isProfitable) {
         Color(0xFF2E7D32) // Green
@@ -295,7 +299,7 @@ fun FinancialSummaryCard(
         ) {
             // Title
             Text(
-                text = title,
+                text = resolvedTitle,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -334,7 +338,7 @@ fun FinancialSummaryCard(
                     )
                     profitMargin?.let {
                         Text(
-                            text = "Margin: ${formatDecimal(it, 1)}%",
+                            text = stringResource(Res.string.margin_percent, formatDecimal(it, 1)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

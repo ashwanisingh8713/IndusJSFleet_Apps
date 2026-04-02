@@ -343,7 +343,14 @@ private fun RoleBadge(role: UserRole) {
             Text(text = icon, style = MaterialTheme.typography.labelLarge)
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = role.name.lowercase().replaceFirstChar { it.uppercase() },
+                text = stringResource(
+                    when (role) {
+                        UserRole.OWNER -> Res.string.role_owner
+                        UserRole.GENERAL_MANAGER -> Res.string.role_general_manager
+                        UserRole.MANAGER -> Res.string.role_manager
+                        UserRole.SUPERVISOR -> Res.string.role_supervisor
+                    }
+                ),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = contentColor
@@ -376,12 +383,17 @@ private fun QuickInfoChip(icon: String, value: String) {
 @Composable
 private fun ProfileDetailsCard(user: User) {
     EnhancedProfileCard(
-        title = "Contact Information",
+        title = stringResource(Res.string.profile_contact_info),
         icon = "📋"
     ) {
-        EnhancedProfileRow(icon = "📧", label = "Email", value = user.email)
-        EnhancedProfileRow(icon = "📱", label = "Mobile", value = user.mobile)
-        EnhancedProfileRow(icon = "📅", label = "Member Since", value = formatDate(user.createdAt), isLast = true)
+        EnhancedProfileRow(icon = "📧", label = stringResource(Res.string.profile_email), value = user.email)
+        EnhancedProfileRow(icon = "📱", label = stringResource(Res.string.profile_mobile), value = user.mobile)
+        EnhancedProfileRow(
+            icon = "📅",
+            label = stringResource(Res.string.profile_member_since),
+            value = formatDate(user.createdAt),
+            isLast = true
+        )
     }
 }
 
@@ -507,7 +519,7 @@ private fun ProfileDetailRow(
 @Composable
 private fun OrganizationStatsCard(stats: OrganizationStats) {
     EnhancedProfileCard(
-        title = "Organization Overview",
+        title = stringResource(Res.string.profile_organization_overview),
         icon = "📊"
     ) {
         // First Row - Team Stats
@@ -518,19 +530,19 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             EnhancedStatItem(
                 icon = "💼",
                 value = stats.totalManagers.toString(),
-                label = "Managers",
+                label = stringResource(Res.string.team_filter_managers),
                 color = MaterialTheme.colorScheme.secondary
             )
             EnhancedStatItem(
                 icon = "👁️",
                 value = stats.totalSupervisors.toString(),
-                label = "Supervisors",
+                label = stringResource(Res.string.team_filter_supervisors),
                 color = MaterialTheme.colorScheme.tertiary
             )
             EnhancedStatItem(
                 icon = "🚗",
                 value = stats.totalDrivers.toString(),
-                label = "Drivers",
+                label = stringResource(Res.string.org_stats_drivers),
                 color = MaterialTheme.colorScheme.primary
             )
         }
@@ -550,13 +562,13 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             EnhancedStatItemWithIcon(
                 iconRes = Res.drawable.ic_truck,
                 value = stats.totalVehicles.toString(),
-                label = "Vehicles",
+                label = stringResource(Res.string.org_stats_vehicles),
                 color = MaterialTheme.colorScheme.primary
             )
             EnhancedStatItem(
                 icon = "🚀",
                 value = stats.activeTrips.toString(),
-                label = "Active Trips",
+                label = stringResource(Res.string.dashboard_active_trips),
                 color = MaterialTheme.colorScheme.tertiary
             )
         }
@@ -644,11 +656,16 @@ private fun EnhancedStatItemWithIcon(
 @Composable
 private fun OwnerInfoCard(ownerInfo: OwnerInfo) {
     EnhancedProfileCard(
-        title = "Organization Owner",
+        title = stringResource(Res.string.profile_org_owner),
         icon = "👑"
     ) {
-        EnhancedProfileRow(icon = "👤", label = "Owner Name", value = ownerInfo.ownerName)
-        EnhancedProfileRow(icon = "📧", label = "Owner Email", value = ownerInfo.ownerEmail, isLast = true)
+        EnhancedProfileRow(icon = "👤", label = stringResource(Res.string.profile_owner_name), value = ownerInfo.ownerName)
+        EnhancedProfileRow(
+            icon = "📧",
+            label = stringResource(Res.string.profile_owner_email),
+            value = ownerInfo.ownerEmail,
+            isLast = true
+        )
     }
 }
 
@@ -659,7 +676,7 @@ private fun ActionButtonsCard(
     onLogout: () -> Unit
 ) {
     EnhancedProfileCard(
-        title = "Account Actions",
+        title = stringResource(Res.string.profile_account_actions),
         icon = "⚙️"
     ) {
         // Edit Profile Button
@@ -677,7 +694,7 @@ private fun ActionButtonsCard(
                 Text(text = "✏️", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Edit Profile",
+                    text = stringResource(Res.string.profile_edit),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -701,7 +718,7 @@ private fun ActionButtonsCard(
                 Text(text = "🔑", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Change Password",
+                    text = stringResource(Res.string.profile_change_password),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -737,7 +754,7 @@ private fun ActionButtonsCard(
                 Text(text = "🚪", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Logout",
+                    text = stringResource(Res.string.profile_logout),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -795,14 +812,14 @@ private fun EditProfileContent(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Edit Your Profile",
+                        text = stringResource(Res.string.profile_edit_heading),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Update your personal information",
+                        text = stringResource(Res.string.profile_edit_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -842,7 +859,7 @@ private fun EditProfileContent(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Personal Details",
+                            text = stringResource(Res.string.profile_personal_details),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -855,7 +872,7 @@ private fun EditProfileContent(
                         value = firstName,
                         onValueChange = onFirstNameChange,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("First Name") },
+                        label = { Text(stringResource(Res.string.profile_first_name)) },
                         leadingIcon = { Text("👤") },
                         singleLine = true,
                         enabled = !isUpdating,
@@ -866,7 +883,7 @@ private fun EditProfileContent(
                         value = lastName,
                         onValueChange = onLastNameChange,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Last Name") },
+                        label = { Text(stringResource(Res.string.profile_last_name)) },
                         leadingIcon = { Text("👤") },
                         singleLine = true,
                         enabled = !isUpdating,
@@ -877,7 +894,7 @@ private fun EditProfileContent(
                         value = email,
                         onValueChange = onEmailChange,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Email") },
+                        label = { Text(stringResource(Res.string.profile_email)) },
                         leadingIcon = { Text("📧") },
                         singleLine = true,
                         enabled = !isUpdating,
@@ -888,7 +905,7 @@ private fun EditProfileContent(
                         value = mobile,
                         onValueChange = onMobileChange,
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Mobile") },
+                        label = { Text(stringResource(Res.string.profile_mobile)) },
                         leadingIcon = { Text("📱") },
                         singleLine = true,
                         enabled = !isUpdating,
@@ -943,7 +960,7 @@ private fun EditProfileContent(
                         Text("💾", style = MaterialTheme.typography.bodyLarge)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Save Changes",
+                            text = stringResource(Res.string.profile_save),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold
                         )

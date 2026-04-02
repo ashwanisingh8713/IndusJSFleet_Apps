@@ -120,7 +120,7 @@ fun VehicleFinanceScreen(
             when {
                 state.isLoading && state.vehicles.isEmpty() -> LoadingContent()
                 state.error != null && state.vehicles.isEmpty() -> ErrorContent(
-                    error = state.error ?: "Something went wrong",
+                    error = state.error ?: stringResource(Res.string.finance_error_generic),
                     onRetry = { viewModel.sendIntent(Intent.LoadData) }
                 )
                 else -> VehicleFinanceContent(
@@ -149,6 +149,7 @@ private fun VehicleFinanceContent(
     onRecordEmiClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val notAvailableLabel = stringResource(Res.string.not_applicable_short)
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -207,7 +208,7 @@ private fun VehicleFinanceContent(
                         IconButton(onClick = { onSearchChange("") }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_close),
-                                contentDescription = "Clear",
+                                contentDescription = stringResource(Res.string.action_clear),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -227,8 +228,10 @@ private fun VehicleFinanceContent(
         if (state.filteredVehicles.isEmpty()) {
             item {
                 EmptyContent(
-                    title = "No vehicles found",
-                    actionLabel = if (state.selectedFilter == FinanceFilter.PENDING) "Add Purchase Info" else null,
+                    title = stringResource(Res.string.finance_empty_no_vehicles),
+                    actionLabel = if (state.selectedFilter == FinanceFilter.PENDING) {
+                        stringResource(Res.string.finance_add_purchase)
+                    } else null,
                     onAction = if (state.selectedFilter == FinanceFilter.PENDING) onAddPurchaseClick else null
                 )
             }
@@ -236,6 +239,7 @@ private fun VehicleFinanceContent(
             items(state.filteredVehicles) { item ->
                 VehicleFinanceCard(
                     item = item,
+                    notAvailableLabel = notAvailableLabel,
                     onClick = { onVehicleClick(item.vehicle.id.toIntOrNull() ?: 0) },
                     onRecordEmiClick = { onRecordEmiClick(item.vehicle.id.toIntOrNull() ?: 0) },
                     onAddPurchaseClick = onAddPurchaseClick
@@ -278,12 +282,12 @@ private fun FinanceSummaryCard(
             ) {
                 Column {
                     Text(
-                        text = "Fleet Finance",
+                        text = stringResource(Res.string.finance_fleet_finance),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "$totalVehicles vehicles in fleet",
+                        text = stringResource(Res.string.finance_vehicles_in_fleet, totalVehicles),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -306,7 +310,7 @@ private fun FinanceSummaryCard(
                                 color = WarningOrange
                             )
                             Text(
-                                text = "Monthly EMI",
+                                text = stringResource(Res.string.finance_monthly_emi_badge),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = WarningOrange.copy(alpha = 0.8f)
                             )
@@ -322,17 +326,17 @@ private fun FinanceSummaryCard(
             ) {
                 CompactStatItem(
                     value = financedVehicles.toString(),
-                    label = "Loans",
+                    label = stringResource(Res.string.finance_stat_loans),
                     color = LoanBlue
                 )
                 CompactStatItem(
                     value = cashVehicles.toString(),
-                    label = "Cash",
+                    label = stringResource(Res.string.finance_stat_cash),
                     color = CashGreen
                 )
                 CompactStatItem(
                     value = pendingVehicles.toString(),
-                    label = "Pending",
+                    label = stringResource(Res.string.finance_stat_pending),
                     color = NoInfoGray
                 )
             }
@@ -353,7 +357,7 @@ private fun FinanceSummaryCard(
                             color = CashGreen
                         )
                         Text(
-                            text = "Total Paid",
+                            text = stringResource(Res.string.finance_total_paid_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -374,7 +378,7 @@ private fun FinanceSummaryCard(
                             color = CriticalRed
                         )
                         Text(
-                            text = "Outstanding",
+                            text = stringResource(Res.string.finance_outstanding_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -430,7 +434,7 @@ private fun EmiAlertsCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "🔔 EMI Alerts",
+                text = stringResource(Res.string.finance_emi_alerts_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -481,15 +485,16 @@ private fun EmiAlertItem(
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = alert.vehicle?.registrationNumber ?: "Vehicle",
+                text = alert.vehicle?.registrationNumber ?: stringResource(Res.string.finance_vehicle_fallback),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = if (isOverdue)
-                    "Overdue by ${alert.daysOverdue} days"
-                else
-                    "Due in ${alert.daysUntilDue} days",
+                text = if (isOverdue) {
+                    stringResource(Res.string.finance_overdue_by_days, alert.daysOverdue)
+                } else {
+                    stringResource(Res.string.finance_due_in_days, alert.daysUntilDue)
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = if (isOverdue) CriticalRed else WarningOrange
             )
@@ -516,7 +521,7 @@ private fun FilterChipsRow(
     ) {
         item {
             FinanceFilterChip(
-                label = "All",
+                label = stringResource(Res.string.finance_filter_all),
                 count = financedCount + cashCount + pendingCount,
                 selected = selectedFilter == FinanceFilter.ALL,
                 color = MaterialTheme.colorScheme.primary,
@@ -525,7 +530,7 @@ private fun FilterChipsRow(
         }
         item {
             FinanceFilterChip(
-                label = "Financed",
+                label = stringResource(Res.string.finance_filter_financed),
                 count = financedCount,
                 selected = selectedFilter == FinanceFilter.LOAN,
                 color = LoanBlue,
@@ -534,7 +539,7 @@ private fun FilterChipsRow(
         }
         item {
             FinanceFilterChip(
-                label = "Cash",
+                label = stringResource(Res.string.finance_stat_cash),
                 count = cashCount,
                 selected = selectedFilter == FinanceFilter.CASH,
                 color = CashGreen,
@@ -543,7 +548,7 @@ private fun FilterChipsRow(
         }
         item {
             FinanceFilterChip(
-                label = "Not Recorded",
+                label = stringResource(Res.string.finance_filter_not_recorded),
                 count = pendingCount,
                 selected = selectedFilter == FinanceFilter.PENDING,
                 color = NoInfoGray,
@@ -556,6 +561,7 @@ private fun FilterChipsRow(
 @Composable
 private fun VehicleFinanceCard(
     item: VehicleFinanceItem,
+    notAvailableLabel: String,
     onClick: () -> Unit,
     onRecordEmiClick: () -> Unit,
     onAddPurchaseClick: () -> Unit
@@ -604,11 +610,15 @@ private fun VehicleFinanceCard(
 
             // Content based on status
             when (item.status) {
-                FinanceStatus.LOAN -> LoanCardContent(
+                FinanceStatus.LOAN ->                 LoanCardContent(
                     purchase = item.purchase!!,
-                    onRecordEmiClick = onRecordEmiClick
+                    onRecordEmiClick = onRecordEmiClick,
+                    notAvailableLabel = notAvailableLabel
                 )
-                FinanceStatus.CASH -> CashCardContent(purchase = item.purchase!!)
+                FinanceStatus.CASH -> CashCardContent(
+                    purchase = item.purchase!!,
+                    notAvailableLabel = notAvailableLabel
+                )
                 FinanceStatus.PENDING -> NoInfoCardContent(onAddClick = onAddPurchaseClick)
             }
         }
@@ -617,10 +627,15 @@ private fun VehicleFinanceCard(
 
 @Composable
 private fun StatusChip(status: FinanceStatus) {
-    val (color, label) = when (status) {
-        FinanceStatus.LOAN -> LoanBlue to "Financed"
-        FinanceStatus.CASH -> CashGreen to "Cash"
-        FinanceStatus.PENDING -> NoInfoGray to "Not Recorded"
+    val color = when (status) {
+        FinanceStatus.LOAN -> LoanBlue
+        FinanceStatus.CASH -> CashGreen
+        FinanceStatus.PENDING -> NoInfoGray
+    }
+    val label = when (status) {
+        FinanceStatus.LOAN -> stringResource(Res.string.finance_status_financed)
+        FinanceStatus.CASH -> stringResource(Res.string.finance_stat_cash)
+        FinanceStatus.PENDING -> stringResource(Res.string.finance_status_not_recorded)
     }
 
     Surface(
@@ -640,7 +655,8 @@ private fun StatusChip(status: FinanceStatus) {
 @Composable
 private fun LoanCardContent(
     purchase: VehiclePurchase,
-    onRecordEmiClick: () -> Unit
+    onRecordEmiClick: () -> Unit,
+    notAvailableLabel: String
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         // Divider
@@ -653,19 +669,19 @@ private fun LoanCardContent(
         ) {
             Column {
                 Text(
-                    text = "Lender",
+                    text = stringResource(Res.string.finance_lender),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = purchase.financierName ?: "N/A",
+                    text = purchase.financierName ?: notAvailableLabel,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "Monthly EMI",
+                    text = stringResource(Res.string.finance_monthly_emi_badge),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -686,13 +702,17 @@ private fun LoanCardContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${purchase.loanProgressPercent.toInt()}% Complete",
+                    text = stringResource(Res.string.finance_percent_complete, purchase.loanProgressPercent.toInt()),
                     style = MaterialTheme.typography.labelMedium,
                     color = LoanBlue,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "${purchase.emisPaid}/${purchase.tenureMonths} EMIs paid",
+                    text = stringResource(
+                        Res.string.finance_emis_paid_progress,
+                        purchase.emisPaid,
+                        purchase.tenureMonths
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -720,12 +740,18 @@ private fun LoanCardContent(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "Next EMI: ${getNextEmiDueDate(purchase)}",
+                    text = stringResource(
+                        Res.string.finance_next_emi_line,
+                        getNextEmiDueDate(purchase, notAvailableLabel)
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "Outstanding: ${formatCurrency(purchase.outstandingBalance)}",
+                    text = stringResource(
+                        Res.string.finance_outstanding_line,
+                        formatCurrency(purchase.outstandingBalance)
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = CriticalRed
                 )
@@ -746,7 +772,7 @@ private fun LoanCardContent(
 }
 
 @Composable
-private fun CashCardContent(purchase: VehiclePurchase) {
+private fun CashCardContent(purchase: VehiclePurchase, notAvailableLabel: String) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
@@ -761,7 +787,7 @@ private fun CashCardContent(purchase: VehiclePurchase) {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "Purchase Price",
+                    text = stringResource(Res.string.finance_purchase_price),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -789,7 +815,7 @@ private fun CashCardContent(purchase: VehiclePurchase) {
                 ) {
                     Text("✓", style = MaterialTheme.typography.labelMedium, color = CashGreen)
                     Text(
-                        text = "Fully Paid",
+                        text = stringResource(Res.string.finance_fully_paid),
                         style = MaterialTheme.typography.labelMedium,
                         color = CashGreen,
                         fontWeight = FontWeight.SemiBold
@@ -816,12 +842,12 @@ private fun NoInfoCardContent(onAddClick: () -> Unit) {
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "No purchase information",
+                    text = stringResource(Res.string.finance_no_purchase_card),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "Add details to track finance",
+                    text = stringResource(Res.string.finance_add_details_track),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -831,7 +857,7 @@ private fun NoInfoCardContent(onAddClick: () -> Unit) {
                 onClick = onAddClick,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                Text("Add Info", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(Res.string.finance_add_info_short), style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -841,7 +867,7 @@ private fun NoInfoCardContent(onAddClick: () -> Unit) {
  * Get the next EMI due date for display.
  * Calculates from loanStartDate + emisPaid months to ensure accuracy.
  */
-private fun getNextEmiDueDate(purchase: VehiclePurchase): String {
+private fun getNextEmiDueDate(purchase: VehiclePurchase, notAvailableLabel: String): String {
     // Calculate from loanStartDate + emisPaid months
     val loanStartDate = purchase.loanStartDate
     if (!loanStartDate.isNullOrBlank()) {
@@ -860,7 +886,7 @@ private fun getNextEmiDueDate(purchase: VehiclePurchase): String {
         return formatDueDateDisplay(purchase.nextEmiDueDate)
     }
 
-    return "N/A"
+    return notAvailableLabel
 }
 
 /**

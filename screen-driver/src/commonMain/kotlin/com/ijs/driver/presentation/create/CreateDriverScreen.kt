@@ -17,15 +17,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDatePicker
 import com.indusjs.datetimepicker.DateTimeUtils
-import com.indusjs.uicomponents.components.FleetEmailField
-import com.indusjs.uicomponents.components.FleetMobileField
 import com.indusjs.uicomponents.components.CaretakerSectionCard
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
 import com.ijs.driver.domain.entity.LicenseType
+import com.ijs.driver.presentation.driverLicenseTypeLong
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Create Driver Screen composable.
@@ -59,12 +62,12 @@ fun CreateDriverScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Driver") },
+                title = { Text(stringResource(Res.string.driver_create_title)) },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.sendIntent(CreateDriverContract.Intent.Cancel) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -92,7 +95,7 @@ fun CreateDriverScreen(
                         onClick = { viewModel.sendIntent(CreateDriverContract.Intent.Cancel) },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(Res.string.cancel))
                     }
 
                     Button(
@@ -108,7 +111,10 @@ fun CreateDriverScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
-                        Text(if (state.isSaving) "Saving..." else "Add Driver")
+                        Text(
+                            if (state.isSaving) stringResource(Res.string.action_saving)
+                            else stringResource(Res.string.drivers_add)
+                        )
                     }
                 }
             }
@@ -124,8 +130,8 @@ fun CreateDriverScreen(
             // Required Fields Section
             item {
                 SectionHeader(
-                    title = "Basic Information",
-                    subtitle = "Required fields",
+                    title = stringResource(Res.string.driver_edit_basic_info),
+                    subtitle = stringResource(Res.string.driver_create_section_basic_subtitle),
                     icon = "👤"
                 )
             }
@@ -138,8 +144,8 @@ fun CreateDriverScreen(
                     OutlinedTextField(
                         value = state.firstName,
                         onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateFirstName(it)) },
-                        label = { Text("First Name *") },
-                        placeholder = { Text("e.g., Raj") },
+                        label = { Text(stringResource(Res.string.driver_create_first_name)) },
+                        placeholder = { Text(stringResource(Res.string.driver_create_first_name_placeholder)) },
                         isError = state.firstNameError != null,
                         supportingText = state.firstNameError?.let { { Text(it) } },
                         keyboardOptions = KeyboardOptions(
@@ -153,8 +159,8 @@ fun CreateDriverScreen(
                     OutlinedTextField(
                         value = state.lastName,
                         onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLastName(it)) },
-                        label = { Text("Last Name *") },
-                        placeholder = { Text("e.g., Kumar") },
+                        label = { Text(stringResource(Res.string.driver_create_last_name)) },
+                        placeholder = { Text(stringResource(Res.string.driver_create_last_name_placeholder)) },
                         isError = state.lastNameError != null,
                         supportingText = state.lastNameError?.let { { Text(it) } },
                         keyboardOptions = KeyboardOptions(
@@ -168,22 +174,28 @@ fun CreateDriverScreen(
             }
 
             item {
-                FleetMobileField(
-                    rawValue = state.mobile,
-                    onRawValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateMobile(it)) },
-                    label = "Mobile Number *",
-                    placeholder = "Enter 10-digit mobile",
+                FleetInputField(
+                    value = state.mobile,
+                    onValueChange = {
+                        viewModel.sendIntent(
+                            CreateDriverContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
+                        )
+                    },
+                    fieldType = FieldType.PHONE,
+                    label = stringResource(Res.string.driver_label_mobile_required),
+                    placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
                     isError = state.mobileError != null,
                     errorMessage = state.mobileError
                 )
             }
 
             item {
-                FleetEmailField(
+                FleetInputField(
                     value = state.email,
                     onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateEmail(it)) },
-                    label = "Email (Optional)",
-                    placeholder = "e.g., raj.kumar@example.com",
+                    fieldType = FieldType.EMAIL,
+                    label = stringResource(Res.string.driver_label_email_optional),
+                    placeholder = stringResource(Res.string.driver_placeholder_email_example),
                     isError = state.emailError != null,
                     errorMessage = state.emailError
                 )
@@ -192,8 +204,8 @@ fun CreateDriverScreen(
             // License Section
             item {
                 SectionHeader(
-                    title = "License Details",
-                    subtitle = "Driver's license information",
+                    title = stringResource(Res.string.driver_edit_license_details),
+                    subtitle = stringResource(Res.string.driver_create_license_section_subtitle),
                     icon = "🪪"
                 )
             }
@@ -202,8 +214,8 @@ fun CreateDriverScreen(
                 OutlinedTextField(
                     value = state.licenseNumber,
                     onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseNumber(it)) },
-                    label = { Text("License Number *") },
-                    placeholder = { Text("e.g., DL-1234567890") },
+                    label = { Text(stringResource(Res.string.driver_create_license)) },
+                    placeholder = { Text(stringResource(Res.string.driver_create_license_placeholder)) },
                     leadingIcon = { Text("🪪", modifier = Modifier.padding(start = 12.dp)) },
                     isError = state.licenseNumberError != null,
                     supportingText = state.licenseNumberError?.let { { Text(it) } },
@@ -227,7 +239,7 @@ fun CreateDriverScreen(
                 FleetDatePicker(
                     date = state.licenseExpiry,
                     onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseExpiry(it)) },
-                    label = "License Expiry Date *",
+                    label = stringResource(Res.string.driver_label_license_expiry_required),
                     minDate = DateTimeUtils.getCurrentDate(),  // License expiry must be in future
                     isError = state.licenseExpiryError != null,
                     errorMessage = state.licenseExpiryError
@@ -237,8 +249,8 @@ fun CreateDriverScreen(
             // Personal Details Section
             item {
                 SectionHeader(
-                    title = "Personal Details",
-                    subtitle = "Optional information",
+                    title = stringResource(Res.string.driver_edit_personal_details),
+                    subtitle = stringResource(Res.string.driver_create_personal_section_subtitle),
                     icon = "📋"
                 )
             }
@@ -250,7 +262,7 @@ fun CreateDriverScreen(
                 FleetDatePicker(
                     date = state.dateOfBirth,
                     onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateDateOfBirth(it)) },
-                    label = "Date of Birth",
+                    label = stringResource(Res.string.driver_overview_dob),
                     maxDate = maxDobDate,  // Driver must be at least 18 years old
                     initialDisplayDate = maxDobDate  // Show 18 years ago when picker opens
                 )
@@ -268,8 +280,8 @@ fun CreateDriverScreen(
                 OutlinedTextField(
                     value = state.address,
                     onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateAddress(it)) },
-                    label = { Text("Address") },
-                    placeholder = { Text("e.g., 123 Main St, New Delhi") },
+                    label = { Text(stringResource(Res.string.driver_create_address)) },
+                    placeholder = { Text(stringResource(Res.string.driver_create_address_placeholder)) },
                     leadingIcon = { Text("🏠", modifier = Modifier.padding(start = 12.dp)) },
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Words,
@@ -282,12 +294,17 @@ fun CreateDriverScreen(
             }
 
             item {
-                FleetMobileField(
-                    rawValue = state.emergencyContact,
-                    onRawValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateEmergencyContact(it)) },
-                    label = "Emergency Contact",
-                    placeholder = "Enter 10-digit mobile",
-                    leadingEmoji = "🆘"
+                FleetInputField(
+                    value = state.emergencyContact,
+                    onValueChange = {
+                        viewModel.sendIntent(
+                            CreateDriverContract.Intent.UpdateEmergencyContact(filterDigitsOnly(it, 10))
+                        )
+                    },
+                    fieldType = FieldType.PHONE,
+                    label = stringResource(Res.string.driver_overview_emergency_contact),
+                    placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
+                    leadingIcon = { Text("🆘", modifier = Modifier.padding(start = 12.dp)) }
                 )
             }
 
@@ -295,7 +312,7 @@ fun CreateDriverScreen(
                 FleetDatePicker(
                     date = state.joiningDate,
                     onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateJoiningDate(it)) },
-                    label = "Joining Date"
+                    label = stringResource(Res.string.driver_overview_joining_date)
                 )
             }
 
@@ -337,7 +354,7 @@ fun CreateDriverScreen(
                     ) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Creating Driver...")
+                        Text(stringResource(Res.string.driver_create_creating))
                     }
                 }
             }
@@ -390,7 +407,7 @@ private fun LicenseTypeSelector(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "License Type",
+            text = stringResource(Res.string.driver_edit_license_type),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -404,22 +421,13 @@ private fun LicenseTypeSelector(
                 FilterChip(
                     selected = selectedType == type,
                     onClick = { onTypeSelected(type) },
-                    label = { Text(getLicenseTypeLabel(type)) },
+                    label = { Text(driverLicenseTypeLong(type)) },
                     leadingIcon = if (selectedType == type) {
                         { Text("✓") }
                     } else null
                 )
             }
         }
-    }
-}
-
-private fun getLicenseTypeLabel(type: LicenseType): String {
-    return when (type) {
-        LicenseType.LMV -> "LMV (Light Motor)"
-        LicenseType.HMV -> "HMV (Heavy Motor)"
-        LicenseType.MCWG -> "MCWG (Motorcycle)"
-        LicenseType.MCWOG -> "MCWOG (Scooter)"
     }
 }
 
@@ -432,7 +440,7 @@ private fun BloodGroupSelector(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Blood Group",
+            text = stringResource(Res.string.driver_edit_blood_group),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

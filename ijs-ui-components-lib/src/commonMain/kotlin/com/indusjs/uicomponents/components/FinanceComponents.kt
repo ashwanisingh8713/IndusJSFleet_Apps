@@ -23,7 +23,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlin.math.pow
+import org.jetbrains.compose.resources.stringResource
 
 // ==================== Finance Colors ====================
 
@@ -229,7 +231,7 @@ fun EmiCountdownCard(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "EMI #$emiNumber",
+                    text = stringResource(Res.string.emi_number_label, emiNumber),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -254,7 +256,7 @@ fun EmiCountdownCard(
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Record Payment")
+                Text(stringResource(Res.string.record_payment))
             }
         }
     }
@@ -459,7 +461,7 @@ fun PaymentTimelineItem(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = "EMI #$emiNumber",
+                        text = stringResource(Res.string.emi_number_label, emiNumber),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -537,7 +539,7 @@ fun EmiCalculatorPreview(
             ) {
                 Text("🧮", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = "EMI Calculator Preview",
+                    text = stringResource(Res.string.emi_calculator_preview),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = FinanceColors.LoanBlue

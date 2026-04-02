@@ -39,9 +39,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.data.model.costs.CostTypeGroupDto
 import com.indusjs.fleet.data.model.costs.CostTypeItemDto
-import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
-import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_check
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Type alias for CostTypeGroupDto - used across UI layer for cost type groups.
@@ -96,11 +96,13 @@ fun CostTypeTwoLevelSelector(
     onCostTypeSelected: (CostTypeSelection) -> Unit,
     onCategoryChanged: ((groupId: String, groupName: String) -> Unit)? = null,
     modifier: Modifier = Modifier,
-    categoryLabel: String = "Cost Category",
-    itemLabel: String = "Cost Type",
+    categoryLabel: String = "",
+    itemLabel: String = "",
     isError: Boolean = false,
     errorMessage: String? = null
 ) {
+    val resolvedCategoryLabel = categoryLabel.ifBlank { stringResource(Res.string.cost_category) }
+    val resolvedItemLabel = itemLabel.ifBlank { stringResource(Res.string.cost_type) }
     // Find currently selected group
     val selectedGroup = remember(selectedCostType, groups) {
         groups.find { group -> group.items.any { it.id == selectedCostType } }
@@ -115,7 +117,7 @@ fun CostTypeTwoLevelSelector(
     Column(modifier = modifier.fillMaxWidth()) {
         // Category Dropdown
         Text(
-            text = "$categoryLabel *",
+            text = "$resolvedCategoryLabel *",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = if (isError && currentGroup == null)
@@ -133,7 +135,7 @@ fun CostTypeTwoLevelSelector(
                 value = currentGroup?.groupName ?: "",
                 onValueChange = {},
                 readOnly = true,
-                placeholder = { Text("Select category") },
+                placeholder = { Text(stringResource(Res.string.select_category)) },
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCategoryExpanded)
                 },
@@ -200,7 +202,7 @@ fun CostTypeTwoLevelSelector(
         ) {
             Column {
                 Text(
-                    text = "$itemLabel *",
+                    text = "$resolvedItemLabel *",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = if (isError && selectedCostType == null)
@@ -274,7 +276,7 @@ fun CostTypeTwoLevelSelector(
         // Hint when no category selected
         if (currentGroup == null) {
             Text(
-                text = "Select a category to see available cost types",
+                text = stringResource(Res.string.cost_type_select_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp)

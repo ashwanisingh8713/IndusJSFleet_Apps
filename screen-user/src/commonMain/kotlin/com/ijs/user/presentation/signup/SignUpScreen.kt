@@ -3,27 +3,20 @@ package com.ijs.user.presentation.signup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.uicomponents.components.FleetEmailField
-import com.indusjs.uicomponents.components.FleetMobileField
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -74,7 +67,24 @@ fun SignUpScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            TopAppBar(
+                title = { },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateToLogin) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_arrow_back),
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -85,26 +95,7 @@ fun SignUpScreen(
                 .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // App Icon
-            Surface(
-                modifier = Modifier.size(88.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shadowElevation = 4.dp
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_fleet_logo),
-                        contentDescription = stringResource(Res.string.app_name),
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = stringResource(Res.string.signup_title),
@@ -129,47 +120,32 @@ fun SignUpScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedTextField(
+                FleetInputField(
                     value = state.firstName,
                     onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateFirstName(it)) },
                     modifier = Modifier.weight(1f),
-                    label = { Text(stringResource(Res.string.label_first_name)) },
-                    placeholder = { Text(stringResource(Res.string.placeholder_first_name)) },
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Next
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onNext = { focusManager.moveFocus(FocusDirection.Right) }
-                    ),
-                    singleLine = true,
-                    enabled = !state.isLoading,
-                    shape = RoundedCornerShape(12.dp)
+                    label = stringResource(Res.string.label_first_name),
+                    placeholder = stringResource(Res.string.placeholder_first_name),
+                    enabled = !state.isLoading
                 )
 
-                OutlinedTextField(
+                FleetInputField(
                     value = state.lastName,
                     onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateLastName(it)) },
                     modifier = Modifier.weight(1f),
-                    label = { Text(stringResource(Res.string.label_last_name)) },
-                    placeholder = { Text(stringResource(Res.string.placeholder_last_name)) },
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Next
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                    ),
-                    singleLine = true,
-                    enabled = !state.isLoading,
-                    shape = RoundedCornerShape(12.dp)
+                    label = stringResource(Res.string.label_last_name),
+                    placeholder = stringResource(Res.string.placeholder_last_name),
+                    enabled = !state.isLoading
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Email Field
-            FleetEmailField(
+            FleetInputField(
                 value = state.email,
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateEmail(it)) },
+                fieldType = FieldType.EMAIL,
                 modifier = Modifier.fillMaxWidth(),
                 label = stringResource(Res.string.signup_email_label),
                 placeholder = stringResource(Res.string.signup_email_placeholder),
@@ -179,9 +155,14 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Mobile Field
-            FleetMobileField(
-                rawValue = state.mobile,
-                onRawValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateMobile(it)) },
+            FleetInputField(
+                value = state.mobile,
+                onValueChange = {
+                    viewModel.sendIntent(
+                        SignUpContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
+                    )
+                },
+                fieldType = FieldType.PHONE,
                 modifier = Modifier.fillMaxWidth(),
                 label = stringResource(Res.string.signup_mobile_label),
                 placeholder = stringResource(Res.string.signup_mobile_placeholder),
@@ -193,115 +174,31 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Password Field
-            OutlinedTextField(
+            FleetInputField(
                 value = state.password,
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdatePassword(it)) },
+                fieldType = FieldType.PASSWORD,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(Res.string.signup_password_label)) },
-                placeholder = { Text(stringResource(Res.string.signup_password_placeholder)) },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_lock),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                },
-                trailingIcon = {
-                    IconButton(
-                        onClick = { viewModel.sendIntent(SignUpContract.Intent.TogglePasswordVisibility) }
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                if (state.isPasswordVisible) Res.drawable.ic_visibility_off
-                                else Res.drawable.ic_visibility
-                            ),
-                            contentDescription = if (state.isPasswordVisible) "Hide password" else "Show password",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                },
-                visualTransformation = if (state.isPasswordVisible) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                ),
-                singleLine = true,
-                enabled = !state.isLoading,
-                supportingText = {
-                    Text(
-                        stringResource(Res.string.signup_password_min_chars),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                shape = RoundedCornerShape(12.dp)
+                label = stringResource(Res.string.signup_password_label),
+                placeholder = stringResource(Res.string.signup_password_placeholder),
+                enabled = !state.isLoading
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // Confirm Password Field
-            OutlinedTextField(
+            FleetInputField(
                 value = state.confirmPassword,
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateConfirmPassword(it)) },
+                fieldType = FieldType.PASSWORD,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(Res.string.signup_confirm_password_label)) },
-                placeholder = { Text(stringResource(Res.string.signup_confirm_password_placeholder)) },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_lock),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                },
-                trailingIcon = {
-                    IconButton(
-                        onClick = { viewModel.sendIntent(SignUpContract.Intent.ToggleConfirmPasswordVisibility) }
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                if (state.isConfirmPasswordVisible) Res.drawable.ic_visibility_off
-                                else Res.drawable.ic_visibility
-                            ),
-                            contentDescription = if (state.isConfirmPasswordVisible) "Hide password" else "Show password",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                },
-                visualTransformation = if (state.isConfirmPasswordVisible) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        viewModel.sendIntent(SignUpContract.Intent.SignUp)
-                    }
-                ),
-                singleLine = true,
-                enabled = !state.isLoading,
+                label = stringResource(Res.string.signup_confirm_password_label),
+                placeholder = stringResource(Res.string.signup_confirm_password_placeholder),
                 isError = state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password,
-                supportingText = {
-                    if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password) {
-                        Text(
-                            stringResource(Res.string.signup_passwords_do_not_match),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                },
-                shape = RoundedCornerShape(12.dp)
+                errorMessage = if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password) {
+                    stringResource(Res.string.signup_passwords_do_not_match)
+                } else null,
+                enabled = !state.isLoading
             )
 
             // Error Message

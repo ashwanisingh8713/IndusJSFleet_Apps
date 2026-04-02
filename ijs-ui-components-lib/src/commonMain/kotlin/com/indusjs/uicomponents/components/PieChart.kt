@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Data class representing a slice of the pie chart.
@@ -105,7 +107,7 @@ fun PieChart(
             // Center text showing total
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Total",
+                    text = stringResource(Res.string.chart_total),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -218,7 +220,7 @@ private fun EmptyPieChart(
             }
 
             Text(
-                text = "No data",
+                text = stringResource(Res.string.chart_no_data),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.uicomponents.components.FleetDateRangePickerDialog
 import com.indusjs.uicomponents.components.LoadingContent
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.LocalDate
 import com.ijs.reports.presentation.ReportsContract.Effect
 import com.ijs.reports.presentation.ReportsContract.Intent
@@ -41,6 +42,15 @@ fun ReportsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingExportPath by remember { mutableStateOf<String?>(null) }
+
+    pendingExportPath?.let { path ->
+        val msg = stringResource(Res.string.reports_exported_path, path)
+        LaunchedEffect(msg) {
+            snackbarHostState.showSnackbar(msg)
+            pendingExportPath = null
+        }
+    }
 
     var pickerStartDdMm by remember { mutableStateOf("") }
     var pickerEndDdMm by remember { mutableStateOf("") }
@@ -53,7 +63,7 @@ fun ReportsScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
+        viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
                 is Effect.NavigateToVehiclePL -> onNavigateToVehiclePL()
@@ -64,7 +74,7 @@ fun ReportsScreen(
                 is Effect.NavigateToTripCostReport -> onNavigateToTripCostReport()
                 is Effect.NavigateToDriverCostReport -> onNavigateToDriverCostReport()
                 is Effect.NavigateToCombinedReport -> onNavigateToCombinedReport()
-                is Effect.ShowExportSuccess -> snackbarHostState.showSnackbar("Report exported: ${effect.filePath}")
+                is Effect.ShowExportSuccess -> pendingExportPath = effect.filePath
                 is Effect.ShowExportError -> snackbarHostState.showSnackbar(effect.message)
             }
         }
@@ -107,7 +117,7 @@ fun ReportsScreen(
                     if (state.hasSummary) {
                         IconButton(onClick = { viewModel.sendIntent(Intent.ExportToPdf) }, enabled = !state.isExporting) {
                             if (state.isExporting) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                            else Text("PDF", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            else Text(stringResource(Res.string.export_format_pdf), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                     IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
@@ -155,16 +165,16 @@ private fun ReportsDashboardContent(
             item { FinancialHeroCard(summary) }
             item { FleetSnapshotCard(summary) }
             if (summary.expenseBreakdown.isNotEmpty()) {
-                item { SectionLabel("Expense Breakdown") }
+                item { SectionLabel(stringResource(Res.string.reports_section_expense_breakdown)) }
                 item { ExpenseBreakdownSection(summary.expenseBreakdown) }
             }
             if (summary.topPerformingVehicle != null || summary.lossMakingVehiclesList.isNotEmpty()) {
-                item { SectionLabel("Vehicle Insights") }
+                item { SectionLabel(stringResource(Res.string.reports_section_vehicle_insights)) }
                 item { VehicleInsightsSection(summary.topPerformingVehicle, summary.lossMakingVehiclesList, onVehiclePLClick) }
             }
             item { DocumentCostsNotice() }
         }
-        item { SectionLabel("Detailed Reports") }
+        item { SectionLabel(stringResource(Res.string.reports_section_detailed_reports)) }
         item { DetailedReportsSection(onVehiclePLClick, onTripPLClick, onConsolidatedClick, onCombinedReportClick, onMaintenanceCostClick, onTripCostClick, onDriverCostClick, onCostAnalysisClick) }
         item { Spacer(Modifier.height(24.dp)) }
     }
@@ -178,12 +188,12 @@ private fun PeriodFilterGrid(selectedPeriod: ReportPeriod, onPeriodSelect: (Repo
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             firstRow.forEach { period ->
-                PeriodChip(Modifier.weight(1f), period.label, selectedPeriod == period) { onPeriodSelect(period) }
+                PeriodChip(Modifier.weight(1f), period.localizedLabel(), selectedPeriod == period) { onPeriodSelect(period) }
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             secondRow.forEach { period ->
-                PeriodChip(Modifier.weight(1f), period.label, selectedPeriod == period) { onPeriodSelect(period) }
+                PeriodChip(Modifier.weight(1f), period.localizedLabel(), selectedPeriod == period) { onPeriodSelect(period) }
             }
             repeat(4 - secondRow.size) { Spacer(Modifier.weight(1f)) }
         }
@@ -212,10 +222,10 @@ private fun ErrorBanner(error: String, onRetry: () -> Unit) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer), shape = RoundedCornerShape(12.dp)) {
         Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Error loading data", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+                Text(stringResource(Res.string.reports_error_loading), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
                 Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f))
             }
-            TextButton(onClick = onRetry) { Text("Retry", color = MaterialTheme.colorScheme.onErrorContainer) }
+            TextButton(onClick = onRetry) { Text(stringResource(Res.string.retry), color = MaterialTheme.colorScheme.onErrorContainer) }
         }
     }
 }

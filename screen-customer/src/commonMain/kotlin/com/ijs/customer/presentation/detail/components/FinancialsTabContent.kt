@@ -20,6 +20,7 @@ import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.customer.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.ReportType
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
@@ -60,8 +61,8 @@ fun FinancialsTabContent(
             }
             state.financialReport == null -> {
                 EmptyContent(
-                    title = "No financial data",
-                    message = "No financial data available for this period",
+                    title = stringResource(Res.string.customer_financials_empty_title),
+                    message = stringResource(Res.string.customer_financials_empty_message_period),
                     icon = "📊"
                 )
             }
@@ -154,7 +155,7 @@ private fun PeriodSelector(
                     FilterChip(
                         selected = selectedPeriod == FinancialPeriod.CUSTOM,
                         onClick = onCustomDateClick,
-                        label = { Text("Custom") },
+                        label = { Text(stringResource(Res.string.period_custom)) },
                         shape = RoundedCornerShape(20.dp)
                     )
                 }
@@ -172,7 +173,7 @@ private fun PeriodSelector(
                 } else {
                     Icon(
                         painter = painterResource(Res.drawable.ic_download),
-                        contentDescription = "Export",
+                        contentDescription = stringResource(Res.string.cd_export_pdf),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -181,7 +182,7 @@ private fun PeriodSelector(
 
         if (startDate.isNotBlank() && endDate.isNotBlank()) {
             Text(
-                text = "📅 $startDate to $endDate",
+                text = stringResource(Res.string.customer_financials_date_range, startDate, endDate),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -207,7 +208,7 @@ private fun ProfitLossCard(report: CustomerFinancialReport) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "📊 Financial Overview",
+                text = stringResource(Res.string.dashboard_financial_overview),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -217,12 +218,12 @@ private fun ProfitLossCard(report: CustomerFinancialReport) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 FinancialMetric(
-                    label = "Revenue",
+                    label = stringResource(Res.string.reports_revenue),
                     value = report.totalRevenueDisplay,
                     color = MaterialTheme.colorScheme.primary
                 )
                 FinancialMetric(
-                    label = "Expenses",
+                    label = stringResource(Res.string.reports_expenses),
                     value = report.totalCostsDisplay,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -235,7 +236,7 @@ private fun ProfitLossCard(report: CustomerFinancialReport) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 FinancialMetric(
-                    label = "Net Profit",
+                    label = stringResource(Res.string.reports_net_profit_label),
                     value = report.netProfitDisplay,
                     color = if (report.isProfitable) {
                         MaterialTheme.colorScheme.primary
@@ -245,7 +246,7 @@ private fun ProfitLossCard(report: CustomerFinancialReport) {
                     isLarge = true
                 )
                 FinancialMetric(
-                    label = "Margin",
+                    label = stringResource(Res.string.reports_margin),
                     value = report.profitMarginDisplay,
                     color = MaterialTheme.colorScheme.onSurface,
                     isLarge = true
@@ -291,7 +292,7 @@ private fun TripSummaryCard(summary: FinancialTripSummary) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "🚛 Trip Summary",
+                text = stringResource(Res.string.customer_financials_trip_summary),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -307,7 +308,7 @@ private fun TripSummaryCard(summary: FinancialTripSummary) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Total",
+                        text = stringResource(Res.string.reports_total),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -320,7 +321,7 @@ private fun TripSummaryCard(summary: FinancialTripSummary) {
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Completed",
+                        text = stringResource(Res.string.trip_state_completed),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -332,7 +333,7 @@ private fun TripSummaryCard(summary: FinancialTripSummary) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Avg Value",
+                        text = stringResource(Res.string.customer_avg_value),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -356,7 +357,7 @@ private fun PaymentStatusCard(received: Double, pending: Double) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "💰 Payment Status",
+                text = stringResource(Res.string.customer_payment_status_title),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -373,7 +374,7 @@ private fun PaymentStatusCard(received: Double, pending: Double) {
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Received",
+                        text = stringResource(Res.string.payment_status_received),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -386,7 +387,7 @@ private fun PaymentStatusCard(received: Double, pending: Double) {
                         color = if (pending > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Pending",
+                        text = stringResource(Res.string.payment_status_pending),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -410,7 +411,7 @@ private fun PeriodBreakdownCard(breakdown: List<PeriodBreakdown>) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "📈 Period Breakdown",
+                text = stringResource(Res.string.customer_period_breakdown),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -464,7 +465,7 @@ private fun TopVehiclesCard(vehicles: List<TopVehicle>) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "🚛 Top Performing Vehicles",
+                text = stringResource(Res.string.customer_top_vehicles),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -505,7 +506,7 @@ private fun TopVehiclesCard(vehicles: List<TopVehicle>) {
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "${vehicle.trips} trips",
+                                text = stringResource(Res.string.reports_trips_count, vehicle.trips),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -546,9 +547,9 @@ private fun ExportButton(
                 strokeWidth = 2.dp
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Exporting...")
+            Text(stringResource(Res.string.action_exporting))
         } else {
-            Text("📥 Export Report as PDF", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.action_export_report_pdf), fontWeight = FontWeight.SemiBold)
         }
     }
 }

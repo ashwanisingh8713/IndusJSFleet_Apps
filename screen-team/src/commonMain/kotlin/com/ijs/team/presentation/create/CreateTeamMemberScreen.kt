@@ -20,8 +20,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.uicomponents.components.FleetEmailField
-import com.indusjs.uicomponents.components.FleetMobileField
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.ijs.team.domain.entity.TeamMemberRole
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -46,6 +48,15 @@ fun CreateTeamMemberScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // Apply excludeGeneralManager filter on first composition
     LaunchedEffect(excludeGeneralManager) {
@@ -59,7 +70,7 @@ fun CreateTeamMemberScreen(
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is CreateTeamMemberContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is CreateTeamMemberContract.Effect.TeamMemberCreated -> {
                     // Handled by navigation
@@ -104,17 +115,29 @@ fun CreateTeamMemberScreen(
 
             // Role Selection Section
             SectionCard(
-                title = "Select Role",
-                subtitle = "Choose the team member's role and permissions"
+                title = stringResource(Res.string.team_select_role_title),
+                subtitle = stringResource(Res.string.team_select_role_subtitle)
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     state.availableRoles.forEach { role ->
                         val (title, emoji, description) = when (role) {
-                            TeamMemberRole.GENERAL_MANAGER -> Triple("General Manager", "👨‍💼", "Full operational & financial access")
-                            TeamMemberRole.MANAGER -> Triple("Manager", "👔", "Can manage drivers and trips")
-                            TeamMemberRole.SUPERVISOR -> Triple("Supervisor", "👷", "Can view and track operations")
+                            TeamMemberRole.GENERAL_MANAGER -> Triple(
+                                stringResource(Res.string.team_role_general_manager),
+                                "👨‍💼",
+                                stringResource(Res.string.team_role_gm_desc)
+                            )
+                            TeamMemberRole.MANAGER -> Triple(
+                                stringResource(Res.string.team_role_manager),
+                                "👔",
+                                stringResource(Res.string.team_role_manager_desc)
+                            )
+                            TeamMemberRole.SUPERVISOR -> Triple(
+                                stringResource(Res.string.team_role_supervisor),
+                                "👷",
+                                stringResource(Res.string.team_role_supervisor_desc)
+                            )
                         }
                         RoleSelectionCard(
                             title = title,
@@ -131,7 +154,7 @@ fun CreateTeamMemberScreen(
             // Personal Information Section
             SectionCard(
                 title = stringResource(Res.string.team_section_personal),
-                subtitle = "Enter the team member's details"
+                subtitle = stringResource(Res.string.team_section_member_details_subtitle)
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -175,9 +198,10 @@ fun CreateTeamMemberScreen(
                     }
 
                     // Email Field
-                    FleetEmailField(
+                    FleetInputField(
                         value = state.email,
                         onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateEmail(it)) },
+                        fieldType = FieldType.EMAIL,
                         modifier = Modifier.fillMaxWidth(),
                         label = stringResource(Res.string.team_label_email),
                         placeholder = stringResource(Res.string.team_placeholder_email),
@@ -185,9 +209,14 @@ fun CreateTeamMemberScreen(
                     )
 
                     // Mobile Field
-                    FleetMobileField(
-                        rawValue = state.mobile,
-                        onRawValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateMobile(it)) },
+                    FleetInputField(
+                        value = state.mobile,
+                        onValueChange = {
+                            viewModel.sendIntent(
+                                CreateTeamMemberContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
+                            )
+                        },
+                        fieldType = FieldType.PHONE,
                         modifier = Modifier.fillMaxWidth(),
                         label = stringResource(Res.string.team_label_mobile),
                         placeholder = stringResource(Res.string.team_placeholder_mobile),
@@ -227,7 +256,11 @@ fun CreateTeamMemberScreen(
                                         if (state.isPasswordVisible) Res.drawable.ic_visibility_off
                                         else Res.drawable.ic_visibility
                                     ),
-                                    contentDescription = if (state.isPasswordVisible) "Hide password" else "Show password",
+                                    contentDescription = if (state.isPasswordVisible) {
+                                        stringResource(Res.string.team_cd_hide_password)
+                                    } else {
+                                        stringResource(Res.string.team_cd_show_password)
+                                    },
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -274,7 +307,11 @@ fun CreateTeamMemberScreen(
                                         if (state.isConfirmPasswordVisible) Res.drawable.ic_visibility_off
                                         else Res.drawable.ic_visibility
                                     ),
-                                    contentDescription = if (state.isConfirmPasswordVisible) "Hide password" else "Show password",
+                                    contentDescription = if (state.isConfirmPasswordVisible) {
+                                        stringResource(Res.string.team_cd_hide_password)
+                                    } else {
+                                        stringResource(Res.string.team_cd_show_password)
+                                    },
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -299,7 +336,7 @@ fun CreateTeamMemberScreen(
                         isError = state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password,
                         supportingText = {
                             if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password) {
-                                Text("Passwords do not match", color = MaterialTheme.colorScheme.error)
+                                Text(stringResource(Res.string.error_passwords_mismatch), color = MaterialTheme.colorScheme.error)
                             }
                         }
                     )
@@ -324,7 +361,7 @@ fun CreateTeamMemberScreen(
                     ) {
                         Text("⚠️")
                         Text(
-                            text = error,
+                            text = error.resolve(),
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -350,11 +387,11 @@ fun CreateTeamMemberScreen(
                     )
                 } else {
                     val roleText = when (state.selectedRole) {
-                        TeamMemberRole.GENERAL_MANAGER -> "General Manager"
-                        TeamMemberRole.MANAGER -> "Manager"
-                        TeamMemberRole.SUPERVISOR -> "Supervisor"
+                        TeamMemberRole.GENERAL_MANAGER -> stringResource(Res.string.team_role_general_manager)
+                        TeamMemberRole.MANAGER -> stringResource(Res.string.team_role_manager)
+                        TeamMemberRole.SUPERVISOR -> stringResource(Res.string.team_role_supervisor)
                     }
-                    Text("Create $roleText", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(Res.string.team_create_button, roleText), fontWeight = FontWeight.SemiBold)
                 }
             }
 

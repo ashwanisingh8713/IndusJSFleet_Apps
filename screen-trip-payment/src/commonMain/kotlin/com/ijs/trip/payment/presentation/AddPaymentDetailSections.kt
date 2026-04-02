@@ -9,7 +9,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.PaymentMode
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Date & time picker section for payment date.
@@ -18,7 +21,7 @@ import com.ijs.trip.payment.domain.entity.PaymentMode
 internal fun DateTimeSection(
     date: String,
     time: String,
-    error: String?,
+    error: UiText?,
     minDate: String? = null,
     maxDate: String? = null,
     onDateTimeChange: (String, String) -> Unit
@@ -28,9 +31,9 @@ internal fun DateTimeSection(
         time = time,
         onDateTimeChange = onDateTimeChange,
         mode = PickerMode.DATE_TIME,
-        label = "Payment Date & Time *",
+        label = stringResource(Res.string.payment_label_date_time),
         isError = error != null,
-        errorMessage = error,
+        errorMessage = error?.resolve(),
         minDate = minDate,
         maxDate = maxDate
     )
@@ -51,7 +54,7 @@ internal fun TransactionDetailsSection(
 ) {
     Column {
         Text(
-            text = "Transaction Details",
+            text = stringResource(Res.string.payment_section_transaction),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary
         )
@@ -62,8 +65,8 @@ internal fun TransactionDetailsSection(
                 OutlinedTextField(
                     value = transactionId,
                     onValueChange = onTransactionIdChange,
-                    label = { Text("UPI ID *") },
-                    placeholder = { Text("e.g., user@upi") },
+                    label = { Text(stringResource(Res.string.payment_label_upi_id)) },
+                    placeholder = { Text(stringResource(Res.string.payment_placeholder_upi_id)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -72,8 +75,8 @@ internal fun TransactionDetailsSection(
                 OutlinedTextField(
                     value = bankName,
                     onValueChange = onBankNameChange,
-                    label = { Text("Bank Name *") },
-                    placeholder = { Text("Enter bank name") },
+                    label = { Text(stringResource(Res.string.payment_label_bank_name)) },
+                    placeholder = { Text(stringResource(Res.string.payment_placeholder_bank_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -81,8 +84,8 @@ internal fun TransactionDetailsSection(
                 OutlinedTextField(
                     value = paymentSource,
                     onValueChange = onPaymentSourceChange,
-                    label = { Text("Account Number *") },
-                    placeholder = { Text("Enter account number") },
+                    label = { Text(stringResource(Res.string.payment_label_account_number)) },
+                    placeholder = { Text(stringResource(Res.string.payment_placeholder_account_number)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -91,8 +94,8 @@ internal fun TransactionDetailsSection(
                 OutlinedTextField(
                     value = transactionId,
                     onValueChange = onTransactionIdChange,
-                    label = { Text("Transaction Reference") },
-                    placeholder = { Text("Enter transaction ID (optional)") },
+                    label = { Text(stringResource(Res.string.payment_label_transaction_ref)) },
+                    placeholder = { Text(stringResource(Res.string.payment_placeholder_transaction_ref)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -111,8 +114,8 @@ internal fun TransactionDetailsSection(
                 OutlinedTextField(
                     value = transactionId,
                     onValueChange = onTransactionIdChange,
-                    label = { Text("Reference (Optional)") },
-                    placeholder = { Text("Enter reference if any") },
+                    label = { Text(stringResource(Res.string.payment_label_reference)) },
+                    placeholder = { Text(stringResource(Res.string.payment_placeholder_reference)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -135,7 +138,7 @@ internal fun AdditionalInfoSection(
 ) {
     Column {
         Text(
-            text = "Additional Info",
+            text = stringResource(Res.string.payment_section_additional),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary
         )
@@ -155,7 +158,7 @@ internal fun AdditionalInfoSection(
             OutlinedTextField(
                 value = receivedAtLocation,
                 onValueChange = onLocationChange,
-                label = { Text("Location") },
+                label = { Text(stringResource(Res.string.payment_label_location)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true
             )
@@ -166,7 +169,7 @@ internal fun AdditionalInfoSection(
         OutlinedTextField(
             value = notes,
             onValueChange = onNotesChange,
-            label = { Text("Notes") },
+            label = { Text(stringResource(Res.string.payment_label_notes)) },
             modifier = Modifier.fillMaxWidth(),
             minLines = 2,
             maxLines = 4

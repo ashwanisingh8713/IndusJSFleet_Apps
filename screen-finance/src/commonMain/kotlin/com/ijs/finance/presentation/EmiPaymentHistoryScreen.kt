@@ -56,7 +56,7 @@ fun EmiPaymentHistoryScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Payment History")
+                        Text(stringResource(Res.string.finance_payment_history))
                         vehicle?.let {
                             Text(
                                 text = it.registrationNumber,
@@ -80,20 +80,21 @@ fun EmiPaymentHistoryScreen(
         when {
             state.isLoading -> LoadingContent()
             state.error != null -> ErrorContent(
-                error = state.error ?: "Something went wrong",
+                error = state.error ?: stringResource(Res.string.finance_error_generic),
                 onRetry = { viewModel.sendIntent(Intent.SelectVehicle(vehicleId)) }
             )
             purchase == null || !purchase.isFinanced -> {
                 EmptyContent(
-                    title = "No loan information",
+                    title = stringResource(Res.string.finance_no_loan_title),
                     iconRes = Res.drawable.ic_info,
-                    message = "This vehicle doesn't have loan/finance information"
+                    message = stringResource(Res.string.finance_no_loan_message)
                 )
             }
             else -> EmiPaymentHistoryContent(
                 purchase = purchase,
                 paidPayments = paidPayments,
                 pendingPayments = pendingPayments,
+                notAvailableLabel = stringResource(Res.string.not_applicable_short),
                 modifier = Modifier.padding(paddingValues)
             )
         }
@@ -104,6 +105,7 @@ private fun EmiPaymentHistoryContent(
     purchase: VehiclePurchase,
     paidPayments: List<LoanPayment>,
     pendingPayments: List<LoanPayment>,
+    notAvailableLabel: String,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -116,13 +118,14 @@ private fun EmiPaymentHistoryContent(
             PaymentSummaryCard(
                 purchase = purchase,
                 paidCount = purchase.emisPaid,  // Use API value instead of list size
-                totalPaid = purchase.totalPaid   // Use API value for total paid
+                totalPaid = purchase.totalPaid,   // Use API value for total paid
+                notAvailableLabel = notAvailableLabel
             )
         }
         // Paid Payments Section
         item {
             Text(
-                text = "Paid EMIs (${purchase.emisPaid})",
+                text = stringResource(Res.string.finance_paid_emis_header, purchase.emisPaid),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = CashGreen
@@ -145,12 +148,12 @@ private fun EmiPaymentHistoryContent(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "No payments recorded yet",
+                            text = stringResource(Res.string.finance_no_payments_yet),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "Record your EMI payments to track history",
+                            text = stringResource(Res.string.finance_record_first_emi_hint),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -176,7 +179,7 @@ private fun EmiPaymentHistoryContent(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Upcoming EMIs (${purchase.emisRemaining})",
+                    text = stringResource(Res.string.finance_upcoming_emis_header, purchase.emisRemaining),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = WarningOrange
@@ -204,7 +207,10 @@ private fun EmiPaymentHistoryContent(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "${genuinelyUpcoming.size - 3} more EMIs scheduled",
+                                text = stringResource(
+                                    Res.string.finance_more_emis_scheduled,
+                                    genuinelyUpcoming.size - 3
+                                ),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = WarningOrange
@@ -221,7 +227,8 @@ private fun EmiPaymentHistoryContent(
 private fun PaymentSummaryCard(
     purchase: VehiclePurchase,
     paidCount: Int,
-    totalPaid: Double
+    totalPaid: Double,
+    notAvailableLabel: String
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -237,7 +244,7 @@ private fun PaymentSummaryCard(
         ) {
             // Header
             Text(
-                text = "Payment Summary",
+                text = stringResource(Res.string.finance_payment_summary_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = LoanBlueDark
@@ -250,13 +257,13 @@ private fun PaymentSummaryCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${purchase.loanProgressPercent}% Complete",
+                        text = stringResource(Res.string.finance_percent_complete, purchase.loanProgressPercent.toInt()),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = LoanBlue
                     )
                     Text(
-                        text = "$paidCount/${purchase.tenureMonths} EMIs",
+                        text = stringResource(Res.string.finance_emis_slash, paidCount, purchase.tenureMonths),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Medium,
                         color = LoanBlueDark
@@ -281,17 +288,17 @@ private fun PaymentSummaryCard(
             ) {
                 SummaryItem(
                     value = paidCount.toString(),
-                    label = "EMIs Paid",
+                    label = stringResource(Res.string.finance_stat_emis_paid),
                     color = CashGreen
                 )
                 SummaryItem(
                     value = purchase.emisRemaining.toString(),
-                    label = "Remaining",
+                    label = stringResource(Res.string.finance_stat_remaining),
                     color = WarningOrange
                 )
                 SummaryItem(
                     value = purchase.tenureMonths.toString(),
-                    label = "Total",
+                    label = stringResource(Res.string.finance_stat_total),
                     color = LoanBlue
                 )
             }
@@ -305,7 +312,7 @@ private fun PaymentSummaryCard(
             ) {
                 Column {
                     Text(
-                        text = "Total Paid",
+                        text = stringResource(Res.string.finance_total_paid_label),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -318,7 +325,7 @@ private fun PaymentSummaryCard(
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Outstanding",
+                        text = stringResource(Res.string.finance_outstanding_label),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -341,7 +348,7 @@ private fun PaymentSummaryCard(
                 ) {
                     Column {
                         Text(
-                            text = "Monthly EMI",
+                            text = stringResource(Res.string.finance_monthly_emi_badge),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -354,12 +361,12 @@ private fun PaymentSummaryCard(
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "Financier",
+                            text = stringResource(Res.string.finance_row_financier),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = purchase.financierName ?: "N/A",
+                            text = purchase.financierName ?: notAvailableLabel,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -428,7 +435,10 @@ private fun PaymentHistoryCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Paid on ${formatDateDisplay(payment.paymentDate)}",
+                    text = stringResource(
+                        Res.string.finance_paid_on,
+                        formatDateDisplay(payment.paymentDate)
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -451,7 +461,10 @@ private fun PaymentHistoryCard(
                 if (payment.lateFee > 0) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "+ ${formatCurrency(payment.lateFee)} late fee",
+                        text = stringResource(
+                            Res.string.finance_late_fee_plus,
+                            formatCurrency(payment.lateFee)
+                        ),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         color = CriticalRed
@@ -496,7 +509,7 @@ private fun PendingPaymentCard(payment: LoanPayment) {
                             color = CriticalRed.copy(alpha = 0.15f)
                         ) {
                             Text(
-                                text = "OVERDUE",
+                                text = stringResource(Res.string.finance_emi_overdue_badge),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
@@ -507,7 +520,10 @@ private fun PendingPaymentCard(payment: LoanPayment) {
                 }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Due: ${formatDateDisplay(payment.dueDate)}",
+                    text = stringResource(
+                        Res.string.finance_due_colon,
+                        formatDateDisplay(payment.dueDate)
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

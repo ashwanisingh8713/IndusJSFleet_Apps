@@ -3,6 +3,7 @@ package com.ijs.team.presentation.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
 
@@ -18,7 +19,7 @@ object TeamMemberDetailContract {
         val memberId: String = "",
         val member: TeamMember? = null,
         val isLoading: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         // Edit mode
         val isEditMode: Boolean = false,
         val isSaving: Boolean = false,
@@ -30,10 +31,10 @@ object TeamMemberDetailContract {
         val editRole: TeamMemberRole = TeamMemberRole.SUPERVISOR,
         val editIsActive: Boolean = true,
         // Validation errors
-        val firstNameError: String? = null,
-        val lastNameError: String? = null,
-        val emailError: String? = null,
-        val mobileError: String? = null,
+        val firstNameError: UiText? = null,
+        val lastNameError: UiText? = null,
+        val emailError: UiText? = null,
+        val mobileError: UiText? = null,
         // Current user permissions
         val currentUserRole: String = "owner",
         val currentUserId: String = "",
@@ -45,8 +46,8 @@ object TeamMemberDetailContract {
         val isOwner: Boolean get() = currentUserRole.lowercase() == "owner"
         val isGeneralManager: Boolean get() = currentUserRole.lowercase() == "general_manager"
         val isSelf: Boolean get() = member?.id == currentUserId
-        val displayName: String get() = member?.fullName ?: "Team Member"
-        val initials: String get() = member?.initials ?: "TM"
+        val displayName: String get() = member?.fullName.orEmpty()
+        val initials: String get() = member?.initials.orEmpty()
 
         // Computed: Can change role based on permissions and not editing self
         val canChangeRoleComputed: Boolean get() {
@@ -83,7 +84,7 @@ object TeamMemberDetailContract {
      * Side effects for Team Member Detail screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data object NavigateBack : Effect
         data object MemberUpdated : Effect
     }

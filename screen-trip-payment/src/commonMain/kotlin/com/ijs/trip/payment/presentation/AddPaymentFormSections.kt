@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.indusjs.uicomponents.components.UiText
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,7 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun TripSelectionSection(
     selectedTrip: TripSummaryForPayment?,
-    error: String?,
+    error: UiText?,
     onSelectTrip: () -> Unit
 ) {
     Column {
@@ -49,7 +50,7 @@ internal fun TripSelectionSection(
                 if (selectedTrip != null) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Trip #${selectedTrip.id}",
+                            text = stringResource(Res.string.payment_trip_id, selectedTrip.id),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium
                         )
@@ -73,7 +74,7 @@ internal fun TripSelectionSection(
                 }
                 Icon(
                     painter = painterResource(Res.drawable.ic_search),
-                    contentDescription = "Select",
+                    contentDescription = stringResource(Res.string.payment_cd_select_trip),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -81,7 +82,7 @@ internal fun TripSelectionSection(
 
         error?.let {
             Text(
-                text = it,
+                text = it.resolve(),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -129,7 +130,7 @@ internal fun SelectedTripInfoCard(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Pending",
+                        text = stringResource(Res.string.payment_add_pending),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -145,12 +146,12 @@ internal fun SelectedTripInfoCard(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Customer",
+                        text = stringResource(Res.string.payment_add_customer),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = trip.customerName?.take(12) ?: "N/A",
+                        text = trip.customerName?.take(12) ?: stringResource(Res.string.label_not_applicable),
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -169,7 +170,7 @@ internal fun SelectedTripInfoCard(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "🚀 Start",
+                        text = "🚀 ${stringResource(Res.string.payment_trip_start_label)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -181,7 +182,7 @@ internal fun SelectedTripInfoCard(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "🏁 End",
+                        text = "🏁 ${stringResource(Res.string.payment_trip_end_label)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.tertiary
                     )
@@ -205,14 +206,14 @@ internal fun AmountSection(
     tdsAmount: String,
     discountAmount: String,
     netAmount: String,
-    amountError: String?,
+    amountError: UiText?,
     onAmountChange: (String) -> Unit,
     onTdsChange: (String) -> Unit,
     onDiscountChange: (String) -> Unit
 ) {
     Column {
         Text(
-            text = "Amount Details",
+            text = stringResource(Res.string.payment_section_amount),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary
         )
@@ -221,13 +222,13 @@ internal fun AmountSection(
         OutlinedTextField(
             value = amount,
             onValueChange = onAmountChange,
-            label = { Text("Amount *") },
-            placeholder = { Text("Enter amount") },
+            label = { Text(stringResource(Res.string.payment_label_amount)) },
+            placeholder = { Text(stringResource(Res.string.payment_placeholder_amount)) },
             prefix = { Text("₹") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             isError = amountError != null,
-            supportingText = amountError?.let { { Text(it) } },
+            supportingText = amountError?.let { err -> { Text(err.resolve()) } },
             singleLine = true
         )
 
@@ -240,7 +241,7 @@ internal fun AmountSection(
             OutlinedTextField(
                 value = tdsAmount,
                 onValueChange = onTdsChange,
-                label = { Text("TDS") },
+                label = { Text(stringResource(Res.string.payment_label_tds)) },
                 prefix = { Text("₹") },
                 modifier = Modifier.weight(1f),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -249,7 +250,7 @@ internal fun AmountSection(
             OutlinedTextField(
                 value = discountAmount,
                 onValueChange = onDiscountChange,
-                label = { Text("Discount") },
+                label = { Text(stringResource(Res.string.payment_label_discount)) },
                 prefix = { Text("₹") },
                 modifier = Modifier.weight(1f),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -268,7 +269,7 @@ internal fun AmountSection(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Net Amount",
+                text = stringResource(Res.string.payment_label_net_amount),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -295,7 +296,7 @@ internal fun PaymentTypeDropdown(
 
     Column {
         Text(
-            text = "Payment Type",
+            text = stringResource(Res.string.payment_section_type),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary
         )
@@ -306,7 +307,7 @@ internal fun PaymentTypeDropdown(
             onExpandedChange = { expanded = it }
         ) {
             OutlinedTextField(
-                value = "${selectedType.icon} ${selectedType.displayName}",
+                value = "${selectedType.icon} ${selectedType.localizedDisplayName()}",
                 onValueChange = {},
                 readOnly = true,
                 modifier = Modifier
@@ -315,7 +316,7 @@ internal fun PaymentTypeDropdown(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 supportingText = {
                     Text(
-                        text = selectedType.description,
+                        text = selectedType.localizedDescription(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
@@ -330,7 +331,7 @@ internal fun PaymentTypeDropdown(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = "${type.icon} ${type.displayName} - ${type.description}",
+                                text = "${type.icon} ${type.localizedDisplayName()} - ${type.localizedDescription()}",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         },
@@ -361,7 +362,7 @@ internal fun PaymentModeChips(
                 FilterChip(
                     selected = selectedMode == mode,
                     onClick = { onModeSelected(mode) },
-                    label = { Text("${mode.icon} ${mode.displayName}") }
+                    label = { Text("${mode.icon} ${mode.localizedDisplayName()}") }
                 )
             }
         }
@@ -373,7 +374,7 @@ internal fun PaymentModeChips(
                 FilterChip(
                     selected = selectedMode == mode,
                     onClick = { onModeSelected(mode) },
-                    label = { Text("${mode.icon} ${mode.displayName}") }
+                    label = { Text("${mode.icon} ${mode.localizedDisplayName()}") }
                 )
             }
         }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -14,16 +15,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.indusjs.uicomponents.components.DateInputField
-import com.ijs.driver.domain.entity.Driver
-import com.ijs.driver.domain.entity.DriverStatus
 import com.ijs.driver.domain.entity.LicenseType
+import com.ijs.driver.presentation.driverLicenseTypeShort
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
-import com.indusjs.uicomponents.components.FleetDateField
-import com.indusjs.uicomponents.components.FleetEmailField
-import com.indusjs.uicomponents.components.FleetMobileField
+import org.jetbrains.compose.resources.stringResource
 import com.indusjs.uicomponents.components.CaretakerSectionCard
+import com.indusjs.uicomponents.components.DateVisualTransformation
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.components.convertDdMmYyyyToIso
 import com.indusjs.uicomponents.components.convertIsoToDdMmYyyyRaw
 import com.ijs.team.presentation.toCaretakerInfo
@@ -34,9 +35,10 @@ internal fun EditModeContent(
     state: DriverDetailContract.State,
     viewModel: DriverDetailViewModel
 ) {
+    val dateVisualTransformation = remember { DateVisualTransformation() }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // Basic Info Section
-        EditSectionHeader(icon = "👤", title = "Basic Information")
+        EditSectionHeader(icon = "👤", title = stringResource(Res.string.driver_edit_basic_info))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -45,7 +47,7 @@ internal fun EditModeContent(
             OutlinedTextField(
                 value = state.firstName,
                 onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateFirstName(it)) },
-                label = { Text("First Name *") },
+                label = { Text(stringResource(Res.string.driver_create_first_name)) },
                 isError = state.firstNameError != null,
                 supportingText = state.firstNameError?.let { { Text(it) } },
                 keyboardOptions = KeyboardOptions(
@@ -71,19 +73,25 @@ internal fun EditModeContent(
             )
         }
 
-        FleetMobileField(
-            rawValue = state.mobile,
-            onRawValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateMobile(it)) },
-            label = "Mobile Number *",
-            placeholder = "Enter 10-digit mobile",
+        FleetInputField(
+            value = state.mobile,
+            onValueChange = {
+                viewModel.sendIntent(
+                    DriverDetailContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
+                )
+            },
+            fieldType = FieldType.PHONE,
+            label = stringResource(Res.string.driver_label_mobile_required),
+            placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
             isError = state.mobileError != null,
             errorMessage = state.mobileError
         )
 
-        FleetEmailField(
+        FleetInputField(
             value = state.email,
             onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateEmail(it)) },
-            label = "Email",
+            fieldType = FieldType.EMAIL,
+            label = stringResource(Res.string.driver_overview_email),
             isError = state.emailError != null,
             errorMessage = state.emailError
         )
@@ -97,7 +105,7 @@ internal fun EditModeContent(
         OutlinedTextField(
             value = state.licenseNumber,
             onValueChange = { },
-            label = { Text("License Number") },
+            label = { Text(stringResource(Res.string.driver_edit_license_number)) },
             leadingIcon = { Text("🪪", modifier = Modifier.padding(start = 12.dp)) },
             enabled = false,
             singleLine = true,
@@ -107,7 +115,7 @@ internal fun EditModeContent(
         // License Type
         Column {
             Text(
-                text = "License Type",
+                text = stringResource(Res.string.driver_edit_license_type),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -121,41 +129,49 @@ internal fun EditModeContent(
                     FilterChip(
                         selected = state.licenseType == type,
                         onClick = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateLicenseType(type)) },
-                        label = { Text(getLicenseTypeLabel(type)) }
+                        label = { Text(driverLicenseTypeShort(type)) }
                     )
                 }
             }
         }
 
-        FleetDateField(
-            rawValue = convertIsoToDdMmYyyyRaw(state.licenseExpiry),
-            onRawValueChange = {
-                val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
+        FleetInputField(
+            value = convertIsoToDdMmYyyyRaw(state.licenseExpiry),
+            onValueChange = {
+                val filtered = filterDigitsOnly(it, 8)
+                val isoFormatted = if (filtered.length == 8) convertDdMmYyyyToIso(filtered) else filtered
                 viewModel.sendIntent(DriverDetailContract.Intent.UpdateLicenseExpiry(isoFormatted))
             },
-            label = "License Expiry Date",
-            leadingEmoji = "📅"
+            fieldType = FieldType.NUMBER,
+            label = stringResource(Res.string.driver_label_license_expiry),
+            placeholder = stringResource(Res.string.placeholder_dd_mm_yyyy),
+            visualTransformation = dateVisualTransformation,
+            leadingIcon = { Text("📅", modifier = Modifier.padding(start = 12.dp)) }
         )
 
         HorizontalDivider()
 
         // Personal Details Section
-        EditSectionHeader(icon = "📋", title = "Personal Details")
+        EditSectionHeader(icon = "📋", title = stringResource(Res.string.driver_edit_personal_details))
 
-        FleetDateField(
-            rawValue = convertIsoToDdMmYyyyRaw(state.dateOfBirth),
-            onRawValueChange = {
-                val isoFormatted = if (it.length == 8) convertDdMmYyyyToIso(it) else it
+        FleetInputField(
+            value = convertIsoToDdMmYyyyRaw(state.dateOfBirth),
+            onValueChange = {
+                val filtered = filterDigitsOnly(it, 8)
+                val isoFormatted = if (filtered.length == 8) convertDdMmYyyyToIso(filtered) else filtered
                 viewModel.sendIntent(DriverDetailContract.Intent.UpdateDateOfBirth(isoFormatted))
             },
-            label = "Date of Birth",
-            leadingEmoji = "🎂"
+            fieldType = FieldType.NUMBER,
+            label = stringResource(Res.string.driver_overview_dob),
+            placeholder = stringResource(Res.string.placeholder_dd_mm_yyyy),
+            visualTransformation = dateVisualTransformation,
+            leadingIcon = { Text("🎂", modifier = Modifier.padding(start = 12.dp)) }
         )
 
         // Blood Group
         Column {
             Text(
-                text = "Blood Group",
+                text = stringResource(Res.string.driver_edit_blood_group),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -182,19 +198,24 @@ internal fun EditModeContent(
         OutlinedTextField(
             value = state.address,
             onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateAddress(it)) },
-            label = { Text("Address") },
+            label = { Text(stringResource(Res.string.driver_edit_address)) },
             leadingIcon = { Text("🏠", modifier = Modifier.padding(start = 12.dp)) },
             singleLine = false,
             maxLines = 2,
             modifier = Modifier.fillMaxWidth()
         )
 
-        FleetMobileField(
-            rawValue = state.emergencyContact,
-            onRawValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateEmergencyContact(it)) },
-            label = "Emergency Contact",
-            placeholder = "Enter 10-digit mobile",
-            leadingEmoji = "🆘"
+        FleetInputField(
+            value = state.emergencyContact,
+            onValueChange = {
+                viewModel.sendIntent(
+                    DriverDetailContract.Intent.UpdateEmergencyContact(filterDigitsOnly(it, 10))
+                )
+            },
+            fieldType = FieldType.PHONE,
+            label = stringResource(Res.string.driver_overview_emergency_contact),
+            placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
+            leadingIcon = { Text("🆘", modifier = Modifier.padding(start = 12.dp)) }
         )
 
         HorizontalDivider()
@@ -236,6 +257,3 @@ internal fun EditSectionHeader(
         )
     }
 }
-
-// Helper functions
-

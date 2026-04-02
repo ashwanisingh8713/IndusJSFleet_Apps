@@ -13,21 +13,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FinanceColors
+import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
-import com.indusjs.uicomponents.components.FleetTextField
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.finance.domain.entity.PaymentType
 import com.ijs.finance.presentation.VehicleFinanceContract.Effect
 import com.ijs.finance.presentation.VehicleFinanceContract.Intent
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 // Use FinanceColors from core.ui
 private val LoanBlue = FinanceColors.LoanBlue
@@ -58,12 +58,12 @@ fun AddPurchaseInfoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Purchase Information") },
+                title = { Text(stringResource(Res.string.finance_add_purchase_screen_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 },
@@ -78,7 +78,7 @@ fun AddPurchaseInfoScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Save")
+                            Text(stringResource(Res.string.save))
                         }
                     }
                 }
@@ -95,7 +95,7 @@ fun AddPurchaseInfoScreen(
         ) {
             // Section 1: Select Vehicle
             item {
-                FleetSectionCard(title = "🚛 Select Vehicle *") {
+                FleetSectionCard(title = stringResource(Res.string.finance_section_vehicle_required)) {
                     Column {
                         ExposedDropdownMenuBox(
                             expanded = showVehicleDropdown,
@@ -108,7 +108,7 @@ fun AddPurchaseInfoScreen(
                                     ?: "",
                                 onValueChange = {},
                                 readOnly = true,
-                                placeholder = { Text("Select a vehicle") },
+                                placeholder = { Text(stringResource(Res.string.finance_placeholder_vehicle)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showVehicleDropdown) },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -122,7 +122,7 @@ fun AddPurchaseInfoScreen(
                             ) {
                                 if (state.vehiclesWithoutPurchase.isEmpty()) {
                                     DropdownMenuItem(
-                                        text = { Text("All vehicles have purchase info") },
+                                        text = { Text(stringResource(Res.string.finance_dropdown_all_have_purchase)) },
                                         onClick = { showVehicleDropdown = false },
                                         enabled = false
                                     )
@@ -158,7 +158,7 @@ fun AddPurchaseInfoScreen(
 
                         if (state.vehiclesWithoutPurchase.isEmpty()) {
                             Text(
-                                text = "All vehicles already have purchase information",
+                                text = stringResource(Res.string.finance_all_vehicles_have_purchase),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.padding(top = 4.dp)
@@ -170,7 +170,7 @@ fun AddPurchaseInfoScreen(
 
             // Section 2: Purchase Details
             item {
-                FleetSectionCard(title = "📝 Purchase Details") {
+                FleetSectionCard(title = stringResource(Res.string.finance_section_purchase)) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         // Purchase Date
                         FleetDateTimePicker(
@@ -180,37 +180,39 @@ fun AddPurchaseInfoScreen(
                                 viewModel.sendIntent(Intent.UpdatePurchaseDate(date))
                             },
                             mode = PickerMode.DATE_ONLY,
-                            label = "Purchase Date *",
+                            label = stringResource(Res.string.finance_label_purchase_date),
                             isError = state.purchaseDateError != null,
                             errorMessage = state.purchaseDateError
                         )
 
                         // Purchase Price
-                        FleetTextField(
+                        FleetInputField(
                             value = state.formPurchasePrice,
                             onValueChange = { viewModel.sendIntent(Intent.UpdatePurchasePrice(it)) },
-                            label = "Purchase Price *",
-                            placeholder = "Enter amount",
+                            fieldType = FieldType.NUMBER,
+                            label = stringResource(Res.string.finance_label_purchase_price),
+                            placeholder = stringResource(Res.string.finance_placeholder_enter_amount),
                             leadingIcon = { Text("₹") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             isError = state.purchasePriceError != null,
                             errorMessage = state.purchasePriceError
                         )
 
                         // Vendor Name
-                        FleetTextField(
+                        FleetInputField(
                             value = state.formVendorName,
                             onValueChange = { viewModel.sendIntent(Intent.UpdateVendorName(it)) },
+                            fieldType = FieldType.DEFAULT,
                             label = "Vendor/Dealer",
                             placeholder = "Dealer name"
                         )
 
                         // Invoice Number
-                        FleetTextField(
+                        FleetInputField(
                             value = state.formInvoiceNumber,
                             onValueChange = { viewModel.sendIntent(Intent.UpdateInvoiceNumber(it)) },
-                            label = "Invoice Number",
-                            placeholder = "INV-XXXX"
+                            fieldType = FieldType.DEFAULT,
+                            label = stringResource(Res.string.finance_label_invoice),
+                            placeholder = stringResource(Res.string.finance_placeholder_invoice)
                         )
                     }
                 }
@@ -218,12 +220,12 @@ fun AddPurchaseInfoScreen(
 
             // Section 3: Payment Type
             item {
-                FleetSectionCard(title = "💳 Payment Type *") {
+                FleetSectionCard(title = stringResource(Res.string.finance_section_payment_type)) {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         PaymentTypeOption(
                             icon = "💵",
-                            title = "Cash / Full Payment",
-                            description = "Vehicle purchased with full payment",
+                            title = stringResource(Res.string.finance_cash_title),
+                            description = stringResource(Res.string.finance_cash_desc),
                             isSelected = state.formPaymentType == PaymentType.CASH,
                             color = CashGreen,
                             onClick = { viewModel.sendIntent(Intent.UpdatePaymentType(PaymentType.CASH)) }
@@ -231,8 +233,8 @@ fun AddPurchaseInfoScreen(
 
                         PaymentTypeOption(
                             icon = "🏦",
-                            title = "Loan (EMI)",
-                            description = "Financed with bank/NBFC",
+                            title = stringResource(Res.string.finance_loan_title),
+                            description = stringResource(Res.string.finance_loan_desc),
                             isSelected = state.formPaymentType == PaymentType.LOAN,
                             color = LoanBlue,
                             onClick = { viewModel.sendIntent(Intent.UpdatePaymentType(PaymentType.LOAN)) }
@@ -244,16 +246,16 @@ fun AddPurchaseInfoScreen(
             // Section 4: Loan Details (only if loan selected)
             if (state.formPaymentType == PaymentType.LOAN) {
                 item {
-                    FleetSectionCard(title = "🏦 Loan Details") {
+                    FleetSectionCard(title = stringResource(Res.string.finance_section_loan)) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             // Down Payment
-                            FleetTextField(
+                            FleetInputField(
                                 value = state.formDownPayment,
                                 onValueChange = { viewModel.sendIntent(Intent.UpdateDownPayment(it)) },
-                                label = "Down Payment *",
-                                placeholder = "Enter amount",
+                                fieldType = FieldType.NUMBER,
+                                label = stringResource(Res.string.finance_label_down_payment),
+                                placeholder = stringResource(Res.string.finance_placeholder_enter_amount),
                                 leadingIcon = { Text("₹") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 isError = state.downPaymentError != null,
                                 errorMessage = state.downPaymentError
                             )
@@ -262,7 +264,7 @@ fun AddPurchaseInfoScreen(
                             OutlinedTextField(
                                 value = formatCurrency(state.calculatedLoanAmount),
                                 onValueChange = {},
-                                label = { Text("Loan Amount (auto-calculated)") },
+                                label = { Text(stringResource(Res.string.finance_label_loan_amount)) },
                                 readOnly = true,
                                 enabled = false,
                                 modifier = Modifier.fillMaxWidth(),
@@ -272,21 +274,23 @@ fun AddPurchaseInfoScreen(
                             HorizontalDivider()
 
                             // Financier Name
-                            FleetTextField(
+                            FleetInputField(
                                 value = state.formFinancierName,
                                 onValueChange = { viewModel.sendIntent(Intent.UpdateFinancierName(it)) },
-                                label = "Financier/Bank *",
-                                placeholder = "e.g., HDFC Bank",
+                                fieldType = FieldType.DEFAULT,
+                                label = stringResource(Res.string.finance_label_financier),
+                                placeholder = stringResource(Res.string.finance_placeholder_financier),
                                 isError = state.financierError != null,
                                 errorMessage = state.financierError
                             )
 
                             // Loan Account Number
-                            FleetTextField(
+                            FleetInputField(
                                 value = state.formLoanAccountNumber,
                                 onValueChange = { viewModel.sendIntent(Intent.UpdateLoanAccountNumber(it)) },
-                                label = "Loan Account Number",
-                                placeholder = "LOAN-XXXX"
+                                fieldType = FieldType.DEFAULT,
+                                label = stringResource(Res.string.finance_label_loan_account),
+                                placeholder = stringResource(Res.string.finance_placeholder_loan_account)
                             )
 
                             // Interest Rate and Tenure in row
@@ -294,29 +298,27 @@ fun AddPurchaseInfoScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                FleetTextField(
+                                FleetInputField(
                                     value = state.formInterestRate,
                                     onValueChange = { viewModel.sendIntent(Intent.UpdateInterestRate(it)) },
-                                    label = "Rate *",
-                                    placeholder = "9.5",
+                                    fieldType = FieldType.DECIMAL,
+                                    label = stringResource(Res.string.finance_label_rate),
+                                    placeholder = stringResource(Res.string.finance_placeholder_rate),
                                     trailingIcon = { Text("%", style = MaterialTheme.typography.bodySmall) },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     isError = state.interestRateError != null,
                                     errorMessage = state.interestRateError,
-                                    singleLine = true,
                                     modifier = Modifier.weight(1f)
                                 )
 
-                                FleetTextField(
+                                FleetInputField(
                                     value = state.formTenureMonths,
                                     onValueChange = { viewModel.sendIntent(Intent.UpdateTenureMonths(it)) },
-                                    label = "Tenure *",
-                                    placeholder = "48",
+                                    fieldType = FieldType.NUMBER,
+                                    label = stringResource(Res.string.finance_label_tenure),
+                                    placeholder = stringResource(Res.string.finance_placeholder_tenure),
                                     trailingIcon = { Text("mo", style = MaterialTheme.typography.bodySmall) },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     isError = state.tenureError != null,
                                     errorMessage = state.tenureError,
-                                    singleLine = true,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -340,7 +342,7 @@ fun AddPurchaseInfoScreen(
                                     viewModel.sendIntent(Intent.UpdateLoanStartDate(date))
                                 },
                                 mode = PickerMode.DATE_ONLY,
-                                label = "EMI Start Date *",
+                                label = stringResource(Res.string.finance_label_emi_start_date),
                                 isError = state.loanStartDateError != null,
                                 errorMessage = state.loanStartDateError
                             )
@@ -349,28 +351,31 @@ fun AddPurchaseInfoScreen(
 
                             // Bank Details
                             Text(
-                                text = "Bank Account (for payment reference)",
+                                text = stringResource(Res.string.finance_bank_reference),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
-                            FleetTextField(
+                            FleetInputField(
                                 value = state.formBankName,
                                 onValueChange = { viewModel.sendIntent(Intent.UpdateBankName(it)) },
-                                label = "Bank Name",
-                                placeholder = "Your bank name"
+                                fieldType = FieldType.DEFAULT,
+                                label = stringResource(Res.string.finance_label_bank_name),
+                                placeholder = stringResource(Res.string.finance_placeholder_bank_name)
                             )
 
-                            FleetTextField(
+                            FleetInputField(
                                 value = state.formBankAccountNumber,
                                 onValueChange = { viewModel.sendIntent(Intent.UpdateBankAccountNumber(it)) },
-                                label = "Account Number",
-                                placeholder = "Account number"
+                                fieldType = FieldType.DEFAULT,
+                                label = stringResource(Res.string.finance_label_account_number),
+                                placeholder = stringResource(Res.string.finance_placeholder_account_number)
                             )
 
-                            FleetTextField(
+                            FleetInputField(
                                 value = state.formBankIfsc,
                                 onValueChange = { viewModel.sendIntent(Intent.UpdateBankIfsc(it)) },
+                                fieldType = FieldType.DEFAULT,
                                 label = "IFSC Code",
                                 placeholder = "HDFC0001234"
                             )
@@ -381,7 +386,7 @@ fun AddPurchaseInfoScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Auto-debit enabled")
+                                Text(stringResource(Res.string.finance_label_auto_debit))
                                 Switch(
                                     checked = state.formAutoDebitEnabled,
                                     onCheckedChange = { viewModel.sendIntent(Intent.UpdateAutoDebitEnabled(it)) }
@@ -394,11 +399,11 @@ fun AddPurchaseInfoScreen(
 
             // Section 5: Notes
             item {
-                FleetSectionCard(title = "📝 Notes") {
+                FleetSectionCard(title = stringResource(Res.string.finance_section_notes)) {
                     OutlinedTextField(
                         value = state.formNotes,
                         onValueChange = { viewModel.sendIntent(Intent.UpdateNotes(it)) },
-                        placeholder = { Text("Additional notes...") },
+                        placeholder = { Text(stringResource(Res.string.finance_placeholder_additional_notes)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         shape = RoundedCornerShape(12.dp)
@@ -422,7 +427,7 @@ fun AddPurchaseInfoScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text("Save Purchase Information")
+                    Text(stringResource(Res.string.finance_save_purchase))
                 }
             }
 
@@ -502,7 +507,7 @@ private fun EmiCalculationPreview(
                 Text("💡", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "EMI Calculation Preview",
+                    text = stringResource(Res.string.finance_emi_calc_preview),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium
                 )
@@ -514,7 +519,7 @@ private fun EmiCalculationPreview(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Monthly EMI:", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.finance_monthly_emi), style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = formatCurrency(emi),
                     style = MaterialTheme.typography.bodyMedium,
@@ -527,7 +532,7 @@ private fun EmiCalculationPreview(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Total Interest:", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.finance_total_interest), style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = formatCurrency(totalInterest),
                     style = MaterialTheme.typography.bodyMedium,
@@ -539,7 +544,7 @@ private fun EmiCalculationPreview(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Total Payable:", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.finance_total_payable), style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = formatCurrency(totalPayable),
                     style = MaterialTheme.typography.bodyMedium,

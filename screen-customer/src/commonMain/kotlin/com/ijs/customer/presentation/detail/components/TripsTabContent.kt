@@ -25,6 +25,7 @@ import com.ijs.customer.presentation.detail.CustomerDetailContract.TripStateFilt
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Trips Tab Content with integrated pending payment info.
@@ -46,6 +47,7 @@ fun TripsTabContent(
     }
 
     val isLoading = state.isLoadingTrips && state.trips.isEmpty()
+    val tripsErrorFallback = stringResource(Res.string.customer_trips_error_generic)
 
     // Calculate values from trips if summary is null
     val totalTrips = state.tripsSummary?.totalTrips ?: state.trips.size
@@ -61,7 +63,7 @@ fun TripsTabContent(
     when {
         isLoading -> LoadingContent()
         state.tripsError != null && state.trips.isEmpty() -> ErrorContent(
-            error = state.tripsError ?: "Something went wrong",
+            error = state.tripsError ?: tripsErrorFallback,
             onRetry = { onIntent(Intent.RefreshTrips) }
         )
         else -> {
@@ -95,8 +97,8 @@ fun TripsTabContent(
                 if (state.trips.isEmpty()) {
                     item {
                         EmptyContent(
-                            title = "No trips found",
-                            message = "This customer has no trips yet",
+                            title = stringResource(Res.string.report_no_trips_found),
+                            message = stringResource(Res.string.customer_no_trips),
                             icon = "🚛"
                         )
                     }
@@ -119,7 +121,7 @@ fun TripsTabContent(
                                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                                 } else {
                                     TextButton(onClick = { onIntent(Intent.LoadMoreTrips) }) {
-                                        Text("Load More")
+                                        Text(stringResource(Res.string.action_load_more))
                                     }
                                 }
                             }
@@ -158,7 +160,7 @@ private fun TripsSummaryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Overview",
+                    text = stringResource(Res.string.vehicles_overview),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -172,7 +174,7 @@ private fun TripsSummaryCard(
                     } else {
                         Icon(
                             painter = painterResource(Res.drawable.ic_download),
-                            contentDescription = "Export",
+                            contentDescription = stringResource(Res.string.cd_export_pdf),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -189,13 +191,13 @@ private fun TripsSummaryCard(
                 SummaryStatBox(
                     icon = "🚛",
                     value = totalTrips.toString(),
-                    label = "Total Trips",
+                    label = stringResource(Res.string.customer_total_trips_label),
                     modifier = Modifier.weight(1f)
                 )
                 SummaryStatBox(
                     icon = "✅",
                     value = completedTrips.toString(),
-                    label = "Completed",
+                    label = stringResource(Res.string.trip_state_completed),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -207,14 +209,14 @@ private fun TripsSummaryCard(
                 SummaryStatBox(
                     icon = "💰",
                     value = totalRevenue,
-                    label = "Revenue",
+                    label = stringResource(Res.string.reports_revenue),
                     isPrimary = true,
                     modifier = Modifier.weight(1f)
                 )
                 SummaryStatBox(
                     icon = "⏳",
                     value = totalPending,
-                    label = "Due",
+                    label = stringResource(Res.string.customer_trip_due_label),
                     isError = true,
                     modifier = Modifier.weight(1f)
                 )
@@ -380,7 +382,7 @@ private fun EnhancedTripRow(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 DateLabel(
-                    label = "Start",
+                    label = stringResource(Res.string.customer_trip_label_start),
                     date = FleetDateTime.formatIsoToDisplayDate(trip.plannedStart ?: trip.scheduledDate)
                 )
                 Text(
@@ -389,7 +391,7 @@ private fun EnhancedTripRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 DateLabel(
-                    label = "End",
+                    label = stringResource(Res.string.customer_trip_label_end),
                     date = FleetDateTime.formatIsoToDisplayDate(trip.plannedEnd)
                 )
             }
@@ -414,19 +416,19 @@ private fun EnhancedTripRow(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         PaymentInfoItem(
-                            label = "Price",
+                            label = stringResource(Res.string.customer_trip_price_label),
                             value = trip.tripPriceDisplay,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f)
                         )
                         PaymentInfoItem(
-                            label = "Paid",
+                            label = stringResource(Res.string.customer_trip_paid_label),
                             value = trip.paidAmountDisplay,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.weight(1f)
                         )
                         PaymentInfoItem(
-                            label = "Due",
+                            label = stringResource(Res.string.customer_trip_due_label),
                             value = formatCurrency(dueAmount),
                             color = if (hasPending) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f)
@@ -437,21 +439,21 @@ private fun EnhancedTripRow(
                     when {
                         isPaid -> {
                             PaymentStatusBadge(
-                                text = "✓ Paid",
+                                text = stringResource(Res.string.customer_trip_paid_badge),
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                         hasPending -> {
                             PaymentStatusBadge(
-                                text = "Due",
+                                text = stringResource(Res.string.customer_trip_due_label),
                                 containerColor = MaterialTheme.colorScheme.errorContainer,
                                 contentColor = MaterialTheme.colorScheme.onErrorContainer
                             )
                         }
                         else -> {
                             PaymentStatusBadge(
-                                text = "Pending",
+                                text = stringResource(Res.string.payment_status_pending),
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                             )

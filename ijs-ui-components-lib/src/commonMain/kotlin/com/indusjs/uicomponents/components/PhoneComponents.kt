@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.rememberPhoneDialer
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
 /**
@@ -65,7 +66,7 @@ fun ClickablePhoneRow(
         ) {
             Icon(
                 painter = painterResource(Res.drawable.ic_phone),
-                contentDescription = "Call $phoneNumber",
+                contentDescription = stringResource(Res.string.cd_call_phone, phoneNumber),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )

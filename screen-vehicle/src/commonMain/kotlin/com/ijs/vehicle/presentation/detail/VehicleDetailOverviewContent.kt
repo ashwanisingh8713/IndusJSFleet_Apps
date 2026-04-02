@@ -18,6 +18,7 @@ import com.ijs.vehicle.domain.entity.VehicleStatus
 import com.ijs.vehicle.domain.entity.VehicleType
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun OverviewTabContent(
@@ -74,7 +75,7 @@ internal fun OverviewTabContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Delete Vehicle")
+                Text(stringResource(Res.string.vehicle_overview_delete))
             }
         }
 
@@ -86,7 +87,7 @@ internal fun OverviewTabContent(
 @Composable
 internal fun CurrentLocationSection(vehicle: Vehicle) {
     EnhancedSectionCard(
-        title = "Current Location",
+        title = stringResource(Res.string.vehicle_detail_current_location),
         icon = "📍"
     ) {
         val location = vehicle.lastLocation
@@ -97,29 +98,29 @@ internal fun CurrentLocationSection(vehicle: Vehicle) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Lat: ${location.latitude}",
+                        text = stringResource(Res.string.vehicle_overview_location_lat, location.latitude.toString()),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Lng: ${location.longitude}",
+                        text = stringResource(Res.string.vehicle_overview_location_lng, location.longitude.toString()),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Last updated: Recently",
+                        text = stringResource(Res.string.vehicle_overview_updated_recently),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 FilledTonalButton(onClick = { /* TODO: Open in maps */ }) {
-                    Text("📍 View Map")
+                    Text("📍 ${stringResource(Res.string.vehicle_overview_view_map)}")
                 }
             }
         } else {
             Text(
-                text = "Location not available",
+                text = stringResource(Res.string.vehicle_overview_location_unavailable),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -132,12 +133,12 @@ internal fun AssignedDriverSection(vehicle: Vehicle) {
     // Get driver name from assignedDriver object or assignedDriverName or use ID as fallback
     val driverName = vehicle.assignedDriver?.fullName()?.takeIf { it.isNotBlank() && it != "N/A" }
         ?: vehicle.assignedDriverName?.takeIf { it.isNotBlank() }
-        ?: "Driver #${vehicle.assignedDriverId}"
+        ?: stringResource(Res.string.vehicle_overview_driver_fallback, vehicle.assignedDriverId!!)
 
     val driverMobile = vehicle.assignedDriver?.mobile
 
     EnhancedSectionCard(
-        title = "Assigned Driver",
+        title = stringResource(Res.string.vehicle_detail_assigned_driver),
         icon = "👤"
     ) {
         Row(
@@ -174,7 +175,7 @@ internal fun AssignedDriverSection(vehicle: Vehicle) {
                 onClick = { /* TODO: View driver */ },
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) {
-                Text("View", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(Res.string.vehicle_overview_view), style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -207,51 +208,51 @@ internal fun StatusChip(status: VehicleStatus) {
 @Composable
 internal fun VehicleInfoSection(vehicle: Vehicle) {
     EnhancedSectionCard(
-        title = "Vehicle Information",
+        title = stringResource(Res.string.vehicle_detail_info),
         icon = "🚗"
     ) {
-        EnhancedInfoRow(icon = "🔢", label = "Registration", value = vehicle.registrationNumber)
-        EnhancedInfoRow(icon = "🏭", label = "Make", value = vehicle.make)
-        EnhancedInfoRow(icon = "📦", label = "Model", value = vehicle.model)
-        EnhancedInfoRow(icon = "📅", label = "Year", value = vehicle.year.toString())
-        EnhancedInfoRow(icon = "🚙", label = "Type", value = getVehicleTypeLabel(vehicle.type), isLast = true)
+        EnhancedInfoRow(icon = "🔢", label = stringResource(Res.string.vehicle_overview_registration_short), value = vehicle.registrationNumber)
+        EnhancedInfoRow(icon = "🏭", label = stringResource(Res.string.vehicle_overview_make), value = vehicle.make)
+        EnhancedInfoRow(icon = "📦", label = stringResource(Res.string.vehicle_overview_model), value = vehicle.model)
+        EnhancedInfoRow(icon = "📅", label = stringResource(Res.string.vehicle_overview_year), value = vehicle.year.toString())
+        EnhancedInfoRow(icon = "🚙", label = stringResource(Res.string.vehicles_type), value = getVehicleTypeLabel(vehicle.type), isLast = true)
     }
 }
 
 @Composable
 internal fun SpecificationsSection(vehicle: Vehicle) {
     EnhancedSectionCard(
-        title = "Specifications",
+        title = stringResource(Res.string.vehicle_detail_specs),
         icon = "⚙️"
     ) {
-        EnhancedInfoRow(icon = "⛽", label = "Fuel Type", value = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() })
-        EnhancedInfoRow(icon = "🎨", label = "Color", value = vehicle.color.replaceFirstChar { it.uppercaseChar() })
-        EnhancedInfoRow(icon = "👥", label = "Capacity", value = "${vehicle.capacity} seats")
-        EnhancedInfoRow(icon = "📏", label = "Mileage", value = "${vehicle.mileage.toInt()} km")
-        EnhancedInfoRow(icon = "🔋", label = "Fuel Level", value = "${vehicle.fuelLevel}%", isLast = true)
+        EnhancedInfoRow(icon = "⛽", label = stringResource(Res.string.vehicle_edit_fuel_type), value = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() })
+        EnhancedInfoRow(icon = "🎨", label = stringResource(Res.string.vehicle_edit_color), value = vehicle.color.replaceFirstChar { it.uppercaseChar() })
+        EnhancedInfoRow(icon = "👥", label = stringResource(Res.string.vehicle_edit_capacity), value = stringResource(Res.string.vehicle_overview_capacity_seats, vehicle.capacity))
+        EnhancedInfoRow(icon = "📏", label = stringResource(Res.string.vehicle_list_label_mileage), value = stringResource(Res.string.vehicle_trips_km, vehicle.mileage.toInt()))
+        EnhancedInfoRow(icon = "🔋", label = stringResource(Res.string.vehicle_overview_fuel_level), value = "${vehicle.fuelLevel}%", isLast = true)
     }
 }
 
 @Composable
 internal fun StatusSection(vehicle: Vehicle) {
     EnhancedSectionCard(
-        title = "Additional Info",
+        title = stringResource(Res.string.vehicle_detail_additional),
         icon = "ℹ️"
     ) {
-        EnhancedInfoRow(icon = "🆔", label = "Vehicle ID", value = "#${vehicle.id}")
-        EnhancedInfoRow(icon = "📊", label = "Status", value = getStatusLabel(vehicle.status))
+        EnhancedInfoRow(icon = "🆔", label = stringResource(Res.string.vehicle_overview_vehicle_id), value = "#${vehicle.id}")
+        EnhancedInfoRow(icon = "📊", label = stringResource(Res.string.vehicles_status), value = getStatusLabel(vehicle.status))
 
         // Show assigned driver info
         val driverName = vehicle.assignedDriver?.fullName() ?: vehicle.assignedDriverName
         if (!driverName.isNullOrBlank() && driverName != "N/A") {
-            EnhancedInfoRow(icon = "👤", label = "Assigned Driver", value = driverName)
+            EnhancedInfoRow(icon = "👤", label = stringResource(Res.string.vehicle_detail_assigned_driver), value = driverName)
         }
 
         vehicle.lastServiceDate?.let {
-            EnhancedInfoRow(icon = "🔧", label = "Last Service", value = formatDate(it))
+            EnhancedInfoRow(icon = "🔧", label = stringResource(Res.string.vehicle_overview_last_service), value = formatDate(it))
         }
         vehicle.nextServiceDate?.let {
-            EnhancedInfoRow(icon = "📆", label = "Next Service", value = formatDate(it), isLast = true)
+            EnhancedInfoRow(icon = "📆", label = stringResource(Res.string.vehicle_overview_next_service), value = formatDate(it), isLast = true)
         } ?: run {
             // If no next service date, mark the previous one as last
         }
@@ -268,19 +269,19 @@ internal fun StatusSection(vehicle: Vehicle) {
 @Composable
 internal fun TripAssignmentCard(tripAssignment: com.ijs.vehicle.domain.entity.VehicleTripAssignment) {
     EnhancedSectionCard(
-        title = "Current Trip",
+        title = stringResource(Res.string.vehicle_detail_current_trip),
         icon = "🚀"
     ) {
-        EnhancedInfoRow(icon = "🎫", label = "Trip ID", value = "#${tripAssignment.tripId}")
-        EnhancedInfoRow(icon = "📍", label = "Status", value = tripAssignment.tripState.replaceFirstChar { it.uppercaseChar() })
+        EnhancedInfoRow(icon = "🎫", label = stringResource(Res.string.vehicle_overview_trip_id), value = "#${tripAssignment.tripId}")
+        EnhancedInfoRow(icon = "📍", label = stringResource(Res.string.vehicles_status), value = tripAssignment.tripState.replaceFirstChar { it.uppercaseChar() })
         tripAssignment.startLocation?.let {
-            EnhancedInfoRow(icon = "🏁", label = "From", value = it)
+            EnhancedInfoRow(icon = "🏁", label = stringResource(Res.string.vehicle_overview_from), value = it)
         }
         tripAssignment.endLocation?.let {
-            EnhancedInfoRow(icon = "🎯", label = "To", value = it)
+            EnhancedInfoRow(icon = "🎯", label = stringResource(Res.string.vehicle_overview_to), value = it)
         }
         tripAssignment.customerName?.let {
-            EnhancedInfoRow(icon = "👤", label = "Customer", value = it, isLast = true)
+            EnhancedInfoRow(icon = "👤", label = stringResource(Res.string.vehicle_overview_customer), value = it, isLast = true)
         }
     }
 }

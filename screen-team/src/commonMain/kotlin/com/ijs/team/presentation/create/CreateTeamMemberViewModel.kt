@@ -2,12 +2,15 @@ package com.ijs.team.presentation.create
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.core.util.PermissionUtils
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.ijs.team.domain.entity.TeamMemberRole
 import com.indusjs.fleet.domain.entity.user.UserRole
 import com.ijs.team.domain.repository.TeamRepository
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -103,52 +106,52 @@ class CreateTeamMemberViewModel(
 
         // Validation
         if (firstName.isEmpty()) {
-            updateState { copy(error = "Please enter first name") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_first_name_required)) }
             return
         }
 
         if (lastName.isEmpty()) {
-            updateState { copy(error = "Please enter last name") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_last_name_required)) }
             return
         }
 
         if (email.isEmpty()) {
-            updateState { copy(error = "Please enter email") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_email_required)) }
             return
         }
 
         if (!isValidEmail(email)) {
-            updateState { copy(error = "Please enter a valid email address") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_email_invalid)) }
             return
         }
 
         if (mobile.isEmpty()) {
-            updateState { copy(error = "Please enter mobile number") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_mobile_required)) }
             return
         }
 
         if (mobile.length < 10) {
-            updateState { copy(error = "Please enter a valid mobile number") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_mobile_invalid)) }
             return
         }
 
         if (password.isEmpty()) {
-            updateState { copy(error = "Please enter password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_password_required)) }
             return
         }
 
         if (password.length < 6) {
-            updateState { copy(error = "Password must be at least 6 characters") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_password_min_chars)) }
             return
         }
 
         if (confirmPassword.isEmpty()) {
-            updateState { copy(error = "Please confirm password") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_confirm_password_required)) }
             return
         }
 
         if (password != confirmPassword) {
-            updateState { copy(error = "Passwords do not match") }
+            updateState { copy(error = UiText.StringRes(Res.string.error_passwords_mismatch)) }
             return
         }
 
@@ -168,8 +171,7 @@ class CreateTeamMemberViewModel(
                 result.fold(
                     onSuccess = { teamMember ->
                         updateState { copy(isLoading = false) }
-                        val roleText = if (role == TeamMemberRole.MANAGER) "Manager" else "Supervisor"
-                        sendEffect(CreateTeamMemberContract.Effect.ShowSnackbar("$roleText ${teamMember.fullName} created successfully!"))
+                        sendEffect(CreateTeamMemberContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_team_member_created)))
                         sendEffect(CreateTeamMemberContract.Effect.TeamMemberCreated)
                         sendEffect(CreateTeamMemberContract.Effect.NavigateBack)
                     },
@@ -177,7 +179,8 @@ class CreateTeamMemberViewModel(
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Failed to create team member"
+                                error = error.message?.let { UiText.Raw(it) }
+                                    ?: UiText.StringRes(Res.string.error_create_team_member)
                             )
                         }
                     }
@@ -186,7 +189,8 @@ class CreateTeamMemberViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to create team member"
+                        error = e.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_create_team_member)
                     )
                 }
             }

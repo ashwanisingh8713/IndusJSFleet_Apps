@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.reports.domain.entity.PLSummary
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -68,7 +70,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                 ) {
                     Column {
                         Text(
-                            "Expenses",
+                            stringResource(Res.string.reports_expenses),
                             style = MaterialTheme.typography.labelSmall,
                             color = ReportsColors.LossRed
                         )
@@ -91,7 +93,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        "Expense Ratio",
+                        stringResource(Res.string.reports_expense_ratio),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -143,12 +145,16 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                         Text(profitStatus.icon, fontSize = 20.sp)
                         Column {
                             Text(
-                                if (isProfit) "Net Profit" else "Net Loss",
+                                if (isProfit) {
+                                    stringResource(Res.string.reports_net_profit_label)
+                                } else {
+                                    stringResource(Res.string.reports_net_loss_label)
+                                },
                                 style = MaterialTheme.typography.labelMedium,
                                 color = statusColor
                             )
                             Text(
-                                profitStatus.label,
+                                profitStatus.localizedLabel(),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = statusColor.copy(alpha = 0.7f)
                             )
@@ -162,7 +168,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                             color = statusColor
                         )
                         Text(
-                            "${summary.profitMarginPercentage.roundToInt()}% margin",
+                            stringResource(Res.string.reports_margin_percent, summary.profitMarginPercentage.roundToInt()),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = statusColor.copy(alpha = 0.7f)
@@ -191,7 +197,7 @@ internal fun FleetSnapshotCard(summary: PLSummary) {
         Column(Modifier.padding(14.dp)) {
             // Header
             Text(
-                "Fleet Snapshot",
+                stringResource(Res.string.reports_fleet_snapshot),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -205,16 +211,16 @@ internal fun FleetSnapshotCard(summary: PLSummary) {
             ) {
                 SnapshotMetric(
                     Modifier.weight(1f), "${summary.completedTrips}",
-                    "Trips", ReportsColors.InfoBlue
+                    stringResource(Res.string.org_stats_trips), ReportsColors.InfoBlue
                 )
                 SnapshotMetric(
                     Modifier.weight(1f), "${summary.activeVehicles}",
-                    "Vehicles", ReportsColors.Purple
+                    stringResource(Res.string.org_stats_vehicles), ReportsColors.Purple
                 )
                 SnapshotMetric(
                     Modifier.weight(1f),
                     "${summary.profitMarginPercentage.roundToInt()}%",
-                    "Margin",
+                    stringResource(Res.string.reports_margin),
                     if (summary.isProfitable) ReportsColors.ProfitGreen else ReportsColors.LossRed
                 )
             }

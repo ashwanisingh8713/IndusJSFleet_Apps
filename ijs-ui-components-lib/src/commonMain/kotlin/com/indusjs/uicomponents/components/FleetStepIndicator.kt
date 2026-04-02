@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Data class representing a single step in the wizard.
@@ -247,7 +248,7 @@ fun FleetStepProgressBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Step $currentStep of $totalSteps",
+                text = stringResource(Res.string.step_indicator, currentStep, totalSteps),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary

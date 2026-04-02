@@ -29,6 +29,7 @@ import com.ijs.driver.domain.entity.Driver
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Driver Cost Entry Screen with multi-row cost entries.
@@ -42,6 +43,8 @@ fun DriverCostEntryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingCostSavedEventId by remember { mutableStateOf(0) }
+    var pendingCostSavedCount by remember { mutableStateOf(0) }
 
     // Set initial driver if provided
     LaunchedEffect(initialDriverId, state.drivers) {
@@ -62,9 +65,18 @@ fun DriverCostEntryScreen(
                 }
                 is DriverCostEntryContract.Effect.NavigateBack -> onNavigateBack()
                 is DriverCostEntryContract.Effect.CostsSaved -> {
-                    snackbarHostState.showSnackbar("${effect.count} cost(s) saved successfully")
+                    pendingCostSavedEventId++
+                    pendingCostSavedCount = effect.count
                 }
             }
+        }
+    }
+
+    if (pendingCostSavedEventId > 0) {
+        val costSavedMsg = stringResource(Res.string.driver_cost_saved_count, pendingCostSavedCount)
+        LaunchedEffect(pendingCostSavedEventId) {
+            snackbarHostState.showSnackbar(costSavedMsg)
+            pendingCostSavedEventId = 0
         }
     }
 
@@ -81,12 +93,12 @@ fun DriverCostEntryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Driver Cost") },
+                title = { Text(stringResource(Res.string.drivers_cost)) },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.sendIntent(DriverCostEntryContract.Intent.NavigateBack) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -106,7 +118,7 @@ fun DriverCostEntryScreen(
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh Cost Types",
+                                contentDescription = stringResource(Res.string.driver_cost_refresh_cost_types),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -119,7 +131,7 @@ fun DriverCostEntryScreen(
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_history),
-                            contentDescription = "History",
+                            contentDescription = stringResource(Res.string.cd_history),
                             tint = if (state.selectedDriver != null)
                                 MaterialTheme.colorScheme.primary
                             else
@@ -174,7 +186,7 @@ fun DriverCostEntryScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "💰 Cost Entries",
+                            text = stringResource(Res.string.driver_cost_entry_section),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -183,11 +195,11 @@ fun DriverCostEntryScreen(
                         ) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_add),
-                                contentDescription = "Add",
+                                contentDescription = stringResource(Res.string.cd_add),
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Add New Cost")
+                            Text(stringResource(Res.string.driver_cost_add_new_row))
                         }
                     }
                 }
@@ -248,7 +260,7 @@ fun DriverCostEntryScreen(
                             )
                         } else {
                             Text(
-                                "💾 Save Driver Cost(s)",
+                                stringResource(Res.string.driver_cost_save_button),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -282,7 +294,7 @@ private fun DriverSelectionCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "👨‍✈️ Select Driver",
+                text = stringResource(Res.string.driver_cost_select_driver_section),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -296,8 +308,8 @@ private fun DriverSelectionCard(
                         "${it.firstName} ${it.lastName} - ${it.mobile}"
                     } ?: "",
                     onValueChange = {},
-                    label = { Text("Driver *") },
-                    placeholder = { Text("Select a driver") },
+                    label = { Text(stringResource(Res.string.driver_cost_label_driver)) },
+                    placeholder = { Text(stringResource(Res.string.driver_cost_placeholder_driver)) },
                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                     readOnly = true,
                     isError = state.driverError != null,
@@ -382,7 +394,7 @@ private fun DriverDetailsCard(driver: Driver) {
                 )
                 if (driver.licenseNumber.isNotBlank()) {
                     Text(
-                        text = "License: ${driver.licenseNumber}",
+                        text = stringResource(Res.string.driver_cost_license_line, driver.licenseNumber),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -398,7 +410,11 @@ private fun DriverDetailsCard(driver: Driver) {
                     MaterialTheme.colorScheme.errorContainer
             ) {
                 Text(
-                    text = if (driver.isActive) "Active" else "Inactive",
+                    text = if (driver.isActive) {
+                        stringResource(Res.string.driver_cost_active)
+                    } else {
+                        stringResource(Res.string.driver_cost_inactive)
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     color = if (driver.isActive)
                         MaterialTheme.colorScheme.onPrimaryContainer
@@ -466,7 +482,11 @@ private fun DriverCostEntryRowCard(
 
                     // Cost type label or placeholder
                     Text(
-                        text = if (entry.costTypeLabel.isNotBlank()) entry.costTypeLabel else "New Cost Entry",
+                        text = if (entry.costTypeLabel.isNotBlank()) {
+                            entry.costTypeLabel
+                        } else {
+                            stringResource(Res.string.driver_cost_new_entry)
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
@@ -480,7 +500,7 @@ private fun DriverCostEntryRowCard(
                             color = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Text(
-                                text = "Deduction",
+                                text = stringResource(Res.string.driver_cost_deduction),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -509,7 +529,11 @@ private fun DriverCostEntryRowCard(
                     // Expand/collapse icon
                     Icon(
                         painter = painterResource(Res.drawable.ic_chevron_right),
-                        contentDescription = if (entry.isExpanded) "Collapse" else "Expand",
+                        contentDescription = if (entry.isExpanded) {
+                            stringResource(Res.string.driver_cost_collapse)
+                        } else {
+                            stringResource(Res.string.driver_cost_expand)
+                        },
                         modifier = Modifier
                             .size(24.dp)
                             .graphicsLayer {
@@ -526,7 +550,7 @@ private fun DriverCostEntryRowCard(
                         ) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_delete),
-                                contentDescription = "Delete",
+                                contentDescription = stringResource(Res.string.delete),
                                 modifier = Modifier.size(20.dp),
                                 tint = MaterialTheme.colorScheme.error
                             )
@@ -562,8 +586,8 @@ private fun DriverCostEntryRowCard(
                         OutlinedTextField(
                             value = entry.customCostTypeName,
                             onValueChange = onCustomCostTypeChange,
-                            label = { Text("Custom Cost Name") },
-                            placeholder = { Text("Enter custom cost name") },
+                            label = { Text(stringResource(Res.string.driver_cost_label_custom_name)) },
+                            placeholder = { Text(stringResource(Res.string.driver_cost_placeholder_custom_name)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -577,7 +601,7 @@ private fun DriverCostEntryRowCard(
                             onDateChange(newDate)
                             onTimeChange(newTime)
                         },
-                        label = "Date & Time *",
+                        label = stringResource(Res.string.driver_cost_label_date_time),
                         isError = entry.dateError != null,
                         errorMessage = entry.dateError,
                         minDate = minDate,  // Cost date must be >= Driver joining date
@@ -593,8 +617,8 @@ private fun DriverCostEntryRowCard(
                                 onAmountChange(value)
                             }
                         },
-                        label = { Text("Amount (₹) *") },
-                        placeholder = { Text("Enter amount") },
+                        label = { Text(stringResource(Res.string.driver_cost_label_amount)) },
+                        placeholder = { Text(stringResource(Res.string.driver_cost_placeholder_amount)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         isError = entry.amountError != null,
@@ -617,8 +641,8 @@ private fun DriverCostEntryRowCard(
                     OutlinedTextField(
                         value = entry.notes,
                         onValueChange = onNotesChange,
-                        label = { Text("Notes (Optional)") },
-                        placeholder = { Text("Add any notes...") },
+                        label = { Text(stringResource(Res.string.driver_cost_label_notes)) },
+                        placeholder = { Text(stringResource(Res.string.driver_cost_notes_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         maxLines = 2
                     )
@@ -642,7 +666,7 @@ private fun CostHistoryDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text("Cost History")
+                Text(stringResource(Res.string.driver_cost_history_dialog_title))
                 if (driverInfo.isNotBlank()) {
                     Text(
                         text = driverInfo,
@@ -666,7 +690,7 @@ private fun CostHistoryDialog(
                     }
                     costs.isEmpty() -> {
                         Text(
-                            text = "No cost history found",
+                            text = stringResource(Res.string.driver_cost_history_empty),
                             modifier = Modifier.align(Alignment.Center),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -686,7 +710,7 @@ private fun CostHistoryDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(stringResource(Res.string.close))
             }
         }
     )
@@ -725,7 +749,7 @@ private fun CostHistoryItem(cost: DriverCostDto) {
                             color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
                         ) {
                             Text(
-                                text = "Deduction",
+                                text = stringResource(Res.string.driver_cost_deduction),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)

@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,12 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.indusjs.datetimepicker.FleetDatePicker
 import com.indusjs.datetimepicker.DateTimeUtils
-import com.indusjs.uicomponents.components.FleetMobileField
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.components.CaretakerSectionCard
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
@@ -30,6 +29,7 @@ import com.ijs.vehicle.domain.entity.VehicleDocument
 import com.ijs.vehicle.domain.entity.VehicleType
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Add/Register Vehicle Screen with document upload functionality.
@@ -90,12 +90,12 @@ fun AddVehicleScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Register Vehicle") },
+                title = { Text(stringResource(Res.string.vehicle_register_title)) },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.sendIntent(AddVehicleContract.Intent.Cancel) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
@@ -126,7 +126,10 @@ fun AddVehicleScreen(
             // Step indicator
             StepIndicator(
                 currentStep = state.currentStep,
-                steps = listOf("Basic Info", "Documents"),
+                steps = listOf(
+                    stringResource(Res.string.vehicle_register_step_basic),
+                    stringResource(Res.string.vehicle_register_step_documents)
+                ),
                 onStepClick = { step ->
                     if (step < state.currentStep || (step == 1 && state.isBasicInfoValid)) {
                         viewModel.sendIntent(AddVehicleContract.Intent.GoToStep(step))
@@ -179,7 +182,7 @@ fun AddVehicleScreen(
                     ) {
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Registering Vehicle...")
+                        Text(stringResource(Res.string.action_registering))
                     }
                 }
             }
@@ -272,21 +275,17 @@ private fun BasicInfoStep(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            SectionHeader(title = "🚗 Vehicle Information")
+            SectionHeader(title = stringResource(Res.string.vehicle_section_info))
         }
 
         item {
-            OutlinedTextField(
+            FleetInputField(
                 value = state.registrationNumber,
                 onValueChange = { onIntent(AddVehicleContract.Intent.UpdateRegistrationNumber(it)) },
-                label = { Text("Registration Number *") },
-                placeholder = { Text("e.g., MH12AB1234") },//KA051HK0712
+                label = stringResource(Res.string.vehicle_label_registration),
+                placeholder = stringResource(Res.string.vehicle_placeholder_registration),
                 isError = state.registrationNumberError != null,
-                supportingText = state.registrationNumberError?.let { { Text(it) } },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Characters
-                ),
-                singleLine = true,
+                errorMessage = state.registrationNumberError,
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -296,25 +295,23 @@ private fun BasicInfoStep(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedTextField(
+                FleetInputField(
                     value = state.make,
                     onValueChange = { onIntent(AddVehicleContract.Intent.UpdateMake(it)) },
-                    label = { Text("Make *") },
-                    placeholder = { Text("e.g., Tata") },
+                    label = stringResource(Res.string.vehicle_label_make),
+                    placeholder = stringResource(Res.string.vehicle_placeholder_make),
                     isError = state.makeError != null,
-                    supportingText = state.makeError?.let { { Text(it) } },
-                    singleLine = true,
+                    errorMessage = state.makeError,
                     modifier = Modifier.weight(1f)
                 )
 
-                OutlinedTextField(
+                FleetInputField(
                     value = state.model,
                     onValueChange = { onIntent(AddVehicleContract.Intent.UpdateModel(it)) },
-                    label = { Text("Model *") },
-                    placeholder = { Text("e.g., Prima") },
+                    label = stringResource(Res.string.vehicle_label_model),
+                    placeholder = stringResource(Res.string.vehicle_placeholder_model),
                     isError = state.modelError != null,
-                    supportingText = state.modelError?.let { { Text(it) } },
-                    singleLine = true,
+                    errorMessage = state.modelError,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -325,24 +322,22 @@ private fun BasicInfoStep(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedTextField(
+                FleetInputField(
                     value = state.year,
                     onValueChange = { onIntent(AddVehicleContract.Intent.UpdateYear(it)) },
-                    label = { Text("Year *") },
-                    placeholder = { Text("e.g., 2023") },
+                    fieldType = FieldType.NUMBER,
+                    label = stringResource(Res.string.vehicle_label_year),
+                    placeholder = stringResource(Res.string.vehicle_placeholder_year),
                     isError = state.yearError != null,
-                    supportingText = state.yearError?.let { { Text(it) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
+                    errorMessage = state.yearError,
                     modifier = Modifier.weight(1f)
                 )
 
-                OutlinedTextField(
+                FleetInputField(
                     value = state.color,
                     onValueChange = { onIntent(AddVehicleContract.Intent.UpdateColor(it)) },
-                    label = { Text("Color") },
-                    placeholder = { Text("e.g., White") },
-                    singleLine = true,
+                    label = stringResource(Res.string.vehicle_label_color),
+                    placeholder = stringResource(Res.string.vehicle_placeholder_color),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -365,25 +360,29 @@ private fun BasicInfoStep(
 
 
         item {
-            SectionHeader(title = "👤 Owner Information")
+            SectionHeader(title = stringResource(Res.string.vehicle_section_owner))
         }
 
         item {
-            OutlinedTextField(
+            FleetInputField(
                 value = state.ownerName,
                 onValueChange = { onIntent(AddVehicleContract.Intent.UpdateOwnerName(it)) },
-                label = { Text("Owner Name") },
-                singleLine = true,
+                label = stringResource(Res.string.vehicle_label_owner_name),
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
         item {
-            FleetMobileField(
-                rawValue = state.ownerContact,
-                onRawValueChange = { onIntent(AddVehicleContract.Intent.UpdateOwnerContact(it)) },
-                label = "Owner Contact",
-                placeholder = "Enter 10-digit mobile"
+            FleetInputField(
+                value = state.ownerContact,
+                onValueChange = {
+                    onIntent(
+                        AddVehicleContract.Intent.UpdateOwnerContact(filterDigitsOnly(it, 10))
+                    )
+                },
+                fieldType = FieldType.PHONE,
+                label = stringResource(Res.string.vehicle_label_owner_contact),
+                placeholder = stringResource(Res.string.vehicle_placeholder_owner_contact)
             )
         }
 
@@ -417,12 +416,12 @@ private fun DocumentsStep(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            SectionHeader(title = "📄 Documents (Optional)")
+            SectionHeader(title = stringResource(Res.string.vehicle_documents_section_optional))
         }
 
         item {
             Text(
-                text = "You can upload vehicle documents now or add them later:",
+                text = stringResource(Res.string.vehicle_documents_upload_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -477,15 +476,16 @@ private fun DocumentsStep(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = if (state.documents.isNotEmpty())
-                                "Documents ready"
-                            else
-                                "No documents uploaded",
+                            text = if (state.documents.isNotEmpty()) {
+                                stringResource(Res.string.vehicle_documents_ready)
+                            } else {
+                                stringResource(Res.string.vehicle_documents_none_uploaded)
+                            },
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "${state.documents.size} document(s) uploaded",
+                            text = stringResource(Res.string.vehicle_documents_count_uploaded, state.documents.size),
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -559,14 +559,14 @@ private fun DocumentUploadCard(
                 // Document info - compact layout
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = getDocumentTypeName(documentType),
+                        text = documentTypeDisplayName(documentType),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
 
                     if (uploadedDocument != null) {
                         Text(
-                            text = "${uploadedDocument.fileName} • ${formatFileSize(uploadedDocument.fileSize)}",
+                            text = "${uploadedDocument.fileName} • ${formatFileSizeDisplay(uploadedDocument.fileSize)}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1
@@ -580,7 +580,7 @@ private fun DocumentUploadCard(
                         )
                     } else {
                         Text(
-                            text = "Tap to upload",
+                            text = stringResource(Res.string.vehicle_tap_to_upload),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -601,7 +601,7 @@ private fun DocumentUploadCard(
                         modifier = Modifier.height(32.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                     ) {
-                        Text("Upload", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(Res.string.vehicle_docs_upload), style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
@@ -612,7 +612,7 @@ private fun DocumentUploadCard(
                 FleetDatePicker(
                     date = expiryDateRaw,
                     onDateChange = onExpiryDateChange,
-                    label = "Expiry Date",
+                    label = stringResource(Res.string.vehicle_expiry_date),
                     minDate = DateTimeUtils.getCurrentDate()  // Expiry must be in future
                 )
             }
@@ -627,7 +627,7 @@ private fun VehicleTypeSelector(
 ) {
     Column {
         Text(
-            text = "Vehicle Type *",
+            text = stringResource(Res.string.vehicle_type_required_label),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -658,7 +658,7 @@ private fun FuelTypeSelector(
 ) {
     Column {
         Text(
-            text = "Fuel Type",
+            text = stringResource(Res.string.vehicle_edit_fuel_type),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -714,7 +714,10 @@ private fun BottomActionBar(
                 onClick = onPrevious,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(if (currentStep == 0) "Cancel" else "Previous")
+                Text(
+                    if (currentStep == 0) stringResource(Res.string.cancel)
+                    else stringResource(Res.string.previous)
+                )
             }
 
             Button(
@@ -722,23 +725,32 @@ private fun BottomActionBar(
                 enabled = canProceed && !isSaving,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(if (currentStep == 1) "Register Vehicle" else "Next")
+                Text(
+                    if (currentStep == 1) stringResource(Res.string.vehicle_register_button)
+                    else stringResource(Res.string.next)
+                )
             }
         }
     }
 }
 
-private fun getDocumentTypeName(type: DocumentType): String {
-    return when (type) {
-        DocumentType.REGISTRATION_CERTIFICATE -> "Registration Certificate [RC]"
-        DocumentType.INSURANCE -> "Insurance [INS]"
-        DocumentType.PUC_CERTIFICATE -> "PUC Certificate [PUC]"
-        DocumentType.FITNESS_CERTIFICATE -> "Fitness Certificate [FC]"
-        DocumentType.ROAD_TAX -> "Road Tax [RT]"
-        DocumentType.PERMIT -> "Permit [PERMIT]"
-        DocumentType.DRIVER_LICENSE -> "Driver License"
-        DocumentType.OTHER -> "Other Document"
-    }
+@Composable
+private fun documentTypeDisplayName(type: DocumentType): String = when (type) {
+    DocumentType.REGISTRATION_CERTIFICATE -> stringResource(Res.string.vehicle_doc_type_rc)
+    DocumentType.INSURANCE -> stringResource(Res.string.vehicle_doc_type_insurance)
+    DocumentType.PUC_CERTIFICATE -> stringResource(Res.string.vehicle_doc_type_puc)
+    DocumentType.FITNESS_CERTIFICATE -> stringResource(Res.string.vehicle_doc_type_fitness)
+    DocumentType.ROAD_TAX -> stringResource(Res.string.vehicle_doc_type_road_tax)
+    DocumentType.PERMIT -> stringResource(Res.string.vehicle_doc_type_permit)
+    DocumentType.DRIVER_LICENSE -> stringResource(Res.string.vehicle_doc_type_driver_license)
+    DocumentType.OTHER -> stringResource(Res.string.vehicle_doc_type_other)
+}
+
+@Composable
+private fun formatFileSizeDisplay(bytes: Long): String = when {
+    bytes < 1024 -> stringResource(Res.string.vehicle_file_size_b, bytes.toInt())
+    bytes < 1024 * 1024 -> stringResource(Res.string.vehicle_file_size_kb, (bytes / 1024).toInt())
+    else -> stringResource(Res.string.vehicle_file_size_mb, (bytes / (1024 * 1024)).toInt())
 }
 
 /**
@@ -771,14 +783,6 @@ private fun getDocumentEmoji(type: DocumentType): String {
     }
 }
 
-private fun formatFileSize(bytes: Long): String {
-    return when {
-        bytes < 1024 -> "$bytes B"
-        bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-        else -> "${bytes / (1024 * 1024)} MB"
-    }
-}
-
 /**
  * Dialog shown before file picker to inform user about supported formats.
  */
@@ -798,7 +802,7 @@ private fun DocumentUploadDialog(
         },
         title = {
             Text(
-                text = "Upload ${getDocumentTypeName(documentType)}",
+                text = stringResource(Res.string.vehicle_upload_title, documentTypeDisplayName(documentType)),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -808,7 +812,7 @@ private fun DocumentUploadDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Please select a file to upload.",
+                    text = stringResource(Res.string.vehicle_upload_select_file_prompt),
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -823,7 +827,7 @@ private fun DocumentUploadDialog(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Supported Formats:",
+                            text = stringResource(Res.string.vehicle_upload_supported_formats),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -835,7 +839,7 @@ private fun DocumentUploadDialog(
                             FormatChip("PNG")
                         }
                         Text(
-                            text = "Maximum file size: 10 MB",
+                            text = stringResource(Res.string.vehicle_upload_max_size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -844,7 +848,7 @@ private fun DocumentUploadDialog(
 
                 // Tag info
                 Text(
-                    text = "Tag: ${getDocumentTag(documentType)}",
+                    text = stringResource(Res.string.vehicle_upload_tag, getDocumentTag(documentType)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -852,12 +856,12 @@ private fun DocumentUploadDialog(
         },
         confirmButton = {
             Button(onClick = onSelectFile) {
-                Text("Select File")
+                Text(stringResource(Res.string.vehicle_btn_select_file))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         }
     )
