@@ -1,0 +1,8 @@
+{
+  "search.exclude": {
+    "**/build": true,
+    "**/.gradle": true,
+    "**/generated": true,
+    "Docs/postman_collections": true
+  }
+}

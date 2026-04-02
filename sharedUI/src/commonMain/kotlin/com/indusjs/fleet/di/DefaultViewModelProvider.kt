@@ -21,7 +21,7 @@ import com.ijs.customer.domain.repository.CustomerRepository
 import com.indusjs.fleet.domain.repository.dashboard.DashboardRepository
 import com.ijs.driver.domain.repository.DriverRepository
 import com.ijs.finance.domain.repository.VehicleFinanceRepository
-import com.ijs.payment.domain.repository.TripPaymentRepository
+import com.ijs.trip.payment.domain.repository.TripPaymentRepository
 import com.ijs.reports.domain.repository.ReportsRepository
 import com.ijs.reports.domain.usecase.GetConsolidatedPLUseCase
 import com.ijs.reports.domain.usecase.GetMultiCostTypeAnalysisUseCase
@@ -79,9 +79,9 @@ import com.ijs.driver.presentation.create.CreateDriverViewModel
 import com.ijs.driver.presentation.detail.DriverDetailViewModel
 import com.ijs.finance.presentation.VehicleFinanceViewModel
 import com.ijs.map.presentation.MapsViewModel
-import com.ijs.payment.presentation.AddPaymentViewModel
-import com.ijs.payment.presentation.PaymentDetailViewModel
-import com.ijs.payment.presentation.PaymentsViewModel
+import com.ijs.trip.payment.presentation.AddPaymentViewModel
+import com.ijs.trip.payment.presentation.PaymentDetailViewModel
+import com.ijs.trip.payment.presentation.PaymentsViewModel
 import com.ijs.reports.presentation.ReportsViewModel
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLViewModel
 import com.ijs.reports.presentation.cost.CostAnalysisViewModel

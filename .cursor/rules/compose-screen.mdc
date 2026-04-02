@@ -1,0 +1,48 @@
+---
+description: Compose screen patterns for IndusJS Fleet UI
+globs: "**/*Screen.kt"
+alwaysApply: false
+---
+
+# Compose Screen Pattern
+
+```kotlin
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun {Feature}Screen(
+    viewModel: {Feature}ViewModel,
+    onNavigateBack: () -> Unit,
+    onNavigateTo{Detail}: (String) -> Unit
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is Effect.NavigateTo{Detail} -> onNavigateTo{Detail}(effect.id)
+                is Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
+            }
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = { /* TopAppBar with navigation icon */ }
+    ) { paddingValues ->
+        when {
+            state.isLoading && !state.hasData -> LoadingContent()
+            state.error != null && !state.hasData -> ErrorContent(error = state.error!!, onRetry = { ... })
+            else -> {Feature}Content(state = state, modifier = Modifier.padding(paddingValues))
+        }
+    }
+}
+```
+
+## Rules
+- Screen composable receives ViewModel + navigation lambdas (no direct Navigator access)
+- Collect `state` via `collectAsStateWithLifecycle()`
+- Collect `effect` in `LaunchedEffect(Unit)` — route effects to navigation lambdas
+- Loading/Error/Content tri-state pattern using `LoadingContent()` / `ErrorContent()` from ui-components
+- Extract content into private sub-composables when screen > 200 lines
+- Icons from `painterResource(Res.drawable.ic_xxx)`, strings from `stringResource(Res.string.xxx)`

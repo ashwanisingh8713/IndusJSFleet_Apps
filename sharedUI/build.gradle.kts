@@ -41,7 +41,7 @@ kotlin {
             implementation(project(":screen-vehicle"))
             implementation(project(":screen-trip"))
             implementation(project(":screen-customer"))
-            implementation(project(":screen-payment"))
+            implementation(project(":screen-trip-payment"))
             implementation(project(":screen-team"))
             implementation(project(":screen-report"))
             implementation(project(":screen-finance"))

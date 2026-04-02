@@ -14,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.uicomponents.components.DateRangePickerDialog
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.reports.presentation.ReportsContract.Effect
 import com.ijs.reports.presentation.ReportsContract.Intent
@@ -58,12 +57,10 @@ fun ReportsScreen(
         }
     }
 
-    DateRangePickerDialog(
+    ReportsDateRangePickerDialog(
         isVisible = state.showDateRangePicker,
         startDate = state.startDate,
         endDate = state.endDate,
-        onStartDateChange = { viewModel.sendIntent(Intent.UpdateStartDate(it)) },
-        onEndDateChange = { viewModel.sendIntent(Intent.UpdateEndDate(it)) },
         onApply = { start, end -> viewModel.sendIntent(Intent.SetCustomDateRange(start, end)) },
         onDismiss = { viewModel.sendIntent(Intent.HideDateRangePicker) }
     )

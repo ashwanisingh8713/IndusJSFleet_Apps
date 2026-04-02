@@ -7,8 +7,8 @@ import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.indusjs.fleet.data.model.costs.TripCostDto
 import com.ijs.customer.domain.entity.Customer
 import com.ijs.driver.domain.entity.Driver
-import com.ijs.payment.domain.entity.TripPayment
-import com.ijs.payment.domain.entity.TripPaymentSummary
+import com.ijs.trip.payment.domain.entity.TripPayment
+import com.ijs.trip.payment.domain.entity.TripPaymentSummary
 import com.ijs.trip.domain.entity.Trip
 import com.ijs.trip.domain.entity.TripStatus
 import com.ijs.vehicle.domain.entity.Vehicle

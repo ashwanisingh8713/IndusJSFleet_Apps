@@ -1,0 +1,33 @@
+---
+description: Checklist for adding a new feature end-to-end
+alwaysApply: false
+---
+
+# New Feature Checklist
+
+When adding a new feature to IndusJS Fleet, create files in this order:
+
+## 1. Domain Layer (feature module)
+- [ ] `domain/entity/{Feature}.kt` — clean data class, no annotations
+- [ ] `domain/repository/{Feature}Repository.kt` — interface with Flow/Result returns
+- [ ] `domain/usecase/{Feature}UseCases.kt` — one class per action, `@Inject`
+
+## 2. Data Layer (feature module)
+- [ ] `data/model/{Feature}Dto.kt` — `@Serializable`, `@SerialName` for all fields
+- [ ] `data/model/Create{Feature}Request.kt` — request DTO if creating/updating
+- [ ] `data/mapper/{Feature}Mapper.kt` — `@Inject`, mapToDomain/mapToRequest
+- [ ] `data/datasource/{Feature}RemoteDataSource.kt` — interface + `@Inject` impl
+- [ ] `data/repository/{Feature}RepositoryImpl.kt` — `@Inject`, Flow + Result pattern
+
+## 3. Presentation Layer (feature module)
+- [ ] `presentation/{Feature}Contract.kt` — State/Intent/Effect
+- [ ] `presentation/{Feature}ViewModel.kt` — `@Inject`, MviViewModel
+- [ ] `presentation/{Feature}Screen.kt` — Compose UI
+- [ ] `presentation/{Feature}FeatureFacade.kt` — public entry point
+
+## 4. Wiring (sharedUI)
+- [ ] `FeatureRepositoryFactory` — add repository creation
+- [ ] `DefaultViewModelProvider` — add use cases + VM factory
+- [ ] `ViewModelProvider` interface — add VM factory signature
+- [ ] `FleetRoute.kt` — add route(s)
+- [ ] `FleetNavigation.kt` — add NavEntry with Facade call

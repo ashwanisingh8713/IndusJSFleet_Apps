@@ -1,0 +1,44 @@
+---
+description: Error handling with Result type and ApiErrorHandler
+globs: "**/*.kt"
+alwaysApply: false
+---
+
+# Error Handling
+
+## Result type (`ijs-error-lib`)
+```kotlin
+sealed class Result<out T> {
+    object Loading : Result<Nothing>()
+    data class Success<T>(val data: T) : Result<T>()
+    data class Error(val exception: Throwable? = null, val message: String? = null) : Result<Nothing>()
+}
+```
+
+## In repositories — wrap API calls
+```kotlin
+try {
+    val response = remoteDataSource.getData(token)
+    emit(Result.Success(mapper.mapToDomain(response.data)))
+} catch (e: Exception) {
+    emit(Result.Error(e, ApiErrorHandler.extractMessage(e)))
+}
+```
+
+## In ViewModels — handle all three states
+```kotlin
+when (result) {
+    is Result.Loading -> updateState { copy(isLoading = true, error = null) }
+    is Result.Success -> updateState { copy(isLoading = false, data = result.data) }
+    is Result.Error -> {
+        updateState { copy(isLoading = false, error = result.message) }
+        sendEffect(Effect.ShowSnackbar(result.message ?: "Something went wrong"))
+    }
+}
+```
+
+## Rules
+- Use `com.indusjs.error.result.Result`, NOT `kotlin.Result`
+- Use `ApiErrorHandler.extractMessage(e)` for user-friendly error messages
+- 401 errors trigger `AuthenticationManager` logout flow automatically
+- Always clear `error` state when starting a new load (`error = null`)

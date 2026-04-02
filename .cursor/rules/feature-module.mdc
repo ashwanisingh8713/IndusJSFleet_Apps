@@ -1,0 +1,44 @@
+---
+description: Feature module structure and FeatureFacade pattern
+globs: "screen-*/**/*.kt"
+alwaysApply: false
+---
+
+# Feature Module Structure
+
+Each `screen-{feature}` module follows this layout:
+```
+screen-{feature}/src/commonMain/kotlin/com/ijs/{feature}/
+├── data/
+│   ├── datasource/{Feature}RemoteDataSource.kt
+│   ├── mapper/{Feature}Mapper.kt
+│   ├── model/{Feature}Dto.kt, {Feature}Request.kt
+│   └── repository/{Feature}RepositoryImpl.kt
+├── domain/
+│   ├── entity/{Feature}.kt
+│   ├── repository/{Feature}Repository.kt (interface)
+│   └── usecase/{Feature}UseCases.kt
+└── presentation/
+    ├── {Feature}Contract.kt
+    ├── {Feature}ViewModel.kt
+    ├── {Feature}Screen.kt
+    └── {Feature}FeatureFacade.kt
+```
+
+## FeatureFacade — public entry point
+```kotlin
+object {Feature}FeatureFacade {
+    @Composable
+    fun {Feature}ListEntry(viewModel: ..., onNavigateBack: ..., onNavigateTo...: ...) {
+        {Feature}Screen(viewModel, onNavigateBack, onNavigateTo...)
+    }
+}
+```
+- Facade is the **only public API** — screens/VMs are `internal` where possible
+- `sharedUI` navigation calls Facade entries, never screen composables directly
+- Each screen gets its own Facade entry function
+
+## Role-based access
+- Owner/GM see all financial data (trip_price, P&L, revenue)
+- Manager sees operational data only (no prices, no P&L)
+- Supervisor is view-only (can only update trip status)

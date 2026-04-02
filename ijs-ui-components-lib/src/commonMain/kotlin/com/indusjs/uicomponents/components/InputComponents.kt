@@ -3,6 +3,7 @@ package com.indusjs.uicomponents.components
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenuItem
@@ -910,6 +911,7 @@ fun convertIsoToDdMmYyyy(isoDate: String): String {
  * @param isExpanded Whether the dropdown is expanded
  * @param error Error message to display (null if no error)
  * @param enabled Whether the dropdown is enabled
+ * @param leadingIcon Optional leading icon composable
  * @param modifier Modifier for the field
  * @param onToggle Called when dropdown should toggle open/close
  * @param onDismiss Called when dropdown should dismiss
@@ -924,6 +926,7 @@ fun FleetDropdownField(
     isExpanded: Boolean,
     error: String? = null,
     enabled: Boolean = true,
+    leadingIcon: @Composable (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     onToggle: () -> Unit,
     onDismiss: () -> Unit,
@@ -946,6 +949,7 @@ fun FleetDropdownField(
             enabled = enabled,
             isError = error != null,
             supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+            leadingIcon = leadingIcon,
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded && enabled)
             },
@@ -954,6 +958,8 @@ fun FleetDropdownField(
         ExposedDropdownMenu(
             expanded = isExpanded && enabled,
             onDismissRequest = onDismiss,
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(12.dp),
             content = content
         )
     }

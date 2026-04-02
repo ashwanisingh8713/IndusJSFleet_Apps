@@ -1,0 +1,41 @@
+---
+description: Repository implementation pattern with Result flow
+globs: "**/*RepositoryImpl.kt"
+alwaysApply: false
+---
+
+# Repository Pattern
+
+```kotlin
+@Inject
+class {Feature}RepositoryImpl(
+    private val remoteDataSource: {Feature}RemoteDataSource,
+    private val userLocalDataSource: UserLocalDataSource,
+    private val mapper: {Feature}Mapper
+) : {Feature}Repository {
+
+    override fun get{Items}(): Flow<Result<List<{Entity}>>> = flow {
+        emit(Result.Loading)
+        try {
+            val token = requireAuthToken()
+            val response = remoteDataSource.get{Items}(token)
+            emit(Result.Success(mapper.mapToDomainList(response.data)))
+        } catch (e: Exception) {
+            emit(Result.Error(e, ApiErrorHandler.extractMessage(e)))
+        }
+    }
+
+    private suspend fun requireAuthToken(): String {
+        return userLocalDataSource.getAuthToken()
+            ?: throw ApiException.AuthenticationException("No auth token")
+    }
+}
+```
+
+## Rules
+- Interface in `domain/repository/`, impl in `data/repository/`
+- List endpoints return `Flow<Result<List<T>>>`, single-item returns `suspend Result<T>`
+- Always emit `Result.Loading` first in flow builders
+- Get auth token via `userLocalDataSource.getAuthToken()`
+- Map DTOs to domain entities via `{Feature}Mapper` — never return DTOs
+- Error handling: catch `Exception`, use `ApiErrorHandler.extractMessage(e)`

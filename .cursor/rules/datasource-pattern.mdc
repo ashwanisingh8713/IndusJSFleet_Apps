@@ -1,0 +1,38 @@
+---
+description: Remote data source pattern with Ktor HTTP client
+globs: "**/*DataSource*.kt"
+alwaysApply: false
+---
+
+# DataSource Pattern
+
+```kotlin
+interface {Feature}RemoteDataSource : RemoteDataSource {
+    suspend fun get{Items}(token: String): ApiResponse<List<{Feature}Dto>>
+    suspend fun get{Item}ById(token: String, id: String): ApiResponse<{Feature}Dto>
+    suspend fun create{Item}(token: String, request: Create{Feature}Request): ApiResponse<{Feature}Dto>
+}
+
+@Inject
+class {Feature}RemoteDataSourceImpl(
+    private val httpClient: HttpClient,
+    private val logger: FleetLogger
+) : {Feature}RemoteDataSource {
+
+    private val baseUrl = "${ApiConfig.BASE_URL}/{features}"
+
+    override suspend fun get{Items}(token: String): ApiResponse<List<{Feature}Dto>> {
+        return httpClient.get(baseUrl) {
+            headers { append(HttpHeaders.Authorization, "Bearer $token") }
+        }.body()
+    }
+}
+```
+
+## Rules
+- Interface + Impl split. Interface in `data/datasource/`, impl in same file or separate
+- Base URL from `ApiConfig.BASE_URL` + resource path
+- Auth via `Bearer $token` header on every request
+- Return `ApiResponse<T>` (or typed response wrapper), not raw `HttpResponse`
+- Log requests/responses with `FleetLogger`, tag with module constant
+- Query params via `url { parameters.append("key", "value") }`

@@ -11,7 +11,7 @@ import com.ijs.customer.domain.entity.Customer
 import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.driver.domain.entity.Driver
 import com.ijs.driver.domain.usecase.GetDriversUseCase
-import com.ijs.payment.domain.repository.TripPaymentRepository
+import com.ijs.trip.payment.domain.repository.TripPaymentRepository
 import com.ijs.trip.domain.repository.TripRepository
 import com.ijs.trip.domain.usecase.CancelTripUseCase
 import com.ijs.trip.domain.usecase.GetTripByIdUseCase

@@ -33,7 +33,7 @@ kotlin {
             implementation(project(":screen-vehicle"))
             implementation(project(":screen-driver"))
             implementation(project(":screen-customer"))
-            implementation(project(":screen-payment"))
+            implementation(project(":screen-trip-payment"))
 
             // PDF report generation + date/time picker
             implementation(project(":ijs-pdf-report"))

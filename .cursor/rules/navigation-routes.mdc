@@ -1,0 +1,39 @@
+---
+description: Navigation 3 route and entry patterns
+globs: "**/navigation/*.kt"
+alwaysApply: false
+---
+
+# Navigation 3 Pattern
+
+## Routes (`FleetRoute.kt`)
+```kotlin
+@Serializable
+sealed interface FleetRoute : NavKey {
+    @Serializable data object Dashboard : FleetRoute
+    @Serializable data object Vehicles : FleetRoute
+    @Serializable data class VehicleDetail(val vehicleId: String) : FleetRoute
+}
+```
+- `data object` for leaf routes (no params)
+- `data class` for parameterized routes
+- All routes `@Serializable` and implement `FleetRoute : NavKey`
+
+## NavEntry (`FleetNavigation.kt`)
+```kotlin
+is FleetRoute.Vehicles -> NavEntry(route) {
+    val vm = rememberViewModel { viewModelProvider.vehiclesViewModel() }
+    VehicleFeatureFacade.VehiclesListEntry(
+        viewModel = vm,
+        onNavigateBack = { backStack.removeLastOrNull() },
+        onNavigateToDetail = { id -> backStack.add(FleetRoute.VehicleDetail(id)) },
+        onNavigateToAdd = { backStack.add(FleetRoute.AddVehicle) }
+    )
+}
+```
+
+## Rules
+- ViewModel created via `rememberViewModel { viewModelProvider.xxxViewModel() }`
+- Navigation via `backStack.add(route)` / `backStack.removeLastOrNull()`
+- Screen accessed through `FeatureFacade` entry point, not direct composable
+- Deep navigation: `backStack.add()` multiple routes for nested screens

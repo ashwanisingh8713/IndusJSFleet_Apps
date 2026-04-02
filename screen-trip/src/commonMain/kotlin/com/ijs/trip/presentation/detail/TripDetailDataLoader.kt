@@ -11,8 +11,8 @@ import com.ijs.customer.domain.entity.Customer
 import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.driver.domain.entity.DriverStatus
 import com.ijs.driver.domain.usecase.GetDriversUseCase
-import com.ijs.payment.domain.entity.TripPaymentSummary
-import com.ijs.payment.domain.repository.TripPaymentRepository
+import com.ijs.trip.payment.domain.entity.TripPaymentSummary
+import com.ijs.trip.payment.domain.repository.TripPaymentRepository
 import com.ijs.trip.domain.usecase.GetTripByIdUseCase
 import com.ijs.vehicle.domain.entity.VehicleStatus
 import com.ijs.vehicle.domain.usecase.GetVehiclesUseCase

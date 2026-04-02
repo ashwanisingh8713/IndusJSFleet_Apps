@@ -46,7 +46,9 @@ fun FleetDateTimePicker(
     errorMessage: String? = null,
     minDate: String? = null,
     maxDate: String? = null,
-    initialDisplayDate: String? = null  // Date to show in calendar when picker opens with empty date
+    initialDisplayDate: String? = null,  // Date to show in calendar when picker opens with empty date
+    /** When false, hides the "Quick Select" shortcuts row inside the picker dialog (e.g. date range dialog). */
+    showQuickDateShortcuts: Boolean = true
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -105,7 +107,8 @@ fun FleetDateTimePicker(
             },
             onDismiss = { showDialog = false },
             minDate = minDate,
-            maxDate = maxDate
+            maxDate = maxDate,
+            showQuickDateShortcuts = showQuickDateShortcuts
         )
     }
 }
@@ -127,7 +130,8 @@ fun FleetDatePicker(
     errorMessage: String? = null,
     minDate: String? = null,
     maxDate: String? = null,
-    initialDisplayDate: String? = null
+    initialDisplayDate: String? = null,
+    showQuickDateShortcuts: Boolean = true
 ) {
     FleetDateTimePicker(
         date = date,
@@ -141,7 +145,8 @@ fun FleetDatePicker(
         errorMessage = errorMessage,
         minDate = minDate,
         maxDate = maxDate,
-        initialDisplayDate = initialDisplayDate
+        initialDisplayDate = initialDisplayDate,
+        showQuickDateShortcuts = showQuickDateShortcuts
     )
 }
 
@@ -180,7 +185,8 @@ private fun PickerDialog(
     onConfirm: (date: String, time: String) -> Unit,
     onDismiss: () -> Unit,
     minDate: String?,
-    maxDate: String?
+    maxDate: String?,
+    showQuickDateShortcuts: Boolean = true
 ) {
     // Use initialDisplayDate when date is blank (e.g., for DOB show 18 years ago)
     val effectiveDisplayDate = initialDate.ifBlank {
@@ -286,7 +292,7 @@ private fun PickerDialog(
                 }
 
                 // Quick Shortcuts - only for DATE_TIME and DATE_ONLY (NOT for TIME_ONLY)
-                if (mode == PickerMode.DATE_TIME || mode == PickerMode.DATE_ONLY) {
+                if (showQuickDateShortcuts && (mode == PickerMode.DATE_TIME || mode == PickerMode.DATE_ONLY)) {
                     QuickDateShortcutsRow(
                         onDateSelected = { newDate ->
                             selectedDate = newDate

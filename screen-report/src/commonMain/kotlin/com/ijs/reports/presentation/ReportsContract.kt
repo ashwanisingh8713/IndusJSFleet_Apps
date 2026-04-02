@@ -46,8 +46,6 @@ object ReportsContract {
         data class SetCustomDateRange(val startDate: String, val endDate: String) : Intent
         data object ShowDateRangePicker : Intent
         data object HideDateRangePicker : Intent
-        data class UpdateStartDate(val date: String) : Intent
-        data class UpdateEndDate(val date: String) : Intent
         // Navigation - P&L Reports
         data object NavigateToVehiclePL : Intent
         data object NavigateToTripPL : Intent

@@ -1,0 +1,52 @@
+---
+description: MviViewModel pattern for screen ViewModels
+globs: "**/*ViewModel.kt"
+alwaysApply: false
+---
+
+# ViewModel Pattern
+
+```kotlin
+@Inject
+class {Feature}ViewModel(
+    private val dispatcherProvider: DispatcherProvider,
+    private val get{Feature}UseCase: Get{Feature}UseCase,
+    private val logger: FleetLogger
+) : MviViewModel<State, Intent, Effect>(State()) {
+
+    init {
+        sendIntent(Intent.Load{Feature})
+    }
+
+    override suspend fun handleIntent(intent: Intent) {
+        when (intent) {
+            is Intent.Load{Feature} -> load()
+            is Intent.Select{Item} -> sendEffect(Effect.NavigateTo{Screen}(intent.id))
+            // ...
+        }
+    }
+
+    private suspend fun load() {
+        withContext(dispatcherProvider.io) {
+            useCase().collectLatest { result ->
+                when (result) {
+                    is Result.Loading -> updateState { copy(isLoading = true, error = null) }
+                    is Result.Success -> updateState { copy(isLoading = false, data = result.data) }
+                    is Result.Error -> {
+                        updateState { copy(isLoading = false, error = result.message ?: "Failed") }
+                        sendEffect(Effect.ShowSnackbar(result.message ?: "Failed"))
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+## Rules
+- `@Inject` on class, not constructor
+- Extend `MviViewModel<State, Intent, Effect>(State())`
+- `handleIntent` routes via `when` — each branch delegates to a private suspend function
+- Use `updateState { copy(...) }` for state changes, `sendEffect(...)` for one-shots
+- IO work wrapped in `withContext(dispatcherProvider.io)`
+- Collect flows with `collectLatest`, handle all three Result branches

@@ -19,7 +19,7 @@ import com.ijs.driver.presentation.DriverFeatureFacade
 import com.ijs.trip.presentation.TripFeatureFacade
 import com.ijs.team.presentation.TeamFeatureFacade
 import com.ijs.customer.presentation.CustomerFeatureFacade
-import com.ijs.payment.presentation.PaymentFeatureFacade
+import com.ijs.trip.payment.presentation.PaymentFeatureFacade
 import com.ijs.reports.presentation.ReportsFeatureFacade
 import com.ijs.finance.presentation.FinanceFeatureFacade
 
@@ -173,11 +173,16 @@ fun fleetEntryProvider(
         }
 
         is FleetRoute.AddVehicle -> NavEntry(route) {
-            val viewModel = rememberViewModel { addVehicleViewModel() }
+            val addVehicleKey = "add_vehicle"
+            val viewModel = rememberSharedViewModel(addVehicleKey) { addVehicleViewModel() }
             VehicleFeatureFacade.AddVehicleEntry(
                 viewModel = viewModel,
-                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateBack = {
+                    clearSharedViewModel(addVehicleKey)
+                    backStack.removeLastOrNull()
+                },
                 onVehicleRegistered = { vehicleId ->
+                    clearSharedViewModel(addVehicleKey)
                     backStack.popAndNavigate(FleetRoute.VehicleDetail(vehicleId))
                 },
                 onNavigateToCreateTeamMember = {
@@ -237,11 +242,15 @@ fun fleetEntryProvider(
         }
 
         is FleetRoute.TripDetail -> NavEntry(route) {
-            val viewModel = rememberViewModel { tripDetailViewModel() }
+            val tripDetailKey = "trip_detail_${route.tripId}"
+            val viewModel = rememberSharedViewModel(tripDetailKey) { tripDetailViewModel() }
             TripFeatureFacade.TripDetailEntry(
                 viewModel = viewModel,
                 tripId = route.tripId,
-                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateBack = {
+                    clearSharedViewModel(tripDetailKey)
+                    backStack.removeLastOrNull()
+                },
                 onNavigateToAddTripCost = { tripId, vehicleId ->
                     backStack.add(FleetRoute.TripCostEntry(tripId = tripId, vehicleId = vehicleId))
                 },
@@ -255,11 +264,16 @@ fun fleetEntryProvider(
         }
 
         is FleetRoute.CreateTrip -> NavEntry(route) {
-            val viewModel = rememberViewModel { createTripViewModel() }
+            val createTripKey = "create_trip"
+            val viewModel = rememberSharedViewModel(createTripKey) { createTripViewModel() }
             TripFeatureFacade.CreateTripEntry(
                 viewModel = viewModel,
-                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateBack = {
+                    clearSharedViewModel(createTripKey)
+                    backStack.removeLastOrNull()
+                },
                 onTripCreated = { tripId ->
+                    clearSharedViewModel(createTripKey)
                     backStack.popAndNavigate(FleetRoute.TripDetail(tripId))
                 },
                 onNavigateToAddCustomer = {

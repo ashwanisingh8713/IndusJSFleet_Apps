@@ -95,9 +95,9 @@ interface ViewModelProvider {
     fun createCustomerViewModel(): com.ijs.customer.presentation.create.CreateCustomerViewModel
 
     // Payment ViewModels
-    fun paymentsViewModel(): com.ijs.payment.presentation.PaymentsViewModel
-    fun addPaymentViewModel(): com.ijs.payment.presentation.AddPaymentViewModel
-    fun paymentDetailViewModel(): com.ijs.payment.presentation.PaymentDetailViewModel
+    fun paymentsViewModel(): com.ijs.trip.payment.presentation.PaymentsViewModel
+    fun addPaymentViewModel(): com.ijs.trip.payment.presentation.AddPaymentViewModel
+    fun paymentDetailViewModel(): com.ijs.trip.payment.presentation.PaymentDetailViewModel
 
     // Vehicle Finance ViewModels
     fun vehicleFinanceViewModel(): com.ijs.finance.presentation.VehicleFinanceViewModel

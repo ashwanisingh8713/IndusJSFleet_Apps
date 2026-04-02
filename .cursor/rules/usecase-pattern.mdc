@@ -1,0 +1,47 @@
+---
+description: Use case pattern for domain layer
+globs: "**/*UseCase*.kt"
+alwaysApply: false
+---
+
+# UseCase Pattern
+
+```kotlin
+// List use case — implements UseCase<T> interface
+@Inject
+class Get{Items}UseCase(
+    private val repository: {Feature}Repository
+) : UseCase<List<{Entity}>> {
+    override operator fun invoke(): Flow<Result<List<{Entity}>>> {
+        return repository.get{Items}()
+    }
+}
+
+// Single-item / action use case — standalone class
+@Inject
+class Get{Item}ByIdUseCase(
+    private val repository: {Feature}Repository
+) {
+    suspend operator fun invoke(id: String): Result<{Entity}> {
+        return repository.get{Item}ById(id)
+    }
+}
+
+// Create/Update/Delete use case
+@Inject
+class Create{Item}UseCase(
+    private val repository: {Feature}Repository
+) {
+    suspend operator fun invoke(entity: {Entity}): Result<{Entity}> {
+        return repository.create{Item}(entity)
+    }
+}
+```
+
+## Rules
+- One use case per action (Single Responsibility)
+- `@Inject` on class
+- `operator fun invoke()` — enables `useCase()` call syntax
+- List fetches return `Flow<Result<List<T>>>`, mutations return `suspend Result<T>`
+- Use cases only depend on repository interfaces, never on data-layer classes
+- All use cases in `domain/usecase/{feature}/` directory

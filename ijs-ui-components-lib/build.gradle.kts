@@ -33,6 +33,9 @@ kotlin {
             // Foundation — exposes shared DTOs, MVI base, error types, StatusConstants
             api(project(":ijs-core-lib"))
 
+            // Date range dialog uses FleetDateTimePicker (ijs-datetime-picker)
+            implementation(project(":ijs-datetime-picker"))
+
             // Compose Multiplatform
             implementation(libs.compose.runtime)
             implementation(libs.compose.ui)

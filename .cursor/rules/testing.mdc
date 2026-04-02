@@ -1,0 +1,34 @@
+---
+description: Testing conventions for KMP modules
+globs: "**/*Test.kt,**/test/**"
+alwaysApply: false
+---
+
+# Testing Conventions
+
+## ViewModel tests
+```kotlin
+class {Feature}ViewModelTest {
+    private val fakeRepository = Fake{Feature}Repository()
+    private val useCase = Get{Feature}UseCase(fakeRepository)
+    private val viewModel = {Feature}ViewModel(TestDispatcherProvider(), useCase)
+
+    @Test
+    fun `load data updates state with success`() = runTest {
+        fakeRepository.setResponse(Result.Success(testData))
+        viewModel.sendIntent(Intent.Load{Feature})
+        advanceUntilIdle()
+        assertEquals(false, viewModel.state.value.isLoading)
+        assertEquals(testData, viewModel.state.value.data)
+    }
+}
+```
+
+## Rules
+- Tests in `src/commonTest/kotlin/` mirroring main source layout
+- Use `TestDispatcherProvider` from `ijs-dispatcher-lib` for coroutine tests
+- Use `runTest` from `kotlinx-coroutines-test`
+- Fake implementations for repositories and data sources
+- Test all three `Result` branches: Loading, Success, Error
+- Test intent routing in `handleIntent`
+- Naming: backtick-quoted descriptive names

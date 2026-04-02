@@ -1,0 +1,40 @@
+---
+description: Shared UI components and theme conventions
+globs: "**/uicomponents/**,**/theme/**"
+alwaysApply: false
+---
+
+# UI Components & Theme
+
+## Available shared components (`ijs-ui-components-lib`)
+- `LoadingContent()` — full-screen loading spinner
+- `ErrorContent(error, onRetry)` — error state with retry button
+- `FleetDateField(rawValue, onRawValueChange, label, placeholder)` — date input DD-MM-YYYY
+- `DateRangePickerDialog(isVisible, startDate, endDate, ...)` — date range dialog
+- `ShimmerEffect()` — loading placeholder
+- `FleetTopAppBar(...)` — consistent top bar
+
+## Theme usage
+```kotlin
+// Colors — always from MaterialTheme
+MaterialTheme.colorScheme.primary
+MaterialTheme.colorScheme.surface
+MaterialTheme.colorScheme.onSurface
+MaterialTheme.colorScheme.errorContainer
+
+// Typography
+MaterialTheme.typography.titleLarge
+MaterialTheme.typography.bodyMedium
+MaterialTheme.typography.labelSmall
+
+// Shapes
+RoundedCornerShape(12.dp)  // cards
+RoundedCornerShape(8.dp)   // chips, small elements
+RoundedCornerShape(20.dp)  // dialogs
+```
+
+## Rules
+- Reuse components from `ijs-ui-components-lib` before creating new ones
+- Icons: `Res.drawable.ic_xxx` via `painterResource()`
+- Strings: `Res.string.xxx` via `stringResource()` — no hardcoded text
+- Consistent spacing: 4dp, 8dp, 12dp, 16dp, 20dp, 24dp increments

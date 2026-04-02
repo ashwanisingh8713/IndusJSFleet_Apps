@@ -2,15 +2,15 @@ package com.indusjs.fleet.di.adapter
 
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.error.result.Result
-import com.ijs.payment.domain.repository.TripProviderForPayment
-import com.ijs.payment.presentation.TripSummaryForPayment
+import com.ijs.trip.payment.domain.repository.TripProviderForPayment
+import com.ijs.trip.payment.presentation.TripSummaryForPayment
 import com.ijs.trip.domain.repository.TripRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /**
- * Adapter that bridges [TripRepository] (screen-trip) to [TripProviderForPayment] (screen-payment).
- * Breaks the circular dependency between screen-trip ↔ screen-payment.
+ * Adapter that bridges [TripRepository] (screen-trip) to [TripProviderForPayment] (screen-trip-payment).
+ * Breaks the circular dependency between screen-trip ↔ screen-trip-payment.
  */
 class TripProviderAdapter(
     private val tripRepository: TripRepository

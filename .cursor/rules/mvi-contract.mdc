@@ -1,0 +1,38 @@
+---
+description: MVI Contract pattern (State/Intent/Effect) for screen modules
+globs: "**/*Contract.kt"
+alwaysApply: false
+---
+
+# MVI Contract Pattern
+
+Every screen has a Contract object with exactly three nested types:
+
+```kotlin
+object {Feature}Contract {
+    data class State(
+        val isLoading: Boolean = false,
+        val error: String? = null,
+        // feature-specific fields with sensible defaults
+    ) : UiState
+
+    sealed interface Intent : UiIntent {
+        data object Load{Feature} : Intent          // initial load
+        data object Refresh : Intent                 // pull-to-refresh
+        data class Select{Item}(val id: String) : Intent  // navigation
+        // use data object for no-arg, data class for parameterized
+    }
+
+    sealed interface Effect : UiEffect {
+        data class NavigateTo{Screen}(val id: String) : Effect
+        data class ShowSnackbar(val message: String) : Effect
+    }
+}
+```
+
+## Rules
+- State implements `UiState`, Intent implements `UiIntent`, Effect implements `UiEffect`
+- All State fields must have default values (supports `State()` construction)
+- Navigation triggers → Effect (one-shot), UI state changes → State
+- Computed properties in State via `get()` (e.g., `val hasData: Boolean get() = data != null`)
+- One file per screen: `{Feature}Contract.kt` in `presentation/{feature}/`

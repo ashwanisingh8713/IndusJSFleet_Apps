@@ -12,8 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
-import com.ijs.payment.domain.entity.PaymentStatus
-import com.ijs.payment.domain.entity.TripPayment
+import com.ijs.trip.payment.domain.entity.PaymentStatus
+import com.ijs.trip.payment.domain.entity.TripPayment
 
 /**
  * Trip Payments Section — displays payment history and summary for a trip.

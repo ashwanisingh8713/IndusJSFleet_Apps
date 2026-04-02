@@ -366,7 +366,9 @@ private fun VehicleDriverSelectionSection(
 
             ExposedDropdownMenu(
                 expanded = state.showVehicleDropdown,
-                onDismissRequest = { viewModel.sendIntent(CreateTripContract.Intent.ToggleVehicleDropdown) }
+                onDismissRequest = { viewModel.sendIntent(CreateTripContract.Intent.ToggleVehicleDropdown) },
+                containerColor = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 // Sort vehicles: available first, occupied at bottom
                 state.vehicles.sortedBy { it.isOccupied }.forEach { vehicle ->
@@ -446,7 +448,9 @@ private fun VehicleDriverSelectionSection(
 
             ExposedDropdownMenu(
                 expanded = state.showDriverDropdown,
-                onDismissRequest = { viewModel.sendIntent(CreateTripContract.Intent.ToggleDriverDropdown) }
+                onDismissRequest = { viewModel.sendIntent(CreateTripContract.Intent.ToggleDriverDropdown) },
+                containerColor = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 // Sort drivers: available first, occupied at bottom
                 state.drivers.sortedBy { it.isOccupied }.forEach { driver ->
@@ -656,8 +660,9 @@ private fun LocationSearchField(
         ExposedDropdownMenu(
             expanded = showDropdown && predictions.isNotEmpty(),
             onDismissRequest = onDismissDropdown,
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface)
                 .heightIn(max = 250.dp)
         ) {
             predictions.forEach { prediction ->
@@ -755,7 +760,9 @@ private fun CargoSection(
             )
             ExposedDropdownMenu(
                 expanded = showCargoTypeDropdown,
-                onDismissRequest = { showCargoTypeDropdown = false }
+                onDismissRequest = { showCargoTypeDropdown = false },
+                containerColor = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 state.cargoTypeOptions.forEach { cargo ->
                     DropdownMenuItem(
@@ -821,7 +828,9 @@ private fun CargoSection(
                 )
                 ExposedDropdownMenu(
                     expanded = showWeightUnitDropdown,
-                    onDismissRequest = { showWeightUnitDropdown = false }
+                    onDismissRequest = { showWeightUnitDropdown = false },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     state.weightUnitOptions.forEach { unit ->
                         DropdownMenuItem(
@@ -908,31 +917,6 @@ private fun PricingSection(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Info banner - compact
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(6.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "📊",
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Pricing helps track Profit & Loss in financial reports",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Price input - compact with inline error
             OutlinedTextField(
                 value = state.tripPrice,
@@ -960,6 +944,31 @@ private fun PricingSection(
                 },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Info banner - below Total Amount
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(6.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📊",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Pricing helps track Profit & Loss in financial reports",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

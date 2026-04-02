@@ -38,8 +38,6 @@ init {
             is Intent.SetCustomDateRange -> handleCustomDateRange(intent.startDate, intent.endDate)
             is Intent.ShowDateRangePicker -> updateState { copy(showDateRangePicker = true) }
             is Intent.HideDateRangePicker -> updateState { copy(showDateRangePicker = false) }
-            is Intent.UpdateStartDate -> updateState { copy(startDate = intent.date) }
-            is Intent.UpdateEndDate -> updateState { copy(endDate = intent.date) }
             // Navigation - P&L Reports
             is Intent.NavigateToVehiclePL -> sendEffect(Effect.NavigateToVehiclePL)
             is Intent.NavigateToTripPL -> sendEffect(Effect.NavigateToTripPL)

@@ -1,0 +1,21 @@
+---
+description: Core Kotlin Multiplatform coding standards for IndusJS Fleet
+alwaysApply: true
+---
+
+# Coding Standards
+
+- Kotlin 2.3, Compose Multiplatform 1.10, Material 3, Metro DI 0.9.1, Navigation 3
+- Targets: Android, iOS, JS, WasmJS — all shared code in `commonMain`
+- Classes ≤ 500 lines. Extract helpers, split large screens into sub-composables
+- Use `DispatcherProvider` (injected), never raw `Dispatchers.IO`
+- Use `@Inject` on the **class**, not the constructor
+- Use `FleetLogger` for logging, never `println`
+- Use `FleetDateTime` for date formatting, never manual string manipulation
+- Colors from `MaterialTheme.colorScheme`, never hardcoded `Color(0xFF...)`
+- Strings from compose resources `stringResource(Res.string.xxx)`, not hardcoded
+- DTOs: `@Serializable` + `@SerialName("snake_case")` for API fields
+- Domain entities: clean Kotlin data classes, no serialization annotations
+- Never expose DTOs to presentation layer — always map to domain entities
+- `Result<T>` from `ijs-error-lib` (Loading/Success/Error), not kotlin.Result
+- Date format: API uses `DD-MM-YYYY` for costs/documents, `ISO 8601` for trips

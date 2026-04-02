@@ -7,7 +7,7 @@ import com.ijs.customer.data.datasource.CustomerRemoteDataSource
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
 import com.ijs.driver.data.datasource.DriverRemoteDataSourceImpl
 import com.ijs.finance.data.datasource.VehicleFinanceRemoteDataSourceImpl
-import com.ijs.payment.data.datasource.TripPaymentRemoteDataSource
+import com.ijs.trip.payment.data.datasource.TripPaymentRemoteDataSource
 import com.ijs.reports.data.datasource.ReportsRemoteDataSource
 import com.ijs.team.data.datasource.TeamLocalDataSource
 import com.ijs.team.data.datasource.TeamRemoteDataSourceImpl
@@ -21,7 +21,7 @@ import com.ijs.vehicle.data.mapper.VehicleMapper
 import com.ijs.customer.data.repository.CustomerRepositoryImpl
 import com.ijs.driver.data.repository.DriverRepositoryImpl
 import com.ijs.finance.data.repository.VehicleFinanceRepositoryImpl
-import com.ijs.payment.data.repository.TripPaymentRepositoryImpl
+import com.ijs.trip.payment.data.repository.TripPaymentRepositoryImpl
 import com.ijs.reports.data.repository.ReportsRepositoryImpl
 import com.ijs.team.data.repository.TeamRepositoryImpl
 import com.ijs.trip.data.repository.TripRepositoryImpl
@@ -29,7 +29,7 @@ import com.ijs.vehicle.data.repository.VehicleRepositoryImpl
 import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.driver.domain.repository.DriverRepository
 import com.ijs.finance.domain.repository.VehicleFinanceRepository
-import com.ijs.payment.domain.repository.TripPaymentRepository
+import com.ijs.trip.payment.domain.repository.TripPaymentRepository
 import com.ijs.reports.domain.repository.ReportsRepository
 import com.ijs.team.domain.repository.TeamRepository
 import com.ijs.trip.domain.repository.TripRepository

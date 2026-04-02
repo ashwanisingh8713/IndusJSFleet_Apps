@@ -1,0 +1,44 @@
+---
+description: DTO serialization and Mapper conventions
+globs: "**/*Dto.kt,**/*Mapper.kt,**/*Request.kt"
+alwaysApply: false
+---
+
+# DTO & Mapper Pattern
+
+## DTOs (`data/model/`)
+```kotlin
+@Serializable
+data class {Feature}Dto(
+    @SerialName("id") val id: Int,
+    @SerialName("registration_number") val registrationNumber: String,
+    @SerialName("created_at") val createdAt: String? = null
+)
+```
+- `@Serializable` on every DTO
+- `@SerialName("snake_case")` for every field (API uses snake_case)
+- All fields nullable or with defaults for safe deserialization
+- Nested DTOs for embedded objects (e.g., `AssignedDriverDto`)
+
+## Request DTOs
+```kotlin
+@Serializable
+data class Create{Feature}Request(
+    @SerialName("field_name") val fieldName: String
+)
+```
+
+## Mappers (`data/mapper/`)
+```kotlin
+@Inject
+class {Feature}Mapper {
+    fun mapToDomain(dto: {Feature}Dto): {Feature} { ... }
+    fun mapToDomainList(dtos: List<{Feature}Dto>): List<{Feature}> = dtos.map { mapToDomain(it) }
+    fun mapToRequest(entity: {Feature}): Create{Feature}Request { ... }
+}
+```
+- `@Inject` on mapper class
+- `mapToDomain` converts DTO → domain entity
+- `mapToRequest` converts domain entity → request DTO
+- Date normalization via `FleetDateTime` in mapper
+- ID conversion: API `Int` → domain `String` via `toString()`

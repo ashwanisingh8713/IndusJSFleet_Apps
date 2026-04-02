@@ -1,0 +1,43 @@
+---
+description: Gradle build configuration conventions for KMP modules
+globs: "**/*.gradle.kts"
+alwaysApply: false
+---
+
+# Gradle Conventions
+
+## Feature module template (`screen-{feature}/build.gradle.kts`)
+```kotlin
+plugins {
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.kmp.library)
+    alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.metro)
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.compose.multiplatform)
+}
+
+apply(from = rootProject.file("gradle/fleet-android-conventions.gradle"))
+apply(from = rootProject.file("gradle/fleet-compose-conventions.gradle"))
+
+kotlin {
+    android { namespace = "com.ijs.{feature}" }
+    iosX64(); iosArm64(); iosSimulatorArm64()
+    js { browser() }
+    wasmJs { browser() }
+
+    sourceSets {
+        commonMain.dependencies {
+            api(project(":ijs-network-lib"))
+            // feature-specific deps
+        }
+    }
+}
+```
+
+## Rules
+- All versions via `libs.versions.toml` — never hardcode versions
+- Use `api()` for transitive deps (`:ijs-network-lib`), `implementation()` for internal
+- All modules target: android, iosX64, iosArm64, iosSimulatorArm64, js, wasmJs
+- Apply shared conventions: `fleet-android-conventions.gradle`, `fleet-compose-conventions.gradle`
+- Android namespace: `com.ijs.{feature}` for feature modules, `com.indusjs.{lib}` for libraries

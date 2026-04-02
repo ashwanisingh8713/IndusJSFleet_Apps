@@ -1,0 +1,40 @@
+---
+description: API conventions and network layer patterns
+globs: "**/network/**,**/datasource/**,**/ApiConfig*"
+alwaysApply: false
+---
+
+# API Conventions
+
+**Base URL:** `https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2`
+
+## Request pattern
+```kotlin
+httpClient.get("$baseUrl/endpoint") {
+    headers { append(HttpHeaders.Authorization, "Bearer $token") }
+    url { parameters.append("start_date", startDate) }
+}
+```
+
+## Response wrapper
+```kotlin
+@Serializable
+data class ApiResponse<T>(
+    @SerialName("success") val success: Boolean,
+    @SerialName("data") val data: T,
+    @SerialName("message") val message: String? = null
+)
+```
+
+## Date formats in API
+| Context | Format | Example |
+|---------|--------|---------|
+| Trip scheduling | ISO 8601 | `2026-03-14T15:30:00Z` |
+| Cost entries | DD-MM-YYYY | `14-03-2026` |
+| Documents | DD-MM-YYYY | `14-03-2026` |
+| Query params (reports) | YYYY-MM-DD | `2026-03-14` |
+
+## Auth
+- Bearer token in `Authorization` header on every request
+- Token stored via `UserLocalDataSource.getAuthToken()`
+- 401 response → automatic logout via `AuthenticationManager`

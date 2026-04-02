@@ -1,0 +1,40 @@
+---
+description: Metro DI wiring and DefaultViewModelProvider patterns
+globs: "**/di/*.kt"
+alwaysApply: false
+---
+
+# Metro DI Wiring
+
+## Injectable classes — `@Inject` on the class
+```kotlin
+@Inject
+class VehiclesViewModel(...) : MviViewModel<...>(State())
+
+@Inject
+class VehicleRepositoryImpl(...) : VehicleRepository
+
+@Inject
+class VehicleMapper
+```
+
+## DefaultViewModelProvider — manual wiring hub
+```kotlin
+// Lazy repository (via FeatureRepositoryFactory)
+private val vehicleRepository by lazy { featureRepositoryFactory.vehicleRepository }
+
+// Lazy use case (built from repository)
+private val getVehiclesUseCase by lazy { GetVehiclesUseCase(vehicleRepository) }
+
+// ViewModel factory method
+override fun vehiclesViewModel(): VehiclesViewModel {
+    return VehiclesViewModel(dispatcherProvider, getVehiclesUseCase, deleteVehicleUseCase)
+}
+```
+
+## Adding a new feature to DI
+1. Create repository impl in feature module
+2. Add repository property in `FeatureRepositoryFactory`
+3. Add use case lazy properties in `DefaultViewModelProvider`
+4. Add ViewModel factory method to `ViewModelProvider` interface
+5. Implement factory method in `DefaultViewModelProvider`
