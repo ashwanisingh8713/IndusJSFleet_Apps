@@ -68,6 +68,9 @@
     <string name="current_state_label">Current: %1$s</string>
     <string name="current_state">Current state</string>
     <string name="not_available_from_current_state">Not available from current state</string>
+    <string name="state_dialog_select_new_status">Select new status</string>
+    <string name="state_dialog_tap_to_change">Tap an option below to change</string>
+    <string name="state_dialog_updating">Updating status…</string>
 
     <!-- ==================== Content Descriptions ==================== -->
     <string name="cd_switch_to_light_mode">Switch to Light Mode</string>

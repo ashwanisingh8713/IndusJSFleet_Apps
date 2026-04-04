@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.uicomponents.components.FleetDateRangePickerDialog
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.fleet.core.util.formatCurrency
@@ -87,13 +88,26 @@ fun VehicleProfitLossScreen(
         }
     }
 
+    // Date Range Picker Dialog for Custom period
+    FleetDateRangePickerDialog(
+        isVisible = state.showDateRangePicker,
+        startDate = state.pickerStartDate,
+        endDate = state.pickerEndDate,
+        onStartDateChange = { viewModel.sendIntent(Intent.UpdatePickerStartDate(it)) },
+        onEndDateChange = { viewModel.sendIntent(Intent.UpdatePickerEndDate(it)) },
+        onApply = { start, end ->
+            viewModel.sendIntent(Intent.ApplyCustomDateRange(start, end))
+        },
+        onDismiss = { viewModel.sendIntent(Intent.HideDateRangePicker) }
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
                         Text(
-                            text = if (state.isFleetOverviewMode) "Fleet P&L Overview" else "Vehicle P&L",
+                            text = "Vehicle P&L",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )

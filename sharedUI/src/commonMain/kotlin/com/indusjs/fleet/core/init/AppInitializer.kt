@@ -5,6 +5,7 @@ import com.indusjs.fleet.TAG_APP_INITIALIZER
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.usecase.costs.InitializeCostTypesUseCase
+import com.indusjs.fleet.domain.usecase.states.InitializeStatesUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
  *
  * Current responsibilities:
  * - Initialize cost types from API (one-time save to local storage)
+ * - Initialize entity states from API (one-time save to local storage)
  *
  * Future responsibilities can be added here:
  * - Initialize user preferences
@@ -21,6 +23,7 @@ import kotlinx.coroutines.launch
  */
 class AppInitializer(
     private val initializeCostTypesUseCase: InitializeCostTypesUseCase,
+    private val initializeStatesUseCase: InitializeStatesUseCase,
     private val dispatcherProvider: DispatcherProvider,
     private val logger: FleetLogger
 ) {
@@ -50,6 +53,20 @@ class AppInitializer(
                 is Result.Error -> {
                     logger.w(TAG_APP_INITIALIZER, "Cost types initialization failed: ${result.message}")
                     // Don't block app - cost type screens will use fallback hardcoded types
+                }
+                is Result.Loading -> {
+                    // Shouldn't happen for this use case
+                }
+            }
+
+            // Initialize entity states (one-time fetch and save)
+            when (val result = initializeStatesUseCase()) {
+                is Result.Success -> {
+                    logger.d(TAG_APP_INITIALIZER, "Entity states initialization completed successfully")
+                }
+                is Result.Error -> {
+                    logger.w(TAG_APP_INITIALIZER, "Entity states initialization failed: ${result.message}")
+                    // Don't block app - screens will use fallback hardcoded states from StatusConstants
                 }
                 is Result.Loading -> {
                     // Shouldn't happen for this use case

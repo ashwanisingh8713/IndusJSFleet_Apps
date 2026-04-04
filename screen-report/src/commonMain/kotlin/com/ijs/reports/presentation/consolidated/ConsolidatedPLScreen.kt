@@ -1,7 +1,5 @@
 package com.ijs.reports.presentation.consolidated
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -11,8 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,10 +16,6 @@ import com.indusjs.uicomponents.components.DateVisualTransformation
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.filterDigitsOnly
-import com.indusjs.fleet.core.util.formatCurrency
-import com.indusjs.fleet.core.util.formatPercentage
-import com.ijs.reports.domain.entity.ConsolidatedPL
-import com.ijs.reports.domain.entity.PeriodBreakdown
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.COST_TYPES
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.Effect
@@ -34,7 +26,9 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * Consolidated P&L Screen
+ * Consolidated P&L Screen.
+ * Result cards (ConsolidatedSummaryCard, PeriodBreakdownCard, VehicleSummaryCard)
+ * are in ConsolidatedPLResultCards.kt for 500-line compliance.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -281,10 +275,7 @@ private fun FiltersCard(
                             FilterChip(
                                 selected = selectedVehicleIds.contains(vehicle.id),
                                 onClick = { onToggleVehicle(vehicle.id) },
-                                label = { Text(vehicle.registrationNumber, style = MaterialTheme.typography.labelSmall) },
-                                leadingIcon = if (selectedVehicleIds.contains(vehicle.id)) {
-                                    { Icon(painterResource(Res.drawable.ic_check), null, Modifier.size(14.dp)) }
-                                } else null
+                                label = { Text(vehicle.registrationNumber, style = MaterialTheme.typography.labelSmall) }
                             )
                         }
                     }
@@ -317,16 +308,11 @@ private fun FiltersCard(
 
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(COST_TYPES) { costType ->
-                        val displayName = costType.replace("_", " ").split(" ").joinToString(" ") {
-                            it.replaceFirstChar { c -> c.uppercaseChar() }
-                        }
+                        val displayName = ConsolidatedPLContract.costIdLabel(costType)
                         FilterChip(
                             selected = selectedCostTypes.contains(costType),
                             onClick = { onToggleCostType(costType) },
-                            label = { Text(displayName, style = MaterialTheme.typography.labelSmall) },
-                            leadingIcon = if (selectedCostTypes.contains(costType)) {
-                                { Icon(painterResource(Res.drawable.ic_check), null, Modifier.size(14.dp)) }
-                            } else null
+                            label = { Text(displayName, style = MaterialTheme.typography.labelSmall) }
                         )
                     }
                 }
@@ -358,222 +344,4 @@ private fun FiltersCard(
         }
     }
 }
-
-@Composable
-private fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (report.isProfitable)
-                com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
-            else
-                com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f)
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "CONSOLIDATED SUMMARY",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                SummaryColumn(label = "Total Revenue", value = formatCurrency(report.totalRevenue))
-                SummaryColumn(label = "Total Expenses", value = formatCurrency(report.totalExpenses), alignment = Alignment.End)
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "NET ${if (report.isProfitable) "PROFIT" else "LOSS"}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "${if (report.isProfitable) "▲" else "▼"} ${formatCurrency(kotlin.math.abs(report.netProfit))}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = if (report.isProfitable) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
-                    )
-                    if (report.profitMargin > 0) {
-                        Text(
-                            text = "Margin: ${formatPercentage(report.profitMargin)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                StatColumn(value = "${report.totalVehicles}", label = "Vehicles")
-                StatColumn(value = "${report.totalTrips}", label = "Total Trips")
-                StatColumn(value = "${report.completedTrips}", label = "Completed")
-            }
-        }
-    }
-}
-
-@Composable
-private fun SummaryColumn(label: String, value: String, alignment: Alignment.Horizontal = Alignment.Start) {
-    Column(horizontalAlignment = alignment) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-@Composable
-private fun StatColumn(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun PeriodBreakdownCard(period: PeriodBreakdown) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = period.label ?: period.period,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "${period.tripCount} trips",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "${if (period.isProfitable) "▲" else "▼"} ${formatCurrency(kotlin.math.abs(period.profit))}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (period.isProfitable) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
-                )
-                Text(
-                    text = "Rev: ${formatCurrency(period.revenue)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun VehicleSummaryCard(
-    vehicleNumber: String,
-    tripCount: Int,
-    revenue: Double,
-    expenses: Double,
-    profit: Double,
-    isProfitable: Boolean
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = vehicleNumber,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "$tripCount trips",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Text(
-                    text = "${if (isProfitable) "▲" else "▼"} ${formatCurrency(kotlin.math.abs(profit))}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isProfitable) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Revenue: ${formatCurrency(revenue)}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "Expenses: ${formatCurrency(expenses)}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-    }
-}
-
 

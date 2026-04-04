@@ -115,8 +115,9 @@ fun TripDetailScreen(
     if (showStatusDialog && state.trip != null) {
         StateChangeDialog(
             title = stringResource(Res.string.trip_detail_change_status),
-            currentStateLabel = TripStatus.getDisplayLabel(state.trip!!.status),
-            stateOptions = getTripStateOptions(state.trip!!.status),
+            currentStateLabel = state.stateLabels[com.ijs.trip.domain.entity.TripStatus.toApiString(state.trip!!.status)]
+                ?: TripStatus.getDisplayLabel(state.trip!!.status),
+            stateOptions = getTripStateOptions(state.trip!!.status, state.stateLabels),
             onStateSelected = { newState ->
                 showStatusDialog = false
                 viewModel.sendIntent(TripDetailContract.Intent.UpdateTripState(newState))
@@ -376,7 +377,8 @@ private fun TripDetailContent(
                 TripHeader(
                     trip = state.trip!!,
                     canViewTripPrice = state.canViewTripPrice,
-                    onStatusClick = onShowStatusDialog
+                    onStatusClick = onShowStatusDialog,
+                    stateLabels = state.stateLabels
                 )
             }
 
@@ -415,7 +417,8 @@ private fun TripDetailContent(
                         onAddPayment = { viewModel.sendIntent(TripDetailContract.Intent.NavigateToAddPayment) },
                         onPaymentClick = { paymentId ->
                             viewModel.sendIntent(TripDetailContract.Intent.NavigateToPaymentDetail(paymentId))
-                        }
+                        },
+                        paymentStateLabels = state.paymentStateLabels
                     )
                 }
             }

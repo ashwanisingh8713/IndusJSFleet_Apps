@@ -133,6 +133,7 @@ internal fun CollapsibleTripGroupCard(
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
     onPaymentClick: (String) -> Unit,
+    paymentStateLabels: Map<String, String> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     val rotationAngle by animateFloatAsState(
@@ -276,7 +277,8 @@ internal fun CollapsibleTripGroupCard(
                     group.payments.forEach { payment ->
                         CompactPaymentItem(
                             payment = payment,
-                            onClick = { onPaymentClick(payment.id) }
+                            onClick = { onPaymentClick(payment.id) },
+                            paymentStateLabels = paymentStateLabels
                         )
                     }
                 }
@@ -293,6 +295,7 @@ internal fun CollapsibleTripGroupCard(
 internal fun CompactPaymentItem(
     payment: TripPayment,
     onClick: () -> Unit,
+    paymentStateLabels: Map<String, String> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -358,7 +361,7 @@ internal fun CompactPaymentItem(
                     else if (payment.isPending) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
                     else MaterialTheme.colorScheme.onSurface
                 )
-                PaymentStatusBadge(status = payment.paymentStatus)
+                PaymentStatusBadge(status = payment.paymentStatus, paymentStateLabels = paymentStateLabels)
             }
         }
     }

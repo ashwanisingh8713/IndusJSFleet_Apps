@@ -108,7 +108,10 @@ object DriverDetailContract {
         val selectedTab: Int = 0,
 
         // User role for permission checks
-        val currentUserRole: String = ""
+        val currentUserRole: String = "",
+
+        /** DB-cached driver state labels (apiValue -> displayLabel) */
+        val stateLabels: Map<String, String> = emptyMap()
     ) : UiState {
 
         /**

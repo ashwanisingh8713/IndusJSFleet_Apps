@@ -397,7 +397,7 @@ internal fun InfoRow(label: String, value: String) {
 @Composable
 internal fun getStatusColor(status: DriverStatus): androidx.compose.ui.graphics.Color {
     val colorScheme = DriverStatus.getColorScheme(status)
-    return com.indusjs.uicomponents.components.stateColorSchemeToColor(colorScheme)
+    return com.indusjs.uicomponents.components.stateColorSchemeToChipColor(colorScheme)
 }
 
 

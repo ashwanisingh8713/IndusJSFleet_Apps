@@ -208,7 +208,9 @@ fun PaymentsScreen(
                                     val filterInfo = listOfNotNull(
                                         state.filter.paymentType?.displayName,
                                         state.filter.paymentMode?.displayName,
-                                        state.filter.paymentStatus?.displayName
+                                        state.filter.paymentStatus?.let { status ->
+                                            state.paymentStateLabels[status.apiValue] ?: status.displayName
+                                        }
                                     ).joinToString(", ").ifEmpty { null }
 
                                     pdfExportData = PaymentsListPdfData(
@@ -222,7 +224,7 @@ fun PaymentsScreen(
                                                 paymentType = payment.typeDisplay,
                                                 paymentMode = payment.modeDisplay,
                                                 paymentDate = payment.paymentDate?.take(10) ?: "",
-                                                paymentStatus = payment.paymentStatus.displayName,
+                                                paymentStatus = state.paymentStateLabels[payment.paymentStatus.apiValue] ?: payment.paymentStatus.displayName,
                                                 receiptNumber = payment.receiptNumber,
                                                 startLocation = payment.tripInfo?.startLocation,
                                                 endLocation = payment.tripInfo?.endLocation
@@ -402,7 +404,8 @@ fun PaymentsScreen(
                             item {
                                 FilterChipRow(
                                     filter = state.filter,
-                                    onClear = { viewModel.sendIntent(PaymentsContract.Intent.ResetFilter) }
+                                    onClear = { viewModel.sendIntent(PaymentsContract.Intent.ResetFilter) },
+                                    paymentStateLabels = state.paymentStateLabels
                                 )
                             }
                         }
@@ -426,7 +429,8 @@ fun PaymentsScreen(
                                     },
                                     onPaymentClick = { paymentId ->
                                         viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(paymentId))
-                                    }
+                                    },
+                                    paymentStateLabels = state.paymentStateLabels
                                 )
                             }
                         } else {
@@ -438,7 +442,8 @@ fun PaymentsScreen(
                                 PaymentCard(
                                     payment = payment,
                                     onClick = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(payment.id)) },
-                                    onLongClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowDeleteConfirmation(payment)) }
+                                    onLongClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowDeleteConfirmation(payment)) },
+                                    paymentStateLabels = state.paymentStateLabels
                                 )
                             }
                         }
@@ -484,7 +489,8 @@ fun PaymentsScreen(
                 viewModel.sendIntent(PaymentsContract.Intent.UpdateTempFilterDateRange(start, end))
             },
             onApply = { viewModel.sendIntent(PaymentsContract.Intent.ApplyFilter) },
-            onReset = { viewModel.sendIntent(PaymentsContract.Intent.ResetFilter) }
+            onReset = { viewModel.sendIntent(PaymentsContract.Intent.ResetFilter) },
+            paymentStateLabels = state.paymentStateLabels
         )
     }
 

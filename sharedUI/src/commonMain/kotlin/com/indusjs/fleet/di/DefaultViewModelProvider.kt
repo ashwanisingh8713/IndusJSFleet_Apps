@@ -11,6 +11,7 @@ import com.indusjs.logger.IjsLogger
 import com.indusjs.fleet.data.datasource.costs.CostsLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSourceImpl
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
+import com.indusjs.fleet.data.datasource.states.StatesLocalDataSourceImpl
 import com.ijs.team.data.datasource.TeamLocalDataSourceImpl
 import com.ijs.customer.data.datasource.CustomerLocalDataSourceImpl
 import com.indusjs.fleet.data.mapper.dashboard.DashboardCacheMapper
@@ -37,6 +38,7 @@ import com.indusjs.fleet.domain.usecase.costs.GetMaintenanceCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.GetDriverCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.GetTripCostTypesUseCase
 import com.indusjs.fleet.domain.usecase.costs.InitializeCostTypesUseCase
+import com.indusjs.fleet.domain.usecase.states.InitializeStatesUseCase
 import com.ijs.customer.domain.usecase.CreateCustomerUseCase
 import com.ijs.customer.domain.usecase.GetCustomersUseCase
 import com.ijs.customer.domain.usecase.GetLocalCustomersUseCase
@@ -202,6 +204,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         DashboardLocalDataSourceImpl(database.dashboardDao(), dashboardCacheMapper)
     }
     private val costsLocalDataSource by lazy { CostsLocalDataSourceImpl(database.costTypesDao(), json, fleetLogger) }
+    private val statesLocalDataSource by lazy { StatesLocalDataSourceImpl(database.statesDao(), json, fleetLogger) }
     private val teamLocalDataSource by lazy { TeamLocalDataSourceImpl(database.teamMembersDao()) }
     private val customerLocalDataSource by lazy { CustomerLocalDataSourceImpl(database.customerDao(), fleetLogger) }
 
@@ -217,6 +220,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
             dispatcherProvider = dispatcherProvider,
             dashboardLocalDataSource = dashboardLocalDataSource,
             costsLocalDataSource = costsLocalDataSource,
+            statesLocalDataSource = statesLocalDataSource,
             logger = fleetLogger
         )
     }
@@ -251,6 +255,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val tripProviderAdapter by lazy { com.indusjs.fleet.di.adapter.TripProviderAdapter(tripRepository) }
     private val costsRepository: CostsRepository get() = networkDataGraph.costsRepository
     private val costTypesRepository: CostTypesRepository get() = networkDataGraph.costTypesRepository
+    private val statesRepository get() = networkDataGraph.statesRepository
     private val vehicleFinanceRepository: VehicleFinanceRepository get() = featureRepos.vehicleFinanceRepository
     private val reportsRepository: ReportsRepository get() = featureRepos.reportsRepository
 
@@ -303,6 +308,9 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val getMaintenanceCostTypesUseCase by lazy { GetMaintenanceCostTypesUseCase(costTypesRepository) }
     private val getDriverCostTypesUseCase by lazy { GetDriverCostTypesUseCase(costTypesRepository) }
 
+    // States use cases
+    private val initializeStatesUseCase by lazy { InitializeStatesUseCase(statesRepository, fleetLogger) }
+
     // Customer use cases
     private val getCustomersUseCase by lazy { GetCustomersUseCase(customerRepository) }
     private val getLocalCustomersUseCase by lazy { GetLocalCustomersUseCase(customerRepository) }
@@ -311,7 +319,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
 
     // App Initializer - handles one-time initialization tasks
     val appInitializer: AppInitializer by lazy {
-        AppInitializer(initializeCostTypesUseCase, dispatcherProvider, fleetLogger)
+        AppInitializer(initializeCostTypesUseCase, initializeStatesUseCase, dispatcherProvider, fleetLogger)
     }
 
     // Onboarding
@@ -342,7 +350,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     override fun vehiclesViewModel() = VehiclesViewModel(
         dispatcherProvider,
         getVehiclesUseCase,
-        deleteVehicleUseCase
+        deleteVehicleUseCase,
+        statesRepository
     )
 
     override fun addVehicleViewModel() = AddVehicleViewModel(
@@ -360,7 +369,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         getDriversUseCase,
         costsRepository,
         teamRepository,
-        costTypesRepository
+        costTypesRepository,
+        statesRepository = statesRepository
     )
 
     override fun driversViewModel() = DriversViewModel(
@@ -368,7 +378,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         getDriversUseCase,
         deleteDriverUseCase,
         updateDriverStatusUseCase,
-        toggleDriverActiveUseCase
+        toggleDriverActiveUseCase,
+        statesRepository
     )
 
     override fun createDriverViewModel() = CreateDriverViewModel(
@@ -387,13 +398,15 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         driverRepository,
         teamRepository,
         costsRepository,
-        userLocalDataSource
+        userLocalDataSource,
+        statesRepository = statesRepository
     )
 
     override fun tripsViewModel() = TripsViewModel(
         dispatcherProvider,
         getTripsUseCase,
-        cancelTripUseCase
+        cancelTripUseCase,
+        statesRepository
     )
 
     override fun createTripViewModel() = CreateTripViewModel(
@@ -420,7 +433,8 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         googlePlacesService,
         customerRepository,
         tripPaymentRepository,
-        fleetLogger
+        fleetLogger,
+        statesRepository = statesRepository
     )
 
     override fun mapsViewModel() = MapsViewModel(dispatcherProvider)
@@ -487,11 +501,11 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     override fun createCustomerViewModel() = CreateCustomerViewModel(createCustomerUseCase)
 
     // Payment ViewModels
-    override fun paymentsViewModel() = PaymentsViewModel(tripPaymentRepository, fleetLogger)
+    override fun paymentsViewModel() = PaymentsViewModel(tripPaymentRepository, fleetLogger, statesRepository)
 
-    override fun addPaymentViewModel() = AddPaymentViewModel(tripPaymentRepository, tripProviderAdapter, fleetLogger)
+    override fun addPaymentViewModel() = AddPaymentViewModel(tripPaymentRepository, tripProviderAdapter, fleetLogger, statesRepository)
 
-    override fun paymentDetailViewModel() = PaymentDetailViewModel(tripPaymentRepository, userRepository, fleetLogger)
+    override fun paymentDetailViewModel() = PaymentDetailViewModel(tripPaymentRepository, userRepository, fleetLogger, statesRepository)
 
     // Vehicle Finance ViewModels
     override fun vehicleFinanceViewModel() = VehicleFinanceViewModel(vehicleRepository, vehicleFinanceRepository, dispatcherProvider, fleetLogger)

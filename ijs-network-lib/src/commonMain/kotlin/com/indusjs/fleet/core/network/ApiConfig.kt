@@ -40,10 +40,9 @@ object ApiConfig {
         const val DASHBOARD_COST_OVERVIEW = "/dashboard/cost-overview"
         const val DASHBOARD_PENDING_PAYMENTS = "/dashboard/pending-payments"
         const val DASHBOARD_ALERTS_STATUS = "/dashboard/alerts-status"
-        const val DASHBOARD_VEHICLE_STATUS = "/dashboard/vehicle-status"
-        const val DASHBOARD_TRIPS_STATUS = "/dashboard/trips-status"
-        const val DASHBOARD_DRIVERS_STATUS = "/dashboard/drivers-status"
         const val DASHBOARD_FINANCIAL_SUMMARY = "/dashboard/financial-summary"
+        // NOTE: /dashboard/vehicle-status, /dashboard/trips-status, /dashboard/drivers-status
+        // are not documented in the API spec and have no backend confirmation — omitted.
 
         // ── Cost Types (cached in local DB) ─────────────────────────────
         const val COST_TYPES_TRIP = "/cost-types/trip"
@@ -51,15 +50,18 @@ object ApiConfig {
         const val COST_TYPES_DRIVER = "/cost-types/driver"
 
         // ── Trip Costs ──────────────────────────────────────────────────
-        const val TRIP_COST_TYPES = "/cost-types/trip"
+        @Deprecated("Use COST_TYPES_TRIP", ReplaceWith("COST_TYPES_TRIP"))
+        const val TRIP_COST_TYPES = COST_TYPES_TRIP
         const val TRIP_COSTS = "/trip-costs"
 
         // ── Maintenance Costs ───────────────────────────────────────────
-        const val MAINTENANCE_COST_TYPES = "/cost-types/maintenance"
+        @Deprecated("Use COST_TYPES_MAINTENANCE", ReplaceWith("COST_TYPES_MAINTENANCE"))
+        const val MAINTENANCE_COST_TYPES = COST_TYPES_MAINTENANCE
         const val MAINTENANCE_COSTS = "/maintenance-costs"
 
         // ── Driver Cost Types ───────────────────────────────────────────
-        const val DRIVER_COST_TYPES = "/cost-types/driver"
+        @Deprecated("Use COST_TYPES_DRIVER", ReplaceWith("COST_TYPES_DRIVER"))
+        const val DRIVER_COST_TYPES = COST_TYPES_DRIVER
 
         // ── Vehicles ────────────────────────────────────────────────────
         const val VEHICLES = "/vehicles"
@@ -91,6 +93,7 @@ object ApiConfig {
         fun tripCancel(tripId: String) = "$TRIPS/$tripId/cancel"
         fun tripStatus(tripId: String) = "$TRIPS/$tripId/status"
         fun tripCosts(tripId: String) = "$TRIPS/$tripId/costs"
+        fun tripCostsBulk(tripId: String) = "$TRIPS/$tripId/costs/bulk"
         fun tripPayments(tripId: String) = "$TRIPS/$tripId/payments"
         fun vehicleTripsById(vehicleId: String) = "$VEHICLES/$vehicleId/trips"
 
@@ -101,6 +104,13 @@ object ApiConfig {
         // ── Customers ───────────────────────────────────────────────────
         const val CUSTOMERS = "/customers"
         fun customerById(customerId: String) = "$CUSTOMERS/$customerId"
+        fun customerToggleActive(customerId: String) = "$CUSTOMERS/$customerId/toggle-active"
+        fun customerTrips(customerId: String) = "$CUSTOMERS/$customerId/trips"
+        fun customerStatistics(customerId: String) = "$CUSTOMERS/$customerId/statistics"
+        fun customerPendingPayments(customerId: String) = "$CUSTOMERS/$customerId/pending-payments"
+        fun customerPayments(customerId: String) = "$CUSTOMERS/$customerId/payments"
+        fun customerPaymentSummary(customerId: String) = "$CUSTOMERS/$customerId/payment-summary"
+        fun customerFinancialReport(customerId: String) = "$CUSTOMERS/$customerId/financial-report"
 
         // ── Trip Payments ───────────────────────────────────────────────
         const val TRIP_PAYMENTS = "/trip-payments"
@@ -141,6 +151,20 @@ object ApiConfig {
         // ── Caretaker ───────────────────────────────────────────────────
         const val CARETAKERS = "/caretakers"
         fun caretakerById(caretakerId: String) = "$CARETAKERS/$caretakerId"
+
+        // ── Audit Logs (Owner/GM only) ──────────────────────────────────
+        const val AUDIT_LOGS = "/audit-logs"
+
+        // ── States (reference data) ─────────────────────────────────────
+        const val STATES = "/states"
+
+        // ── Location Tracking ───────────────────────────────────────────
+        const val LOCATIONS_TRACK = "/locations/track"
+        const val LOCATIONS_CURRENT = "/locations/current"
+
+        // ── Health / Status (unauthenticated) ───────────────────────────
+        const val HEALTH = "/health"
+        const val STATUS = "/status"
     }
 
     /**

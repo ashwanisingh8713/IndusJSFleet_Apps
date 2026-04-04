@@ -61,7 +61,10 @@ object AddPaymentContract {
         val error: String? = null,
         val amountError: UiText? = null,
         val tripError: UiText? = null,
-        val dateError: UiText? = null
+        val dateError: UiText? = null,
+
+        /** DB-cached payment state labels (apiValue -> displayLabel) */
+        val paymentStateLabels: Map<String, String> = emptyMap()
     ) : UiState {
 
         val netAmount: Double

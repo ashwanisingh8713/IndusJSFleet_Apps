@@ -24,7 +24,9 @@ object DriversContract {
         val isRefreshing: Boolean = false,
         val isDeleting: Boolean = false,
         val driverToDelete: String? = null,
-        val showDeleteConfirmation: Boolean = false
+        val showDeleteConfirmation: Boolean = false,
+        /** DB-cached driver state labels (apiValue -> displayLabel) */
+        val stateLabels: Map<String, String> = emptyMap()
     ) : UiState
 
     /**

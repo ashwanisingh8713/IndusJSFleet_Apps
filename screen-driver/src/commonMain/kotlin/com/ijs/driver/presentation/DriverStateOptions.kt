@@ -6,15 +6,22 @@ import com.ijs.driver.domain.entity.DriverStatus
 
 /**
  * Driver-specific state option builder.
+ * Uses DB-cached labels when available, falls back to StatusConstants.
+ *
+ * @param currentStatus Current driver status enum
+ * @param stateLabels DB-cached state labels map (apiValue -> label). When non-empty, labels come from DB.
  */
-fun getDriverStateOptions(currentStatus: DriverStatus): List<StateOption> {
+fun getDriverStateOptions(
+    currentStatus: DriverStatus,
+    stateLabels: Map<String, String> = emptyMap()
+): List<StateOption> {
     val currentApiValue = DriverStatus.toApiString(currentStatus)
     val validTransitions = StatusConstants.DriverTransitions.getValidTransitions(currentApiValue)
 
     return StatusConstants.DriverState.ALL.map { stateValue ->
         StateOption(
             value = stateValue,
-            label = StatusConstants.DriverState.getDisplayLabel(stateValue),
+            label = stateLabels[stateValue] ?: StatusConstants.DriverState.getDisplayLabel(stateValue),
             icon = StatusConstants.DriverState.getIcon(stateValue),
             colorScheme = StatusConstants.DriverState.getColorScheme(stateValue),
             isCurrentState = stateValue == currentApiValue,

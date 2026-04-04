@@ -1,8 +1,10 @@
 package com.ijs.trip.presentation
 
+import androidx.lifecycle.viewModelScope
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.domain.repository.states.StatesRepository
 import com.ijs.trip.domain.entity.TripStatus
 import com.ijs.trip.domain.usecase.CancelTripUseCase
 import com.ijs.trip.domain.usecase.GetTripsUseCase
@@ -11,6 +13,7 @@ import com.ijs.trip.presentation.TripsContract.Intent
 import com.ijs.trip.presentation.TripsContract.State
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -23,11 +26,22 @@ import kotlinx.coroutines.withContext
 class TripsViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val getTripsUseCase: GetTripsUseCase,
-    private val cancelTripUseCase: CancelTripUseCase
+    private val cancelTripUseCase: CancelTripUseCase,
+    private val statesRepository: StatesRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     init {
+        loadStateLabels()
         sendIntent(Intent.LoadTrips)
+    }
+
+    private fun loadStateLabels() {
+        viewModelScope.launch {
+            try {
+                val labels = statesRepository.getTripStatesFlat().toMap()
+                updateState { copy(stateLabels = labels) }
+            } catch (_: Exception) { /* fallback to empty → StatusConstants used */ }
+        }
     }
 
     override suspend fun handleIntent(intent: Intent) {

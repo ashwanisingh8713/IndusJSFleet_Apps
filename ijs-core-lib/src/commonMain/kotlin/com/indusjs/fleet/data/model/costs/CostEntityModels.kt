@@ -90,6 +90,8 @@ data class CostCreatedByUserDto(
 data class CreateTripCostRequest(
     @SerialName("trip_id")
     val tripId: Int,
+    @SerialName("vehicle_id")
+    val vehicleId: Int? = null,
     @SerialName("cost_id")
     val costId: String? = null,
     @SerialName("cost_label")
@@ -107,7 +109,13 @@ data class CreateTripCostRequest(
     @SerialName("time")
     val time: String? = null,
     @SerialName("notes")
-    val notes: String? = null
+    val notes: String? = null,
+    @SerialName("fuel_quantity")
+    val fuelQuantity: Double? = null,
+    @SerialName("fuel_rate")
+    val fuelRate: Double? = null,
+    @SerialName("km_per_liter")
+    val kmPerLiter: Double? = null
 )
 
 /**
@@ -246,7 +254,34 @@ data class CreateMaintenanceCostRequest(
     @SerialName("description")
     val description: String? = null,
     @SerialName("notes")
-    val notes: String? = null
+    val notes: String? = null,
+    @SerialName("vendor_name")
+    val vendorName: String? = null,
+    @SerialName("invoice_no")
+    val invoiceNo: String? = null
+)
+
+/**
+ * Update Maintenance Cost request body (partial update).
+ */
+@Serializable
+data class UpdateMaintenanceCostRequest(
+    @SerialName("cost_id")
+    val costId: String? = null,
+    @SerialName("cost_label")
+    val costLabel: String? = null,
+    @SerialName("group_id")
+    val groupId: String? = null,
+    @SerialName("amount")
+    val amount: Double? = null,
+    @SerialName("date")
+    val date: String? = null,
+    @SerialName("description")
+    val description: String? = null,
+    @SerialName("notes")
+    val notes: String? = null,
+    @SerialName("vendor_name")
+    val vendorName: String? = null
 )
 
 /**
@@ -269,7 +304,11 @@ data class BulkMaintenanceCostItem(
     @SerialName("description")
     val description: String? = null,
     @SerialName("notes")
-    val notes: String? = null
+    val notes: String? = null,
+    @SerialName("vendor_name")
+    val vendorName: String? = null,
+    @SerialName("invoice_no")
+    val invoiceNo: String? = null
 )
 
 /**

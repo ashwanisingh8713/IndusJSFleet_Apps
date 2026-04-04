@@ -17,7 +17,7 @@ object VehiclePLDateCalculator {
 
     /**
      * Calculate start and end dates based on the selected period.
-     * Returns dates in DD-MM-YYYY format as required by the API.
+     * Returns dates in YYYY-MM-DD format per OpenAPI spec (Docs/api_modules/openapi.json).
      */
     fun getDateRangeForPeriod(
         period: String,
@@ -93,10 +93,11 @@ object VehiclePLDateCalculator {
         }
     }
 
+    /**
+     * Format date as YYYY-MM-DD per OpenAPI spec.
+     */
     private fun formatDate(date: LocalDate): String {
-        val day = date.dayOfMonth.toString().padStart(2, '0')
-        val month = date.month.number.toString().padStart(2, '0')
-        return "$day-$month-${date.year}"
+        return date.toString() // LocalDate.toString() returns YYYY-MM-DD (ISO 8601)
     }
 
     private fun getLastDayOfMonth(year: Int, month: Int): LocalDate {

@@ -33,7 +33,8 @@ internal fun PaymentFilterBottomSheet(
     onUpdateStatus: (PaymentStatus?) -> Unit,
     onUpdateDateRange: (String?, String?) -> Unit,
     onApply: () -> Unit,
-    onReset: () -> Unit
+    onReset: () -> Unit,
+    paymentStateLabels: Map<String, String> = emptyMap()
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -151,7 +152,7 @@ internal fun PaymentFilterBottomSheet(
                     FilterChip(
                         selected = filter.paymentStatus == status,
                         onClick = { onUpdateStatus(status) },
-                        label = { Text("${status.icon} ${status.localizedDisplayName()}", style = MaterialTheme.typography.bodySmall) }
+                        label = { Text("${status.icon} ${paymentStateLabels[status.apiValue] ?: status.localizedDisplayName()}", style = MaterialTheme.typography.bodySmall) }
                     )
                 }
             }

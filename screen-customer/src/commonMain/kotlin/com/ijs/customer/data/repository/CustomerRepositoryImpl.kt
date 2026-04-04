@@ -46,7 +46,13 @@ class CustomerRepositoryImpl(
         isActive: Boolean?
     ): Result<List<Customer>> = try {
         val token = requireAuthToken()
-        val response = remoteDataSource.getCustomers(token, page, perPage)
+        val response = remoteDataSource.getCustomers(
+            token = token,
+            page = page,
+            perPage = perPage,
+            search = searchQuery,
+            isActive = isActive
+        )
 
         if (response.success && response.customers.isNotEmpty()) {
             // Cache customers locally

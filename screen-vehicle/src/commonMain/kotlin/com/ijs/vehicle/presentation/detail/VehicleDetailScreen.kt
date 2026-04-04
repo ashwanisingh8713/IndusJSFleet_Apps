@@ -285,8 +285,9 @@ fun VehicleDetailScreen(
     if (state.showStateChangeDialog && state.vehicle != null) {
         StateChangeDialog(
             title = stringResource(Res.string.vehicle_detail_change_status),
-            currentStateLabel = VehicleStatus.getDisplayLabel(state.vehicle!!.status),
-            stateOptions = getVehicleStateOptions(state.vehicle!!.status),
+            currentStateLabel = state.stateLabels[VehicleStatus.toApiString(state.vehicle!!.status)]
+                ?: VehicleStatus.getDisplayLabel(state.vehicle!!.status),
+            stateOptions = getVehicleStateOptions(state.vehicle!!.status, state.stateLabels),
             onStateSelected = { newState ->
                 viewModel.sendIntent(VehicleDetailContract.Intent.UpdateVehicleState(newState))
             },
@@ -351,7 +352,7 @@ fun VehicleDetailScreen(
                                 viewModel.sendIntent(VehicleDetailContract.Intent.ShowStateChangeDialog)
                             }
                         ) {
-                            StatusChip(status = vehicle.status)
+                            StatusChip(status = vehicle.status, stateLabels = state.stateLabels)
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         // Edit Button

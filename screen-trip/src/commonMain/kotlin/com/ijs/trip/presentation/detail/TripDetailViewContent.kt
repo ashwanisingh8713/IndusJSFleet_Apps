@@ -20,7 +20,8 @@ import com.ijs.trip.domain.entity.Trip
 internal fun TripHeader(
     trip: Trip,
     canViewTripPrice: Boolean = false,
-    onStatusClick: () -> Unit
+    onStatusClick: () -> Unit,
+    stateLabels: Map<String, String> = emptyMap()
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -58,7 +59,8 @@ internal fun TripHeader(
                 )
                 EnhancedStatusBadge(
                     status = trip.status,
-                    onClick = onStatusClick
+                    onClick = onStatusClick,
+                    stateLabels = stateLabels
                 )
             }
 

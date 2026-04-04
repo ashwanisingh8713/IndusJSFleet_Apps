@@ -44,7 +44,7 @@ enum class PaymentMode(
 
 /**
  * Payment status enumeration.
- * Matches API values: received, pending, cancelled
+ * Matches API values: received, pending, cancelled, partial
  */
 enum class PaymentStatus(
     val apiValue: String,
@@ -53,7 +53,8 @@ enum class PaymentStatus(
 ) {
     RECEIVED("received", "Received", "✅"),
     PENDING("pending", "Pending", "⏳"),
-    CANCELLED("cancelled", "Cancelled", "❌");
+    CANCELLED("cancelled", "Cancelled", "❌"),
+    PARTIAL("partial", "Partial", "📊");
 
     companion object {
         fun fromApiValue(value: String?): PaymentStatus =

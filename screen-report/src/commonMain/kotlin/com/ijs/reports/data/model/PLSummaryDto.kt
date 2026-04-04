@@ -12,10 +12,14 @@ import kotlinx.serialization.Serializable
  * P&L Summary DTO
  * GET /reports/profit-loss/summary
  *
+ * The API may return the financial overview under either "overview" or "summary" key.
+ * We support BOTH to handle API variations safely (since ignoreUnknownKeys = true,
+ * whichever key is NOT present simply stays null).
+ *
  * API Response structure:
  * {
  *   "period": {"start_date": "...", "end_date": "..."},
- *   "overview": {...},
+ *   "overview" or "summary": {...},
  *   "fleet_summary": {...},
  *   "trip_summary": {...},
  *   "expense_breakdown": {...},
@@ -29,6 +33,8 @@ data class PLSummaryDto(
     val period: PLPeriodDto? = null,
     @SerialName("overview")
     val overview: PLOverviewDto? = null,
+    @SerialName("summary")
+    val summary: PLOverviewDto? = null,
     @SerialName("fleet_summary")
     val fleetSummary: PLFleetSummaryDto? = null,
     @SerialName("trip_summary")
@@ -39,7 +45,14 @@ data class PLSummaryDto(
     val topPerformers: PLTopPerformersDto? = null,
     @SerialName("alerts")
     val alerts: PLAlertsContainerDto? = null
-)
+) {
+    /**
+     * Returns the financial overview from whichever key the API populated.
+     * Prefers "overview", falls back to "summary".
+     */
+    val financialOverview: PLOverviewDto?
+        get() = overview ?: summary
+}
 
 @Serializable
 data class PLPeriodDto(
@@ -49,6 +62,12 @@ data class PLPeriodDto(
     val endDate: String? = null
 )
 
+/**
+ * Financial overview data. Includes alternative field names for robustness:
+ * - The API may return "gross_profit" or "net_profit"
+ * - The API may return "profit_margin_percentage" or "profit_margin"
+ * - The API may return "status" or "profit_status"
+ */
 @Serializable
 data class PLOverviewDto(
     @SerialName("total_revenue")
@@ -57,11 +76,31 @@ data class PLOverviewDto(
     val totalExpenses: Double = 0.0,
     @SerialName("gross_profit")
     val grossProfit: Double = 0.0,
+    @SerialName("net_profit")
+    val netProfit: Double = 0.0,
     @SerialName("profit_margin_percentage")
     val profitMarginPercentage: Double = 0.0,
+    @SerialName("profit_margin")
+    val profitMargin: Double = 0.0,
     @SerialName("status")
-    val status: String? = null // "profit" or "loss"
-)
+    val status: String? = null,
+    @SerialName("profit_status")
+    val profitStatus: String? = null,
+    @SerialName("is_profitable")
+    val isProfitable: Boolean = false
+) {
+    /** Best available profit value (prefers gross_profit, falls back to net_profit) */
+    val effectiveProfit: Double get() = if (grossProfit != 0.0) grossProfit else netProfit
+    /** Best available margin (prefers profit_margin_percentage, falls back to profit_margin) */
+    val effectiveMargin: Double get() = if (profitMarginPercentage != 0.0) profitMarginPercentage else profitMargin
+    /** Best available status string */
+    val effectiveStatus: String get() = status ?: profitStatus ?: "neutral"
+    /** Whether profitable (from explicit field or derived from status) */
+    val effectiveIsProfitable: Boolean get() = isProfitable
+            || effectiveStatus == "profit"
+            || effectiveStatus == "highly_profitable"
+            || effectiveProfit > 0
+}
 
 @Serializable
 data class PLFleetSummaryDto(

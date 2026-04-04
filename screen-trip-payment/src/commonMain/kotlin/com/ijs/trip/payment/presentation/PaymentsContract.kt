@@ -34,7 +34,10 @@ object PaymentsContract {
         val isDeleting: Boolean = false,
 
         // PDF Export
-        val isExportingPdf: Boolean = false
+        val isExportingPdf: Boolean = false,
+
+        /** DB-cached payment state labels (apiValue -> displayLabel) */
+        val paymentStateLabels: Map<String, String> = emptyMap()
     ) : UiState {
         val hasFilters: Boolean get() = filter.hasFilters
         val isEmpty: Boolean get() = payments.isEmpty() && !isLoading

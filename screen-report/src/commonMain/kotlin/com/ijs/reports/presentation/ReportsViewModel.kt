@@ -74,21 +74,50 @@ init {
     }
 
     private suspend fun handleCustomDateRange(startDate: String, endDate: String) {
-        logger.d(TAG_REPORTS_VM, "handleCustomDateRange: $startDate to $endDate")
+        logger.d(TAG_REPORTS_VM, "handleCustomDateRange (DD-MM-YYYY input): $startDate to $endDate")
+        // Convert DD-MM-YYYY from picker to YYYY-MM-DD for API
+        val apiStartDate = convertDdMmYyyyToYyyyMmDd(startDate) ?: startDate
+        val apiEndDate = convertDdMmYyyyToYyyyMmDd(endDate) ?: endDate
+        logger.d(TAG_REPORTS_VM, "handleCustomDateRange (YYYY-MM-DD for API): $apiStartDate to $apiEndDate")
         updateState {
             copy(
-                startDate = startDate,
-                endDate = endDate,
+                startDate = apiStartDate,
+                endDate = apiEndDate,
                 showDateRangePicker = false,
                 selectedPeriod = ReportPeriod.CUSTOM
             )
         }
-        loadSummary(startDateOverride = startDate, endDateOverride = endDate)
+        loadSummary(startDateOverride = apiStartDate, endDateOverride = apiEndDate)
+    }
+
+    /**
+     * Converts DD-MM-YYYY → YYYY-MM-DD for the API.
+     * Returns null if the input is not in DD-MM-YYYY format.
+     */
+    private fun convertDdMmYyyyToYyyyMmDd(date: String): String? {
+        val parts = date.split("-")
+        if (parts.size != 3) return null
+        // DD-MM-YYYY: parts[0]=day(2), parts[1]=month(2), parts[2]=year(4)
+        return if (parts[0].length == 2 && parts[2].length == 4) {
+            "${parts[2]}-${parts[1]}-${parts[0]}"
+        } else null // Already in YYYY-MM-DD or unknown format
+    }
+
+    /**
+     * Converts YYYY-MM-DD → DD-MM-YYYY for UI display/picker.
+     */
+    private fun convertYyyyMmDdToDdMmYyyy(date: String): String {
+        val parts = date.split("-")
+        if (parts.size != 3) return date
+        // YYYY-MM-DD: parts[0]=year(4), parts[1]=month(2), parts[2]=day(2)
+        return if (parts[0].length == 4) {
+            "${parts[2]}-${parts[1]}-${parts[0]}"
+        } else date // Already in DD-MM-YYYY or unknown format
     }
 
     /**
      * Calculate date range based on the selected period.
-     * Returns Pair(startDate, endDate) in YYYY-MM-DD format for API.
+     * Returns Pair(startDate, endDate) in YYYY-MM-DD format per OpenAPI spec.
      * The P&L Summary API only accepts start_date and end_date, NOT period parameter.
      *
      * As per report-pl-screen.prompt.md Date Range Periods:
@@ -107,53 +136,47 @@ init {
             .toLocalDateTime(TimeZone.currentSystemDefault()).date
         logger.d(TAG_REPORTS_VM, "Today's date: $today")
 
+        // Use YYYY-MM-DD format per OpenAPI spec (Docs/api_modules/openapi.json)
+        val todayStr = today.toString()
+
         val result = when (period) {
             ReportPeriod.TODAY -> {
-                val dateStr = today.toString() // YYYY-MM-DD
-                dateStr to dateStr
+                todayStr to todayStr
             }
             ReportPeriod.WEEKLY -> {
-                // Last 7 days (rolling)
                 val startDate = today.minus(DatePeriod(days = 6))
-                startDate.toString() to today.toString()
+                startDate.toString() to todayStr
             }
             ReportPeriod.FIFTEEN_DAYS -> {
-                // Last 15 days (rolling)
                 val startDate = today.minus(DatePeriod(days = 14))
-                startDate.toString() to today.toString()
+                startDate.toString() to todayStr
             }
             ReportPeriod.MONTHLY -> {
-                // Start of current month to today
                 val startOfMonth = LocalDate(today.year, today.month, 1)
-                startOfMonth.toString() to today.toString()
+                startOfMonth.toString() to todayStr
             }
             ReportPeriod.QUARTERLY -> {
-                // Current quarter (Indian financial quarters)
-                // Q1: Apr-Jun, Q2: Jul-Sep, Q3: Oct-Dec, Q4: Jan-Mar
                 val quarterStart = when (today.monthNumber) {
-                    in 4..6 -> LocalDate(today.year, Month.APRIL, 1)      // Q1
-                    in 7..9 -> LocalDate(today.year, Month.JULY, 1)       // Q2
-                    in 10..12 -> LocalDate(today.year, Month.OCTOBER, 1) // Q3
-                    else -> LocalDate(today.year - 1, Month.JANUARY, 1)  // Q4 (Jan-Mar of previous FY)
+                    in 4..6 -> LocalDate(today.year, Month.APRIL, 1)
+                    in 7..9 -> LocalDate(today.year, Month.JULY, 1)
+                    in 10..12 -> LocalDate(today.year, Month.OCTOBER, 1)
+                    else -> LocalDate(today.year - 1, Month.JANUARY, 1)
                 }
-                quarterStart.toString() to today.toString()
+                quarterStart.toString() to todayStr
             }
             ReportPeriod.HALF_YEARLY -> {
-                // Last 6 months (rolling)
                 val startDate = today.minus(DatePeriod(months = 6))
-                startDate.toString() to today.toString()
+                startDate.toString() to todayStr
             }
             ReportPeriod.YEARLY -> {
-                // Financial year (April 1 to March 31)
                 val fyStart = if (today.monthNumber >= 4) {
                     LocalDate(today.year, Month.APRIL, 1)
                 } else {
                     LocalDate(today.year - 1, Month.APRIL, 1)
                 }
-                fyStart.toString() to today.toString()
+                fyStart.toString() to todayStr
             }
             ReportPeriod.CUSTOM -> {
-                // Custom dates handled separately
                 "" to ""
             }
         }

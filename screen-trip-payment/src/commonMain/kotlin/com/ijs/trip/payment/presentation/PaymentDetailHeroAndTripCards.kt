@@ -18,7 +18,10 @@ import org.jetbrains.compose.resources.stringResource
  * Hero section showing payment amount, status, receipt, mode, date, and type.
  */
 @Composable
-internal fun HeroSection(payment: TripPayment) {
+internal fun HeroSection(
+    payment: TripPayment,
+    paymentStateLabels: Map<String, String> = emptyMap()
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -52,7 +55,7 @@ internal fun HeroSection(payment: TripPayment) {
                         )
                     }
                 }
-                DetailPaymentStatusBadge(status = payment.paymentStatus)
+                DetailPaymentStatusBadge(status = payment.paymentStatus, paymentStateLabels = paymentStateLabels)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -307,12 +310,14 @@ internal fun PaymentDetailsCard(payment: TripPayment) {
 @Composable
 internal fun DetailPaymentStatusBadge(
     status: PaymentStatus,
+    paymentStateLabels: Map<String, String> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     val (backgroundColor, textColor) = when (status) {
         PaymentStatus.RECEIVED -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceivedBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
         PaymentStatus.PENDING -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPendingBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
         PaymentStatus.CANCELLED -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentCancelledBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentCancelled
+        PaymentStatus.PARTIAL -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPendingBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
     }
 
     Surface(
@@ -321,7 +326,7 @@ internal fun DetailPaymentStatusBadge(
         color = backgroundColor
     ) {
         Text(
-            text = status.localizedDisplayName(),
+            text = paymentStateLabels[status.apiValue] ?: status.localizedDisplayName(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall,
             color = textColor

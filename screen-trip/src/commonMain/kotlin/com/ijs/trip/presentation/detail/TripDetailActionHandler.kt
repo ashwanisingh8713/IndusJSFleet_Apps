@@ -169,10 +169,10 @@ suspend fun saveChanges() {
                         copy(isUpdatingState = false, showStateChangeDialog = false, trip = result.data)
                     }
                     stateManager.emitEffect(Effect.StateUpdated(newState))
+                    val label = stateManager.currentTripState.stateLabels[newState]
+                        ?: com.indusjs.fleet.core.constants.StatusConstants.TripState.getDisplayLabel(newState)
                     stateManager.emitEffect(
-                        Effect.ShowSnackbar(
-                            "Status updated to ${com.indusjs.fleet.core.constants.StatusConstants.TripState.getDisplayLabel(newState)}"
-                        )
+                        Effect.ShowSnackbar("Status updated to $label")
                     )
                 }
                 is Result.Error -> {

@@ -25,3 +25,24 @@ fun stateColorSchemeToColor(scheme: StateColorScheme): Color = when (scheme) {
     StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
 }
 
+/**
+ * Color mapping for **clickable** status chips and badges.
+ *
+ * Unlike [stateColorSchemeToColor], NEUTRAL returns [MaterialTheme.colorScheme.onSurfaceVariant]
+ * — a darker, clearly visible shade — so that chips with inactive/neutral status
+ * never look disabled or un-tappable.
+ *
+ * Usage:
+ * ```
+ * val chipColor = stateColorSchemeToChipColor(VehicleStatus.getColorScheme(vehicle.status))
+ * ```
+ */
+@Composable
+fun stateColorSchemeToChipColor(scheme: StateColorScheme): Color = when (scheme) {
+    StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.primary
+    StateColorScheme.WARNING -> MaterialTheme.colorScheme.secondary
+    StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
+    StateColorScheme.INFO -> MaterialTheme.colorScheme.tertiary
+    StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.onSurfaceVariant
+}
+

@@ -29,7 +29,8 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun FilterChipRow(
     filter: TripPaymentFilter,
-    onClear: () -> Unit
+    onClear: () -> Unit,
+    paymentStateLabels: Map<String, String> = emptyMap()
 ) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -69,7 +70,7 @@ internal fun FilterChipRow(
             FilterChip(
                 selected = true,
                 onClick = { },
-                label = { Text(status.displayName, style = MaterialTheme.typography.labelSmall) }
+                label = { Text(paymentStateLabels[status.apiValue] ?: status.displayName, style = MaterialTheme.typography.labelSmall) }
             )
         }
 
@@ -261,6 +262,7 @@ internal fun PaymentCard(
     payment: TripPayment,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
+    paymentStateLabels: Map<String, String> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -328,7 +330,7 @@ internal fun PaymentCard(
                         else if (payment.isPending) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
                         else MaterialTheme.colorScheme.onSurface
                     )
-                    PaymentStatusBadge(status = payment.paymentStatus)
+                    PaymentStatusBadge(status = payment.paymentStatus, paymentStateLabels = paymentStateLabels)
                 }
             }
 
@@ -466,12 +468,14 @@ internal fun getPaymentTypeColor(type: PaymentType): Color {
 @Composable
 internal fun PaymentStatusBadge(
     status: PaymentStatus,
+    paymentStateLabels: Map<String, String> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     val (backgroundColor, textColor) = when (status) {
         PaymentStatus.RECEIVED -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceivedBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
         PaymentStatus.PENDING -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPendingBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
         PaymentStatus.CANCELLED -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentCancelledBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentCancelled
+        PaymentStatus.PARTIAL -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPendingBg to com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
     }
 
     Surface(
@@ -480,7 +484,7 @@ internal fun PaymentStatusBadge(
         color = backgroundColor
     ) {
         Text(
-            text = status.displayName,
+            text = paymentStateLabels[status.apiValue] ?: status.localizedDisplayName(),
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall,
             color = textColor

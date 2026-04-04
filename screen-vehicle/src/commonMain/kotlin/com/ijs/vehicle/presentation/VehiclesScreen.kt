@@ -129,11 +129,12 @@ fun VehiclesScreen(
             val statusCountByStatus = remember(state.vehicles) {
                 state.vehicles.groupingBy { it.status }.eachCount()
             }
-            val vehicleStatusFilters = remember(statusCountByStatus) {
+            val vehicleStatusFilters = remember(statusCountByStatus, state.stateLabels) {
                 VehicleStatus.entries.map { status ->
+                    val apiValue = VehicleStatus.toApiString(status)
                     FilterDefinition(
                         id = status,
-                        label = VehicleStatus.getDisplayLabel(status),
+                        label = state.stateLabels[apiValue] ?: VehicleStatus.getDisplayLabel(status),
                         count = statusCountByStatus[status]
                     )
                 }
@@ -189,7 +190,8 @@ fun VehiclesScreen(
                     VehicleList(
                         vehicles = state.filteredVehicles,
                         onVehicleClick = { viewModel.sendIntent(VehiclesContract.Intent.SelectVehicle(it)) },
-                        onDeleteClick = { viewModel.sendIntent(VehiclesContract.Intent.DeleteVehicle(it)) }
+                        onDeleteClick = { viewModel.sendIntent(VehiclesContract.Intent.DeleteVehicle(it)) },
+                        stateLabels = state.stateLabels
                     )
                 }
             }
@@ -222,7 +224,8 @@ fun VehiclesScreen(
 private fun VehicleList(
     vehicles: List<Vehicle>,
     onVehicleClick: (String) -> Unit,
-    onDeleteClick: (String) -> Unit
+    onDeleteClick: (String) -> Unit,
+    stateLabels: Map<String, String> = emptyMap()
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -233,7 +236,8 @@ private fun VehicleList(
             VehicleCard(
                 vehicle = vehicle,
                 onClick = { onVehicleClick(vehicle.id) },
-                onDeleteClick = { onDeleteClick(vehicle.id) }
+                onDeleteClick = { onDeleteClick(vehicle.id) },
+                stateLabels = stateLabels
             )
         }
     }
@@ -243,7 +247,8 @@ private fun VehicleList(
 private fun VehicleCard(
     vehicle: Vehicle,
     onClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    stateLabels: Map<String, String> = emptyMap()
 ) {
     Card(
         modifier = Modifier
@@ -297,7 +302,7 @@ private fun VehicleCard(
                     }
                 }
 
-                StatusBadge(status = vehicle.status)
+                StatusBadge(status = vehicle.status, stateLabels = stateLabels)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -409,10 +414,11 @@ private fun VehicleInfoItem(
 }
 
 @Composable
-private fun StatusBadge(status: VehicleStatus) {
+private fun StatusBadge(status: VehicleStatus, stateLabels: Map<String, String> = emptyMap()) {
     val colorScheme = VehicleStatus.getColorScheme(status)
     val color = com.indusjs.uicomponents.components.stateColorSchemeToColor(colorScheme)
-    val text = VehicleStatus.getDisplayLabel(status)
+    val apiValue = VehicleStatus.toApiString(status)
+    val text = stateLabels[apiValue] ?: VehicleStatus.getDisplayLabel(status)
 
     // Using reusable FleetStatusBadge component
     FleetStatusBadge(

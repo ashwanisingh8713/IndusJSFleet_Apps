@@ -86,6 +86,13 @@ class VehiclePLViewModel(
             is Intent.ApplyVehicleFilter -> applyVehicleFilter()
             is Intent.UpdateViewMode -> updateState { copy(viewMode = intent.mode) }
             is Intent.UpdateChartType -> updateState { copy(chartType = intent.type) }
+            is Intent.ShowDateRangePicker -> updateState {
+                copy(showDateRangePicker = true, pickerStartDate = startDate, pickerEndDate = endDate)
+            }
+            is Intent.HideDateRangePicker -> updateState { copy(showDateRangePicker = false) }
+            is Intent.UpdatePickerStartDate -> updateState { copy(pickerStartDate = intent.date) }
+            is Intent.UpdatePickerEndDate -> updateState { copy(pickerEndDate = intent.date) }
+            is Intent.ApplyCustomDateRange -> applyCustomDateRange(intent.startDate, intent.endDate)
             is Intent.ShowExportOptions -> updateState { copy(showExportOptions = true) }
             is Intent.DismissExportOptions -> updateState { copy(showExportOptions = false) }
             is Intent.ExportReport -> exportReport(intent.format)
@@ -93,7 +100,18 @@ class VehiclePLViewModel(
     }
 
     private suspend fun handlePeriodUpdate(period: String) {
-        updateState { copy(period = period, useCustomDateRange = period == "custom") }
+        if (period == "custom") {
+            updateState { copy(period = period, useCustomDateRange = true, showDateRangePicker = true, pickerStartDate = startDate, pickerEndDate = endDate) }
+            return
+        }
+        updateState { copy(period = period, useCustomDateRange = false) }
+        if (currentState.isFleetOverviewMode && currentState.initialLoadComplete) {
+            loadFleetOverview()
+        }
+    }
+
+    private suspend fun applyCustomDateRange(startDate: String, endDate: String) {
+        updateState { copy(startDate = startDate, endDate = endDate, showDateRangePicker = false) }
         if (currentState.isFleetOverviewMode && currentState.initialLoadComplete) {
             loadFleetOverview()
         }

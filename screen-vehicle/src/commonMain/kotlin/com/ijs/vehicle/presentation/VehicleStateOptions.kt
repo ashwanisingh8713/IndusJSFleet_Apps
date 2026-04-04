@@ -6,15 +6,22 @@ import com.ijs.vehicle.domain.entity.VehicleStatus
 
 /**
  * Vehicle-specific state option builder.
+ * Uses DB-cached labels when available, falls back to StatusConstants.
+ *
+ * @param currentStatus Current vehicle status enum
+ * @param stateLabels DB-cached state labels map (apiValue -> label). When non-empty, labels come from DB.
  */
-fun getVehicleStateOptions(currentStatus: VehicleStatus): List<StateOption> {
+fun getVehicleStateOptions(
+    currentStatus: VehicleStatus,
+    stateLabels: Map<String, String> = emptyMap()
+): List<StateOption> {
     val currentApiValue = VehicleStatus.toApiString(currentStatus)
     val validTransitions = StatusConstants.VehicleTransitions.getValidTransitions(currentApiValue)
 
     return StatusConstants.VehicleState.ALL.map { stateValue ->
         StateOption(
             value = stateValue,
-            label = StatusConstants.VehicleState.getDisplayLabel(stateValue),
+            label = stateLabels[stateValue] ?: StatusConstants.VehicleState.getDisplayLabel(stateValue),
             icon = StatusConstants.VehicleState.getIcon(stateValue),
             colorScheme = StatusConstants.VehicleState.getColorScheme(stateValue),
             isCurrentState = stateValue == currentApiValue,

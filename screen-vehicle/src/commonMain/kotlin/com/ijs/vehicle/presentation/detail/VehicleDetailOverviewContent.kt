@@ -182,13 +182,14 @@ internal fun AssignedDriverSection(vehicle: Vehicle) {
 }
 
 @Composable
-internal fun StatusChip(status: VehicleStatus) {
+internal fun StatusChip(status: VehicleStatus, stateLabels: Map<String, String> = emptyMap()) {
     val colorScheme = VehicleStatus.getColorScheme(status)
-    val baseColor = com.indusjs.uicomponents.components.stateColorSchemeToColor(colorScheme)
+    val baseColor = com.indusjs.uicomponents.components.stateColorSchemeToChipColor(colorScheme)
     val containerColor = baseColor.copy(alpha = 0.15f)
     val contentColor = baseColor
     val icon = VehicleStatus.getIcon(status)
-    val label = VehicleStatus.getDisplayLabel(status)
+    val apiValue = VehicleStatus.toApiString(status)
+    val label = stateLabels[apiValue] ?: VehicleStatus.getDisplayLabel(status)
     val text = "$icon $label"
 
     Surface(

@@ -37,7 +37,8 @@ internal fun TripPaymentsSection(
     tripPrice: Double?,
     isLoading: Boolean,
     onAddPayment: () -> Unit,
-    onPaymentClick: (String) -> Unit
+    onPaymentClick: (String) -> Unit,
+    paymentStateLabels: Map<String, String> = emptyMap()
 ) {
     EnhancedSectionCard(
         title = stringResource(Res.string.payments_title),
@@ -85,7 +86,8 @@ internal fun TripPaymentsSection(
                 payments.forEachIndexed { index, payment ->
                     PaymentListItem(
                         payment = payment,
-                        onClick = { onPaymentClick(payment.id) }
+                        onClick = { onPaymentClick(payment.id) },
+                        paymentStateLabels = paymentStateLabels
                     )
                     if (index < payments.size - 1) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -238,7 +240,8 @@ private fun PaymentSummaryHeader(
 @Composable
 private fun PaymentListItem(
     payment: TripPayment,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    paymentStateLabels: Map<String, String> = emptyMap()
 ) {
     Surface(
         modifier = Modifier
@@ -316,7 +319,7 @@ private fun PaymentListItem(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                PaymentStatusBadge(status = payment.paymentStatus)
+                PaymentStatusBadge(status = payment.paymentStatus, paymentStateLabels = paymentStateLabels)
             }
         }
     }
@@ -326,7 +329,10 @@ private fun PaymentListItem(
  * Status badge for payment.
  */
 @Composable
-private fun PaymentStatusBadge(status: PaymentStatus) {
+private fun PaymentStatusBadge(
+    status: PaymentStatus,
+    paymentStateLabels: Map<String, String> = emptyMap()
+) {
     val (bgColor, textColor) = when (status) {
         PaymentStatus.RECEIVED -> Pair(
             MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
@@ -340,6 +346,10 @@ private fun PaymentStatusBadge(status: PaymentStatus) {
             MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
             MaterialTheme.colorScheme.error
         )
+        PaymentStatus.PARTIAL -> Pair(
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+            MaterialTheme.colorScheme.secondary
+        )
     }
 
     Surface(
@@ -347,7 +357,7 @@ private fun PaymentStatusBadge(status: PaymentStatus) {
         color = bgColor
     ) {
         Text(
-            text = "${status.icon} ${status.displayName}",
+            text = "${status.icon} ${paymentStateLabels[status.apiValue] ?: status.displayName}",
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,

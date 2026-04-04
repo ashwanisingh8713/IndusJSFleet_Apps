@@ -43,7 +43,7 @@ data class MultiTripPLRequest(
  */
 @Serializable
 data class MultiCostTypePLRequest(
-    @SerialName("cost_types")
+    @SerialName("cost_ids")
     val costTypes: List<String>,
     @SerialName("start_date")
     val startDate: String? = null,
@@ -63,7 +63,7 @@ data class ConsolidatedPLRequest(
     val vehicleIds: List<Int>? = null,
     @SerialName("trip_ids")
     val tripIds: List<Int>? = null,
-    @SerialName("cost_types")
+    @SerialName("cost_ids")
     val costTypes: List<String>? = null,
     @SerialName("start_date")
     val startDate: String? = null,

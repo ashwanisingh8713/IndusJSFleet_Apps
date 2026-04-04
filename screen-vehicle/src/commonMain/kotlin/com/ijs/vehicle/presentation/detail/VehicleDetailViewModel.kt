@@ -8,6 +8,7 @@ import com.ijs.driver.domain.entity.Driver
 import com.ijs.vehicle.domain.entity.VehicleType
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
+import com.indusjs.fleet.domain.repository.states.StatesRepository
 import com.indusjs.fleet.data.model.costs.toCostTypeGroups
 import com.ijs.team.domain.repository.TeamRepository
 import com.ijs.vehicle.domain.repository.VehicleRepository
@@ -41,8 +42,22 @@ class VehicleDetailViewModel(
     private val getDriversUseCase: GetDriversUseCase,
     private val costsRepository: CostsRepository,
     private val teamRepository: TeamRepository,
-    private val costTypesRepository: CostTypesRepository? = null
+    private val costTypesRepository: CostTypesRepository? = null,
+    private val statesRepository: StatesRepository? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
+
+    init {
+        loadStateLabels()
+    }
+
+    private fun loadStateLabels() {
+        viewModelScope.launch {
+            try {
+                val labels = statesRepository?.getVehicleStatesFlat()?.toMap() ?: emptyMap()
+                if (labels.isNotEmpty()) updateState { copy(stateLabels = labels) }
+            } catch (_: Exception) { /* fallback to empty → StatusConstants used */ }
+        }
+    }
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
@@ -1246,7 +1261,9 @@ class VehicleDetailViewModel(
                         )
                     }
                     sendEffect(Effect.StateUpdated(newState))
-                    sendEffect(Effect.ShowSnackbar("Status updated to ${com.indusjs.fleet.core.constants.StatusConstants.VehicleState.getDisplayLabel(newState)}"))
+                    val label = currentState.stateLabels[newState]
+                        ?: com.indusjs.fleet.core.constants.StatusConstants.VehicleState.getDisplayLabel(newState)
+                    sendEffect(Effect.ShowSnackbar("Status updated to $label"))
                 }
                 is Result.Error -> {
                     updateState { copy(isUpdatingState = false) }

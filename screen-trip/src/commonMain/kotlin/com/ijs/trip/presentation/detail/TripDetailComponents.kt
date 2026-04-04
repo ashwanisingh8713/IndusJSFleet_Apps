@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.indusjs.fleet.core.constants.StatusConstants
 import com.ijs.trip.domain.entity.TripStatus
 
 /**
@@ -116,19 +115,15 @@ internal fun EnhancedInfoRow(
 @Composable
 internal fun EnhancedStatusBadge(
     status: TripStatus,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    stateLabels: Map<String, String> = emptyMap()
 ) {
     val colorScheme = TripStatus.getColorScheme(status)
-    val baseColor = when (colorScheme) {
-        StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.secondary
-        StatusConstants.StateColorScheme.WARNING -> MaterialTheme.colorScheme.tertiary
-        StatusConstants.StateColorScheme.ERROR -> MaterialTheme.colorScheme.error
-        StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.primary
-        StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
-    }
+    val baseColor = com.indusjs.uicomponents.components.stateColorSchemeToChipColor(colorScheme)
     val containerColor = baseColor.copy(alpha = 0.15f)
     val iconText = TripStatus.getIcon(status)
-    val text = TripStatus.getDisplayLabel(status)
+    val apiValue = TripStatus.toApiString(status)
+    val text = stateLabels[apiValue] ?: TripStatus.getDisplayLabel(status)
 
     Surface(
         onClick = onClick,

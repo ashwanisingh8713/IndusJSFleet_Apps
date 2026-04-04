@@ -44,7 +44,11 @@ fun DriversScreen(
     onNavigateBack: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val driverStatusLabels = driverStatusLabelsByApi()
+    val resourceLabels = driverStatusLabelsByApi()
+    // Merge: DB-cached labels take priority over resource strings
+    val driverStatusLabels = remember(resourceLabels, state.stateLabels) {
+        resourceLabels + state.stateLabels
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val pullRefreshState = rememberPullToRefreshState()
 

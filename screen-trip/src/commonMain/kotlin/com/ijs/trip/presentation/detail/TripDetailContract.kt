@@ -141,7 +141,13 @@ object TripDetailContract {
 
         // State Change
         val showStateChangeDialog: Boolean = false,
-        val isUpdatingState: Boolean = false
+        val isUpdatingState: Boolean = false,
+
+        /** DB-cached trip state labels (apiValue -> displayLabel) */
+        val stateLabels: Map<String, String> = emptyMap(),
+
+        /** DB-cached payment state labels (apiValue -> displayLabel) */
+        val paymentStateLabels: Map<String, String> = emptyMap()
     ) : UiState {
 
         val isFormValid: Boolean

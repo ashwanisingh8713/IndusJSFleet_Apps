@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FleetSearchField
@@ -216,23 +217,3 @@ private fun MonthHeader(
     }
 }
 
-/**
- * Format currency with Indian suffix (K, L, Cr).
- */
-private fun formatCurrency(amount: Double): String {
-    return when {
-        amount >= 10000000 -> {
-            val value = amount / 10000000
-            "₹${((value * 10).toInt() / 10.0)}Cr"
-        }
-        amount >= 100000 -> {
-            val value = amount / 100000
-            "₹${((value * 10).toInt() / 10.0)}L"
-        }
-        amount >= 1000 -> {
-            val value = amount / 1000
-            "₹${((value * 10).toInt() / 10.0)}K"
-        }
-        else -> "₹${amount.toInt()}"
-    }
-}

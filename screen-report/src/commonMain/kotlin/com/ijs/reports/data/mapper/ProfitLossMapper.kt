@@ -13,21 +13,23 @@ object ProfitLossMapper {
     fun toTripProfitLoss(dto: TripProfitLossDto) = TripProfitLoss(
         tripId = dto.tripId,
         vehicleId = dto.vehicleId,
-        vehicleNumber = dto.vehicleNumber,
+        vehicleNumber = dto.vehicleNumber ?: dto.vehicleRegistration,
         driverId = dto.driverId,
         driverName = dto.driverName,
         startLocation = dto.startLocation,
         endLocation = dto.endLocation,
-        scheduledDate = dto.scheduledDate,
-        state = dto.state,
+        scheduledDate = dto.scheduledDate ?: dto.tripDate,
+        state = dto.state ?: dto.status,
         purchasePrice = dto.purchasePrice,
-        sellingValue = dto.sellingValue,
+        sellingValue = dto.sellingValue.takeIf { it != 0.0 } ?: dto.tripPrice,
         totalTripCosts = dto.totalTripCosts,
-        totalExpenses = dto.totalExpenses,
-        grossProfit = dto.grossProfit,
-        netProfit = dto.netProfit,
+        // API may return total_cost OR total_expenses — use whichever is non-zero
+        totalExpenses = dto.totalExpenses.takeIf { it != 0.0 } ?: dto.totalCost,
+        // API may return gross_profit OR net_profit — use whichever is non-zero
+        grossProfit = dto.grossProfit.takeIf { it != 0.0 } ?: dto.netProfit,
+        netProfit = dto.netProfit.takeIf { it != 0.0 } ?: dto.grossProfit,
         profitMargin = dto.profitMargin,
-        isProfitable = dto.isProfitable,
+        isProfitable = dto.isProfitable || dto.netProfit > 0 || dto.grossProfit > 0,
         costBreakdown = dto.costBreakdown?.map { toCostBreakdownItem(it) } ?: emptyList()
     )
 
@@ -44,31 +46,37 @@ object ProfitLossMapper {
         totalRevenue = dto.totalRevenue,
         totalTripCosts = dto.totalTripCosts,
         totalMaintenanceCosts = dto.totalMaintenanceCosts,
-        totalExpenses = dto.totalExpenses,
-        grossProfit = dto.grossProfit,
-        netProfit = dto.netProfit,
+        // API may return total_cost OR total_expenses — use whichever is non-zero
+        totalExpenses = dto.totalExpenses.takeIf { it != 0.0 } ?: dto.totalCost,
+        // API may return gross_profit OR net_profit — use whichever is non-zero
+        grossProfit = dto.grossProfit.takeIf { it != 0.0 } ?: dto.netProfit,
+        netProfit = dto.netProfit.takeIf { it != 0.0 } ?: dto.grossProfit,
         profitMargin = dto.profitMargin,
-        isProfitable = dto.isProfitable,
+        // API may return is_profitable or we derive it from profit_status or net_profit
+        isProfitable = dto.isProfitable
+                || dto.profitStatus == "profit"
+                || dto.profitStatus == "highly_profitable"
+                || (dto.netProfit > 0 && !dto.isProfitable),
         costBreakdown = dto.costBreakdown?.map { toCostBreakdownItem(it) } ?: emptyList(),
         tripSummary = dto.tripSummary?.map { toTripSummaryItem(it) } ?: emptyList()
     )
 
     fun toFleetProfitLoss(dto: FleetProfitLossDto) = FleetProfitLoss(
-        period = dto.period,
-        startDate = dto.startDate,
-        endDate = dto.endDate,
-        totalVehicles = dto.totalVehicles,
-        totalTrips = dto.totalTrips,
-        completedTrips = dto.completedTrips,
-        totalRevenue = dto.totalRevenue,
-        totalExpenses = dto.totalExpenses,
-        totalTripCosts = dto.totalTripCosts,
-        totalMaintenanceCosts = dto.totalMaintenanceCosts,
-        grossProfit = dto.grossProfit,
-        netProfit = dto.netProfit,
-        profitMargin = dto.profitMargin,
-        isProfitable = dto.isProfitable,
-        vehicleBreakdown = dto.vehicleBreakdown?.map { toVehicleProfitLoss(it) } ?: emptyList(),
+        period = dto.period?.let { "${it.startDate ?: ""} to ${it.endDate ?: ""}" },
+        startDate = dto.period?.startDate,
+        endDate = dto.period?.endDate,
+        totalVehicles = dto.summary?.totalVehicles ?: 0,
+        totalTrips = dto.summary?.totalTrips ?: 0,
+        completedTrips = dto.summary?.completedTrips ?: 0,
+        totalRevenue = dto.summary?.totalRevenue ?: 0.0,
+        totalExpenses = dto.summary?.totalExpenses ?: dto.summary?.totalCost ?: 0.0,
+        totalTripCosts = dto.summary?.totalTripCosts ?: 0.0,
+        totalMaintenanceCosts = dto.summary?.totalMaintenanceCosts ?: 0.0,
+        grossProfit = dto.summary?.grossProfit ?: dto.summary?.totalProfit ?: 0.0,
+        netProfit = dto.summary?.netProfit ?: dto.summary?.totalProfit ?: 0.0,
+        profitMargin = dto.summary?.profitMargin ?: 0.0,
+        isProfitable = dto.summary?.isProfitable ?: false,
+        vehicleBreakdown = dto.vehicles?.map { toVehicleProfitLoss(it) } ?: emptyList(),
         costBreakdown = dto.costBreakdown?.map { toCostBreakdownItem(it) } ?: emptyList()
     )
 
@@ -166,33 +174,37 @@ object ProfitLossMapper {
         isProfitable = dto.isProfitable
     )
 
-    fun toPLSummary(dto: PLSummaryDto) = PLSummary(
-        startDate = dto.period?.startDate,
-        endDate = dto.period?.endDate,
-        totalRevenue = dto.overview?.totalRevenue ?: 0.0,
-        totalExpenses = dto.overview?.totalExpenses ?: 0.0,
-        grossProfit = dto.overview?.grossProfit ?: 0.0,
-        profitMarginPercentage = dto.overview?.profitMarginPercentage ?: 0.0,
-        status = dto.overview?.status ?: "neutral",
-        isProfitable = dto.overview?.status == "profit",
-        totalVehicles = dto.fleetSummary?.totalVehicles ?: 0,
-        activeVehicles = dto.fleetSummary?.activeVehicles ?: 0,
-        profitableVehicles = dto.fleetSummary?.profitableVehicles ?: 0,
-        lossMakingVehicles = dto.fleetSummary?.lossMakingVehicles ?: 0,
-        totalTrips = dto.tripSummary?.totalTrips ?: 0,
-        completedTrips = dto.tripSummary?.completedTrips ?: 0,
-        profitableTrips = dto.tripSummary?.profitableTrips ?: 0,
-        lossMakingTrips = dto.tripSummary?.lossMakingTrips ?: 0,
-        expenseBreakdown = dto.expenseBreakdown?.map { (type, item) ->
-            ExpenseBreakdownItem(
-                type = type,
-                amount = item.amount,
-                percentage = item.percentage
-            )
-        } ?: emptyList(),
-        topPerformingVehicle = dto.topPerformers?.mostProfitableVehicle?.let { toVehiclePerformer(it) },
-        lossMakingVehiclesList = dto.alerts?.lossMakingVehicles?.map { toVehiclePerformer(it) } ?: emptyList()
-    )
+    fun toPLSummary(dto: PLSummaryDto) : PLSummary {
+        // Use financialOverview which handles both "overview" and "summary" keys
+        val overview = dto.financialOverview
+        return PLSummary(
+            startDate = dto.period?.startDate,
+            endDate = dto.period?.endDate,
+            totalRevenue = overview?.totalRevenue ?: 0.0,
+            totalExpenses = overview?.totalExpenses ?: 0.0,
+            grossProfit = overview?.effectiveProfit ?: 0.0,
+            profitMarginPercentage = overview?.effectiveMargin ?: 0.0,
+            status = overview?.effectiveStatus ?: "neutral",
+            isProfitable = overview?.effectiveIsProfitable ?: false,
+            totalVehicles = dto.fleetSummary?.totalVehicles ?: 0,
+            activeVehicles = dto.fleetSummary?.activeVehicles ?: 0,
+            profitableVehicles = dto.fleetSummary?.profitableVehicles ?: 0,
+            lossMakingVehicles = dto.fleetSummary?.lossMakingVehicles ?: 0,
+            totalTrips = dto.tripSummary?.totalTrips ?: 0,
+            completedTrips = dto.tripSummary?.completedTrips ?: 0,
+            profitableTrips = dto.tripSummary?.profitableTrips ?: 0,
+            lossMakingTrips = dto.tripSummary?.lossMakingTrips ?: 0,
+            expenseBreakdown = dto.expenseBreakdown?.map { (type, item) ->
+                ExpenseBreakdownItem(
+                    type = type,
+                    amount = item.amount,
+                    percentage = item.percentage
+                )
+            } ?: emptyList(),
+            topPerformingVehicle = dto.topPerformers?.mostProfitableVehicle?.let { toVehiclePerformer(it) },
+            lossMakingVehiclesList = dto.alerts?.lossMakingVehicles?.map { toVehiclePerformer(it) } ?: emptyList()
+        )
+    }
 
     fun toVehiclePerformer(dto: PLVehiclePerformerDto) = VehiclePerformer(
         id = dto.id,

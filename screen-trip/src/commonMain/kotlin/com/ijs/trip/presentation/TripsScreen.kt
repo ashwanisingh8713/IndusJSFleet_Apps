@@ -49,9 +49,10 @@ fun TripsScreen(
     val pullRefreshState = rememberPullToRefreshState()
     val tripStatusFilters = TripStatus.entries.map { status ->
         val countForStatus = state.trips.count { it.status == status }
+        val apiValue = TripStatus.toApiString(status)
         FilterDefinition(
             id = status,
-            label = TripStatus.getDisplayLabel(status),
+            label = state.stateLabels[apiValue] ?: TripStatus.getDisplayLabel(status),
             count = countForStatus.takeIf { it > 0 }
         )
     }
@@ -186,7 +187,8 @@ fun TripsScreen(
                 else -> {
                     TripList(
                         trips = state.filteredTrips,
-                        onTripClick = { viewModel.sendIntent(TripsContract.Intent.SelectTrip(it)) }
+                        onTripClick = { viewModel.sendIntent(TripsContract.Intent.SelectTrip(it)) },
+                        stateLabels = state.stateLabels
                     )
                 }
             }
@@ -195,14 +197,16 @@ fun TripsScreen(
     }
 }
 
-private fun getStatusDisplayName(status: TripStatus): String {
-    return TripStatus.getDisplayLabel(status)
+private fun getStatusDisplayName(status: TripStatus, stateLabels: Map<String, String> = emptyMap()): String {
+    val apiValue = TripStatus.toApiString(status)
+    return stateLabels[apiValue] ?: TripStatus.getDisplayLabel(status)
 }
 
 @Composable
 private fun TripList(
     trips: List<Trip>,
-    onTripClick: (String) -> Unit
+    onTripClick: (String) -> Unit,
+    stateLabels: Map<String, String> = emptyMap()
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -212,7 +216,8 @@ private fun TripList(
         items(trips, key = { it.id }) { trip ->
             TripCard(
                 trip = trip,
-                onClick = { onTripClick(trip.id) }
+                onClick = { onTripClick(trip.id) },
+                stateLabels = stateLabels
             )
         }
     }
@@ -221,7 +226,8 @@ private fun TripList(
 @Composable
 private fun TripCard(
     trip: Trip,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    stateLabels: Map<String, String> = emptyMap()
 ) {
     Card(
         modifier = Modifier
@@ -303,7 +309,7 @@ private fun TripCard(
                     }
                 }
 
-                StatusBadge(status = trip.status)
+                StatusBadge(status = trip.status, stateLabels = stateLabels)
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -377,7 +383,7 @@ private fun TripCard(
                             )
                         } else {
                             TripInfoItem(
-                                value = getStatusDisplayName(trip.status).take(10),
+                                value = getStatusDisplayName(trip.status, stateLabels).take(10),
                                 label = stringResource(Res.string.trip_list_status)
                             )
                         }
@@ -594,7 +600,7 @@ private fun TripInfoItem(
 }
 
 @Composable
-private fun StatusBadge(status: TripStatus) {
+private fun StatusBadge(status: TripStatus, stateLabels: Map<String, String> = emptyMap()) {
     val colorScheme = TripStatus.getColorScheme(status)
     val color = when (colorScheme) {
         com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.SUCCESS -> MaterialTheme.colorScheme.secondary
@@ -603,7 +609,8 @@ private fun StatusBadge(status: TripStatus) {
         com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.INFO -> MaterialTheme.colorScheme.primary
         com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme.NEUTRAL -> MaterialTheme.colorScheme.outline
     }
-    val text = TripStatus.getDisplayLabel(status)
+    val apiValue = TripStatus.toApiString(status)
+    val text = stateLabels[apiValue] ?: TripStatus.getDisplayLabel(status)
 
     // Using reusable FleetStatusBadge component
     FleetStatusBadge(

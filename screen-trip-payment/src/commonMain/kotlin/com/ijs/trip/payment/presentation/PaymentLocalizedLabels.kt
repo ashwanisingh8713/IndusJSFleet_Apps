@@ -30,6 +30,7 @@ internal fun PaymentStatus.localizedDisplayName(): String = when (this) {
     PaymentStatus.RECEIVED -> stringResource(Res.string.payment_status_received)
     PaymentStatus.PENDING -> stringResource(Res.string.payment_status_pending)
     PaymentStatus.CANCELLED -> stringResource(Res.string.payment_status_cancelled)
+    PaymentStatus.PARTIAL -> stringResource(Res.string.payment_trip_payment_partial_label)
 }
 
 @Composable

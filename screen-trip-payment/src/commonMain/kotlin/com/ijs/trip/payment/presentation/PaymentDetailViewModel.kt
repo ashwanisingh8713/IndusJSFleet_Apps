@@ -5,10 +5,13 @@ import com.ijs.trip.payment.TAG_PAYMENT_DETAIL_VM
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.entity.user.UserRole
+import com.indusjs.fleet.domain.repository.states.StatesRepository
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.repository.TripPaymentRepository
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import dev.zacsweers.metro.Inject
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 
@@ -19,8 +22,19 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 class PaymentDetailViewModel(
     private val repository: TripPaymentRepository,
     private val userRepository: UserRepository,
-    private val logger: FleetLogger
+    private val logger: FleetLogger,
+    private val statesRepository: StatesRepository? = null
 ) : MviViewModel<PaymentDetailContract.State, PaymentDetailContract.Intent, PaymentDetailContract.Effect>(PaymentDetailContract.State()) {
+
+    init {
+        viewModelScope.launch {
+            try {
+                val labels = statesRepository?.getPaymentStatesFlat()?.toMap() ?: emptyMap()
+                if (labels.isNotEmpty()) updateState { copy(paymentStateLabels = labels) }
+            } catch (_: Exception) { /* fallback */ }
+        }
+    }
+
 override suspend fun handleIntent(intent: PaymentDetailContract.Intent) {
         when (intent) {
             is PaymentDetailContract.Intent.LoadPayment -> loadPayment(intent.paymentId)

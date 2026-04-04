@@ -41,6 +41,10 @@ object VehiclePLContract {
         val recentReports: List<RecentReport> = emptyList(),
         // Custom date range mode
         val useCustomDateRange: Boolean = false,
+        // Date range picker dialog visibility
+        val showDateRangePicker: Boolean = false,
+        val pickerStartDate: String = "",
+        val pickerEndDate: String = "",
         // Sorting and filtering
         val sortOption: VehiclePLSortOption = VehiclePLSortOption.PROFIT_HIGH_LOW,
         val plStatusFilter: PLStatusFilter = PLStatusFilter.ALL,
@@ -183,6 +187,12 @@ object VehiclePLContract {
         // View mode
         data class UpdateViewMode(val mode: ReportViewMode) : Intent
         data class UpdateChartType(val type: ReportChartType) : Intent
+        // Date range picker dialog
+        data object ShowDateRangePicker : Intent
+        data object HideDateRangePicker : Intent
+        data class UpdatePickerStartDate(val date: String) : Intent
+        data class UpdatePickerEndDate(val date: String) : Intent
+        data class ApplyCustomDateRange(val startDate: String, val endDate: String) : Intent
         // Export
         data object ShowExportOptions : Intent
         data object DismissExportOptions : Intent

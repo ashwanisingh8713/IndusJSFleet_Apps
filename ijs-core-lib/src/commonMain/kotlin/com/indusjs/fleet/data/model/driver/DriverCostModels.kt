@@ -63,15 +63,16 @@ data class DriverCostDto(
     val id: Int = 0,
     @SerialName("driver_id") val driverId: Int,
     @SerialName("trip_id") val tripId: Int? = null,
+    @SerialName("vehicle_id") val vehicleId: Int? = null,
     @SerialName("cost_id") val costId: String,
     @SerialName("cost_label") val costLabel: String,
     @SerialName("group_id") val groupId: String,
     @SerialName("custom_cost_label") val customCostLabel: String? = null,
-    val amount: Double,
-    val date: String,
-    val month: String? = null,
-    val description: String? = null,
-    val notes: String? = null,
+    @SerialName("amount") val amount: Double,
+    @SerialName("date") val date: String,
+    @SerialName("month") val month: String? = null,
+    @SerialName("description") val description: String? = null,
+    @SerialName("notes") val notes: String? = null,
     @SerialName("is_deduction") val isDeduction: Boolean = false,
     @SerialName("created_at") val createdAt: String? = null
 ) : Dto {
@@ -83,15 +84,16 @@ data class DriverCostDto(
 data class CreateDriverCostRequest(
     @SerialName("driver_id") val driverId: Int,
     @SerialName("trip_id") val tripId: Int? = null,
+    @SerialName("vehicle_id") val vehicleId: Int? = null,
     @SerialName("cost_id") val costId: String,
     @SerialName("cost_label") val costLabel: String,
     @SerialName("group_id") val groupId: String,
     @SerialName("custom_cost_label") val customCostLabel: String? = null,
-    val amount: Double,
-    val date: String,
-    val month: String? = null,
-    val description: String? = null,
-    val notes: String? = null,
+    @SerialName("amount") val amount: Double,
+    @SerialName("date") val date: String,
+    @SerialName("month") val month: String? = null,
+    @SerialName("description") val description: String? = null,
+    @SerialName("notes") val notes: String? = null,
     @SerialName("is_deduction") val isDeduction: Boolean = false
 )
 
@@ -133,15 +135,17 @@ data class BulkCreateDriverCostsRequest(
 
 @Serializable
 data class BulkDriverCostItem(
+    @SerialName("trip_id") val tripId: Int? = null,
+    @SerialName("vehicle_id") val vehicleId: Int? = null,
     @SerialName("cost_id") val costId: String,
     @SerialName("cost_label") val costLabel: String,
     @SerialName("group_id") val groupId: String,
     @SerialName("custom_cost_label") val customCostLabel: String? = null,
-    val amount: Double,
-    val date: String,
-    val month: String? = null,
-    val description: String? = null,
-    val notes: String? = null,
+    @SerialName("amount") val amount: Double,
+    @SerialName("date") val date: String,
+    @SerialName("month") val month: String? = null,
+    @SerialName("description") val description: String? = null,
+    @SerialName("notes") val notes: String? = null,
     @SerialName("is_deduction") val isDeduction: Boolean = false
 )
 

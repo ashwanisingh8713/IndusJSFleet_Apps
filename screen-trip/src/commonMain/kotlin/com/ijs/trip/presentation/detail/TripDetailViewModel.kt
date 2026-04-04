@@ -7,6 +7,7 @@ import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
+import com.indusjs.fleet.domain.repository.states.StatesRepository
 import com.ijs.customer.domain.entity.Customer
 import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.driver.domain.entity.Driver
@@ -23,6 +24,7 @@ import com.ijs.trip.presentation.detail.TripDetailContract.Intent
 import com.ijs.trip.presentation.detail.TripDetailContract.State
 import dev.zacsweers.metro.Inject
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the Trip Detail screen implementing MVI pattern.
@@ -46,7 +48,8 @@ class TripDetailViewModel(
     private val googlePlacesService: GooglePlacesService? = null,
     private val customerRepository: CustomerRepository? = null,
     private val tripPaymentRepository: TripPaymentRepository? = null,
-    private val logger: FleetLogger
+    private val logger: FleetLogger,
+    private val statesRepository: StatesRepository? = null
 ) : MviViewModel<State, Intent, Effect>(State()), TripDetailStateManager {
 // ==================== TripDetailStateManager Implementation ====================
 
@@ -85,6 +88,23 @@ class TripDetailViewModel(
         cancelTripUseCase = cancelTripUseCase,
         logger = logger
     )
+
+    init {
+        // Load DB-cached trip state labels
+        viewModelScope.launch {
+            try {
+                val labels = statesRepository?.getTripStatesFlat()?.toMap() ?: emptyMap()
+                if (labels.isNotEmpty()) updateState { copy(stateLabels = labels) }
+            } catch (_: Exception) { /* fallback to empty */ }
+        }
+        // Load DB-cached payment state labels
+        viewModelScope.launch {
+            try {
+                val labels = statesRepository?.getPaymentStatesFlat()?.toMap() ?: emptyMap()
+                if (labels.isNotEmpty()) updateState { copy(paymentStateLabels = labels) }
+            } catch (_: Exception) { /* fallback to empty */ }
+        }
+    }
 
     // ==================== Intent Handling ====================
 

@@ -101,7 +101,7 @@ Authorization: Bearer {{token}}
 | page | Page number | `?page=1` |
 | per_page | Items per page | `?per_page=20` |
 
-**State Options:** `active`, `maintenance`, `inactive`
+**State Options:** `active`, `inactive`, `maintenance`, `retired`
 
 **Response:**
 ```json
@@ -215,7 +215,7 @@ Content-Type: application/json
 }
 ```
 
-**State Options:** `active`, `maintenance`, `inactive`
+**State Options:** `active`, `inactive`, `maintenance`, `retired`
 
 **Response:**
 ```json

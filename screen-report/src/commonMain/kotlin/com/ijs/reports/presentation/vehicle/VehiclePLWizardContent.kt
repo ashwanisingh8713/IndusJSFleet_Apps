@@ -1,7 +1,6 @@
 package com.ijs.reports.presentation.vehicle
 
 import androidx.compose.foundation.background
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,8 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.indusjs.datetimepicker.FleetDateTimePicker
-import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.PLStatusFilter
@@ -508,28 +505,18 @@ internal fun PeriodSelectionChipsCard(
                 }
             }
 
-            // Custom date range using ijs-datetime-picker
-            AnimatedVisibility(visible = useCustomDateRange) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+            // Show selected custom date range label if applicable
+            if (useCustomDateRange && startDate.isNotBlank() && endDate.isNotBlank()) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
-                    FleetDateTimePicker(
-                        date = startDate,
-                        time = "",
-                        onDateTimeChange = { newDate, _ -> onStartDateChange(newDate) },
-                        label = "From Date",
-                        mode = PickerMode.DATE_ONLY,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    FleetDateTimePicker(
-                        date = endDate,
-                        time = "",
-                        onDateTimeChange = { newDate, _ -> onEndDateChange(newDate) },
-                        label = "To Date",
-                        mode = PickerMode.DATE_ONLY,
-                        minDate = startDate.ifBlank { null },
-                        modifier = Modifier.fillMaxWidth()
+                    Text(
+                        text = "📅 $startDate — $endDate",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                 }
             }

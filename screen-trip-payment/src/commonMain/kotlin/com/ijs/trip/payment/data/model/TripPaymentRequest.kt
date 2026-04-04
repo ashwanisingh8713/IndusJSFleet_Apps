@@ -28,7 +28,17 @@ data class CreateTripPaymentRequest(
     @SerialName("bank_name") val bankName: String? = null,
     @SerialName("notes") val notes: String? = null,
     @SerialName("received_by") val receivedBy: String? = null,
-    @SerialName("received_at_location") val receivedAtLocation: String? = null
+    @SerialName("received_at_location") val receivedAtLocation: String? = null,
+    @SerialName("payment_status") val paymentStatus: String? = null,
+    @SerialName("due_date") val dueDate: String? = null,
+    @SerialName("reference_number") val referenceNumber: String? = null,
+    @SerialName("bank_branch") val bankBranch: String? = null,
+    @SerialName("account_number") val accountNumber: String? = null,
+    @SerialName("ifsc_code") val ifscCode: String? = null,
+    @SerialName("invoice_number") val invoiceNumber: String? = null,
+    @SerialName("invoice_date") val invoiceDate: String? = null,
+    @SerialName("invoice_amount") val invoiceAmount: Double? = null,
+    @SerialName("remarks") val remarks: String? = null
 )
 
 /**
@@ -49,7 +59,9 @@ data class UpdateTripPaymentRequest(
     @SerialName("bank_name") val bankName: String? = null,
     @SerialName("notes") val notes: String? = null,
     @SerialName("received_by") val receivedBy: String? = null,
-    @SerialName("received_at_location") val receivedAtLocation: String? = null
+    @SerialName("received_at_location") val receivedAtLocation: String? = null,
+    @SerialName("reference_number") val referenceNumber: String? = null,
+    @SerialName("remarks") val remarks: String? = null
 )
 
 /**
@@ -74,7 +86,17 @@ data class AddPaymentToTripRequest(
     @SerialName("bank_name") val bankName: String? = null,
     @SerialName("notes") val notes: String? = null,
     @SerialName("received_by") val receivedBy: String? = null,
-    @SerialName("received_at_location") val receivedAtLocation: String? = null
+    @SerialName("received_at_location") val receivedAtLocation: String? = null,
+    @SerialName("payment_status") val paymentStatus: String? = null,
+    @SerialName("due_date") val dueDate: String? = null,
+    @SerialName("reference_number") val referenceNumber: String? = null,
+    @SerialName("bank_branch") val bankBranch: String? = null,
+    @SerialName("account_number") val accountNumber: String? = null,
+    @SerialName("ifsc_code") val ifscCode: String? = null,
+    @SerialName("invoice_number") val invoiceNumber: String? = null,
+    @SerialName("invoice_date") val invoiceDate: String? = null,
+    @SerialName("invoice_amount") val invoiceAmount: Double? = null,
+    @SerialName("remarks") val remarks: String? = null
 )
 
 /**

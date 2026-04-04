@@ -30,14 +30,18 @@ class CustomerRemoteDataSource(
     suspend fun getCustomers(
         token: String,
         page: Int = 1,
-        perPage: Int = 20
+        perPage: Int = 20,
+        search: String? = null,
+        isActive: Boolean? = null
     ): CustomerListResponse {
-        logger.d(TAG_CUSTOMER_REMOTE_DS, "Fetching customers, page: $page")
+        logger.d(TAG_CUSTOMER_REMOTE_DS, "Fetching customers, page: $page, search: $search, isActive: $isActive")
 
         val response = httpClient.get("${ApiConfig.BASE_URL}/customers") {
             header("Authorization", "Bearer $token")
             parameter("page", page)
             parameter("per_page", perPage)
+            search?.let { parameter("search", it) }
+            isActive?.let { parameter("is_active", it) }
         }
 
         val responseText = response.bodyAsText()
@@ -112,7 +116,7 @@ class CustomerRemoteDataSource(
     suspend fun toggleCustomerStatus(token: String, customerId: Int): CustomerResponse {
         logger.d(TAG_CUSTOMER_REMOTE_DS, "Toggling customer status: $customerId")
 
-        val response = httpClient.patch("${ApiConfig.BASE_URL}/customers/$customerId/toggle-status") {
+        val response = httpClient.patch("${ApiConfig.BASE_URL}/customers/$customerId/toggle-active") {
             header("Authorization", "Bearer $token")
         }
 

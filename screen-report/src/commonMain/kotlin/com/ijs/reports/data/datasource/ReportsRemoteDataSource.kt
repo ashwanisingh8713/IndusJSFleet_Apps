@@ -103,7 +103,8 @@ class ReportsRemoteDataSource(
             endDate?.let { parameter("end_date", it) }
         }
         val body = response.bodyAsText()
-        logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
+        logger.d(TAG_REPORTS_REMOTE_DS, "Fleet P&L response status: ${response.status}, body length: ${body.length}")
+        logger.d(TAG_REPORTS_REMOTE_DS, "Fleet P&L raw (first 1000 chars): ${body.take(1000)}")
 
         if (!response.status.isSuccess()) {
             val msg = extractErrorMessage(body, "Failed to fetch fleet P&L (HTTP ${response.status.value})")
@@ -111,6 +112,13 @@ class ReportsRemoteDataSource(
             throw ApiException(msg, response.status.value)
         }
         val result = json.decodeFromString<ProfitLossResponse<FleetProfitLossDto>>(body)
+        result.data?.let { dto ->
+            logger.d(TAG_REPORTS_REMOTE_DS, "Fleet P&L parsed: vehicles=${dto.vehicles?.size}, summary=${dto.summary}")
+            dto.summary?.let { s ->
+                logger.d(TAG_REPORTS_REMOTE_DS, "  summary: revenue=${s.totalRevenue}, expenses=${s.totalExpenses}, totalCost=${s.totalCost}")
+                logger.d(TAG_REPORTS_REMOTE_DS, "  summary: grossProfit=${s.grossProfit}, totalProfit=${s.totalProfit}, netProfit=${s.netProfit}")
+            }
+        }
         return result.data
     }
 
@@ -120,7 +128,7 @@ class ReportsRemoteDataSource(
      */
     suspend fun getMultiVehicleProfitLoss(token: String, request: MultiVehiclePLRequest): List<VehicleProfitLossDto>? {
         val url = "${ApiConfig.BASE_URL}/reports/profit-loss/vehicles"
-        logger.d(TAG_REPORTS_REMOTE_DS, "Fetching multi-vehicle P&L: ${request.vehicleIds}")
+        logger.d(TAG_REPORTS_REMOTE_DS, "Fetching multi-vehicle P&L: ids=${request.vehicleIds}, dates=${request.startDate}..${request.endDate}")
 
         val response: HttpResponse = httpClient.post(url) {
             header(HttpHeaders.Authorization, "Bearer $token")
@@ -128,7 +136,8 @@ class ReportsRemoteDataSource(
             setBody(json.encodeToString(MultiVehiclePLRequest.serializer(), request))
         }
         val body = response.bodyAsText()
-        logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
+        logger.d(TAG_REPORTS_REMOTE_DS, "Multi-vehicle P&L response status: ${response.status}, body length: ${body.length}")
+        logger.d(TAG_REPORTS_REMOTE_DS, "Multi-vehicle P&L raw (first 1000 chars): ${body.take(1000)}")
 
         if (!response.status.isSuccess()) {
             val msg = extractErrorMessage(body, "Failed to fetch multi-vehicle P&L (HTTP ${response.status.value})")
@@ -137,6 +146,9 @@ class ReportsRemoteDataSource(
         }
         val result = json.decodeFromString<ProfitLossResponse<MultiVehiclePLResponseDto>>(body)
         logger.d(TAG_REPORTS_REMOTE_DS, "Parsed vehicles: ${result.data?.vehicles?.size ?: 0}")
+        result.data?.vehicles?.firstOrNull()?.let { first ->
+            logger.d(TAG_REPORTS_REMOTE_DS, "First vehicle: id=${first.vehicleId}, revenue=${first.totalRevenue}, totalCost=${first.totalCost}, totalExpenses=${first.totalExpenses}, grossProfit=${first.grossProfit}, netProfit=${first.netProfit}")
+        }
         return result.data?.vehicles
     }
 
@@ -264,6 +276,11 @@ class ReportsRemoteDataSource(
         }
         val body = response.bodyAsText()
         logger.d(TAG_REPORTS_REMOTE_DS, "Response status: ${response.status}, body length: ${body.length}")
+        // Log more of the raw response for debugging
+        logger.d(TAG_REPORTS_REMOTE_DS, "Raw P&L summary response (first 1000 chars): ${body.take(1000)}")
+        if (body.length > 1000) {
+            logger.d(TAG_REPORTS_REMOTE_DS, "Raw P&L summary response (next 1000 chars): ${body.drop(1000).take(1000)}")
+        }
 
         if (!response.status.isSuccess()) {
             val msg = extractErrorMessage(body, "Failed to fetch P&L summary (HTTP ${response.status.value})")
@@ -271,7 +288,25 @@ class ReportsRemoteDataSource(
             throw ApiException(msg, response.status.value)
         }
         val result = json.decodeFromString<ProfitLossResponse<PLSummaryDto>>(body)
-        logger.d(TAG_REPORTS_REMOTE_DS, "Parsed P&L summary: success=${result.success}")
+        logger.d(TAG_REPORTS_REMOTE_DS, "Parsed P&L summary: success=${result.success}, message=${result.message}")
+        logger.d(TAG_REPORTS_REMOTE_DS, "PLSummaryDto data null? ${result.data == null}")
+        result.data?.let { dto ->
+            logger.d(TAG_REPORTS_REMOTE_DS, "  period: ${dto.period}")
+            logger.d(TAG_REPORTS_REMOTE_DS, "  overview (field 'overview'): ${dto.overview}")
+            logger.d(TAG_REPORTS_REMOTE_DS, "  summary (field 'summary'): ${dto.summary}")
+            logger.d(TAG_REPORTS_REMOTE_DS, "  financialOverview (resolved): ${dto.financialOverview}")
+            dto.financialOverview?.let { ov ->
+                logger.d(TAG_REPORTS_REMOTE_DS, "    totalRevenue=${ov.totalRevenue}, totalExpenses=${ov.totalExpenses}")
+                logger.d(TAG_REPORTS_REMOTE_DS, "    grossProfit=${ov.grossProfit}, netProfit=${ov.netProfit}")
+                logger.d(TAG_REPORTS_REMOTE_DS, "    profitMarginPercentage=${ov.profitMarginPercentage}, profitMargin=${ov.profitMargin}")
+                logger.d(TAG_REPORTS_REMOTE_DS, "    status=${ov.status}, profitStatus=${ov.profitStatus}")
+                logger.d(TAG_REPORTS_REMOTE_DS, "    effectiveProfit=${ov.effectiveProfit}, effectiveMargin=${ov.effectiveMargin}")
+                logger.d(TAG_REPORTS_REMOTE_DS, "    effectiveStatus=${ov.effectiveStatus}, effectiveIsProfitable=${ov.effectiveIsProfitable}")
+            }
+            logger.d(TAG_REPORTS_REMOTE_DS, "  fleetSummary: ${dto.fleetSummary}")
+            logger.d(TAG_REPORTS_REMOTE_DS, "  tripSummary: ${dto.tripSummary}")
+            logger.d(TAG_REPORTS_REMOTE_DS, "  expenseBreakdown keys: ${dto.expenseBreakdown?.keys}")
+        }
         return result.data
     }
 }

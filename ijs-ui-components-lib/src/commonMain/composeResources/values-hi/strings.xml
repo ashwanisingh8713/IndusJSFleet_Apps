@@ -68,6 +68,9 @@
     <string name="current_state_label">वर्तमान: %1$s</string>
     <string name="current_state">वर्तमान स्थिति</string>
     <string name="not_available_from_current_state">वर्तमान स्थिति से उपलब्ध नहीं</string>
+    <string name="state_dialog_select_new_status">नई स्थिति चुनें</string>
+    <string name="state_dialog_tap_to_change">बदलने के लिए नीचे एक विकल्प पर टैप करें</string>
+    <string name="state_dialog_updating">स्थिति अपडेट हो रही है…</string>
 
     <!-- ==================== Content Descriptions ==================== -->
     <string name="cd_switch_to_light_mode">लाइट मोड पर जाएं</string>

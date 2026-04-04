@@ -419,7 +419,7 @@ data class CreateTripRequest(
     val sellingValue: Double? = null,
     @SerialName("estimated_expense")
     val estimatedExpense: Double? = null,
-    @SerialName("trip_price")
+    @SerialName("expected_trip_price")
     val tripPrice: Double? = null,
     // Payment
     @SerialName("payment_status")
@@ -506,6 +506,8 @@ data class UpdateTripRequest(
     val weightUnit: String? = null,
 
     // Customer
+    @SerialName("customer_id")
+    val customerId: Int? = null,
     @SerialName("customer_name")
     val customerName: String? = null,
     @SerialName("customer_contact")

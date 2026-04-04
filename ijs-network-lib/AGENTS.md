@@ -11,7 +11,7 @@ HTTP networking infrastructure, authentication management, user data layer, cros
 - `UserLocalDataSource` — auth token storage (needed by every repository for authenticated API calls)
 - `HttpClientProvider` — configured HttpClient factory
 
-## What's Inside (32 files)
+## What's Inside
 
 | Package | Content |
 |---------|---------|
@@ -20,21 +20,31 @@ HTTP networking infrastructure, authentication management, user data layer, cros
 | `data.datasource.user` | `UserLocalDataSource` (Settings-based token/role storage interface + impl), `UserRemoteDataSource` (login/signup/profile API interface + impl) |
 | `data.datasource.dashboard` | `DashboardRemoteDataSource` (interface + impl), `DashboardLocalDataSource` (interface only — impl in sharedUI with Room) |
 | `data.datasource.costs` | `CostsRemoteDataSource` (interface + impl), `CostsLocalDataSource` (interface only — impl in sharedUI with Room) |
+| `data.datasource.states` | `StatesRemoteDataSource` (interface + impl) — GET /states reference data |
+| `data.datasource.auditlogs` | `AuditLogsRemoteDataSource` (interface + impl) — GET /audit-logs (Owner/GM) |
 | `data.datasource.location` | `GooglePlacesService` (Places autocomplete, details, Distance Matrix) |
 | `data.model.user` | `UserDto`, `ApiResponse<T>`, `LoginRequest`, `SignUpRequest`, etc. |
 | `data.model.dashboard` | `DashboardModels` — all dashboard DTOs |
+| `data.model.states` | `StatesApiResponse`, `StatesDataDto`, `StateItemDto` — entity state reference data |
+| `data.model.auditlogs` | `AuditLogsApiResponse`, `AuditLogItemDto`, `AuditPerformedByDto` — audit trail DTOs |
 | `data.mapper.user` | `UserMapper` — DTO ↔ Domain |
 | `data.mapper.dashboard` | `DashboardMapper` — DTO ↔ Domain |
 | `data.repository.user` | `UserRepositoryImpl` |
 | `data.repository.dashboard` | `DashboardRepositoryImpl` (offline-first with cache) |
 | `data.repository.costs` | `CostsRepositoryImpl`, `CostTypesRepositoryImpl` |
+| `data.repository.states` | `StatesRepositoryImpl` (in-memory cache) |
+| `data.repository.auditlogs` | `AuditLogsRepositoryImpl` |
 | `domain.entity.dashboard` | `DashboardStats` + related domain entities |
 | `domain.entity.maps` | `MapEntities` (vehicle map status) |
 | `domain.repository.user` | `UserRepository` interface |
 | `domain.repository.dashboard` | `DashboardRepository` interface |
 | `domain.repository.costs` | `CostsRepository`, `CostTypesRepository` interfaces |
+| `domain.repository.states` | `StatesRepository` interface |
+| `domain.repository.auditlogs` | `AuditLogsRepository` interface |
 | `domain.usecase.dashboard` | Dashboard use cases |
 | `domain.usecase.costs` | Cost type use cases |
+| `domain.usecase.states` | `GetStatesUseCase` — fetch/cache entity states |
+| `domain.usecase.auditlogs` | `GetAuditLogsUseCase` — paginated audit log retrieval |
 | `di` | `NetworkDataGraph` — DI composition root |
 
 ## NetworkDataGraph (DI)
@@ -51,6 +61,8 @@ graph.userRepository          // Auth, login, profile
 graph.dashboardRepository     // Dashboard aggregation
 graph.costsRepository         // Cost CRUD
 graph.costTypesRepository     // Cost type cache
+graph.statesRepository        // Entity state reference data (vehicle/driver/trip/payment states)
+graph.auditLogsRepository     // Audit log trail (Owner/GM only)
 graph.userLocalDataSource     // Token storage
 ```
 

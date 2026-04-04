@@ -110,40 +110,62 @@ data class VehicleProfitLossDto(
 /**
  * Fleet Profit/Loss DTO
  * GET /reports/profit-loss
+ *
+ * API Response structure (from Docs/api_modules/11-reports.md):
+ * {
+ *   "period": { "start_date": "...", "end_date": "..." },
+ *   "vehicles": [...],
+ *   "summary": { "total_vehicles": ..., "total_revenue": ..., ... }
+ * }
  */
 @Serializable
 data class FleetProfitLossDto(
     @SerialName("period")
-    val period: String? = null,
-    @SerialName("start_date")
-    val startDate: String? = null,
-    @SerialName("end_date")
-    val endDate: String? = null,
+    val period: PeriodDto? = null,
+    @SerialName("vehicles")
+    val vehicles: List<VehicleProfitLossDto>? = null,
+    @SerialName("summary")
+    val summary: FleetPLSummaryDto? = null,
+    @SerialName("cost_breakdown")
+    val costBreakdown: List<CostBreakdownItemDto>? = null
+)
+
+/**
+ * Nested summary object within Fleet P&L response.
+ */
+@Serializable
+data class FleetPLSummaryDto(
     @SerialName("total_vehicles")
     val totalVehicles: Int = 0,
     @SerialName("total_trips")
     val totalTrips: Int = 0,
     @SerialName("completed_trips")
     val completedTrips: Int = 0,
+    @SerialName("total_distance")
+    val totalDistance: Double = 0.0,
     @SerialName("total_revenue")
     val totalRevenue: Double = 0.0,
     @SerialName("total_expenses")
     val totalExpenses: Double = 0.0,
+    @SerialName("total_cost")
+    val totalCost: Double = 0.0,
     @SerialName("total_trip_costs")
     val totalTripCosts: Double = 0.0,
     @SerialName("total_maintenance_costs")
     val totalMaintenanceCosts: Double = 0.0,
     @SerialName("gross_profit")
     val grossProfit: Double = 0.0,
+    @SerialName("total_profit")
+    val totalProfit: Double = 0.0,
     @SerialName("net_profit")
     val netProfit: Double = 0.0,
     @SerialName("profit_margin")
     val profitMargin: Double = 0.0,
     @SerialName("is_profitable")
     val isProfitable: Boolean = false,
-    @SerialName("vehicle_breakdown")
-    val vehicleBreakdown: List<VehicleProfitLossDto>? = null,
-    @SerialName("cost_breakdown")
-    val costBreakdown: List<CostBreakdownItemDto>? = null
+    @SerialName("profitable_vehicles")
+    val profitableVehicles: Int = 0,
+    @SerialName("loss_making_vehicles")
+    val lossMakingVehicles: Int = 0
 )
 

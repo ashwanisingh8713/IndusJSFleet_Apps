@@ -101,7 +101,7 @@ fun PaymentDetailScreen(
                 onDismissMenu = { showMenu = false },
                 onDownloadReceipt = { payment ->
                     isExportingPdf = true
-                    pdfExportData = generatePdfData(payment)
+                    pdfExportData = generatePdfData(payment, state.paymentStateLabels)
                 },
                 onEdit = { viewModel.sendIntent(PaymentDetailContract.Intent.NavigateToEdit) },
                 onDelete = { viewModel.sendIntent(PaymentDetailContract.Intent.ShowDeleteConfirmation) }
@@ -129,7 +129,8 @@ fun PaymentDetailScreen(
                 state.payment != null -> {
                     PaymentDetailContent(
                         payment = state.payment!!,
-                        scrollState = scrollState
+                        scrollState = scrollState,
+                        paymentStateLabels = state.paymentStateLabels
                     )
                 }
             }
@@ -261,7 +262,8 @@ private fun PaymentDetailTopBar(
 @Composable
 private fun PaymentDetailContent(
     payment: TripPayment,
-    scrollState: androidx.compose.foundation.ScrollState
+    scrollState: androidx.compose.foundation.ScrollState,
+    paymentStateLabels: Map<String, String> = emptyMap()
 ) {
     Column(
         modifier = Modifier
@@ -271,7 +273,7 @@ private fun PaymentDetailContent(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        HeroSection(payment = payment)
+        HeroSection(payment = payment, paymentStateLabels = paymentStateLabels)
         TripInfoCard(payment = payment)
         PaymentDetailsCard(payment = payment)
         CustomerDetailsCard(payment = payment)
@@ -322,7 +324,10 @@ private fun DeletePaymentDialog(
 /**
  * Generate PDF data from a TripPayment for receipt export.
  */
-private fun generatePdfData(payment: TripPayment): PaymentReceiptPdfData {
+private fun generatePdfData(
+    payment: TripPayment,
+    paymentStateLabels: Map<String, String> = emptyMap()
+): PaymentReceiptPdfData {
     return PaymentReceiptPdfData(
         paymentId = payment.id.toIntOrNull() ?: 0,
         receiptNumber = payment.receiptNumber ?: "N/A",
@@ -342,7 +347,7 @@ private fun generatePdfData(payment: TripPayment): PaymentReceiptPdfData {
         paymentType = payment.typeDisplay,
         paymentMode = payment.modeDisplay,
         paymentDate = payment.paymentDate?.take(10) ?: "",
-        paymentStatus = payment.paymentStatus.displayName,
+        paymentStatus = paymentStateLabels[payment.paymentStatus.apiValue] ?: payment.paymentStatus.displayName,
         transactionId = payment.transactionId,
         bankName = payment.bankName,
         notes = payment.notes,

@@ -23,7 +23,9 @@ object TripsContract {
         val error: String? = null,
         val searchQuery: String = "",
         val selectedStatusFilter: TripStatus? = null,
-        val isRefreshing: Boolean = false
+        val isRefreshing: Boolean = false,
+        /** DB-cached trip state labels (apiValue -> displayLabel) */
+        val stateLabels: Map<String, String> = emptyMap()
     ) : UiState
 
     /**

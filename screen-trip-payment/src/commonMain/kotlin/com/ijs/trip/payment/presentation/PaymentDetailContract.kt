@@ -23,7 +23,10 @@ object PaymentDetailContract {
 
         // User role (for edit/delete visibility)
         val canEdit: Boolean = false,
-        val canDelete: Boolean = false
+        val canDelete: Boolean = false,
+
+        /** DB-cached payment state labels (apiValue -> displayLabel) */
+        val paymentStateLabels: Map<String, String> = emptyMap()
     ) : UiState
 
     sealed interface Intent : UiIntent {

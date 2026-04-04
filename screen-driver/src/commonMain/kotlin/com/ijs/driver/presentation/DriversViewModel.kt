@@ -1,8 +1,10 @@
 package com.ijs.driver.presentation
 
+import androidx.lifecycle.viewModelScope
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.domain.repository.states.StatesRepository
 import com.ijs.driver.domain.entity.DriverStatus
 import com.ijs.driver.domain.usecase.DeleteDriverUseCase
 import com.ijs.driver.domain.usecase.GetDriversUseCase
@@ -13,6 +15,7 @@ import com.ijs.driver.presentation.DriversContract.Intent
 import com.ijs.driver.presentation.DriversContract.State
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -26,11 +29,22 @@ class DriversViewModel(
     private val getDriversUseCase: GetDriversUseCase,
     private val deleteDriverUseCase: DeleteDriverUseCase,
     private val updateDriverStatusUseCase: UpdateDriverStatusUseCase,
-    private val toggleDriverActiveUseCase: ToggleDriverActiveUseCase
+    private val toggleDriverActiveUseCase: ToggleDriverActiveUseCase,
+    private val statesRepository: StatesRepository
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     init {
+        loadStateLabels()
         sendIntent(Intent.LoadDrivers)
+    }
+
+    private fun loadStateLabels() {
+        viewModelScope.launch {
+            try {
+                val labels = statesRepository.getDriverStatesFlat().toMap()
+                updateState { copy(stateLabels = labels) }
+            } catch (_: Exception) { /* fallback to empty → StatusConstants used */ }
+        }
     }
 
     override suspend fun handleIntent(intent: Intent) {

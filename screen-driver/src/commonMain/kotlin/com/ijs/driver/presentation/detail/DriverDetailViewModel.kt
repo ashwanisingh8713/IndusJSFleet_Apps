@@ -6,6 +6,7 @@ import com.indusjs.error.result.Result
 import com.ijs.team.data.model.TeamMemberDto
 import com.ijs.driver.domain.entity.DriverStatus
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
+import com.indusjs.fleet.domain.repository.states.StatesRepository
 import com.ijs.driver.domain.repository.DriverRepository
 import com.ijs.team.domain.repository.TeamRepository
 import com.ijs.driver.domain.usecase.DeleteDriverUseCase
@@ -35,7 +36,8 @@ class DriverDetailViewModel(
     private val driverRepository: DriverRepository,
     private val teamRepository: TeamRepository,
     private val costsRepository: CostsRepository,
-    private val userLocalDataSource: com.indusjs.fleet.data.datasource.user.UserLocalDataSource? = null
+    private val userLocalDataSource: com.indusjs.fleet.data.datasource.user.UserLocalDataSource? = null,
+    private val statesRepository: StatesRepository? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     init {
@@ -47,6 +49,13 @@ class DriverDetailViewModel(
                 ""
             }
             updateState { copy(currentUserRole = userRole) }
+        }
+        // Load DB-cached state labels
+        viewModelScope.launch {
+            try {
+                val labels = statesRepository?.getDriverStatesFlat()?.toMap() ?: emptyMap()
+                if (labels.isNotEmpty()) updateState { copy(stateLabels = labels) }
+            } catch (_: Exception) { /* fallback to empty */ }
         }
     }
 
@@ -855,7 +864,9 @@ class DriverDetailViewModel(
                         )
                     }
                     sendEffect(Effect.StateUpdated(newStatus))
-                    sendEffect(Effect.ShowSnackbar("Status updated to ${com.indusjs.fleet.core.constants.StatusConstants.DriverState.getDisplayLabel(newStatus)}"))
+                    val label = currentState.stateLabels[newStatus]
+                        ?: com.indusjs.fleet.core.constants.StatusConstants.DriverState.getDisplayLabel(newStatus)
+                    sendEffect(Effect.ShowSnackbar("Status updated to $label"))
                 }
                 is Result.Error -> {
                     updateState { copy(isUpdatingState = false) }

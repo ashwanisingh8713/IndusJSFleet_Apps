@@ -23,7 +23,9 @@ object VehiclesContract {
         val selectedStatusFilter: VehicleStatus? = null,
         val isRefreshing: Boolean = false,
         val vehicleToDelete: String? = null,
-        val showDeleteConfirmation: Boolean = false
+        val showDeleteConfirmation: Boolean = false,
+        /** DB-cached vehicle state labels (apiValue -> displayLabel) */
+        val stateLabels: Map<String, String> = emptyMap()
     ) : UiState
 
     /**

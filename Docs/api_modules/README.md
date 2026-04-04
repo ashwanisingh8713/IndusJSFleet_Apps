@@ -47,15 +47,18 @@ See [cost_types.md](../prompts/cost_types.md) for complete reference.
 | 06 | [06-documents.md](06-documents.md) | Document upload & tracking |
 | 07 | [07-trips.md](07-trips.md) | Trip management |
 | 08 | [08-trip-costs.md](08-trip-costs.md) | Trip cost tracking |
+| 08b | [08-trip-payments.md](08-trip-payments.md) | Trip payment tracking |
 | 09 | [09-maintenance-costs.md](09-maintenance-costs.md) | Vehicle maintenance costs |
 | 10 | [10-dashboard.md](10-dashboard.md) | Dashboard & overview |
 | 11 | [11-reports.md](11-reports.md) | Reports & P&L |
 | 12 | [12-location-tracking.md](12-location-tracking.md) | GPS location tracking |
 | 12b | [12-driver-costs.md](12-driver-costs.md) | Driver cost tracking |
 | 13 | [13-health-metrics.md](13-health-metrics.md) | Health & metrics |
-| 14 | [14-customers.md](14-customers.md) | Customer management |
-| 08b | [08-trip-payments.md](08-trip-payments.md) | Trip payment tracking |
+| 14 | [14-customers.md](14-customers.md) | Customer management & financials |
 | 15 | [15-vehicle-purchase-emi.md](15-vehicle-purchase-emi.md) | Vehicle Purchase & EMI tracking |
+| 16 | [16-audit-logs.md](16-audit-logs.md) | Audit logs |
+| 17 | [17-states.md](17-states.md) | Entity states (reference data) |
+| 18 | [18-cost-types.md](18-cost-types.md) | Cost types (reference data) |
 
 ---
 
@@ -174,3 +177,8 @@ The original Postman collection is available at:
 ## Support
 
 For API support or issues, refer to the main [README.md](../../README.md) or documentation in `/doc_prompts/`.
+
+---
+
+*Last Updated: April 2026*
+

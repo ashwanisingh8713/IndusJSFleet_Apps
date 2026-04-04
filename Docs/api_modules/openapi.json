@@ -1,0 +1,2539 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "IndusJS Fleet Management API",
+    "description": "Comprehensive Fleet Management Backend API for managing vehicles, drivers, trips, customers, payments, and financial reports.",
+    "version": "2.0.0",
+    "contact": {
+      "name": "IndusJS Fleet Support",
+      "email": "support@indusjs.com"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://indusjs-fleet-docker-960880113496.asia-south2.run.app",
+      "description": "Production Server"
+    },
+    {
+      "url": "http://localhost:8080",
+      "description": "Local Development"
+    }
+  ],
+  "tags": [
+    {"name": "API Info", "description": "API version and health information"},
+    {"name": "Authentication", "description": "User authentication endpoints"},
+    {"name": "Profile", "description": "User profile management"},
+    {"name": "Dashboard", "description": "Dashboard and analytics endpoints"},
+    {"name": "Team Management", "description": "Team member management"},
+    {"name": "Audit Logs", "description": "System audit logs"},
+    {"name": "States", "description": "State management and reference data"},
+    {"name": "Cost Types", "description": "Cost type reference data"},
+    {"name": "Caretakers", "description": "Caretaker assignment management"},
+    {"name": "Vehicles", "description": "Vehicle management"},
+    {"name": "Vehicle Documents", "description": "Vehicle document management"},
+    {"name": "Vehicle Location", "description": "Vehicle location tracking"},
+    {"name": "Vehicle Costs", "description": "Vehicle cost management"},
+    {"name": "Vehicle Purchase", "description": "Vehicle purchase and loan management"},
+    {"name": "Documents", "description": "Document management"},
+    {"name": "Drivers", "description": "Driver management"},
+    {"name": "Driver Costs", "description": "Driver cost management"},
+    {"name": "Trips", "description": "Trip management"},
+    {"name": "Trip Stops", "description": "Trip stop management"},
+    {"name": "Trip Costs", "description": "Trip cost management"},
+    {"name": "Trip Payments", "description": "Trip payment management"},
+    {"name": "Customers", "description": "Customer management"},
+    {"name": "Maintenance Costs", "description": "Vehicle maintenance cost management"},
+    {"name": "Location Tracking", "description": "Real-time location tracking"},
+    {"name": "Reports", "description": "Financial and operational reports"},
+    {"name": "Vehicle Loan Payments", "description": "Vehicle loan/EMI payment management"}
+  ],
+  "paths": {
+    "/api": {
+      "get": {
+        "tags": ["API Info"],
+        "summary": "Get API Information",
+        "operationId": "getApiInfo",
+        "responses": {
+          "200": {
+            "description": "API information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiInfoResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/versions": {
+      "get": {
+        "tags": ["API Info"],
+        "summary": "Get API Versions",
+        "operationId": "getApiVersions",
+        "responses": {
+          "200": {
+            "description": "API versions retrieved successfully"
+          }
+        }
+      }
+    },
+    "/api/version": {
+      "get": {
+        "tags": ["API Info"],
+        "summary": "Get Current API Version",
+        "operationId": "getCurrentVersion",
+        "responses": {
+          "200": {
+            "description": "Current API version retrieved successfully"
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": ["API Info"],
+        "summary": "Health Check",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/HealthResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/signup": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Sign Up",
+        "operationId": "signUp",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/SignUpRequest"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/AuthResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "409": {"$ref": "#/components/responses/Conflict"}
+        }
+      }
+    },
+    "/api/v2/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Login",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/LoginRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/AuthResponse"}
+              }
+            }
+          },
+          "401": {"$ref": "#/components/responses/Unauthorized"}
+        }
+      }
+    },
+    "/api/v2/auth/forgot-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Forgot Password",
+        "operationId": "forgotPassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/ForgotPasswordRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Password reset email sent"}
+        }
+      }
+    },
+    "/api/v2/auth/reset-password": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Reset Password",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/ResetPasswordRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Password reset successfully"}
+        }
+      }
+    },
+    "/api/v2/profile": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Get User Profile",
+        "operationId": "getProfile",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/UserProfile"}
+              }
+            }
+          },
+          "401": {"$ref": "#/components/responses/Unauthorized"}
+        }
+      },
+      "put": {
+        "tags": ["Profile"],
+        "summary": "Update User Profile",
+        "operationId": "updateProfile",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/UpdateProfileRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Profile updated successfully"},
+          "401": {"$ref": "#/components/responses/Unauthorized"}
+        }
+      }
+    },
+    "/api/v2/profile/change-password": {
+      "post": {
+        "tags": ["Profile"],
+        "summary": "Change Password",
+        "operationId": "changePassword",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/ChangePasswordRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Password changed successfully"},
+          "401": {"$ref": "#/components/responses/Unauthorized"}
+        }
+      }
+    },
+    "/api/v2/dashboard": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Get Unified Dashboard",
+        "operationId": "getUnifiedDashboard",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Dashboard data retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/DashboardResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/dashboard/financial-summary": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Get Financial Summary",
+        "description": "Quick financial KPIs for dashboard. Owner and GM only.",
+        "operationId": "getFinancialSummary",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["today", "weekly", "monthly", "yearly"],
+              "default": "monthly"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Financial summary retrieved",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/FinancialSummaryResponse"}
+              }
+            }
+          },
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/dashboard/cost-overview": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Get Cost Overview",
+        "description": "Detailed cost breakdown. Owner and GM only.",
+        "operationId": "getCostOverview",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "filter",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["today", "weekly", "monthly"],
+              "default": "today"
+            }
+          }
+        ],
+        "responses": {
+          "200": {"description": "Cost overview retrieved"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/dashboard/pending-payments": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Get Pending Payments",
+        "operationId": "getDashboardPendingPayments",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"}
+        ],
+        "responses": {
+          "200": {"description": "Pending payments retrieved"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/team/members": {
+      "post": {
+        "tags": ["Team Management"],
+        "summary": "Create Team Member",
+        "operationId": "createTeamMember",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/CreateUserRequest"}
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Team member created"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      },
+      "get": {
+        "tags": ["Team Management"],
+        "summary": "List Team Members",
+        "operationId": "listTeamMembers",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {"$ref": "#/components/parameters/SearchParam"}
+        ],
+        "responses": {
+          "200": {"description": "Team members retrieved"}
+        }
+      }
+    },
+    "/api/v2/team/members/{id}": {
+      "get": {
+        "tags": ["Team Management"],
+        "summary": "Get Team Member",
+        "operationId": "getTeamMember",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Team member retrieved"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "put": {
+        "tags": ["Team Management"],
+        "summary": "Update Team Member",
+        "operationId": "updateTeamMember",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/UpdateUserRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Team member updated"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "delete": {
+        "tags": ["Team Management"],
+        "summary": "Delete Team Member",
+        "operationId": "deleteTeamMember",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Team member deleted"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
+    "/api/v2/audit-logs": {
+      "get": {
+        "tags": ["Audit Logs"],
+        "summary": "Get Audit Logs",
+        "operationId": "getAuditLogs",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {
+            "name": "entity_type",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Audit logs retrieved"}
+        }
+      }
+    },
+    "/api/v2/states": {
+      "get": {
+        "tags": ["States"],
+        "summary": "Get All States",
+        "operationId": "getAllStates",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {"description": "All states retrieved"}
+        }
+      }
+    },
+    "/api/v2/cost-types/trip": {
+      "get": {
+        "tags": ["Cost Types"],
+        "summary": "Get Trip Cost Types",
+        "operationId": "getTripCostTypes",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Trip cost types retrieved",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CostTypesResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/cost-types/maintenance": {
+      "get": {
+        "tags": ["Cost Types"],
+        "summary": "Get Maintenance Cost Types",
+        "operationId": "getMaintenanceCostTypes",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {"description": "Maintenance cost types retrieved"}
+        }
+      }
+    },
+    "/api/v2/cost-types/driver": {
+      "get": {
+        "tags": ["Cost Types"],
+        "summary": "Get Driver Cost Types",
+        "operationId": "getDriverCostTypes",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {"description": "Driver cost types retrieved"}
+        }
+      }
+    },
+    "/api/v2/vehicles": {
+      "post": {
+        "tags": ["Vehicles"],
+        "summary": "Register Vehicle",
+        "operationId": "registerVehicle",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/VehicleInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vehicle registered",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/VehicleResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"}
+        }
+      },
+      "get": {
+        "tags": ["Vehicles"],
+        "summary": "List Vehicles",
+        "operationId": "listVehicles",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {"$ref": "#/components/parameters/SearchParam"},
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "inactive", "maintenance", "retired"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vehicles retrieved",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/VehicleListResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/vehicles/{id}": {
+      "get": {
+        "tags": ["Vehicles"],
+        "summary": "Get Vehicle",
+        "operationId": "getVehicle",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Vehicle retrieved"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "put": {
+        "tags": ["Vehicles"],
+        "summary": "Update Vehicle",
+        "operationId": "updateVehicle",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/VehicleUpdateInput"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Vehicle updated"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "delete": {
+        "tags": ["Vehicles"],
+        "summary": "Delete Vehicle",
+        "operationId": "deleteVehicle",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Vehicle deleted"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
+    "/api/v2/vehicles/{id}/state": {
+      "patch": {
+        "tags": ["Vehicles"],
+        "summary": "Update Vehicle State",
+        "operationId": "updateVehicleState",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["state"],
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": ["active", "inactive", "maintenance", "retired"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Vehicle state updated"}
+        }
+      }
+    },
+    "/api/v2/vehicles/{id}/profit-loss": {
+      "get": {
+        "tags": ["Vehicle Costs"],
+        "summary": "Get Vehicle Profit/Loss",
+        "operationId": "getVehicleProfitLoss",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/IdParam"},
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["today", "weekly", "monthly", "yearly"]
+            }
+          },
+          {"$ref": "#/components/parameters/StartDateParam"},
+          {"$ref": "#/components/parameters/EndDateParam"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Vehicle profit/loss retrieved",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/VehicleProfitLossResponse"}
+              }
+            }
+          },
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/vehicles/{id}/purchase": {
+      "post": {
+        "tags": ["Vehicle Purchase"],
+        "summary": "Create Vehicle Purchase",
+        "operationId": "createVehiclePurchase",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/VehiclePurchaseInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Vehicle purchase created"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      },
+      "get": {
+        "tags": ["Vehicle Purchase"],
+        "summary": "Get Vehicle Purchase",
+        "operationId": "getVehiclePurchase",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Vehicle purchase retrieved"}
+        }
+      },
+      "put": {
+        "tags": ["Vehicle Purchase"],
+        "summary": "Update Vehicle Purchase",
+        "operationId": "updateVehiclePurchase",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/VehiclePurchaseInput"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Vehicle purchase updated"}
+        }
+      }
+    },
+    "/api/v2/drivers": {
+      "post": {
+        "tags": ["Drivers"],
+        "summary": "Create Driver",
+        "operationId": "createDriver",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/DriverInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Driver created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/DriverResponse"}
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Drivers"],
+        "summary": "List Drivers",
+        "operationId": "listDrivers",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {"$ref": "#/components/parameters/SearchParam"},
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["available", "on_trip", "on_leave", "inactive"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {"description": "Drivers retrieved"}
+        }
+      }
+    },
+    "/api/v2/drivers/{id}": {
+      "get": {
+        "tags": ["Drivers"],
+        "summary": "Get Driver",
+        "operationId": "getDriver",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Driver retrieved"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "put": {
+        "tags": ["Drivers"],
+        "summary": "Update Driver",
+        "operationId": "updateDriver",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/DriverUpdateInput"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Driver updated"}
+        }
+      },
+      "delete": {
+        "tags": ["Drivers"],
+        "summary": "Delete Driver",
+        "operationId": "deleteDriver",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Driver deleted"}
+        }
+      }
+    },
+    "/api/v2/drivers/{id}/costs": {
+      "post": {
+        "tags": ["Driver Costs"],
+        "summary": "Create Driver Cost",
+        "operationId": "createDriverCost",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/DriverCostInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Driver cost created"}
+        }
+      },
+      "get": {
+        "tags": ["Driver Costs"],
+        "summary": "Get Driver Costs",
+        "operationId": "getDriverCosts",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/IdParam"},
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"}
+        ],
+        "responses": {
+          "200": {"description": "Driver costs retrieved"}
+        }
+      }
+    },
+    "/api/v2/trips": {
+      "post": {
+        "tags": ["Trips"],
+        "summary": "Create Trip",
+        "operationId": "createTrip",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/TripInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Trip created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/TripResponse"}
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Trips"],
+        "summary": "List Trips",
+        "operationId": "listTrips",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["planned", "on_route", "completed", "cancelled", "failed", "delayed"]
+            }
+          },
+          {
+            "name": "vehicle_id",
+            "in": "query",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "driver_id",
+            "in": "query",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "customer_id",
+            "in": "query",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Trips retrieved"}
+        }
+      }
+    },
+    "/api/v2/trips/{id}": {
+      "get": {
+        "tags": ["Trips"],
+        "summary": "Get Trip",
+        "operationId": "getTrip",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Trip retrieved"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "put": {
+        "tags": ["Trips"],
+        "summary": "Update Trip",
+        "operationId": "updateTrip",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/TripUpdateInput"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Trip updated"}
+        }
+      },
+      "delete": {
+        "tags": ["Trips"],
+        "summary": "Delete Trip",
+        "operationId": "deleteTrip",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Trip deleted"}
+        }
+      }
+    },
+    "/api/v2/trips/{id}/state": {
+      "patch": {
+        "tags": ["Trips"],
+        "summary": "Update Trip State",
+        "operationId": "updateTripState",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["state"],
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": ["planned", "on_route", "completed", "cancelled", "failed", "delayed"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Trip state updated"}
+        }
+      }
+    },
+    "/api/v2/trips/{id}/costs": {
+      "get": {
+        "tags": ["Trip Costs"],
+        "summary": "Get Trip Costs",
+        "operationId": "getTripCosts",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Trip costs retrieved"}
+        }
+      }
+    },
+    "/api/v2/trips/{id}/costs/bulk": {
+      "post": {
+        "tags": ["Trip Costs"],
+        "summary": "Bulk Create Trip Costs",
+        "operationId": "bulkCreateTripCosts",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["costs"],
+                "properties": {
+                  "costs": {
+                    "type": "array",
+                    "items": {"$ref": "#/components/schemas/TripCostBulkInput"}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Trip costs created"}
+        }
+      }
+    },
+    "/api/v2/trips/{id}/profit-loss": {
+      "get": {
+        "tags": ["Trip Costs"],
+        "summary": "Get Trip Profit/Loss",
+        "operationId": "getTripProfitLoss",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {
+            "description": "Trip profit/loss retrieved",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/TripProfitLossResponse"}
+              }
+            }
+          },
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/trips/{id}/payments": {
+      "get": {
+        "tags": ["Trip Payments"],
+        "summary": "Get Trip Payments",
+        "operationId": "getTripPayments",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Trip payments retrieved"}
+        }
+      },
+      "post": {
+        "tags": ["Trip Payments"],
+        "summary": "Add Payment to Trip",
+        "operationId": "addPaymentToTrip",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/TripPaymentInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Payment added to trip"}
+        }
+      }
+    },
+    "/api/v2/trip-payments": {
+      "post": {
+        "tags": ["Trip Payments"],
+        "summary": "Create Trip Payment",
+        "description": "Create a new trip payment. Owner and GM only.",
+        "operationId": "createTripPayment",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/TripPaymentInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment created successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/TripPaymentResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      },
+      "get": {
+        "tags": ["Trip Payments"],
+        "summary": "List Trip Payments",
+        "operationId": "listTripPayments",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {
+            "name": "trip_id",
+            "in": "query",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "vehicle_id",
+            "in": "query",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "customer_id",
+            "in": "query",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "payment_type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["advance", "partial", "final", "refund"]
+            }
+          },
+          {
+            "name": "payment_mode",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["cash", "upi", "bank_transfer", "card", "credit", "other"]
+            }
+          },
+          {
+            "name": "payment_status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["received", "pending", "cancelled"]
+            }
+          },
+          {"$ref": "#/components/parameters/StartDateParam"},
+          {"$ref": "#/components/parameters/EndDateParam"}
+        ],
+        "responses": {
+          "200": {"description": "Payments retrieved"}
+        }
+      }
+    },
+    "/api/v2/trip-payments/{id}": {
+      "get": {
+        "tags": ["Trip Payments"],
+        "summary": "Get Trip Payment",
+        "operationId": "getTripPayment",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Payment retrieved"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "put": {
+        "tags": ["Trip Payments"],
+        "summary": "Update Trip Payment",
+        "operationId": "updateTripPayment",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/TripPaymentUpdateInput"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Payment updated"}
+        }
+      },
+      "delete": {
+        "tags": ["Trip Payments"],
+        "summary": "Delete Trip Payment",
+        "description": "Owner only.",
+        "operationId": "deleteTripPayment",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Payment deleted"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/trip-payments/summary": {
+      "get": {
+        "tags": ["Trip Payments"],
+        "summary": "Get Payment Summary",
+        "operationId": "getPaymentSummary",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/StartDateParam"},
+          {"$ref": "#/components/parameters/EndDateParam"}
+        ],
+        "responses": {
+          "200": {"description": "Payment summary retrieved"}
+        }
+      }
+    },
+    "/api/v2/trip-payments/tds-report": {
+      "get": {
+        "tags": ["Trip Payments"],
+        "summary": "Get TDS Report",
+        "operationId": "getTdsReport",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "financial_year",
+            "in": "query",
+            "schema": {"type": "string"},
+            "example": "2025-26"
+          }
+        ],
+        "responses": {
+          "200": {"description": "TDS report retrieved"}
+        }
+      }
+    },
+    "/api/v2/customers": {
+      "post": {
+        "tags": ["Customers"],
+        "summary": "Create Customer",
+        "description": "Create a new customer. Owner, GM, and Manager can create.",
+        "operationId": "createCustomer",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/CustomerInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer created successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CustomerResponse"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "409": {"$ref": "#/components/responses/Conflict"}
+        }
+      },
+      "get": {
+        "tags": ["Customers"],
+        "summary": "List Customers",
+        "operationId": "listCustomers",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {"$ref": "#/components/parameters/SearchParam"},
+          {
+            "name": "is_active",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["true", "false"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customers retrieved",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CustomerListResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/customers/{id}": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get Customer",
+        "operationId": "getCustomer",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {
+            "description": "Customer retrieved",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CustomerResponse"}
+              }
+            }
+          },
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "put": {
+        "tags": ["Customers"],
+        "summary": "Update Customer",
+        "operationId": "updateCustomer",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/CustomerUpdateInput"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer updated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CustomerResponse"}
+              }
+            }
+          },
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      }
+    },
+    "/api/v2/customers/{id}/toggle-active": {
+      "patch": {
+        "tags": ["Customers"],
+        "summary": "Toggle Customer Active Status",
+        "operationId": "toggleCustomerActive",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Customer status toggled"},
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/customers/{id}/trips": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get Customer Trips",
+        "operationId": "getCustomerTrips",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/IdParam"},
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Customer trips retrieved"}
+        }
+      }
+    },
+    "/api/v2/customers/{id}/statistics": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get Customer Statistics",
+        "description": "Owner and GM only.",
+        "operationId": "getCustomerStatistics",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/IdParam"},
+          {"$ref": "#/components/parameters/StartDateParam"},
+          {"$ref": "#/components/parameters/EndDateParam"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer statistics retrieved",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CustomerStatisticsResponse"}
+              }
+            }
+          },
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/customers/{id}/pending-payments": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get Customer Pending Payments",
+        "description": "Owner and GM only.",
+        "operationId": "getCustomerPendingPayments",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/IdParam"},
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {"$ref": "#/components/parameters/StartDateParam"},
+          {"$ref": "#/components/parameters/EndDateParam"}
+        ],
+        "responses": {
+          "200": {"description": "Pending payments retrieved"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/customers/{id}/payments": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get Customer Payments",
+        "description": "Owner and GM only.",
+        "operationId": "getCustomerPayments",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/IdParam"},
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {"$ref": "#/components/parameters/StartDateParam"},
+          {"$ref": "#/components/parameters/EndDateParam"},
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Customer payments retrieved"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/customers/{id}/payment-summary": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get Customer Payment Summary",
+        "description": "Owner and GM only.",
+        "operationId": "getCustomerPaymentSummary",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/IdParam"},
+          {"$ref": "#/components/parameters/StartDateParam"},
+          {"$ref": "#/components/parameters/EndDateParam"}
+        ],
+        "responses": {
+          "200": {"description": "Payment summary retrieved"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/customers/{id}/financial-report": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get Customer Financial Report",
+        "description": "Comprehensive P&L report. Owner and GM only.",
+        "operationId": "getCustomerFinancialReport",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/IdParam"},
+          {"$ref": "#/components/parameters/StartDateParam"},
+          {"$ref": "#/components/parameters/EndDateParam"},
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["monthly", "quarterly", "yearly"],
+              "default": "monthly"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Financial report retrieved",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/CustomerFinancialReportResponse"}
+              }
+            }
+          },
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/trip-costs": {
+      "post": {
+        "tags": ["Trip Costs"],
+        "summary": "Create Trip Cost",
+        "operationId": "createTripCost",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/TripCostInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Trip cost created"}
+        }
+      }
+    },
+    "/api/v2/trip-costs/{id}": {
+      "get": {
+        "tags": ["Trip Costs"],
+        "summary": "Get Trip Cost",
+        "operationId": "getTripCost",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Trip cost retrieved"}
+        }
+      },
+      "put": {
+        "tags": ["Trip Costs"],
+        "summary": "Update Trip Cost",
+        "operationId": "updateTripCost",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/TripCostUpdateInput"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Trip cost updated"}
+        }
+      },
+      "delete": {
+        "tags": ["Trip Costs"],
+        "summary": "Delete Trip Cost",
+        "operationId": "deleteTripCost",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Trip cost deleted"}
+        }
+      }
+    },
+    "/api/v2/maintenance-costs": {
+      "get": {
+        "tags": ["Maintenance Costs"],
+        "summary": "List Maintenance Costs",
+        "operationId": "listMaintenanceCosts",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"},
+          {
+            "name": "vehicle_id",
+            "in": "query",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Maintenance costs retrieved"}
+        }
+      },
+      "post": {
+        "tags": ["Maintenance Costs"],
+        "summary": "Create Maintenance Cost",
+        "operationId": "createMaintenanceCost",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/MaintenanceCostInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Maintenance cost created"}
+        }
+      }
+    },
+    "/api/v2/maintenance-costs/{id}": {
+      "get": {
+        "tags": ["Maintenance Costs"],
+        "summary": "Get Maintenance Cost",
+        "operationId": "getMaintenanceCost",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Maintenance cost retrieved"}
+        }
+      },
+      "put": {
+        "tags": ["Maintenance Costs"],
+        "summary": "Update Maintenance Cost",
+        "operationId": "updateMaintenanceCost",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/MaintenanceCostUpdateInput"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Maintenance cost updated"}
+        }
+      },
+      "delete": {
+        "tags": ["Maintenance Costs"],
+        "summary": "Delete Maintenance Cost",
+        "operationId": "deleteMaintenanceCost",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"$ref": "#/components/parameters/IdParam"}],
+        "responses": {
+          "200": {"description": "Maintenance cost deleted"}
+        }
+      }
+    },
+    "/api/v2/reports/profit-loss": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get Fleet Profit/Loss",
+        "operationId": "getFleetProfitLoss",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["today", "weekly", "monthly", "yearly"]
+            }
+          },
+          {"$ref": "#/components/parameters/StartDateParam"},
+          {"$ref": "#/components/parameters/EndDateParam"}
+        ],
+        "responses": {
+          "200": {"description": "Fleet profit/loss retrieved"},
+          "403": {"$ref": "#/components/responses/Forbidden"}
+        }
+      }
+    },
+    "/api/v2/reports/profit-loss/vehicles": {
+      "post": {
+        "tags": ["Reports"],
+        "summary": "Get Multi-Vehicle Profit/Loss",
+        "operationId": "getMultiVehicleProfitLoss",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["vehicle_ids", "start_date", "end_date"],
+                "properties": {
+                  "vehicle_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"}
+                  },
+                  "start_date": {"type": "string", "format": "date"},
+                  "end_date": {"type": "string", "format": "date"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Multi-vehicle P&L retrieved"}
+        }
+      }
+    },
+    "/api/v2/vehicle-loan-payments": {
+      "post": {
+        "tags": ["Vehicle Loan Payments"],
+        "summary": "Create Loan Payment",
+        "operationId": "createLoanPayment",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/VehicleLoanPaymentInput"}
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Loan payment created"}
+        }
+      },
+      "get": {
+        "tags": ["Vehicle Loan Payments"],
+        "summary": "List Loan Payments",
+        "operationId": "listLoanPayments",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/PageParam"},
+          {"$ref": "#/components/parameters/PerPageParam"}
+        ],
+        "responses": {
+          "200": {"description": "Loan payments retrieved"}
+        }
+      }
+    },
+    "/api/v2/vehicle-loan-payments/upcoming": {
+      "get": {
+        "tags": ["Vehicle Loan Payments"],
+        "summary": "Get Upcoming EMIs",
+        "operationId": "getUpcomingEmis",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {"description": "Upcoming EMIs retrieved"}
+        }
+      }
+    },
+    "/api/v2/vehicle-loan-payments/overdue": {
+      "get": {
+        "tags": ["Vehicle Loan Payments"],
+        "summary": "Get Overdue EMIs",
+        "operationId": "getOverdueEmis",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {"description": "Overdue EMIs retrieved"}
+        }
+      }
+    },
+    "/api/v2/locations/track": {
+      "post": {
+        "tags": ["Location Tracking"],
+        "summary": "Track Location",
+        "operationId": "trackLocation",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/LocationTrackInput"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Location tracked"}
+        }
+      }
+    },
+    "/api/v2/locations/current": {
+      "get": {
+        "tags": ["Location Tracking"],
+        "summary": "Get All Vehicles Current Location",
+        "operationId": "getAllVehiclesLocation",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {"description": "Current locations retrieved"}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Authorization header using the Bearer scheme"
+      }
+    },
+    "parameters": {
+      "IdParam": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {"type": "integer"},
+        "description": "Resource ID"
+      },
+      "PageParam": {
+        "name": "page",
+        "in": "query",
+        "schema": {"type": "integer", "default": 1, "minimum": 1},
+        "description": "Page number"
+      },
+      "PerPageParam": {
+        "name": "per_page",
+        "in": "query",
+        "schema": {"type": "integer", "default": 20, "minimum": 1, "maximum": 100},
+        "description": "Items per page"
+      },
+      "SearchParam": {
+        "name": "search",
+        "in": "query",
+        "schema": {"type": "string"},
+        "description": "Search term"
+      },
+      "StartDateParam": {
+        "name": "start_date",
+        "in": "query",
+        "schema": {"type": "string", "format": "date"},
+        "description": "Start date (YYYY-MM-DD)"
+      },
+      "EndDateParam": {
+        "name": "end_date",
+        "in": "query",
+        "schema": {"type": "string", "format": "date"},
+        "description": "End date (YYYY-MM-DD)"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict - Resource already exists",
+        "content": {
+          "application/json": {
+            "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+          }
+        }
+      }
+    },
+    "schemas": {
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean", "example": true},
+          "message": {"type": "string"},
+          "data": {"type": "object"}
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean", "example": false},
+          "message": {"type": "string"},
+          "error": {"type": "string"}
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "count": {"type": "integer"},
+          "page": {"type": "integer"},
+          "per_page": {"type": "integer"},
+          "total_pages": {"type": "integer"},
+          "has_more": {"type": "boolean"}
+        }
+      },
+      "ApiInfoResponse": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "version": {"type": "string"},
+          "status": {"type": "string"}
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string", "example": "healthy"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      },
+      "SignUpRequest": {
+        "type": "object",
+        "required": ["email", "password", "first_name", "last_name", "mobile"],
+        "properties": {
+          "email": {"type": "string", "format": "email"},
+          "password": {"type": "string", "minLength": 8},
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "mobile": {"type": "string"}
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {"type": "string", "format": "email"},
+          "password": {"type": "string"}
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"},
+          "data": {
+            "type": "object",
+            "properties": {
+              "token": {"type": "string"},
+              "user": {"$ref": "#/components/schemas/UserProfile"}
+            }
+          }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {"type": "string", "format": "email"}
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "required": ["token", "password"],
+        "properties": {
+          "token": {"type": "string"},
+          "password": {"type": "string", "minLength": 8}
+        }
+      },
+      "UserProfile": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "email": {"type": "string"},
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "mobile": {"type": "string"},
+          "role": {"type": "string", "enum": ["owner", "general_manager", "manager", "supervisor"]}
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "mobile": {"type": "string"}
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "required": ["current_password", "new_password"],
+        "properties": {
+          "current_password": {"type": "string"},
+          "new_password": {"type": "string", "minLength": 8}
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": ["email", "password", "first_name", "last_name", "role"],
+        "properties": {
+          "email": {"type": "string", "format": "email"},
+          "password": {"type": "string"},
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "mobile": {"type": "string"},
+          "role": {"type": "string", "enum": ["general_manager", "manager", "supervisor"]}
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "mobile": {"type": "string"}
+        }
+      },
+      "DashboardResponse": {
+        "type": "object",
+        "properties": {
+          "user_info": {"$ref": "#/components/schemas/UserProfile"},
+          "fleet_overview": {"type": "object"},
+          "today_summary": {"type": "object"},
+          "alerts": {"type": "array", "items": {"type": "object"}},
+          "quick_actions": {"type": "object"}
+        }
+      },
+      "FinancialSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "period": {"type": "string"},
+          "start_date": {"type": "string"},
+          "end_date": {"type": "string"},
+          "total_revenue": {"type": "number"},
+          "total_expenses": {"type": "number"},
+          "trip_costs": {"type": "number"},
+          "maintenance_costs": {"type": "number"},
+          "net_profit": {"type": "number"},
+          "profit_margin": {"type": "number"},
+          "profit_status": {"type": "string", "enum": ["profit", "loss", "break_even"]},
+          "pending_payments": {"type": "number"},
+          "received_payments": {"type": "number"}
+        }
+      },
+      "CostTypesResponse": {
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "group_id": {"type": "string"},
+                "group_name": {"type": "string"},
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "cost_id": {"type": "string"},
+                      "cost_label": {"type": "string"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CustomerInput": {
+        "type": "object",
+        "required": ["primary_contact"],
+        "properties": {
+          "company_name": {"type": "string", "description": "Required if person_name not provided"},
+          "person_name": {"type": "string", "description": "Required if company_name not provided"},
+          "primary_contact": {"type": "string"},
+          "secondary_contact": {"type": "string"},
+          "company_address": {"type": "string"},
+          "email": {"type": "string", "format": "email"},
+          "gst_number": {"type": "string"},
+          "notes": {"type": "string"}
+        }
+      },
+      "CustomerUpdateInput": {
+        "type": "object",
+        "properties": {
+          "company_name": {"type": "string"},
+          "person_name": {"type": "string"},
+          "primary_contact": {"type": "string"},
+          "secondary_contact": {"type": "string"},
+          "company_address": {"type": "string"},
+          "email": {"type": "string", "format": "email"},
+          "gst_number": {"type": "string"},
+          "notes": {"type": "string"}
+        }
+      },
+      "CustomerResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"},
+          "data": {"$ref": "#/components/schemas/Customer"}
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "company_name": {"type": "string"},
+          "person_name": {"type": "string"},
+          "primary_contact": {"type": "string"},
+          "secondary_contact": {"type": "string"},
+          "company_address": {"type": "string"},
+          "email": {"type": "string"},
+          "gst_number": {"type": "string"},
+          "notes": {"type": "string"},
+          "owner_id": {"type": "integer"},
+          "is_active": {"type": "boolean"},
+          "created_by_id": {"type": "integer"},
+          "total_trips": {"type": "integer"},
+          "total_revenue": {"type": "number"},
+          "pending_payment": {"type": "number"},
+          "created_at": {"type": "string", "format": "date-time"},
+          "updated_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "CustomerListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"},
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {"type": "array", "items": {"$ref": "#/components/schemas/Customer"}},
+              "count": {"type": "integer"},
+              "page": {"type": "integer"},
+              "per_page": {"type": "integer"},
+              "total_pages": {"type": "integer"},
+              "has_more": {"type": "boolean"}
+            }
+          }
+        }
+      },
+      "CustomerStatisticsResponse": {
+        "type": "object",
+        "properties": {
+          "customer": {"type": "object"},
+          "summary": {
+            "type": "object",
+            "properties": {
+              "total_trips": {"type": "integer"},
+              "completed_trips": {"type": "integer"},
+              "total_revenue": {"type": "number"},
+              "total_paid": {"type": "number"},
+              "total_pending": {"type": "number"},
+              "collection_rate": {"type": "number"},
+              "net_profit": {"type": "number"}
+            }
+          },
+          "trips_by_state": {"type": "object"},
+          "payment_by_mode": {"type": "object"},
+          "monthly_revenue": {"type": "array", "items": {"type": "object"}}
+        }
+      },
+      "CustomerFinancialReportResponse": {
+        "type": "object",
+        "properties": {
+          "customer": {"type": "object"},
+          "date_range": {"type": "object"},
+          "revenue_summary": {
+            "type": "object",
+            "properties": {
+              "total_expected": {"type": "number"},
+              "total_received": {"type": "number"},
+              "total_pending": {"type": "number"}
+            }
+          },
+          "cost_summary": {
+            "type": "object",
+            "properties": {
+              "total_trip_costs": {"type": "number"},
+              "fuel_costs": {"type": "number"},
+              "toll_costs": {"type": "number"},
+              "other_costs": {"type": "number"}
+            }
+          },
+          "profit_loss": {
+            "type": "object",
+            "properties": {
+              "gross_profit": {"type": "number"},
+              "profit_margin": {"type": "number"},
+              "collection_rate": {"type": "number"},
+              "is_profitable": {"type": "boolean"}
+            }
+          },
+          "trip_summary": {"type": "object"},
+          "period_breakdown": {"type": "array", "items": {"type": "object"}},
+          "top_vehicles": {"type": "array", "items": {"type": "object"}}
+        }
+      },
+      "VehicleInput": {
+        "type": "object",
+        "required": ["registration_number"],
+        "properties": {
+          "registration_number": {"type": "string"},
+          "make": {"type": "string"},
+          "model": {"type": "string"},
+          "year": {"type": "integer"},
+          "vehicle_type": {"type": "string"},
+          "fuel_type": {"type": "string"},
+          "capacity": {"type": "number"}
+        }
+      },
+      "VehicleUpdateInput": {
+        "type": "object",
+        "properties": {
+          "make": {"type": "string"},
+          "model": {"type": "string"},
+          "year": {"type": "integer"},
+          "vehicle_type": {"type": "string"},
+          "fuel_type": {"type": "string"},
+          "capacity": {"type": "number"}
+        }
+      },
+      "VehicleResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"},
+          "data": {"type": "object"}
+        }
+      },
+      "VehicleListResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"},
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {"type": "array", "items": {"type": "object"}},
+              "count": {"type": "integer"},
+              "page": {"type": "integer"},
+              "per_page": {"type": "integer"},
+              "total_pages": {"type": "integer"}
+            }
+          }
+        }
+      },
+      "VehicleProfitLossResponse": {
+        "type": "object",
+        "properties": {
+          "vehicle_id": {"type": "integer"},
+          "vehicle_registration": {"type": "string"},
+          "period": {"type": "object"},
+          "total_trips": {"type": "integer"},
+          "total_distance": {"type": "number"},
+          "total_revenue": {"type": "number"},
+          "total_cost": {"type": "number"},
+          "fuel_cost": {"type": "number"},
+          "maintenance_cost": {"type": "number"},
+          "other_cost": {"type": "number"},
+          "net_profit": {"type": "number"},
+          "profit_margin": {"type": "number"},
+          "profit_status": {"type": "string"}
+        }
+      },
+      "VehiclePurchaseInput": {
+        "type": "object",
+        "required": ["purchase_date", "purchase_price", "payment_type"],
+        "properties": {
+          "purchase_date": {"type": "string", "format": "date"},
+          "purchase_price": {"type": "number"},
+          "payment_type": {"type": "string", "enum": ["cash", "loan"]},
+          "loan_amount": {"type": "number"},
+          "loan_interest_rate": {"type": "number"},
+          "loan_tenure_months": {"type": "integer"},
+          "emi_amount": {"type": "number"},
+          "loan_start_date": {"type": "string", "format": "date"}
+        }
+      },
+      "DriverInput": {
+        "type": "object",
+        "required": ["first_name", "last_name", "mobile", "license_number"],
+        "properties": {
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "mobile": {"type": "string"},
+          "email": {"type": "string"},
+          "license_number": {"type": "string"},
+          "license_expiry": {"type": "string", "format": "date"},
+          "address": {"type": "string"}
+        }
+      },
+      "DriverUpdateInput": {
+        "type": "object",
+        "properties": {
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "mobile": {"type": "string"},
+          "email": {"type": "string"},
+          "address": {"type": "string"}
+        }
+      },
+      "DriverResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"},
+          "data": {"type": "object"}
+        }
+      },
+      "DriverCostInput": {
+        "type": "object",
+        "required": ["cost_id", "cost_label", "group_id", "amount", "date"],
+        "properties": {
+          "trip_id": {"type": "integer"},
+          "vehicle_id": {"type": "integer"},
+          "cost_id": {"type": "string", "example": "DC-001-001"},
+          "cost_label": {"type": "string", "example": "Monthly Salary"},
+          "group_id": {"type": "string", "example": "DC-G-001"},
+          "amount": {"type": "number"},
+          "date": {"type": "string", "format": "date"},
+          "month": {"type": "string", "example": "2026-04"},
+          "description": {"type": "string"},
+          "notes": {"type": "string"},
+          "is_deduction": {"type": "boolean"}
+        }
+      },
+      "TripInput": {
+        "type": "object",
+        "required": ["vehicle_id", "driver_id", "scheduled_date", "start_time", "planned_start", "planned_end", "start_location", "start_lat", "start_lng", "end_location", "end_lat", "end_lng", "cargo_type"],
+        "properties": {
+          "vehicle_id": {"type": "integer"},
+          "driver_id": {"type": "integer"},
+          "customer_id": {"type": "integer"},
+          "scheduled_date": {"type": "string", "format": "date-time"},
+          "start_time": {"type": "string", "format": "date-time"},
+          "delivery_date": {"type": "string", "format": "date-time"},
+          "planned_start": {"type": "string", "format": "date-time"},
+          "planned_end": {"type": "string", "format": "date-time"},
+          "start_location": {"type": "string"},
+          "start_lat": {"type": "number"},
+          "start_lng": {"type": "number"},
+          "end_location": {"type": "string"},
+          "end_lat": {"type": "number"},
+          "end_lng": {"type": "number"},
+          "cargo_type": {"type": "string"},
+          "cargo_description": {"type": "string"},
+          "expected_trip_price": {"type": "number"}
+        }
+      },
+      "TripUpdateInput": {
+        "type": "object",
+        "properties": {
+          "vehicle_id": {"type": "integer"},
+          "driver_id": {"type": "integer"},
+          "customer_id": {"type": "integer"},
+          "expected_trip_price": {"type": "number"},
+          "notes": {"type": "string"}
+        }
+      },
+      "TripResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"},
+          "data": {"type": "object"}
+        }
+      },
+      "TripProfitLossResponse": {
+        "type": "object",
+        "properties": {
+          "trip_id": {"type": "integer"},
+          "vehicle_id": {"type": "integer"},
+          "vehicle_registration": {"type": "string"},
+          "driver_name": {"type": "string"},
+          "trip_date": {"type": "string"},
+          "expected_trip_price": {"type": "number"},
+          "paid_trip_price": {"type": "number"},
+          "total_cost": {"type": "number"},
+          "net_profit": {"type": "number"},
+          "profit_margin": {"type": "number"},
+          "status": {"type": "string"},
+          "payment_status": {"type": "string"},
+          "pending_amount": {"type": "number"},
+          "cost_breakdown": {"type": "array", "items": {"type": "object"}}
+        }
+      },
+      "TripCostInput": {
+        "type": "object",
+        "required": ["trip_id", "vehicle_id", "cost_id", "cost_label", "group_id", "amount", "date"],
+        "properties": {
+          "trip_id": {"type": "integer"},
+          "vehicle_id": {"type": "integer"},
+          "cost_id": {"type": "string", "example": "TC-001-002"},
+          "cost_label": {"type": "string", "example": "Diesel"},
+          "group_id": {"type": "string", "example": "TC-G-001"},
+          "amount": {"type": "number"},
+          "date": {"type": "string"},
+          "time": {"type": "string"},
+          "notes": {"type": "string"},
+          "custom_cost_label": {"type": "string"},
+          "fuel_quantity": {"type": "number"},
+          "fuel_rate": {"type": "number"},
+          "km_per_liter": {"type": "number"}
+        }
+      },
+      "TripCostUpdateInput": {
+        "type": "object",
+        "properties": {
+          "cost_id": {"type": "string"},
+          "cost_label": {"type": "string"},
+          "group_id": {"type": "string"},
+          "amount": {"type": "number"},
+          "date": {"type": "string"},
+          "notes": {"type": "string"}
+        }
+      },
+      "TripCostBulkInput": {
+        "type": "object",
+        "required": ["cost_id", "cost_label", "group_id", "amount", "date"],
+        "properties": {
+          "cost_id": {"type": "string"},
+          "cost_label": {"type": "string"},
+          "group_id": {"type": "string"},
+          "amount": {"type": "number"},
+          "date": {"type": "string", "format": "date-time"},
+          "time": {"type": "string", "format": "date-time"},
+          "notes": {"type": "string"},
+          "fuel_quantity": {"type": "number"},
+          "fuel_rate": {"type": "number"}
+        }
+      },
+      "TripPaymentInput": {
+        "type": "object",
+        "required": ["trip_id", "vehicle_id", "amount", "payment_type", "payment_mode", "payment_date"],
+        "properties": {
+          "trip_id": {"type": "integer"},
+          "vehicle_id": {"type": "integer"},
+          "driver_id": {"type": "integer"},
+          "customer_id": {"type": "integer"},
+          "customer_name": {"type": "string"},
+          "customer_contact": {"type": "string"},
+          "customer_company": {"type": "string"},
+          "customer_gst": {"type": "string"},
+          "amount": {"type": "number", "minimum": 0.01},
+          "tds_amount": {"type": "number", "default": 0},
+          "discount_amount": {"type": "number", "default": 0},
+          "payment_type": {"type": "string", "enum": ["advance", "partial", "final", "refund"]},
+          "payment_mode": {"type": "string", "enum": ["cash", "upi", "bank_transfer", "card", "credit", "other"]},
+          "payment_source": {"type": "string"},
+          "payment_status": {"type": "string", "enum": ["received", "pending", "cancelled"], "default": "received"},
+          "payment_date": {"type": "string", "format": "date-time"},
+          "due_date": {"type": "string", "format": "date-time"},
+          "transaction_id": {"type": "string"},
+          "reference_number": {"type": "string"},
+          "bank_name": {"type": "string"},
+          "bank_branch": {"type": "string"},
+          "account_number": {"type": "string"},
+          "ifsc_code": {"type": "string"},
+          "invoice_number": {"type": "string"},
+          "invoice_date": {"type": "string", "format": "date-time"},
+          "invoice_amount": {"type": "number"},
+          "received_by": {"type": "string"},
+          "received_at_location": {"type": "string"},
+          "notes": {"type": "string"},
+          "remarks": {"type": "string"}
+        }
+      },
+      "TripPaymentUpdateInput": {
+        "type": "object",
+        "properties": {
+          "amount": {"type": "number"},
+          "tds_amount": {"type": "number"},
+          "discount_amount": {"type": "number"},
+          "payment_type": {"type": "string"},
+          "payment_mode": {"type": "string"},
+          "payment_source": {"type": "string"},
+          "payment_status": {"type": "string"},
+          "payment_date": {"type": "string"},
+          "transaction_id": {"type": "string"},
+          "reference_number": {"type": "string"},
+          "notes": {"type": "string"},
+          "remarks": {"type": "string"}
+        }
+      },
+      "TripPaymentResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "message": {"type": "string"},
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "integer"},
+              "trip_id": {"type": "integer"},
+              "vehicle_id": {"type": "integer"},
+              "amount": {"type": "number"},
+              "tds_amount": {"type": "number"},
+              "discount_amount": {"type": "number"},
+              "net_amount": {"type": "number"},
+              "payment_type": {"type": "string"},
+              "payment_mode": {"type": "string"},
+              "payment_status": {"type": "string"},
+              "payment_date": {"type": "string"},
+              "receipt_number": {"type": "string"},
+              "financial_year": {"type": "string"},
+              "financial_month": {"type": "string"},
+              "financial_quarter": {"type": "string"},
+              "created_at": {"type": "string"}
+            }
+          }
+        }
+      },
+      "MaintenanceCostInput": {
+        "type": "object",
+        "required": ["vehicle_id", "cost_id", "cost_label", "group_id", "amount", "date"],
+        "properties": {
+          "vehicle_id": {"type": "integer"},
+          "cost_id": {"type": "string", "example": "VMC-001-001"},
+          "cost_label": {"type": "string", "example": "Engine Oil Change"},
+          "group_id": {"type": "string", "example": "VMC-G-001"},
+          "amount": {"type": "number"},
+          "date": {"type": "string"},
+          "time": {"type": "string"},
+          "description": {"type": "string"},
+          "notes": {"type": "string"},
+          "vendor_name": {"type": "string"},
+          "invoice_no": {"type": "string"},
+          "custom_cost_label": {"type": "string"}
+        }
+      },
+      "MaintenanceCostUpdateInput": {
+        "type": "object",
+        "properties": {
+          "cost_id": {"type": "string"},
+          "cost_label": {"type": "string"},
+          "group_id": {"type": "string"},
+          "amount": {"type": "number"},
+          "date": {"type": "string"},
+          "description": {"type": "string"},
+          "notes": {"type": "string"},
+          "vendor_name": {"type": "string"}
+        }
+      },
+      "VehicleLoanPaymentInput": {
+        "type": "object",
+        "required": ["vehicle_purchase_id", "amount", "payment_date"],
+        "properties": {
+          "vehicle_purchase_id": {"type": "integer"},
+          "amount": {"type": "number"},
+          "payment_date": {"type": "string", "format": "date"}
+        }
+      },
+      "LocationTrackInput": {
+        "type": "object",
+        "required": ["vehicle_id", "latitude", "longitude"],
+        "properties": {
+          "vehicle_id": {"type": "integer"},
+          "latitude": {"type": "number"},
+          "longitude": {"type": "number"},
+          "speed": {"type": "number"},
+          "heading": {"type": "number"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  }
+}
+

@@ -59,7 +59,11 @@ fun DriverDetailScreen(
     onNavigateToTripDetail: (Int) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val driverStatusLabels = driverStatusLabelsByApi()
+    val resourceLabels = driverStatusLabelsByApi()
+    // Merge: DB-cached labels take priority over resource strings
+    val driverStatusLabels = remember(resourceLabels, state.stateLabels) {
+        resourceLabels + state.stateLabels
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -167,7 +171,8 @@ fun DriverDetailScreen(
         StateChangeDialog(
             title = stringResource(Res.string.driver_change_status_title),
             currentStateLabel = driverStatusLabel(state.driver!!.status, driverStatusLabels),
-            stateOptions = getDriverStateOptions(state.driver!!.status).map { opt ->
+            stateOptions = getDriverStateOptions(state.driver!!.status, state.stateLabels).map { opt ->
+                // Prefer DB labels (via stateLabels), then localized resource labels, then original
                 opt.copy(label = driverStatusLabels[opt.value] ?: opt.label)
             },
             onStateSelected = { newStatus ->

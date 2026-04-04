@@ -18,9 +18,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ProfitLossResponse<T>(
     @SerialName("success")
-    val success: Boolean,
+    val success: Boolean = false,
     @SerialName("message")
-    val message: String,
+    val message: String = "",
     @SerialName("data")
     val data: T? = null
 )

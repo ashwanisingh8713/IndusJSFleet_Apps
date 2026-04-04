@@ -152,6 +152,9 @@ object VehicleDetailContract {
         val showStateChangeDialog: Boolean = false,
         val isUpdatingState: Boolean = false,
 
+        /** DB-cached vehicle state labels (apiValue -> displayLabel) */
+        val stateLabels: Map<String, String> = emptyMap(),
+
         // Current selected tab
         val selectedTab: Int = 0
     ) : UiState {

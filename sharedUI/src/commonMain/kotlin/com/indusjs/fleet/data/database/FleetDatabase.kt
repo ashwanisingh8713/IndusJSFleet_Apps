@@ -7,7 +7,9 @@ import com.indusjs.fleet.data.database.dao.DashboardDao
 import com.indusjs.fleet.data.database.dao.SettingsCostTypesDao
 import com.indusjs.fleet.data.database.dao.SettingsCustomerDao
 import com.indusjs.fleet.data.database.dao.SettingsDashboardDao
+import com.indusjs.fleet.data.database.dao.SettingsStatesDao
 import com.indusjs.fleet.data.database.dao.SettingsTeamMembersDao
+import com.indusjs.fleet.data.database.dao.StatesDao
 import com.indusjs.fleet.data.database.dao.TeamMembersDao
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.json.Json
@@ -29,6 +31,7 @@ class FleetDatabase(
 ) {
     private val dashboardDaoImpl = SettingsDashboardDao(settings, json)
     private val costTypesDaoImpl = SettingsCostTypesDao(settings, json)
+    private val statesDaoImpl = SettingsStatesDao(settings, json)
     private val teamMembersDaoImpl = SettingsTeamMembersDao(settings, json, logger)
     private val customerDaoImpl = SettingsCustomerDao(settings, json)
 
@@ -42,6 +45,12 @@ class FleetDatabase(
      * Cost types are fetched once on first app launch and persisted forever.
      */
     fun costTypesDao(): CostTypesDao = costTypesDaoImpl
+
+    /**
+     * States DAO for caching entity states (vehicle, driver, trip, payment).
+     * States are fetched once on first app launch and persisted.
+     */
+    fun statesDao(): StatesDao = statesDaoImpl
 
     /**
      * Team Members DAO for caching team members data.
