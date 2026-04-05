@@ -7,11 +7,11 @@ package com.indusjs.fleet.core.network
  * across all data sources and modules.
  */
 object ApiConfig {
-    /**
-     * Base URL for the Fleet Management API.
-     */
-    //const val BASE_URL = "http://192.168.1.8:8080/api/v1"
+    /** Base URL for the Fleet Management API.*/
     const val BASE_URL = "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2"
+
+    /** Base URL for the Fleet Management API, BHAIYA.*/
+    //const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v2"
 
     /**
      * Google Places API Key for location autocomplete.
