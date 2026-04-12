@@ -1,7 +1,6 @@
 package com.ijs.user.presentation.otp
 
 import com.indusjs.dispatcher.DispatcherProvider
-import com.indusjs.fleet.core.debug.postDebugLog9fbb5d
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.uicomponents.components.UiText
@@ -23,9 +22,6 @@ class OtpVerificationViewModel(
         needsEmail: Boolean = email.isNotBlank(),
         needsMobile: Boolean = mobile.isNotBlank()
     ) {
-        // #region agent log
-        postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"H1","location":"OtpVerificationViewModel.initialize","message":"init flags","data":{"email":"$email","mobile":"$mobile","needsEmail":$needsEmail,"needsMobile":$needsMobile},"timestamp":0}""")
-        // #endregion
         updateState {
             copy(
                 email = email,
@@ -149,9 +145,6 @@ class OtpVerificationViewModel(
         val s = currentState
         val emailDone = !s.needsEmailVerification || s.isEmailVerified
         val mobileDone = !s.needsMobileVerification || s.isMobileVerified
-        // #region agent log
-        postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"H2","location":"OtpVerificationViewModel.checkAllVerified","message":"check done","data":{"needsEmail":${s.needsEmailVerification},"emailVerified":${s.isEmailVerified},"emailDone":$emailDone,"needsMobile":${s.needsMobileVerification},"mobileVerified":${s.isMobileVerified},"mobileDone":$mobileDone},"timestamp":0}""")
-        // #endregion
         if (emailDone && mobileDone) {
             sendEffect(OtpVerificationContract.Effect.VerificationComplete)
         }

@@ -10,7 +10,6 @@ import com.indusjs.uicomponents.components.UiText
 import com.ijs.user.presentation.login.LoginContract.Effect
 import com.ijs.user.presentation.login.LoginContract.Intent
 import com.ijs.user.presentation.login.LoginContract.State
-import com.indusjs.fleet.core.debug.postDebugLog9fbb5d
 import dev.zacsweers.metro.Inject
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
@@ -82,17 +81,11 @@ class LoginViewModel(
 
                 result.fold(
                     onSuccess = {
-                        // #region agent log
-                        postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"login_nav","location":"LoginVM:login:onSuccess","message":"login_success_navigating_to_dashboard","data":{"identifier":"${identifier.take(20)}"},"timestamp":0}""")
-                        // #endregion
                         updateState { copy(isLoading = false) }
                         sendEffect(Effect.NavigateToDashboard)
                     },
                     onFailure = { throwable ->
                         val errorMsg = throwable.message ?: ""
-                        // #region agent log
-                        postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"login_nav","location":"LoginVM:login:onFailure","message":"login_failed","data":{"error":"${errorMsg.take(150).replace("\"","'")}","loginMode":"${currentState.loginMode}","identifier":"${identifier.take(20)}"},"timestamp":0}""")
-                        // #endregion
 
                         val emailNotVerified = errorMsg.contains("email", ignoreCase = true)
                             && errorMsg.contains("not verified", ignoreCase = true)
@@ -104,9 +97,6 @@ class LoginViewModel(
                             val isEmailIdentifier = currentState.loginMode == LoginContract.LoginMode.EMAIL
                             val email = if (isEmailIdentifier) identifier else ""
                             val mobile = if (!isEmailIdentifier) identifier else ""
-                            // #region agent log
-                            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"login_nav","location":"LoginVM:login:navToOtp","message":"navigating_to_otp","data":{"emailNotVerified":$emailNotVerified,"mobileNotVerified":$mobileNotVerified,"email":"${email.take(20)}","mobile":"${mobile.take(20)}"},"timestamp":0}""")
-                            // #endregion
                             sendEffect(Effect.NavigateToOtpVerification(
                                 email = email,
                                 mobile = mobile,

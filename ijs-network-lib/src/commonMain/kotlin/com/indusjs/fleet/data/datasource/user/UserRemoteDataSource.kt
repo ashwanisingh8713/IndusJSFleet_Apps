@@ -37,7 +37,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import dev.zacsweers.metro.Inject
-import com.indusjs.fleet.core.debug.postDebugLog9fbb5d
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.network.TAG_USER_REMOTE_DS
 import kotlinx.serialization.json.Json
@@ -106,11 +105,7 @@ class UserRemoteDataSourceImpl(
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            val result = handleAuthResponse(response)
-            // #region agent log
-            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"login","location":"UserRemoteDS:login","message":"login_result","data":{"success":${result.success},"message":"${result.message?.take(100)?.replace("\"","'")}","has_data":${result.data != null}},"timestamp":0}""")
-            // #endregion
-            result
+            handleAuthResponse(response)
         } catch (e: Exception) {
             logger.e(TAG_USER_REMOTE_DS, "Login failed: ${e.message}", e)
             ApiResponse(success = false, message = e.message ?: "Network error occurred")
@@ -134,16 +129,10 @@ class UserRemoteDataSourceImpl(
     override suspend fun resetPassword(request: ResetPasswordRequest): ApiResponse<Unit> {
         return try {
             logger.d(TAG_USER_REMOTE_DS, "Reset password for: ${request.identifier}")
-            // #region agent log — Hypothesis B: reset_token field missing from request
-            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"B","location":"UserRemoteDS:resetPassword","message":"reset_password_request_fields","data":{"has_identifier":${request.identifier.isNotBlank()},"has_new_password":${request.newPassword.isNotBlank()}},"timestamp":0}""")
-            // #endregion
             val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.RESET_PASSWORD}") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            // #region agent log — Hypothesis B: capture reset_password response status
-            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"B","location":"UserRemoteDS:resetPassword","message":"reset_password_response_status","data":{"status":${response.status.value}},"timestamp":0}""")
-            // #endregion
             handleUnitResponse(response)
         } catch (e: Exception) {
             logger.e(TAG_USER_REMOTE_DS, "Reset password failed: ${e.message}", e)
@@ -201,9 +190,6 @@ class UserRemoteDataSourceImpl(
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            // #region agent log
-            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"verify_email","location":"UserRemoteDS:verifyEmailOtp","message":"verify_email_response","data":{"status":${response.status.value}},"timestamp":0}""")
-            // #endregion
             handleUnitResponse(response)
         } catch (e: Exception) {
             logger.e(TAG_USER_REMOTE_DS, "Verify email OTP failed: ${e.message}", e)
@@ -219,9 +205,6 @@ class UserRemoteDataSourceImpl(
                 setBody(request)
             }
             val raw = response.bodyAsText()
-            // #region agent log
-            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"verify_mobile","location":"UserRemoteDS:verifyMobile","message":"verify_mobile_response","data":{"status":${response.status.value},"body_preview":"${raw.take(200).replace("\"","'")}"},"timestamp":0}""")
-            // #endregion
             if (!response.status.isSuccess()) {
                 return ApiResponse(success = false, message = parseErrorMessage(response.status, raw))
             }
@@ -250,9 +233,6 @@ class UserRemoteDataSourceImpl(
                 contentType(ContentType.Application.Json)
                 setBody(request)
             }
-            // #region agent log
-            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"send_otp","location":"UserRemoteDS:sendLoginOtp","message":"send_otp_response","data":{"status":${response.status.value}},"timestamp":0}""")
-            // #endregion
             handleUnitResponse(response)
         } catch (e: Exception) {
             logger.e(TAG_USER_REMOTE_DS, "Send login OTP failed: ${e.message}", e)
@@ -268,9 +248,6 @@ class UserRemoteDataSourceImpl(
                 setBody(request)
             }
             val raw = response.bodyAsText()
-            // #region agent log
-            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"verify_login_otp","location":"UserRemoteDS:verifyLoginOtp","message":"verify_login_otp_response","data":{"status":${response.status.value},"body_preview":"${raw.take(200).replace("\"","'")}"},"timestamp":0}""")
-            // #endregion
             if (!response.status.isSuccess()) {
                 return ApiResponse(success = false, message = parseErrorMessage(response.status, raw))
             }
@@ -308,10 +285,6 @@ class UserRemoteDataSourceImpl(
             logger.e(TAG_USER_REMOTE_DS, "Failed to read signup response body", e)
             return SignUpApiResponse(success = false, message = "Failed to read response body")
         }
-
-        // #region agent log
-        postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"signup","location":"UserRemoteDS:handleSignUpResponse","message":"signup_raw_response","data":{"status":${response.status.value},"body_preview":"${raw.take(200).replace("\"","'")}"},"timestamp":0}""")
-        // #endregion
 
         if (!response.status.isSuccess()) {
             val errorMsg = parseErrorMessage(response.status, raw)
@@ -371,9 +344,6 @@ class UserRemoteDataSourceImpl(
 
         return try {
             val apiResp = json.decodeFromString<AuthApiResponse>(raw)
-            // #region agent log — Hypothesis C: token may be null in IsResend signup case
-            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"C","location":"UserRemoteDS:handleAuthResponse","message":"auth_parse_result","data":{"success":${apiResp.success},"has_data":${apiResp.data != null},"has_token":${apiResp.data?.token?.isNotBlank()}},"timestamp":0}""")
-            // #endregion
             when {
                 apiResp.success && apiResp.data != null && !apiResp.data.token.isNullOrBlank() -> {
                     // Normal success: new account created or successful login
@@ -396,10 +366,6 @@ class UserRemoteDataSourceImpl(
                 val jsonEl = json.parseToJsonElement(raw)
                 val tokenFound = findInJson(jsonEl, "token")
                 val userEl = findElementInJson(jsonEl, "user")
-
-                // #region agent log — Hypothesis C: check if token is missing in fallback path
-                postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"C","location":"UserRemoteDS:handleAuthResponse:fallback","message":"fallback_token_check","data":{"token_found":${tokenFound != null},"user_found":${userEl != null},"raw_preview":"${raw.take(120).replace("\"","'")}"},"timestamp":0}""")
-                // #endregion
 
                 if (tokenFound != null && userEl != null) {
                     val userDto = json.decodeFromJsonElement<UserDto>(userEl)
