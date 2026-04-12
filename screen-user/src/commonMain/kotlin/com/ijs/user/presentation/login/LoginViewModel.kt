@@ -10,16 +10,12 @@ import com.indusjs.uicomponents.components.UiText
 import com.ijs.user.presentation.login.LoginContract.Effect
 import com.ijs.user.presentation.login.LoginContract.Intent
 import com.ijs.user.presentation.login.LoginContract.State
+import com.indusjs.fleet.core.debug.postDebugLog9fbb5d
 import dev.zacsweers.metro.Inject
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * ViewModel for the Login screen implementing MVI pattern.
- *
- * On initialization, checks if user is already logged in and auto-navigates to dashboard.
- */
 @Inject
 class LoginViewModel(
     private val dispatcherProvider: DispatcherProvider,
@@ -27,7 +23,6 @@ class LoginViewModel(
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     init {
-        // Check auth status on initialization
         viewModelScope.launch {
             checkAuthStatus()
         }
@@ -35,8 +30,9 @@ class LoginViewModel(
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
-            is Intent.UpdateEmail -> updateState { copy(email = intent.email) }
+            is Intent.UpdateIdentifier -> updateState { copy(identifier = intent.value) }
             is Intent.UpdatePassword -> updateState { copy(password = intent.password) }
+            is Intent.SwitchLoginMode -> updateState { copy(loginMode = intent.mode, identifier = "", error = null) }
             is Intent.TogglePasswordVisibility -> updateState { copy(isPasswordVisible = !isPasswordVisible) }
             is Intent.Login -> login()
             is Intent.ClearError -> updateState { copy(error = null) }
@@ -44,21 +40,14 @@ class LoginViewModel(
         }
     }
 
-    /**
-     * Checks if user is already logged in.
-     * If logged in, auto-navigates to dashboard.
-     */
     private suspend fun checkAuthStatus() {
         withContext(dispatcherProvider.io) {
             try {
                 val isLoggedIn = userRepository.isLoggedIn()
                 if (isLoggedIn) {
-                    // User is already logged in, navigate to dashboard
                     sendEffect(Effect.NavigateToDashboard)
                 }
             } catch (_: Exception) {
-                // If check fails, just show login screen
-                // User will need to login manually
             } finally {
                 updateState { copy(isCheckingAuth = false) }
             }
@@ -66,12 +55,15 @@ class LoginViewModel(
     }
 
     private suspend fun login() {
-        val email = currentState.email.trim()
+        val identifier = currentState.identifier.trim()
         val password = currentState.password
 
-        // Validate inputs
-        if (email.isEmpty()) {
-            updateState { copy(error = UiText.StringRes(Res.string.login_error_email_required)) }
+        if (identifier.isEmpty()) {
+            val errorRes = if (currentState.loginMode == LoginContract.LoginMode.EMAIL)
+                Res.string.login_error_email_required
+            else
+                Res.string.login_error_mobile_required
+            updateState { copy(error = UiText.StringRes(errorRes)) }
             return
         }
         if (password.isEmpty()) {
@@ -84,21 +76,50 @@ class LoginViewModel(
         withContext(dispatcherProvider.io) {
             try {
                 val result = userRepository.login(
-                    identifier = email,
+                    identifier = identifier,
                     password = password
                 )
 
                 result.fold(
                     onSuccess = {
+                        // #region agent log
+                        postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"login_nav","location":"LoginVM:login:onSuccess","message":"login_success_navigating_to_dashboard","data":{"identifier":"${identifier.take(20)}"},"timestamp":0}""")
+                        // #endregion
                         updateState { copy(isLoading = false) }
                         sendEffect(Effect.NavigateToDashboard)
                     },
                     onFailure = { throwable ->
-                        updateState {
-                            copy(
-                                isLoading = false,
-                                error = classifyError(throwable)
-                            )
+                        val errorMsg = throwable.message ?: ""
+                        // #region agent log
+                        postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"login_nav","location":"LoginVM:login:onFailure","message":"login_failed","data":{"error":"${errorMsg.take(150).replace("\"","'")}","loginMode":"${currentState.loginMode}","identifier":"${identifier.take(20)}"},"timestamp":0}""")
+                        // #endregion
+
+                        val emailNotVerified = errorMsg.contains("email", ignoreCase = true)
+                            && errorMsg.contains("not verified", ignoreCase = true)
+                        val mobileNotVerified = errorMsg.contains("mobile", ignoreCase = true)
+                            && errorMsg.contains("not verified", ignoreCase = true)
+
+                        if (emailNotVerified || mobileNotVerified) {
+                            updateState { copy(isLoading = false) }
+                            val isEmailIdentifier = currentState.loginMode == LoginContract.LoginMode.EMAIL
+                            val email = if (isEmailIdentifier) identifier else ""
+                            val mobile = if (!isEmailIdentifier) identifier else ""
+                            // #region agent log
+                            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"login_nav","location":"LoginVM:login:navToOtp","message":"navigating_to_otp","data":{"emailNotVerified":$emailNotVerified,"mobileNotVerified":$mobileNotVerified,"email":"${email.take(20)}","mobile":"${mobile.take(20)}"},"timestamp":0}""")
+                            // #endregion
+                            sendEffect(Effect.NavigateToOtpVerification(
+                                email = email,
+                                mobile = mobile,
+                                needsEmailVerification = emailNotVerified,
+                                needsMobileVerification = mobileNotVerified
+                            ))
+                        } else {
+                            updateState {
+                                copy(
+                                    isLoading = false,
+                                    error = classifyError(throwable)
+                                )
+                            }
                         }
                     }
                 )
@@ -113,28 +134,19 @@ class LoginViewModel(
         }
     }
 
-    /**
-     * Maps a [Throwable] to a [UiText] using [ErrorClassifier].
-     */
     private fun classifyError(throwable: Throwable): UiText {
+        val msg = throwable.message
+        if (!msg.isNullOrBlank()) {
+            return UiText.Raw(msg)
+        }
+
         val errorType = ErrorClassifier.classifyFromException(throwable)
         return when (errorType) {
-            ErrorType.AUTHENTICATION -> UiText.StringRes(Res.string.login_error_invalid_credentials)
             ErrorType.NETWORK_CONNECTION -> UiText.StringRes(Res.string.error_network)
             ErrorType.NETWORK_TIMEOUT -> UiText.StringRes(Res.string.error_timeout)
             ErrorType.SERVER_ERROR -> UiText.StringRes(Res.string.error_server)
-            ErrorType.AUTHORIZATION -> UiText.StringRes(Res.string.error_forbidden)
-            ErrorType.NOT_FOUND -> UiText.StringRes(Res.string.error_not_found)
             ErrorType.RATE_LIMITED -> UiText.StringRes(Res.string.error_rate_limited)
-            ErrorType.VALIDATION -> UiText.StringRes(Res.string.login_error_invalid_credentials)
-            ErrorType.UNKNOWN -> {
-                val msg = throwable.message
-                if (!msg.isNullOrBlank()) {
-                    UiText.Raw(msg)
-                } else {
-                    UiText.StringRes(Res.string.error_generic)
-                }
-            }
+            else -> UiText.StringRes(Res.string.error_generic)
         }
     }
 }

@@ -9,9 +9,14 @@ import com.indusjs.fleet.data.model.user.ChangePasswordRequest
 import com.indusjs.fleet.data.model.user.ForgotPasswordRequest
 import com.indusjs.fleet.data.model.user.LoginRequest
 import com.indusjs.fleet.data.model.user.ResetPasswordRequest
+import com.indusjs.fleet.data.model.user.SendLoginOtpRequest
 import com.indusjs.fleet.data.model.user.SignUpRequest
 import com.indusjs.fleet.data.model.user.UpdateProfileRequest
+import com.indusjs.fleet.data.model.user.VerifyEmailOtpRequest
+import com.indusjs.fleet.data.model.user.VerifyLoginOtpRequest
+import com.indusjs.fleet.data.model.user.VerifyMobileRequest
 import com.indusjs.fleet.domain.entity.user.AuthResult
+import com.indusjs.fleet.domain.entity.user.SignUpResult
 import com.indusjs.fleet.domain.entity.user.User
 import com.indusjs.fleet.domain.entity.user.UserProfile
 import com.indusjs.fleet.domain.entity.user.UserRole
@@ -37,7 +42,7 @@ class UserRepositoryImpl(
         password: String,
         firstName: String,
         lastName: String
-    ): Result<AuthResult> = runCatching {
+    ): Result<SignUpResult> = runCatching {
         val response = remoteDataSource.signUp(
             SignUpRequest(
                 email = email,
@@ -48,13 +53,16 @@ class UserRepositoryImpl(
             )
         )
 
-        val authResult = response.data?.toDomain()
-            ?: throw ApiException(response.message ?: "Sign up failed")
+        if (!response.success) {
+            throw ApiException(response.message ?: "Sign up failed")
+        }
 
-        localDataSource.saveAuthToken(authResult.token)
-        localDataSource.saveUserRole(UserRole.toApiString(authResult.user.role))
-        localDataSource.saveUserId(authResult.user.id)
-        authResult
+        // v1 backend does NOT issue tokens at signup — verification is required first.
+        // Do NOT save any auth token or navigate to dashboard.
+        SignUpResult(
+            message = response.message ?: "Account registered successfully",
+            isResend = response.isResend
+        )
     }
 
     override suspend fun login(
@@ -89,10 +97,15 @@ class UserRepositoryImpl(
 
     override suspend fun resetPassword(
         identifier: String,
+        resetToken: String,
         newPassword: String
     ): Result<Unit> = runCatching {
         val response = remoteDataSource.resetPassword(
-            ResetPasswordRequest(identifier = identifier, newPassword = newPassword)
+            ResetPasswordRequest(
+                identifier = identifier,
+                resetToken = resetToken,
+                newPassword = newPassword
+            )
         )
 
         if (!response.success) {
@@ -149,6 +162,42 @@ class UserRepositoryImpl(
         if (!response.success) {
             throw ApiException(response.message ?: "Failed to change password")
         }
+    }
+
+    override suspend fun verifyEmailOtp(email: String, otp: String): Result<Unit> = runCatching {
+        val response = remoteDataSource.verifyEmailOtp(VerifyEmailOtpRequest(email = email, otp = otp))
+        if (!response.success) {
+            throw ApiException(response.message ?: "Email verification failed")
+        }
+    }
+
+    override suspend fun verifyMobile(token: String): Result<String?> = runCatching {
+        val response = remoteDataSource.verifyMobile(VerifyMobileRequest(token = token))
+        if (!response.success) {
+            throw ApiException(response.message ?: "Mobile verification failed")
+        }
+        val accessToken = response.data?.token
+        if (!accessToken.isNullOrBlank()) {
+            localDataSource.saveAuthToken(accessToken)
+        }
+        accessToken
+    }
+
+    override suspend fun sendLoginOtp(mobile: String): Result<Unit> = runCatching {
+        val response = remoteDataSource.sendLoginOtp(SendLoginOtpRequest(mobile = mobile))
+        if (!response.success) {
+            throw ApiException(response.message ?: "Failed to send OTP")
+        }
+    }
+
+    override suspend fun verifyLoginOtp(mobile: String, otp: String): Result<AuthResult> = runCatching {
+        val response = remoteDataSource.verifyLoginOtp(VerifyLoginOtpRequest(mobile = mobile, otp = otp))
+        val authResult = response.data?.toDomain()
+            ?: throw ApiException(response.message ?: "OTP verification failed")
+        localDataSource.saveAuthToken(authResult.token)
+        localDataSource.saveUserRole(UserRole.toApiString(authResult.user.role))
+        localDataSource.saveUserId(authResult.user.id)
+        authResult
     }
 
     override suspend fun getAuthToken(): String? = localDataSource.getAuthToken()

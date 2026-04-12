@@ -29,6 +29,7 @@ import com.ijs.trip.presentation.detail.TripDetailViewModel
 import com.ijs.user.presentation.changepassword.ChangePasswordViewModel
 import com.ijs.user.presentation.forgotpassword.ForgotPasswordViewModel
 import com.ijs.user.presentation.profile.ProfileViewModel
+import com.ijs.user.presentation.otp.OtpVerificationViewModel
 import com.ijs.user.presentation.signup.SignUpViewModel
 import com.ijs.vehicle.presentation.AddVehicleViewModel
 import com.ijs.vehicle.presentation.VehiclesViewModel
@@ -53,6 +54,7 @@ interface ViewModelProvider {
     fun loginViewModel(): LoginViewModel
     fun signUpViewModel(): SignUpViewModel
     fun forgotPasswordViewModel(): ForgotPasswordViewModel
+    fun otpVerificationViewModel(): OtpVerificationViewModel
 
     // User ViewModels
     fun profileViewModel(): ProfileViewModel

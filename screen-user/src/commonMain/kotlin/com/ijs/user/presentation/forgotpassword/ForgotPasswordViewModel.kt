@@ -21,6 +21,7 @@ class ForgotPasswordViewModel(
         when (intent) {
             is ForgotPasswordContract.Intent.UpdateIdentifier -> updateState { copy(identifier = intent.identifier) }
             is ForgotPasswordContract.Intent.SubmitForgotPassword -> submitForgotPassword()
+            is ForgotPasswordContract.Intent.UpdateResetToken -> updateState { copy(resetToken = intent.token) }
             is ForgotPasswordContract.Intent.UpdateNewPassword -> updateState { copy(newPassword = intent.password) }
             is ForgotPasswordContract.Intent.UpdateConfirmPassword -> updateState { copy(confirmPassword = intent.password) }
             is ForgotPasswordContract.Intent.TogglePasswordVisibility -> updateState { copy(isPasswordVisible = !isPasswordVisible) }
@@ -80,10 +81,16 @@ class ForgotPasswordViewModel(
 
     private suspend fun resetPassword() {
         val identifier = currentState.identifier.trim()
+        val resetToken = currentState.resetToken.trim()
         val newPassword = currentState.newPassword
         val confirmPassword = currentState.confirmPassword
 
         // Validation
+        if (resetToken.isEmpty()) {
+            updateState { copy(error = UiText.StringRes(Res.string.error_reset_token_required)) }
+            return
+        }
+
         if (newPassword.isEmpty()) {
             updateState { copy(error = UiText.StringRes(Res.string.error_new_password_required)) }
             return
@@ -110,6 +117,7 @@ class ForgotPasswordViewModel(
             try {
                 val result = userRepository.resetPassword(
                     identifier = identifier,
+                    resetToken = resetToken,
                     newPassword = newPassword
                 )
 

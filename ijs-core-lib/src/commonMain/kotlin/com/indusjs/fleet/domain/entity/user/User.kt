@@ -125,3 +125,12 @@ data class AuthResult(
     val token: String
 )
 
+/**
+ * SignUp result — v1 backend does NOT issue tokens at signup.
+ * Email/mobile verification is required before login is possible.
+ */
+data class SignUpResult(
+    val message: String,
+    val isResend: Boolean
+)
+

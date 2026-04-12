@@ -119,10 +119,14 @@ class SignUpViewModel(
                 )
 
                 result.fold(
-                    onSuccess = {
+                    onSuccess = { signUpResult ->
                         updateState { copy(isLoading = false) }
-                        sendEffect(SignUpContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_account_created)))
-                        sendEffect(SignUpContract.Effect.NavigateToDashboard)
+                        sendEffect(SignUpContract.Effect.NavigateToOtpVerification(
+                            email = email,
+                            mobile = mobile,
+                            message = signUpResult.message,
+                            isResend = signUpResult.isResend
+                        ))
                     },
                     onFailure = { error ->
                         updateState {

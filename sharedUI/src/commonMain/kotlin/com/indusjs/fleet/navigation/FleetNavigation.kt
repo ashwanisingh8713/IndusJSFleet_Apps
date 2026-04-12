@@ -64,7 +64,13 @@ fun fleetEntryProvider(
                     backStack.navigateAndClear(FleetRoute.Dashboard)
                 },
                 onNavigateToSignUp = { backStack.add(FleetRoute.SignUp) },
-                onNavigateToForgotPassword = { backStack.add(FleetRoute.ForgotPassword) }
+                onNavigateToForgotPassword = { backStack.add(FleetRoute.ForgotPassword) },
+                onNavigateToOtpVerification = { email, mobile, needsEmail, needsMobile ->
+                    backStack.add(FleetRoute.OtpVerification(
+                        email = email, mobile = mobile,
+                        needsEmailVerification = needsEmail, needsMobileVerification = needsMobile
+                    ))
+                }
             )
         }
 
@@ -72,10 +78,40 @@ fun fleetEntryProvider(
             val viewModel = rememberViewModel { signUpViewModel() }
             UserFeatureFacade.SignUpEntry(
                 viewModel = viewModel,
-                onSignUpSuccess = {
-                    backStack.navigateAndClear(FleetRoute.Dashboard)
+                onNavigateToOtpVerification = { email, mobile, message, isResend ->
+                    backStack.add(FleetRoute.OtpVerification(
+                        email = email, mobile = mobile,
+                        needsEmailVerification = true, needsMobileVerification = true
+                    ))
                 },
                 onNavigateToLogin = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.SignUpSuccess -> NavEntry(route) {
+            UserFeatureFacade.SignUpSuccessEntry(
+                message = route.message,
+                isResend = route.isResend,
+                onNavigateToLogin = {
+                    backStack.navigateAndClear(FleetRoute.Login)
+                }
+            )
+        }
+
+        is FleetRoute.OtpVerification -> NavEntry(route) {
+            val viewModel = rememberViewModel { otpVerificationViewModel() }
+            UserFeatureFacade.OtpVerificationEntry(
+                viewModel = viewModel,
+                email = route.email,
+                mobile = route.mobile,
+                needsEmailVerification = route.needsEmailVerification,
+                needsMobileVerification = route.needsMobileVerification,
+                onVerificationComplete = {
+                    backStack.navigateAndClear(FleetRoute.Login)
+                },
+                onNavigateToLogin = {
+                    backStack.navigateAndClear(FleetRoute.Login)
+                }
             )
         }
 

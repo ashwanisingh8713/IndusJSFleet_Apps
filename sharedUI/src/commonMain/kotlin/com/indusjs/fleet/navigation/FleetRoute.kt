@@ -22,6 +22,13 @@ sealed interface FleetRoute : NavKey {
 
     @Serializable data object Login : FleetRoute
     @Serializable data object SignUp : FleetRoute
+    @Serializable data class SignUpSuccess(val message: String, val isResend: Boolean) : FleetRoute
+    @Serializable data class OtpVerification(
+        val email: String = "",
+        val mobile: String = "",
+        val needsEmailVerification: Boolean = false,
+        val needsMobileVerification: Boolean = false
+    ) : FleetRoute
     @Serializable data object ForgotPassword : FleetRoute
 
     // ==================== Main Routes ====================

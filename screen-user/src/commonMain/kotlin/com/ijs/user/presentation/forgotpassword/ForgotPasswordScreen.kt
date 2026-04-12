@@ -94,12 +94,14 @@ fun ForgotPasswordScreen(
         ) {
             if (state.isResetMode) {
                 ResetPasswordContent(
+                    resetToken = state.resetToken,
                     newPassword = state.newPassword,
                     confirmPassword = state.confirmPassword,
                     isPasswordVisible = state.isPasswordVisible,
                     isConfirmPasswordVisible = state.isConfirmPasswordVisible,
                     isLoading = state.isLoading,
                     error = state.error,
+                    onResetTokenChange = { viewModel.sendIntent(ForgotPasswordContract.Intent.UpdateResetToken(it)) },
                     onNewPasswordChange = { viewModel.sendIntent(ForgotPasswordContract.Intent.UpdateNewPassword(it)) },
                     onConfirmPasswordChange = { viewModel.sendIntent(ForgotPasswordContract.Intent.UpdateConfirmPassword(it)) },
                     onTogglePasswordVisibility = { viewModel.sendIntent(ForgotPasswordContract.Intent.TogglePasswordVisibility) },
@@ -223,12 +225,14 @@ private fun ForgotPasswordContent(
 
 @Composable
 private fun ResetPasswordContent(
+    resetToken: String,
     newPassword: String,
     confirmPassword: String,
     isPasswordVisible: Boolean,
     isConfirmPasswordVisible: Boolean,
     isLoading: Boolean,
     error: com.indusjs.uicomponents.components.UiText?,
+    onResetTokenChange: (String) -> Unit,
     onNewPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
@@ -259,7 +263,36 @@ private fun ResetPasswordContent(
         textAlign = TextAlign.Center
     )
 
-    Spacer(modifier = Modifier.height(32.dp))
+    Spacer(modifier = Modifier.height(24.dp))
+
+    // Reset Token Field
+    OutlinedTextField(
+        value = resetToken,
+        onValueChange = onResetTokenChange,
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(Res.string.reset_token_label)) },
+        placeholder = { Text(stringResource(Res.string.reset_token_placeholder)) },
+        leadingIcon = { Text("🔑") },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Next
+        ),
+        keyboardActions = KeyboardActions(
+            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+        ),
+        singleLine = true,
+        enabled = !isLoading,
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
+        supportingText = {
+            Text(
+                text = stringResource(Res.string.reset_token_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
+
+    Spacer(modifier = Modifier.height(12.dp))
 
     // New Password Field
     OutlinedTextField(

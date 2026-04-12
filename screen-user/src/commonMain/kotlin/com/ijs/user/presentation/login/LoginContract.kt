@@ -10,35 +10,36 @@ import com.indusjs.uicomponents.components.UiText
  */
 object LoginContract {
 
-    /**
-     * UI State for the Login screen.
-     */
+    enum class LoginMode { EMAIL, MOBILE }
+
     data class State(
-        val email: String = "",
+        val loginMode: LoginMode = LoginMode.EMAIL,
+        val identifier: String = "",
         val password: String = "",
         val isLoading: Boolean = false,
-        val isCheckingAuth: Boolean = true, // Initially checking auth status
+        val isCheckingAuth: Boolean = true,
         val error: UiText? = null,
         val isPasswordVisible: Boolean = false
     ) : UiState
 
-    /**
-     * User intents for the Login screen.
-     */
     sealed interface Intent : UiIntent {
-        data class UpdateEmail(val email: String) : Intent
+        data class UpdateIdentifier(val value: String) : Intent
         data class UpdatePassword(val password: String) : Intent
+        data class SwitchLoginMode(val mode: LoginMode) : Intent
         data object TogglePasswordVisibility : Intent
         data object Login : Intent
         data object ClearError : Intent
-        data object CheckAuthStatus : Intent // Check if already logged in
+        data object CheckAuthStatus : Intent
     }
 
-    /**
-     * Side effects for the Login screen.
-     */
     sealed interface Effect : UiEffect {
         data object NavigateToDashboard : Effect
         data class ShowError(val message: UiText) : Effect
+        data class NavigateToOtpVerification(
+            val email: String,
+            val mobile: String,
+            val needsEmailVerification: Boolean,
+            val needsMobileVerification: Boolean
+        ) : Effect
     }
 }

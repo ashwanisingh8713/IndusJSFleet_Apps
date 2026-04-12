@@ -9,7 +9,10 @@ import com.ijs.user.presentation.login.LoginScreen
 import com.ijs.user.presentation.login.LoginViewModel
 import com.ijs.user.presentation.profile.ProfileScreen
 import com.ijs.user.presentation.profile.ProfileViewModel
+import com.ijs.user.presentation.otp.OtpVerificationScreen
+import com.ijs.user.presentation.otp.OtpVerificationViewModel
 import com.ijs.user.presentation.signup.SignUpScreen
+import com.ijs.user.presentation.signup.SignUpSuccessScreen
 import com.ijs.user.presentation.signup.SignUpViewModel
 
 /**
@@ -35,13 +38,15 @@ object UserFeatureFacade {
         viewModel: LoginViewModel,
         onLoginSuccess: () -> Unit,
         onNavigateToSignUp: () -> Unit,
-        onNavigateToForgotPassword: () -> Unit
+        onNavigateToForgotPassword: () -> Unit,
+        onNavigateToOtpVerification: (email: String, mobile: String, needsEmail: Boolean, needsMobile: Boolean) -> Unit = { _, _, _, _ -> }
     ) {
         LoginScreen(
             viewModel = viewModel,
             onLoginSuccess = onLoginSuccess,
             onNavigateToSignUp = onNavigateToSignUp,
-            onNavigateToForgotPassword = onNavigateToForgotPassword
+            onNavigateToForgotPassword = onNavigateToForgotPassword,
+            onNavigateToOtpVerification = onNavigateToOtpVerification
         )
     }
 
@@ -51,12 +56,51 @@ object UserFeatureFacade {
     @Composable
     fun SignUpEntry(
         viewModel: SignUpViewModel,
-        onSignUpSuccess: () -> Unit,
+        onNavigateToOtpVerification: (email: String, mobile: String, message: String, isResend: Boolean) -> Unit,
         onNavigateToLogin: () -> Unit
     ) {
         SignUpScreen(
             viewModel = viewModel,
-            onSignUpSuccess = onSignUpSuccess,
+            onNavigateToOtpVerification = onNavigateToOtpVerification,
+            onNavigateToLogin = onNavigateToLogin
+        )
+    }
+
+    /**
+     * Entry point for the Sign Up Success screen.
+     */
+    @Composable
+    fun SignUpSuccessEntry(
+        message: String,
+        isResend: Boolean,
+        onNavigateToLogin: () -> Unit
+    ) {
+        SignUpSuccessScreen(
+            message = message,
+            isResend = isResend,
+            onNavigateToLogin = onNavigateToLogin
+        )
+    }
+
+    /**
+     * Entry point for the OTP Verification screen.
+     */
+    @Composable
+    fun OtpVerificationEntry(
+        viewModel: OtpVerificationViewModel,
+        email: String,
+        mobile: String,
+        needsEmailVerification: Boolean = email.isNotBlank(),
+        needsMobileVerification: Boolean = mobile.isNotBlank(),
+        onVerificationComplete: () -> Unit,
+        onNavigateToLogin: () -> Unit
+    ) {
+        androidx.compose.runtime.LaunchedEffect(email, mobile, needsEmailVerification, needsMobileVerification) {
+            viewModel.initialize(email, mobile, needsEmailVerification, needsMobileVerification)
+        }
+        OtpVerificationScreen(
+            viewModel = viewModel,
+            onVerificationComplete = onVerificationComplete,
             onNavigateToLogin = onNavigateToLogin
         )
     }

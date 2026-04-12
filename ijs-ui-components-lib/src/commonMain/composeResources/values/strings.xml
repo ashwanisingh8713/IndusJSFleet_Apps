@@ -181,7 +181,10 @@
     <!-- ==================== Auth / Reset Password ==================== -->
     <string name="reset_password_title">Reset Password</string>
     <string name="reset_password_heading">Create New Password</string>
-    <string name="reset_password_description">Enter your new password below.</string>
+    <string name="reset_password_description">Enter the reset token from your email and set a new password.</string>
+    <string name="reset_token_label">Reset Token</string>
+    <string name="reset_token_placeholder">Enter the token from your email/SMS</string>
+    <string name="reset_token_hint">Check your email or SMS for the reset token</string>
     <string name="reset_password_new_label">New Password</string>
     <string name="reset_password_new_placeholder">Enter new password</string>
     <string name="reset_password_confirm_label">Confirm Password</string>
@@ -189,6 +192,7 @@
     <string name="reset_password_min_chars">Minimum 6 characters</string>
     <string name="reset_password_mismatch">Passwords do not match</string>
     <string name="reset_password_button">Reset Password</string>
+    <string name="error_reset_token_required">Please enter the reset token from your email or SMS</string>
 
     <!-- ==================== Auth / Change Password ==================== -->
     <string name="change_password_title">Change Password</string>
@@ -690,6 +694,48 @@
 
     <!-- ==================== Success Messages ==================== -->
     <string name="success_account_created">Account created successfully!</string>
+
+    <!-- ==================== Sign Up Success Screen ==================== -->
+    <string name="signup_success_title">Account Created!</string>
+    <string name="signup_success_resend_title">Verification Resent</string>
+    <string name="signup_success_description">Please check your email and mobile for verification. Once verified, you can log in to start managing your fleet.</string>
+    <string name="signup_success_resend_description">Your account already exists but was not yet verified. We have resent the verification email and SMS. Please verify to continue.</string>
+    <string name="signup_success_next_steps">Next Steps:</string>
+    <string name="signup_success_step_1">1. Check your email inbox for a verification link</string>
+    <string name="signup_success_step_2">2. Check your mobile for the SMS verification code</string>
+    <string name="signup_success_step_3">3. After verification, come back and sign in</string>
+    <string name="signup_success_go_to_login">Go to Sign In</string>
+
+    <!-- ==================== Login Mode Toggle ==================== -->
+    <string name="login_mode_email">Email</string>
+    <string name="login_mode_mobile">Mobile</string>
+    <string name="login_mobile_label">Mobile Number</string>
+    <string name="login_mobile_placeholder">Enter your 10-digit mobile number</string>
+    <string name="login_error_mobile_required">Mobile number is required</string>
+
+    <!-- ==================== OTP Verification Screen ==================== -->
+    <string name="otp_title">Verify Your Account</string>
+    <string name="otp_subtitle">We sent verification codes to your email and mobile. Enter them below to activate your account.</string>
+    <string name="otp_subtitle_email_only">We sent a verification code to your email. Enter it below to verify your email address.</string>
+    <string name="otp_subtitle_mobile_only">We sent a verification code to your mobile. Enter it below to verify your mobile number.</string>
+    <string name="otp_email_section_title">Email Verification</string>
+    <string name="otp_mobile_section_title">Mobile Verification</string>
+    <string name="otp_enter_code">Enter OTP</string>
+    <string name="otp_placeholder">6-digit code</string>
+    <string name="otp_placeholder_mobile">4-digit code</string>
+    <string name="otp_verify_email">Verify Email</string>
+    <string name="otp_verify_mobile">Verify Mobile</string>
+    <string name="otp_resend_email">Resend</string>
+    <string name="otp_resend_mobile">Resend</string>
+    <string name="otp_error_6_digits">Please enter a valid 6-digit OTP</string>
+    <string name="otp_error_4_digits">Please enter a valid 4-digit OTP</string>
+    <string name="otp_email_verified">Email verified successfully!</string>
+    <string name="otp_mobile_verified">Mobile verified successfully!</string>
+    <string name="otp_email_verify_failed">Email verification failed</string>
+    <string name="otp_mobile_verify_failed">Mobile verification failed</string>
+    <string name="otp_resend_email_sent">Verification email resent</string>
+    <string name="otp_resend_mobile_sent">Verification SMS resent</string>
+    <string name="otp_skip_to_login">Skip to Sign In</string>
     <string name="success_profile_updated">Profile updated successfully</string>
     <string name="success_password_changed">Password changed successfully</string>
     <string name="success_password_reset">Password reset successfully!</string>

@@ -49,7 +49,7 @@ object SignUpContract {
      */
     sealed interface Effect : UiEffect {
         data class ShowSnackbar(val message: UiText) : Effect
-        data object NavigateToDashboard : Effect
+        data class NavigateToOtpVerification(val email: String, val mobile: String, val message: String, val isResend: Boolean) : Effect
         data object NavigateToLogin : Effect
     }
 }

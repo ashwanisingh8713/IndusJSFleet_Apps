@@ -20,6 +20,7 @@ object ForgotPasswordContract {
         val isSuccess: Boolean = false,
         // Reset Password fields
         val isResetMode: Boolean = false,
+        val resetToken: String = "",
         val newPassword: String = "",
         val confirmPassword: String = "",
         val isPasswordVisible: Boolean = false,
@@ -32,6 +33,7 @@ object ForgotPasswordContract {
     sealed interface Intent : UiIntent {
         data class UpdateIdentifier(val identifier: String) : Intent
         data object SubmitForgotPassword : Intent
+        data class UpdateResetToken(val token: String) : Intent
         data class UpdateNewPassword(val password: String) : Intent
         data class UpdateConfirmPassword(val password: String) : Intent
         data object TogglePasswordVisibility : Intent

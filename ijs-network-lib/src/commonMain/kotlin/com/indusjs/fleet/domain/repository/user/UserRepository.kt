@@ -1,6 +1,7 @@
 package com.indusjs.fleet.domain.repository.user
 
 import com.indusjs.fleet.domain.entity.user.AuthResult
+import com.indusjs.fleet.domain.entity.user.SignUpResult
 import com.indusjs.fleet.domain.entity.user.User
 import com.indusjs.fleet.domain.entity.user.UserProfile
 import com.indusjs.fleet.domain.repository.Repository
@@ -13,6 +14,7 @@ interface UserRepository : Repository {
 
     /**
      * Sign up a new owner account.
+     * Returns a SignUpResult — no token is issued; verification required before login.
      */
     suspend fun signUp(
         email: String,
@@ -20,7 +22,7 @@ interface UserRepository : Repository {
         password: String,
         firstName: String,
         lastName: String
-    ): Result<AuthResult>
+    ): Result<SignUpResult>
 
     /**
      * Login with email or mobile and password.
@@ -36,10 +38,14 @@ interface UserRepository : Repository {
     suspend fun forgotPassword(identifier: String): Result<Unit>
 
     /**
-     * Reset password with new password.
+     * Reset password using the reset token from the forgot-password email and new password.
+     * @param identifier email or mobile used to request the reset
+     * @param resetToken one-time token delivered via email/SMS
+     * @param newPassword the new password to set
      */
     suspend fun resetPassword(
         identifier: String,
+        resetToken: String,
         newPassword: String
     ): Result<Unit>
 
@@ -66,6 +72,27 @@ interface UserRepository : Repository {
         newPassword: String,
         confirmPassword: String
     ): Result<Unit>
+
+    /**
+     * Verify email using OTP sent during signup.
+     */
+    suspend fun verifyEmailOtp(email: String, otp: String): Result<Unit>
+
+    /**
+     * Verify mobile using the OTP/token sent during signup.
+     * Returns an access token on success (user is now fully verified).
+     */
+    suspend fun verifyMobile(token: String): Result<String?>
+
+    /**
+     * Send a login OTP to the given mobile number.
+     */
+    suspend fun sendLoginOtp(mobile: String): Result<Unit>
+
+    /**
+     * Verify login OTP and get auth tokens.
+     */
+    suspend fun verifyLoginOtp(mobile: String, otp: String): Result<AuthResult>
 
     /**
      * Get the current authentication token.

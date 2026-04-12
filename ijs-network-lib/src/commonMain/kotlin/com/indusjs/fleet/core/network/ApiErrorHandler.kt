@@ -1,5 +1,6 @@
 package com.indusjs.fleet.core.network
 
+import com.indusjs.fleet.core.debug.postDebugLog9fbb5d
 import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -82,10 +83,27 @@ object ApiErrorHandler {
             val jsonElement = json.parseToJsonElement(body)
             val jsonObject = jsonElement as? JsonObject ?: return null
 
+            // #region agent log — Hypothesis A: v1 error format uses 'errorMessage' not 'message'
+            val keys = jsonObject.keys.take(8).joinToString(",")
+            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"A","location":"ApiErrorHandler:tryExtractJsonMessage","message":"error_body_keys","data":{"keys":"$keys","body_preview":"${body.take(120).replace("\"","'")}"},"timestamp":0}""")
+            // #endregion
+
             // Try to get message field first (most common)
             val messageField = jsonObject["message"]?.jsonPrimitive?.contentOrNull
             if (!messageField.isNullOrBlank() && messageField != "null") {
+                // #region agent log
+                postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"A","location":"ApiErrorHandler:tryExtractJsonMessage","message":"found_message_field","data":{"value":"${messageField.take(80)}"},"timestamp":0}""")
+                // #endregion
                 return messageField
+            }
+
+            // Try new v1 'errorMessage' field
+            val errorMessageField = jsonObject["errorMessage"]?.jsonPrimitive?.contentOrNull
+            if (!errorMessageField.isNullOrBlank() && errorMessageField != "null") {
+                // #region agent log
+                postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"A","location":"ApiErrorHandler:tryExtractJsonMessage","message":"found_errorMessage_field","data":{"value":"${errorMessageField.take(80)}"},"timestamp":0}""")
+                // #endregion
+                return errorMessageField
             }
 
             // Try error field (may contain DB constraint errors)
@@ -100,6 +118,9 @@ object ApiErrorHandler {
                 return detailField
             }
 
+            // #region agent log
+            postDebugLog9fbb5d("""{"sessionId":"9fbb5d","hypothesisId":"A","location":"ApiErrorHandler:tryExtractJsonMessage","message":"no_known_field_found_fallback_to_http_status","data":{"keys":"$keys"},"timestamp":0}""")
+            // #endregion
             null
         } catch (e: Exception) {
             null

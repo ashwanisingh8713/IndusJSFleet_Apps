@@ -2,6 +2,7 @@ package com.ijs.user.presentation.login
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -17,6 +18,7 @@ import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.isAppInDarkTheme
 import com.indusjs.uicomponents.theme.rememberThemeToggle
@@ -25,27 +27,20 @@ import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-/**
- * Login Screen composable.
- * Uses reusable UI components from core/ui for consistent styling.
- *
- * Automatically checks if user is already logged in on startup.
- * If logged in, navigates to dashboard without showing login form.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {},
-    onNavigateToForgotPassword: () -> Unit = {}
+    onNavigateToForgotPassword: () -> Unit = {},
+    onNavigateToOtpVerification: (email: String, mobile: String, needsEmail: Boolean, needsMobile: Boolean) -> Unit = { _, _, _, _ -> }
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
 
     var pendingSnackbar by remember { mutableStateOf<com.indusjs.uicomponents.components.UiText?>(null) }
-
     pendingSnackbar?.let { uiText ->
         val message = uiText.resolve()
         LaunchedEffect(message) {
@@ -58,9 +53,10 @@ fun LoginScreen(
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is LoginContract.Effect.NavigateToDashboard -> onLoginSuccess()
-                is LoginContract.Effect.ShowError -> {
-                    pendingSnackbar = effect.message
-                }
+                is LoginContract.Effect.ShowError -> pendingSnackbar = effect.message
+                is LoginContract.Effect.NavigateToOtpVerification -> onNavigateToOtpVerification(
+                    effect.email, effect.mobile, effect.needsEmailVerification, effect.needsMobileVerification
+                )
             }
         }
     }
@@ -73,7 +69,6 @@ fun LoginScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Theme toggle button in top-right corner
             val isDarkTheme = isAppInDarkTheme()
             val toggleTheme = rememberThemeToggle()
             IconButton(
@@ -92,20 +87,18 @@ fun LoginScreen(
                 )
             }
 
-            // Main content centered
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                // Show splash/loading while checking auth status
                 if (state.isCheckingAuth) {
                     SplashContent()
                 } else {
-                    // Show login form
                     LoginFormContent(
                         state = state,
-                        onEmailChange = { viewModel.sendIntent(LoginContract.Intent.UpdateEmail(it)) },
+                        onIdentifierChange = { viewModel.sendIntent(LoginContract.Intent.UpdateIdentifier(it)) },
                         onPasswordChange = { viewModel.sendIntent(LoginContract.Intent.UpdatePassword(it)) },
+                        onSwitchMode = { viewModel.sendIntent(LoginContract.Intent.SwitchLoginMode(it)) },
                         onLogin = { viewModel.sendIntent(LoginContract.Intent.Login) },
                         onForgotPassword = onNavigateToForgotPassword,
                         onSignUp = onNavigateToSignUp,
@@ -117,9 +110,6 @@ fun LoginScreen(
     }
 }
 
-/**
- * Splash content shown while checking authentication status.
- */
 @Composable
 private fun SplashContent() {
     Column(
@@ -132,24 +122,18 @@ private fun SplashContent() {
             modifier = Modifier.size(FleetTokens.IconSize.XXL),
             tint = MaterialTheme.colorScheme.primary
         )
-
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
-
         Text(
             text = stringResource(Res.string.login_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
-
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
-
         CircularProgressIndicator(
             modifier = Modifier.size(FleetTokens.IconSize.L),
             strokeWidth = FleetTokens.Height.ProgressStroke
         )
-
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
-
         Text(
             text = stringResource(Res.string.loading),
             style = MaterialTheme.typography.bodyMedium,
@@ -158,14 +142,12 @@ private fun SplashContent() {
     }
 }
 
-/**
- * Login form content.
- */
 @Composable
 private fun LoginFormContent(
     state: LoginContract.State,
-    onEmailChange: (String) -> Unit,
+    onIdentifierChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
+    onSwitchMode: (LoginContract.LoginMode) -> Unit,
     onLogin: () -> Unit,
     onForgotPassword: () -> Unit,
     onSignUp: () -> Unit,
@@ -185,32 +167,64 @@ private fun LoginFormContent(
             modifier = Modifier.size(FleetTokens.IconSize.XXL),
             tint = MaterialTheme.colorScheme.primary
         )
-
         Text(
             text = stringResource(Res.string.login_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
-
         Text(
             text = stringResource(Res.string.login_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
-        FleetInputField(
-            value = state.email,
-            onValueChange = onEmailChange,
-            fieldType = FieldType.EMAIL,
-            label = stringResource(Res.string.label_email),
-            placeholder = stringResource(Res.string.placeholder_email),
-            enabled = !state.isLoading,
-            keyboardActions = KeyboardActions(
-                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+        // Email / Mobile toggle
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            SegmentedButton(
+                selected = state.loginMode == LoginContract.LoginMode.EMAIL,
+                onClick = { onSwitchMode(LoginContract.LoginMode.EMAIL) },
+                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+            ) {
+                Text(text = stringResource(Res.string.login_mode_email))
+            }
+            SegmentedButton(
+                selected = state.loginMode == LoginContract.LoginMode.MOBILE,
+                onClick = { onSwitchMode(LoginContract.LoginMode.MOBILE) },
+                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+            ) {
+                Text(text = stringResource(Res.string.login_mode_mobile))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+
+        if (state.loginMode == LoginContract.LoginMode.EMAIL) {
+            FleetInputField(
+                value = state.identifier,
+                onValueChange = onIdentifierChange,
+                fieldType = FieldType.EMAIL,
+                label = stringResource(Res.string.label_email),
+                placeholder = stringResource(Res.string.placeholder_email),
+                enabled = !state.isLoading,
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
-        )
+        } else {
+            FleetInputField(
+                value = state.identifier,
+                onValueChange = { onIdentifierChange(filterDigitsOnly(it, 10)) },
+                fieldType = FieldType.PHONE,
+                label = stringResource(Res.string.login_mobile_label),
+                placeholder = stringResource(Res.string.login_mobile_placeholder),
+                enabled = !state.isLoading,
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
+            )
+        }
 
         FleetInputField(
             value = state.password,
@@ -256,9 +270,7 @@ private fun LoginFormContent(
 
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(Res.string.login_no_account),
                 style = MaterialTheme.typography.bodyMedium,
@@ -278,4 +290,3 @@ private fun LoginFormContent(
         )
     }
 }
-

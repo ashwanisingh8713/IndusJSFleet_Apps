@@ -99,6 +99,7 @@ import com.ijs.trip.presentation.detail.TripDetailViewModel
 import com.ijs.user.presentation.changepassword.ChangePasswordViewModel
 import com.ijs.user.presentation.forgotpassword.ForgotPasswordViewModel
 import com.ijs.user.presentation.profile.ProfileViewModel
+import com.ijs.user.presentation.otp.OtpVerificationViewModel
 import com.ijs.user.presentation.signup.SignUpViewModel
 import com.ijs.vehicle.presentation.AddVehicleViewModel
 import com.ijs.vehicle.presentation.VehiclesViewModel
@@ -332,6 +333,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     override fun loginViewModel() = LoginViewModel(dispatcherProvider, userRepository)
     override fun signUpViewModel() = SignUpViewModel(dispatcherProvider, userRepository)
     override fun forgotPasswordViewModel() = ForgotPasswordViewModel(dispatcherProvider, userRepository)
+    override fun otpVerificationViewModel() = OtpVerificationViewModel(dispatcherProvider, userRepository)
 
     // User ViewModels
     override fun profileViewModel() = ProfileViewModel(dispatcherProvider, userRepository)

@@ -29,8 +29,18 @@ object ApiConfig {
         // ── Authentication ──────────────────────────────────────────────
         const val SIGNUP = "/auth/signup"
         const val LOGIN = "/auth/login"
+        const val LOGOUT = "/auth/logout"
         const val FORGOT_PASSWORD = "/auth/forgot-password"
         const val RESET_PASSWORD = "/auth/reset-password"
+
+        // ── Email / Mobile Verification (required after signup) ─────────
+        const val VERIFY_EMAIL = "/auth/verify-email"
+        const val VERIFY_EMAIL_OTP = "/auth/verify-email/otp"
+        const val VERIFY_MOBILE = "/auth/verify-mobile"
+
+        // ── OTP Passwordless Login ───────────────────────────────────────
+        const val LOGIN_OTP_SEND = "/auth/login/otp/send"
+        const val LOGIN_OTP_VERIFY = "/auth/login/otp/verify"
 
         // ── User Profile ────────────────────────────────────────────────
         const val PROFILE = "/profile"

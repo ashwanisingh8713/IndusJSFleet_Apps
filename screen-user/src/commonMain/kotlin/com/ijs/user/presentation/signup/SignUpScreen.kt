@@ -29,7 +29,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SignUpScreen(
     viewModel: SignUpViewModel,
-    onSignUpSuccess: () -> Unit = {},
+    onNavigateToOtpVerification: (email: String, mobile: String, message: String, isResend: Boolean) -> Unit = { _, _, _, _ -> },
     onNavigateToLogin: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -56,8 +56,8 @@ fun SignUpScreen(
                 is SignUpContract.Effect.ShowSnackbar -> {
                     pendingSnackbar = effect.message
                 }
-                is SignUpContract.Effect.NavigateToDashboard -> {
-                    onSignUpSuccess()
+                is SignUpContract.Effect.NavigateToOtpVerification -> {
+                    onNavigateToOtpVerification(effect.email, effect.mobile, effect.message, effect.isResend)
                 }
                 is SignUpContract.Effect.NavigateToLogin -> {
                     onNavigateToLogin()

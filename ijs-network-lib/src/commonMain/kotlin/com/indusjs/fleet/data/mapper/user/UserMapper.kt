@@ -31,7 +31,7 @@ object UserMapper {
 
     fun AuthResponseDto.toDomain(): AuthResult = AuthResult(
         user = user.toDomain(),
-        token = token
+        token = token ?: ""
     )
 
     fun OwnerStatsDto.toDomain(): OrganizationStats = OrganizationStats(

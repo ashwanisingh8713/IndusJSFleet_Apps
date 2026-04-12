@@ -33,6 +33,8 @@ data class ForgotPasswordRequest(
 @Serializable
 data class ResetPasswordRequest(
     val identifier: String,
+    @SerialName("reset_token")
+    val resetToken: String,
     @SerialName("new_password")
     val newPassword: String
 ) : Dto
@@ -60,20 +62,24 @@ data class ChangePasswordRequest(
 @JsonIgnoreUnknownKeys
 @Serializable
 data class UserDto(
-    val id: Int,
-    val email: String,
-    val mobile: String,
+    val id: Int = 0,
+    val email: String = "",
+    val mobile: String = "",
     @SerialName("first_name")
-    val firstName: String,
+    val firstName: String = "",
     @SerialName("last_name")
-    val lastName: String,
-    val role: String,
+    val lastName: String = "",
+    val role: String = "",
     @SerialName("owner_id")
     val ownerId: Int? = null,
+    @SerialName("created_by_id")
+    val createdById: Int? = null,
+    @SerialName("tenant_id")
+    val tenantId: String = "",
     @SerialName("is_active")
     val isActive: Boolean = true,
     @SerialName("created_at")
-    val createdAt: String,
+    val createdAt: String = "",
     @SerialName("updated_at")
     val updatedAt: String? = null
 ) : Dto
@@ -82,7 +88,8 @@ data class UserDto(
 @Serializable
 data class AuthResponseDto(
     val user: UserDto,
-    val token: String
+    // token is absent in the IsResend signup case (existing unverified account)
+    val token: String? = null
 ) : Dto
 
 @JsonIgnoreUnknownKeys
@@ -158,6 +165,17 @@ data class AuthApiResponse(
     val data: AuthResponseDto? = null
 )
 
+/**
+ * SignUp API response — token is NEVER present in v1 (IAM requires verification first).
+ * The data contains user info but no token.
+ */
+data class SignUpApiResponse(
+    val success: Boolean = false,
+    val message: String? = null,
+    val user: UserDto? = null,
+    val isResend: Boolean = false
+)
+
 @JsonIgnoreUnknownKeys
 @Serializable
 data class ProfileApiResponse(
@@ -179,5 +197,39 @@ data class UserApiResponse(
 data class SimpleApiResponse(
     val success: Boolean = false,
     val message: String? = null
+)
+
+// ── Verification & OTP DTOs ──────────────────────────────────────────────
+
+@Serializable
+data class VerifyEmailOtpRequest(
+    val email: String,
+    val otp: String
+) : Dto
+
+@Serializable
+data class VerifyMobileRequest(
+    val token: String
+) : Dto
+
+@Serializable
+data class SendLoginOtpRequest(
+    val mobile: String
+) : Dto
+
+@Serializable
+data class VerifyLoginOtpRequest(
+    val mobile: String,
+    val otp: String
+) : Dto
+
+@JsonIgnoreUnknownKeys
+@Serializable
+data class VerifyMobileResponseDto(
+    val token: String? = null,
+    @SerialName("refresh_token")
+    val refreshToken: String? = null,
+    @SerialName("expires_in")
+    val expiresIn: Int = 0
 )
 
