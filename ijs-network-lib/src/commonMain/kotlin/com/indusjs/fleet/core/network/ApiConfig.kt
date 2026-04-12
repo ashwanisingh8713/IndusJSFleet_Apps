@@ -7,17 +7,8 @@ package com.indusjs.fleet.core.network
  * across all data sources and modules.
  */
 object ApiConfig {
-    /**
-     * Base URL for the Fleet Management API **including the version prefix**.
-     *
-     * All [Endpoints] values are paths like `/auth/login` (no `/api/v1`); Ktor builds
-     * `BASE_URL + endpoint` → e.g. `…/api/v1/auth/login`.
-     *
-     * - **clean-architecture** Cloud Run service: routes are registered under `/api/v1` in Go
-     *   (`routes/routes.go`). Use `…/api/v1` here — a host-only URL breaks every call (404/wrong host path).
-     * - **Legacy Docker** deployment used `/api/v2` on that host; keep the version segment that matches
-     *   the deployed backend.
-     */
+
+    /** `IndusJSFleet_GoLang_Backend` branch `Google_Cloud_SQL` (Cloud Run). */
 //    const val BASE_URL = "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2"
 
     /** `IndusJSFleet_GoLang_Backend` branch `clean-architecture-code-refactoring` (Cloud Run). */
