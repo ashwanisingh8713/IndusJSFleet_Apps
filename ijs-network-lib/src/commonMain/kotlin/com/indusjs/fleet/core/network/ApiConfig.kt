@@ -176,6 +176,15 @@ object ApiConfig {
         // ── Health / Status (unauthenticated) ───────────────────────────
         const val HEALTH = "/health"
         const val STATUS = "/status"
+
+        // ── Subscription / Billing (IAM-proxied) ────────────────────────
+        const val SUBSCRIPTION_PLANS = "/plans"
+        const val ONBOARDING_STATUS = "/onboarding/status"
+        const val SELECT_PLAN = "/onboarding/plan"
+        const val PAYMENT_ORDERS = "/payments/orders"
+        const val PAYMENT_VERIFY = "/payments/verify"
+        const val PAYMENTS_LIST = "/payments"
+        fun paymentById(paymentId: String) = "/payments/$paymentId"
     }
 
     /**

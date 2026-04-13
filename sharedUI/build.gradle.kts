@@ -50,6 +50,7 @@ kotlin {
             implementation(project(":screen-map"))
             implementation(project(":screen-alerts"))
             implementation(project(":screen-dashboard"))
+            implementation(project(":screen-payment"))
             implementation(project(":ijs-error-lib"))
             implementation(project(":ijs-dispatcher-lib"))
             implementation(project(":ijs-datetime-picker"))

@@ -4,6 +4,9 @@ import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.customer.data.datasource.CustomerLocalDataSource
 import com.ijs.customer.data.datasource.CustomerRemoteDataSource
+import com.ijs.subscription.data.datasource.SubscriptionRemoteDataSourceImpl
+import com.ijs.subscription.data.repository.SubscriptionRepositoryImpl
+import com.ijs.subscription.domain.repository.SubscriptionRepository
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSourceImpl
 import com.ijs.driver.data.datasource.DriverRemoteDataSourceImpl
 import com.ijs.finance.data.datasource.VehicleFinanceRemoteDataSourceImpl
@@ -131,6 +134,15 @@ class FeatureRepositoryFactory(
             remoteDataSource = VehicleFinanceRemoteDataSourceImpl(httpClient, json, logger),
             userLocalDataSource = userLocalDataSource,
             dispatcherProvider = dispatcherProvider,
+            logger = logger
+        )
+    }
+
+    // ── Subscription / Billing (screen-payment) ──
+    val subscriptionRepository: SubscriptionRepository by lazy {
+        SubscriptionRepositoryImpl(
+            remoteDataSource = SubscriptionRemoteDataSourceImpl(httpClient, logger),
+            userLocalDataSource = userLocalDataSource,
             logger = logger
         )
     }

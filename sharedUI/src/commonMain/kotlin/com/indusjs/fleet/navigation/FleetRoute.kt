@@ -103,4 +103,25 @@ sealed interface FleetRoute : NavKey {
     @Serializable data class VehicleFinanceDetail(val vehicleId: String) : FleetRoute
     @Serializable data class EditPurchaseInfo(val vehicleId: String) : FleetRoute
     @Serializable data class EmiPaymentHistory(val vehicleId: String) : FleetRoute
+
+    // ==================== Subscription / Billing Routes ====================
+
+    @Serializable data class SubscriptionPlans(val isRenewal: Boolean = false) : FleetRoute
+    @Serializable data class SubscriptionCheckout(
+        val planId: String,
+        val planName: String,
+        val monthlyPrice: Long,
+        val annualPrice: Long,
+        val discountPercent: Double = 0.0,
+        val effectiveMonthlyPriceAnnual: Long = 0L,
+        val annualSavings: Long = 0L,
+        val currency: String = "INR",
+        val trialDays: Int = 0,
+        val billingInterval: String = "monthly"
+    ) : FleetRoute
+    @Serializable data class SubscriptionSuccess(
+        val planName: String,
+        val amount: Long,
+        val currency: String
+    ) : FleetRoute
 }

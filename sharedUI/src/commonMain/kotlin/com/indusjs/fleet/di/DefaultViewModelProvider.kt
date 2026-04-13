@@ -105,6 +105,14 @@ import com.ijs.vehicle.presentation.AddVehicleViewModel
 import com.ijs.vehicle.presentation.VehiclesViewModel
 import com.ijs.vehicle.presentation.costs.MaintenanceCostEntryViewModel
 import com.ijs.vehicle.presentation.detail.VehicleDetailViewModel
+import com.ijs.subscription.domain.repository.SubscriptionRepository
+import com.ijs.subscription.domain.usecase.CreatePaymentOrderUseCase
+import com.ijs.subscription.domain.usecase.GetOnboardingStatusUseCase
+import com.ijs.subscription.domain.usecase.GetPlansUseCase
+import com.ijs.subscription.domain.usecase.SelectPlanUseCase
+import com.ijs.subscription.domain.usecase.VerifyPaymentUseCase
+import com.ijs.subscription.presentation.plans.PlansViewModel
+import com.ijs.subscription.presentation.checkout.PaymentCheckoutViewModel
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
@@ -259,6 +267,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val statesRepository get() = networkDataGraph.statesRepository
     private val vehicleFinanceRepository: VehicleFinanceRepository get() = featureRepos.vehicleFinanceRepository
     private val reportsRepository: ReportsRepository get() = featureRepos.reportsRepository
+    private val subscriptionRepository: SubscriptionRepository get() = featureRepos.subscriptionRepository
 
     // ==================== Use Cases (created from graph-provided repositories) ====================
 
@@ -317,6 +326,13 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val getLocalCustomersUseCase by lazy { GetLocalCustomersUseCase(customerRepository) }
     private val createCustomerUseCase by lazy { CreateCustomerUseCase(customerRepository) }
     private val refreshCustomersUseCase by lazy { RefreshCustomersUseCase(customerRepository) }
+
+    // Subscription use cases
+    private val getOnboardingStatusUseCase by lazy { GetOnboardingStatusUseCase(subscriptionRepository) }
+    private val getPlansUseCase by lazy { GetPlansUseCase(subscriptionRepository) }
+    private val selectPlanUseCase by lazy { SelectPlanUseCase(subscriptionRepository) }
+    private val createPaymentOrderUseCase by lazy { CreatePaymentOrderUseCase(subscriptionRepository) }
+    private val verifyPaymentUseCase by lazy { VerifyPaymentUseCase(subscriptionRepository) }
 
     // App Initializer - handles one-time initialization tasks
     val appInitializer: AppInitializer by lazy {
@@ -511,4 +527,38 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
 
     // Vehicle Finance ViewModels
     override fun vehicleFinanceViewModel() = VehicleFinanceViewModel(vehicleRepository, vehicleFinanceRepository, dispatcherProvider, fleetLogger)
+
+    // Subscription / Billing ViewModels
+    override fun subscriptionPlansViewModel(isRenewal: Boolean) = PlansViewModel(
+        dispatcherProvider, getPlansUseCase, getOnboardingStatusUseCase, selectPlanUseCase, isRenewal
+    )
+
+    override fun subscriptionCheckoutViewModel() = PaymentCheckoutViewModel(
+        dispatcherProvider, createPaymentOrderUseCase, verifyPaymentUseCase
+    )
+
+    /**
+     * Checks whether the user needs to go through the subscription/payment gate
+     * before accessing the main Dashboard. Called from App.kt startup.
+     */
+    override suspend fun checkSubscriptionGate(): SubscriptionGateResult {
+        return try {
+            val result = getOnboardingStatusUseCase()
+            val status = result.getOrNull() ?: return SubscriptionGateResult.NoGate
+            when {
+                status.needsPlanSelection -> SubscriptionGateResult.RequiresPlanSelection
+                status.needsPayment -> SubscriptionGateResult.RequiresPayment
+                else -> SubscriptionGateResult.NoGate
+            }
+        } catch (e: Exception) {
+            fleetLogger.w(TAG, "Subscription gate check failed (non-blocking): ${e.message}")
+            SubscriptionGateResult.NoGate
+        }
+    }
+}
+
+enum class SubscriptionGateResult {
+    NoGate,
+    RequiresPlanSelection,
+    RequiresPayment
 }

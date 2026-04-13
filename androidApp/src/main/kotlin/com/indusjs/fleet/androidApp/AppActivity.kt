@@ -22,14 +22,38 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowInsetsControllerCompat
 import com.indusjs.fleet.App
 import com.indusjs.fleet.FilePickerRequest
+import com.ijs.subscription.presentation.platform.AndroidRazorpayBridge
+import com.ijs.subscription.presentation.platform.RazorpayResult
+import com.razorpay.PaymentData
+import com.razorpay.PaymentResultWithDataListener
 
-class AppActivity : ComponentActivity() {
+class AppActivity : ComponentActivity(), PaymentResultWithDataListener {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { 
-            AndroidApp()
+        setContent {
+            AndroidApp(activity = this)
         }
+    }
+
+    override fun onPaymentSuccess(razorpayPaymentId: String?, paymentData: PaymentData?) {
+        AndroidRazorpayBridge.emit(
+            RazorpayResult.Success(
+                orderId = paymentData?.orderId ?: "",
+                paymentId = razorpayPaymentId ?: "",
+                signature = paymentData?.signature ?: ""
+            )
+        )
+    }
+
+    override fun onPaymentError(errorCode: Int, errorDescription: String?, paymentData: PaymentData?) {
+        AndroidRazorpayBridge.emit(
+            RazorpayResult.Failed(
+                errorCode = errorCode,
+                description = errorDescription ?: "Payment failed"
+            )
+        )
     }
 }
 
@@ -51,7 +75,7 @@ class PickDocumentContract : ActivityResultContract<Array<String>, Uri?>() {
 }
 
 @Composable
-private fun AndroidApp() {
+private fun AndroidApp(activity: AppActivity) {
     val context = LocalContext.current
     var pendingRequest by remember { mutableStateOf<FilePickerRequest?>(null) }
 
@@ -108,6 +132,7 @@ private fun AndroidApp() {
 
     App(
         onThemeChanged = { ThemeChanged(it) },
+        razorpayLauncher = com.ijs.subscription.presentation.platform.createAndroidRazorpayLauncher(activity),
         onPickFile = { request ->
             pendingRequest = request
             // Launch file picker for documents (PDF, JPEG, PNG)

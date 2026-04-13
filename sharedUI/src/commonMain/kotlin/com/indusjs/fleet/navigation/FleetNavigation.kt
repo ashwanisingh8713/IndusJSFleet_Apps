@@ -1,12 +1,16 @@
 package com.indusjs.fleet.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import com.indusjs.fleet.FilePickerRequest
+import com.indusjs.fleet.di.LocalViewModelProvider
+import com.indusjs.fleet.di.SubscriptionGateResult
 import com.indusjs.fleet.di.rememberViewModel
 import com.indusjs.fleet.di.rememberSharedViewModel
 import com.indusjs.fleet.di.clearSharedViewModel
+import kotlinx.coroutines.launch
 import com.ijs.vehicle.domain.entity.DocumentType
 import com.ijs.alerts.presentation.AlertsFeatureFacade
 import com.ijs.dashboard.presentation.DashboardFeatureFacade
@@ -22,6 +26,10 @@ import com.ijs.customer.presentation.CustomerFeatureFacade
 import com.ijs.trip.payment.presentation.PaymentFeatureFacade
 import com.ijs.reports.presentation.ReportsFeatureFacade
 import com.ijs.finance.presentation.FinanceFeatureFacade
+import com.ijs.subscription.domain.entity.BillingInterval
+import com.ijs.subscription.domain.entity.FeatureLimit
+import com.ijs.subscription.domain.entity.Plan
+import com.ijs.subscription.presentation.SubscriptionFeatureFacade
 
 /**
  * Navigation 3 entry provider for the Fleet Management app.
@@ -58,10 +66,22 @@ fun fleetEntryProvider(
 
         is FleetRoute.Login -> NavEntry(route) {
             val viewModel = rememberViewModel { loginViewModel() }
+            val viewModelProvider = LocalViewModelProvider.current
+            val scope = rememberCoroutineScope()
             UserFeatureFacade.LoginEntry(
                 viewModel = viewModel,
                 onLoginSuccess = {
-                    backStack.navigateAndClear(FleetRoute.Dashboard)
+                    scope.launch {
+                        val gate = viewModelProvider.checkSubscriptionGate()
+                        when (gate) {
+                            SubscriptionGateResult.RequiresPlanSelection ->
+                                backStack.navigateAndClear(FleetRoute.SubscriptionPlans(isRenewal = false))
+                            SubscriptionGateResult.RequiresPayment ->
+                                backStack.navigateAndClear(FleetRoute.SubscriptionPlans(isRenewal = true))
+                            SubscriptionGateResult.NoGate ->
+                                backStack.navigateAndClear(FleetRoute.Dashboard)
+                        }
+                    }
                 },
                 onNavigateToSignUp = { backStack.add(FleetRoute.SignUp) },
                 onNavigateToForgotPassword = { backStack.add(FleetRoute.ForgotPassword) },
@@ -579,6 +599,74 @@ fun fleetEntryProvider(
                 viewModel = viewModel,
                 vehicleId = route.vehicleId.toIntOrNull() ?: 0,
                 onNavigateBack = { backStack.removeLastOrNull() }
+            )
+        }
+
+        // ==================== Subscription / Billing ====================
+
+        is FleetRoute.SubscriptionPlans -> NavEntry(route) {
+            val viewModel = rememberViewModel { subscriptionPlansViewModel(route.isRenewal) }
+            SubscriptionFeatureFacade.PlansEntry(
+                viewModel = viewModel,
+                onNavigateToPayment = { plan, interval ->
+                    backStack.add(
+                        FleetRoute.SubscriptionCheckout(
+                            planId = plan.id,
+                            planName = plan.name,
+                            monthlyPrice = plan.monthlyPrice,
+                            annualPrice = plan.annualPrice,
+                            discountPercent = plan.discountPercent,
+                            effectiveMonthlyPriceAnnual = plan.effectiveMonthlyPriceAnnual,
+                            annualSavings = plan.annualSavings,
+                            currency = plan.currency,
+                            trialDays = plan.trialDays,
+                            billingInterval = interval.apiValue
+                        )
+                    )
+                },
+                onNavigateToDashboard = { backStack.navigateAndClear(FleetRoute.Dashboard) },
+                onLogout = { backStack.navigateAndClear(FleetRoute.Login) }
+            )
+        }
+
+        is FleetRoute.SubscriptionCheckout -> NavEntry(route) {
+            val viewModel = rememberViewModel { subscriptionCheckoutViewModel() }
+            val plan = Plan(
+                id = route.planId,
+                name = route.planName,
+                description = "",
+                monthlyPrice = route.monthlyPrice,
+                annualPrice = route.annualPrice,
+                discountPercent = route.discountPercent,
+                effectiveMonthlyPriceAnnual = route.effectiveMonthlyPriceAnnual,
+                annualSavings = route.annualSavings,
+                currency = route.currency,
+                trialDays = route.trialDays,
+                features = emptyList(),
+                featureLimits = emptyList<FeatureLimit>(),
+                isActive = true
+            )
+            val interval = BillingInterval.from(route.billingInterval)
+            SubscriptionFeatureFacade.PaymentCheckoutEntry(
+                viewModel = viewModel,
+                plan = plan,
+                billingInterval = interval,
+                razorpayLauncher = LocalRazorpayLauncher.current,
+                onPaymentSuccess = { planName, amount, currency ->
+                    backStack.navigateAndClear(
+                        FleetRoute.SubscriptionSuccess(planName, amount, currency)
+                    )
+                },
+                onNavigateBackToPlans = { backStack.removeLastOrNull() }
+            )
+        }
+
+        is FleetRoute.SubscriptionSuccess -> NavEntry(route) {
+            SubscriptionFeatureFacade.PaymentSuccessEntry(
+                planName = route.planName,
+                amount = route.amount,
+                currency = route.currency,
+                onContinue = { backStack.navigateAndClear(FleetRoute.Dashboard) }
             )
         }
     }

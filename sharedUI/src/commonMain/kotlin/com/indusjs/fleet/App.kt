@@ -3,6 +3,7 @@ package com.indusjs.fleet
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation3.runtime.NavBackStack
@@ -12,10 +13,14 @@ import com.indusjs.fleet.core.auth.AuthenticationManager
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.di.DefaultViewModelProvider
 import com.indusjs.fleet.di.ProvideViewModels
+import com.indusjs.fleet.di.SubscriptionGateResult
 import com.ijs.vehicle.domain.entity.DocumentType
 import com.indusjs.fleet.navigation.FleetRoute
+import com.indusjs.fleet.navigation.LocalRazorpayLauncher
 import com.indusjs.fleet.navigation.fleetEntryProvider
 import com.indusjs.fleet.navigation.navigateAndClear
+import com.ijs.subscription.presentation.platform.RazorpayLauncher
+import com.ijs.subscription.presentation.platform.RazorpayResult
 import com.indusjs.uicomponents.theme.AppTheme
 import com.indusjs.fleet.core.logger.initPlatformLogger
 
@@ -43,7 +48,8 @@ fun App(
     onPickFile: ((FilePickerRequest) -> Unit)? = null,
     onOpenDocument: ((documentName: String, fileUrl: String) -> Unit)? = null,
     onDownloadDocument: ((documentName: String, fileUrl: String) -> Unit)? = null,
-    onSaveDocument: ((documentName: String, fileBytes: ByteArray, mimeType: String) -> Unit)? = null
+    onSaveDocument: ((documentName: String, fileBytes: ByteArray, mimeType: String) -> Unit)? = null,
+    razorpayLauncher: RazorpayLauncher = { _, onResult -> onResult(RazorpayResult.Cancelled) }
 ) = AppTheme(onThemeChanged) {
 
     // Initialize platform logger (no-op on Android/iOS where it's done earlier;
@@ -74,7 +80,18 @@ fun App(
             } else {
                 val isLoggedIn = viewModelProvider.userRepository.isLoggedIn()
                 fleetLogger.d(TAG_APP, "Auth check result: isLoggedIn=$isLoggedIn")
-                initialRoute = if (isLoggedIn) FleetRoute.Dashboard else FleetRoute.Login
+                if (isLoggedIn) {
+                    val gate = viewModelProvider.checkSubscriptionGate()
+                    fleetLogger.d(TAG_APP, "Subscription gate result: $gate")
+                    initialRoute = when (gate) {
+                        SubscriptionGateResult.RequiresPlanSelection,
+                        SubscriptionGateResult.RequiresPayment ->
+                            FleetRoute.SubscriptionPlans(isRenewal = gate == SubscriptionGateResult.RequiresPayment)
+                        SubscriptionGateResult.NoGate -> FleetRoute.Dashboard
+                    }
+                } else {
+                    initialRoute = FleetRoute.Login
+                }
                 fleetLogger.d(TAG_APP, "Initial route set to: $initialRoute")
             }
         } catch (e: Exception) {
@@ -153,17 +170,19 @@ fun App(
             ) { paddingValues ->
                 Box(modifier = Modifier.padding(paddingValues)) {
                     ProvideViewModels(viewModelProvider) {
-                        NavDisplay(
-                            backStack = backStack,
-                            entryProvider = fleetEntryProvider(
+                        CompositionLocalProvider(LocalRazorpayLauncher provides razorpayLauncher) {
+                            NavDisplay(
                                 backStack = backStack,
-                                onPickFile = onPickFile,
-                                onOpenDocument = onOpenDocument,
-                                onDownloadDocument = onDownloadDocument,
-                                onSaveDocument = onSaveDocument
-                            ),
-                            onBack = { backStack.removeLastOrNull() }
-                        )
+                                entryProvider = fleetEntryProvider(
+                                    backStack = backStack,
+                                    onPickFile = onPickFile,
+                                    onOpenDocument = onOpenDocument,
+                                    onDownloadDocument = onDownloadDocument,
+                                    onSaveDocument = onSaveDocument
+                                ),
+                                onBack = { backStack.removeLastOrNull() }
+                            )
+                        }
                     }
                 }
             }

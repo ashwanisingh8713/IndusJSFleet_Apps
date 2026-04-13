@@ -44,6 +44,7 @@ android {
 
 dependencies {
     implementation(project(":sharedUI"))
+    implementation(project(":screen-payment"))
     implementation(project(":ijs-logger-lib"))
     implementation(libs.androidx.activityCompose)
 
@@ -51,4 +52,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.analytics)
+
+    // Razorpay Android SDK — required for AppActivity to implement PaymentResultWithDataListener
+    implementation("com.razorpay:checkout:1.6.40")
 }
