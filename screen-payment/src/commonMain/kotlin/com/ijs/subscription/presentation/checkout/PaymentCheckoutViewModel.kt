@@ -3,7 +3,7 @@ package com.ijs.subscription.presentation.checkout
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.uicomponents.components.UiText
-import com.ijs.subscription.TAG_CHECKOUT_VM
+import com.ijs.subscription.SubscriptionPaymentTestConfig
 import com.ijs.subscription.domain.usecase.CreatePaymentOrderUseCase
 import com.ijs.subscription.domain.usecase.VerifyPaymentUseCase
 import com.ijs.subscription.presentation.checkout.PaymentCheckoutContract.Effect
@@ -57,7 +57,8 @@ class PaymentCheckoutViewModel(
                                 orderId = order.orderId,
                                 amount = order.amount,
                                 currency = order.currency,
-                                providerKey = order.providerKey,
+                                providerKey = order.providerKey.takeUnless { it.isBlank() }
+                                    ?: SubscriptionPaymentTestConfig.FALLBACK_PROVIDER_KEY_WHEN_EMPTY,
                                 receiptId = order.receiptId,
                                 customerEmail = order.customerEmail,
                                 customerName = order.customerName,

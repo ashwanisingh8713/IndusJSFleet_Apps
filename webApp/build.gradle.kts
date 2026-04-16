@@ -18,6 +18,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":sharedUI"))
+            implementation(project(":screen-payment"))
             implementation(libs.compose.ui)
         }
     }

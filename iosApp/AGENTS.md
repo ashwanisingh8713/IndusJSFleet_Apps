@@ -7,6 +7,8 @@ iOS platform entry point for the IndusJS Fleet app. **Thin SwiftUI shell** that 
 **Language:** Swift  
 **Framework:** SwiftUI + Compose Multiplatform (via KMP framework)
 
+**Razorpay (host / ATS):** [../Docs/Razorpay/iosApp_RAZORPAY_INTEGRATION.md](../Docs/Razorpay/iosApp_RAZORPAY_INTEGRATION.md) — [../Docs/Razorpay/README.md](../Docs/Razorpay/README.md).
+
 ---
 
 ## Source Tree

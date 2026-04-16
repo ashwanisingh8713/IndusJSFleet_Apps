@@ -7,6 +7,8 @@ The **core KMP module** — all shared business logic, UI screens, and architect
 **Package:** `com.indusjs.fleet`  
 **Targets:** Android, iOS (x64/arm64/simulatorArm64), JS (browser), WasmJS (browser)
 
+**Razorpay:** [../Docs/Razorpay/sharedUI_RAZORPAY_INTEGRATION.md](../Docs/Razorpay/sharedUI_RAZORPAY_INTEGRATION.md) — [../Docs/Razorpay/README.md](../Docs/Razorpay/README.md).
+
 ---
 
 ## Architecture: Clean Architecture + MVI

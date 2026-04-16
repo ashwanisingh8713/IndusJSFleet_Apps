@@ -44,20 +44,7 @@ fun createAndroidRazorpayLauncher(activity: Activity): RazorpayLauncher = { data
     val checkout = Checkout()
     checkout.setKeyID(data.providerKey)
 
-    val options = JSONObject().apply {
-        put("name", "IndusJS Fleet")
-        put("description", data.planName)
-        put("order_id", data.orderId)
-        put("amount", data.amount)
-        put("currency", data.currency)
-        put("prefill", JSONObject().apply {
-            put("email", data.customerEmail)
-            put("name", data.customerName)
-        })
-        put("theme", JSONObject().apply {
-            put("color", "#1976D2")
-        })
-    }
+    val options = JSONObject(data.toRazorpaySdkOptionsJson())
 
     // Subscribe to the bridge for exactly one result, then cancel.
     var collectorJob: Job? = null

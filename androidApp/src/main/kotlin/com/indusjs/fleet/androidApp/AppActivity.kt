@@ -24,6 +24,7 @@ import com.indusjs.fleet.App
 import com.indusjs.fleet.FilePickerRequest
 import com.ijs.subscription.presentation.platform.AndroidRazorpayBridge
 import com.ijs.subscription.presentation.platform.RazorpayResult
+import com.razorpay.Checkout
 import com.razorpay.PaymentData
 import com.razorpay.PaymentResultWithDataListener
 
@@ -48,6 +49,11 @@ class AppActivity : ComponentActivity(), PaymentResultWithDataListener {
     }
 
     override fun onPaymentError(errorCode: Int, errorDescription: String?, paymentData: PaymentData?) {
+        // Razorpay Android: user closed checkout / back without paying (commonly code 3).
+        if (errorCode == Checkout.PAYMENT_CANCELED) {
+            AndroidRazorpayBridge.emit(RazorpayResult.Cancelled)
+            return
+        }
         AndroidRazorpayBridge.emit(
             RazorpayResult.Failed(
                 errorCode = errorCode,

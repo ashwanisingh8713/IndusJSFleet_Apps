@@ -2,34 +2,29 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CLIENT_ID</key>
-	<string>000000000000-placeholder.apps.googleusercontent.com</string>
-	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.000000000000-placeholder</string>
 	<key>API_KEY</key>
-	<string>AIza_PLACEHOLDER_KEY_REPLACE_ME</string>
+	<string>AIzaSyD2aYfiFCJxUv45vyrQG_B8Va6P9vixiGA</string>
 	<key>GCM_SENDER_ID</key>
-	<string>000000000000</string>
+	<string>414300730573</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.indusjs.fleet.iosApp</string>
 	<key>PROJECT_ID</key>
-	<string>indusjs-fleet-placeholder</string>
+	<string>indusjsfleet</string>
 	<key>STORAGE_BUCKET</key>
-	<string>indusjs-fleet-placeholder.appspot.com</string>
+	<string>indusjsfleet.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
-	<false/>
+	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
-	<true/>
+	<false></false>
 	<key>IS_APPINVITE_ENABLED</key>
-	<false/>
+	<true></true>
 	<key>IS_GCM_ENABLED</key>
-	<true/>
+	<true></true>
 	<key>IS_SIGNIN_ENABLED</key>
-	<false/>
+	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:000000000000:ios:0000000000000000000000</string>
+	<string>1:414300730573:ios:9802597fe8e519b1326584</string>
 </dict>
 </plist>
-

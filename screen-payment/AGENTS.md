@@ -35,5 +35,7 @@ Razorpay checkout is launched via a lambda callback passed from each platform:
 The `PaymentCheckoutScreen` accepts a `razorpayLauncher` lambda so no
 platform-specific code leaks into `commonMain`.
 
+**Design doc (canonical):** [../Docs/Razorpay/screen-payment_RAZORPAY_INTEGRATION.md](../Docs/Razorpay/screen-payment_RAZORPAY_INTEGRATION.md) — index: [../Docs/Razorpay/README.md](../Docs/Razorpay/README.md).
+
 ## Facade
 `SubscriptionFeatureFacade` — provides `@Composable` entry points consumed by `sharedUI`.

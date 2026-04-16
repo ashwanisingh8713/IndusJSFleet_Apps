@@ -8,10 +8,15 @@ package com.indusjs.fleet.core.network
  */
 object ApiConfig {
 
-    /** `IndusJSFleet_GoLang_Backend` branch `Google_Cloud_SQL` (Cloud Run). */
-//    const val BASE_URL = "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2"
-
-    /** `IndusJSFleet_GoLang_Backend` branch `clean-architecture-code-refactoring` (Cloud Run). */
+    /**
+     * **Live production** for this client: one Cloud Run host + `/api/v1` prefix, one JWT for
+     * auth, fleet routes (`/vehicles`, …), and subscription/IAM-proxied routes (`/plans`,
+     * `/onboarding/*`, `/payments/*`). Verified together with the same Bearer token.
+     *
+     * There is a separate Fleet-only production on `indusjs-fleet-docker-…asia-south2…/api/v2`
+     * (different JWT issuer; `/plans` etc. were not mounted there at last check). Do not swap
+     * this value for that host without a unified auth + subscription deployment.
+     */
     const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
 
     /**

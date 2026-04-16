@@ -27,5 +27,76 @@
         </circle>
     </svg>
     </body>
+    <!-- Razorpay Standard Checkout (JS + Wasm bridge). Must load before webApp.js -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        (function () {
+            function done(onDone, obj) {
+                try {
+                    onDone(JSON.stringify(obj));
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            var bridge = {
+                open: function (payloadJson, onDone) {
+                    var finished = false;
+                    function finish(obj) {
+                        if (finished) return;
+                        finished = true;
+                        done(onDone, obj);
+                    }
+                    if (typeof Razorpay === "undefined") {
+                        finish({
+                            type: "failed",
+                            code: 0,
+                            description: "Razorpay checkout.js failed to load."
+                        });
+                        return;
+                    }
+                    var options;
+                    try {
+                        options = JSON.parse(payloadJson);
+                    } catch (e) {
+                        finish({ type: "failed", code: 0, description: "Invalid checkout JSON" });
+                        return;
+                    }
+                    options.handler = function (response) {
+                        finish({
+                            type: "success",
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+                    };
+                    options.modal = {
+                        ondismiss: function () {
+                            finish({ type: "dismiss" });
+                        }
+                    };
+                    var rzp = new Razorpay(options);
+                    rzp.on("payment.failed", function (resp) {
+                        var err = (resp && resp.error) || {};
+                        var raw = err.code;
+                        var code =
+                            typeof raw === "number" && !isNaN(raw)
+                                ? raw | 0
+                                : (function (x) {
+                                      var p = parseInt(String(x), 10);
+                                      return isNaN(p) ? 0 : p;
+                                  })(raw);
+                        finish({
+                            type: "failed",
+                            code: code,
+                            description: err.description || "Payment failed"
+                        });
+                    });
+                    rzp.open();
+                }
+            };
+            if (typeof globalThis !== "undefined") globalThis.__IndusFleetRazorpay = bridge;
+            if (typeof window !== "undefined") window.__IndusFleetRazorpay = bridge;
+        })();
+    </script>
     <script src="webApp.js"></script>
 </html>

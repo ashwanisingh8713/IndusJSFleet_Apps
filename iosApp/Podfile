@@ -1,5 +1,11 @@
 # IndusJS Fleet iOS Podfile
 # Firebase Crashlytics integration for crash reporting
+#
+# The `Pods/` directory is gitignored. Before the first Xcode build (or after
+# pulling Podfile / Podfile.lock changes), run either:
+#   (repo root)  ./gradlew iosPodInstall
+#   (this folder) ./bootstrap-ios.sh
+#   (this folder) pod install
 
 platform :ios, '14.0'
 use_frameworks!

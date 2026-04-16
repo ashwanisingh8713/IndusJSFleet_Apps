@@ -58,3 +58,5 @@ src/main/
 - `androidx.core:core-ktx` — FileProvider for PDF sharing
 
 **All business logic, screens, navigation, and data flows live in `sharedUI`. This module only provides the Android shell.**
+
+**Razorpay:** [../Docs/Razorpay/androidApp_RAZORPAY_INTEGRATION.md](../Docs/Razorpay/androidApp_RAZORPAY_INTEGRATION.md) — [../Docs/Razorpay/README.md](../Docs/Razorpay/README.md).
