@@ -51,14 +51,16 @@ class PaymentCheckoutViewModel(
             createPaymentOrderUseCase(plan.id, interval).fold(
                 onSuccess = { order ->
                     updateState { copy(isCreatingOrder = false, currentOrder = order) }
+                    val serverKey = order.providerKey
+                    val isValidRazorpayKey = serverKey.startsWith("rzp_test_") || serverKey.startsWith("rzp_live_")
+                    val effectiveKey = if (isValidRazorpayKey) serverKey else SubscriptionPaymentTestConfig.FALLBACK_PROVIDER_KEY_WHEN_EMPTY
                     sendEffect(
                         Effect.LaunchRazorpayCheckout(
                             RazorpayCheckoutData(
                                 orderId = order.orderId,
                                 amount = order.amount,
                                 currency = order.currency,
-                                providerKey = order.providerKey.takeUnless { it.isBlank() }
-                                    ?: SubscriptionPaymentTestConfig.FALLBACK_PROVIDER_KEY_WHEN_EMPTY,
+                                providerKey = effectiveKey,
                                 receiptId = order.receiptId,
                                 customerEmail = order.customerEmail,
                                 customerName = order.customerName,

@@ -106,7 +106,7 @@ sealed interface FleetRoute : NavKey {
 
     // ==================== Subscription / Billing Routes ====================
 
-    @Serializable data class SubscriptionPlans(val isRenewal: Boolean = false) : FleetRoute
+    @Serializable data class SubscriptionPlans(val isPaymentPending: Boolean = false) : FleetRoute
     @Serializable data class SubscriptionCheckout(
         val planId: String,
         val planName: String,
@@ -124,4 +124,5 @@ sealed interface FleetRoute : NavKey {
         val amount: Long,
         val currency: String
     ) : FleetRoute
+    @Serializable data object CreateOrganization : FleetRoute
 }

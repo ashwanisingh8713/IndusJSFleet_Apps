@@ -4,7 +4,7 @@ import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.uicomponents.components.UiText
-import com.ijs.team.domain.entity.TeamMemberRole
+import com.ijs.team.domain.entity.AssignableTeamRole
 
 /**
  * MVI Contract for Create Team Member screen.
@@ -21,15 +21,14 @@ object CreateTeamMemberContract {
         val mobile: String = "",
         val password: String = "",
         val confirmPassword: String = "",
-        val selectedRole: TeamMemberRole = TeamMemberRole.MANAGER,
+        /** IAM role name from API (e.g. admin, user). */
+        val selectedIamRoleName: String = "",
+        val availableIamRoles: List<AssignableTeamRole> = emptyList(),
+        val rolesLoading: Boolean = true,
         val isPasswordVisible: Boolean = false,
         val isConfirmPasswordVisible: Boolean = false,
         val isLoading: Boolean = false,
-        val error: UiText? = null,
-        // Current user's role for permission filtering
-        val currentUserRole: String = "",
-        // Roles that the current user can create
-        val availableRoles: List<TeamMemberRole> = listOf(TeamMemberRole.MANAGER, TeamMemberRole.SUPERVISOR)
+        val error: UiText? = null
     ) : UiState
 
     /**
@@ -42,12 +41,12 @@ object CreateTeamMemberContract {
         data class UpdateMobile(val mobile: String) : Intent
         data class UpdatePassword(val password: String) : Intent
         data class UpdateConfirmPassword(val confirmPassword: String) : Intent
-        data class SelectRole(val role: TeamMemberRole) : Intent
+        data class SelectIamRole(val roleName: String) : Intent
         data object TogglePasswordVisibility : Intent
         data object ToggleConfirmPasswordVisibility : Intent
         data object CreateTeamMember : Intent
         data object ClearError : Intent
-        // When coming from Caretaker assignment, exclude General Manager
+        /** When true, removes elevated IAM roles such as owner from the selectable list. */
         data class SetExcludeGeneralManager(val exclude: Boolean) : Intent
     }
 
@@ -60,4 +59,3 @@ object CreateTeamMemberContract {
         data object NavigateBack : Effect
     }
 }
-

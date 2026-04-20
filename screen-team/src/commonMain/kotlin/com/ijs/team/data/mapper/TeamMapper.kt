@@ -26,6 +26,8 @@ object TeamMapper {
 
     private fun String.toTeamMemberRole(): TeamMemberRole = when (this.lowercase()) {
         "general_manager", "generalmanager", "gm" -> TeamMemberRole.GENERAL_MANAGER
+        "admin" -> TeamMemberRole.MANAGER
+        "user" -> TeamMemberRole.SUPERVISOR
         "manager" -> TeamMemberRole.MANAGER
         "supervisor" -> TeamMemberRole.SUPERVISOR
         else -> TeamMemberRole.SUPERVISOR

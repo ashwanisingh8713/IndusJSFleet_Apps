@@ -8,7 +8,9 @@ data class OnboardingStatus(
     val paymentDone: Boolean,
     val selectedPlan: Plan?,
     val paymentRequired: Boolean,
-    val readyToCreateTenant: Boolean
+    val readyToCreateTenant: Boolean,
+    val tenantCreated: Boolean,
+    val tenantId: String
 ) {
     val needsPlanSelection: Boolean
         get() = step == OnboardingStep.PLAN
@@ -16,8 +18,11 @@ data class OnboardingStatus(
     val needsPayment: Boolean
         get() = step == OnboardingStep.PAYMENT || (paymentRequired && !paymentDone)
 
+    val hasTenantFromServer: Boolean
+        get() = tenantCreated && tenantId.isNotBlank()
+
     val isComplete: Boolean
-        get() = step == OnboardingStep.COMPLETE || readyToCreateTenant
+        get() = step == OnboardingStep.COMPLETE || readyToCreateTenant || hasTenantFromServer
 }
 
 enum class OnboardingStep(val apiValue: String) {

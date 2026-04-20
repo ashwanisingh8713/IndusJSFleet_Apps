@@ -75,7 +75,7 @@ fun PlanCard(
         label = "card_border_$cardIndex"
     )
     val elevation by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (isSelected) 8.dp else 1.dp,
+        targetValue = if (isSelected) 6.dp else 1.dp,
         animationSpec = tween(220),
         label = "card_elevation_$cardIndex"
     )
@@ -120,16 +120,16 @@ fun PlanCard(
                         if (isSelected) {
                             Box(
                                 modifier = Modifier
-                                    .size(28.dp)
+                                    .size(30.dp)
                                     .clip(CircleShape)
-                                    .background(scheme.surface.copy(alpha = 0.25f)),
+                                    .background(scheme.surface),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_check),
                                     contentDescription = "Selected",
-                                    tint = accentContent,
-                                    modifier = Modifier.size(16.dp)
+                                    tint = scheme.primary,
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         } else if (isPopular) {
@@ -178,7 +178,8 @@ fun PlanCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 14.dp, bottom = if (isSelected) 0.dp else 14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (plan.features.isNotEmpty() || plan.featureLimits.isNotEmpty()) {
@@ -191,16 +192,13 @@ fun PlanCard(
                     )
                     Spacer(Modifier.height(2.dp))
 
-                    // Show up to 6 text features
                     plan.features.take(6).forEach { feature ->
                         FeatureRow(feature = feature)
                     }
-                    // Show feature limits
                     plan.featureLimits.take(5).forEach { limit ->
                         FeatureLimitRow(featureLimit = limit)
                     }
                 } else if (plan.isFree) {
-                    // Free plan fallback copy
                     listOf(
                         "Up to 5 vehicles",
                         "Basic trip tracking",
@@ -208,37 +206,46 @@ fun PlanCard(
                     ).forEach { FeatureRow(it) }
                 }
 
-                Spacer(Modifier.height(4.dp))
-                HorizontalDivider(color = scheme.outlineVariant.copy(alpha = 0.5f))
-                Spacer(Modifier.height(2.dp))
-
-                // Tap-to-select hint when not selected
                 if (!isSelected) {
+                    Spacer(Modifier.height(2.dp))
+                    HorizontalDivider(color = scheme.outlineVariant.copy(alpha = 0.4f))
                     Text(
                         text = "Tap to select",
                         style = MaterialTheme.typography.labelSmall,
-                        color = scheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        modifier = Modifier.fillMaxWidth(),
+                        color = scheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
-                } else {
+                }
+            }
+
+            // ── Full-width selected banner at card bottom ─────
+            if (isSelected) {
+                Spacer(Modifier.height(6.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = scheme.primary)
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(scheme.primary)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_check),
+                            contentDescription = null,
+                            tint = scheme.onPrimary,
+                            modifier = Modifier.size(14.dp)
                         )
-                        Spacer(Modifier.width(6.dp))
                         Text(
                             text = "Selected",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = scheme.primary,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.labelMedium,
+                            color = scheme.onPrimary,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }

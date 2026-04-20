@@ -8,16 +8,8 @@ package com.indusjs.fleet.core.network
  */
 object ApiConfig {
 
-    /**
-     * **Live production** for this client: one Cloud Run host + `/api/v1` prefix, one JWT for
-     * auth, fleet routes (`/vehicles`, …), and subscription/IAM-proxied routes (`/plans`,
-     * `/onboarding/*`, `/payments/*`). Verified together with the same Bearer token.
-     *
-     * There is a separate Fleet-only production on `indusjs-fleet-docker-…asia-south2…/api/v2`
-     * (different JWT issuer; `/plans` etc. were not mounted there at last check). Do not swap
-     * this value for that host without a unified auth + subscription deployment.
-     */
-    const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
+    //const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
+    const val BASE_URL = "http://192.168.1.13:8081/api/v1"
 
     /**
      * Google Places API Key for location autocomplete.
@@ -190,6 +182,7 @@ object ApiConfig {
         const val PAYMENT_VERIFY = "/payments/verify"
         const val PAYMENTS_LIST = "/payments"
         fun paymentById(paymentId: String) = "/payments/$paymentId"
+        const val CREATE_TENANT = "/tenants"
     }
 
     /**

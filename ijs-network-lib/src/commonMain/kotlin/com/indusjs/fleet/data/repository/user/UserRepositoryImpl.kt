@@ -73,15 +73,17 @@ class UserRepositoryImpl(
             LoginRequest(identifier = identifier, password = password)
         )
 
-        val authResult = response.data?.toDomain()
+        val authData = response.data
             ?: throw ApiException(response.message ?: "Login failed")
+        val authResult = authData.toDomain()
 
         val roleToSave = UserRole.toApiString(authResult.user.role)
-        logger.d(TAG_USER_REPO, "Login successful - User: ${authResult.user.email}, Role enum: ${authResult.user.role}, Role to save: '$roleToSave'")
+        logger.d(TAG_USER_REPO, "Login successful - User: ${authResult.user.email}, Role enum: ${authResult.user.role}, Role to save: '$roleToSave', tenantId: '${authData.user.tenantId}'")
 
         localDataSource.saveAuthToken(authResult.token)
         localDataSource.saveUserRole(roleToSave)
         localDataSource.saveUserId(authResult.user.id)
+        localDataSource.saveTenantId(authData.user.tenantId)
         authResult
     }
 

@@ -7,6 +7,7 @@ import androidx.navigation3.runtime.NavEntry
 import com.indusjs.fleet.FilePickerRequest
 import com.indusjs.fleet.di.LocalViewModelProvider
 import com.indusjs.fleet.di.SubscriptionGateResult
+import com.ijs.subscription.presentation.plans.PlanPageMode
 import com.indusjs.fleet.di.rememberViewModel
 import com.indusjs.fleet.di.rememberSharedViewModel
 import com.indusjs.fleet.di.clearSharedViewModel
@@ -75,9 +76,11 @@ fun fleetEntryProvider(
                         val gate = viewModelProvider.checkSubscriptionGate()
                         when (gate) {
                             SubscriptionGateResult.RequiresPlanSelection ->
-                                backStack.navigateAndClear(FleetRoute.SubscriptionPlans(isRenewal = false))
+                                backStack.navigateAndClear(FleetRoute.SubscriptionPlans(isPaymentPending = false))
                             SubscriptionGateResult.RequiresPayment ->
-                                backStack.navigateAndClear(FleetRoute.SubscriptionPlans(isRenewal = true))
+                                backStack.navigateAndClear(FleetRoute.SubscriptionPlans(isPaymentPending = true))
+                            SubscriptionGateResult.RequiresTenantCreation ->
+                                backStack.navigateAndClear(FleetRoute.CreateOrganization)
                             SubscriptionGateResult.NoGate ->
                                 backStack.navigateAndClear(FleetRoute.Dashboard)
                         }
@@ -605,7 +608,8 @@ fun fleetEntryProvider(
         // ==================== Subscription / Billing ====================
 
         is FleetRoute.SubscriptionPlans -> NavEntry(route) {
-            val viewModel = rememberViewModel { subscriptionPlansViewModel(route.isRenewal) }
+            val mode = if (route.isPaymentPending) PlanPageMode.COMPLETE_PAYMENT else PlanPageMode.CHOOSE
+            val viewModel = rememberViewModel { subscriptionPlansViewModel(mode) }
             SubscriptionFeatureFacade.PlansEntry(
                 viewModel = viewModel,
                 onNavigateToPayment = { plan, interval ->
@@ -666,7 +670,23 @@ fun fleetEntryProvider(
                 planName = route.planName,
                 amount = route.amount,
                 currency = route.currency,
-                onContinue = { backStack.navigateAndClear(FleetRoute.Dashboard) }
+                onContinue = {
+                    backStack.navigateAndClear(FleetRoute.CreateOrganization)
+                }
+            )
+        }
+
+        is FleetRoute.CreateOrganization -> NavEntry(route) {
+            val viewModel = rememberViewModel { createOrganizationViewModel() }
+            SubscriptionFeatureFacade.CreateOrganizationEntry(
+                viewModel = viewModel,
+                onOrganizationCreated = {
+                    backStack.navigateAndClear(FleetRoute.Dashboard)
+                    backStack.add(FleetRoute.CreateTeamMember())
+                },
+                onSkipToTeamMember = {
+                    backStack.navigateAndClear(FleetRoute.Dashboard)
+                }
             )
         }
     }

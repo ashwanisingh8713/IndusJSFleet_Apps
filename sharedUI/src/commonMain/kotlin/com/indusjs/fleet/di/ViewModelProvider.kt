@@ -34,8 +34,10 @@ import com.ijs.user.presentation.signup.SignUpViewModel
 import com.ijs.vehicle.presentation.AddVehicleViewModel
 import com.ijs.vehicle.presentation.VehiclesViewModel
 import com.ijs.vehicle.presentation.detail.VehicleDetailViewModel
+import com.ijs.subscription.presentation.plans.PlanPageMode
 import com.ijs.subscription.presentation.plans.PlansViewModel
 import com.ijs.subscription.presentation.checkout.PaymentCheckoutViewModel
+import com.ijs.subscription.presentation.organization.CreateOrganizationViewModel
 
 /**
  * Provider for all application ViewModels.
@@ -107,8 +109,9 @@ interface ViewModelProvider {
     fun vehicleFinanceViewModel(): com.ijs.finance.presentation.VehicleFinanceViewModel
 
     // Subscription / Billing ViewModels
-    fun subscriptionPlansViewModel(isRenewal: Boolean = false): PlansViewModel
+    fun subscriptionPlansViewModel(pageMode: PlanPageMode = PlanPageMode.CHOOSE): PlansViewModel
     fun subscriptionCheckoutViewModel(): PaymentCheckoutViewModel
+    fun createOrganizationViewModel(): CreateOrganizationViewModel
 
     // Subscription gate — called after sign-in to determine the first screen
     suspend fun checkSubscriptionGate(): SubscriptionGateResult

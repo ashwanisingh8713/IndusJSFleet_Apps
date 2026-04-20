@@ -1,66 +1,85 @@
 package com.ijs.team.presentation.create
 
+import androidx.lifecycle.viewModelScope
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.uicomponents.components.UiText
-import com.indusjs.fleet.core.util.PermissionUtils
-import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
-import com.ijs.team.domain.entity.TeamMemberRole
-import com.indusjs.fleet.domain.entity.user.UserRole
+import com.ijs.team.domain.entity.AssignableTeamRole
 import com.ijs.team.domain.repository.TeamRepository
 import dev.zacsweers.metro.Inject
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
-import indusjsfleet.ijs_ui_components_lib.generated.resources.*
-import androidx.lifecycle.viewModelScope
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_confirm_password_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_create_team_member
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_email_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_email_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_first_name_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_last_name_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_team_member
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_password_contains_name
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_password_min_chars
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_password_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_passwords_mismatch
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_team_member_created
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for Create Team Member screen.
  *
- * Dependencies are provided via DefaultViewModelProvider.
+ * Loads assignable IAM roles from the Fleet API and creates the member with the selected role.
+ * After creation, the backend syncs IAM direct permissions from the role definition.
  */
 @Inject
 class CreateTeamMemberViewModel(
     private val dispatcherProvider: DispatcherProvider,
-    private val teamRepository: TeamRepository,
-    private val userLocalDataSource: UserLocalDataSource
+    private val teamRepository: TeamRepository
 ) : MviViewModel<CreateTeamMemberContract.State, CreateTeamMemberContract.Intent, CreateTeamMemberContract.Effect>(
     CreateTeamMemberContract.State()
 ) {
 
     init {
-        // Load user role and determine available roles for creation
         viewModelScope.launch(dispatcherProvider.io) {
-            val userRole = try {
-                userLocalDataSource.getUserRole() ?: ""
-            } catch (e: Exception) {
-                ""
-            }
-
-            // Determine which roles the current user can create
-            val creatableRoles = PermissionUtils.getCreatableRoles(userRole)
-            val availableTeamRoles = creatableRoles.mapNotNull {
-                when (it) {
-                    UserRole.GENERAL_MANAGER -> TeamMemberRole.GENERAL_MANAGER
-                    UserRole.MANAGER -> TeamMemberRole.MANAGER
-                    UserRole.SUPERVISOR -> TeamMemberRole.SUPERVISOR
-                    else -> null
-                }
-            }
-
-            // Default to first available role or Manager
-            val defaultRole = availableTeamRoles.firstOrNull() ?: TeamMemberRole.MANAGER
-
-            updateState {
-                copy(
-                    currentUserRole = userRole,
-                    availableRoles = availableTeamRoles.ifEmpty { listOf(TeamMemberRole.MANAGER, TeamMemberRole.SUPERVISOR) },
-                    selectedRole = defaultRole
-                )
-            }
+            loadAssignableRoles(excludeElevated = false)
         }
     }
+
+    private suspend fun loadAssignableRoles(excludeElevated: Boolean) {
+        updateState { copy(rolesLoading = true, error = null) }
+        val result = teamRepository.getAssignableTeamRoles()
+        val fromApi = result.getOrNull().orEmpty().let { roles ->
+            if (excludeElevated) {
+                roles.filter { !it.name.equals("owner", ignoreCase = true) }
+            } else {
+                roles
+            }
+        }
+        val effective = if (fromApi.isNotEmpty()) {
+            fromApi
+        } else {
+            defaultFallbackRoles()
+        }
+        val selected = effective.firstOrNull()?.name ?: ""
+        updateState {
+            copy(
+                availableIamRoles = effective,
+                selectedIamRoleName = selected,
+                rolesLoading = false,
+                error = if (fromApi.isEmpty() && result.isFailure) {
+                    result.exceptionOrNull()?.message?.let { UiText.Raw(it) }
+                        ?: UiText.StringRes(Res.string.error_load_team_member)
+                } else {
+                    null
+                }
+            )
+        }
+    }
+
+    private fun defaultFallbackRoles(): List<AssignableTeamRole> = listOf(
+        AssignableTeamRole(id = "", name = "admin", description = ""),
+        AssignableTeamRole(id = "", name = "user", description = "")
+    )
 
     override suspend fun handleIntent(intent: CreateTeamMemberContract.Intent) {
         when (intent) {
@@ -69,26 +88,20 @@ class CreateTeamMemberViewModel(
             is CreateTeamMemberContract.Intent.UpdateEmail -> updateState { copy(email = intent.email) }
             is CreateTeamMemberContract.Intent.UpdateMobile -> updateState { copy(mobile = intent.mobile) }
             is CreateTeamMemberContract.Intent.UpdatePassword -> updateState { copy(password = intent.password) }
-            is CreateTeamMemberContract.Intent.UpdateConfirmPassword -> updateState { copy(confirmPassword = intent.confirmPassword) }
-            is CreateTeamMemberContract.Intent.SelectRole -> updateState { copy(selectedRole = intent.role) }
-            is CreateTeamMemberContract.Intent.TogglePasswordVisibility -> updateState { copy(isPasswordVisible = !isPasswordVisible) }
-            is CreateTeamMemberContract.Intent.ToggleConfirmPasswordVisibility -> updateState { copy(isConfirmPasswordVisible = !isConfirmPasswordVisible) }
+            is CreateTeamMemberContract.Intent.UpdateConfirmPassword ->
+                updateState { copy(confirmPassword = intent.confirmPassword) }
+            is CreateTeamMemberContract.Intent.SelectIamRole ->
+                updateState { copy(selectedIamRoleName = intent.roleName) }
+            is CreateTeamMemberContract.Intent.TogglePasswordVisibility ->
+                updateState { copy(isPasswordVisible = !isPasswordVisible) }
+            is CreateTeamMemberContract.Intent.ToggleConfirmPasswordVisibility ->
+                updateState { copy(isConfirmPasswordVisible = !isConfirmPasswordVisible) }
             is CreateTeamMemberContract.Intent.CreateTeamMember -> createTeamMember()
             is CreateTeamMemberContract.Intent.ClearError -> updateState { copy(error = null) }
             is CreateTeamMemberContract.Intent.SetExcludeGeneralManager -> {
                 if (intent.exclude) {
-                    // Filter out General Manager from available roles
-                    val filteredRoles = currentState.availableRoles.filter { it != TeamMemberRole.GENERAL_MANAGER }
-                    val newSelectedRole = if (currentState.selectedRole == TeamMemberRole.GENERAL_MANAGER) {
-                        filteredRoles.firstOrNull() ?: TeamMemberRole.MANAGER
-                    } else {
-                        currentState.selectedRole
-                    }
-                    updateState {
-                        copy(
-                            availableRoles = filteredRoles.ifEmpty { listOf(TeamMemberRole.MANAGER, TeamMemberRole.SUPERVISOR) },
-                            selectedRole = newSelectedRole
-                        )
+                    withContext(dispatcherProvider.io) {
+                        loadAssignableRoles(excludeElevated = true)
                     }
                 }
             }
@@ -102,9 +115,8 @@ class CreateTeamMemberViewModel(
         val mobile = currentState.mobile.trim()
         val password = currentState.password
         val confirmPassword = currentState.confirmPassword
-        val role = currentState.selectedRole
+        val iamRole = currentState.selectedIamRoleName.trim()
 
-        // Validation
         if (firstName.isEmpty()) {
             updateState { copy(error = UiText.StringRes(Res.string.error_first_name_required)) }
             return
@@ -140,8 +152,13 @@ class CreateTeamMemberViewModel(
             return
         }
 
-        if (password.length < 6) {
+        if (password.length < 8) {
             updateState { copy(error = UiText.StringRes(Res.string.error_password_min_chars)) }
+            return
+        }
+
+        if (passwordContainsIdentity(password, firstName, lastName, email)) {
+            updateState { copy(error = UiText.StringRes(Res.string.error_password_contains_name)) }
             return
         }
 
@@ -155,6 +172,11 @@ class CreateTeamMemberViewModel(
             return
         }
 
+        if (iamRole.isEmpty() || currentState.availableIamRoles.none { it.name == iamRole }) {
+            updateState { copy(error = UiText.StringRes(Res.string.error_load_team_member)) }
+            return
+        }
+
         updateState { copy(isLoading = true, error = null) }
 
         withContext(dispatcherProvider.io) {
@@ -165,11 +187,11 @@ class CreateTeamMemberViewModel(
                     password = password,
                     firstName = firstName,
                     lastName = lastName,
-                    role = role
+                    iamRole = iamRole
                 )
 
                 result.fold(
-                    onSuccess = { teamMember ->
+                    onSuccess = {
                         updateState { copy(isLoading = false) }
                         sendEffect(CreateTeamMemberContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_team_member_created)))
                         sendEffect(CreateTeamMemberContract.Effect.TeamMemberCreated)
@@ -179,7 +201,7 @@ class CreateTeamMemberViewModel(
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message?.let { UiText.Raw(it) }
+                                error = error.message?.let { msg -> UiText.Raw(msg) }
                                     ?: UiText.StringRes(Res.string.error_create_team_member)
                             )
                         }
@@ -202,5 +224,18 @@ class CreateTeamMemberViewModel(
         val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
         return emailRegex.matches(email)
     }
-}
 
+    private fun passwordContainsIdentity(
+        password: String,
+        firstName: String,
+        lastName: String,
+        email: String
+    ): Boolean {
+        val lowerPass = password.lowercase()
+        if (firstName.length >= 3 && lowerPass.contains(firstName.lowercase())) return true
+        if (lastName.length >= 3 && lowerPass.contains(lastName.lowercase())) return true
+        val emailLocal = email.substringBefore("@")
+        if (emailLocal.length >= 3 && lowerPass.contains(emailLocal.lowercase())) return true
+        return false
+    }
+}

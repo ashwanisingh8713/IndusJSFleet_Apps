@@ -1,5 +1,6 @@
 package com.ijs.team.domain.repository
 
+import com.ijs.team.domain.entity.AssignableTeamRole
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
 import com.indusjs.fleet.domain.repository.Repository
@@ -10,7 +11,12 @@ import com.indusjs.fleet.domain.repository.Repository
 interface TeamRepository : Repository {
 
     /**
-     * Create a new team member (Manager or Supervisor).
+     * IAM tenant roles the current user may assign when adding a member (e.g. admin, user).
+     */
+    suspend fun getAssignableTeamRoles(): Result<List<AssignableTeamRole>>
+
+    /**
+     * Create a new team member with an IAM tenant [iamRole] (e.g. "admin", "user").
      */
     suspend fun createTeamMember(
         email: String,
@@ -18,7 +24,7 @@ interface TeamRepository : Repository {
         password: String,
         firstName: String,
         lastName: String,
-        role: TeamMemberRole
+        iamRole: String
     ): Result<TeamMember>
 
     /**

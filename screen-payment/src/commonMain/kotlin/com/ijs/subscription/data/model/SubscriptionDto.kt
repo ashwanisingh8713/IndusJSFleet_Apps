@@ -49,7 +49,9 @@ data class OnboardingStatusDto(
     @SerialName("payment_done") val paymentDone: Boolean = false,
     @SerialName("selected_plan") val selectedPlan: PlanDto? = null,
     @SerialName("payment_required") val paymentRequired: Boolean = false,
-    @SerialName("ready_to_create_tenant") val readyToCreateTenant: Boolean = false
+    @SerialName("ready_to_create_tenant") val readyToCreateTenant: Boolean = false,
+    @SerialName("tenant_created") val tenantCreated: Boolean = false,
+    @SerialName("tenant_id") val tenantId: String = ""
 )
 
 @Serializable
@@ -81,4 +83,11 @@ data class PaymentVerifyResponseDto(
 @Serializable
 data class SelectPlanMessageDto(
     @SerialName("message") val message: String = ""
+)
+
+@Serializable
+data class CreateTenantResponseDto(
+    @SerialName("tenant_id") val tenantId: String = "",
+    @SerialName("access_token") val accessToken: String = "",
+    @SerialName("refresh_token") val refreshToken: String = ""
 )

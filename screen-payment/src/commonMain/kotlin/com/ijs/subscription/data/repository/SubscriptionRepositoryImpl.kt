@@ -8,6 +8,7 @@ import com.ijs.subscription.TAG_SUBSCRIPTION_REPO
 import com.ijs.subscription.data.datasource.SubscriptionRemoteDataSource
 import com.ijs.subscription.data.mapper.SubscriptionMapper.toDomain
 import com.ijs.subscription.data.model.CreatePaymentOrderRequest
+import com.ijs.subscription.data.model.CreateTenantRequest
 import com.ijs.subscription.data.model.SelectPlanRequest
 import com.ijs.subscription.data.model.VerifyPaymentRequest
 import com.ijs.subscription.domain.entity.BillingInterval
@@ -15,6 +16,7 @@ import com.ijs.subscription.domain.entity.OnboardingStatus
 import com.ijs.subscription.domain.entity.PaymentOrder
 import com.ijs.subscription.domain.entity.PaymentResult
 import com.ijs.subscription.domain.entity.Plan
+import com.ijs.subscription.domain.entity.TenantCreateResult
 import com.ijs.subscription.domain.repository.SubscriptionRepository
 
 class SubscriptionRepositoryImpl(
@@ -109,5 +111,26 @@ class SubscriptionRepositoryImpl(
             ?: throw ApiException(response.message ?: "Payment verification failed")
     }.also { result ->
         result.onFailure { logger.e(TAG_SUBSCRIPTION_REPO, "verifyPayment failed: ${it.message}", it) }
+    }
+
+    override suspend fun createTenant(
+        organizationName: String,
+        slug: String
+    ): Result<TenantCreateResult> = runCatching {
+        val token = requireToken()
+        val response = remoteDataSource.createTenant(
+            token,
+            CreateTenantRequest(organizationName = organizationName, slug = slug)
+        )
+        val tenantResult = response.data?.toDomain()
+            ?: throw ApiException(response.message ?: "Failed to create organization")
+
+        userLocalDataSource.saveTenantId(tenantResult.tenantId)
+        if (tenantResult.accessToken.isNotBlank()) {
+            userLocalDataSource.saveAuthToken(tenantResult.accessToken)
+        }
+        tenantResult
+    }.also { result ->
+        result.onFailure { logger.e(TAG_SUBSCRIPTION_REPO, "createTenant failed: ${it.message}", it) }
     }
 }

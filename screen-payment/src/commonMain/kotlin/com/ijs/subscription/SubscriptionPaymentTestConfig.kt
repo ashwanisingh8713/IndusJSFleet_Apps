@@ -8,5 +8,5 @@ package com.ijs.subscription
  * `provider_key` from the server instead.
  */
 object SubscriptionPaymentTestConfig {
-    const val FALLBACK_PROVIDER_KEY_WHEN_EMPTY: String = "rzp_test_SbOIvY47mFiBqR"
+    const val FALLBACK_PROVIDER_KEY_WHEN_EMPTY: String = "rzp_test_SbOh5B6Y2Rcg4K"
 }

@@ -20,3 +20,11 @@ data class VerifyPaymentRequest(
     @SerialName("provider_payment_id") val providerPaymentId: String,
     @SerialName("signature") val signature: String
 )
+
+@Serializable
+data class CreateTenantRequest(
+    @SerialName("organization_name") val organizationName: String,
+    @SerialName("slug") val slug: String,
+    @SerialName("default_language") val defaultLanguage: String = "en",
+    @SerialName("billing_interval") val billingInterval: String = ""
+)

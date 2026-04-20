@@ -24,7 +24,7 @@ import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.filterDigitsOnly
-import com.ijs.team.domain.entity.TeamMemberRole
+import com.ijs.team.domain.entity.AssignableTeamRole
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -61,7 +61,7 @@ fun CreateTeamMemberScreen(
     // Apply excludeGeneralManager filter on first composition
     LaunchedEffect(excludeGeneralManager) {
         if (excludeGeneralManager) {
-            viewModel.sendIntent(CreateTeamMemberContract.Intent.SetExcludeGeneralManager(true))
+            viewModel.sendIntent(CreateTeamMemberContract.Intent.SetExcludeGeneralManager(exclude = true))
         }
     }
 
@@ -113,40 +113,35 @@ fun CreateTeamMemberScreen(
         ) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Role Selection Section
+            // Role Selection — IAM roles from API (admin, user)
             SectionCard(
                 title = stringResource(Res.string.team_select_role_title),
                 subtitle = stringResource(Res.string.team_select_role_subtitle)
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    state.availableRoles.forEach { role ->
-                        val (title, emoji, description) = when (role) {
-                            TeamMemberRole.GENERAL_MANAGER -> Triple(
-                                stringResource(Res.string.team_role_general_manager),
-                                "👨‍💼",
-                                stringResource(Res.string.team_role_gm_desc)
-                            )
-                            TeamMemberRole.MANAGER -> Triple(
-                                stringResource(Res.string.team_role_manager),
-                                "👔",
-                                stringResource(Res.string.team_role_manager_desc)
-                            )
-                            TeamMemberRole.SUPERVISOR -> Triple(
-                                stringResource(Res.string.team_role_supervisor),
-                                "👷",
-                                stringResource(Res.string.team_role_supervisor_desc)
+                if (state.rolesLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        state.availableIamRoles.forEach { role ->
+                            val (title, emoji, description) = iamRoleCardContent(role)
+                            RoleSelectionCard(
+                                title = title,
+                                emoji = emoji,
+                                description = description,
+                                isSelected = state.selectedIamRoleName == role.name,
+                                onClick = {
+                                    viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectIamRole(role.name))
+                                },
+                                enabled = !state.isLoading
                             )
                         }
-                        RoleSelectionCard(
-                            title = title,
-                            emoji = emoji,
-                            description = description,
-                            isSelected = state.selectedRole == role,
-                            onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectRole(role)) },
-                            enabled = !state.isLoading
-                        )
                     }
                 }
             }
@@ -386,12 +381,8 @@ fun CreateTeamMemberScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    val roleText = when (state.selectedRole) {
-                        TeamMemberRole.GENERAL_MANAGER -> stringResource(Res.string.team_role_general_manager)
-                        TeamMemberRole.MANAGER -> stringResource(Res.string.team_role_manager)
-                        TeamMemberRole.SUPERVISOR -> stringResource(Res.string.team_role_supervisor)
-                    }
-                    Text(stringResource(Res.string.team_create_button, roleText), fontWeight = FontWeight.SemiBold)
+                    val roleTitle = iamRoleTitle(state.selectedIamRoleName)
+                    Text(stringResource(Res.string.team_create_button, roleTitle), fontWeight = FontWeight.SemiBold)
                 }
             }
 
@@ -399,6 +390,37 @@ fun CreateTeamMemberScreen(
         }
     }
 }
+
+@Composable
+private fun iamRoleTitle(roleName: String): String = when (roleName.lowercase()) {
+    "admin" -> stringResource(Res.string.team_iam_role_admin_title)
+    "user" -> stringResource(Res.string.team_iam_role_user_title)
+    else -> roleName.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+}
+
+@Composable
+private fun iamRoleDescription(roleName: String, apiDescription: String): String =
+    apiDescription.ifBlank {
+        when (roleName.lowercase()) {
+            "admin" -> stringResource(Res.string.team_iam_role_admin_desc)
+            "user" -> stringResource(Res.string.team_iam_role_user_desc)
+            else -> ""
+        }
+    }
+
+@Composable
+private fun iamRoleEmoji(roleName: String): String = when (roleName.lowercase()) {
+    "admin" -> "🛡️"
+    "user" -> "👤"
+    else -> "👤"
+}
+
+@Composable
+private fun iamRoleCardContent(role: AssignableTeamRole): Triple<String, String, String> = Triple(
+    iamRoleTitle(role.name),
+    iamRoleEmoji(role.name),
+    iamRoleDescription(role.name, role.description)
+)
 
 /**
  * Section card wrapper with title and subtitle.

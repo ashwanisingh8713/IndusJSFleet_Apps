@@ -660,7 +660,8 @@
     <string name="error_mobile_10_digits">Enter 10-digit mobile number</string>
     <string name="error_mobile_start_digit">Mobile must start with 6, 7, 8, or 9</string>
     <string name="error_password_required">Please enter a password</string>
-    <string name="error_password_min_chars">Password must be at least 6 characters</string>
+    <string name="error_password_min_chars">Password must be at least 8 characters</string>
+    <string name="error_password_contains_name">Password must not contain your name or email</string>
     <string name="error_confirm_password_required">Please confirm your password</string>
     <string name="error_passwords_mismatch">Passwords do not match</string>
     <string name="error_current_password_required">Please enter your current password</string>
@@ -1352,6 +1353,10 @@
     <string name="team_save_changes">Save Changes</string>
     <string name="team_select_role_title">Select role</string>
     <string name="team_select_role_subtitle">Choose the team member\'s role and permissions</string>
+    <string name="team_iam_role_admin_title">Administrator</string>
+    <string name="team_iam_role_admin_desc">Full control to manage users, permissions, and sensitive operations for your organization.</string>
+    <string name="team_iam_role_user_title">Team member</string>
+    <string name="team_iam_role_user_desc">Standard access for day-to-day fleet work—vehicles, trips, and assigned tasks—without admin controls.</string>
     <string name="team_role_general_manager">General manager</string>
     <string name="team_role_manager">Manager</string>
     <string name="team_role_supervisor">Supervisor</string>
@@ -1937,4 +1942,31 @@
     <string name="finance_row_monthly_emi_plain">Monthly EMI</string>
     <string name="finance_row_total_interest_plain">Total Interest</string>
     <string name="finance_row_total_payable_plain">Total Payable</string>
+
+    <!-- ==================== Onboarding Steps ==================== -->
+    <string name="step_payment">Payment</string>
+    <string name="step_organization">Organization</string>
+    <string name="step_dashboard">Dashboard</string>
+
+    <!-- ==================== Payment Success Screen ==================== -->
+    <string name="payment_success_title">Payment Successful!</string>
+    <string name="payment_success_subtitle">Your subscription is now active</string>
+    <string name="payment_success_cd">Payment successful</string>
+    <string name="payment_receipt_paid">Paid</string>
+    <string name="payment_receipt_plan">Plan</string>
+    <string name="payment_receipt_amount">Amount</string>
+    <string name="payment_receipt_status">Status</string>
+    <string name="payment_receipt_confirmed">Confirmed</string>
+    <string name="payment_success_welcome">Welcome to IndusJS Fleet!</string>
+    <string name="payment_success_next_step">Let\u2019s set up your organization next.</string>
+    <string name="payment_success_setup_org">Set Up Organization</string>
+
+    <!-- ==================== Create Organization Screen ==================== -->
+    <string name="create_org_title">Set Up Your Organization</string>
+    <string name="create_org_description">Your Organization is the command center for everything \u2014 vehicles, drivers, trips, payments, customers, team members, and real-time insights, all under one roof.</string>
+    <string name="create_org_cta_hint">Give it a name and you\u2019re ready to roll.</string>
+    <string name="create_org_name_label">Organization Name</string>
+    <string name="create_org_name_placeholder">e.g. Sharma Transport Co.</string>
+    <string name="create_org_name_supporting">This is how your company will appear across the app</string>
+    <string name="create_org_button">Create &amp; Continue</string>
 </resources>

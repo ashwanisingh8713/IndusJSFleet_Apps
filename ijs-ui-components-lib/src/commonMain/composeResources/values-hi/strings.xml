@@ -656,7 +656,8 @@
     <string name="error_mobile_10_digits">10 अंकों का मोबाइल नंबर दर्ज करें</string>
     <string name="error_mobile_start_digit">मोबाइल 6, 7, 8, या 9 से शुरू होना चाहिए</string>
     <string name="error_password_required">कृपया पासवर्ड दर्ज करें</string>
-    <string name="error_password_min_chars">पासवर्ड कम से कम 6 अक्षर का होना चाहिए</string>
+    <string name="error_password_min_chars">पासवर्ड कम से कम 8 अक्षर का होना चाहिए</string>
+    <string name="error_password_contains_name">पासवर्ड में आपका नाम या ईमेल नहीं होना चाहिए</string>
     <string name="error_confirm_password_required">कृपया अपने पासवर्ड की पुष्टि करें</string>
     <string name="error_passwords_mismatch">पासवर्ड मेल नहीं खाते</string>
     <string name="error_current_password_required">कृपया अपना वर्तमान पासवर्ड दर्ज करें</string>
@@ -1306,6 +1307,10 @@
     <string name="team_save_changes">परिवर्तन सहेजें</string>
     <string name="team_select_role_title">भूमिका चुनें</string>
     <string name="team_select_role_subtitle">टीम सदस्य की भूमिका और अनुमतियां चुनें</string>
+    <string name="team_iam_role_admin_title">प्रशासक</string>
+    <string name="team_iam_role_admin_desc">उपयोगकर्ता, अनुमतियां और संवेदनशील संचालन प्रबंधित करने के लिए पूर्ण नियंत्रण।</string>
+    <string name="team_iam_role_user_title">टीम सदस्य</string>
+    <string name="team_iam_role_user_desc">दैनिक बेड़ा कार्य—वाहन, ट्रिप और असाइन किए गए कार्य—बिना प्रशासक नियंत्रण के।</string>
     <string name="team_role_general_manager">महा प्रबंधक</string>
     <string name="team_role_manager">प्रबंधक</string>
     <string name="team_role_supervisor">पर्यवेक्षक</string>
@@ -1893,4 +1898,31 @@
     <string name="finance_row_monthly_emi_plain">मासिक EMI</string>
     <string name="finance_row_total_interest_plain">कुल ब्याज</string>
     <string name="finance_row_total_payable_plain">कुल देय</string>
+
+    <!-- ==================== Onboarding Steps ==================== -->
+    <string name="step_payment">भुगतान</string>
+    <string name="step_organization">संगठन</string>
+    <string name="step_dashboard">डैशबोर्ड</string>
+
+    <!-- ==================== Payment Success Screen ==================== -->
+    <string name="payment_success_title">भुगतान सफल!</string>
+    <string name="payment_success_subtitle">आपकी सदस्यता अब सक्रिय है</string>
+    <string name="payment_success_cd">भुगतान सफल</string>
+    <string name="payment_receipt_paid">भुगतान हुआ</string>
+    <string name="payment_receipt_plan">प्लान</string>
+    <string name="payment_receipt_amount">राशि</string>
+    <string name="payment_receipt_status">स्थिति</string>
+    <string name="payment_receipt_confirmed">पुष्टि हुई</string>
+    <string name="payment_success_welcome">IndusJS Fleet में आपका स्वागत है!</string>
+    <string name="payment_success_next_step">अब अपना संगठन सेट करें।</string>
+    <string name="payment_success_setup_org">संगठन सेट करें</string>
+
+    <!-- ==================== Create Organization Screen ==================== -->
+    <string name="create_org_title">अपना संगठन सेट करें</string>
+    <string name="create_org_description">आपका संगठन सब कुछ का कमांड सेंटर है \u2014 वाहन, ड्राइवर, ट्रिप, भुगतान, ग्राहक, टीम सदस्य और रियल-टाइम इनसाइट्स, सब एक ही जगह।</string>
+    <string name="create_org_cta_hint">बस एक नाम दें और शुरू हो जाएँ।</string>
+    <string name="create_org_name_label">संगठन का नाम</string>
+    <string name="create_org_name_placeholder">उदा. शर्मा ट्रांसपोर्ट कं.</string>
+    <string name="create_org_name_supporting">ऐप में आपकी कंपनी इसी नाम से दिखेगी</string>
+    <string name="create_org_button">बनाएँ और आगे बढ़ें</string>
 </resources>

@@ -5,6 +5,8 @@ import com.ijs.subscription.domain.entity.BillingInterval
 import com.ijs.subscription.domain.entity.Plan
 import com.ijs.subscription.presentation.checkout.PaymentCheckoutScreen
 import com.ijs.subscription.presentation.checkout.PaymentCheckoutViewModel
+import com.ijs.subscription.presentation.organization.CreateOrganizationScreen
+import com.ijs.subscription.presentation.organization.CreateOrganizationViewModel
 import com.ijs.subscription.presentation.plans.PlansScreen
 import com.ijs.subscription.presentation.plans.PlansViewModel
 import com.ijs.subscription.presentation.platform.RazorpayLauncher
@@ -58,6 +60,19 @@ object SubscriptionFeatureFacade {
             amount = amount,
             currency = currency,
             onContinue = onContinue
+        )
+    }
+
+    @Composable
+    fun CreateOrganizationEntry(
+        viewModel: CreateOrganizationViewModel,
+        onOrganizationCreated: () -> Unit,
+        onSkipToTeamMember: () -> Unit
+    ) {
+        CreateOrganizationScreen(
+            viewModel = viewModel,
+            onOrganizationCreated = onOrganizationCreated,
+            onSkipToTeamMember = onSkipToTeamMember
         )
     }
 }

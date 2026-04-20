@@ -86,7 +86,9 @@ fun App(
                     initialRoute = when (gate) {
                         SubscriptionGateResult.RequiresPlanSelection,
                         SubscriptionGateResult.RequiresPayment ->
-                            FleetRoute.SubscriptionPlans(isRenewal = gate == SubscriptionGateResult.RequiresPayment)
+                            FleetRoute.SubscriptionPlans(isPaymentPending = gate == SubscriptionGateResult.RequiresPayment)
+                        SubscriptionGateResult.RequiresTenantCreation ->
+                            FleetRoute.CreateOrganization
                         SubscriptionGateResult.NoGate -> FleetRoute.Dashboard
                     }
                 } else {

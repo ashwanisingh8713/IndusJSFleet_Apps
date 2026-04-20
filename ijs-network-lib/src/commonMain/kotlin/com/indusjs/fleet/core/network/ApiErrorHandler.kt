@@ -88,9 +88,16 @@ object ApiErrorHandler {
                 return messageField
             }
 
-            // Try new v1 'errorMessage' field
+            // Try 'developerMessage' which carries the actual IAM/backend error detail
+            val developerMessage = jsonObject["developerMessage"]?.jsonPrimitive?.contentOrNull
+            if (!developerMessage.isNullOrBlank() && developerMessage != "null") {
+                return developerMessage
+            }
+
+            // Try new v1 'errorMessage' field (skip if it looks like a code e.g. "internal_error")
             val errorMessageField = jsonObject["errorMessage"]?.jsonPrimitive?.contentOrNull
-            if (!errorMessageField.isNullOrBlank() && errorMessageField != "null") {
+            if (!errorMessageField.isNullOrBlank() && errorMessageField != "null"
+                && !errorMessageField.contains('_')) {
                 return errorMessageField
             }
 

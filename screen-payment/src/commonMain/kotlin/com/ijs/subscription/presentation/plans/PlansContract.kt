@@ -7,6 +7,14 @@ import com.indusjs.uicomponents.components.UiText
 import com.ijs.subscription.domain.entity.BillingInterval
 import com.ijs.subscription.domain.entity.Plan
 
+/**
+ * Determines the hero copy and CTA tone on the Plans screen.
+ *
+ * [CHOOSE] — first-time user picking a plan.
+ * [COMPLETE_PAYMENT] — user selected a plan but hasn't paid yet.
+ */
+enum class PlanPageMode { CHOOSE, COMPLETE_PAYMENT }
+
 object PlansContract {
 
     data class State(
@@ -17,7 +25,7 @@ object PlansContract {
         val preSelectedPlan: Plan? = null,
         val isConfirming: Boolean = false,
         val error: UiText? = null,
-        val isRenewal: Boolean = false
+        val pageMode: PlanPageMode = PlanPageMode.CHOOSE
     ) : UiState
 
     sealed interface Intent : UiIntent {

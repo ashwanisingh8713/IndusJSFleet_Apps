@@ -19,8 +19,8 @@ class PlansViewModel(
     private val getPlansUseCase: GetPlansUseCase,
     private val getOnboardingStatusUseCase: GetOnboardingStatusUseCase,
     private val selectPlanUseCase: SelectPlanUseCase,
-    private val isRenewal: Boolean = false
-) : MviViewModel<State, Intent, Effect>(State(isRenewal = isRenewal)) {
+    private val pageMode: PlanPageMode = PlanPageMode.CHOOSE
+) : MviViewModel<State, Intent, Effect>(State(pageMode = pageMode)) {
 
     init {
         sendIntent(Intent.LoadPlans)

@@ -42,12 +42,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -65,7 +63,6 @@ import com.ijs.subscription.presentation.plans.PlansContract.Intent
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_check
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -138,6 +135,15 @@ private fun PlansContent(
 ) {
     val listState = rememberLazyListState()
 
+    // Auto-scroll to the initially selected plan so it's visible on load
+    val selectedPlanId = state.selectedPlan?.id
+    LaunchedEffect(selectedPlanId, state.plans) {
+        if (selectedPlanId != null && state.plans.isNotEmpty()) {
+            val idx = state.plans.indexOfFirst { it.id == selectedPlanId }
+            if (idx > 0) listState.animateScrollToItem(idx)
+        }
+    }
+
     // Track which card is most visible (centred)
     val centredIndex by remember {
         derivedStateOf {
@@ -163,7 +169,7 @@ private fun PlansContent(
 
             // ── Hero header ──────────────────────────────────────
             HeroHeader(
-                isRenewal = state.isRenewal,
+                pageMode = state.pageMode,
                 onLogout = onLogout
             )
 
@@ -239,7 +245,7 @@ private fun PlansContent(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun HeroHeader(isRenewal: Boolean, onLogout: () -> Unit) {
+private fun HeroHeader(pageMode: PlanPageMode, onLogout: () -> Unit) {
     val primary = MaterialTheme.colorScheme.primary
     val primaryVariant = MaterialTheme.colorScheme.primaryContainer
     Box(
@@ -268,6 +274,13 @@ private fun HeroHeader(isRenewal: Boolean, onLogout: () -> Unit) {
                 }
             }
 
+            val (headline, subtitle) = when (pageMode) {
+                PlanPageMode.CHOOSE -> "Choose Your Plan" to
+                        "Powerful fleet management tools.\nCancel anytime. No hidden fees."
+                PlanPageMode.COMPLETE_PAYMENT -> "Complete Your Purchase" to
+                        "You're almost there!\nComplete payment to start managing your fleet."
+            }
+
             // Headline
             Column(
                 modifier = Modifier
@@ -276,17 +289,14 @@ private fun HeroHeader(isRenewal: Boolean, onLogout: () -> Unit) {
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = if (isRenewal) "Renew Your Plan" else "Choose Your Plan",
+                    text = headline,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = if (isRenewal)
-                        "Your subscription has expired.\nPick a plan to continue managing your fleet."
-                    else
-                        "Powerful fleet management tools.\nCancel anytime. No hidden fees.",
+                    text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.80f),
                     lineHeight = 22.sp

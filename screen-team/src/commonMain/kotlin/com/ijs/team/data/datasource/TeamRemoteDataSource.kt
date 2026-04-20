@@ -2,6 +2,7 @@ package com.ijs.team.data.datasource
 
 import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.fleet.core.network.ApiErrorHandler
+import com.ijs.team.data.model.AssignableRolesApiResponse
 import com.ijs.team.data.model.CreateTeamMemberRequest
 import com.ijs.team.data.model.ResetPasswordRequest
 import com.ijs.team.data.model.TeamMemberApiResponse
@@ -33,6 +34,7 @@ import kotlinx.serialization.json.Json
  * Remote data source for team management API calls.
  */
 interface TeamRemoteDataSource {
+    suspend fun getAssignableTeamRoles(token: String): AssignableRolesApiResponse
     suspend fun createTeamMember(token: String, request: CreateTeamMemberRequest): TeamMemberApiResponse
     suspend fun getTeamMembers(token: String, role: String? = null): TeamMemberListApiResponse
     suspend fun getTeamMember(token: String, id: String): TeamMemberApiResponse
@@ -62,6 +64,20 @@ class TeamRemoteDataSourceImpl(
 
     companion object {
         private const val TEAM_MEMBERS_ENDPOINT = "/team/members"
+        private const val TEAM_MEMBER_ROLES_ENDPOINT = "/team/members/roles"
+    }
+
+    override suspend fun getAssignableTeamRoles(token: String): AssignableRolesApiResponse {
+        return try {
+            logger.d(TAG_TEAM_REMOTE_DS, "Fetching assignable team member IAM roles")
+            val response: HttpResponse = httpClient.get("$baseUrl$TEAM_MEMBER_ROLES_ENDPOINT") {
+                header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            handleAssignableRolesResponse(response)
+        } catch (e: Exception) {
+            logger.e(TAG_TEAM_REMOTE_DS, "Get assignable roles failed: ${e.message}", e)
+            AssignableRolesApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
     }
 
     override suspend fun createTeamMember(token: String, request: CreateTeamMemberRequest): TeamMemberApiResponse {
@@ -162,6 +178,25 @@ class TeamRemoteDataSourceImpl(
         } catch (e: Exception) {
             logger.e(TAG_TEAM_REMOTE_DS, "Delete team member failed: ${e.message}", e)
             TeamSimpleApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    private suspend fun handleAssignableRolesResponse(response: HttpResponse): AssignableRolesApiResponse {
+        val raw = try {
+            response.bodyAsText()
+        } catch (e: Exception) {
+            logger.e(TAG_TEAM_REMOTE_DS, "Failed to read assignable roles body", e)
+            return AssignableRolesApiResponse(success = false, message = "Failed to read response body")
+        }
+        logger.d(TAG_TEAM_REMOTE_DS, "Assignable roles status: ${response.status}, body: $raw")
+        if (!response.status.isSuccess()) {
+            return AssignableRolesApiResponse(success = false, message = parseErrorMessage(response.status, raw))
+        }
+        return try {
+            json.decodeFromString<AssignableRolesApiResponse>(raw)
+        } catch (e: Exception) {
+            logger.e(TAG_TEAM_REMOTE_DS, "Failed to parse assignable roles: $raw", e)
+            AssignableRolesApiResponse(success = false, message = "Failed to parse response: ${e.message}")
         }
     }
 

@@ -3,6 +3,7 @@ package com.ijs.subscription.data.mapper
 import com.ijs.subscription.data.model.FeatureLimitDto
 import com.ijs.subscription.data.model.OnboardingStatusDto
 import com.ijs.subscription.data.model.PaymentOrderDto
+import com.ijs.subscription.data.model.CreateTenantResponseDto
 import com.ijs.subscription.data.model.PaymentVerifyResponseDto
 import com.ijs.subscription.data.model.PlanDto
 import com.ijs.subscription.domain.entity.FeatureLimit
@@ -11,6 +12,7 @@ import com.ijs.subscription.domain.entity.OnboardingStep
 import com.ijs.subscription.domain.entity.PaymentOrder
 import com.ijs.subscription.domain.entity.PaymentResult
 import com.ijs.subscription.domain.entity.Plan
+import com.ijs.subscription.domain.entity.TenantCreateResult
 
 object SubscriptionMapper {
 
@@ -45,7 +47,9 @@ object SubscriptionMapper {
         paymentDone = paymentDone,
         selectedPlan = selectedPlan?.toDomain(),
         paymentRequired = paymentRequired,
-        readyToCreateTenant = readyToCreateTenant
+        readyToCreateTenant = readyToCreateTenant,
+        tenantCreated = tenantCreated,
+        tenantId = tenantId
     )
 
     fun PaymentOrderDto.toDomain(): PaymentOrder = PaymentOrder(
@@ -70,5 +74,11 @@ object SubscriptionMapper {
         planName = planName,
         subscriptionId = subscriptionId,
         message = message
+    )
+
+    fun CreateTenantResponseDto.toDomain(): TenantCreateResult = TenantCreateResult(
+        tenantId = tenantId,
+        accessToken = accessToken,
+        refreshToken = refreshToken
     )
 }

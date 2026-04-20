@@ -110,7 +110,10 @@ import com.ijs.subscription.domain.usecase.CreatePaymentOrderUseCase
 import com.ijs.subscription.domain.usecase.GetOnboardingStatusUseCase
 import com.ijs.subscription.domain.usecase.GetPlansUseCase
 import com.ijs.subscription.domain.usecase.SelectPlanUseCase
+import com.ijs.subscription.domain.usecase.CreateTenantUseCase
 import com.ijs.subscription.domain.usecase.VerifyPaymentUseCase
+import com.ijs.subscription.presentation.organization.CreateOrganizationViewModel
+import com.ijs.subscription.presentation.plans.PlanPageMode
 import com.ijs.subscription.presentation.plans.PlansViewModel
 import com.ijs.subscription.presentation.checkout.PaymentCheckoutViewModel
 import com.russhwolf.settings.Settings
@@ -333,6 +336,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private val selectPlanUseCase by lazy { SelectPlanUseCase(subscriptionRepository) }
     private val createPaymentOrderUseCase by lazy { CreatePaymentOrderUseCase(subscriptionRepository) }
     private val verifyPaymentUseCase by lazy { VerifyPaymentUseCase(subscriptionRepository) }
+    private val createTenantUseCase by lazy { CreateTenantUseCase(subscriptionRepository) }
 
     // App Initializer - handles one-time initialization tasks
     val appInitializer: AppInitializer by lazy {
@@ -459,7 +463,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
 
     override fun teamListViewModel() = TeamListViewModel(dispatcherProvider, teamRepository, userLocalDataSource)
 
-    override fun createTeamMemberViewModel() = CreateTeamMemberViewModel(dispatcherProvider, teamRepository, userLocalDataSource)
+    override fun createTeamMemberViewModel() = CreateTeamMemberViewModel(dispatcherProvider, teamRepository)
 
     override fun teamMemberDetailViewModel() =
         TeamMemberDetailViewModel(dispatcherProvider, teamRepository, userLocalDataSource, fleetLogger)
@@ -529,12 +533,16 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     override fun vehicleFinanceViewModel() = VehicleFinanceViewModel(vehicleRepository, vehicleFinanceRepository, dispatcherProvider, fleetLogger)
 
     // Subscription / Billing ViewModels
-    override fun subscriptionPlansViewModel(isRenewal: Boolean) = PlansViewModel(
-        dispatcherProvider, getPlansUseCase, getOnboardingStatusUseCase, selectPlanUseCase, isRenewal
+    override fun subscriptionPlansViewModel(pageMode: PlanPageMode) = PlansViewModel(
+        dispatcherProvider, getPlansUseCase, getOnboardingStatusUseCase, selectPlanUseCase, pageMode
     )
 
     override fun subscriptionCheckoutViewModel() = PaymentCheckoutViewModel(
         dispatcherProvider, createPaymentOrderUseCase, verifyPaymentUseCase
+    )
+
+    override fun createOrganizationViewModel() = CreateOrganizationViewModel(
+        dispatcherProvider, createTenantUseCase
     )
 
     /**
@@ -542,17 +550,31 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
      * before accessing the main Dashboard. Called from App.kt startup.
      */
     override suspend fun checkSubscriptionGate(): SubscriptionGateResult {
+        val localTenantId = userLocalDataSource.getTenantId()
+        val hasTenantLocally = !localTenantId.isNullOrBlank()
         return try {
             val result = getOnboardingStatusUseCase()
-            val status = result.getOrNull() ?: return SubscriptionGateResult.NoGate
+            val status = result.getOrNull()
+                ?: return if (!hasTenantLocally) SubscriptionGateResult.RequiresTenantCreation else SubscriptionGateResult.NoGate
+
+            // Server confirms tenant already exists — restore local state if missing
+            if (status.hasTenantFromServer) {
+                if (!hasTenantLocally) {
+                    userLocalDataSource.saveTenantId(status.tenantId)
+                }
+                return SubscriptionGateResult.NoGate
+            }
+
             when {
                 status.needsPlanSelection -> SubscriptionGateResult.RequiresPlanSelection
                 status.needsPayment -> SubscriptionGateResult.RequiresPayment
+                status.readyToCreateTenant -> SubscriptionGateResult.RequiresTenantCreation
+                status.isComplete && !hasTenantLocally -> SubscriptionGateResult.RequiresTenantCreation
                 else -> SubscriptionGateResult.NoGate
             }
         } catch (e: Exception) {
             fleetLogger.w(TAG, "Subscription gate check failed (non-blocking): ${e.message}")
-            SubscriptionGateResult.NoGate
+            if (!hasTenantLocally) SubscriptionGateResult.RequiresTenantCreation else SubscriptionGateResult.NoGate
         }
     }
 }
@@ -560,5 +582,6 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
 enum class SubscriptionGateResult {
     NoGate,
     RequiresPlanSelection,
-    RequiresPayment
+    RequiresPayment,
+    RequiresTenantCreation
 }

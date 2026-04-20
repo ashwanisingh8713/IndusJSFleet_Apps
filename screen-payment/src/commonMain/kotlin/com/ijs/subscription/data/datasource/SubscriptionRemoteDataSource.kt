@@ -4,6 +4,8 @@ import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.core.network.ApiConfig
 import com.ijs.subscription.TAG_SUBSCRIPTION_REMOTE_DS
 import com.ijs.subscription.data.model.CreatePaymentOrderRequest
+import com.ijs.subscription.data.model.CreateTenantRequest
+import com.ijs.subscription.data.model.CreateTenantResponseDto
 import com.ijs.subscription.data.model.OnboardingStatusDto
 import com.ijs.subscription.data.model.PaymentOrderDto
 import com.ijs.subscription.data.model.PaymentVerifyResponseDto
@@ -18,6 +20,7 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
@@ -27,6 +30,7 @@ interface SubscriptionRemoteDataSource {
     suspend fun selectPlan(token: String, request: SelectPlanRequest): SubscriptionApiResponse<SelectPlanMessageDto>
     suspend fun createPaymentOrder(token: String, request: CreatePaymentOrderRequest): SubscriptionApiResponse<PaymentOrderDto>
     suspend fun verifyPayment(token: String, request: VerifyPaymentRequest): SubscriptionApiResponse<PaymentVerifyResponseDto>
+    suspend fun createTenant(token: String, request: CreateTenantRequest): SubscriptionApiResponse<CreateTenantResponseDto>
 }
 
 class SubscriptionRemoteDataSourceImpl(
@@ -78,6 +82,18 @@ class SubscriptionRemoteDataSourceImpl(
     ): SubscriptionApiResponse<PaymentVerifyResponseDto> {
         logger.d(TAG_SUBSCRIPTION_REMOTE_DS, "POST verify payment order: ${request.orderId}")
         return httpClient.post("$baseUrl${ApiConfig.Endpoints.PAYMENT_VERIFY}") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+    }
+
+    override suspend fun createTenant(
+        token: String,
+        request: CreateTenantRequest
+    ): SubscriptionApiResponse<CreateTenantResponseDto> {
+        logger.d(TAG_SUBSCRIPTION_REMOTE_DS, "POST create tenant: ${request.organizationName}")
+        return httpClient.post("$baseUrl${ApiConfig.Endpoints.CREATE_TENANT}") {
             bearerAuth(token)
             contentType(ContentType.Application.Json)
             setBody(request)

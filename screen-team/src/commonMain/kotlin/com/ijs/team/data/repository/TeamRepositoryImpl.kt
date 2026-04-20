@@ -12,6 +12,7 @@ import com.ijs.team.data.model.CreateTeamMemberRequest
 import com.ijs.team.data.model.ResetPasswordRequest
 import com.ijs.team.data.model.TeamMemberDto
 import com.ijs.team.data.model.UpdateTeamMemberRequest
+import com.ijs.team.domain.entity.AssignableTeamRole
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
 import com.ijs.team.domain.repository.TeamRepository
@@ -29,6 +30,21 @@ class TeamRepositoryImpl(
     private val logger: FleetLogger
 ) : TeamRepository {
 
+    override suspend fun getAssignableTeamRoles(): Result<List<AssignableTeamRole>> = runCatching {
+        val token = requireAuthToken()
+        val response = remoteDataSource.getAssignableTeamRoles(token)
+        if (!response.success || response.data == null) {
+            // Fleet route may not exist yet — UI falls back to default admin/user choices.
+            return@runCatching emptyList()
+        }
+        response.data.roles.map { dto ->
+            AssignableTeamRole(
+                id = dto.id,
+                name = dto.name,
+                description = dto.description
+            )
+        }
+    }
 
     override suspend fun createTeamMember(
         email: String,
@@ -36,7 +52,7 @@ class TeamRepositoryImpl(
         password: String,
         firstName: String,
         lastName: String,
-        role: TeamMemberRole
+        iamRole: String
     ): Result<TeamMember> = runCatching {
         val token = requireAuthToken()
 
@@ -48,7 +64,7 @@ class TeamRepositoryImpl(
                 password = password,
                 firstName = firstName,
                 lastName = lastName,
-                role = role.toApiString()
+                role = mapIamSelectionToCurrentFleetApiRole(iamRole)
             )
         )
 
@@ -220,5 +236,17 @@ class TeamRepositoryImpl(
             userLocalDataSource.getAuthToken()
         }
     }
+
+    /**
+     * Current Fleet API expects `general_manager` | `manager` | `supervisor`.
+     * The Add Member UI uses IAM-style `admin` | `user` until the backend implements
+     * `IndusJSFleet_Apps/Docs/BACKEND_TEAM_MEMBER_IAM_ROLES_SPEC.md`.
+     */
+    private fun mapIamSelectionToCurrentFleetApiRole(iamRole: String): String =
+        when (iamRole.lowercase()) {
+            "admin" -> "manager"
+            "user" -> "supervisor"
+            else -> iamRole
+        }
 }
 
