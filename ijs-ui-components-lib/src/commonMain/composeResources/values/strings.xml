@@ -566,13 +566,19 @@
     <string name="team_no_results">No results found</string>
     <string name="team_no_members_yet">No team members yet</string>
     <string name="team_no_results_message">Try adjusting your search or filters</string>
-    <string name="team_empty_description">Add managers and supervisors to help\nmanage your fleet operations</string>
+    <string name="team_empty_description">Add admins and users to manage operations, customers, payments, and day-to-day fleet work.</string>
     <string name="team_add_member">Add Team Member</string>
+    <string name="team_new_member">New Member</string>
+    <string name="team_overview_title">Team workspace</string>
+    <string name="team_overview_subtitle">%1$d members · %2$d active</string>
     <string name="team_filter_all">All</string>
     <string name="team_filter_gm">GM</string>
     <string name="team_filter_managers">Managers</string>
     <string name="team_filter_supervisors">Supervisors</string>
+    <string name="team_filter_admins">Admins</string>
+    <string name="team_filter_users">Users</string>
     <string name="team_label_total">Total</string>
+    <string name="team_role_owner">Owner</string>
     <string name="team_status_active">Active</string>
     <string name="team_status_inactive">Inactive</string>
     <string name="team_action_disable">Disable</string>
@@ -1299,6 +1305,9 @@
     <string name="driver_create_last_name_placeholder">e.g., Kumar</string>
     <string name="driver_create_license">License Number *</string>
     <string name="driver_create_license_placeholder">e.g., DL-1234567890</string>
+    <string name="driver_create_password_label">Driver login password *</string>
+    <string name="driver_create_password_placeholder">Create a secure password</string>
+    <string name="driver_create_password_supporting">Required by the driver account API. Minimum 8 characters; avoid using the driver name or email.</string>
     <string name="driver_create_address">Address</string>
     <string name="driver_create_address_placeholder">e.g., 123 Main St…</string>
 
@@ -1353,6 +1362,9 @@
     <string name="team_save_changes">Save Changes</string>
     <string name="team_select_role_title">Select role</string>
     <string name="team_select_role_subtitle">Choose the team member\'s role and permissions</string>
+    <string name="team_role_permissions_title">%s permissions</string>
+    <string name="team_iam_role_owner_title">Owner</string>
+    <string name="team_iam_role_owner_desc">Full organization ownership — billing, settings, and all administrative powers. Only one owner per organization.</string>
     <string name="team_iam_role_admin_title">Administrator</string>
     <string name="team_iam_role_admin_desc">Full control to manage users, permissions, and sensitive operations for your organization.</string>
     <string name="team_iam_role_user_title">Team member</string>

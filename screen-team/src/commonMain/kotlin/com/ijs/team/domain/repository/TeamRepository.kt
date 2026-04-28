@@ -45,8 +45,8 @@ interface TeamRepository : Repository {
     /**
      * Update a team member.
      *
-     * **Owner can update:** first_name, last_name, email, mobile, role, is_active
-     * **Manager can update:** first_name, last_name, email, mobile, is_active (Supervisors only)
+     * **Owner can update:** first_name, last_name, email, mobile, role, is_active.
+     * **Admin can update:** user members, subject to backend IAM permissions.
      */
     suspend fun updateTeamMember(
         id: String,
@@ -54,7 +54,7 @@ interface TeamRepository : Repository {
         lastName: String? = null,
         email: String? = null,
         mobile: String? = null,
-        role: TeamMemberRole? = null,  // Owner only
+        role: TeamMemberRole? = null,
         isActive: Boolean? = null
     ): Result<TeamMember>
 

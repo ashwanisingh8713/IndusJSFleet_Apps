@@ -6,6 +6,7 @@ import com.indusjs.fleet.data.datasource.RemoteDataSource
 import com.ijs.driver.data.model.CreateDriverRequest
 import com.ijs.driver.data.model.DriverApiResponse
 import com.ijs.driver.data.model.DriverDto
+import com.ijs.driver.data.model.DriverListDataDto
 import com.ijs.driver.data.model.UpdateDriverRequest
 import com.ijs.driver.data.model.UpdateDriverStatusRequest
 import com.indusjs.fleet.data.model.history.DriverHistoryApiResponse
@@ -142,7 +143,6 @@ class DriverRemoteDataSourceImpl(
     ): DriverApiResponse<DriverDto> {
         return try {
             logger.d(TAG_DRIVER_REMOTE_DS, "Creating driver: ${request.firstName} ${request.lastName}")
-            logger.d(TAG_DRIVER_REMOTE_DS, "Request body: $request")
             val response: HttpResponse = httpClient.post(baseUrl) {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
@@ -227,23 +227,36 @@ class DriverRemoteDataSourceImpl(
 
         return try {
             if (response.status.isSuccess()) {
-                val parsed = json.decodeFromString<DriverApiResponse<List<DriverDto>>>(body)
-                parsed
+                parseSuccessfulListResponse(body)
             } else {
-                val errorResponse = try {
-                    json.decodeFromString<DriverApiResponse<List<DriverDto>>>(body)
-                } catch (e: Exception) {
-                    null
-                }
+                val errorMessage = ApiErrorHandler.extractErrorMessage(response.status, body)
                 DriverApiResponse(
                     success = false,
-                    message = errorResponse?.message ?: "Request failed with status ${response.status}"
+                    message = errorMessage
                 )
             }
         } catch (e: Exception) {
             logger.e(TAG_DRIVER_REMOTE_DS, "Failed to parse list response: ${e.message}", e)
             DriverApiResponse(success = false, message = "Failed to parse response: ${e.message}")
         }
+    }
+
+    private fun parseSuccessfulListResponse(body: String): DriverApiResponse<List<DriverDto>> {
+        val pagedResponse = runCatching {
+            json.decodeFromString<DriverApiResponse<DriverListDataDto>>(body)
+        }.getOrNull()
+
+        if (pagedResponse?.data != null) {
+            val data = pagedResponse.data
+            return DriverApiResponse(
+                success = pagedResponse.success,
+                message = pagedResponse.message,
+                data = data.items,
+                pagination = data.toPagination()
+            )
+        }
+
+        return json.decodeFromString<DriverApiResponse<List<DriverDto>>>(body)
     }
 
     private suspend fun parseSingleResponse(response: HttpResponse): DriverApiResponse<DriverDto> {
@@ -255,9 +268,7 @@ class DriverRemoteDataSourceImpl(
                 val parsed = json.decodeFromString<DriverApiResponse<DriverDto>>(body)
                 parsed
             } else {
-                // Extract the best error message from response
-                val errorMessage = tryExtractErrorMessage(body)
-                    ?: "Request failed with status ${response.status}"
+                val errorMessage = ApiErrorHandler.extractErrorMessage(response.status, body)
 
                 logger.e(TAG_DRIVER_REMOTE_DS, "API error: $errorMessage")
                 DriverApiResponse(
@@ -270,41 +281,6 @@ class DriverRemoteDataSourceImpl(
             DriverApiResponse(success = false, message = "Failed to parse response: ${e.message}")
         }
     }
-
-    /**
-     * Try to extract error message from response body when standard parsing fails.
-     * Uses centralized ApiErrorHandler for consistent error messages.
-     */
-    private fun tryExtractErrorMessage(body: String): String? {
-        if (body.isBlank()) return null
-        return try {
-            val jsonElement = json.parseToJsonElement(body)
-            val jsonObject = jsonElement as? kotlinx.serialization.json.JsonObject ?: return null
-
-            // Try message field first
-            val messageField = jsonObject["message"]?.toString()?.trim('"')
-            if (!messageField.isNullOrBlank() && messageField != "null") {
-                return messageField
-            }
-
-            // Try error field with DB constraint parsing
-            val errorField = jsonObject["error"]?.toString()?.trim('"')
-            if (!errorField.isNullOrBlank() && errorField != "null") {
-                return ApiErrorHandler.parseDbConstraintError(errorField)
-            }
-
-            // Try detail field
-            val detailField = jsonObject["detail"]?.toString()?.trim('"')
-            if (!detailField.isNullOrBlank() && detailField != "null") {
-                return detailField
-            }
-
-            null
-        } catch (e: Exception) {
-            null
-        }
-    }
-
 
     private suspend fun parseDeleteResponse(response: HttpResponse): DriverApiResponse<Unit> {
         val body = response.bodyAsText()

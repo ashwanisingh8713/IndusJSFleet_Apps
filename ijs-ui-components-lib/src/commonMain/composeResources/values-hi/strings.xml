@@ -560,13 +560,19 @@
     <string name="team_no_results">कोई परिणाम नहीं मिला</string>
     <string name="team_no_members_yet">अभी कोई टीम सदस्य नहीं</string>
     <string name="team_no_results_message">अपनी खोज या फ़िल्टर समायोजित करें</string>
-    <string name="team_empty_description">अपने फ्लीट संचालन प्रबंधन में मदद के लिए\nप्रबंधक और पर्यवेक्षक जोड़ें</string>
+    <string name="team_empty_description">संचालन, ग्राहक, भुगतान और रोज़मर्रा के फ्लीट कार्य संभालने के लिए प्रशासक और उपयोगकर्ता जोड़ें।</string>
     <string name="team_add_member">टीम सदस्य जोड़ें</string>
+    <string name="team_new_member">नया सदस्य</string>
+    <string name="team_overview_title">टीम वर्कस्पेस</string>
+    <string name="team_overview_subtitle">%1$d सदस्य · %2$d सक्रिय</string>
     <string name="team_filter_all">सभी</string>
     <string name="team_filter_gm">महा प्रबंधक</string>
     <string name="team_filter_managers">प्रबंधक</string>
     <string name="team_filter_supervisors">पर्यवेक्षक</string>
+    <string name="team_filter_admins">प्रशासक</string>
+    <string name="team_filter_users">उपयोगकर्ता</string>
     <string name="team_label_total">कुल</string>
+    <string name="team_role_owner">मालिक</string>
     <string name="team_status_active">सक्रिय</string>
     <string name="team_status_inactive">निष्क्रिय</string>
     <string name="team_action_disable">अक्षम करें</string>
@@ -1253,6 +1259,9 @@
     <string name="driver_create_last_name_placeholder">जैसे, कुमार</string>
     <string name="driver_create_license">लाइसेंस नंबर *</string>
     <string name="driver_create_license_placeholder">जैसे, DL-1234567890</string>
+    <string name="driver_create_password_label">ड्राइवर लॉगिन पासवर्ड *</string>
+    <string name="driver_create_password_placeholder">सुरक्षित पासवर्ड बनाएं</string>
+    <string name="driver_create_password_supporting">ड्राइवर अकाउंट API के लिए आवश्यक। न्यूनतम 8 अक्षर; ड्राइवर का नाम या ईमेल इस्तेमाल न करें।</string>
     <string name="driver_create_address">पता</string>
     <string name="driver_create_address_placeholder">जैसे, 123 मुख्य सड़क…</string>
 
@@ -1307,6 +1316,9 @@
     <string name="team_save_changes">परिवर्तन सहेजें</string>
     <string name="team_select_role_title">भूमिका चुनें</string>
     <string name="team_select_role_subtitle">टीम सदस्य की भूमिका और अनुमतियां चुनें</string>
+    <string name="team_role_permissions_title">%s अनुमतियां</string>
+    <string name="team_iam_role_owner_title">मालिक</string>
+    <string name="team_iam_role_owner_desc">पूर्ण संगठन स्वामित्व — बिलिंग, सेटिंग्स और सभी प्रशासनिक अधिकार। प्रति संगठन केवल एक मालिक।</string>
     <string name="team_iam_role_admin_title">प्रशासक</string>
     <string name="team_iam_role_admin_desc">उपयोगकर्ता, अनुमतियां और संवेदनशील संचालन प्रबंधित करने के लिए पूर्ण नियंत्रण।</string>
     <string name="team_iam_role_user_title">टीम सदस्य</string>

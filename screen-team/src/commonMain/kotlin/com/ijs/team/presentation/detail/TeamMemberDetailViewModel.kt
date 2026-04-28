@@ -3,11 +3,9 @@ package com.ijs.team.presentation.detail
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.core.mvi.MviViewModel
-import com.indusjs.fleet.core.util.PermissionUtils
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.ijs.team.TAG_TEAM_DETAIL_VM
 import com.ijs.team.domain.entity.TeamMemberRole
-import com.indusjs.fleet.domain.entity.user.UserRole
 import com.ijs.team.domain.repository.TeamRepository
 import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
@@ -82,15 +80,7 @@ class TeamMemberDetailViewModel(
                     ""
                 }
 
-                val creatableRoles = PermissionUtils.getCreatableRoles(userRole)
-                val availableTeamRoles = creatableRoles.mapNotNull {
-                    when (it) {
-                        UserRole.GENERAL_MANAGER -> TeamMemberRole.GENERAL_MANAGER
-                        UserRole.MANAGER -> TeamMemberRole.MANAGER
-                        UserRole.SUPERVISOR -> TeamMemberRole.SUPERVISOR
-                        else -> null
-                    }
-                }
+                val availableTeamRoles = loadEditableRoles()
 
                 val result = teamRepository.getTeamMember(memberId)
 
@@ -99,24 +89,21 @@ class TeamMemberDetailViewModel(
                         val canEditMember = when {
                             member.id == userId -> false
                             userRole.lowercase() == "owner" -> true
-                            userRole.lowercase() == "general_manager" ->
-                                member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
+                            isAdminRole(userRole) -> member.role == TeamMemberRole.SUPERVISOR
                             else -> false
                         }
 
                         val canChangeRoleForMember = when {
                             member.id == userId -> false
                             userRole.lowercase() == "owner" -> true
-                            userRole.lowercase() == "general_manager" ->
-                                member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
+                            isAdminRole(userRole) -> member.role == TeamMemberRole.SUPERVISOR
                             else -> false
                         }
 
                         val canToggleActiveMember = when {
                             member.id == userId -> false
                             userRole.lowercase() == "owner" -> true
-                            userRole.lowercase() == "general_manager" ->
-                                member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
+                            isAdminRole(userRole) -> member.role == TeamMemberRole.SUPERVISOR
                             else -> false
                         }
 
@@ -306,4 +293,25 @@ class TeamMemberDetailViewModel(
         val digitsOnly = mobile.filter { it.isDigit() }
         return digitsOnly.length >= 10
     }
+
+    private suspend fun loadEditableRoles(): List<TeamMemberRole> {
+        val rolesFromApi = teamRepository.getAssignableTeamRoles()
+            .getOrNull()
+            .orEmpty()
+            .mapNotNull { role ->
+                when (role.name.lowercase()) {
+                    "admin" -> TeamMemberRole.MANAGER
+                    "user" -> TeamMemberRole.SUPERVISOR
+                    else -> null
+                }
+            }
+            .distinct()
+
+        return rolesFromApi.ifEmpty {
+            listOf(TeamMemberRole.MANAGER, TeamMemberRole.SUPERVISOR)
+        }
+    }
+
+    private fun isAdminRole(role: String): Boolean =
+        role.lowercase() in setOf("admin", "manager", "general_manager")
 }

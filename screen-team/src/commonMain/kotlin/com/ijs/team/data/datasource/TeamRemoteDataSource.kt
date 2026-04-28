@@ -64,7 +64,7 @@ class TeamRemoteDataSourceImpl(
 
     companion object {
         private const val TEAM_MEMBERS_ENDPOINT = "/team/members"
-        private const val TEAM_MEMBER_ROLES_ENDPOINT = "/team/members/roles"
+        private const val TEAM_MEMBER_ROLES_ENDPOINT = "/team/roles"
     }
 
     override suspend fun getAssignableTeamRoles(token: String): AssignableRolesApiResponse {

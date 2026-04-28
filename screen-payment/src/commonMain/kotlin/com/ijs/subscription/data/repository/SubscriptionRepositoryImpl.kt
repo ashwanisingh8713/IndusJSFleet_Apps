@@ -1,6 +1,8 @@
 package com.ijs.subscription.data.repository
 
 import com.indusjs.error.exception.ApiException
+import com.indusjs.fleet.core.auth.AuthenticationManager
+import com.indusjs.fleet.core.auth.JwtHelper
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
@@ -126,8 +128,18 @@ class SubscriptionRepositoryImpl(
             ?: throw ApiException(response.message ?: "Failed to create organization")
 
         userLocalDataSource.saveTenantId(tenantResult.tenantId)
+
         if (tenantResult.accessToken.isNotBlank()) {
+            val hasTid = JwtHelper.hasTenantContext(tenantResult.accessToken)
+            logger.d(TAG_SUBSCRIPTION_REPO, "createTenant: new access_token received, hasTid=$hasTid")
             userLocalDataSource.saveAuthToken(tenantResult.accessToken)
+        } else {
+            // IAM's IssueTokensForUser likely failed — the old pre-tenant JWT remains.
+            // Force re-login so the next JWT carries the tenant context + owner permissions.
+            logger.e(TAG_SUBSCRIPTION_REPO, "createTenant: access_token is EMPTY — triggering session refresh")
+            AuthenticationManager.emitSessionExpired(
+                "Your organization was created, but the session needs to be refreshed. Please log in again."
+            )
         }
         tenantResult
     }.also { result ->

@@ -556,6 +556,9 @@ private fun EditMemberContent(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
+                RolePermissionPreview(role = state.editRole)
+                Spacer(modifier = Modifier.height(16.dp))
+
                 // Active Status Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -673,9 +676,9 @@ private fun RoleFilterChip(
     modifier: Modifier = Modifier
 ) {
     val icon = when (role) {
-        TeamMemberRole.GENERAL_MANAGER -> "👨‍💼"
-        TeamMemberRole.MANAGER -> "👔"
-        TeamMemberRole.SUPERVISOR -> "👷"
+        TeamMemberRole.GENERAL_MANAGER -> "👑"
+        TeamMemberRole.MANAGER -> "🛡️"
+        TeamMemberRole.SUPERVISOR -> "👤"
     }
     val label = role.localizedDisplayName()
     FilterChip(
@@ -686,6 +689,43 @@ private fun RoleFilterChip(
         enabled = enabled,
         modifier = modifier
     )
+}
+
+@Composable
+private fun RolePermissionPreview(role: TeamMemberRole) {
+    val title = when (role) {
+        TeamMemberRole.GENERAL_MANAGER -> stringResource(Res.string.team_role_owner)
+        TeamMemberRole.MANAGER -> stringResource(Res.string.team_iam_role_admin_title)
+        TeamMemberRole.SUPERVISOR -> stringResource(Res.string.team_iam_role_user_title)
+    }
+    val description = when (role) {
+        TeamMemberRole.GENERAL_MANAGER -> stringResource(Res.string.team_iam_role_owner_desc)
+        TeamMemberRole.MANAGER -> stringResource(Res.string.team_iam_role_admin_desc)
+        TeamMemberRole.SUPERVISOR -> stringResource(Res.string.team_iam_role_user_desc)
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = stringResource(Res.string.team_role_permissions_title, title),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 private fun formatDate(dateString: String): String {

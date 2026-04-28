@@ -85,11 +85,15 @@ class DriverRepositoryImpl(
         }
     }
 
-    override suspend fun createDriver(driver: Driver): Result<Driver> {
+    override suspend fun createDriver(
+        driver: Driver,
+        password: String,
+        caretakerId: Int?
+    ): Result<Driver> {
         return try {
             val token = requireAuthToken()
-            val request = mapper.mapToCreateRequest(driver)
-            logger.d(TAG_DRIVER_REPO, "Creating driver with request: $request")
+            val request = mapper.mapToCreateRequest(driver, password, caretakerId)
+            logger.d(TAG_DRIVER_REPO, "Creating driver: ${driver.firstName} ${driver.lastName}, mobile=${driver.mobile}")
             val response = remoteDataSource.createDriver(token, request)
             logger.d(TAG_DRIVER_REPO, "Create driver response - success: ${response.success}, message: ${response.message}")
 
@@ -107,10 +111,10 @@ class DriverRepositoryImpl(
         }
     }
 
-    override suspend fun updateDriver(driver: Driver): Result<Driver> {
+    override suspend fun updateDriver(driver: Driver, caretakerId: Int?): Result<Driver> {
         return try {
             val token = requireAuthToken()
-            val request = mapper.mapToUpdateRequest(driver)
+            val request = mapper.mapToUpdateRequest(driver, caretakerId)
             val response = remoteDataSource.updateDriver(token, driver.id, request)
 
             val data = response.data

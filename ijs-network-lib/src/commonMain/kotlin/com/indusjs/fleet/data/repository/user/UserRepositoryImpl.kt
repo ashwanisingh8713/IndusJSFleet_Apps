@@ -2,6 +2,7 @@ package com.indusjs.fleet.data.repository.user
 
 import com.indusjs.error.exception.ApiException
 import com.indusjs.fleet.core.auth.AuthTokenHelper
+import com.indusjs.fleet.core.auth.JwtHelper
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.data.datasource.user.UserRemoteDataSource
 import com.indusjs.fleet.data.mapper.user.UserMapper.toDomain
@@ -24,6 +25,8 @@ import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.network.TAG_USER_REPO
 import dev.zacsweers.metro.Inject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Implementation of UserRepository.
@@ -77,7 +80,7 @@ class UserRepositoryImpl(
             ?: throw ApiException(response.message ?: "Login failed")
         val authResult = authData.toDomain()
 
-        val roleToSave = UserRole.toApiString(authResult.user.role)
+        val roleToSave = resolveLoginRole(authData.user.role, authResult.user.role, authResult.token)
         logger.d(TAG_USER_REPO, "Login successful - User: ${authResult.user.email}, Role enum: ${authResult.user.role}, Role to save: '$roleToSave', tenantId: '${authData.user.tenantId}'")
 
         localDataSource.saveAuthToken(authResult.token)
@@ -216,6 +219,30 @@ class UserRepositoryImpl(
     private suspend fun requireAuthToken(): String {
         return AuthTokenHelper.requireAuthTokenOrRedirect {
             localDataSource.getAuthToken()
+        }
+    }
+
+    private fun resolveLoginRole(
+        apiRole: String,
+        fallbackRole: UserRole,
+        token: String
+    ): String {
+        if (apiRole.isNotBlank()) return apiRole
+
+        val globalRoles = JwtHelper.decodeClaims(token)
+            ?.get("global_roles")
+            ?.jsonArray
+            ?.mapNotNull { it.jsonPrimitive.content.takeIf(String::isNotBlank) }
+            .orEmpty()
+
+        return when {
+            globalRoles.any { it.equals("owner", ignoreCase = true) } -> "owner"
+            globalRoles.any { it.equals("admin", ignoreCase = true) } -> "admin"
+            globalRoles.any { it.equals("general_manager", ignoreCase = true) } -> "general_manager"
+            globalRoles.any { it.equals("manager", ignoreCase = true) } -> "manager"
+            globalRoles.any { it.equals("user", ignoreCase = true) } -> "user"
+            globalRoles.any { it.equals("supervisor", ignoreCase = true) } -> "supervisor"
+            else -> UserRole.toApiString(fallbackRole)
         }
     }
 }

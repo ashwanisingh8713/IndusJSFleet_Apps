@@ -13,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -108,6 +107,19 @@ fun TeamListScreen(
                     }
                 },
                 actions = {
+                    if (state.canCreateTeamMember) {
+                        IconButton(
+                            onClick = { viewModel.sendIntent(TeamListContract.Intent.NavigateToCreateMember) },
+                            enabled = !state.isLoading
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_add),
+                                contentDescription = stringResource(Res.string.team_add_member),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                     IconButton(
                         onClick = { viewModel.sendIntent(TeamListContract.Intent.RefreshTeamMembers) },
                         enabled = !state.isRefreshing && !state.isLoading
@@ -132,24 +144,6 @@ fun TeamListScreen(
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
-        },
-        floatingActionButton = {
-            // Only show FAB if user can create team members (Owner or General Manager)
-            if (state.canCreateTeamMember) {
-                ExtendedFloatingActionButton(
-                    onClick = { viewModel.sendIntent(TeamListContract.Intent.NavigateToCreateMember) },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.team_add), fontWeight = FontWeight.Medium)
-                }
-            }
         }
     ) { paddingValues ->
         PullToRefreshBox(
@@ -163,19 +157,11 @@ fun TeamListScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Enhanced Stats Section
-                TeamStatsSection(
-                    generalManagersCount = state.generalManagersCount,
-                    managersCount = state.managersCount,
-                    supervisorsCount = state.supervisorsCount,
-                    totalCount = state.teamMembers.size
-                )
-
                 // Enhanced Filter Tabs
                 EnhancedFilterTabs(
                     selectedFilter = state.selectedFilter,
                     onFilterSelected = { viewModel.sendIntent(TeamListContract.Intent.SelectFilter(it)) },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                 )
 
                 // Search Field
@@ -228,9 +214,9 @@ fun TeamListScreen(
                                 )
                             }
 
-                            // Bottom spacing for FAB
+                            // Bottom spacing
                             item {
-                                Spacer(modifier = Modifier.height(80.dp))
+                                Spacer(modifier = Modifier.height(24.dp))
                             }
                         }
                     }
@@ -256,116 +242,6 @@ fun TeamListScreen(
 }
 
 /**
- * Enhanced stats section with visual cards.
- */
-@Composable
-private fun TeamStatsSection(
-    generalManagersCount: Int,
-    managersCount: Int,
-    supervisorsCount: Int,
-    totalCount: Int
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            StatItem(
-                icon = "🎯",
-                count = generalManagersCount,
-                label = stringResource(Res.string.team_filter_gm),
-                color = MaterialTheme.colorScheme.tertiary
-            )
-
-            // Divider
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(50.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-            )
-
-            StatItem(
-                icon = "👔",
-                count = managersCount,
-                label = stringResource(Res.string.team_filter_managers),
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            // Divider
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(50.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-            )
-
-            StatItem(
-                icon = "👷",
-                count = supervisorsCount,
-                label = stringResource(Res.string.team_filter_supervisors),
-                color = MaterialTheme.colorScheme.secondary
-            )
-
-            // Divider
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(50.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant)
-            )
-
-            StatItem(
-                icon = "👥",
-                count = totalCount,
-                label = stringResource(Res.string.team_label_total),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatItem(
-    icon: String,
-    count: Int,
-    label: String,
-    color: Color
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = icon,
-            style = MaterialTheme.typography.headlineSmall
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = count.toString(),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-/**
  * Enhanced filter tabs with better visual design.
  */
 @Composable
@@ -387,9 +263,8 @@ private fun EnhancedFilterTabs(
                     Text(
                         text = when (filter) {
                             TeamListContract.FilterType.ALL -> stringResource(Res.string.team_filter_all)
-                            TeamListContract.FilterType.GENERAL_MANAGERS -> stringResource(Res.string.team_filter_gm)
-                            TeamListContract.FilterType.MANAGERS -> stringResource(Res.string.team_filter_managers)
-                            TeamListContract.FilterType.SUPERVISORS -> stringResource(Res.string.team_filter_supervisors)
+                            TeamListContract.FilterType.ADMINS -> stringResource(Res.string.team_filter_admins)
+                            TeamListContract.FilterType.USERS -> stringResource(Res.string.team_filter_users)
                         },
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                     )
@@ -398,9 +273,8 @@ private fun EnhancedFilterTabs(
                     Text(
                         text = when (filter) {
                             TeamListContract.FilterType.ALL -> "👥"
-                            TeamListContract.FilterType.GENERAL_MANAGERS -> "🎯"
-                            TeamListContract.FilterType.MANAGERS -> "👔"
-                            TeamListContract.FilterType.SUPERVISORS -> "👷"
+                            TeamListContract.FilterType.ADMINS -> "🛡️"
+                            TeamListContract.FilterType.USERS -> "👤"
                         },
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -491,6 +365,38 @@ private fun EmptyTeamContent(
 /**
  * Enhanced team member card with better visual design and role-based actions.
  */
+@Composable
+private fun MemberStatusBadge(isActive: Boolean) {
+    val color = if (isActive) FleetStatusColors.FleetOnRoute else MaterialTheme.colorScheme.error
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = color.copy(alpha = 0.15f)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = if (isActive) {
+                    stringResource(Res.string.team_status_active)
+                } else {
+                    stringResource(Res.string.team_status_inactive)
+                },
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = color
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EnhancedTeamMemberCard(
@@ -592,6 +498,10 @@ private fun EnhancedTeamMemberCard(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    MemberStatusBadge(isActive = member.isActive)
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -628,43 +538,6 @@ private fun EnhancedTeamMemberCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Status Badge
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = if (member.isActive) {
-                        FleetStatusColors.FleetOnRoute.copy(alpha = 0.15f)
-                    } else {
-                        MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-                    }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (member.isActive) FleetStatusColors.FleetOnRoute
-                                    else MaterialTheme.colorScheme.error
-                                )
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (member.isActive) stringResource(Res.string.team_status_active) else stringResource(Res.string.team_status_inactive),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                            color = if (member.isActive) {
-                                FleetStatusColors.FleetOnRoute
-                            } else {
-                                MaterialTheme.colorScheme.error
-                            }
-                        )
-                    }
-                }
             }
 
             // Actions Menu

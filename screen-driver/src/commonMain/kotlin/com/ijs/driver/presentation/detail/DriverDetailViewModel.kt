@@ -73,12 +73,14 @@ class DriverDetailViewModel(
             is Intent.UpdateLastName -> updateLastName(intent.value)
             is Intent.UpdateEmail -> updateEmail(intent.value)
             is Intent.UpdateMobile -> updateMobile(intent.value)
+            is Intent.UpdateLicenseNumber -> updateState { copy(licenseNumber = intent.value.uppercase()) }
             is Intent.UpdateLicenseType -> updateState { copy(licenseType = intent.type) }
             is Intent.UpdateLicenseExpiry -> updateState { copy(licenseExpiry = intent.value) }
             is Intent.UpdateDateOfBirth -> updateState { copy(dateOfBirth = intent.value) }
             is Intent.UpdateAddress -> updateState { copy(address = intent.value) }
             is Intent.UpdateEmergencyContact -> updateState { copy(emergencyContact = intent.value) }
             is Intent.UpdateBloodGroup -> updateState { copy(bloodGroup = intent.value) }
+            is Intent.UpdateJoiningDate -> updateState { copy(joiningDate = intent.value) }
 
             // Actions
             is Intent.UpdateStatus -> updateStatus(intent.status)
@@ -175,7 +177,8 @@ class DriverDetailViewModel(
                             dateOfBirth = driver.dateOfBirth?.let { formatTimestamp(it) } ?: "",
                             address = driver.address ?: "",
                             emergencyContact = driver.emergencyContact ?: "",
-                            bloodGroup = driver.bloodGroup ?: ""
+                            bloodGroup = driver.bloodGroup ?: "",
+                            joiningDate = driver.joiningDate?.let { formatTimestamp(it) } ?: ""
                         )
                     }
                 }
@@ -213,11 +216,13 @@ class DriverDetailViewModel(
                     email = driver.email,
                     mobile = driver.mobile,
                     licenseType = driver.licenseType,
+                    licenseNumber = driver.licenseNumber,
                     licenseExpiry = formatTimestamp(driver.licenseExpiry),
                     dateOfBirth = driver.dateOfBirth?.let { formatTimestamp(it) } ?: "",
                     address = driver.address ?: "",
                     emergencyContact = driver.emergencyContact ?: "",
                     bloodGroup = driver.bloodGroup ?: "",
+                    joiningDate = driver.joiningDate?.let { formatTimestamp(it) } ?: "",
                     // Clear errors
                     firstNameError = null,
                     lastNameError = null,
@@ -328,15 +333,20 @@ class DriverDetailViewModel(
                 lastName = currentState.lastName.trim(),
                 email = currentState.email.trim(),
                 mobile = currentState.mobile.trim(),
+                licenseNumber = currentState.licenseNumber.trim(),
                 licenseType = currentState.licenseType,
                 licenseExpiry = parseDateToTimestamp(currentState.licenseExpiry),
                 dateOfBirth = currentState.dateOfBirth.takeIf { it.isNotBlank() }?.let { parseDateToTimestamp(it) },
                 address = currentState.address.takeIf { it.isNotBlank() },
                 emergencyContact = currentState.emergencyContact.takeIf { it.isNotBlank() },
-                bloodGroup = currentState.bloodGroup.takeIf { it.isNotBlank() }
+                bloodGroup = currentState.bloodGroup.takeIf { it.isNotBlank() },
+                joiningDate = currentState.joiningDate.takeIf { it.isNotBlank() }?.let { parseDateToTimestamp(it) }
             )
 
-            when (val result = updateDriverUseCase(updatedDriver)) {
+            when (val result = updateDriverUseCase(
+                driver = updatedDriver,
+                caretakerId = currentState.selectedCaretaker?.id
+            )) {
                 is Result.Success -> {
                     updateState {
                         copy(

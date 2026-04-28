@@ -44,7 +44,7 @@ object TeamMemberDetailContract {
         val canToggleActive: Boolean = true
     ) : UiState {
         val isOwner: Boolean get() = currentUserRole.lowercase() == "owner"
-        val isGeneralManager: Boolean get() = currentUserRole.lowercase() == "general_manager"
+        val isAdmin: Boolean get() = currentUserRole.lowercase() in setOf("admin", "manager", "general_manager")
         val isSelf: Boolean get() = member?.id == currentUserId
         val displayName: String get() = member?.fullName.orEmpty()
         val initials: String get() = member?.initials.orEmpty()
@@ -55,7 +55,7 @@ object TeamMemberDetailContract {
             val memberRole = member?.role ?: return false
             return when {
                 isOwner -> true  // Owner can change any role
-                isGeneralManager -> memberRole == TeamMemberRole.MANAGER || memberRole == TeamMemberRole.SUPERVISOR
+                isAdmin -> memberRole == TeamMemberRole.SUPERVISOR
                 else -> false
             }
         }

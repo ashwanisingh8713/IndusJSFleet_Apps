@@ -8,8 +8,11 @@ package com.indusjs.fleet.core.network
  */
 object ApiConfig {
 
-    //const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
-    const val BASE_URL = "http://192.168.1.13:8081/api/v1"
+    /** `IndusJSFleet_GoLang_Backend` branch `Google_Cloud_SQL` (Cloud Run). */
+//    const val BASE_URL = "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2"
+
+    /** `IndusJSFleet_GoLang_Backend` branch `clean-architecture-code-refactoring` (Cloud Run). */
+    const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
 
     /**
      * Google Places API Key for location autocomplete.

@@ -115,6 +115,9 @@ interface ViewModelProvider {
 
     // Subscription gate — called after sign-in to determine the first screen
     suspend fun checkSubscriptionGate(): SubscriptionGateResult
+
+    /** Mark the team setup onboarding step as completed (member created or skipped). */
+    suspend fun markTeamSetupCompleted()
 }
 
 /**

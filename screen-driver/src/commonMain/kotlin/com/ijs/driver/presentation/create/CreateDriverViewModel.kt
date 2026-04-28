@@ -36,6 +36,7 @@ class CreateDriverViewModel(
             is Intent.UpdateFirstName -> updateFirstName(intent.value)
             is Intent.UpdateLastName -> updateLastName(intent.value)
             is Intent.UpdateMobile -> updateMobile(intent.value)
+            is Intent.UpdatePassword -> updatePassword(intent.value)
             is Intent.UpdateLicenseNumber -> updateLicenseNumber(intent.value)
 
             // Optional field updates
@@ -77,6 +78,10 @@ class CreateDriverViewModel(
         updateState { copy(mobile = value, mobileError = error) }
     }
 
+    private fun updatePassword(value: String) {
+        updateState { copy(password = value, passwordError = validatePassword(value)) }
+    }
+
     private fun updateLicenseNumber(value: String) {
         val error = if (value.isBlank()) "License number is required" else null
         updateState { copy(licenseNumber = value.uppercase(), licenseNumberError = error) }
@@ -96,6 +101,15 @@ class CreateDriverViewModel(
         }
     }
 
+    private fun validatePassword(value: String): String? {
+        return when {
+            value.isBlank() -> "Password is required"
+            value.length < 8 -> "Password must be at least 8 characters"
+            passwordContainsIdentity(value) -> "Password must not contain driver name or email"
+            else -> null
+        }
+    }
+
     private fun isValidEmail(email: String): Boolean {
         val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
         return emailRegex.matches(email)
@@ -105,6 +119,7 @@ class CreateDriverViewModel(
         val firstNameError = if (currentState.firstName.isBlank()) "First name is required" else null
         val lastNameError = if (currentState.lastName.isBlank()) "Last name is required" else null
         val mobileError = validateMobile(currentState.mobile)
+        val passwordError = validatePassword(currentState.password)
         val licenseNumberError = if (currentState.licenseNumber.isBlank()) "License number is required" else null
         val licenseExpiryError = if (currentState.licenseExpiry.isBlank()) "License expiry date is required" else null
         val emailError = if (currentState.email.isNotBlank() && !isValidEmail(currentState.email)) "Invalid email format" else null
@@ -114,6 +129,7 @@ class CreateDriverViewModel(
                 firstNameError = firstNameError,
                 lastNameError = lastNameError,
                 mobileError = mobileError,
+                passwordError = passwordError,
                 licenseNumberError = licenseNumberError,
                 licenseExpiryError = licenseExpiryError,
                 emailError = emailError
@@ -121,7 +137,7 @@ class CreateDriverViewModel(
         }
 
         return firstNameError == null && lastNameError == null &&
-                mobileError == null && licenseNumberError == null &&
+                mobileError == null && passwordError == null && licenseNumberError == null &&
                 licenseExpiryError == null && emailError == null
     }
 
@@ -153,7 +169,11 @@ class CreateDriverViewModel(
                     isActive = true
                 )
 
-                when (val result = createDriverUseCase(driver)) {
+                when (val result = createDriverUseCase(
+                    driver = driver,
+                    password = currentState.password,
+                    caretakerId = currentState.selectedCaretaker?.id
+                )) {
                     is Result.Success -> {
                         updateState { copy(isSaving = false) }
                         sendEffect(Effect.ShowSnackbar("Driver created successfully!"))
@@ -206,6 +226,20 @@ class CreateDriverViewModel(
         } catch (_: Exception) {
             0L
         }
+    }
+
+    private fun passwordContainsIdentity(password: String): Boolean {
+        val normalizedPassword = password.lowercase()
+        val identityParts = listOf(
+            currentState.firstName,
+            currentState.lastName,
+            currentState.email.substringBefore("@")
+        )
+
+        return identityParts
+            .map { it.trim().lowercase() }
+            .filter { it.length >= 3 }
+            .any { normalizedPassword.contains(it) }
     }
 
     /**

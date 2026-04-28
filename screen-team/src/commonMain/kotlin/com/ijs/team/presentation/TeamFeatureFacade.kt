@@ -48,12 +48,14 @@ object TeamFeatureFacade {
     fun CreateTeamMemberEntry(
         viewModel: CreateTeamMemberViewModel,
         excludeGeneralManager: Boolean = false,
-        onNavigateBack: () -> Unit
+        onNavigateBack: () -> Unit,
+        onTeamMemberCreated: () -> Unit = {}
     ) {
         CreateTeamMemberScreen(
             viewModel = viewModel,
             excludeGeneralManager = excludeGeneralManager,
-            onNavigateBack = onNavigateBack
+            onNavigateBack = onNavigateBack,
+            onTeamMemberCreated = onTeamMemberCreated
         )
     }
 

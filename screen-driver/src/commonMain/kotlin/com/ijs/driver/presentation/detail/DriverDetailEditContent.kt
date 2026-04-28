@@ -101,13 +101,15 @@ internal fun EditModeContent(
         // License Section
         EditSectionHeader(icon = "🪪", title = "License Details")
 
-        // License number (read-only)
         OutlinedTextField(
             value = state.licenseNumber,
-            onValueChange = { },
+            onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateLicenseNumber(it)) },
             label = { Text(stringResource(Res.string.driver_edit_license_number)) },
             leadingIcon = { Text("🪪", modifier = Modifier.padding(start = 12.dp)) },
-            enabled = false,
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Characters,
+                imeAction = ImeAction.Next
+            ),
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -216,6 +218,20 @@ internal fun EditModeContent(
             label = stringResource(Res.string.driver_overview_emergency_contact),
             placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
             leadingIcon = { Text("🆘", modifier = Modifier.padding(start = 12.dp)) }
+        )
+
+        FleetInputField(
+            value = convertIsoToDdMmYyyyRaw(state.joiningDate),
+            onValueChange = {
+                val filtered = filterDigitsOnly(it, 8)
+                val isoFormatted = if (filtered.length == 8) convertDdMmYyyyToIso(filtered) else filtered
+                viewModel.sendIntent(DriverDetailContract.Intent.UpdateJoiningDate(isoFormatted))
+            },
+            fieldType = FieldType.NUMBER,
+            label = stringResource(Res.string.driver_overview_joining_date),
+            placeholder = stringResource(Res.string.placeholder_dd_mm_yyyy),
+            visualTransformation = dateVisualTransformation,
+            leadingIcon = { Text("📅", modifier = Modifier.padding(start = 12.dp)) }
         )
 
         HorizontalDivider()

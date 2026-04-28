@@ -24,6 +24,7 @@ object CreateDriverContract {
         val firstName: String = "",
         val lastName: String = "",
         val mobile: String = "",
+        val password: String = "",
         val licenseNumber: String = "",
 
         // Optional fields
@@ -40,6 +41,7 @@ object CreateDriverContract {
         val firstNameError: String? = null,
         val lastNameError: String? = null,
         val mobileError: String? = null,
+        val passwordError: String? = null,
         val licenseNumberError: String? = null,
         val licenseExpiryError: String? = null,
         val emailError: String? = null,
@@ -64,11 +66,13 @@ object CreateDriverContract {
             get() = firstName.isNotBlank() &&
                     lastName.isNotBlank() &&
                     mobile.isNotBlank() &&
+                    password.isNotBlank() &&
                     licenseNumber.isNotBlank() &&
                     licenseExpiry.isNotBlank() &&
                     firstNameError == null &&
                     lastNameError == null &&
                     mobileError == null &&
+                    passwordError == null &&
                     licenseNumberError == null &&
                     licenseExpiryError == null &&
                     emailError == null
@@ -85,6 +89,7 @@ object CreateDriverContract {
         data class UpdateFirstName(val value: String) : Intent
         data class UpdateLastName(val value: String) : Intent
         data class UpdateMobile(val value: String) : Intent
+        data class UpdatePassword(val value: String) : Intent
         data class UpdateLicenseNumber(val value: String) : Intent
 
         // Optional field updates

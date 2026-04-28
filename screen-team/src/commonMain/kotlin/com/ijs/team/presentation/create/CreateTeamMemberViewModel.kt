@@ -48,13 +48,18 @@ class CreateTeamMemberViewModel(
     private suspend fun loadAssignableRoles(excludeElevated: Boolean) {
         updateState { copy(rolesLoading = true, error = null) }
         val result = teamRepository.getAssignableTeamRoles()
-        val fromApi = result.getOrNull().orEmpty().let { roles ->
-            if (excludeElevated) {
-                roles.filter { !it.name.equals("owner", ignoreCase = true) }
-            } else {
-                roles
+        val fromApi = result.getOrNull().orEmpty()
+            .filter {
+                it.name.equals("admin", ignoreCase = true) ||
+                    it.name.equals("user", ignoreCase = true)
             }
-        }
+            .let { roles ->
+                if (excludeElevated) {
+                    roles.filter { !it.name.equals("admin", ignoreCase = true) }
+                } else {
+                    roles
+                }
+            }
         val effective = if (fromApi.isNotEmpty()) {
             fromApi
         } else {
@@ -195,7 +200,6 @@ class CreateTeamMemberViewModel(
                         updateState { copy(isLoading = false) }
                         sendEffect(CreateTeamMemberContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.success_team_member_created)))
                         sendEffect(CreateTeamMemberContract.Effect.TeamMemberCreated)
-                        sendEffect(CreateTeamMemberContract.Effect.NavigateBack)
                     },
                     onFailure = { error ->
                         updateState {

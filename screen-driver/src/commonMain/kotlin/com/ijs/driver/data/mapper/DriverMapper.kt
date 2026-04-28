@@ -82,7 +82,12 @@ class DriverMapper {
     /**
      * Maps Driver domain entity to CreateDriverRequest.
      */
-    fun mapToCreateRequest(driver: Driver): CreateDriverRequest = CreateDriverRequest(
+    fun mapToCreateRequest(
+        driver: Driver,
+        password: String,
+        caretakerId: Int? = null
+    ): CreateDriverRequest = CreateDriverRequest(
+        password = password,
         firstName = driver.firstName,
         lastName = driver.lastName,
         email = driver.email.takeIf { it.isNotBlank() },
@@ -94,21 +99,27 @@ class DriverMapper {
         address = driver.address,
         emergencyContact = driver.emergencyContact,
         bloodGroup = driver.bloodGroup,
-        joiningDate = driver.joiningDate?.let { formatTimestamp(it) }
+        joiningDate = driver.joiningDate?.let { formatTimestamp(it) },
+        caretakerId = caretakerId
     )
 
     /**
      * Maps Driver domain entity to UpdateDriverRequest.
      */
-    fun mapToUpdateRequest(driver: Driver): UpdateDriverRequest = UpdateDriverRequest(
+    fun mapToUpdateRequest(driver: Driver, caretakerId: Int? = null): UpdateDriverRequest = UpdateDriverRequest(
         firstName = driver.firstName,
         lastName = driver.lastName,
         email = driver.email.takeIf { it.isNotBlank() },
         mobile = driver.mobile,
+        licenseNumber = driver.licenseNumber,
         licenseExpiry = formatTimestamp(driver.licenseExpiry),
+        licenseType = LicenseType.toApiString(driver.licenseType),
+        dateOfBirth = driver.dateOfBirth?.let { formatTimestamp(it) },
         address = driver.address,
         emergencyContact = driver.emergencyContact,
-        bloodGroup = driver.bloodGroup
+        bloodGroup = driver.bloodGroup,
+        joiningDate = driver.joiningDate?.let { formatTimestamp(it) },
+        caretakerId = caretakerId
     )
 
     /**

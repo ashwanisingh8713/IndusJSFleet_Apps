@@ -44,6 +44,7 @@ object DriverDetailContract {
         val address: String = "",
         val emergencyContact: String = "",
         val bloodGroup: String = "",
+        val joiningDate: String = "",
 
         // Validation errors
         val firstNameError: String? = null,
@@ -168,12 +169,14 @@ object DriverDetailContract {
         data class UpdateLastName(val value: String) : Intent
         data class UpdateEmail(val value: String) : Intent
         data class UpdateMobile(val value: String) : Intent
+        data class UpdateLicenseNumber(val value: String) : Intent
         data class UpdateLicenseType(val type: LicenseType) : Intent
         data class UpdateLicenseExpiry(val value: String) : Intent
         data class UpdateDateOfBirth(val value: String) : Intent
         data class UpdateAddress(val value: String) : Intent
         data class UpdateEmergencyContact(val value: String) : Intent
         data class UpdateBloodGroup(val value: String) : Intent
+        data class UpdateJoiningDate(val value: String) : Intent
 
         // Status update (quick action)
         data class UpdateStatus(val status: DriverStatus) : Intent

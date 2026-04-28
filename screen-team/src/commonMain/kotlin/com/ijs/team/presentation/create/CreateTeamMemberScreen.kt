@@ -42,7 +42,8 @@ import org.jetbrains.compose.resources.stringResource
 fun CreateTeamMemberScreen(
     viewModel: CreateTeamMemberViewModel,
     excludeGeneralManager: Boolean = false,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onTeamMemberCreated: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -73,7 +74,7 @@ fun CreateTeamMemberScreen(
                     pendingSnackbar = effect.message
                 }
                 is CreateTeamMemberContract.Effect.TeamMemberCreated -> {
-                    // Handled by navigation
+                    onTeamMemberCreated()
                 }
                 is CreateTeamMemberContract.Effect.NavigateBack -> {
                     onNavigateBack()

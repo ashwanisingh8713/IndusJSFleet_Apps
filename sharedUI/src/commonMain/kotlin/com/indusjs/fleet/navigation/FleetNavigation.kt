@@ -81,6 +81,8 @@ fun fleetEntryProvider(
                                 backStack.navigateAndClear(FleetRoute.SubscriptionPlans(isPaymentPending = true))
                             SubscriptionGateResult.RequiresTenantCreation ->
                                 backStack.navigateAndClear(FleetRoute.CreateOrganization)
+                            SubscriptionGateResult.RequiresTeamMemberCreation ->
+                                backStack.navigateAndClear(FleetRoute.CreateTeamMember())
                             SubscriptionGateResult.NoGate ->
                                 backStack.navigateAndClear(FleetRoute.Dashboard)
                         }
@@ -401,10 +403,22 @@ fun fleetEntryProvider(
 
         is FleetRoute.CreateTeamMember -> NavEntry(route) {
             val viewModel = rememberViewModel { createTeamMemberViewModel() }
+            val viewModelProvider = LocalViewModelProvider.current
+            val scope = rememberCoroutineScope()
             TeamFeatureFacade.CreateTeamMemberEntry(
                 viewModel = viewModel,
                 excludeGeneralManager = route.excludeGeneralManager,
-                onNavigateBack = { backStack.removeLastOrNull() }
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onTeamMemberCreated = {
+                    scope.launch {
+                        viewModelProvider.markTeamSetupCompleted()
+                        if (backStack.size <= 1) {
+                            backStack.navigateAndClear(FleetRoute.Dashboard)
+                        } else {
+                            backStack.removeLastOrNull()
+                        }
+                    }
+                }
             )
         }
 
@@ -678,13 +692,15 @@ fun fleetEntryProvider(
 
         is FleetRoute.CreateOrganization -> NavEntry(route) {
             val viewModel = rememberViewModel { createOrganizationViewModel() }
+            val viewModelProvider = LocalViewModelProvider.current
+            val scope = rememberCoroutineScope()
             SubscriptionFeatureFacade.CreateOrganizationEntry(
                 viewModel = viewModel,
                 onOrganizationCreated = {
-                    backStack.navigateAndClear(FleetRoute.Dashboard)
-                    backStack.add(FleetRoute.CreateTeamMember())
+                    backStack.navigateAndClear(FleetRoute.CreateTeamMember())
                 },
                 onSkipToTeamMember = {
+                    scope.launch { viewModelProvider.markTeamSetupCompleted() }
                     backStack.navigateAndClear(FleetRoute.Dashboard)
                 }
             )

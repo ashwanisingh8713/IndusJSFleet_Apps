@@ -91,7 +91,7 @@ object ApiErrorHandler {
             // Try 'developerMessage' which carries the actual IAM/backend error detail
             val developerMessage = jsonObject["developerMessage"]?.jsonPrimitive?.contentOrNull
             if (!developerMessage.isNullOrBlank() && developerMessage != "null") {
-                return developerMessage
+                return parseDbConstraintError(developerMessage)
             }
 
             // Try new v1 'errorMessage' field (skip if it looks like a code e.g. "internal_error")
@@ -110,7 +110,7 @@ object ApiErrorHandler {
             // Try detail field (used by some APIs)
             val detailField = jsonObject["detail"]?.jsonPrimitive?.contentOrNull
             if (!detailField.isNullOrBlank() && detailField != "null") {
-                return detailField
+                return parseDbConstraintError(detailField)
             }
 
             null
@@ -133,7 +133,11 @@ object ApiErrorHandler {
 
             // Mobile duplicates
             error.contains("duplicate key", ignoreCase = true) && error.contains("mobile", ignoreCase = true) ->
-                "An account with this mobile number already exists"
+                "A record with this mobile number already exists. Please use a different mobile number."
+
+            // Driver IAM role setup missing in backend/IAM seed data
+            error.contains("role not found in tenant", ignoreCase = true) ->
+                "Driver role is not configured for this organization. Please contact support or backend team."
 
             // License duplicates (for drivers)
             error.contains("duplicate key", ignoreCase = true) && error.contains("license", ignoreCase = true) ->

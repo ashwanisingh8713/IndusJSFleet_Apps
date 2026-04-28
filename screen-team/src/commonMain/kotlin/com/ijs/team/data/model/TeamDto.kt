@@ -9,9 +9,7 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 
 /**
  * Request to create a team member.
- * Current Fleet API: [role] must be `general_manager`, `manager`, or `supervisor`.
- * The app maps UI selections `admin`/`user` to `manager`/`supervisor` until the backend
- * ships IAM-aligned roles (see Docs/BACKEND_TEAM_MEMBER_IAM_ROLES_SPEC.md).
+ * Current Fleet API accepts IAM-aligned role names such as `admin` and `user`.
  */
 @Serializable
 data class CreateTeamMemberRequest(
@@ -25,21 +23,11 @@ data class CreateTeamMemberRequest(
     val role: String
 )
 
-/**
- * One assignable IAM role in Fleet API envelope: data.roles[].
- */
-@JsonIgnoreUnknownKeys
-@Serializable
-data class AssignableRoleDto(
-    val id: String = "",
-    val name: String = "",
-    val description: String = ""
-)
-
 @JsonIgnoreUnknownKeys
 @Serializable
 data class AssignableRolesDataDto(
-    val roles: List<AssignableRoleDto> = emptyList()
+    val roles: List<String> = emptyList(),
+    val count: Int = 0
 )
 
 @JsonIgnoreUnknownKeys
@@ -65,10 +53,10 @@ data class UpdateTeamMemberRequest(
     val lastName: String? = null,
     val email: String? = null,
     val mobile: String? = null,
-    val role: String? = null,  // Owner only - "manager" or "supervisor"
+    val role: String? = null,  // IAM role name: "admin" or "user"
     @SerialName("is_active")
     val isActive: Boolean? = null,
-    val password: String? = null  // Owner and Manager (for Supervisors only)
+    val password: String? = null
 )
 
 /**

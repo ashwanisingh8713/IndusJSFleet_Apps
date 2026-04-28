@@ -1,14 +1,43 @@
 # Backend specification: Team member IAM roles & permissions
 
-This document describes **Fleet API (`IndusJSFleet_GoLang_Backend`) and IAM integration** changes expected by the **IndusJSFleet mobile app** (Kotlin Multiplatform). The app currently adapts to the **legacy** contract (see “App compatibility” below); once the backend implements this spec, the app can send IAM role names directly and rely on the new list-roles endpoint.
+This document describes **Fleet API (`IndusJSFleet_GoLang_Backend`) and IAM integration** changes expected by the **IndusJSFleet mobile app** (Kotlin Multiplatform). The app currently adapts to the **legacy** contract (see "App compatibility" below); once the backend implements this spec, the app can send IAM role names directly and rely on the new list-roles endpoint.
+
+---
+
+## CRITICAL: Token issue after tenant creation (403 on team APIs)
+
+### Problem
+
+After a new owner creates a tenant (organization), the very next API call to `POST /api/v1/team/members` returns **403 "insufficient permissions to create team members"**.
+
+### Root cause analysis
+
+1. **IAM `CreateTenant` handler** (in `tenant_handler.go`) calls `IssueTokensForUser` to return a fresh JWT with the `tid` (tenant_id) claim and the owner role.
+2. If `IssueTokensForUser` **fails** (returns error), the handler **silently** skips adding `access_token` / `refresh_token` to the response. The client keeps the **old pre-tenant JWT** which has **no** `tid` claim and **no** tenant-scoped permissions.
+3. Fleet's `enrichPermissions` in `ExternalIAMClient` calls IAM `GET /api/v1/me/permissions` with the user's token. If this call **fails** (timeout, IAM unreachable, wrong token context), it **silently returns** with **empty** `Permissions` — and `RequireIAMPermission("users:create", …)` denies the request.
+
+### Required backend fixes
+
+1. **IAM `CreateTenant` handler**: If `IssueTokensForUser` fails, **return an error** (or at minimum, log the failure prominently). An empty `access_token` in a 201 response is misleading and leaves the client in an unrecoverable state.
+
+2. **Fleet `enrichPermissions`**: When the permission fetch fails, **log a warning** instead of silently swallowing the error. Consider returning a specific error to the middleware so it can return a more descriptive error (e.g., "permission check unavailable, try again") rather than a flat 403.
+
+3. **Verify `IssueTokensForUser` succeeds reliably**: After the transaction commits the tenant + owner role, the `GetByID` call inside `IssueTokensForUser` must see the updated `user.TenantID`. Ensure there is no read-replica lag or transaction isolation issue causing a stale read.
+
+### App-side mitigations (already implemented)
+
+- The app now decodes the JWT payload locally (`JwtHelper.kt`) and checks for the `tid` claim.
+- After tenant creation: if `access_token` is blank, a session-expired event is emitted so the user re-logs in with a fresh token.
+- Before team member creation: if the stored JWT has no `tid`, the user is prompted to re-login.
+- On 403 "insufficient permissions": the error message asks the user to re-login.
 
 ---
 
 ## Goals
 
-1. **Create team member** with an IAM tenant role **`admin`** or **`user`** (aligned with tenant onboarding in IndusJS-IAM), not only Fleet-local labels `manager` / `supervisor`.
+1. **Create team member** with an IAM tenant role — **`owner`**, **`admin`**, or **`user`** — aligned with tenant onboarding in IndusJS-IAM, not only Fleet-local labels `general_manager` / `manager` / `supervisor`.
 2. Expose **GET assignable roles** from IAM so the client does not hard-code role metadata.
-3. After user creation in IAM, optionally **sync direct user permissions** from the role’s permission list (IAM “manage permissions” behaviour), if product policy requires explicit overrides in addition to role assignment.
+3. After user creation in IAM, **sync direct user permissions** from the role's permission list (IAM "manage permissions" behaviour).
 
 ---
 
@@ -28,7 +57,7 @@ This document describes **Fleet API (`IndusJSFleet_GoLang_Backend`) and IAM inte
 
 **Suggested permission:** Reuse `users:create` (same as creating a member) or `users:read` if product prefers read-only for the picker.
 
-**Response (200):** Standard Fleet success envelope, e.g.:
+**Response (200):** Standard Fleet success envelope:
 
 ```json
 {
@@ -38,13 +67,18 @@ This document describes **Fleet API (`IndusJSFleet_GoLang_Backend`) and IAM inte
     "roles": [
       {
         "id": "<uuid>",
+        "name": "owner",
+        "description": "Organization Owner - Full Access"
+      },
+      {
+        "id": "<uuid>",
         "name": "admin",
         "description": "Administrator - Manage users and content"
       },
       {
         "id": "<uuid>",
         "name": "user",
-        "description": "..."
+        "description": "Standard team member"
       }
     ]
   }
@@ -53,8 +87,9 @@ This document describes **Fleet API (`IndusJSFleet_GoLang_Backend`) and IAM inte
 
 **Implementation notes:**
 
-- Proxy IAM `GET /api/v1/admin/roles` with the **owner’s bearer token** (same pattern as other IAM-proxied calls).
-- Filter to roles assignable to new members (e.g. only `admin` and `user`, exclude `owner`), and return a **stable order** (e.g. `admin` then `user`).
+- Proxy IAM `GET /api/v1/admin/roles` with the **owner's bearer token** (same pattern as other IAM-proxied calls).
+- Return all three tenant roles: `owner`, `admin`, `user` in a **stable order**.
+- The app uses `excludeElevated` logic to hide `owner` when the current user shouldn't be able to assign it (e.g., an admin creating a member).
 
 ---
 
@@ -64,12 +99,18 @@ This document describes **Fleet API (`IndusJSFleet_GoLang_Backend`) and IAM inte
 
 **Request body — `role` field:**
 
-- **New:** `role` must be one of **`admin`**, **`user`** (IAM tenant role names), matching IAM `CreateUserRequest.roles` and tenant role definitions.
-- **Migration:** Deprecate `general_manager` / `manager` / `supervisor` on this endpoint once clients are updated, or accept both during a transition window (not required for KMP app if app only sends `admin`/`user` after backend ships).
+- **New:** `role` must be one of **`owner`**, **`admin`**, **`user`** (IAM tenant role names), matching IAM `CreateUserRequest.roles` and tenant role definitions.
+- **Migration:** Deprecate `general_manager` / `manager` / `supervisor` on this endpoint once clients are updated, or accept both during a transition window.
 
 **Fleet DB mapping (recommended):**
 
-- Keep local `user.role` as today (`manager` / `supervisor` / `general_manager`) for existing permission helpers **or** migrate Fleet domain to IAM names — product decision. Minimum: store a consistent mapping, e.g. `admin` → `manager`, `user` → `supervisor` for backward compatibility with existing middleware.
+| IAM Role | Fleet DB Role     |
+|----------|-------------------|
+| `owner`  | `general_manager` |
+| `admin`  | `manager`         |
+| `user`   | `supervisor`      |
+
+Keep local `user.role` as today for existing permission helpers **or** migrate Fleet domain to IAM names — product decision.
 
 ---
 
@@ -84,7 +125,7 @@ iamReq := iamDomain.CreateUserRequest{
     Password:         req.Password,
     FirstName:        req.FirstName,
     LastName:         req.LastName,
-    Roles:            []string{req.Role}, // "admin" or "user"
+    Roles:            []string{req.Role}, // "owner", "admin", or "user"
     SendVerification: false,
 }
 ```
@@ -93,17 +134,17 @@ Remove the hard-coded `[]string{"user"}`.
 
 ---
 
-## 4. Optional: sync direct permissions after create
+## 4. Sync direct permissions after create (manage permissions)
 
-If business requires calling IAM **assign permission** for each permission on the role (in addition to role assignment on create):
+After successful IAM user creation, sync permissions from the role definition:
 
-1. After successful IAM user create, call **`ListTenantRoles`** (or equivalent) to load the role definition including **`permissions`** with permission IDs.
+1. Call **`ListTenantRoles`** (or equivalent) to load the role definition including **`permissions`** with permission IDs.
 2. For each permission on the selected role, call IAM  
    `POST /api/v1/admin/users/{iamUserId}/permissions`  
    with body `{ "permission_id": "<uuid>", "effect": "allow" }`.
 3. Treat individual failures as non-fatal if duplicates or inherited perms already apply (log + continue).
 
-This mirrors IAM RBAC “manage permissions” for the new user.
+This mirrors IAM RBAC "manage permissions" for the new user.
 
 ---
 
@@ -120,30 +161,39 @@ Types should include role `name`, `description`, and nested `permissions[].id` f
 
 ## 6. Related: change-role endpoint
 
-`PATCH /api/v1/team/members/:id/change-role` currently forces IAM to `"user"` in some implementations. It should map **Fleet role** ↔ **IAM role** consistently (e.g. manager → `admin`, supervisor → `user`) when updating IAM.
+`PATCH /api/v1/team/members/:id/change-role` currently forces IAM to `"user"` in some implementations. It should map **Fleet role** ↔ **IAM role** consistently:
+
+| Fleet Role        | IAM Role |
+|-------------------|----------|
+| `general_manager` | `owner`  |
+| `manager`         | `admin`  |
+| `supervisor`      | `user`   |
 
 ---
 
 ## 7. Tests & route registry
 
 - Register `GET /v1/team/members/roles` **before** `GET /v1/team/members/:id` so `roles` is not captured as an id.
-- Update integration tests: create member body uses `role: "admin"` / `"user"` once the API is live.
+- Update integration tests: create member body uses `role: "owner"` / `"admin"` / `"user"` once the API is live.
 - Update Postman / OpenAPI docs for team module.
 
 ---
 
-## App compatibility (IndusJSFleet_Apps — no backend deploy yet)
+## App compatibility (IndusJSFleet_Apps — current state)
 
 Until the backend ships the above:
 
-- The app calls `GET /api/v1/team/members/roles`; if the route is missing or returns non-success, it **falls back** to a static `admin` / `user` picker.
-- On create, the app maps **`admin` → `manager`**, **`user` → `supervisor`** in `TeamRepositoryImpl` so `POST /team/members` matches the **current** Fleet validation.
+- The app calls `GET /api/v1/team/members/roles`; if the route is missing or returns non-success, it **falls back** to a static `owner` / `admin` / `user` picker.
+- On create, the app maps **`owner` → `general_manager`**, **`admin` → `manager`**, **`user` → `supervisor`** in `TeamRepositoryImpl` so `POST /team/members` matches the **current** Fleet validation.
+- The app verifies the JWT has a `tid` claim before calling any team API. If missing, it prompts re-login.
 
-After the backend implements this document, the app can remove that mapping and send `admin`/`user` in the JSON body directly (coordinate with mobile release).
+After the backend implements this document, the app can remove the mapping and send IAM role names directly (coordinate with mobile release).
 
 ---
 
 ## References (read-only for backend team)
 
-- IndusJS-IAM: tenant onboarding creates tenant roles including `admin` and `user`; `POST /api/v1/users` (admin) accepts `roles: ["admin"]` etc.
+- IndusJS-IAM: tenant onboarding creates `owner`, `admin`, `user` roles; `POST /api/v1/users` (admin) accepts `roles: ["admin"]` etc.
+- IAM `IssueTokensForUser` in `auth_usecase.go` — must succeed after tenant creation for the client to receive the new JWT.
+- IAM `enrichPermissions` in Fleet's `client.go` — silent failure causes 403; consider error propagation.
 - IAM RBAC: `POST /api/v1/admin/users/:id/permissions` for direct permission assignment.

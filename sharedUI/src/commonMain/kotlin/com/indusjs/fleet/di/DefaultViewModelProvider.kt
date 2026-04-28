@@ -545,6 +545,10 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         dispatcherProvider, createTenantUseCase
     )
 
+    override suspend fun markTeamSetupCompleted() {
+        userLocalDataSource.setTeamSetupCompleted(true)
+    }
+
     /**
      * Checks whether the user needs to go through the subscription/payment gate
      * before accessing the main Dashboard. Called from App.kt startup.
@@ -552,17 +556,20 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     override suspend fun checkSubscriptionGate(): SubscriptionGateResult {
         val localTenantId = userLocalDataSource.getTenantId()
         val hasTenantLocally = !localTenantId.isNullOrBlank()
+        val teamSetupDone = userLocalDataSource.isTeamSetupCompleted()
         return try {
             val result = getOnboardingStatusUseCase()
             val status = result.getOrNull()
-                ?: return if (!hasTenantLocally) SubscriptionGateResult.RequiresTenantCreation else SubscriptionGateResult.NoGate
+                ?: return if (!hasTenantLocally) SubscriptionGateResult.RequiresTenantCreation
+                        else if (!teamSetupDone) SubscriptionGateResult.RequiresTeamMemberCreation
+                        else SubscriptionGateResult.NoGate
 
             // Server confirms tenant already exists — restore local state if missing
             if (status.hasTenantFromServer) {
                 if (!hasTenantLocally) {
                     userLocalDataSource.saveTenantId(status.tenantId)
                 }
-                return SubscriptionGateResult.NoGate
+                return resolveTeamSetupGate(teamSetupDone)
             }
 
             when {
@@ -570,12 +577,27 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
                 status.needsPayment -> SubscriptionGateResult.RequiresPayment
                 status.readyToCreateTenant -> SubscriptionGateResult.RequiresTenantCreation
                 status.isComplete && !hasTenantLocally -> SubscriptionGateResult.RequiresTenantCreation
+                status.isComplete && !teamSetupDone -> resolveTeamSetupGate(teamSetupDone)
                 else -> SubscriptionGateResult.NoGate
             }
         } catch (e: Exception) {
             fleetLogger.w(TAG, "Subscription gate check failed (non-blocking): ${e.message}")
-            if (!hasTenantLocally) SubscriptionGateResult.RequiresTenantCreation else SubscriptionGateResult.NoGate
+            if (!hasTenantLocally) SubscriptionGateResult.RequiresTenantCreation
+            else if (!teamSetupDone) SubscriptionGateResult.RequiresTeamMemberCreation
+            else SubscriptionGateResult.NoGate
         }
+    }
+
+    private suspend fun resolveTeamSetupGate(teamSetupDone: Boolean): SubscriptionGateResult {
+        if (teamSetupDone) return SubscriptionGateResult.NoGate
+
+        val existingMembers = teamRepository.getTeamMembers().getOrNull()
+        if (!existingMembers.isNullOrEmpty()) {
+            userLocalDataSource.setTeamSetupCompleted(true)
+            return SubscriptionGateResult.NoGate
+        }
+
+        return SubscriptionGateResult.RequiresTeamMemberCreation
     }
 }
 
@@ -583,5 +605,6 @@ enum class SubscriptionGateResult {
     NoGate,
     RequiresPlanSelection,
     RequiresPayment,
-    RequiresTenantCreation
+    RequiresTenantCreation,
+    RequiresTeamMemberCreation
 }

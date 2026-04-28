@@ -13,6 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDatePicker
@@ -42,6 +44,7 @@ fun CreateDriverScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     // Handle effects
     LaunchedEffect(Unit) {
@@ -186,6 +189,45 @@ fun CreateDriverScreen(
                     placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
                     isError = state.mobileError != null,
                     errorMessage = state.mobileError
+                )
+            }
+
+            item {
+                OutlinedTextField(
+                    value = state.password,
+                    onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdatePassword(it)) },
+                    label = { Text(stringResource(Res.string.driver_create_password_label)) },
+                    placeholder = { Text(stringResource(Res.string.driver_create_password_placeholder)) },
+                    supportingText = {
+                        Text(
+                            state.passwordError
+                                ?: stringResource(Res.string.driver_create_password_supporting)
+                        )
+                    },
+                    isError = state.passwordError != null,
+                    visualTransformation = if (passwordVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                painter = painterResource(
+                                    if (passwordVisible) Res.drawable.ic_visibility_off else Res.drawable.ic_visibility
+                                ),
+                                contentDescription = stringResource(
+                                    if (passwordVisible) Res.string.cd_hide_password else Res.string.cd_show_password
+                                )
+                            )
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Next
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 

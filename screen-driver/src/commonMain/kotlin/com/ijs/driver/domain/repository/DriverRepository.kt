@@ -35,13 +35,20 @@ interface DriverRepository : Repository {
      * Create a new driver.
      * Only Owners and Managers can create drivers.
      */
-    suspend fun createDriver(driver: Driver): Result<Driver>
+    suspend fun createDriver(
+        driver: Driver,
+        password: String,
+        caretakerId: Int? = null
+    ): Result<Driver>
 
     /**
      * Update an existing driver.
      * Only Owners and Managers can update drivers.
      */
-    suspend fun updateDriver(driver: Driver): Result<Driver>
+    suspend fun updateDriver(
+        driver: Driver,
+        caretakerId: Int? = null
+    ): Result<Driver>
 
     /**
      * Update driver status.

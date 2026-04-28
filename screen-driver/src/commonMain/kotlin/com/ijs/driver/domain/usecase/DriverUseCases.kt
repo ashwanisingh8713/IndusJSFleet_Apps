@@ -59,8 +59,12 @@ class GetDriverByIdUseCase(
 class CreateDriverUseCase(
     private val driverRepository: DriverRepository
 ) {
-    suspend operator fun invoke(driver: Driver): Result<Driver> {
-        return driverRepository.createDriver(driver)
+    suspend operator fun invoke(
+        driver: Driver,
+        password: String,
+        caretakerId: Int? = null
+    ): Result<Driver> {
+        return driverRepository.createDriver(driver, password, caretakerId)
     }
 }
 
@@ -71,8 +75,8 @@ class CreateDriverUseCase(
 class UpdateDriverUseCase(
     private val driverRepository: DriverRepository
 ) {
-    suspend operator fun invoke(driver: Driver): Result<Driver> {
-        return driverRepository.updateDriver(driver)
+    suspend operator fun invoke(driver: Driver, caretakerId: Int? = null): Result<Driver> {
+        return driverRepository.updateDriver(driver, caretakerId)
     }
 }
 

@@ -54,8 +54,8 @@ class TeamListViewModel(
             try {
                 // Load current user info
                 val userRole = try {
-                    userLocalDataSource.getUserRole() ?: "supervisor"
-                } catch (e: Exception) { "supervisor" }
+                    userLocalDataSource.getUserRole() ?: "user"
+                } catch (e: Exception) { "user" }
 
                 val userId = try {
                     userLocalDataSource.getUserId() ?: ""
@@ -134,8 +134,8 @@ class TeamListViewModel(
             try {
                 // Load current user info
                 val userRole = try {
-                    userLocalDataSource.getUserRole() ?: "supervisor"
-                } catch (e: Exception) { "supervisor" }
+                    userLocalDataSource.getUserRole() ?: "user"
+                } catch (e: Exception) { "user" }
 
                 val userId = try {
                     userLocalDataSource.getUserId() ?: ""
@@ -311,9 +311,8 @@ class TeamListViewModel(
             .filter { member ->
                 when (filter) {
                     TeamListContract.FilterType.ALL -> true
-                    TeamListContract.FilterType.GENERAL_MANAGERS -> member.role == TeamMemberRole.GENERAL_MANAGER
-                    TeamListContract.FilterType.MANAGERS -> member.role == TeamMemberRole.MANAGER
-                    TeamListContract.FilterType.SUPERVISORS -> member.role == TeamMemberRole.SUPERVISOR
+                    TeamListContract.FilterType.ADMINS -> member.role == TeamMemberRole.MANAGER
+                    TeamListContract.FilterType.USERS -> member.role == TeamMemberRole.SUPERVISOR
                 }
             }
             .filter { member ->

@@ -89,6 +89,8 @@ fun App(
                             FleetRoute.SubscriptionPlans(isPaymentPending = gate == SubscriptionGateResult.RequiresPayment)
                         SubscriptionGateResult.RequiresTenantCreation ->
                             FleetRoute.CreateOrganization
+                        SubscriptionGateResult.RequiresTeamMemberCreation ->
+                            FleetRoute.CreateTeamMember()
                         SubscriptionGateResult.NoGate -> FleetRoute.Dashboard
                     }
                 } else {

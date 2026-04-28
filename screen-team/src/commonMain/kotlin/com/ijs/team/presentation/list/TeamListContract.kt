@@ -17,9 +17,8 @@ object TeamListContract {
      */
     enum class FilterType {
         ALL,
-        GENERAL_MANAGERS,
-        MANAGERS,
-        SUPERVISORS
+        ADMINS,
+        USERS
     }
 
     /**
@@ -41,26 +40,25 @@ object TeamListContract {
         val isResettingPassword: String? = null,  // Member ID being reset
         val showResetPasswordDialogForMemberId: String? = null
     ) : UiState {
-        val generalManagersCount: Int get() = teamMembers.count { it.role == TeamMemberRole.GENERAL_MANAGER }
-        val managersCount: Int get() = teamMembers.count { it.role == TeamMemberRole.MANAGER }
-        val supervisorsCount: Int get() = teamMembers.count { it.role == TeamMemberRole.SUPERVISOR }
+        val adminsCount: Int get() = teamMembers.count { it.role == TeamMemberRole.MANAGER }
+        val usersCount: Int get() = teamMembers.count { it.role == TeamMemberRole.SUPERVISOR }
+        val activeCount: Int get() = teamMembers.count { it.isActive }
 
         // Role-based access helpers
         val isOwner: Boolean get() = currentUserRole.lowercase() == "owner"
-        val isGeneralManager: Boolean get() = currentUserRole.lowercase() == "general_manager"
-        val isManager: Boolean get() = currentUserRole.lowercase() == "manager"
-        val isSupervisor: Boolean get() = currentUserRole.lowercase() == "supervisor"
+        val isAdmin: Boolean get() = currentUserRole.lowercase() in setOf("admin", "manager", "general_manager")
+        val isUser: Boolean get() = currentUserRole.lowercase() in setOf("user", "supervisor")
 
-        // Check if current user can create team members (Owner and GM only)
-        val canCreateTeamMember: Boolean get() = isOwner || isGeneralManager
+        // Check if current user can create team members (owner and admins)
+        val canCreateTeamMember: Boolean get() = isOwner || isAdmin
 
         // Check if current user can edit a member
         fun canEdit(member: TeamMember): Boolean {
             if (member.id == currentUserId) return false  // Cannot edit self
             return when {
                 isOwner -> true  // Owner can edit anyone
-                isGeneralManager -> member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
-                else -> false  // Manager and Supervisor cannot edit
+                isAdmin -> member.role == TeamMemberRole.SUPERVISOR
+                else -> false
             }
         }
 
@@ -69,8 +67,8 @@ object TeamListContract {
             if (member.id == currentUserId) return false  // Cannot toggle self
             return when {
                 isOwner -> true  // Owner can toggle anyone
-                isGeneralManager -> member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
-                else -> false  // Manager and Supervisor cannot toggle
+                isAdmin -> member.role == TeamMemberRole.SUPERVISOR
+                else -> false
             }
         }
 
@@ -79,8 +77,8 @@ object TeamListContract {
             if (member.id == currentUserId) return false  // Cannot reset own password here
             return when {
                 isOwner -> true  // Owner can reset anyone's password
-                isGeneralManager -> member.role == TeamMemberRole.MANAGER || member.role == TeamMemberRole.SUPERVISOR
-                else -> false  // Manager and Supervisor cannot reset passwords
+                isAdmin -> member.role == TeamMemberRole.SUPERVISOR
+                else -> false
             }
         }
 

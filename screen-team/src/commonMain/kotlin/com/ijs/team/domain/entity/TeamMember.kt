@@ -2,7 +2,8 @@ package com.ijs.team.domain.entity
 
 /**
  * Team member role enum.
- * Hierarchy: General Manager > Manager > Supervisor
+ * Fleet API uses IAM-aligned roles: owner, admin, user.
+ * Existing enum names are retained for compatibility with older modules.
  */
 enum class TeamMemberRole {
     GENERAL_MANAGER,
@@ -13,9 +14,9 @@ enum class TeamMemberRole {
      * Convert role to API string representation.
      */
     fun toApiString(): String = when (this) {
-        GENERAL_MANAGER -> "general_manager"
-        MANAGER -> "manager"
-        SUPERVISOR -> "supervisor"
+        GENERAL_MANAGER -> "owner"
+        MANAGER -> "admin"
+        SUPERVISOR -> "user"
     }
 
     companion object {
@@ -23,9 +24,9 @@ enum class TeamMemberRole {
          * Parse role from API string, defaulting to SUPERVISOR if unknown.
          */
         fun fromApiString(value: String): TeamMemberRole = when (value.lowercase().replace("_", "").replace(" ", "")) {
-            "generalmanager", "gm" -> GENERAL_MANAGER
-            "manager" -> MANAGER
-            "supervisor" -> SUPERVISOR
+            "owner", "generalmanager", "gm" -> GENERAL_MANAGER
+            "admin", "manager" -> MANAGER
+            "user", "supervisor" -> SUPERVISOR
             else -> SUPERVISOR
         }
     }
@@ -49,9 +50,9 @@ data class TeamMember(
     val fullName: String get() = "$firstName $lastName"
 
     val roleDisplayName: String get() = when (role) {
-        TeamMemberRole.GENERAL_MANAGER -> "General Manager"
-        TeamMemberRole.MANAGER -> "Manager"
-        TeamMemberRole.SUPERVISOR -> "Supervisor"
+        TeamMemberRole.GENERAL_MANAGER -> "Owner"
+        TeamMemberRole.MANAGER -> "Administrator"
+        TeamMemberRole.SUPERVISOR -> "Team member"
     }
 
     val initials: String get() = "${firstName.firstOrNull() ?: ""}${lastName.firstOrNull() ?: ""}"

@@ -125,6 +125,34 @@ data class DriverApiResponse<T>(
 )
 
 /**
+ * Paginated driver list payload returned by GET /drivers.
+ */
+@Serializable
+data class DriverListDataDto(
+    @SerialName("items")
+    val items: List<DriverDto> = emptyList(),
+    @SerialName("count")
+    val count: Int = 0,
+    @SerialName("has_more")
+    val hasMore: Boolean = false,
+    @SerialName("next_page")
+    val nextPage: Int? = null,
+    @SerialName("page")
+    val page: Int = 1,
+    @SerialName("per_page")
+    val perPage: Int = 50,
+    @SerialName("total_pages")
+    val totalPages: Int = 1
+) {
+    fun toPagination(): DriverPaginationDto = DriverPaginationDto(
+        page = page,
+        perPage = perPage,
+        total = count,
+        totalPages = totalPages
+    )
+}
+
+/**
  * Pagination info for driver list responses.
  */
 @Serializable
@@ -144,6 +172,8 @@ data class DriverPaginationDto(
  */
 @Serializable
 data class CreateDriverRequest(
+    @SerialName("password")
+    val password: String,
     @SerialName("first_name")
     val firstName: String,
     @SerialName("last_name")
@@ -167,7 +197,9 @@ data class CreateDriverRequest(
     @SerialName("blood_group")
     val bloodGroup: String? = null,
     @SerialName("joining_date")
-    val joiningDate: String? = null
+    val joiningDate: String? = null,
+    @SerialName("caretaker_id")
+    val caretakerId: Int? = null
 )
 
 /**
@@ -183,14 +215,24 @@ data class UpdateDriverRequest(
     val email: String? = null,
     @SerialName("mobile")
     val mobile: String? = null,
+    @SerialName("license_number")
+    val licenseNumber: String? = null,
     @SerialName("license_expiry")
     val licenseExpiry: String? = null,
+    @SerialName("license_type")
+    val licenseType: String? = null,
+    @SerialName("date_of_birth")
+    val dateOfBirth: String? = null,
     @SerialName("address")
     val address: String? = null,
     @SerialName("emergency_contact")
     val emergencyContact: String? = null,
     @SerialName("blood_group")
-    val bloodGroup: String? = null
+    val bloodGroup: String? = null,
+    @SerialName("joining_date")
+    val joiningDate: String? = null,
+    @SerialName("caretaker_id")
+    val caretakerId: Int? = null
 )
 
 /**
