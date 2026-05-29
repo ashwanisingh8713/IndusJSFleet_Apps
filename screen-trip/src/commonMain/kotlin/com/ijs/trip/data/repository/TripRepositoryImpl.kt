@@ -106,9 +106,10 @@ class TripRepositoryImpl(
                 fuelRate = data.fuelRate,
                 kmPerLiter = data.kmPerLiter,
                 purchasePrice = data.purchasePrice,
-                sellingValue = data.sellingValue,
+                sellingValue = data.sellingValue ?: data.tripPrice,
                 estimatedExpense = data.estimatedExpense,
                 tripPrice = data.tripPrice,
+                rawTripPrice = data.tripPrice,
                 paymentStatus = data.paymentStatus,
                 pendingAmount = data.pendingAmount,
                 paymentMode = data.paymentMode,
@@ -146,6 +147,8 @@ class TripRepositoryImpl(
                 cargoDescription = trip.cargoDescription,
                 customerName = trip.customerName,
                 tripPrice = trip.tripPrice,
+                rawTripPrice = trip.tripPrice,
+                sellingValue = trip.tripPrice,
                 priority = trip.priority,
                 notes = trip.notes
             )

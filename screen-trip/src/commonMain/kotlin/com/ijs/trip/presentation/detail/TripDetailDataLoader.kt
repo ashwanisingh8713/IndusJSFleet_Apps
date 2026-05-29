@@ -11,6 +11,7 @@ import com.ijs.customer.domain.entity.Customer
 import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.driver.domain.entity.DriverStatus
 import com.ijs.driver.domain.usecase.GetDriversUseCase
+import com.ijs.trip.domain.entity.Trip
 import com.ijs.trip.payment.domain.entity.TripPaymentSummary
 import com.ijs.trip.payment.domain.repository.TripPaymentRepository
 import com.ijs.trip.domain.usecase.GetTripByIdUseCase
@@ -38,8 +39,12 @@ internal class TripDetailDataLoader(
     private val tripPaymentRepository: TripPaymentRepository?,
     private val logger: FleetLogger
 ) {
-suspend fun loadTrip(tripId: String) {
-        stateManager.updateTripState { copy(isLoading = true, error = null, tripId = tripId) }
+    suspend fun loadTrip(tripId: String, isSilent: Boolean = false) {
+        if (!isSilent) {
+            stateManager.updateTripState { copy(isLoading = true, error = null, tripId = tripId) }
+        } else {
+            stateManager.updateTripState { copy(error = null, tripId = tripId) }
+        }
 
         withContext(dispatcherProvider.io) {
             // Load user role for permission check
@@ -100,7 +105,7 @@ suspend fun loadTrip(tripId: String) {
                     // Load trip costs
                     loadTripCosts(tripId)
                     // Load trip payments (Owner/GM only can see pricing)
-                    loadTripPayments(tripId)
+                    loadTripPayments(tripId, trip)
                 }
                 is Result.Error -> {
                     stateManager.updateTripState {
@@ -136,7 +141,7 @@ suspend fun loadTrip(tripId: String) {
      * Load payments for a specific trip.
      * Only loads if the user has permission to view pricing (Owner/GM).
      */
-    suspend fun loadTripPayments(tripId: String) {
+    suspend fun loadTripPayments(tripId: String, trip: Trip) {
         if (tripPaymentRepository == null) {
             logger.d(TAG_TRIP_DETAIL_LOADER, "TripPaymentRepository not available, skipping payment load")
             return
@@ -144,7 +149,11 @@ suspend fun loadTrip(tripId: String) {
 
         // Only load payments for users who can view pricing
         val state = stateManager.currentTripState
-        if (!state.canViewTripPrice) {
+        val canViewTripPrice = run {
+            val role = state.userRole.lowercase().replace("_", "")
+            role == "owner" || role == "generalmanager"
+        }
+        if (!canViewTripPrice) {
             logger.d(TAG_TRIP_DETAIL_LOADER, "User role '${state.userRole}' cannot view payments, skipping")
             return
         }
@@ -159,7 +168,7 @@ suspend fun loadTrip(tripId: String) {
                     val totalPaid = payments
                         .filter { it.isReceived }
                         .sumOf { it.netAmount }
-                    val tripPrice = state.trip?.tripPrice ?: 0.0
+                    val tripPrice = trip.tripPrice ?: 0.0
                     val pending = (tripPrice - totalPaid).coerceAtLeast(0.0)
 
                     stateManager.updateTripState {

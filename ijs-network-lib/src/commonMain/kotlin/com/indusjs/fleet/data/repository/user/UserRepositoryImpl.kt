@@ -87,6 +87,8 @@ class UserRepositoryImpl(
         localDataSource.saveUserRole(roleToSave)
         localDataSource.saveUserId(authResult.user.id)
         localDataSource.saveTenantId(authData.user.tenantId)
+        val fullName = "${authResult.user.firstName} ${authResult.user.lastName}".trim()
+        localDataSource.saveUserName(fullName)
         authResult
     }
 
@@ -122,8 +124,11 @@ class UserRepositoryImpl(
         val token = requireAuthToken()
         val response = remoteDataSource.getProfile(token)
 
-        response.data?.toDomain()
+        val profile = response.data?.toDomain()
             ?: throw ApiException(response.message ?: "Failed to get profile")
+        val fullName = "${profile.user.firstName} ${profile.user.lastName}".trim()
+        localDataSource.saveUserName(fullName)
+        profile
     }
 
     override suspend fun updateProfile(
@@ -144,8 +149,11 @@ class UserRepositoryImpl(
             )
         )
 
-        response.data?.toDomain()
+        val user = response.data?.toDomain()
             ?: throw ApiException(response.message ?: "Failed to update profile")
+        val fullName = "${user.firstName} ${user.lastName}".trim()
+        localDataSource.saveUserName(fullName)
+        user
     }
 
     override suspend fun changePassword(

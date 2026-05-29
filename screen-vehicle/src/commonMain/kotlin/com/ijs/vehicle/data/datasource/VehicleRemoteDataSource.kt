@@ -41,6 +41,11 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.decodeFromJsonElement
 
 /**
  * Interface for remote vehicle data operations.
@@ -439,12 +444,32 @@ class VehicleRemoteDataSourceImpl(
         logger.d(TAG_VEHICLE_REMOTE_DS, "API Response: $bodyText")
         return if (response.status.isSuccess()) {
             try {
-                val apiResponse = json.decodeFromString<VehicleApiResponse<List<VehicleDto>>>(bodyText)
-                // Handle both 'data' and 'vehicles' fields
-                val vehiclesList = apiResponse.data ?: apiResponse.vehicles ?: emptyList()
+                val jsonElement = json.parseToJsonElement(bodyText).jsonObject
+                val success = jsonElement["success"]?.jsonPrimitive?.boolean == true
+                val message = jsonElement["message"]?.jsonPrimitive?.contentOrNull
+                
+                var vehiclesList = emptyList<VehicleDto>()
+                
+                val dataElement = jsonElement["data"]
+                if (dataElement != null) {
+                    if (dataElement is kotlinx.serialization.json.JsonArray) {
+                        vehiclesList = json.decodeFromJsonElement<List<VehicleDto>>(dataElement)
+                    } else if (dataElement is kotlinx.serialization.json.JsonObject) {
+                        val itemsElement = dataElement["items"]
+                        if (itemsElement is kotlinx.serialization.json.JsonArray) {
+                            vehiclesList = json.decodeFromJsonElement<List<VehicleDto>>(itemsElement)
+                        }
+                    }
+                } else {
+                    val vehiclesElement = jsonElement["vehicles"]
+                    if (vehiclesElement is kotlinx.serialization.json.JsonArray) {
+                        vehiclesList = json.decodeFromJsonElement<List<VehicleDto>>(vehiclesElement)
+                    }
+                }
+                
                 VehicleApiResponse(
-                    success = apiResponse.success,
-                    message = apiResponse.message,
+                    success = success,
+                    message = message,
                     data = vehiclesList
                 )
             } catch (e: Exception) {

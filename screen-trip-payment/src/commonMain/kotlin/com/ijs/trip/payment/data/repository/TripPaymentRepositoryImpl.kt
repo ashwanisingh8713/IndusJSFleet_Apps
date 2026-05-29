@@ -178,18 +178,46 @@ class TripPaymentRepositoryImpl(
         val token = requireAuthToken()
         val tripIdInt = tripId.toIntOrNull() ?: throw IllegalArgumentException("Invalid trip ID")
 
-        val response = remoteDataSource.getTripPayments(token, tripIdInt, page, perPage)
-        if (response.success && response.data != null) {
-            val result = response.data.toDomain()
-            logger.d(TAG_PAYMENT_REPO, "Fetched ${result.payments.size} payments for trip $tripId")
+        // 1. Try nested endpoint first
+        val nestedResponse = remoteDataSource.getTripPayments(token, tripIdInt, page, perPage)
+        nestedResponse.data?.payments?.forEach { dto ->
+            logger.d(TAG_PAYMENT_REPO, "PARSE_DTO_TEST - id: ${dto.id}, received_by: '${dto.receivedBy}', receivedByCamel: '${dto.receivedByCamel}'")
+        }
+        if (nestedResponse.success && nestedResponse.data != null && nestedResponse.data.payments.isNotEmpty()) {
+            val result = nestedResponse.data.toDomain()
+            logger.d(TAG_PAYMENT_REPO, "Fetched ${result.payments.size} payments for trip $tripId via nested route")
             Result.Success(result)
         } else {
-            logger.e(TAG_PAYMENT_REPO, "Get trip payments failed: ${response.message}")
-            Result.Error(ApiException(response.message ?: "Failed to fetch trip payments"))
+            // 2. If nested is empty or fails, fall back to flat listPayments endpoint
+            logger.d(TAG_PAYMENT_REPO, "Nested route empty or failed, trying flat /trip-payments endpoint")
+            val flatResponse = remoteDataSource.listPayments(token, page, perPage, tripIdInt)
+            if (flatResponse.success && flatResponse.data != null) {
+                val result = flatResponse.toDomain()
+                logger.d(TAG_PAYMENT_REPO, "Fetched ${result.payments.size} payments for trip $tripId via flat route fallback")
+                Result.Success(result)
+            } else {
+                logger.e(TAG_PAYMENT_REPO, "Both nested and flat payment routes failed/returned empty")
+                if (nestedResponse.success && nestedResponse.data != null) {
+                    Result.Success(nestedResponse.data.toDomain())
+                } else {
+                    Result.Error(ApiException(nestedResponse.message ?: flatResponse.message ?: "Failed to fetch trip payments"))
+                }
+            }
         }
     } catch (e: Exception) {
-        logger.e(TAG_PAYMENT_REPO, "Error fetching trip payments: ${e.message}", e)
-        Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        logger.e(TAG_PAYMENT_REPO, "Error fetching trip payments, trying flat route fallback: ${e.message}")
+        try {
+            val token = requireAuthToken()
+            val tripIdInt = tripId.toInt()
+            val flatResponse = remoteDataSource.listPayments(token, page, perPage, tripIdInt)
+            if (flatResponse.success) {
+                Result.Success(flatResponse.toDomain())
+            } else {
+                Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+            }
+        } catch (fallbackEx: Exception) {
+            Result.Error(e, ApiErrorHandler.extractErrorMessage(e))
+        }
     }
 
     override suspend fun getPayment(paymentId: String): Result<TripPayment> = try {

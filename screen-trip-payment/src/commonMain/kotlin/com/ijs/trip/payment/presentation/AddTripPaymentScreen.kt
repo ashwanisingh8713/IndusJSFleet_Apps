@@ -12,7 +12,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.uicomponents.components.UiText
-import com.ijs.trip.payment.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -24,8 +23,8 @@ import org.jetbrains.compose.resources.stringResource
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddPaymentScreen(
-    viewModel: AddPaymentViewModel,
+fun CreateTripPaymentScreen(
+    viewModel: AddTripPaymentViewModel,
     tripId: String? = null,
     paymentId: String? = null,
     onNavigateBack: () -> Unit

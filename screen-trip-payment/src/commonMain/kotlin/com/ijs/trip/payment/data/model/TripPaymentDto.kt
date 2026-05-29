@@ -31,34 +31,59 @@ data class TripPaymentDto(
     // Payment amounts
     @SerialName("amount") val amount: Double = 0.0,
     @SerialName("tds_amount") val tdsAmount: Double = 0.0,
+    @SerialName("tdsAmount") val tdsAmountCamel: Double? = null,
     @SerialName("discount_amount") val discountAmount: Double = 0.0,
+    @SerialName("discountAmount") val discountAmountCamel: Double? = null,
     @SerialName("net_amount") val netAmount: Double = 0.0,
+    @SerialName("netAmount") val netAmountCamel: Double? = null,
     @SerialName("payment_type") val paymentType: String? = null,
+    @SerialName("paymentType") val paymentTypeCamel: String? = null,
     @SerialName("payment_mode") val paymentMode: String? = null,
+    @SerialName("paymentMode") val paymentModeCamel: String? = null,
     @SerialName("payment_source") val paymentSource: String? = null,
+    @SerialName("paymentSource") val paymentSourceCamel: String? = null,
     @SerialName("payment_date") val paymentDate: String? = null,
+    @SerialName("paymentDate") val paymentDateCamel: String? = null,
     @SerialName("due_date") val dueDate: String? = null,
+    @SerialName("dueDate") val dueDateCamel: String? = null,
     @SerialName("payment_status") val paymentStatus: String? = null,
+    @SerialName("paymentStatus") val paymentStatusCamel: String? = null,
     @SerialName("transaction_id") val transactionId: String? = null,
+    @SerialName("transactionId") val transactionIdCamel: String? = null,
     @SerialName("reference_number") val referenceNumber: String? = null,
+    @SerialName("referenceNumber") val referenceNumberCamel: String? = null,
     @SerialName("bank_name") val bankName: String? = null,
+    @SerialName("bankName") val bankNameCamel: String? = null,
     @SerialName("bank_branch") val bankBranch: String? = null,
+    @SerialName("bankBranch") val bankBranchCamel: String? = null,
     @SerialName("account_number") val accountNumber: String? = null,
+    @SerialName("accountNumber") val accountNumberCamel: String? = null,
     @SerialName("ifsc_code") val ifscCode: String? = null,
+    @SerialName("ifscCode") val ifscCodeCamel: String? = null,
     @SerialName("invoice_number") val invoiceNumber: String? = null,
+    @SerialName("invoiceNumber") val invoiceNumberCamel: String? = null,
     @SerialName("invoice_date") val invoiceDate: String? = null,
+    @SerialName("invoiceDate") val invoiceDateCamel: String? = null,
     @SerialName("invoice_amount") val invoiceAmount: Double = 0.0,
+    @SerialName("invoiceAmount") val invoiceAmountCamel: Double? = null,
     @SerialName("receipt_number") val receiptNumber: String? = null,
+    @SerialName("receiptNumber") val receiptNumberCamel: String? = null,
     @SerialName("financial_year") val financialYear: String? = null,
+    @SerialName("financialYear") val financialYearCamel: String? = null,
     @SerialName("financial_month") val financialMonth: String? = null,
+    @SerialName("financialMonth") val financialMonthCamel: String? = null,
     @SerialName("financial_quarter") val financialQuarter: String? = null,
+    @SerialName("financialQuarter") val financialQuarterCamel: String? = null,
     @SerialName("notes") val notes: String? = null,
     @SerialName("remarks") val remarks: String? = null,
     @SerialName("received_by") val receivedBy: String? = null,
+    @SerialName("receivedBy") val receivedByCamel: String? = null,
     @SerialName("received_at_location") val receivedAtLocation: String? = null,
+    @SerialName("receivedAtLocation") val receivedAtLocationCamel: String? = null,
     @SerialName("owner_id") val ownerId: Int? = null,
     @SerialName("created_by") val createdBy: Int? = null,
     @SerialName("created_by_user") val createdByUser: CreatedByUserDto? = null,
+    @SerialName("createdByUser") val createdByUserCamel: CreatedByUserDto? = null,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
     // Nested objects for detail response
@@ -82,11 +107,13 @@ data class TripPaymentDto(
 data class CreatedByUserDto(
     @SerialName("id") val id: Int,
     @SerialName("first_name") val firstName: String? = null,
+    @SerialName("firstName") val firstNameCamel: String? = null,
     @SerialName("last_name") val lastName: String? = null,
+    @SerialName("lastName") val lastNameCamel: String? = null,
     @SerialName("role") val role: String? = null
 ) {
     val fullName: String
-        get() = listOfNotNull(firstName, lastName).joinToString(" ").ifBlank { "Unknown" }
+        get() = listOfNotNull(firstName ?: firstNameCamel, lastName ?: lastNameCamel).joinToString(" ").ifBlank { "Unknown" }
 }
 
 /**
@@ -232,7 +259,7 @@ data class TripPaymentsHistoryResponse(
  */
 @Serializable
 data class TripPaymentsHistoryDataDto(
-    @SerialName("trip_id") val tripId: Int,
+    @SerialName("trip_id") val tripId: Int = 0,
     @SerialName("trip_info") val tripInfo: TripPaymentTripInfoDto? = null,
     @SerialName("expected_trip_price") val expectedTripPrice: Double = 0.0,
     @SerialName("paid_trip_price") val paidTripPrice: Double = 0.0,

@@ -92,7 +92,9 @@ data class TripDto(
     @SerialName("estimated_expense")
     val estimatedExpense: Double? = null,
     @SerialName("expected_trip_price")
-    val tripPrice: Double? = null,
+    val expectedTripPrice: Double? = null,
+    @SerialName("trip_price")
+    val tripPriceFallback: Double? = null,
     // Payment
     @SerialName("payment_status")
     val paymentStatus: String? = null,
@@ -159,7 +161,10 @@ data class TripDto(
     val totalCostLabel: String? = null,
     @SerialName("has_costs")
     val hasCosts: Boolean? = null
-)
+) {
+    val tripPrice: Double?
+        get() = expectedTripPrice ?: tripPriceFallback ?: sellingValue
+}
 
 /**
  * Cost summary embedded in Trip response.
@@ -421,6 +426,8 @@ data class CreateTripRequest(
     val estimatedExpense: Double? = null,
     @SerialName("expected_trip_price")
     val tripPrice: Double? = null,
+    @SerialName("trip_price")
+    val rawTripPrice: Double? = null,
     // Payment
     @SerialName("payment_status")
     val paymentStatus: String? = null,
@@ -516,6 +523,10 @@ data class UpdateTripRequest(
     // Pricing - API expects expected_trip_price for update
     @SerialName("expected_trip_price")
     val tripPrice: Double? = null,
+    @SerialName("trip_price")
+    val rawTripPrice: Double? = null,
+    @SerialName("selling_value")
+    val sellingValue: Double? = null,
 
     // Other
     @SerialName("priority")

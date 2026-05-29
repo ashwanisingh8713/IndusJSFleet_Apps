@@ -69,6 +69,8 @@ suspend fun saveChanges() {
                 customerName = state.customerName.takeIf { it.isNotBlank() },
                 customerContact = state.customerContact.takeIf { it.isNotBlank() },
                 tripPrice = state.tripPrice.toDoubleOrNull(),
+                rawTripPrice = state.tripPrice.toDoubleOrNull(),
+                sellingValue = state.tripPrice.toDoubleOrNull(),
                 priority = state.priority.lowercase().takeIf { it.isNotBlank() },
                 notes = state.notes.takeIf { it.isNotBlank() }
             )

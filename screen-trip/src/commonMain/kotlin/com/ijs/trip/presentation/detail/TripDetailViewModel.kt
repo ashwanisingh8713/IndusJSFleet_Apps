@@ -111,7 +111,12 @@ class TripDetailViewModel(
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
             is Intent.LoadTrip -> dataLoader.loadTrip(intent.tripId)
-            is Intent.Refresh -> currentState.trip?.let { dataLoader.loadTrip(it.id) }
+            is Intent.Refresh -> {
+                if (!currentState.isLoading && !currentState.isLoadingPayments && !currentState.isLoadingCosts) {
+                    val tid = currentState.trip?.id ?: currentState.tripId
+                    tid?.let { dataLoader.loadTrip(it, isSilent = true) }
+                }
+            }
 
             // Edit mode
             is Intent.EnterEditMode -> enterEditMode()

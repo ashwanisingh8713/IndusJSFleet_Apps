@@ -289,22 +289,72 @@ private fun PaymentListItem(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    // Date + receipt
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        payment.paymentDate?.let { date ->
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    // Received by person name
+                    println("TRIP_PAYMENTS_CONTENT - id: ${payment.id}, receivedBy: '${payment.receivedBy}', createdByName: '${payment.createdByName}'")
+                    val receiverName = payment.receivedBy?.takeIf { it.isNotBlank() && it != "Unknown" && it.lowercase() != "null" }
+                        ?: payment.createdByName?.takeIf { it.isNotBlank() && it != "Unknown" && it.lowercase() != "null" }
+                        ?: "Staff"
+                    Text(
+                        text = "Received by: $receiverName",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    // Date & Time on two lines
+                    payment.paymentDate?.let { date ->
+                        val formattedDate = try {
+                            com.indusjs.datetimeutils.FleetDateTime.formatIsoToDisplayDateTime12Hour(date)
+                        } catch (_: Exception) {
+                            date
+                        }
+                        val parts = formattedDate.split(" ", limit = 2)
+                        val dateString = parts.firstOrNull() ?: ""
+                        val timeString = parts.getOrNull(1) ?: ""
+
+                        if (dateString.isNotBlank()) {
                             Text(
-                                text = date,
-                                style = MaterialTheme.typography.labelMedium,
+                                text = dateString,
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        payment.receiptNumber?.let { receipt ->
+                        if (timeString.isNotBlank()) {
                             Text(
-                                text = " • #$receipt",
-                                style = MaterialTheme.typography.labelMedium,
+                                text = timeString,
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+
+                    // Location info
+                    if (!payment.receivedAtLocation.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "📍 ${stringResource(Res.string.payment_label_location)}: ${payment.receivedAtLocation}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // Notes info
+                    if (!payment.notes.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "📝 ${stringResource(Res.string.payment_label_notes)}: ${payment.notes}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
@@ -414,4 +464,3 @@ private fun PaymentsLoadingContent() {
         CircularProgressIndicator(modifier = Modifier.size(32.dp))
     }
 }
-

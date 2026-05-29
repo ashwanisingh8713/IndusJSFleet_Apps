@@ -20,6 +20,8 @@ interface UserLocalDataSource : LocalDataSource {
     suspend fun getTenantId(): String?
     suspend fun setTeamSetupCompleted(completed: Boolean)
     suspend fun isTeamSetupCompleted(): Boolean
+    suspend fun saveUserName(name: String)
+    suspend fun getUserName(): String?
     suspend fun clearSession()
     suspend fun isLoggedIn(): Boolean
 }
@@ -44,6 +46,7 @@ class UserLocalDataSourceImpl(
         private const val KEY_USER_ID = "user_id"
         private const val KEY_TENANT_ID = "tenant_id"
         private const val KEY_TEAM_SETUP_COMPLETED = "team_setup_completed"
+        private const val KEY_USER_NAME = "user_name"
     }
 
     override suspend fun saveAuthToken(token: String) {
@@ -96,6 +99,15 @@ class UserLocalDataSourceImpl(
         return settings.getBoolean(KEY_TEAM_SETUP_COMPLETED, false)
     }
 
+    override suspend fun saveUserName(name: String) {
+        logger.d(TAG_USER_LOCAL_DS, "Saving user name: $name")
+        settings.putString(KEY_USER_NAME, name)
+    }
+
+    override suspend fun getUserName(): String? {
+        return settings.getStringOrNull(KEY_USER_NAME)
+    }
+
     override suspend fun clearSession() {
         logger.d(TAG_USER_LOCAL_DS, "Clearing session - removing all auth data")
         settings.remove(KEY_AUTH_TOKEN)
@@ -103,6 +115,7 @@ class UserLocalDataSourceImpl(
         settings.remove(KEY_USER_ID)
         settings.remove(KEY_TENANT_ID)
         settings.remove(KEY_TEAM_SETUP_COMPLETED)
+        settings.remove(KEY_USER_NAME)
     }
 
     override suspend fun isLoggedIn(): Boolean {

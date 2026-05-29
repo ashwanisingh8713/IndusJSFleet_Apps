@@ -102,7 +102,7 @@ interface ViewModelProvider {
 
     // Payment ViewModels
     fun paymentsViewModel(): com.ijs.trip.payment.presentation.PaymentsViewModel
-    fun addPaymentViewModel(): com.ijs.trip.payment.presentation.AddPaymentViewModel
+    fun addPaymentViewModel(): com.ijs.trip.payment.presentation.AddTripPaymentViewModel
     fun paymentDetailViewModel(): com.ijs.trip.payment.presentation.PaymentDetailViewModel
 
     // Vehicle Finance ViewModels
@@ -172,6 +172,11 @@ object SharedViewModelStore {
     @Suppress("UNCHECKED_CAST")
     fun <T> getOrCreate(key: String, factory: () -> T): T {
         return cache.getOrPut(key) { factory() as Any } as T
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> get(key: String): T? {
+        return cache[key] as? T
     }
 
     fun clear(key: String) {

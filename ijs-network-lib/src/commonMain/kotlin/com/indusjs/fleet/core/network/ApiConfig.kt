@@ -8,8 +8,6 @@ package com.indusjs.fleet.core.network
  */
 object ApiConfig {
 
-    /** `IndusJSFleet_GoLang_Backend` branch `Google_Cloud_SQL` (Cloud Run). */
-//    const val BASE_URL = "https://indusjs-fleet-docker-960880113496.asia-south2.run.app/api/v2"
 
     /** `IndusJSFleet_GoLang_Backend` branch `clean-architecture-code-refactoring` (Cloud Run). */
     const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"

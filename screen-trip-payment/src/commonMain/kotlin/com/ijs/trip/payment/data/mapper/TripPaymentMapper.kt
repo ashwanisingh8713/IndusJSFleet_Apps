@@ -42,25 +42,25 @@ object TripPaymentMapper {
             customerCompany = resolvedCustomerCompany,
             customerGst = customerGst?.ifBlank { null } ?: customer?.gstNumber?.ifBlank { null },
             amount = amount,
-            tdsAmount = tdsAmount,
-            discountAmount = discountAmount,
-            netAmount = netAmount,
-            paymentType = PaymentType.fromApiValue(paymentType),
-            paymentMode = PaymentMode.fromApiValue(paymentMode),
-            paymentSource = paymentSource,
-            paymentDate = paymentDate,
-            paymentStatus = PaymentStatus.fromApiValue(paymentStatus),
-            transactionId = transactionId,
-            bankName = bankName,
-            receiptNumber = receiptNumber,
-            financialYear = financialYear,
-            financialMonth = financialMonth,
+            tdsAmount = if (tdsAmount > 0) tdsAmount else (tdsAmountCamel ?: 0.0),
+            discountAmount = if (discountAmount > 0) discountAmount else (discountAmountCamel ?: 0.0),
+            netAmount = if (netAmount > 0) netAmount else (netAmountCamel ?: 0.0),
+            paymentType = PaymentType.fromApiValue(paymentType ?: paymentTypeCamel),
+            paymentMode = PaymentMode.fromApiValue(paymentMode ?: paymentModeCamel),
+            paymentSource = paymentSource ?: paymentSourceCamel,
+            paymentDate = paymentDate ?: paymentDateCamel,
+            paymentStatus = PaymentStatus.fromApiValue(paymentStatus ?: paymentStatusCamel),
+            transactionId = transactionId ?: transactionIdCamel,
+            bankName = bankName ?: bankNameCamel,
+            receiptNumber = receiptNumber ?: receiptNumberCamel,
+            financialYear = financialYear ?: financialYearCamel,
+            financialMonth = financialMonth ?: financialMonthCamel,
             notes = notes,
-            receivedBy = receivedBy,
-            receivedAtLocation = receivedAtLocation,
+            receivedBy = receivedBy ?: receivedByCamel,
+            receivedAtLocation = receivedAtLocation ?: receivedAtLocationCamel,
             ownerId = ownerId?.toString(),
             createdById = createdBy?.toString(),
-            createdByName = createdByUser?.fullName,
+            createdByName = (createdByUser ?: createdByUserCamel)?.fullName,
             createdAt = createdAt,
             updatedAt = updatedAt,
             // Build tripInfo from flat fields (list response) OR nested objects (detail response)
@@ -268,7 +268,9 @@ object TripPaymentMapper {
         bankName = bankName,
         notes = notes,
         receivedBy = receivedBy,
-        receivedAtLocation = receivedAtLocation
+        receivedByCamel = receivedBy,
+        receivedAtLocation = receivedAtLocation,
+        receivedAtLocationCamel = receivedAtLocation
     )
 
     fun createAddToTripRequest(
@@ -304,7 +306,9 @@ object TripPaymentMapper {
         bankName = bankName,
         notes = notes,
         receivedBy = receivedBy,
-        receivedAtLocation = receivedAtLocation
+        receivedByCamel = receivedBy,
+        receivedAtLocation = receivedAtLocation,
+        receivedAtLocationCamel = receivedAtLocation
     )
 
     fun createUpdateRequest(
@@ -334,6 +338,8 @@ object TripPaymentMapper {
         bankName = bankName,
         notes = notes,
         receivedBy = receivedBy,
-        receivedAtLocation = receivedAtLocation
+        receivedByCamel = receivedBy,
+        receivedAtLocation = receivedAtLocation,
+        receivedAtLocationCamel = receivedAtLocation
     )
 }

@@ -24,12 +24,12 @@ object PaymentFeatureFacade {
 
     @Composable
     fun AddPaymentEntry(
-        viewModel: AddPaymentViewModel,
+        viewModel: AddTripPaymentViewModel,
         tripId: String? = null,
         paymentId: String? = null,
         onNavigateBack: () -> Unit
     ) {
-        AddPaymentScreen(
+        CreateTripPaymentScreen(
             viewModel = viewModel,
             tripId = tripId,
             paymentId = paymentId,

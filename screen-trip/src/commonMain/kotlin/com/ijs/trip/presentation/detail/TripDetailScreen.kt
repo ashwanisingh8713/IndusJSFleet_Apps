@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.pdfreport.handler.TripCostsPdfHandler
 import com.indusjs.pdfreport.model.TripCostsPdfData
@@ -55,6 +58,20 @@ fun TripDetailScreen(
     // PDF Export state
     var pdfExportData by remember { mutableStateOf<TripCostsPdfData?>(null) }
     var isExportingPdf by remember { mutableStateOf(false) }
+
+    // Refresh trip detail when screen is resumed (e.g., when returning from Add Payment or Edit Payments)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.sendIntent(TripDetailContract.Intent.Refresh)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // Load trip on first composition
     LaunchedEffect(tripId) {

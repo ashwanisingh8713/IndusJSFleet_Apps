@@ -350,7 +350,13 @@ fun fleetEntryProvider(
             TripFeatureFacade.TripCostEntryEntry(
                 viewModel = viewModel,
                 initialTripId = route.tripId,
-                onNavigateBack = { backStack.removeLastOrNull() }
+                onNavigateBack = {
+                    route.tripId?.let { tripId ->
+                        com.indusjs.fleet.di.SharedViewModelStore.get<com.ijs.trip.presentation.detail.TripDetailViewModel>("trip_detail_$tripId")
+                            ?.sendIntent(com.ijs.trip.presentation.detail.TripDetailContract.Intent.Refresh)
+                    }
+                    backStack.removeLastOrNull()
+                }
             )
         }
 
@@ -543,7 +549,13 @@ fun fleetEntryProvider(
                 viewModel = viewModel,
                 tripId = route.tripId,
                 paymentId = null,
-                onNavigateBack = { backStack.removeLastOrNull() }
+                onNavigateBack = {
+                    route.tripId?.let { tripId ->
+                        com.indusjs.fleet.di.SharedViewModelStore.get<com.ijs.trip.presentation.detail.TripDetailViewModel>("trip_detail_$tripId")
+                            ?.sendIntent(com.ijs.trip.presentation.detail.TripDetailContract.Intent.Refresh)
+                    }
+                    backStack.removeLastOrNull()
+                }
             )
         }
 

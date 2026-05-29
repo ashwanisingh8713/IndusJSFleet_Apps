@@ -6,6 +6,7 @@ import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.states.StatesRepository
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 import com.ijs.trip.payment.domain.repository.TripPaymentRepository
@@ -20,10 +21,11 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
  * ViewModel for Add/Edit Payment Screen.
  */
 @Inject
-class AddPaymentViewModel(
+class AddTripPaymentViewModel(
     private val paymentRepository: TripPaymentRepository,
     private val tripProvider: TripProviderForPayment,
     private val logger: FleetLogger,
+    private val userLocalDataSource: UserLocalDataSource,
     private val statesRepository: StatesRepository? = null
 ) : MviViewModel<AddPaymentContract.State, AddPaymentContract.Intent, AddPaymentContract.Effect>(AddPaymentContract.State()) {
 
@@ -113,6 +115,10 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
         if (paymentId != null) {
             loadPaymentForEdit(paymentId)
         } else {
+            val defaultReceiver = userLocalDataSource.getUserName()?.takeIf { it.isNotBlank() }
+                ?: userLocalDataSource.getUserRole()?.lowercase()?.replace("_", " ")?.replaceFirstChar { if (it.isLowerCase()) it.uppercase() else it.toString() }
+                ?: "Staff"
+            updateState { copy(receivedBy = defaultReceiver) }
             loadTrips()
             if (tripId != null) {
                 loadTripAndSelect(tripId)

@@ -81,7 +81,7 @@ import com.ijs.driver.presentation.create.CreateDriverViewModel
 import com.ijs.driver.presentation.detail.DriverDetailViewModel
 import com.ijs.finance.presentation.VehicleFinanceViewModel
 import com.ijs.map.presentation.MapsViewModel
-import com.ijs.trip.payment.presentation.AddPaymentViewModel
+import com.ijs.trip.payment.presentation.AddTripPaymentViewModel
 import com.ijs.trip.payment.presentation.PaymentDetailViewModel
 import com.ijs.trip.payment.presentation.PaymentsViewModel
 import com.ijs.reports.presentation.ReportsViewModel
@@ -148,7 +148,13 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     override val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider()
 
     // Lazy-initialized core dependencies
-    private val httpClient: HttpClient by lazy { HttpClientProvider.create() }
+    private val httpClient: HttpClient by lazy {
+        HttpClientProvider.createHttpClient(
+            json = json,
+            getOldToken = { settings.getStringOrNull("auth_token") },
+            saveNewToken = { settings.putString("auth_token", it) }
+        )
+    }
     private val settings: Settings by lazy { Settings() }
     private val json: Json by lazy {
         Json {
@@ -525,7 +531,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     // Payment ViewModels
     override fun paymentsViewModel() = PaymentsViewModel(tripPaymentRepository, fleetLogger, statesRepository)
 
-    override fun addPaymentViewModel() = AddPaymentViewModel(tripPaymentRepository, tripProviderAdapter, fleetLogger, statesRepository)
+    override fun addPaymentViewModel() = AddTripPaymentViewModel(tripPaymentRepository, tripProviderAdapter, fleetLogger, userLocalDataSource, statesRepository)
 
     override fun paymentDetailViewModel() = PaymentDetailViewModel(tripPaymentRepository, userRepository, fleetLogger, statesRepository)
 

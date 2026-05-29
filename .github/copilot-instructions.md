@@ -11,6 +11,7 @@
 The app manages vehicles, drivers, trips, costs, payments, customers, team members, vehicle finances, and real-time GPS tracking for fleet operations.
 
 ---
+- Do not support backward compatibility as we in initial Development phase.
 
 ## Technology Stack
 

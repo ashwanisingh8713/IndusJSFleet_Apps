@@ -34,6 +34,11 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.decodeFromJsonElement
 
 /**
  * Interface for remote trip data operations.
@@ -172,11 +177,12 @@ class TripRemoteDataSourceImpl(
 
     override suspend fun updateTripStatus(token: String, id: String, status: String): TripApiResponse<TripDto> {
         return try {
-            logger.d(TAG_TRIP_REMOTE_DS, "Updating trip state: $id -> $status")
+            val backendStatus = if (status == "on_route") "in_progress" else status
+            logger.d(TAG_TRIP_REMOTE_DS, "Updating trip state: $id -> $backendStatus (mapped from: $status)")
             val response: HttpResponse = httpClient.patch("$baseUrl/$id/state") {
                 header(HttpHeaders.Authorization, "Bearer $token")
                 contentType(ContentType.Application.Json)
-                setBody(UpdateTripStateRequest(state = status))
+                setBody(UpdateTripStateRequest(state = backendStatus))
             }
             parseSingleResponse(response)
         } catch (e: Exception) {
@@ -266,12 +272,40 @@ class TripRemoteDataSourceImpl(
 
     private suspend fun parseListResponse(response: HttpResponse): TripApiResponse<List<TripDto>> {
         val bodyText = response.bodyAsText()
+        logger.d(TAG_TRIP_REMOTE_DS, "API Response: $bodyText")
         return if (response.status.isSuccess()) {
             try {
-                json.decodeFromString<TripApiResponse<List<TripDto>>>(bodyText)
+                val jsonElement = json.parseToJsonElement(bodyText).jsonObject
+                val success = jsonElement["success"]?.jsonPrimitive?.boolean == true
+                val message = jsonElement["message"]?.jsonPrimitive?.contentOrNull
+                
+                var tripsList = emptyList<TripDto>()
+                
+                val dataElement = jsonElement["data"]
+                if (dataElement != null) {
+                    if (dataElement is kotlinx.serialization.json.JsonArray) {
+                        tripsList = json.decodeFromJsonElement<List<TripDto>>(dataElement)
+                    } else if (dataElement is kotlinx.serialization.json.JsonObject) {
+                        val itemsElement = dataElement["items"]
+                        if (itemsElement is kotlinx.serialization.json.JsonArray) {
+                            tripsList = json.decodeFromJsonElement<List<TripDto>>(itemsElement)
+                        }
+                    }
+                } else {
+                    val tripsElement = jsonElement["trips"]
+                    if (tripsElement is kotlinx.serialization.json.JsonArray) {
+                        tripsList = json.decodeFromJsonElement<List<TripDto>>(tripsElement)
+                    }
+                }
+                
+                TripApiResponse(
+                    success = success,
+                    message = message,
+                    data = tripsList
+                )
             } catch (e: Exception) {
                 logger.e(TAG_TRIP_REMOTE_DS, "Failed to parse response: $bodyText", e)
-                TripApiResponse(success = false, message = "Failed to parse response")
+                TripApiResponse(success = false, message = "Failed to parse response: ${e.message}")
             }
         } else {
             TripApiResponse(success = false, message = ApiErrorHandler.extractErrorMessage(response.status, bodyText))
@@ -397,9 +431,10 @@ class TripRemoteDataSourceImpl(
         notes: String?
     ): TripApiResponse<TripDto> {
         return try {
-            logger.d(TAG_TRIP_REMOTE_DS, "Updating trip state: $id -> $state")
+            val backendState = if (state == "on_route") "in_progress" else state
+            logger.d(TAG_TRIP_REMOTE_DS, "Updating trip state: $id -> $backendState (mapped from: $state)")
             val request = StateUpdateRequestDto(
-                state = state,
+                state = backendState,
                 reason = reason,
                 notes = notes
             )
