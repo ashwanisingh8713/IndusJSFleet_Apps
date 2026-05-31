@@ -25,6 +25,7 @@ object UserMapper {
         lastName = lastName,
         role = role.toUserRole(),
         ownerId = ownerId?.toString(),
+        isActive = isActive,
         createdAt = createdAt,
         updatedAt = updatedAt ?: createdAt
     )
@@ -37,9 +38,12 @@ object UserMapper {
     fun OwnerStatsDto.toDomain(): OrganizationStats = OrganizationStats(
         totalManagers = totalManagers,
         totalSupervisors = totalSupervisors,
-        totalDrivers = totalTeamMembers,
+        totalTeamMembers = totalTeamMembers,
         totalVehicles = totalVehicles,
-        activeTrips = activeTrips
+        activeVehicles = activeVehicles,
+        totalTrips = totalTrips,
+        activeTrips = activeTrips,
+        completedTrips = completedTrips
     )
 
     fun OwnerInfoDto.toDomain(): OwnerInfo = OwnerInfo(
@@ -57,6 +61,7 @@ object UserMapper {
             lastName = lastName,
             role = role.toUserRole(),
             ownerId = ownerId?.toString(),
+            isActive = isActive,
             createdAt = createdAt,
             updatedAt = updatedAt ?: createdAt
         )

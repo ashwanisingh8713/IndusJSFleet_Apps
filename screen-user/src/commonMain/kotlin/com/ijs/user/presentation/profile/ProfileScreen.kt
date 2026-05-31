@@ -1,6 +1,5 @@
 package com.ijs.user.presentation.profile
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -9,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -282,30 +280,70 @@ private fun ProfileHeader(user: User) {
 
             // Full Name
             Text(
-                text = user.fullName,
+                text = user.fullName.ifBlank { user.email },
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Role Badge - Enhanced
-            RoleBadge(role = user.role)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Quick Info Row
+            // Role + Account Status row
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                QuickInfoChip(icon = "📧", value = user.email.take(20) + if (user.email.length > 20) "..." else "")
-                QuickInfoChip(icon = "📱", value = user.mobile)
+                RoleBadge(role = user.role)
+                AccountStatusBadge(isActive = user.isActive)
             }
         }
     }
 }
+
+@Composable
+private fun AccountStatusBadge(isActive: Boolean) {
+    val (containerColor, contentColor, icon, labelRes) = if (isActive) {
+        AccountStatusBadgeData(
+            containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
+            contentColor = MaterialTheme.colorScheme.tertiary,
+            icon = "✅",
+            labelRes = Res.string.profile_status_active
+        )
+    } else {
+        AccountStatusBadgeData(
+            containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
+            contentColor = MaterialTheme.colorScheme.error,
+            icon = "⛔",
+            labelRes = Res.string.profile_status_inactive
+        )
+    }
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = containerColor
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = icon, style = MaterialTheme.typography.labelLarge)
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = stringResource(labelRes),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor
+            )
+        }
+    }
+}
+
+private data class AccountStatusBadgeData(
+    val containerColor: androidx.compose.ui.graphics.Color,
+    val contentColor: androidx.compose.ui.graphics.Color,
+    val icon: String,
+    val labelRes: org.jetbrains.compose.resources.StringResource
+)
 
 @Composable
 private fun RoleBadge(role: UserRole) {
@@ -359,26 +397,6 @@ private fun RoleBadge(role: UserRole) {
     }
 }
 
-@Composable
-private fun QuickInfoChip(icon: String, value: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-    ) {
-        Text(text = icon, style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
 
 @Composable
 private fun ProfileDetailsCard(user: User) {
@@ -386,12 +404,30 @@ private fun ProfileDetailsCard(user: User) {
         title = stringResource(Res.string.profile_contact_info),
         icon = "📋"
     ) {
-        EnhancedProfileRow(icon = "📧", label = stringResource(Res.string.profile_email), value = user.email)
-        EnhancedProfileRow(icon = "📱", label = stringResource(Res.string.profile_mobile), value = user.mobile)
+        EnhancedProfileRow(
+            icon = "📧",
+            label = stringResource(Res.string.profile_email),
+            value = user.email.ifBlank { "—" }
+        )
+        EnhancedProfileRow(
+            icon = "📱",
+            label = stringResource(Res.string.profile_mobile),
+            value = formatMobile(user.mobile)
+        )
+        EnhancedProfileRow(
+            icon = "🆔",
+            label = stringResource(Res.string.profile_user_id),
+            value = user.id.ifBlank { "—" }
+        )
         EnhancedProfileRow(
             icon = "📅",
             label = stringResource(Res.string.profile_member_since),
-            value = formatDate(user.createdAt),
+            value = formatDate(user.createdAt)
+        )
+        EnhancedProfileRow(
+            icon = "🔄",
+            label = stringResource(Res.string.profile_last_updated),
+            value = formatDate(user.updatedAt),
             isLast = true
         )
     }
@@ -455,12 +491,12 @@ private fun EnhancedProfileRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(0.45f)
         ) {
             Text(
                 text = icon,
@@ -477,7 +513,9 @@ private fun EnhancedProfileRow(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(0.55f)
         )
     }
     if (!isLast) {
@@ -488,33 +526,6 @@ private fun EnhancedProfileRow(
     }
 }
 
-@Composable
-private fun ProfileDetailRow(
-    icon: String,
-    label: String,
-    value: String
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = icon, style = MaterialTheme.typography.titleLarge)
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
-    }
-}
 
 @Composable
 private fun OrganizationStatsCard(stats: OrganizationStats) {
@@ -522,7 +533,12 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
         title = stringResource(Res.string.profile_organization_overview),
         icon = "📊"
     ) {
-        // First Row - Team Stats
+        // Team section header
+        SectionLabel(
+            text = stringResource(Res.string.profile_org_team),
+            icon = "👥"
+        )
+        Spacer(modifier = Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -530,19 +546,19 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             EnhancedStatItem(
                 icon = "💼",
                 value = stats.totalManagers.toString(),
-                label = stringResource(Res.string.team_filter_managers),
+                label = stringResource(Res.string.profile_stats_managers),
                 color = MaterialTheme.colorScheme.secondary
             )
             EnhancedStatItem(
                 icon = "👁️",
                 value = stats.totalSupervisors.toString(),
-                label = stringResource(Res.string.team_filter_supervisors),
+                label = stringResource(Res.string.profile_stats_supervisors),
                 color = MaterialTheme.colorScheme.tertiary
             )
             EnhancedStatItem(
-                icon = "🚗",
-                value = stats.totalDrivers.toString(),
-                label = stringResource(Res.string.org_stats_drivers),
+                icon = "👨‍✈️",
+                value = stats.totalTeamMembers.toString(),
+                label = stringResource(Res.string.profile_stats_team_members),
                 color = MaterialTheme.colorScheme.primary
             )
         }
@@ -554,7 +570,12 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Second Row - Fleet Stats
+        // Fleet section header
+        SectionLabel(
+            text = stringResource(Res.string.profile_org_fleet),
+            icon = "🚚"
+        )
+        Spacer(modifier = Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -562,16 +583,62 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             EnhancedStatItemWithIcon(
                 iconRes = Res.drawable.ic_truck,
                 value = stats.totalVehicles.toString(),
-                label = stringResource(Res.string.org_stats_vehicles),
+                label = stringResource(Res.string.profile_stats_total_vehicles),
+                color = MaterialTheme.colorScheme.primary
+            )
+            EnhancedStatItem(
+                icon = "🟢",
+                value = stats.activeVehicles.toString(),
+                label = stringResource(Res.string.profile_stats_active_vehicles),
+                color = MaterialTheme.colorScheme.tertiary
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            thickness = 0.5.dp
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Trips row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            EnhancedStatItem(
+                icon = "🧭",
+                value = stats.totalTrips.toString(),
+                label = stringResource(Res.string.profile_stats_total_trips),
                 color = MaterialTheme.colorScheme.primary
             )
             EnhancedStatItem(
                 icon = "🚀",
                 value = stats.activeTrips.toString(),
-                label = stringResource(Res.string.dashboard_active_trips),
+                label = stringResource(Res.string.profile_stats_active_trips),
                 color = MaterialTheme.colorScheme.tertiary
             )
+            EnhancedStatItem(
+                icon = "✅",
+                value = stats.completedTrips.toString(),
+                label = stringResource(Res.string.profile_stats_completed_trips),
+                color = MaterialTheme.colorScheme.secondary
+            )
         }
+    }
+}
+
+@Composable
+private fun SectionLabel(text: String, icon: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(text = icon, style = MaterialTheme.typography.titleSmall)
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 
@@ -972,7 +1039,8 @@ private fun EditProfileContent(
 }
 
 private fun formatDate(isoDate: String): String {
-    // Convert ISO date (YYYY-MM-DD) to DD-MM-YYYY format
+    if (isoDate.isBlank()) return "—"
+    // Convert ISO date (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ) to DD-MM-YYYY format
     return try {
         val datePart = isoDate.split("T").firstOrNull() ?: isoDate
         val parts = datePart.split("-")
@@ -985,3 +1053,24 @@ private fun formatDate(isoDate: String): String {
         isoDate
     }
 }
+
+/**
+ * Display-friendly mobile number. Keeps a leading + and country code when present,
+ * inserting a space after the country code for readability (e.g. "+91 9876543210").
+ */
+private fun formatMobile(raw: String): String {
+    if (raw.isBlank()) return "—"
+    val trimmed = raw.trim()
+    return when {
+        trimmed.startsWith("+") && trimmed.length > 3 -> {
+            // Assume up to 3-char country code (covers +91, +1, etc.)
+            val ccEnd = (1..3).firstOrNull { trimmed.length > it && !trimmed[it].isDigit() }
+                ?: minOf(3, trimmed.length - 1)
+            val cc = trimmed.substring(0, ccEnd + 1).trimEnd()
+            val rest = trimmed.substring(ccEnd + 1)
+            if (rest.isNotEmpty()) "$cc $rest" else trimmed
+        }
+        else -> trimmed
+    }
+}
+

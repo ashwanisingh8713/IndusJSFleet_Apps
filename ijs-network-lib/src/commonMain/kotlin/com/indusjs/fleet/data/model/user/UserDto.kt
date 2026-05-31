@@ -116,20 +116,20 @@ data class OwnerStatsDto(
 @JsonIgnoreUnknownKeys
 @Serializable
 data class UserProfileDto(
-    val id: Int,
-    val email: String,
-    val mobile: String,
+    val id: Int = 0,
+    val email: String = "",
+    val mobile: String = "",
     @SerialName("first_name")
-    val firstName: String,
+    val firstName: String = "",
     @SerialName("last_name")
-    val lastName: String,
-    val role: String,
+    val lastName: String = "",
+    val role: String = "",
     @SerialName("owner_id")
     val ownerId: Int? = null,
     @SerialName("is_active")
     val isActive: Boolean = true,
     @SerialName("created_at")
-    val createdAt: String,
+    val createdAt: String = "",
     @SerialName("updated_at")
     val updatedAt: String? = null,
     @SerialName("owner_stats")

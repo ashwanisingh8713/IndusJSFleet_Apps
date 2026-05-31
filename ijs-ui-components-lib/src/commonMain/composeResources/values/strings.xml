@@ -1180,6 +1180,23 @@
     <string name="profile_contact_info">Contact Information</string>
     <string name="profile_org_owner">Organization Owner</string>
     <string name="profile_account_actions">Account Actions</string>
+    <string name="profile_status_active">Active</string>
+    <string name="profile_status_inactive">Inactive</string>
+    <string name="profile_greeting_prefix_default">Welcome back,</string>
+    <string name="profile_tap_to_view">Tap to view full profile</string>
+    <string name="profile_user_id">User ID</string>
+    <string name="profile_account_status">Account Status</string>
+    <string name="profile_last_updated">Last Updated</string>
+    <string name="profile_org_team">Team</string>
+    <string name="profile_org_fleet">Fleet</string>
+    <string name="profile_stats_total_vehicles">Total Vehicles</string>
+    <string name="profile_stats_active_vehicles">Active Vehicles</string>
+    <string name="profile_stats_total_trips">Total Trips</string>
+    <string name="profile_stats_active_trips">Active Trips</string>
+    <string name="profile_stats_completed_trips">Completed Trips</string>
+    <string name="profile_stats_team_members">Team Members</string>
+    <string name="profile_stats_managers">Managers</string>
+    <string name="profile_stats_supervisors">Supervisors</string>
 
     <!-- ==================== Vehicle Detail - Sections ==================== -->
     <string name="vehicle_detail_delete">Delete Vehicle</string>

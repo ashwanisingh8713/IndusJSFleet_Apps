@@ -39,7 +39,8 @@ import org.jetbrains.compose.resources.stringResource
 fun DriverCostEntryScreen(
     viewModel: DriverCostEntryViewModel,
     initialDriverId: String? = null,
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onCostsSaved: (driverId: String?, count: Int) -> Unit = { _, _ -> }
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -67,6 +68,8 @@ fun DriverCostEntryScreen(
                 is DriverCostEntryContract.Effect.CostsSaved -> {
                     pendingCostSavedEventId++
                     pendingCostSavedCount = effect.count
+                    // Notify parent so the previous screen (DriverDetail) can refresh its costs tab.
+                    onCostsSaved(state.selectedDriver?.id?.toString() ?: initialDriverId, effect.count)
                 }
             }
         }

@@ -487,15 +487,14 @@ class DriverDetailViewModel(
                     val costs = data.costs
                     val summary = data.summary
 
-                    // Calculate totals locally to ensure accuracy
-                    // The API summary may return 0 for driver costs added from trips
-                    // because those are tracked differently on the backend
+                    // Calculate totals locally to ensure accuracy. The API summary may
+                    // miss driver-cost entries added via trips (those are tracked
+                    // differently on the backend), so local sums are the source of truth.
                     val localEarnings = costs.filter { !it.isDeductionCost }.sumOf { it.amount }
                     val localDeductions = costs.filter { it.isDeductionCost }.sumOf { it.amount }
                     val localNetAmount = localEarnings - localDeductions
 
-                    // Use API summary only if it has meaningful values (non-zero)
-                    // Otherwise, prefer local calculation from actual cost items
+                    // Prefer backend summary only when it has meaningful values.
                     val totalEarnings = if (summary != null && summary.totalEarnings > 0) {
                         summary.totalEarnings
                     } else {
@@ -507,7 +506,7 @@ class DriverDetailViewModel(
                         localDeductions
                     }
                     val netAmount = if (summary != null && (summary.totalEarnings > 0 || summary.totalDeductions > 0)) {
-                        summary.netAmount
+                        summary.netEarnings
                     } else {
                         localNetAmount
                     }

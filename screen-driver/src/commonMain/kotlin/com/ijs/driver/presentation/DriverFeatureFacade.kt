@@ -60,12 +60,14 @@ object DriverFeatureFacade {
     fun DriverCostEntryEntry(
         viewModel: DriverCostEntryViewModel,
         initialDriverId: String? = null,
-        onNavigateBack: () -> Unit
+        onNavigateBack: () -> Unit,
+        onCostsSaved: (driverId: String?, count: Int) -> Unit = { _, _ -> }
     ) {
         DriverCostEntryScreen(
             viewModel = viewModel,
             initialDriverId = initialDriverId,
-            onNavigateBack = onNavigateBack
+            onNavigateBack = onNavigateBack,
+            onCostsSaved = onCostsSaved
         )
     }
 }

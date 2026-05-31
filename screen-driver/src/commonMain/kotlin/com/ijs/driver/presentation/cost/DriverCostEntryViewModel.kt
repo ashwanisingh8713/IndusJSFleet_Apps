@@ -341,8 +341,15 @@ class DriverCostEntryViewModel(
             val isDeduction = entry.selectedGroupId == DriverCostTypes.DEDUCTION_GROUP_ID ||
                     entry.costType.startsWith("DC-003")
 
-            // Convert to ISO 8601 date format for API
-            val isoDateTime = convertFormattedToIsoDateTime(entry.date, entry.time.ifBlank { "00:00" })
+
+            // Driver-costs API expects date in DD-MM-YYYY format (per API spec).
+            // The UI already captures the date in DD-MM-YYYY via FleetDatePicker,
+            // so we send it as-is. We also derive `month` (YYYY-MM) for backend filtering.
+            val ddmmyyyyDate = entry.date.trim()
+            val derivedMonth = runCatching {
+                val parts = ddmmyyyyDate.split("-")
+                if (parts.size == 3 && parts[2].length == 4) "${parts[2]}-${parts[1]}" else null
+            }.getOrNull()
 
             BulkDriverCostItem(
                 costId = entry.costType,
@@ -350,7 +357,8 @@ class DriverCostEntryViewModel(
                 groupId = entry.selectedGroupId,
                 customCostLabel = entry.customCostTypeName.takeIf { it.isNotBlank() },
                 amount = entry.amount.toDouble(),
-                date = isoDateTime,
+                date = ddmmyyyyDate,
+                month = derivedMonth,
                 notes = entry.notes.takeIf { it.isNotBlank() },
                 isDeduction = isDeduction
             )

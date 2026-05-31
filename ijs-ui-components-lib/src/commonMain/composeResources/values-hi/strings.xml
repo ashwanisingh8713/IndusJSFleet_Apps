@@ -1134,6 +1134,23 @@
     <string name="profile_contact_info">संपर्क जानकारी</string>
     <string name="profile_org_owner">संगठन मालिक</string>
     <string name="profile_account_actions">खाता कार्य</string>
+    <string name="profile_status_active">सक्रिय</string>
+    <string name="profile_status_inactive">निष्क्रिय</string>
+    <string name="profile_greeting_prefix_default">स्वागत है,</string>
+    <string name="profile_tap_to_view">पूरा प्रोफ़ाइल देखने के लिए टैप करें</string>
+    <string name="profile_user_id">यूज़र आईडी</string>
+    <string name="profile_account_status">खाता स्थिति</string>
+    <string name="profile_last_updated">अंतिम अद्यतन</string>
+    <string name="profile_org_team">टीम</string>
+    <string name="profile_org_fleet">फ्लीट</string>
+    <string name="profile_stats_total_vehicles">कुल वाहन</string>
+    <string name="profile_stats_active_vehicles">सक्रिय वाहन</string>
+    <string name="profile_stats_total_trips">कुल यात्राएं</string>
+    <string name="profile_stats_active_trips">सक्रिय यात्राएं</string>
+    <string name="profile_stats_completed_trips">पूर्ण यात्राएं</string>
+    <string name="profile_stats_team_members">टीम सदस्य</string>
+    <string name="profile_stats_managers">प्रबंधक</string>
+    <string name="profile_stats_supervisors">पर्यवेक्षक</string>
 
     <!-- ==================== Vehicle Detail - Sections ==================== -->
     <string name="vehicle_detail_delete">वाहन हटाएं</string>

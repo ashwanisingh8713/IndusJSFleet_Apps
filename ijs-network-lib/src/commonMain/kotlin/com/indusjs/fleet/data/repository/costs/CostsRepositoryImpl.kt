@@ -290,13 +290,29 @@ class CostsRepositoryImpl(
                 startDate = startDate,
                 endDate = endDate
             )
-            val data = response.data
+            val envelope = response.data
 
-            if (response.success && data != null) {
-                Result.Success(data)
-            } else {
-                // Return empty data instead of error
+            if (response.success && envelope != null) {
+                // Backend response is double-nested: { data: { data: { costs, summary }, page, total, ... } }
+                // Flatten into the legacy DriverCostsListDto consumed by the app.
+                val payload = envelope.payload
+                Result.Success(
+                    DriverCostsListDto(
+                        costs = payload?.costs.orEmpty(),
+                        summary = payload?.summary,
+                        page = envelope.page,
+                        perPage = envelope.perPage,
+                        total = envelope.total,
+                        totalPages = envelope.totalPages,
+                        hasMore = envelope.hasMore
+                    )
+                )
+            } else if (response.success) {
                 Result.Success(DriverCostsListDto())
+            } else {
+                Result.Error(
+                    ApiException(response.message ?: "Failed to load driver costs")
+                )
             }
         } catch (e: AuthException) {
             Result.Error(e)

@@ -45,6 +45,7 @@ data class User(
     val lastName: String,
     val role: UserRole,
     val ownerId: String? = null, // null for owners, owner's id for managers/supervisors
+    val isActive: Boolean = true,
     val createdAt: String,
     val updatedAt: String
 ) : Entity {
@@ -99,13 +100,17 @@ data class UserProfile(
 
 /**
  * Organization statistics for owners.
+ * Mirrors the `owner_stats` block returned by `GET /profile` for owners.
  */
 data class OrganizationStats(
-    val totalManagers: Int,
-    val totalSupervisors: Int,
-    val totalDrivers: Int,
-    val totalVehicles: Int,
-    val activeTrips: Int
+    val totalManagers: Int = 0,
+    val totalSupervisors: Int = 0,
+    val totalTeamMembers: Int = 0,
+    val totalVehicles: Int = 0,
+    val activeVehicles: Int = 0,
+    val totalTrips: Int = 0,
+    val activeTrips: Int = 0,
+    val completedTrips: Int = 0
 )
 
 /**

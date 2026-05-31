@@ -268,7 +268,9 @@ fun fleetEntryProvider(
         }
 
         is FleetRoute.DriverDetail -> NavEntry(route) {
-            val viewModel = rememberViewModel { driverDetailViewModel() }
+            // Use shared VM so DriverCostEntry can refresh the same instance after save.
+            val driverDetailKey = "driverDetail_${route.driverId}"
+            val viewModel = rememberSharedViewModel(driverDetailKey) { driverDetailViewModel() }
             DriverFeatureFacade.DriverDetailEntry(
                 viewModel = viewModel,
                 driverId = route.driverId,
@@ -371,10 +373,21 @@ fun fleetEntryProvider(
 
         is FleetRoute.DriverCostEntry -> NavEntry(route) {
             val viewModel = rememberViewModel { driverCostEntryViewModel() }
+            // Look up the (already-existing) DriverDetail VM for this driver, if any,
+            // so we can refresh its costs immediately after the bulk create succeeds.
+            val driverDetailKey = route.driverId?.let { "driverDetail_$it" }
+            val parentDetailVm = driverDetailKey?.let { key ->
+                rememberSharedViewModel(key) { driverDetailViewModel() }
+            }
             DriverFeatureFacade.DriverCostEntryEntry(
                 viewModel = viewModel,
                 initialDriverId = route.driverId,
-                onNavigateBack = { backStack.removeLastOrNull() }
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onCostsSaved = { _, _ ->
+                    parentDetailVm?.sendIntent(
+                        com.ijs.driver.presentation.detail.DriverDetailContract.Intent.RefreshCosts
+                    )
+                }
             )
         }
 
