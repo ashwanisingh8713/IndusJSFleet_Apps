@@ -565,10 +565,15 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         val teamSetupDone = userLocalDataSource.isTeamSetupCompleted()
         return try {
             val result = getOnboardingStatusUseCase()
+            result.onFailure { err ->
+                fleetLogger.w(
+                    TAG,
+                    "checkSubscriptionGate: getOnboardingStatus failed (${err::class.simpleName}): ${err.message}. " +
+                        "Falling back based on local state (hasTenantLocally=$hasTenantLocally, teamSetupDone=$teamSetupDone)."
+                )
+            }
             val status = result.getOrNull()
-                ?: return if (!hasTenantLocally) SubscriptionGateResult.RequiresTenantCreation
-                        else if (!teamSetupDone) SubscriptionGateResult.RequiresTeamMemberCreation
-                        else SubscriptionGateResult.NoGate
+                ?: return fallbackGateWithoutStatus(hasTenantLocally, teamSetupDone)
 
             // Server confirms tenant already exists — restore local state if missing
             if (status.hasTenantFromServer) {
@@ -588,10 +593,30 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
             }
         } catch (e: Exception) {
             fleetLogger.w(TAG, "Subscription gate check failed (non-blocking): ${e.message}")
-            if (!hasTenantLocally) SubscriptionGateResult.RequiresTenantCreation
-            else if (!teamSetupDone) SubscriptionGateResult.RequiresTeamMemberCreation
-            else SubscriptionGateResult.NoGate
+            fallbackGateWithoutStatus(hasTenantLocally, teamSetupDone)
         }
+    }
+
+    /**
+     * Fallback decision when the backend onboarding-status check cannot be evaluated
+     * (network error, server 5xx, malformed payload, etc.).
+     *
+     * Onboarding flow order: Plan → Payment → Organization → Team → Dashboard.
+     *
+     * - If the user has no local tenant, they haven't completed onboarding yet — the
+     *   safest re-entry point is the start of the flow, i.e. Plan selection. Routing
+     *   to CreateOrganization here would skip Plan + Payment entirely, which is the
+     *   bug the user reported after a fresh Sign Up.
+     * - If a tenant exists locally but team setup isn't marked done, send to team
+     *   member creation; otherwise allow normal app entry.
+     */
+    private fun fallbackGateWithoutStatus(
+        hasTenantLocally: Boolean,
+        teamSetupDone: Boolean
+    ): SubscriptionGateResult = when {
+        !hasTenantLocally -> SubscriptionGateResult.RequiresPlanSelection
+        !teamSetupDone -> SubscriptionGateResult.RequiresTeamMemberCreation
+        else -> SubscriptionGateResult.NoGate
     }
 
     private suspend fun resolveTeamSetupGate(teamSetupDone: Boolean): SubscriptionGateResult {
