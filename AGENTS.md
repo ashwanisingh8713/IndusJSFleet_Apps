@@ -17,14 +17,26 @@
 | Vehicle Finance | Purchase records, loan tracking, EMI payments |
 | Real-time Tracking | GPS location via MQTT (separate locationTracker APK publishes, fleet app subscribes) |
 
-### User Roles (Hierarchical)
+### Access Control (IAM, permission-first)
 
-| Role | Access Level |
-|------|-------------|
-| **Owner** | Full access — financials, team management, all CRUD operations |
-| **General Manager** | Financial access, manage Managers/Supervisors, all operations |
-| **Manager** | Operational access — create trips/costs, **no** financial data (no trip_price, no P&L) |
-| **Supervisor** | Limited — view-only for most features, can update trip status only |
+Identity lives in the separate **IndusJS-IAM** service (sibling repo).
+**Permission-first model:** a role is a *named permission bundle* with a numeric
+level (owner=100, admin=50, member=10); any user with the right permissions can
+access any feature. Authorization is permission-based
+(`vehicles:create`, `financials:read`, `users:change_role`, …) enforced per route.
+Legacy labels `general_manager`/`manager`/`supervisor` are deprecated — use IAM
+bundle names.
+
+| IAM bundle | Level | Access |
+|------------|:-----:|--------|
+| `owner` | 100 | Full access — financials, team management, billing, all CRUD operations |
+| `admin` | 50 | Operational access — create trips/costs, **no** financial data (no `financials:read`) |
+| `user` | 10 | Limited — view, trip status updates, own cost entries |
+| `driver` | app-scoped | IAM login for the Location Tracker app (GPS publishing); future field cost-upload app |
+
+App-side checks: `PermissionUtils` (`ijs-core-lib`). JWT must contain the `tid`
+(tenant) claim — verified via `JwtHelper` — otherwise tenant APIs return 403.
+Specs: `Docs/BACKEND_TEAM_MEMBER_IAM_ROLES_SPEC.md`, `Docs/user-roles/user-roles-README.md`.
 
 ---
 
@@ -151,7 +163,7 @@ User taps button
 |--------|-------|-------------|
 | Dashboard | `Dashboard` | Fleet overview, cost overview, financial summary, alerts, quick actions |
 
-Dashboard sections: Fleet Overview (vehicle/driver/trip counts), Cost Overview (today/weekly/monthly), Financial Summary (Owner/GM only — revenue, expenses, profit), Vehicle/Driver/Trip status summaries, Alerts (document/license expiry), Quick Actions.
+Dashboard sections: Fleet Overview (vehicle/driver/trip counts), Cost Overview (today/weekly/monthly), Financial Summary (requires `financials:read` — revenue, expenses, profit), Vehicle/Driver/Trip status summaries, Alerts (document/license expiry), Quick Actions.
 
 ### Vehicles
 | Screen | Route | Description |
@@ -200,7 +212,7 @@ Trip states: `planned → on_route → completed` (or `cancelled`, `failed`, `de
 
 Payment status: `received`, `pending`, `cancelled`. Modes: cash, upi, bank_transfer, cheque, card.
 
-### Reports (Owner/GM only)
+### Reports (requires `financials:read`)
 | Screen | Route | Description |
 |--------|-------|-------------|
 | ReportsHub | `Reports` | Summary with period filter |
@@ -216,7 +228,7 @@ Report periods: today, weekly, 15 days, monthly, quarterly, half-yearly, yearly,
 |--------|-------|-------------|
 | TeamList | `TeamList` | All team members |
 | TeamMemberDetail | `TeamMemberDetail(id)` | Member details + permissions |
-| CreateTeamMember | `CreateTeamMember` | Add GM/Manager/Supervisor |
+| CreateTeamMember | `CreateTeamMember` | Add a member by assigning an IAM role bundle (`owner`/`admin`/`user`) |
 
 ### Vehicle Finance
 | Screen | Route | Description |
@@ -232,6 +244,12 @@ Report periods: today, weekly, 15 days, monthly, quarterly, half-yearly, yearly,
 |--------|-------|-------------|
 | MapsScreen | `Maps` | Real-time vehicle tracking (MQTT subscribe) |
 | AlertsList | `AlertsList` | Document expiry, license expiry, maintenance due |
+
+### Notifications (planned — PRD Feat-NTF / FE-06)
+| Screen | Route | Description |
+|--------|-------|-------------|
+| NotificationCenter | `Notifications` *(planned)* | In-app inbox of push notifications (FCM/APNs/Web Push), unread badge, deep links |
+| NotificationSettings | `NotificationSettings` *(planned)* | Per-event opt-in/out, quiet hours, channel choice |
 
 ---
 
