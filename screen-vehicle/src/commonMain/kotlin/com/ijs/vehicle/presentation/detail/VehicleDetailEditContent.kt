@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.CaretakerSectionCard
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
 import com.ijs.vehicle.domain.entity.Vehicle
@@ -25,6 +26,7 @@ import com.ijs.vehicle.domain.entity.VehicleStatus
 import com.ijs.vehicle.domain.entity.VehicleType
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -34,29 +36,17 @@ internal fun EditModeContent(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // ==================== Vehicle Information Section ====================
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        FleetTitledSectionCard(
+            title = stringResource(Res.string.vehicle_edit_info),
+            emoji = "🚗",
+            accent = MaterialTheme.colorScheme.primary
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🚗", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Vehicle Information",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Registration (read-only)
                 OutlinedTextField(
                     value = state.registrationNumber,
                     onValueChange = { },
-                    label = { Text("Registration Number") },
+                    label = { Text(stringResource(Res.string.vehicles_registration)) },
                     enabled = false,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -70,10 +60,10 @@ internal fun EditModeContent(
                     OutlinedTextField(
                         value = state.make,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateMake(it)) },
-                        label = { Text("Make *") },
-                        placeholder = { Text("e.g., Toyota") },
+                        label = { Text(stringResource(Res.string.vehicle_label_make)) },
+                        placeholder = { Text(stringResource(Res.string.vehicle_edit_placeholder_make)) },
                         isError = state.makeError != null,
-                        supportingText = state.makeError?.let { { Text(it) } },
+                        supportingText = state.makeError?.let { { Text(it.resolve()) } },
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words,
                             imeAction = ImeAction.Next
@@ -86,10 +76,10 @@ internal fun EditModeContent(
                     OutlinedTextField(
                         value = state.model,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateModel(it)) },
-                        label = { Text("Model *") },
-                        placeholder = { Text("e.g., Fortuner") },
+                        label = { Text(stringResource(Res.string.vehicle_label_model)) },
+                        placeholder = { Text(stringResource(Res.string.vehicle_edit_placeholder_model)) },
                         isError = state.modelError != null,
-                        supportingText = state.modelError?.let { { Text(it) } },
+                        supportingText = state.modelError?.let { { Text(it.resolve()) } },
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words,
                             imeAction = ImeAction.Next
@@ -107,10 +97,10 @@ internal fun EditModeContent(
                     OutlinedTextField(
                         value = state.year,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateYear(it)) },
-                        label = { Text("Year *") },
-                        placeholder = { Text("e.g., 2024") },
+                        label = { Text(stringResource(Res.string.vehicle_label_year)) },
+                        placeholder = { Text(stringResource(Res.string.vehicle_edit_placeholder_year)) },
                         isError = state.yearError != null,
-                        supportingText = state.yearError?.let { { Text(it) } },
+                        supportingText = state.yearError?.let { { Text(it.resolve()) } },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Next
@@ -123,8 +113,8 @@ internal fun EditModeContent(
                     OutlinedTextField(
                         value = state.mileage,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateMileage(it)) },
-                        label = { Text("Mileage (km)") },
-                        placeholder = { Text("e.g., 50000") },
+                        label = { Text(stringResource(Res.string.vehicle_edit_mileage)) },
+                        placeholder = { Text(stringResource(Res.string.vehicle_edit_mileage_placeholder)) },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal,
                             imeAction = ImeAction.Next
@@ -138,7 +128,7 @@ internal fun EditModeContent(
                 // Vehicle Type selector
                 Column {
                     Text(
-                        text = "Vehicle Type",
+                        text = stringResource(Res.string.vehicle_edit_vehicle_type),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -164,28 +154,16 @@ internal fun EditModeContent(
         }
 
         // ==================== Specifications Section ====================
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        FleetTitledSectionCard(
+            title = stringResource(Res.string.vehicle_edit_specs),
+            emoji = "⚙️",
+            accent = MaterialTheme.colorScheme.primary
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("⚙️", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Specifications",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Fuel Type selector
                 Column {
                     Text(
-                        text = "Fuel Type",
+                        text = stringResource(Res.string.vehicle_edit_fuel_type),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -212,8 +190,8 @@ internal fun EditModeContent(
                     OutlinedTextField(
                         value = state.color,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateColor(it)) },
-                        label = { Text("Color") },
-                        placeholder = { Text("e.g., Silver") },
+                        label = { Text(stringResource(Res.string.vehicle_edit_color)) },
+                        placeholder = { Text(stringResource(Res.string.vehicle_edit_color_placeholder)) },
                         leadingIcon = { Text("🎨", modifier = Modifier.padding(start = 8.dp)) },
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words,
@@ -227,8 +205,8 @@ internal fun EditModeContent(
                     OutlinedTextField(
                         value = state.capacity,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateCapacity(it)) },
-                        label = { Text("Capacity") },
-                        placeholder = { Text("e.g., 7") },
+                        label = { Text(stringResource(Res.string.vehicle_edit_capacity)) },
+                        placeholder = { Text(stringResource(Res.string.vehicle_edit_capacity_placeholder)) },
                         leadingIcon = { Text("👥", modifier = Modifier.padding(start = 8.dp)) },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
@@ -243,23 +221,12 @@ internal fun EditModeContent(
         }
 
         // ==================== Driver Assignment Section ====================
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        FleetTitledSectionCard(
+            title = stringResource(Res.string.vehicle_edit_assigned_driver),
+            emoji = "👤",
+            accent = MaterialTheme.colorScheme.primary
         ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("👤", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Assigned Driver",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary                    )
-                }
-
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Driver Dropdown
                 Column {
                     Surface(
@@ -276,11 +243,11 @@ internal fun EditModeContent(
                             if (state.isLoadingDrivers) {
                                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Text("Loading drivers...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(Res.string.vehicle_edit_loading_drivers), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             } else {
                                 Text(
                                     text = state.selectedDriver?.let { "${it.firstName} ${it.lastName}" }
-                                        ?: "No driver assigned",
+                                        ?: stringResource(Res.string.vehicle_edit_no_driver_assigned),
                                     modifier = Modifier.weight(1f),
                                     color = if (state.selectedDriver != null)
                                         MaterialTheme.colorScheme.onSurface
@@ -313,7 +280,7 @@ internal fun EditModeContent(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "No driver (Unassign)",
+                                            text = stringResource(Res.string.vehicle_edit_no_driver),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
@@ -415,38 +382,19 @@ internal fun getVehicleTypeLabel(type: VehicleType): String = when (type) {
 internal fun getStatusLabel(status: VehicleStatus): String =
     VehicleStatus.getDisplayLabel(status)
 
+/** Epoch millis -> "DD-MMM-YYYY" display (e.g. "04-Jan-2026"). "N/A" when unset. */
 internal fun formatDate(timestamp: Long): String {
-    if (timestamp <= 0) return "N/A"
-    return try {
-        val days = timestamp / (24 * 60 * 60 * 1000)
-        val years = (days / 365.25).toInt() + 1970
-        val remainingDays = (days % 365.25).toInt()
-        val months = (remainingDays / 30) + 1
-        val dayOfMonth = (remainingDays % 30) + 1
-        val monthStr = months.coerceIn(1, 12).toString().padStart(2, '0')
-        val dayStr = dayOfMonth.coerceIn(1, 28).toString().padStart(2, '0')
-        "$dayStr-$monthStr-$years" // DD-MM-YYYY format
-    } catch (_: Exception) {
-        "N/A"
-    }
+    if (timestamp <= 0L) return "N/A"
+    return com.indusjs.fleet.core.util.formatDateToHumanReadable(timestamp).ifBlank { "N/A" }
 }
 
 /**
- * Converts ISO date string (YYYY-MM-DD) to display format (DD-MM-YYYY).
+ * Epoch millis (UTC) -> "DD-MMM-YYYY" display. "N/A" when null/unset.
+ * (Formerly parsed ISO strings; the API now sends epoch-millis numbers.)
  */
-internal fun formatIsoDateToDisplay(isoDate: String?): String {
-    if (isoDate.isNullOrBlank()) return "N/A"
-    return try {
-        val datePart = isoDate.split("T").firstOrNull() ?: isoDate
-        val parts = datePart.split("-")
-        if (parts.size == 3) {
-            "${parts[2]}-${parts[1]}-${parts[0]}" // DD-MM-YYYY
-        } else {
-            datePart
-        }
-    } catch (_: Exception) {
-        isoDate
-    }
+internal fun formatIsoDateToDisplay(timestamp: Long?): String {
+    if (timestamp == null || timestamp <= 0L) return "N/A"
+    return com.indusjs.fleet.core.util.formatDateToHumanReadable(timestamp).ifBlank { "N/A" }
 }
 
 // ==================== Costs Tab ====================

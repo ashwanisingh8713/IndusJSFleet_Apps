@@ -9,8 +9,18 @@ package com.indusjs.fleet.core.network
 object ApiConfig {
 
 
-    /** `IndusJSFleet_GoLang_Backend` branch `clean-architecture-code-refactoring` (Cloud Run). */
-    const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
+    /** Cloud Run deployment (production / staging). */
+    // const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
+
+    /** Local development server (Android emulator uses 10.0.2.2 to reach host machine's localhost). */
+    const val BASE_URL = "http://10.0.2.2:8081/api/v1"
+
+    /**
+     * Server origin without the "/api/v1" suffix.
+     * Backend-issued relative URLs (e.g. document download_url) already include
+     * "/api/v1", so prefix them with BASE_ORIGIN, NOT BASE_URL, to avoid double "/api/v1".
+     */
+    val BASE_ORIGIN: String = BASE_URL.removeSuffix("/api/v1")
 
     /**
      * Google Places API Key for location autocomplete.
@@ -27,6 +37,13 @@ object ApiConfig {
         // ── Authentication ──────────────────────────────────────────────
         const val SIGNUP = "/auth/signup"
         const val LOGIN = "/auth/login"
+        /**
+         * Exchanges a (rotating) refresh token for a NEW access+refresh pair.
+         * Body: {"refresh_token":"<opaque>"} → 200 {data:{access_token, refresh_token,
+         * token_type, expires_in}}. A 401 means the refresh token is
+         * invalid/expired/REUSED → the session is dead → re-login.
+         */
+        const val REFRESH = "/auth/refresh"
         const val LOGOUT = "/auth/logout"
         const val FORGOT_PASSWORD = "/auth/forgot-password"
         const val RESET_PASSWORD = "/auth/reset-password"
@@ -43,6 +60,10 @@ object ApiConfig {
         // ── User Profile ────────────────────────────────────────────────
         const val PROFILE = "/profile"
         const val CHANGE_PASSWORD = "/profile/change-password"
+
+        // ── Permissions / Roles (current user) ──────────────────────────
+        const val ME_PERMISSIONS = "/me/permissions"
+        const val TEAM_ROLES = "/team/roles"
 
         // ── Dashboard ───────────────────────────────────────────────────
         const val DASHBOARD = "/dashboard"
@@ -128,8 +149,10 @@ object ApiConfig {
         const val TRIP_PAYMENTS_TDS_REPORT = "/trip-payments/tds-report"
 
         // ── Team Management ─────────────────────────────────────────────
-        const val TEAM = "/team"
-        fun teamMemberById(memberId: String) = "$TEAM/$memberId"
+        // Backend (team_routes.go): collection at /team/members,
+        // single member at /team/members/:id.
+        const val TEAM_MEMBERS = "/team/members"
+        fun teamMemberById(memberId: String) = "$TEAM_MEMBERS/$memberId"
 
         // ── Documents ───────────────────────────────────────────────────
         const val DOCUMENTS = "/documents"
@@ -145,6 +168,7 @@ object ApiConfig {
         // ── Reports (P&L) ───────────────────────────────────────────────
         const val REPORTS_PL = "/reports/profit-loss"
         const val REPORTS_PL_VEHICLES = "/reports/profit-loss/vehicles"
+        const val REPORTS_PL_CUSTOMERS = "/reports/profit-loss/customers"
         const val REPORTS_PL_TRIPS = "/reports/profit-loss/trips"
         const val REPORTS_PL_COST_TYPES = "/reports/profit-loss/cost-types"
         const val REPORTS_PL_CONSOLIDATED = "/reports/profit-loss/consolidated"

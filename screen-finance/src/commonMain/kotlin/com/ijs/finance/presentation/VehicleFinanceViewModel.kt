@@ -5,6 +5,7 @@ import com.ijs.finance.TAG_FINANCE_VM
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.finance.domain.entity.PaymentType
 import com.ijs.finance.domain.repository.VehicleFinanceRepository
 import com.ijs.vehicle.domain.repository.VehicleRepository
@@ -12,6 +13,20 @@ import com.ijs.finance.presentation.VehicleFinanceContract.Effect
 import com.ijs.finance.presentation.VehicleFinanceContract.Intent
 import com.ijs.finance.presentation.VehicleFinanceContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_down_payment_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_financier_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_interest_rate_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_loan_start_date_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_payment_date_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_purchase_date_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_purchase_price_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_tenure_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_valid_amount
+import indusjsfleet.ijs_ui_components_lib.generated.resources.finance_payment_record_failed
+import indusjsfleet.ijs_ui_components_lib.generated.resources.finance_save_failed
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_payment_recorded
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_purchase_saved
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -100,7 +115,12 @@ init {
                         loadPurchaseInfoForVehicles(vehicleList.map { vehicle -> vehicle.id.toIntOrNull() ?: 0 })
                     }
                     is Result.Error -> {
-                        updateState { copy(isLoading = false, error = vehiclesResult.message) }
+                        updateState {
+                            copy(
+                                isLoading = false,
+                                error = vehiclesResult.message?.let { UiText.Raw(it) }
+                            )
+                        }
                     }
                     is Result.Loading -> { /* Already loading */ }
                 }
@@ -111,7 +131,7 @@ init {
 
         } catch (e: Exception) {
             logger.e(TAG_FINANCE_VM, "Error loading data: ${e.message}", e)
-            updateState { copy(isLoading = false, error = e.message) }
+            updateState { copy(isLoading = false, error = e.message?.let { UiText.Raw(it) }) }
         }
     }
 
@@ -224,7 +244,12 @@ init {
                 }
             }
             is Result.Error -> {
-                updateState { copy(isLoading = false, error = purchaseResult.message) }
+                updateState {
+                    copy(
+                        isLoading = false,
+                        error = purchaseResult.message?.let { UiText.Raw(it) }
+                    )
+                }
                 return
             }
             is Result.Loading -> { /* Already loading */ }
@@ -307,36 +332,36 @@ init {
         var hasError = false
 
         if (currentState.formPurchaseDate.isBlank()) {
-            updateState { copy(purchaseDateError = "Purchase date is required") }
+            updateState { copy(purchaseDateError = UiText.StringRes(Res.string.error_purchase_date_required)) }
             hasError = true
         }
 
         val price = currentState.formPurchasePrice.toDoubleOrNull()
         if (price == null || price <= 0) {
-            updateState { copy(purchasePriceError = "Valid purchase price is required") }
+            updateState { copy(purchasePriceError = UiText.StringRes(Res.string.error_purchase_price_invalid)) }
             hasError = true
         }
 
         if (currentState.formPaymentType == PaymentType.LOAN) {
             if (currentState.formDownPayment.toDoubleOrNull() == null) {
-                updateState { copy(downPaymentError = "Down payment is required") }
+                updateState { copy(downPaymentError = UiText.StringRes(Res.string.error_down_payment_required)) }
                 hasError = true
             }
             if (currentState.formInterestRate.toDoubleOrNull() == null) {
-                updateState { copy(interestRateError = "Interest rate is required") }
+                updateState { copy(interestRateError = UiText.StringRes(Res.string.error_interest_rate_required)) }
                 hasError = true
             }
             val tenure = currentState.formTenureMonths.toIntOrNull()
             if (tenure == null || tenure <= 0) {
-                updateState { copy(tenureError = "Valid tenure is required") }
+                updateState { copy(tenureError = UiText.StringRes(Res.string.error_tenure_required)) }
                 hasError = true
             }
             if (currentState.formFinancierName.isBlank()) {
-                updateState { copy(financierError = "Financier name is required") }
+                updateState { copy(financierError = UiText.StringRes(Res.string.error_financier_required)) }
                 hasError = true
             }
             if (currentState.formLoanStartDate.isBlank()) {
-                updateState { copy(loanStartDateError = "EMI start date is required") }
+                updateState { copy(loanStartDateError = UiText.StringRes(Res.string.error_loan_start_date_required)) }
                 hasError = true
             }
         }
@@ -376,13 +401,18 @@ init {
             is Result.Success -> {
                 updateState { copy(isSaving = false) }
                 hideAddPurchaseSheet()
-                sendEffect(Effect.ShowSnackbar("Purchase information saved successfully"))
+                sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_purchase_saved)))
                 sendEffect(Effect.PurchaseSaved)
                 loadData() // Refresh
             }
             is Result.Error -> {
-                updateState { copy(isSaving = false, error = result.message) }
-                sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to save purchase"))
+                updateState { copy(isSaving = false, error = result.message?.let { UiText.Raw(it) }) }
+                sendEffect(
+                    Effect.ShowSnackbar(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.finance_save_failed)
+                    )
+                )
             }
             is Result.Loading -> { /* Skip */ }
         }
@@ -414,12 +444,12 @@ init {
 
         val amount = currentState.paymentAmount.toDoubleOrNull()
         if (amount == null || amount <= 0) {
-            updateState { copy(paymentAmountError = "Valid amount is required") }
+            updateState { copy(paymentAmountError = UiText.StringRes(Res.string.error_valid_amount)) }
             hasError = true
         }
 
         if (currentState.paymentDate.isBlank()) {
-            updateState { copy(paymentDateError = "Payment date is required") }
+            updateState { copy(paymentDateError = UiText.StringRes(Res.string.error_payment_date_required)) }
             hasError = true
         }
 
@@ -443,7 +473,7 @@ init {
             is Result.Success -> {
                 updateState { copy(isSaving = false) }
                 hideRecordPaymentSheet()
-                sendEffect(Effect.ShowSnackbar("Payment recorded successfully"))
+                sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_payment_recorded)))
                 sendEffect(Effect.PaymentRecorded)
 
                 // Refresh current vehicle details
@@ -451,8 +481,13 @@ init {
                 loadData() // Refresh summary
             }
             is Result.Error -> {
-                updateState { copy(isSaving = false, error = result.message) }
-                sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to record payment"))
+                updateState { copy(isSaving = false, error = result.message?.let { UiText.Raw(it) }) }
+                sendEffect(
+                    Effect.ShowSnackbar(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.finance_payment_record_failed)
+                    )
+                )
             }
             is Result.Loading -> { /* Skip */ }
         }

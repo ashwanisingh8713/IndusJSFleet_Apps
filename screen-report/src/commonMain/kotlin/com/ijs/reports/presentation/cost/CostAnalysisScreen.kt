@@ -11,7 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,7 +23,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.uicomponents.components.DateVisualTransformation
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetSectionHeader
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
@@ -32,6 +38,7 @@ import com.ijs.reports.presentation.cost.CostAnalysisContract.Intent
 import com.ijs.reports.presentation.cost.CostAnalysisContract.State
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Cost Analysis Screen
@@ -43,12 +50,21 @@ fun CostAnalysisScreen(
     onNavigateBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val snackbarHostState = SnackbarHostState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
+                is Effect.ShowSnackbar -> pendingSnackbar = effect.message
             }
         }
     }
@@ -56,12 +72,12 @@ fun CostAnalysisScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Cost Analysis") },
+                title = { Text(stringResource(Res.string.reports_cost_analysis)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 },
@@ -117,7 +133,7 @@ fun CostAnalysisScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text("Analyze Costs")
+                    Text(stringResource(Res.string.reports_analyze_costs))
                 }
             }
 
@@ -134,7 +150,7 @@ fun CostAnalysisScreen(
                 // Cost Breakdown Header
                 item {
                     Text(
-                        text = "Cost Breakdown",
+                        text = stringResource(Res.string.reports_cost_breakdown),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -152,18 +168,7 @@ fun CostAnalysisScreen(
             // Error State
             state.error?.let { error ->
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Text(
-                            text = error,
-                            modifier = Modifier.padding(16.dp),
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    }
+                    FleetInlineErrorBanner(message = error.resolve())
                 }
             }
         }
@@ -186,7 +191,7 @@ private fun DateRangeSection(
             value = startDate,
             onValueChange = { onStartDateChange(filterDigitsOnly(it, 8)) },
             fieldType = FieldType.NUMBER,
-            label = "From",
+            label = stringResource(Res.string.reports_label_from),
             placeholder = "DD-MM-YYYY",
             visualTransformation = dateVisualTransformation,
             modifier = Modifier.weight(1f)
@@ -195,7 +200,7 @@ private fun DateRangeSection(
             value = endDate,
             onValueChange = { onEndDateChange(filterDigitsOnly(it, 8)) },
             fieldType = FieldType.NUMBER,
-            label = "To",
+            label = stringResource(Res.string.reports_label_to),
             placeholder = "DD-MM-YYYY",
             visualTransformation = dateVisualTransformation,
             modifier = Modifier.weight(1f)
@@ -217,16 +222,16 @@ private fun CostTypeSelectionSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Select Cost Types (${selectedTypes.size})",
+                text = stringResource(Res.string.reports_select_cost_types_count, selectedTypes.size),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onSelectAll) {
-                    Text("All", style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelSmall)
                 }
                 TextButton(onClick = onClearAll) {
-                    Text("Clear", style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -315,21 +320,16 @@ private fun TotalCostCard(
     totalAmount: Double,
     totalCount: Int
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        border = null
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Total Expenses",
+                text = stringResource(Res.string.reports_cost_total_expenses_caps),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -341,7 +341,7 @@ private fun TotalCostCard(
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
-                text = "$totalCount entries",
+                text = stringResource(Res.string.reports_entries_count, totalCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
             )
@@ -371,29 +371,19 @@ private fun CostTypeCard(
         else -> "💰"
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+    FleetSectionCard {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = icon, style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = analysis.displayName,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                FleetSectionHeader(
+                    title = analysis.displayName,
+                    emoji = icon,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = formatCurrency(analysis.totalAmount),
                     style = MaterialTheme.typography.titleMedium,
@@ -427,7 +417,7 @@ private fun CostTypeCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${analysis.totalCount} entries",
+                    text = stringResource(Res.string.reports_entries_count, analysis.totalCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -441,7 +431,7 @@ private fun CostTypeCard(
 
             if (analysis.averagePerEntry > 0) {
                 Text(
-                    text = "Avg: ${formatCurrency(analysis.averagePerEntry)}/entry",
+                    text = stringResource(Res.string.reports_cost_avg_per_entry, formatCurrency(analysis.averagePerEntry)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

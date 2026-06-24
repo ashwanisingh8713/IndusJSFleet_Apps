@@ -5,6 +5,7 @@ import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.domain.entity.AssignableTeamRole
+import com.indusjs.fleet.core.util.ValidationUtils
 import com.ijs.team.domain.repository.TeamRepository
 import dev.zacsweers.metro.Inject
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
@@ -17,8 +18,6 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.error_last_name_re
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_team_member
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_invalid
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_required
-import indusjsfleet.ijs_ui_components_lib.generated.resources.error_password_contains_name
-import indusjsfleet.ijs_ui_components_lib.generated.resources.error_password_min_chars
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_password_required
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_passwords_mismatch
 import indusjsfleet.ijs_ui_components_lib.generated.resources.success_team_member_created
@@ -45,33 +44,23 @@ class CreateTeamMemberViewModel(
         }
     }
 
+    // Roles are backend-driven: the picker shows what GET /team/roles returns
+    // (the IAM-assignable tenant roles). [excludeElevated] hides the top-tier
+    // role when a non-owner is creating a member; the backend remains the
+    // authority and rejects an over-privileged assignment regardless.
     private suspend fun loadAssignableRoles(excludeElevated: Boolean) {
         updateState { copy(rolesLoading = true, error = null) }
         val result = teamRepository.getAssignableTeamRoles()
-        val fromApi = result.getOrNull().orEmpty()
-            .filter {
-                it.name.equals("admin", ignoreCase = true) ||
-                    it.name.equals("user", ignoreCase = true)
-            }
-            .let { roles ->
-                if (excludeElevated) {
-                    roles.filter { !it.name.equals("admin", ignoreCase = true) }
-                } else {
-                    roles
-                }
-            }
-        val effective = if (fromApi.isNotEmpty()) {
-            fromApi
-        } else {
-            defaultFallbackRoles()
+        val roles = result.getOrNull().orEmpty().let { fetched ->
+            if (excludeElevated && fetched.size > 1) fetched.drop(1) else fetched
         }
-        val selected = effective.firstOrNull()?.name ?: ""
+        val selected = roles.firstOrNull()?.name ?: ""
         updateState {
             copy(
-                availableIamRoles = effective,
+                availableIamRoles = roles,
                 selectedIamRoleName = selected,
                 rolesLoading = false,
-                error = if (fromApi.isEmpty() && result.isFailure) {
+                error = if (roles.isEmpty()) {
                     result.exceptionOrNull()?.message?.let { UiText.Raw(it) }
                         ?: UiText.StringRes(Res.string.error_load_team_member)
                 } else {
@@ -80,11 +69,6 @@ class CreateTeamMemberViewModel(
             )
         }
     }
-
-    private fun defaultFallbackRoles(): List<AssignableTeamRole> = listOf(
-        AssignableTeamRole(id = "", name = "admin", description = ""),
-        AssignableTeamRole(id = "", name = "user", description = "")
-    )
 
     override suspend fun handleIntent(intent: CreateTeamMemberContract.Intent) {
         when (intent) {
@@ -97,10 +81,6 @@ class CreateTeamMemberViewModel(
                 updateState { copy(confirmPassword = intent.confirmPassword) }
             is CreateTeamMemberContract.Intent.SelectIamRole ->
                 updateState { copy(selectedIamRoleName = intent.roleName) }
-            is CreateTeamMemberContract.Intent.TogglePasswordVisibility ->
-                updateState { copy(isPasswordVisible = !isPasswordVisible) }
-            is CreateTeamMemberContract.Intent.ToggleConfirmPasswordVisibility ->
-                updateState { copy(isConfirmPasswordVisible = !isConfirmPasswordVisible) }
             is CreateTeamMemberContract.Intent.CreateTeamMember -> createTeamMember()
             is CreateTeamMemberContract.Intent.ClearError -> updateState { copy(error = null) }
             is CreateTeamMemberContract.Intent.SetExcludeGeneralManager -> {
@@ -157,15 +137,7 @@ class CreateTeamMemberViewModel(
             return
         }
 
-        if (password.length < 8) {
-            updateState { copy(error = UiText.StringRes(Res.string.error_password_min_chars)) }
-            return
-        }
-
-        if (passwordContainsIdentity(password, firstName, lastName, email)) {
-            updateState { copy(error = UiText.StringRes(Res.string.error_password_contains_name)) }
-            return
-        }
+        // Password policy (length/complexity/contains-name) is enforced by the backend only.
 
         if (confirmPassword.isEmpty()) {
             updateState { copy(error = UiText.StringRes(Res.string.error_confirm_password_required)) }
@@ -223,23 +195,5 @@ class CreateTeamMemberViewModel(
         }
     }
 
-    private fun isValidEmail(email: String): Boolean {
-        if (email.isBlank()) return false
-        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
-        return emailRegex.matches(email)
-    }
-
-    private fun passwordContainsIdentity(
-        password: String,
-        firstName: String,
-        lastName: String,
-        email: String
-    ): Boolean {
-        val lowerPass = password.lowercase()
-        if (firstName.length >= 3 && lowerPass.contains(firstName.lowercase())) return true
-        if (lastName.length >= 3 && lowerPass.contains(lastName.lowercase())) return true
-        val emailLocal = email.substringBefore("@")
-        if (emailLocal.length >= 3 && lowerPass.contains(emailLocal.lowercase())) return true
-        return false
-    }
+    private fun isValidEmail(email: String): Boolean = ValidationUtils.isValidEmail(email)
 }

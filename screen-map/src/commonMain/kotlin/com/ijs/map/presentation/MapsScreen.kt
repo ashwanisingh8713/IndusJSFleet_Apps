@@ -19,7 +19,6 @@ import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.fleet.domain.entity.maps.MapVehicle
 import com.indusjs.fleet.domain.entity.maps.MapVehicleStatus
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -39,13 +38,9 @@ fun MapsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Auto-refresh locations when live tracking is enabled
-    LaunchedEffect(state.isLiveTrackingEnabled) {
-        while (state.isLiveTrackingEnabled) {
-            delay(10000) // Refresh every 10 seconds
-            viewModel.sendIntent(MapsContract.Intent.RefreshVehicleLocations)
-        }
-    }
+    // Live positions arrive via push over the WebSocket (driven by the ViewModel),
+    // so there is no client-side polling loop. The manual refresh action re-seeds
+    // the markers from the tenant's vehicle list and reconnects the live feed.
 
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
@@ -138,6 +133,7 @@ fun MapsScreen(
                     VehicleListBottomSection(
                         vehicles = state.vehicles,
                         selectedVehicle = state.selectedVehicle,
+                        liveConnectionStatus = state.liveConnectionStatus,
                         onVehicleClick = { vehicleId ->
                             viewModel.sendIntent(MapsContract.Intent.SelectVehicle(vehicleId))
                         },
@@ -194,6 +190,7 @@ private fun MapPlaceholder(
 private fun VehicleListBottomSection(
     vehicles: List<MapVehicle>,
     selectedVehicle: MapVehicle?,
+    liveConnectionStatus: MapsContract.LiveConnectionStatus,
     onVehicleClick: (String) -> Unit,
     onNavigateToDetail: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -228,11 +225,20 @@ private fun VehicleListBottomSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = stringResource(Res.string.org_stats_vehicles),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Live-feed connection indicator. Colour conveys status; the
+                    // accompanying label text is pending localisation (see needsString:
+                    // maps_live_connecting / maps_live_connected / maps_live_disconnected).
+                    LiveStatusIndicator(status = liveConnectionStatus)
+                    Text(
+                        text = stringResource(Res.string.org_stats_vehicles),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     VehicleStatusCount(
                         count = vehicles.count { it.status == MapVehicleStatus.MOVING },
@@ -255,17 +261,32 @@ private fun VehicleListBottomSection(
             HorizontalDivider()
 
             // Vehicle list
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(vertical = 8.dp)
-            ) {
-                items(vehicles, key = { it.id }) { vehicle ->
-                    MapVehicleItem(
-                        vehicle = vehicle,
-                        isSelected = selectedVehicle?.id == vehicle.id,
-                        onClick = { onVehicleClick(vehicle.id) },
-                        onDetailClick = { onNavigateToDetail(vehicle.id) }
+            if (vehicles.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(Res.string.maps_no_live_vehicles),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(vehicles, key = { it.id }) { vehicle ->
+                        MapVehicleItem(
+                            vehicle = vehicle,
+                            isSelected = selectedVehicle?.id == vehicle.id,
+                            onClick = { onVehicleClick(vehicle.id) },
+                            onDetailClick = { onNavigateToDetail(vehicle.id) }
+                        )
+                    }
                 }
             }
         }
@@ -365,6 +386,22 @@ private fun MapVehicleItem(
             }
         }
     }
+}
+
+@Composable
+private fun LiveStatusIndicator(status: MapsContract.LiveConnectionStatus) {
+    val color = when (status) {
+        MapsContract.LiveConnectionStatus.CONNECTED -> MaterialTheme.colorScheme.primary
+        MapsContract.LiveConnectionStatus.CONNECTING -> MaterialTheme.colorScheme.tertiary
+        MapsContract.LiveConnectionStatus.DISCONNECTED -> MaterialTheme.colorScheme.error
+        MapsContract.LiveConnectionStatus.IDLE -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+    }
+    Box(
+        modifier = Modifier
+            .size(10.dp)
+            .clip(CircleShape)
+            .background(color)
+    )
 }
 
 @Composable

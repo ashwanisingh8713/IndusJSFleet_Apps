@@ -5,6 +5,7 @@ import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.uicomponents.components.CostTypeGroup
 import com.indusjs.uicomponents.components.CostTypeSelection
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.data.model.driver.DriverCostDto
 import com.indusjs.fleet.data.model.driver.DriverCostTypes
 import com.ijs.driver.domain.entity.Driver
@@ -25,9 +26,9 @@ data class DriverCostEntryRow(
     val notes: String = "",
     val customCostTypeName: String = "",
     // Validation
-    val costTypeError: String? = null,
-    val dateError: String? = null,
-    val amountError: String? = null,
+    val costTypeError: UiText? = null,
+    val dateError: UiText? = null,
+    val amountError: UiText? = null,
     // Expanded state
     val isExpanded: Boolean = true,
     val showCostTypeDropdown: Boolean = false
@@ -65,7 +66,7 @@ object DriverCostEntryContract {
         val drivers: List<Driver> = emptyList(),
         val selectedDriver: Driver? = null,
         val showDriverDropdown: Boolean = false,
-        val driverError: String? = null,
+        val driverError: UiText? = null,
 
         // Multi-row cost entries
         val costEntries: List<DriverCostEntryRow> = listOf(DriverCostEntryRow()),
@@ -79,7 +80,7 @@ object DriverCostEntryContract {
         val isLoading: Boolean = false,
         val isLoadingData: Boolean = false,
         val isSaving: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
 
         // Refresh cost types
         val isRefreshingCostTypes: Boolean = false,
@@ -144,8 +145,8 @@ object DriverCostEntryContract {
      * Side effects for Driver Cost Entry screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
-        data class ShowError(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
+        data class ShowError(val message: UiText) : Effect
         data object NavigateBack : Effect
         data class CostsSaved(val count: Int) : Effect
     }

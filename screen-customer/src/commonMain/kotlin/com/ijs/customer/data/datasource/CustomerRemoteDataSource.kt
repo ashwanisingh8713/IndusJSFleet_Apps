@@ -134,8 +134,8 @@ class CustomerRemoteDataSource(
     suspend fun getCustomerStatistics(
         token: String,
         customerId: Int,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): CustomerStatisticsResponse {
         logger.d(TAG_CUSTOMER_REMOTE_DS, "Fetching customer statistics: $customerId")
 
@@ -247,8 +247,8 @@ class CustomerRemoteDataSource(
     suspend fun getCustomerPaymentSummary(
         token: String,
         customerId: Int,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): CustomerPaymentSummaryResponse {
         logger.d(TAG_CUSTOMER_REMOTE_DS, "Fetching customer payment summary: $customerId")
 
@@ -275,8 +275,8 @@ class CustomerRemoteDataSource(
         token: String,
         customerId: Int,
         period: String = "monthly",
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): CustomerFinancialReportResponse {
         logger.d(TAG_CUSTOMER_REMOTE_DS, "Fetching customer financial report: $customerId, period: $period")
 

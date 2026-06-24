@@ -63,7 +63,13 @@ override suspend fun handleIntent(intent: PaymentDetailContract.Intent) {
             }
             is Result.Error -> {
                 logger.e(TAG_PAYMENT_DETAIL_VM, "Failed to load payment", result.exception)
-                updateState { copy(isLoading = false, error = result.message) }
+                updateState {
+                    copy(
+                        isLoading = false,
+                        error = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_generic)
+                    )
+                }
             }
             is Result.Loading -> { /* Already handled */ }
         }

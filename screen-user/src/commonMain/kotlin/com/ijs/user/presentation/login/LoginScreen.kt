@@ -18,6 +18,7 @@ import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetPasswordField
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.isAppInDarkTheme
@@ -226,10 +227,9 @@ private fun LoginFormContent(
             )
         }
 
-        FleetInputField(
+        FleetPasswordField(
             value = state.password,
             onValueChange = onPasswordChange,
-            fieldType = FieldType.PASSWORD,
             label = stringResource(Res.string.label_password),
             placeholder = stringResource(Res.string.placeholder_password),
             enabled = !state.isLoading,

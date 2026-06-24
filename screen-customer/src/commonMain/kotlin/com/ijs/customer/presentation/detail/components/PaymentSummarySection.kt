@@ -12,9 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.ijs.customer.domain.entity.CustomerPaymentSummary
 import com.ijs.customer.domain.entity.PaymentByMode
 import com.ijs.customer.domain.entity.PaymentMode
+import com.ijs.customer.presentation.localizedDisplayName
+import com.ijs.customer.presentation.localizedModeDisplay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -56,7 +59,7 @@ internal fun PaymentModeFilterChips(
                 FilterChip(
                     selected = selectedMode == mode,
                     onClick = { onModeSelected(mode) },
-                    label = { Text("${mode.icon} ${mode.displayName}") },
+                    label = { Text("${mode.icon} ${mode.localizedDisplayName()}") },
                     shape = RoundedCornerShape(20.dp)
                 )
             }
@@ -83,17 +86,12 @@ internal fun PaymentSummaryCard(
     onExportPdf: () -> Unit,
     isExporting: Boolean
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ),
-        shape = RoundedCornerShape(12.dp)
+    FleetSectionCard(
+        modifier = Modifier.padding(horizontal = 12.dp),
+        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        border = null
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Total Header
@@ -171,7 +169,7 @@ private fun PaymentModeRow(data: PaymentByMode) {
         ) {
             Text(data.modeIcon, style = MaterialTheme.typography.bodyMedium)
             Text(
-                text = data.modeDisplay,
+                text = data.localizedModeDisplay(),
                 style = MaterialTheme.typography.bodyMedium
             )
         }

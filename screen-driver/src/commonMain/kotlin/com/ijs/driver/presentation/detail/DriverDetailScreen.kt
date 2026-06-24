@@ -28,6 +28,7 @@ import com.indusjs.uicomponents.components.CaretakerInfoCard
 import com.indusjs.uicomponents.components.CaretakerSectionCard
 import com.indusjs.uicomponents.components.HistoryTabContent
 import com.indusjs.uicomponents.components.StateChangeDialog
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.driver.presentation.driverStatusLabel
 import com.ijs.driver.presentation.driverStatusLabelsByApi
 import com.ijs.driver.presentation.getDriverStateOptions
@@ -68,6 +69,15 @@ fun DriverDetailScreen(
     val scope = rememberCoroutineScope()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showStatusDialog by remember { mutableStateOf(false) }
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // PDF Export state
     var pdfExportData by remember { mutableStateOf<DriverCostsPdfData?>(null) }
@@ -83,10 +93,10 @@ fun DriverDetailScreen(
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is DriverDetailContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is DriverDetailContract.Effect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is DriverDetailContract.Effect.NavigateBack -> onNavigateBack()
                 is DriverDetailContract.Effect.ShowDeleteConfirmation -> {
@@ -282,7 +292,7 @@ fun DriverDetailScreen(
             }
             state.error != null && state.driver == null -> {
                 ErrorContent(
-                    error = state.error!!,
+                    error = state.error?.resolve() ?: stringResource(Res.string.error_generic),
                     screenContext = FleetErrorContext.DRIVER_DETAIL,
                     onRetry = { viewModel.sendIntent(DriverDetailContract.Intent.Refresh) }
                 )
@@ -432,7 +442,7 @@ private fun DriverDetailTabs(
             DriverDetailTab.HISTORY -> HistoryTabContent(
                 items = state.historyItems,
                 isLoading = state.isLoadingHistory,
-                error = state.historyError,
+                error = state.historyError?.resolve(),
                 hasMore = state.hasMoreHistory,
                 onLoadMore = { viewModel.sendIntent(DriverDetailContract.Intent.LoadMoreHistory) },
                 onRetry = { viewModel.sendIntent(DriverDetailContract.Intent.LoadHistory) }

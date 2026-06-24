@@ -4,7 +4,7 @@ import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.trip.TAG_TRIP_DETAIL_LOADER
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.error.result.Result
-import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
+import com.indusjs.fleet.core.permission.PermissionChecker
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.ijs.trip.presentation.detail.TripDetailContract.Effect
 import com.ijs.customer.domain.entity.Customer
@@ -34,7 +34,7 @@ internal class TripDetailDataLoader(
     private val costsRepository: CostsRepository,
     private val getVehiclesUseCase: GetVehiclesUseCase,
     private val getDriversUseCase: GetDriversUseCase,
-    private val userLocalDataSource: UserLocalDataSource,
+    private val permissionChecker: PermissionChecker,
     private val customerRepository: CustomerRepository?,
     private val tripPaymentRepository: TripPaymentRepository?,
     private val logger: FleetLogger
@@ -47,33 +47,27 @@ internal class TripDetailDataLoader(
         }
 
         withContext(dispatcherProvider.io) {
-            // Load user role for permission check
-            val userRole = try {
-                userLocalDataSource.getUserRole() ?: ""
-            } catch (e: Exception) {
-                logger.e(TAG_TRIP_DETAIL_LOADER, "Failed to get user role: ${e.message}")
-                ""
+            // Compute permission flags from the user's actual permission set
+            stateManager.updateTripState {
+                copy(
+                    canEditTripPermission = permissionChecker.canEditTrip(),
+                    canViewTripPricePermission = permissionChecker.canViewTripPrice()
+                )
             }
-            val normalizedRole = userRole.lowercase().replace("_", "")
-            logger.d(TAG_TRIP_DETAIL_LOADER, "TripDetailDataLoader - userRole: '$userRole', normalized: '$normalizedRole'")
-            stateManager.updateTripState { copy(userRole = userRole) }
 
             when (val result = getTripByIdUseCase(tripId)) {
                 is Result.Success -> {
                     val trip = result.data
 
-                    // Parse departure date/time from ISO or separate fields
+                    // Derive picker date/time from epoch-millis schedule fields
                     val (depDate, depTime) = parseScheduleDateTime(
-                        isoDateTime = trip.plannedStart,
-                        date = trip.scheduledDate,
-                        time = trip.startTime
+                        timestampMs = trip.plannedStart ?: trip.scheduledDate,
+                        fallbackTimeMs = trip.startTime
                     )
 
-                    // Parse arrival date/time from ISO or separate fields
                     val (arrDate, arrTime) = parseScheduleDateTime(
-                        isoDateTime = trip.plannedEnd,
-                        date = trip.deliveryDate,
-                        time = trip.deliveryTime
+                        timestampMs = trip.plannedEnd ?: trip.deliveryDate,
+                        fallbackTimeMs = trip.deliveryTime
                     )
 
                     stateManager.updateTripState {
@@ -99,7 +93,10 @@ internal class TripDetailDataLoader(
                             customerName = trip.customerName ?: "",
                             priority = trip.priority ?: "",
                             notes = trip.notes ?: "",
-                            tripPrice = trip.tripPrice?.toString() ?: ""
+                            tripPrice = trip.tripPrice?.toString() ?: "",
+                            // Actual price (revenue) defaults to the quote when unset; COGS.
+                            actualPrice = (trip.sellingValue ?: trip.tripPrice)?.toString() ?: "",
+                            purchasePrice = trip.purchasePrice?.toString() ?: ""
                         )
                     }
                     // Load trip costs
@@ -119,7 +116,7 @@ internal class TripDetailDataLoader(
     }
 
     suspend fun loadTripCosts(tripId: String) {
-        stateManager.updateTripState { copy(isLoadingCosts = true) }
+        stateManager.updateTripState { copy(isLoadingCosts = true, costsError = null) }
 
         when (val result = costsRepository.getTripCosts(tripId)) {
             is Result.Success -> {
@@ -127,11 +124,17 @@ internal class TripDetailDataLoader(
                 val total = costs.sumOf { it.amount }
                 val byType = costs.groupBy { it.costType }
                 stateManager.updateTripState {
-                    copy(costs = costs, totalCost = total, costsByType = byType, isLoadingCosts = false)
+                    copy(costs = costs, totalCost = total, costsByType = byType, isLoadingCosts = false, costsError = null)
                 }
             }
             is Result.Error -> {
-                stateManager.updateTripState { copy(isLoadingCosts = false) }
+                // Surface the failure instead of falling through to the empty state, which
+                // would hide a real backend error (e.g. trip-costs 500) and make a just-added
+                // cost look like it silently vanished.
+                logger.e(TAG_TRIP_DETAIL_LOADER, "Failed to load trip costs: ${result.message}")
+                stateManager.updateTripState {
+                    copy(isLoadingCosts = false, costsError = result.message ?: "Failed to load costs")
+                }
             }
             is Result.Loading -> { /* Not applicable */ }
         }
@@ -148,13 +151,8 @@ internal class TripDetailDataLoader(
         }
 
         // Only load payments for users who can view pricing
-        val state = stateManager.currentTripState
-        val canViewTripPrice = run {
-            val role = state.userRole.lowercase().replace("_", "")
-            role == "owner" || role == "generalmanager"
-        }
-        if (!canViewTripPrice) {
-            logger.d(TAG_TRIP_DETAIL_LOADER, "User role '${state.userRole}' cannot view payments, skipping")
+        if (!permissionChecker.canViewTripPrice()) {
+            logger.d(TAG_TRIP_DETAIL_LOADER, "User lacks financials:read permission, skipping payment load")
             return
         }
 
@@ -322,43 +320,35 @@ internal class TripDetailDataLoader(
     }
 
     /**
-     * Parses schedule date/time from ISO format or separate date/time fields.
-     * Returns a Pair of (date in DD-MM-YYYY format, time in HH:MM format).
-     * FleetDateTimePicker expects DD-MM-YYYY and HH:MM with delimiters.
+     * Derives the picker's date (DD-MM-YYYY) and time (HH:MM, 24-hour) strings
+     * from a UTC epoch-millis timestamp (device-zone wall clock). Treats null/0
+     * as unset. [fallbackTimeMs] supplies the time-of-day if [timestampMs] is a
+     * date-only value (its own clock is 00:00).
      */
     fun parseScheduleDateTime(
-        isoDateTime: String?,
-        date: String?,
-        time: String?
+        timestampMs: Long?,
+        fallbackTimeMs: Long? = null
     ): Pair<String, String> {
-        if (!isoDateTime.isNullOrBlank()) {
-            try {
-                val parts = isoDateTime.replace("Z", "").split("T")
-                if (parts.size == 2) {
-                    val datePart = parts[0]
-                    val timePart = parts[1]
+        val ms = timestampMs?.takeIf { it > 0L } ?: return Pair("", "")
+        val value = com.indusjs.datetimeutils.FleetEpoch.toValue(ms)
+            ?: return Pair("", "")
 
-                    val dateComponents = datePart.split("-")
-                    if (dateComponents.size == 3) {
-                        // Return DD-MM-YYYY (with hyphens)
-                        val formattedDate = "${dateComponents[2]}-${dateComponents[1]}-${dateComponents[0]}"
-                        val timeComponents = timePart.split(":")
-                        if (timeComponents.size >= 2) {
-                            // Return HH:MM (with colon)
-                            val formattedTime = "${timeComponents[0]}:${timeComponents[1]}"
-                            return Pair(formattedDate, formattedTime)
-                        }
-                    }
-                }
-            } catch (_: Exception) {
-                logger.e(TAG_TRIP_DETAIL_LOADER, "Failed to parse ISO datetime: $isoDateTime")
-            }
+        val day = value.day.toString().padStart(2, '0')
+        val month = value.month.toString().padStart(2, '0')
+        val formattedDate = "$day-$month-${value.year}"
+
+        // Use the timestamp's own time-of-day; if it's exactly midnight and a
+        // separate time field exists, fall back to that.
+        val timeSource = if (value.hour == 0 && value.minute == 0) {
+            com.indusjs.datetimeutils.FleetEpoch.toValue(fallbackTimeMs?.takeIf { it > 0L }) ?: value
+        } else {
+            value
         }
+        val hour = timeSource.hour.toString().padStart(2, '0')
+        val minute = timeSource.minute.toString().padStart(2, '0')
+        val formattedTime = "$hour:$minute"
 
-        // Fallback: preserve delimiters from the original date/time fields
-        val fallbackDate = date?.trim() ?: ""
-        val fallbackTime = time?.trim() ?: ""
-        return Pair(fallbackDate, fallbackTime)
+        return Pair(formattedDate, formattedTime)
     }
 }
 

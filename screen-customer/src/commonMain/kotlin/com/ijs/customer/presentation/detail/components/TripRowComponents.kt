@@ -12,9 +12,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.ijs.customer.domain.entity.CustomerTrip
+import com.ijs.customer.presentation.localizedStateDisplay
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
@@ -59,7 +60,7 @@ internal fun EnhancedTripRow(
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
-                    TripStateChip(trip.stateDisplay, trip.state)
+                    TripStateChip(trip.localizedStateDisplay(), trip.state)
                 }
                 trip.vehicleRegistration?.let { reg ->
                     Text(
@@ -92,7 +93,7 @@ internal fun EnhancedTripRow(
             ) {
                 DateLabel(
                     label = stringResource(Res.string.customer_trip_label_start),
-                    date = FleetDateTime.formatIsoToDisplayDate(trip.plannedStart ?: trip.scheduledDate)
+                    date = formatDateToHumanReadable(trip.plannedStart ?: trip.scheduledDate)
                 )
                 Text(
                     text = "\u2192",
@@ -101,7 +102,7 @@ internal fun EnhancedTripRow(
                 )
                 DateLabel(
                     label = stringResource(Res.string.customer_trip_label_end),
-                    date = FleetDateTime.formatIsoToDisplayDate(trip.plannedEnd)
+                    date = formatDateToHumanReadable(trip.plannedEnd)
                 )
             }
 
@@ -244,7 +245,7 @@ internal fun PaymentStatusBadge(
 internal fun TripStateChip(label: String, state: String?) {
     val (bgColor, textColor) = when (state?.lowercase()) {
         "planned" -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-        "on_route" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        "in_progress" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
         "completed" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
         "cancelled" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
         else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant

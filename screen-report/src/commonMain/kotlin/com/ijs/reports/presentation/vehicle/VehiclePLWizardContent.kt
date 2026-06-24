@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.RecentReport
@@ -55,7 +56,11 @@ internal fun VehiclePLContent(
         if (state.result == null) {
             WizardStepIndicator(
                 currentStep = currentStep,
-                steps = listOf("Select Vehicle", "Select Period", "View Report")
+                steps = listOf(
+                    stringResource(Res.string.reports_wizard_step_vehicle),
+                    stringResource(Res.string.reports_wizard_step_period),
+                    stringResource(Res.string.reports_wizard_step_view)
+                )
             )
             Spacer(modifier = Modifier.height(20.dp))
         }
@@ -65,7 +70,7 @@ internal fun VehiclePLContent(
             state.result != null -> {
                 // Result Header with vehicle info and New Report button
                 ResultHeaderCard(
-                    vehicleNumber = state.result!!.vehicleNumber ?: "Vehicle",
+                    vehicleNumber = state.result!!.vehicleNumber ?: stringResource(Res.string.reports_vehicle_fallback),
                     vehicleMakeModel = "${state.selectedVehicle?.make ?: ""} ${state.selectedVehicle?.model ?: ""}".trim(),
                     period = state.result!!.period ?: state.period,
                     onNewReport = onShowVehicleSelector
@@ -93,14 +98,14 @@ internal fun VehiclePLContent(
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(10.dp)
                             ) {
-                                Text("🔄 New Report")
+                                Text("🔄 " + stringResource(Res.string.reports_new_report))
                             }
                             Button(
                                 onClick = { /* TODO: Export */ },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(10.dp)
                             ) {
-                                Text("📄 Export PDF")
+                                Text("📄 " + stringResource(Res.string.reports_export_pdf))
                             }
                         }
                     }
@@ -151,7 +156,7 @@ internal fun VehiclePLContent(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = state.error ?: "Something went wrong",
+                            text = state.error?.resolve() ?: stringResource(Res.string.reports_error_generic),
                             modifier = Modifier.padding(12.dp),
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             style = MaterialTheme.typography.bodySmall
@@ -170,7 +175,7 @@ internal fun VehiclePLContent(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
-                        text = "Generate Report",
+                        text = stringResource(Res.string.reports_generate_report),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -180,21 +185,18 @@ internal fun VehiclePLContent(
             // ========== STEP 1: Vehicle Selection ==========
             else -> {
                 // Welcome Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                    )
+                FleetSectionCard(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                    border = null,
+                    contentPadding = 20.dp
                 ) {
                     Column(
-                        modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = stringResource(Res.string.vehicle_pl_report_label), style = MaterialTheme.typography.displaySmall)
+                        Text(text = "📊", style = MaterialTheme.typography.displaySmall)
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Vehicle Profit & Loss",
+                            text = stringResource(Res.string.reports_vehicle_pl_header),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -241,7 +243,7 @@ internal fun VehiclePLContent(
                 if (state.recentReports.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        text = "Recent Reports",
+                        text = stringResource(Res.string.reports_recent_reports),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -389,17 +391,12 @@ internal fun SelectedVehicleDisplayCard(
     onChangeVehicle: () -> Unit
 ) {
     val vehicleFallback = stringResource(Res.string.vehicle_pl_vehicle_fallback)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
-        )
+    FleetSectionCard(
+        containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f),
+        border = null
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Checkmark
@@ -463,15 +460,12 @@ internal fun PeriodSelectionChipsCard(
     onStartDateChange: (String) -> Unit,
     onEndDateChange: (String) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = null
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Period chips
@@ -480,10 +474,10 @@ internal fun PeriodSelectionChipsCard(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 listOf(
-                    "weekly" to "Week",
-                    "monthly" to "Month",
-                    "yearly" to "Year",
-                    "custom" to "Custom"
+                    "weekly" to stringResource(Res.string.reports_period_chip_week),
+                    "monthly" to stringResource(Res.string.reports_period_chip_month),
+                    "yearly" to stringResource(Res.string.reports_period_chip_year),
+                    "custom" to stringResource(Res.string.reports_period_chip_custom)
                 ).forEach { (key, label) ->
                     val isSelected = selectedPeriod == key
                     FilterChip(

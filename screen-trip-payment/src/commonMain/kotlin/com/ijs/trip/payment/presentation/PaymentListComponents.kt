@@ -17,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.indusjs.datetimeutils.FleetDateTime
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.PaymentType
 import com.ijs.trip.payment.domain.entity.TripPayment
@@ -30,6 +29,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun FilterChipRow(
     filter: TripPaymentFilter,
     onClear: () -> Unit,
+    customerName: String? = null,
     paymentStateLabels: Map<String, String> = emptyMap()
 ) {
     FlowRow(
@@ -50,19 +50,20 @@ internal fun FilterChipRow(
             modifier = Modifier.padding(end = 4.dp)
         )
 
+        // Customer chip (resolved display name passed in from state)
+        if (filter.customerId != null && !customerName.isNullOrBlank()) {
+            FilterChip(
+                selected = true,
+                onClick = { },
+                label = { Text(customerName, style = MaterialTheme.typography.labelSmall) }
+            )
+        }
+
         filter.paymentType?.let { type ->
             FilterChip(
                 selected = true,
                 onClick = { },
-                label = { Text(type.displayName, style = MaterialTheme.typography.labelSmall) }
-            )
-        }
-
-        filter.paymentMode?.let { mode ->
-            FilterChip(
-                selected = true,
-                onClick = { },
-                label = { Text(mode.displayName, style = MaterialTheme.typography.labelSmall) }
+                label = { Text(type.localizedDisplayName(), style = MaterialTheme.typography.labelSmall) }
             )
         }
 
@@ -70,7 +71,7 @@ internal fun FilterChipRow(
             FilterChip(
                 selected = true,
                 onClick = { },
-                label = { Text(paymentStateLabels[status.apiValue] ?: status.displayName, style = MaterialTheme.typography.labelSmall) }
+                label = { Text(paymentStateLabels[status.apiValue] ?: status.localizedDisplayName(), style = MaterialTheme.typography.labelSmall) }
             )
         }
 
@@ -311,7 +312,7 @@ internal fun PaymentCard(
                         color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = "${payment.paymentType.icon} ${payment.typeDisplay}",
+                            text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()}",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Medium,
@@ -415,11 +416,11 @@ internal fun PaymentCard(
             ) {
                 // Customer name - prioritize customerName, fallback to customerCompany
                 val noCustomerLabel = stringResource(Res.string.payment_no_customer)
-                val customerDisplayName = payment.customerName?.takeIf { it.isNotBlank() }
+                val resolvedCustomerName = payment.customerName?.takeIf { it.isNotBlank() }
                     ?: payment.customerCompany?.takeIf { it.isNotBlank() }
-                    ?: noCustomerLabel
+                val customerDisplayName = resolvedCustomerName ?: noCustomerLabel
                 Text(
-                    text = customerDisplayName,
+                    text = resolvedCustomerName?.let { "👤 $it" } ?: customerDisplayName,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = if (customerDisplayName != noCustomerLabel)
@@ -494,10 +495,9 @@ internal fun PaymentStatusBadge(
 
 
 /**
- * Format ISO date to display format: "DD-MMM-YYYY hh:mm AM/PM"
+ * Format UTC epoch-millis to display format: "DD-MMM-YYYY hh:mm AM/PM".
  */
-
-internal fun formatPaymentDate(isoDate: String): String {
-    return FleetDateTime.formatIsoToDisplayDateTime12Hour(isoDate)
+internal fun formatPaymentDate(timestampMillis: Long): String {
+    return com.indusjs.fleet.core.util.formatDateTimeForDisplay(timestampMillis)
 }
 

@@ -25,6 +25,7 @@ import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.uicomponents.components.CostTypeGroup
 import com.indusjs.uicomponents.components.CostTypeSelection
 import com.indusjs.uicomponents.components.CostTypeTwoLevelSelector
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.theme.FleetColors
 import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.fleet.data.model.costs.TripCostDto
@@ -215,12 +216,21 @@ fun TripCostEntryScreen(
                 ) { index, entry ->
                     val actualIndex = state.costEntries.size - index
                     // Calculate date constraints for trip cost
-                    val tripStartDate = state.selectedTrip?.plannedStart?.let {
-                        com.indusjs.datetimeutils.FleetDateTime.getMinDateForTripCost(it)
-                    } ?: state.selectedTrip?.scheduledDate
+                    // Schedule fields are UTC epoch-millis; convert to DD-MM-YYYY
+                    // picker strings for the cost-date min/max constraints.
+                    val tripStartMs = state.selectedTrip?.plannedStart?.takeIf { it > 0L }
+                        ?: state.selectedTrip?.scheduledDate?.takeIf { it > 0L }
+                    val tripStartDate = tripStartMs?.let {
+                        com.indusjs.datetimeutils.FleetDateTime.getMinDateForTripCost(
+                            com.indusjs.datetimeutils.FleetDateTime.timestampToDateString(it)
+                        )
+                    }
                     val tripEndDate = state.selectedTrip?.let { trip ->
                         val isCompleted = trip.status == com.ijs.trip.domain.entity.TripStatus.COMPLETED
-                        com.indusjs.datetimeutils.FleetDateTime.getMaxDateForTripCost(trip.plannedEnd, isCompleted)
+                        val endDateStr = trip.plannedEnd?.takeIf { it > 0L }?.let { ms ->
+                            com.indusjs.datetimeutils.FleetDateTime.timestampToDateString(ms)
+                        }
+                        com.indusjs.datetimeutils.FleetDateTime.getMaxDateForTripCost(endDateStr, isCompleted)
                     } ?: com.indusjs.datetimeutils.FleetDateTime.getTomorrowDate()
 
                     CostEntryRowCard(
@@ -302,22 +312,7 @@ private fun TripSelectionCard(
 ) {
     val unknownRoute = stringResource(Res.string.payment_unknown)
     val notAvailable = stringResource(Res.string.vehicle_route_na)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(Res.string.trip_cost_section_select_trip),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
+    FleetTitledSectionCard(title = stringResource(Res.string.trip_cost_section_select_trip)) {
             ExposedDropdownMenuBox(
                 expanded = state.showTripDropdown,
                 onExpandedChange = { onToggleDropdown() }
@@ -357,7 +352,9 @@ private fun TripSelectionCard(
                                         stringResource(
                                             Res.string.trip_cost_vehicle_line,
                                             trip.vehicleNumber ?: notAvailable,
-                                            trip.scheduledStartTime.orEmpty()
+                                            com.indusjs.fleet.core.util.formatDateToHumanReadable(
+                                                trip.scheduledStartTime?.takeIf { it > 0L }
+                                            )
                                         ),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -369,7 +366,6 @@ private fun TripSelectionCard(
                     }
                 }
             }
-        }
     }
 }
 
@@ -466,7 +462,10 @@ private fun TripDetailsCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = trip.scheduledStartTime?.take(10) ?: trip.createdAt?.take(10) ?: notAvailable,
+                        text = com.indusjs.fleet.core.util.formatDateToHumanReadable(
+                            trip.scheduledStartTime?.takeIf { it > 0L }
+                                ?: trip.createdAt?.takeIf { it > 0L }
+                        ).ifBlank { notAvailable },
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -926,7 +925,7 @@ private fun CostHistoryItem(cost: TripCostDto) {
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "${cost.date} ${cost.time ?: ""}".trim(),
+                    text = "${cost.date?.takeIf { it > 0L }?.let { com.indusjs.fleet.core.util.formatDateToHumanReadable(it) } ?: ""} ${cost.time ?: ""}".trim(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

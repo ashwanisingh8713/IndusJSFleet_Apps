@@ -1,5 +1,7 @@
 package com.ijs.reports.presentation.vehicle
 
+import com.indusjs.datetimeutils.FleetEpoch
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.core.util.currentTimeMillis
 import kotlinx.datetime.*
 
@@ -16,55 +18,65 @@ object VehiclePLDateCalculator {
     }
 
     /**
-     * Calculate start and end dates based on the selected period.
-     * Returns dates in YYYY-MM-DD format per OpenAPI spec (Docs/api_modules/openapi.json).
+     * Calculate the start and end of the selected period as UTC epoch millis.
+     * For "custom", the customStartDate/customEndDate picker strings (DD-MM-YYYY)
+     * are converted; blank custom bounds fall back to the current month.
+     * Returns null bounds when conversion fails.
      */
     fun getDateRangeForPeriod(
         period: String,
         customStartDate: String,
         customEndDate: String
-    ): Pair<String, String> {
+    ): Pair<Long?, Long?> {
         val today = today()
 
         return when (period) {
             "today" -> {
-                val dateStr = formatDate(today)
-                Pair(dateStr, dateStr)
+                val ms = toEpochMillis(today)
+                Pair(ms, ms)
             }
             "weekly" -> {
                 val startDate = today.minus(DatePeriod(days = 6))
-                Pair(formatDate(startDate), formatDate(today))
+                Pair(toEpochMillis(startDate), toEpochMillis(today))
             }
             "monthly" -> {
                 val startOfMonth = LocalDate(today.year, today.month, 1)
                 val endOfMonth = getLastDayOfMonth(today.year, today.month.number)
-                Pair(formatDate(startOfMonth), formatDate(endOfMonth))
+                Pair(toEpochMillis(startOfMonth), toEpochMillis(endOfMonth))
             }
             "yearly" -> {
                 val startOfYear = LocalDate(today.year, 1, 1)
                 val endOfYear = LocalDate(today.year, 12, 31)
-                Pair(formatDate(startOfYear), formatDate(endOfYear))
+                Pair(toEpochMillis(startOfYear), toEpochMillis(endOfYear))
             }
             "all" -> {
                 val startDate = LocalDate(2020, 1, 1)
-                Pair(formatDate(startDate), formatDate(today))
+                Pair(toEpochMillis(startDate), toEpochMillis(today))
             }
             "custom" -> {
-                val start = customStartDate.ifBlank {
-                    formatDate(LocalDate(today.year, today.month, 1))
-                }
-                val end = customEndDate.ifBlank {
-                    formatDate(getLastDayOfMonth(today.year, today.month.number))
-                }
+                val start = customStartDate.takeIf { it.isNotBlank() }
+                    ?.let { convertToEpochMillis(it) }
+                    ?: toEpochMillis(LocalDate(today.year, today.month, 1))
+                val end = customEndDate.takeIf { it.isNotBlank() }
+                    ?.let { convertToEpochMillis(it) }
+                    ?: toEpochMillis(getLastDayOfMonth(today.year, today.month.number))
                 Pair(start, end)
             }
             else -> {
                 val startOfMonth = LocalDate(today.year, today.month, 1)
                 val endOfMonth = getLastDayOfMonth(today.year, today.month.number)
-                Pair(formatDate(startOfMonth), formatDate(endOfMonth))
+                Pair(toEpochMillis(startOfMonth), toEpochMillis(endOfMonth))
             }
         }
     }
+
+    /** Convert a calendar date (interpreted at local midnight) to UTC epoch millis. */
+    private fun toEpochMillis(date: LocalDate): Long? = FleetEpoch.fromValue(
+        com.indusjs.datetimeutils.FleetDateTimeValue(
+            year = date.year, month = date.month.number, day = date.day,
+            hour = 0, minute = 0, second = 0
+        )
+    )
 
     /**
      * Generate a human-readable label for the current period.
@@ -91,13 +103,6 @@ object VehiclePLDateCalculator {
             }
             else -> "$monthName ${today.year}"
         }
-    }
-
-    /**
-     * Format date as YYYY-MM-DD per OpenAPI spec.
-     */
-    private fun formatDate(date: LocalDate): String {
-        return date.toString() // LocalDate.toString() returns YYYY-MM-DD (ISO 8601)
     }
 
     private fun getLastDayOfMonth(year: Int, month: Int): LocalDate {

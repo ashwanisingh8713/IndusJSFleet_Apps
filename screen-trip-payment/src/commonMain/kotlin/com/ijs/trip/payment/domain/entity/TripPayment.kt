@@ -20,7 +20,8 @@ data class TripPayment(
     val paymentType: PaymentType = PaymentType.PARTIAL,
     val paymentMode: PaymentMode = PaymentMode.CASH,
     val paymentSource: String? = null,
-    val paymentDate: String? = null,
+    /** Payment timestamp as UTC epoch millis (null/0 = unset). */
+    val paymentDate: Long? = null,
     val paymentStatus: PaymentStatus = PaymentStatus.RECEIVED,
     val transactionId: String? = null,
     val bankName: String? = null,
@@ -33,8 +34,10 @@ data class TripPayment(
     val ownerId: String? = null,
     val createdById: String? = null,
     val createdByName: String? = null,
-    val createdAt: String? = null,
-    val updatedAt: String? = null,
+    /** Created timestamp as UTC epoch millis (null/0 = unset). */
+    val createdAt: Long? = null,
+    /** Updated timestamp as UTC epoch millis (null/0 = unset). */
+    val updatedAt: Long? = null,
     // Embedded trip info (for list display)
     val tripInfo: TripPaymentTripInfo? = null
 ) {
@@ -155,7 +158,13 @@ data class TripPaymentSummary(
     val pendingCount: Int = 0,
     val thisMonthTotal: Double = 0.0,
     val byMode: Map<PaymentMode, Double> = emptyMap(),
-    val byType: Map<PaymentType, Double> = emptyMap()
+    val byType: Map<PaymentType, Double> = emptyMap(),
+    /**
+     * Per-trip payment status from the trip payments history summary
+     * (GET /trips/{id}/payments → summary.payment_status). Null for the
+     * all-payments summary, which has no single status.
+     */
+    val paymentStatus: String? = null
 ) {
     val totalReceivedDisplay: String
         get() = "₹${formatWithSuffix(totalReceived)}"

@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetPasswordField
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -75,7 +76,7 @@ fun SignUpScreen(
                     IconButton(onClick = onNavigateToLogin) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -174,10 +175,9 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Password Field
-            FleetInputField(
+            FleetPasswordField(
                 value = state.password,
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdatePassword(it)) },
-                fieldType = FieldType.PASSWORD,
                 modifier = Modifier.fillMaxWidth(),
                 label = stringResource(Res.string.signup_password_label),
                 placeholder = stringResource(Res.string.signup_password_placeholder),
@@ -187,10 +187,9 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Confirm Password Field
-            FleetInputField(
+            FleetPasswordField(
                 value = state.confirmPassword,
                 onValueChange = { viewModel.sendIntent(SignUpContract.Intent.UpdateConfirmPassword(it)) },
-                fieldType = FieldType.PASSWORD,
                 modifier = Modifier.fillMaxWidth(),
                 label = stringResource(Res.string.signup_confirm_password_label),
                 placeholder = stringResource(Res.string.signup_confirm_password_placeholder),

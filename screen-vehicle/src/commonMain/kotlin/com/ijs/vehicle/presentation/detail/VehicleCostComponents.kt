@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun CompactCostCard(cost: CostDisplayItem, onDelete: () -> Unit) {
@@ -44,7 +45,7 @@ internal fun CompactCostCard(cost: CostDisplayItem, onDelete: () -> Unit) {
                         else MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
                     ) {
                         Text(
-                            if (cost.category == "trip") "Trip" else "Maint",
+                            if (cost.category == "trip") stringResource(Res.string.vehicle_costs_trip_label) else stringResource(Res.string.vehicle_costs_maint_label),
                             style = MaterialTheme.typography.labelSmall,
                             color = if (cost.category == "trip") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp)
@@ -70,7 +71,8 @@ internal data class CostDisplayItem(
     val category: String,
     val costType: String,
     val amount: Double,
-    val date: String,
+    /** UTC epoch millis (null/0 when unset). */
+    val date: Long?,
     val dateLabel: String,
     val description: String?,
     val vendorName: String?,
@@ -108,23 +110,11 @@ internal data class CostDisplayItem(
             )
         }
 
-        internal fun formatCostDateLabel(date: String?): String {
-            if (date.isNullOrBlank()) return "Unknown"
-            return try {
-                val datePart = date.split("T").firstOrNull() ?: date
-                if (datePart.contains("-") && datePart.length >= 10) {
-                    val parts = datePart.split("-")
-                    if (parts.size == 3) {
-                        if (parts[0].length == 4) {
-                            "${parts[2]}-${parts[1]}-${parts[0]}"
-                        } else {
-                            datePart
-                        }
-                    } else datePart
-                } else datePart
-            } catch (e: Exception) {
-                date ?: "Unknown"
-            }
+        /** Format a cost date (UTC epoch millis) as a "DD-MMM-YYYY" label. */
+        internal fun formatCostDateLabel(date: Long?): String {
+            if (date == null || date <= 0L) return "Unknown"
+            return com.indusjs.fleet.core.util.formatDateToHumanReadable(date)
+                .ifBlank { "Unknown" }
         }
     }
 }

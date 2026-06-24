@@ -14,7 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.uicomponents.components.DateVisualTransformation
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.COST_TYPES
@@ -24,6 +27,7 @@ import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.Intent
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.State
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Consolidated P&L Screen.
@@ -37,12 +41,21 @@ fun ConsolidatedPLScreen(
     onNavigateBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val snackbarHostState = SnackbarHostState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
+                is Effect.ShowSnackbar -> pendingSnackbar = effect.message
             }
         }
     }
@@ -50,12 +63,12 @@ fun ConsolidatedPLScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Consolidated Report") },
+                title = { Text(stringResource(Res.string.reports_consolidated_screen_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back"
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 },
@@ -113,7 +126,7 @@ fun ConsolidatedPLScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text("Generate Report")
+                    Text(stringResource(Res.string.reports_generate_report))
                 }
             }
 
@@ -128,7 +141,10 @@ fun ConsolidatedPLScreen(
                 if (report.periodBreakdown.isNotEmpty()) {
                     item {
                         Text(
-                            text = "${state.groupBy.replaceFirstChar { it.uppercaseChar() }}ly Breakdown",
+                            text = stringResource(
+                                Res.string.reports_period_breakdown_header,
+                                state.groupBy.replaceFirstChar { it.uppercaseChar() } + "ly"
+                            ),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -143,7 +159,7 @@ fun ConsolidatedPLScreen(
                 if (report.vehicleSummary.isNotEmpty()) {
                     item {
                         Text(
-                            text = "Vehicle Performance",
+                            text = stringResource(Res.string.reports_vehicle_performance),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -165,18 +181,7 @@ fun ConsolidatedPLScreen(
             // Error
             state.error?.let { error ->
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Text(
-                            text = error,
-                            modifier = Modifier.padding(16.dp),
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    }
+                    FleetInlineErrorBanner(message = error.resolve())
                 }
             }
         }
@@ -202,19 +207,14 @@ private fun FiltersCard(
     onEndDateChange: (String) -> Unit,
     onGroupByChange: (String) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
-    ) {
+    FleetSectionCard {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Date Range
             Text(
-                text = "📅 Date Range *",
+                text = "📅 " + stringResource(Res.string.reports_filter_date_range_required),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -227,7 +227,7 @@ private fun FiltersCard(
                     value = startDate,
                     onValueChange = { onStartDateChange(filterDigitsOnly(it, 8)) },
                     fieldType = FieldType.NUMBER,
-                    label = "From",
+                    label = stringResource(Res.string.reports_label_from),
                     placeholder = "DD-MM-YYYY",
                     visualTransformation = dateVisualTransformation,
                     modifier = Modifier.weight(1f)
@@ -236,7 +236,7 @@ private fun FiltersCard(
                     value = endDate,
                     onValueChange = { onEndDateChange(filterDigitsOnly(it, 8)) },
                     fieldType = FieldType.NUMBER,
-                    label = "To",
+                    label = stringResource(Res.string.reports_label_to),
                     placeholder = "DD-MM-YYYY",
                     visualTransformation = dateVisualTransformation,
                     modifier = Modifier.weight(1f)
@@ -253,16 +253,20 @@ private fun FiltersCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "🚚 Vehicles (${selectedVehicleIds.size}/${vehicles.size})",
+                        text = "🚚 " + stringResource(
+                            Res.string.reports_filter_vehicles_count,
+                            selectedVehicleIds.size,
+                            vehicles.size
+                        ),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         TextButton(onClick = onSelectAllVehicles, contentPadding = PaddingValues(4.dp)) {
-                            Text("All", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelSmall)
                         }
                         TextButton(onClick = onClearVehicles, contentPadding = PaddingValues(4.dp)) {
-                            Text("Clear", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -292,16 +296,19 @@ private fun FiltersCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "💰 Cost Types (${selectedCostTypes.size})",
+                        text = "💰 " + stringResource(
+                            Res.string.reports_filter_cost_types_count,
+                            selectedCostTypes.size
+                        ),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         TextButton(onClick = onSelectAllCostTypes, contentPadding = PaddingValues(4.dp)) {
-                            Text("All", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelSmall)
                         }
                         TextButton(onClick = onClearCostTypes, contentPadding = PaddingValues(4.dp)) {
-                            Text("Clear", style = MaterialTheme.typography.labelSmall)
+                            Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -327,7 +334,7 @@ private fun FiltersCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "📊 Group By",
+                    text = "📊 " + stringResource(Res.string.reports_filter_group_by),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )

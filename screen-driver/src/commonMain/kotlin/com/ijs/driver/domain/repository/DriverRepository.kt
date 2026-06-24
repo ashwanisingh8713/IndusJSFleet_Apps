@@ -52,7 +52,7 @@ interface DriverRepository : Repository {
 
     /**
      * Update driver status.
-     * Valid statuses: inactive, active, on_route, on_leave, suspended, terminated
+     * Valid statuses (backend oneof): active, inactive, on_trip, on_leave, suspended
      */
     suspend fun updateDriverStatus(id: String, status: DriverStatus): Result<Driver>
 

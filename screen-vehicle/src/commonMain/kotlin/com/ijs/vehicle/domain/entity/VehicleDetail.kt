@@ -66,9 +66,9 @@ data class VehicleTripItem(
     val destination: String,
     val state: String,
     val stateLabel: String,
-    val scheduledDate: String?,
-    val startTime: String?,
-    val endTime: String?,
+    val scheduledDate: Long?,
+    val startTime: Long?,
+    val endTime: Long?,
     val driverName: String?,
     val distance: Double?,
     val duration: String?
@@ -107,8 +107,8 @@ data class RouteStop(
     val location: String,
     val address: String?,
     val status: String, // "pending", "current", "completed"
-    val scheduledTime: String?,
-    val actualTime: String?,
+    val scheduledTime: Long?,
+    val actualTime: Long?,
     val notes: String?
 )
 /**
@@ -130,12 +130,12 @@ data class VehicleDocumentInfo(
     val id: String,
     val name: String,
     val documentNumber: String?,
-    val expiryDate: String?,
+    val expiryDate: Long?,
     val status: String,
     val statusLabel: String,
     val daysRemaining: Int?,
     val fileUrl: String?,
-    val uploadedAt: String?
+    val uploadedAt: Long?
 )
 /**
  * Documents tab data.

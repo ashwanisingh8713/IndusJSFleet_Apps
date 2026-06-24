@@ -2,6 +2,8 @@ package com.ijs.reports.presentation.trip
 
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.convertToEpochMillis
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.data.model.MultiTripPLRequest
 import com.ijs.reports.domain.usecase.GetMultiTripPLUseCase
 import com.ijs.trip.domain.repository.TripRepository
@@ -9,6 +11,14 @@ import com.ijs.reports.presentation.trip.TripPLContract.Effect
 import com.ijs.reports.presentation.trip.TripPLContract.Intent
 import com.ijs.reports.presentation.trip.TripPLContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_failed_generate
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_failed_load_trips
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_no_pl_data
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_no_valid_trip_ids
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_no_trips_found
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_select_both_dates
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_select_one_trip
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -59,7 +69,7 @@ class TripPLViewModel(
         val currentState = state.value
 
         if (currentState.startDate.isBlank() || currentState.endDate.isBlank()) {
-            sendEffect(Effect.ShowSnackbar("Please select both start and end dates"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.report_select_both_dates)))
             return
         }
 
@@ -82,12 +92,12 @@ class TripPLViewModel(
                     }
 
                     if (allTrips.isEmpty()) {
-                        sendEffect(Effect.ShowSnackbar("No trips found"))
+                        sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.report_no_trips_found)))
                     }
                 }
                 is Result.Error -> {
                     updateState { copy(isLoadingTrips = false, tripsLoaded = false) }
-                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load trips"))
+                    sendEffect(Effect.ShowSnackbar(result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_load_trips)))
                 }
                 is Result.Loading -> { /* Already handled */ }
             }
@@ -98,7 +108,7 @@ class TripPLViewModel(
         val currentState = state.value
 
         if (currentState.selectedTripIds.isEmpty()) {
-            sendEffect(Effect.ShowSnackbar("Please select at least one trip"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.report_select_one_trip)))
             return
         }
 
@@ -106,25 +116,26 @@ class TripPLViewModel(
 
         val tripIds = currentState.selectedTripIds.mapNotNull { it.toIntOrNull() }
         if (tripIds.isEmpty()) {
-            updateState { copy(isLoading = false, error = "No valid trip IDs selected") }
+            updateState { copy(isLoading = false, error = UiText.StringRes(Res.string.report_no_valid_trip_ids)) }
             return
         }
 
+        // Picker state holds DD-MM-YYYY; convert to UTC epoch millis at the request boundary.
         val request = MultiTripPLRequest(
             tripIds = tripIds,
-            startDate = currentState.startDate.takeIf { it.isNotBlank() },
-            endDate = currentState.endDate.takeIf { it.isNotBlank() }
+            startDate = convertToEpochMillis(currentState.startDate),
+            endDate = convertToEpochMillis(currentState.endDate)
         )
 
         when (val result = getMultiTripPLUseCase(request)) {
             is Result.Success -> {
                 updateState { copy(isLoading = false, results = result.data) }
                 if (result.data.isEmpty()) {
-                    sendEffect(Effect.ShowSnackbar("No P&L data available for selected trips"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.report_no_pl_data)))
                 }
             }
             is Result.Error -> {
-                updateState { copy(isLoading = false, error = result.message ?: "Failed to generate report") }
+                updateState { copy(isLoading = false, error = result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_generate)) }
             }
             is Result.Loading -> { /* Already handled */ }
         }

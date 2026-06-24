@@ -23,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.pdfreport.handler.VehicleMaintenanceCostsPdfHandler
 import com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData
 import com.indusjs.uicomponents.components.DateVisualTransformation
+import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.components.formatToDdMmYyyy
@@ -310,7 +312,7 @@ internal fun CostsTabContent(
     // Show only Maintenance Costs (Vehicle Maintenance Costs per costs-README.md)
     // Trip costs are shown in Trip Detail screen, not here
     val allCosts = state.maintenanceCosts.map { CostDisplayItem.fromMaintenanceCost(it) }
-        .sortedByDescending { it.date }
+        .sortedByDescending { it.date ?: 0L }
     val groupedByDate = allCosts.groupBy { it.dateLabel }
     val activeFilterCount = state.selectedCostTypeFilters.size +
         (if (state.costsStartDate.isNotBlank() || state.costsEndDate.isNotBlank()) 1 else 0)
@@ -435,41 +437,28 @@ internal fun CostsTabContent(
             }
         }
 
-        // Error
+        // Error — inline errorContainer-tinted banner (in-list), not the full-screen ErrorContent.
         state.costsError?.let { error ->
             item(key = "error") {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.weight(1f))
-                        TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshCosts) }) { Text(stringResource(Res.string.retry)) }
-                    }
-                }
+                FleetInlineErrorBanner(
+                    message = error.resolve(),
+                    actionLabel = stringResource(Res.string.retry),
+                    onAction = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshCosts) }
+                )
             }
         }
 
         // Empty State - Updated for maintenance costs only
         if (allCosts.isEmpty() && !state.isLoadingCosts && state.costsError == null) {
             item(key = "empty") {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("🔧", style = MaterialTheme.typography.displaySmall)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(stringResource(Res.string.vehicle_costs_no_maintenance), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Text(stringResource(Res.string.vehicle_costs_maint_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Button(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.NavigateToAddMaintenanceCost) }) {
-                            Text(stringResource(Res.string.vehicle_costs_add_maint))
-                        }
-                    }
-                }
+                EmptyContent(
+                    icon = "🔧",
+                    title = stringResource(Res.string.vehicle_costs_no_maintenance),
+                    message = stringResource(Res.string.vehicle_costs_maint_hint),
+                    actionLabel = stringResource(Res.string.vehicle_costs_add_maint),
+                    onAction = { viewModel.sendIntent(VehicleDetailContract.Intent.NavigateToAddMaintenanceCost) },
+                    fillMaxSize = false
+                )
             }
         }
 

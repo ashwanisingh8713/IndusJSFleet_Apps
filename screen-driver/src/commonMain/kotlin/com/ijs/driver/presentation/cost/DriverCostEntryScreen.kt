@@ -3,7 +3,7 @@ package com.ijs.driver.presentation.cost
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,6 +25,10 @@ import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.uicomponents.components.CostTypeGroup
 import com.indusjs.uicomponents.components.CostTypeSelection
 import com.indusjs.uicomponents.components.CostTypeTwoLevelSelector
+import com.indusjs.uicomponents.components.FleetAvatar
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.data.model.driver.DriverCostDto
 import com.ijs.driver.domain.entity.Driver
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -46,6 +51,15 @@ fun DriverCostEntryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingCostSavedEventId by remember { mutableStateOf(0) }
     var pendingCostSavedCount by remember { mutableStateOf(0) }
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // Set initial driver if provided
     LaunchedEffect(initialDriverId, state.drivers) {
@@ -59,10 +73,10 @@ fun DriverCostEntryScreen(
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is DriverCostEntryContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is DriverCostEntryContract.Effect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is DriverCostEntryContract.Effect.NavigateBack -> onNavigateBack()
                 is DriverCostEntryContract.Effect.CostsSaved -> {
@@ -286,26 +300,13 @@ private fun DriverSelectionCard(
     onToggleDropdown: () -> Unit,
     onSelectDriver: (Driver) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.driver_cost_select_driver_section)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ExposedDropdownMenuBox(
+            expanded = state.showDriverDropdown,
+            onExpandedChange = { onToggleDropdown() }
         ) {
-            Text(
-                text = stringResource(Res.string.driver_cost_select_driver_section),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            ExposedDropdownMenuBox(
-                expanded = state.showDriverDropdown,
-                onExpandedChange = { onToggleDropdown() }
-            ) {
                 OutlinedTextField(
                     value = state.selectedDriver?.let {
                         "${it.firstName} ${it.lastName} - ${it.mobile}"
@@ -316,7 +317,7 @@ private fun DriverSelectionCard(
                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                     readOnly = true,
                     isError = state.driverError != null,
-                    supportingText = state.driverError?.let { { Text(it) } },
+                    supportingText = state.driverError?.let { { Text(it.resolve()) } },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = state.showDriverDropdown) }
                 )
 
@@ -349,38 +350,22 @@ private fun DriverSelectionCard(
             }
         }
     }
-}
 
 @Composable
 private fun DriverDetailsCard(driver: Driver) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        )
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        border = null
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .border(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(24.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "${driver.firstName.take(1)}${driver.lastName.take(1)}".uppercase(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            FleetAvatar(
+                name = "${driver.firstName} ${driver.lastName}",
+                background = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.primary,
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -581,7 +566,7 @@ private fun DriverCostEntryRowCard(
                         onCostTypeSelected = onSelectCostType,
                         onCategoryChanged = onCategoryChanged,
                         isError = entry.costTypeError != null,
-                        errorMessage = entry.costTypeError
+                        errorMessage = entry.costTypeError?.resolve()
                     )
 
                     // Custom cost type name (for "Other" type)
@@ -606,7 +591,7 @@ private fun DriverCostEntryRowCard(
                         },
                         label = stringResource(Res.string.driver_cost_label_date_time),
                         isError = entry.dateError != null,
-                        errorMessage = entry.dateError,
+                        errorMessage = entry.dateError?.resolve(),
                         minDate = minDate,  // Cost date must be >= Driver joining date
                         maxDate = maxDate   // Cost date must be <= Tomorrow
                     )
@@ -625,7 +610,7 @@ private fun DriverCostEntryRowCard(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         isError = entry.amountError != null,
-                        supportingText = entry.amountError?.let { { Text(it) } },
+                        supportingText = entry.amountError?.let { { Text(it.resolve()) } },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         leadingIcon = {
                             Text(
@@ -761,7 +746,8 @@ private fun CostHistoryItem(cost: DriverCostDto) {
                     }
                 }
                 Text(
-                    text = cost.date,
+                    text = cost.date?.takeIf { it > 0L }
+                        ?.let { com.indusjs.fleet.core.util.formatDateToHumanReadable(it) } ?: "",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

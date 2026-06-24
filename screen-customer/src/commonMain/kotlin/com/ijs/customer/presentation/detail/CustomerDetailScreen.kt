@@ -15,6 +15,7 @@ import com.indusjs.pdfreport.model.CustomerPaymentsPdfData
 import com.indusjs.pdfreport.model.CustomerTripsPdfData
 import com.indusjs.pdfreport.model.CustomerFinancialsPdfData
 import com.indusjs.uicomponents.components.*
+import com.ijs.customer.presentation.localizedTitle
 import com.ijs.customer.presentation.detail.CustomerDetailContract.CustomerDetailTab
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Effect
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
@@ -39,6 +40,8 @@ private sealed interface CustomerDetailPendingSnackbar {
     ) : CustomerDetailPendingSnackbar
 
     data class Raw(val message: String) : CustomerDetailPendingSnackbar
+
+    data class Text(val uiText: UiText) : CustomerDetailPendingSnackbar
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,6 +66,7 @@ fun CustomerDetailScreen(
                 }
             }
             is CustomerDetailPendingSnackbar.Raw -> pending.message
+            is CustomerDetailPendingSnackbar.Text -> pending.uiText.resolve()
         }
         LaunchedEffect(pending) {
             snackbarHostState.showSnackbar(message)
@@ -84,7 +88,7 @@ fun CustomerDetailScreen(
             when (effect) {
                 is Effect.NavigateBack -> onNavigateBack()
                 is Effect.ShowSnackbar -> {
-                    pendingSnackbar = CustomerDetailPendingSnackbar.Raw(effect.message)
+                    pendingSnackbar = CustomerDetailPendingSnackbar.Text(effect.message)
                 }
                 is Effect.PdfExported -> {
                     pendingSnackbar = CustomerDetailPendingSnackbar.Resource(
@@ -212,7 +216,7 @@ fun CustomerDetailScreen(
         when {
             state.isLoading -> LoadingContent()
             state.error != null && state.customer == null -> ErrorContent(
-                error = state.error!!,
+                error = state.error!!.resolve(),
                 onRetry = { viewModel.sendIntent(Intent.LoadCustomer(customerId)) }
             )
             state.customer == null -> EmptyContent(
@@ -261,7 +265,7 @@ private fun CustomerDetailTabbedContent(
             tabs = visibleTabs.mapIndexed { index, tab ->
                 FleetTab(
                     id = index,
-                    label = "${tab.icon} ${tab.title}"
+                    label = "${tab.icon} ${tab.localizedTitle()}"
                 )
             },
             selectedTabId = pagerState.currentPage,

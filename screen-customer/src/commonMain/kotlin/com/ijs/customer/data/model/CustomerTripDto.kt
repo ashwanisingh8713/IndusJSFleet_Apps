@@ -27,15 +27,15 @@ data class CustomerTripDto(
     @SerialName("estimated_distance")
     val estimatedDistance: Double? = null,
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long? = null,
     @SerialName("planned_start")
-    val plannedStart: String? = null,
+    val plannedStart: Long? = null,
     @SerialName("planned_end")
-    val plannedEnd: String? = null,
+    val plannedEnd: Long? = null,
     @SerialName("actual_start")
-    val actualStart: String? = null,
+    val actualStart: Long? = null,
     @SerialName("actual_end")
-    val actualEnd: String? = null,
+    val actualEnd: Long? = null,
     @SerialName("cargo_type")
     val cargoType: String? = null,
     @SerialName("expected_trip_price")
@@ -51,28 +51,7 @@ data class CustomerTripDto(
     @SerialName("priority")
     val priority: String? = null,
     @SerialName("created_at")
-    val createdAt: String? = null
-)
-
-/**
- * Customer trips summary DTO.
- */
-@Serializable
-data class CustomerTripsSummaryDto(
-    @SerialName("total_trips")
-    val totalTrips: Int = 0,
-    @SerialName("completed_trips")
-    val completedTrips: Int = 0,
-    @SerialName("active_trips")
-    val activeTrips: Int = 0,
-    @SerialName("planned_trips")
-    val plannedTrips: Int = 0,
-    @SerialName("cancelled_trips")
-    val cancelledTrips: Int = 0,
-    @SerialName("total_revenue")
-    val totalRevenue: Double = 0.0,
-    @SerialName("total_pending")
-    val totalPending: Double = 0.0
+    val createdAt: Long? = null
 )
 
 /**
@@ -108,9 +87,7 @@ data class CustomerTripsDataDto(
     @SerialName("per_page")
     val perPage: Int = 20,
     @SerialName("total_pages")
-    val totalPages: Int = 1,
-    @SerialName("summary")
-    val summary: CustomerTripsSummaryDto? = null
+    val totalPages: Int = 1
 )
 
 /**
@@ -127,9 +104,6 @@ data class CustomerTripsResponse(
 ) {
     val trips: List<CustomerTripDto>
         get() = data?.items ?: emptyList()
-
-    val summary: CustomerTripsSummaryDto?
-        get() = data?.summary
 
     val page: Int?
         get() = data?.page

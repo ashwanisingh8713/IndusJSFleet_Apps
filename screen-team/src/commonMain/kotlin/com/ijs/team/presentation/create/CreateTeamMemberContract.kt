@@ -25,8 +25,6 @@ object CreateTeamMemberContract {
         val selectedIamRoleName: String = "",
         val availableIamRoles: List<AssignableTeamRole> = emptyList(),
         val rolesLoading: Boolean = true,
-        val isPasswordVisible: Boolean = false,
-        val isConfirmPasswordVisible: Boolean = false,
         val isLoading: Boolean = false,
         val error: UiText? = null
     ) : UiState
@@ -42,8 +40,6 @@ object CreateTeamMemberContract {
         data class UpdatePassword(val password: String) : Intent
         data class UpdateConfirmPassword(val confirmPassword: String) : Intent
         data class SelectIamRole(val roleName: String) : Intent
-        data object TogglePasswordVisibility : Intent
-        data object ToggleConfirmPasswordVisibility : Intent
         data object CreateTeamMember : Intent
         data object ClearError : Intent
         /** When true, removes elevated IAM roles such as owner from the selectable list. */

@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import com.indusjs.uicomponents.theme.FleetTokens
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -82,109 +84,55 @@ internal fun FleetOverviewHeroCard(
     onTripsClick: () -> Unit
 ) {
     val fleetOverviewDesc = stringResource(Res.string.cd_fleet_overview_summary)
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = fleetOverviewDesc },
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    DashboardSectionCard(
+        modifier = Modifier.semantics { contentDescription = fleetOverviewDesc }
     ) {
-        // Section Title
-        Text(
-            text = stringResource(Res.string.dashboard_fleet_overview),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+        DashboardSectionHeader(
+            title = stringResource(Res.string.dashboard_fleet_overview),
+            emoji = "🚛",
+            accent = MaterialTheme.colorScheme.primary
         )
 
-        // Metrics Row
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+
+        // Number-forward KPI tiles
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            FleetMetricCard(
-                icon = "🚛",
-                value = vehicleStatus.total,
+            MetricTile(
+                value = vehicleStatus.total.toString(),
                 label = stringResource(Res.string.org_stats_vehicles),
                 subLabel = stringResource(Res.string.dashboard_count_available, vehicleStatus.available),
+                emoji = "🚛",
+                accent = MaterialTheme.colorScheme.primary,
                 onClick = onVehiclesClick,
-                modifier = Modifier.weight(1f),
-                accentColor = MaterialTheme.colorScheme.primary
+                modifier = Modifier.weight(1f)
             )
-            FleetMetricCard(
-                icon = "👨‍✈️",
-                value = driverStatus.total,
+            MetricTile(
+                value = driverStatus.total.toString(),
                 label = stringResource(Res.string.org_stats_drivers),
                 subLabel = stringResource(Res.string.dashboard_count_available, driverStatus.available),
+                emoji = "👨‍✈️",
+                accent = MaterialTheme.colorScheme.secondary,
                 onClick = onDriversClick,
-                modifier = Modifier.weight(1f),
-                accentColor = MaterialTheme.colorScheme.secondary
+                modifier = Modifier.weight(1f)
             )
-            FleetMetricCard(
-                icon = "🗺️",
-                value = tripSummary.total,
+            MetricTile(
+                value = tripSummary.total.toString(),
                 label = stringResource(Res.string.org_stats_trips),
                 subLabel = stringResource(Res.string.dashboard_count_active, tripSummary.inProgress),
+                emoji = "🗺️",
+                accent = MaterialTheme.colorScheme.tertiary,
                 onClick = onTripsClick,
-                modifier = Modifier.weight(1f),
-                accentColor = MaterialTheme.colorScheme.tertiary
+                modifier = Modifier.weight(1f)
             )
         }
 
-        // Bottom color range bar showing vehicle status distribution
+        // Vehicle status distribution bar
         if (vehicleStatus.total > 0) {
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
             FleetStatusRatioBar(vehicleStatus = vehicleStatus)
-        }
-    }
-}
-
-/**
- * Fleet Metric Card - Individual metric display.
- */
-@Composable
-private fun FleetMetricCard(
-    icon: String,
-    value: Int,
-    label: String,
-    subLabel: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    accentColor: Color
-) {
-    Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(12.dp),
-        shadowElevation = 1.dp
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.titleLarge
-            )
-            Text(
-                text = value.toString(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = accentColor
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subLabel,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }

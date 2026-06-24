@@ -3,6 +3,7 @@ package com.ijs.vehicle.presentation
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.data.model.TeamMemberDto
 import com.ijs.vehicle.domain.entity.DocumentType
 import com.ijs.vehicle.domain.entity.VehicleDocument
@@ -38,15 +39,15 @@ object AddVehicleContract {
         val documentExpiryDates: Map<DocumentType, String> = emptyMap(), // Raw digits for each doc type
 
         // Validation
-        val registrationNumberError: String? = null,
-        val makeError: String? = null,
-        val modelError: String? = null,
-        val yearError: String? = null,
+        val registrationNumberError: UiText? = null,
+        val makeError: UiText? = null,
+        val modelError: UiText? = null,
+        val yearError: UiText? = null,
 
         // Form state
         val isLoading: Boolean = false,
         val isSaving: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         val currentStep: Int = 0, // 0 = Basic Info, 1 = Documents
 
         // Available options
@@ -129,7 +130,7 @@ object AddVehicleContract {
      * Side effects for the Add Vehicle screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data object NavigateBack : Effect
         data class ShowDocumentPicker(val type: DocumentType) : Effect
         data class VehicleRegistered(val vehicleId: String) : Effect

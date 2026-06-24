@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.reports.TAG_VEHICLE_PL_VM
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.domain.usecase.GetMultiVehiclePLUseCase
 import com.ijs.reports.domain.usecase.GetVehicleProfitLossUseCase
 import com.ijs.reports.presentation.RecentReport
@@ -13,6 +14,10 @@ import com.ijs.reports.presentation.vehicle.VehiclePLContract.Effect
 import com.ijs.reports.presentation.vehicle.VehiclePLContract.Intent
 import com.ijs.reports.presentation.vehicle.VehiclePLContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_select_vehicle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_failed_load_vehicles
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_select_one_vehicle
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -178,8 +183,9 @@ class VehiclePLViewModel(
         kotlinx.coroutines.delay(1500)
         val fileName = "Fleet_PL_Report_${currentState.currentPeriodLabel.replace(" ", "_")}.${format.extension}"
         updateState { copy(isGeneratingExport = false) }
+        // Single snackbar via ExportGenerated (screen maps it to "Report exported: <path>");
+        // a second ShowSnackbar here would overwrite it in the single pendingSnackbar slot.
         sendEffect(Effect.ExportGenerated(fileName, format))
-        sendEffect(Effect.ShowSnackbar("Report generated: $fileName"))
     }
 
     private fun selectVehicle(vehicleId: String) {
@@ -226,7 +232,7 @@ class VehiclePLViewModel(
                 }
                 is Result.Error -> {
                     logger.e(TAG_VEHICLE_PL_VM, "loadVehicles: Error - ${result.message}")
-                    updateState { copy(isLoadingVehicles = false, initialLoadComplete = true, error = result.message ?: "Failed to load vehicles") }
+                    updateState { copy(isLoadingVehicles = false, initialLoadComplete = true, error = result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_load_vehicles)) }
                 }
                 is Result.Loading -> { /* Already handled */ }
             }
@@ -243,13 +249,13 @@ class VehiclePLViewModel(
     private suspend fun generateReport() {
         if (currentState.isMultiMode) {
             if (currentState.selectedVehicleIds.isEmpty()) {
-                sendEffect(Effect.ShowSnackbar("Please select at least one vehicle"))
+                sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.report_select_one_vehicle)))
                 return
             }
             generateMultiVehicleReport()
         } else {
             if (currentState.selectedVehicleId == null) {
-                sendEffect(Effect.ShowSnackbar("Please select a vehicle"))
+                sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.error_select_vehicle)))
                 return
             }
             generateSingleVehicleReport()

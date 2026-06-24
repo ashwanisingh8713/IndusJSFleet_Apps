@@ -15,6 +15,7 @@ import com.ijs.finance.data.mapper.toDomainPayments
 import com.ijs.finance.data.model.*
 import com.ijs.finance.domain.entity.*
 import com.ijs.finance.domain.repository.VehicleFinanceRepository
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.withContext
 
@@ -84,8 +85,16 @@ class VehicleFinanceRepositoryImpl(
             try {
                 val token = requireAuthToken()
 
+                val purchaseDateMs = convertToEpochMillis(purchaseDate)
+                    ?: return@withContext Result.Error(
+                        ApiException("Invalid purchase date"),
+                        "Invalid purchase date"
+                    )
+                val loanStartDateMs = loanStartDate?.takeIf { it.isNotBlank() }
+                    ?.let { convertToEpochMillis(it) }
+
                 val request = CreatePurchaseRequest(
-                    purchaseDate = purchaseDate,
+                    purchaseDate = purchaseDateMs,
                     purchasePrice = purchasePrice,
                     vendorName = vendorName,
                     invoiceNumber = invoiceNumber,
@@ -95,7 +104,7 @@ class VehicleFinanceRepositoryImpl(
                     interestRate = interestRate,
                     tenureMonths = tenureMonths,
                     emiAmount = emiAmount,
-                    loanStartDate = loanStartDate,
+                    loanStartDate = loanStartDateMs,
                     financierName = financierName,
                     loanAccountNumber = loanAccountNumber,
                     bankName = bankName,
@@ -287,10 +296,16 @@ class VehicleFinanceRepositoryImpl(
             try {
                 val token = requireAuthToken()
 
+                val paymentDateMs = convertToEpochMillis(paymentDate)
+                    ?: return@withContext Result.Error(
+                        ApiException("Invalid payment date"),
+                        "Invalid payment date"
+                    )
+
                 val request = RecordPaymentRequest(
                     vehiclePurchaseId = vehiclePurchaseId,
                     amount = amount,
-                    paymentDate = paymentDate,
+                    paymentDate = paymentDateMs,
                     paymentMode = paymentMode?.value,
                     paymentSource = paymentSource,
                     transactionRef = transactionRef,
@@ -323,8 +338,14 @@ class VehicleFinanceRepositoryImpl(
             try {
                 val token = requireAuthToken()
 
+                val paymentDateMs = convertToEpochMillis(paymentDate)
+                    ?: return@withContext Result.Error(
+                        ApiException("Invalid payment date"),
+                        "Invalid payment date"
+                    )
+
                 val request = MarkEmiPaidRequest(
-                    paymentDate = paymentDate,
+                    paymentDate = paymentDateMs,
                     paymentMode = paymentMode?.value,
                     transactionRef = transactionRef,
                     notes = notes

@@ -34,7 +34,7 @@ data class HistoryItemDto(
     @SerialName("performed_by_id")
     val performedById: Int? = null,
     @SerialName("created_at")
-    val createdAt: String? = null
+    val createdAt: Long? = null
 ) : Dto {
     /**
      * Display-friendly action text.
@@ -64,23 +64,17 @@ data class HistoryItemDto(
      * Display-friendly timestamp.
      */
     val displayTimestamp: String
-        get() = createdAt?.let { formatTimestamp(it) } ?: ""
-
-    private fun formatTimestamp(timestamp: String): String {
-        return try {
-            // Parse ISO 8601: "2026-03-14T15:30:00Z" -> "14-03-2026 15:30"
-            val datePattern = Regex("(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})")
-            val match = datePattern.find(timestamp)
-            if (match != null) {
-                val (year, month, day, hour, minute) = match.destructured
-                "$day-$month-$year $hour:$minute"
-            } else {
-                timestamp
-            }
-        } catch (_: Exception) {
-            timestamp
+        get() {
+            val ms = createdAt ?: return ""
+            if (ms <= 0L) return ""
+            // epoch-millis -> "DD-MM-YYYY HH:mm" (24h), preserving the prior format.
+            val v = com.indusjs.datetimeutils.FleetEpoch.toValue(ms) ?: return ""
+            val dd = v.day.toString().padStart(2, '0')
+            val mm = v.month.toString().padStart(2, '0')
+            val hh = v.hour.toString().padStart(2, '0')
+            val mi = v.minute.toString().padStart(2, '0')
+            return "$dd-$mm-${v.year} $hh:$mi"
         }
-    }
 }
 
 /**

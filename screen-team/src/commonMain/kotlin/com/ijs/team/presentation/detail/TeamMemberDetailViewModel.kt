@@ -3,6 +3,8 @@ package com.ijs.team.presentation.detail
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.permission.PermissionChecker
+import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.ijs.team.TAG_TEAM_DETAIL_VM
 import com.ijs.team.domain.entity.TeamMemberRole
@@ -29,6 +31,7 @@ class TeamMemberDetailViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val teamRepository: TeamRepository,
     private val userLocalDataSource: UserLocalDataSource,
+    private val permissionChecker: PermissionChecker,
     private val logger: FleetLogger
 ) : MviViewModel<TeamMemberDetailContract.State, TeamMemberDetailContract.Intent, TeamMemberDetailContract.Effect>(
     TeamMemberDetailContract.State()
@@ -68,17 +71,16 @@ class TeamMemberDetailViewModel(
 
         withContext(dispatcherProvider.io) {
             try {
-                val userRole = try {
-                    userLocalDataSource.getUserRole() ?: "owner"
-                } catch (e: Exception) {
-                    "owner"
-                }
-
                 val userId = try {
                     userLocalDataSource.getUserId() ?: ""
                 } catch (e: Exception) {
                     ""
                 }
+
+                // Permission flags from the user's actual permission set.
+                val hasUpdatePermission = permissionChecker.canManageTeam()
+                val hasChangeRolePermission = permissionChecker.canChangeRole()
+                val hasTogglePermission = permissionChecker.canToggleTeamMemberStatus()
 
                 val availableTeamRoles = loadEditableRoles()
 
@@ -86,32 +88,16 @@ class TeamMemberDetailViewModel(
 
                 result.fold(
                     onSuccess = { member ->
-                        val canEditMember = when {
-                            member.id == userId -> false
-                            userRole.lowercase() == "owner" -> true
-                            isAdminRole(userRole) -> member.role == TeamMemberRole.SUPERVISOR
-                            else -> false
-                        }
-
-                        val canChangeRoleForMember = when {
-                            member.id == userId -> false
-                            userRole.lowercase() == "owner" -> true
-                            isAdminRole(userRole) -> member.role == TeamMemberRole.SUPERVISOR
-                            else -> false
-                        }
-
-                        val canToggleActiveMember = when {
-                            member.id == userId -> false
-                            userRole.lowercase() == "owner" -> true
-                            isAdminRole(userRole) -> member.role == TeamMemberRole.SUPERVISOR
-                            else -> false
-                        }
+                        // Self-guard (identity, not role): users cannot act on own record here.
+                        val isSelf = member.id == userId
+                        val canEditMember = hasUpdatePermission && !isSelf
+                        val canChangeRoleForMember = hasChangeRolePermission && !isSelf
+                        val canToggleActiveMember = hasTogglePermission && !isSelf
 
                         updateState {
                             copy(
                                 isLoading = false,
                                 member = member,
-                                currentUserRole = userRole,
                                 currentUserId = userId,
                                 availableRoles = availableTeamRoles,
                                 canEdit = canEditMember,
@@ -192,7 +178,7 @@ class TeamMemberDetailViewModel(
                 logger.d(
                     TAG_TEAM_DETAIL_VM,
                     "Saving member=${state.memberId} canChangeRole=${state.canChangeRole} isSelf=${state.isSelf} " +
-                        "editRole=${state.editRole} roleToUpdate=$roleToUpdate currentUserRole=${state.currentUserRole}"
+                        "editRole=${state.editRole} roleToUpdate=$roleToUpdate"
                 )
 
                 val result = teamRepository.updateTeamMember(
@@ -283,11 +269,7 @@ class TeamMemberDetailViewModel(
         return isValid
     }
 
-    private fun isValidEmail(email: String): Boolean {
-        if (email.isBlank()) return false
-        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
-        return emailRegex.matches(email)
-    }
+    private fun isValidEmail(email: String): Boolean = ValidationUtils.isValidEmail(email)
 
     private fun isValidMobile(mobile: String): Boolean {
         val digitsOnly = mobile.filter { it.isDigit() }
@@ -311,7 +293,4 @@ class TeamMemberDetailViewModel(
             listOf(TeamMemberRole.MANAGER, TeamMemberRole.SUPERVISOR)
         }
     }
-
-    private fun isAdminRole(role: String): Boolean =
-        role.lowercase() in setOf("admin", "manager", "general_manager")
 }

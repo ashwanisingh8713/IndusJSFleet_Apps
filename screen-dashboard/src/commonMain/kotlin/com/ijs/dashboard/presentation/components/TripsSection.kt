@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import com.indusjs.uicomponents.theme.FleetTokens
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,153 +49,99 @@ internal fun TripsStatusSection(
     onCreateTripClick: () -> Unit,
     onAddTripCostClick: () -> Unit = {}
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header with icon and View All
+    DashboardSectionCard {
+        DashboardSectionHeader(
+            title = stringResource(Res.string.org_stats_trips),
+            iconRes = Res.drawable.ic_trip,
+            accent = MaterialTheme.colorScheme.tertiary,
+            actionLabel = stringResource(Res.string.action_view_all),
+            onActionClick = onClick
+        )
+
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+
+        if (tripSummary.total == 0) {
+            SectionEmptyState(
+                iconRes = Res.drawable.ic_trip,
+                title = stringResource(Res.string.dashboard_no_trips_yet),
+                message = stringResource(Res.string.dashboard_create_trip_message),
+                actionLabel = stringResource(Res.string.add),
+                onAction = onCreateTripClick
+            )
+        } else {
+            // Number-forward status tiles
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(onClick = onClick)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.tertiaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_trip),
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = stringResource(Res.string.org_stats_trips),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(Res.string.dashboard_count_total, tripSummary.total),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                TextButton(onClick = onClick) {
-                    Text(
-                        text = stringResource(Res.string.action_view_all),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_chevron_right),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                MetricTile(
+                    value = tripSummary.inProgress.toString(),
+                    label = stringResource(Res.string.dashboard_label_active),
+                    accent = FleetStatusColors.FleetOnRoute,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    value = tripSummary.planned.toString(),
+                    label = stringResource(Res.string.dashboard_label_planned),
+                    accent = FleetStatusColors.FleetPlanned,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    value = tripSummary.completed.toString(),
+                    label = stringResource(Res.string.dashboard_label_done),
+                    accent = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Active trips preview
+            if (ongoingTrips.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
+                Text(
+                    text = stringResource(Res.string.dashboard_active_trips),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                ongoingTrips.take(2).forEach { trip ->
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+                    OngoingTripItem(trip = trip)
                 }
             }
 
-            if (tripSummary.total == 0) {
-                SectionEmptyState(
-                    iconRes = Res.drawable.ic_trip,
-                    title = stringResource(Res.string.dashboard_no_trips_yet),
-                    message = stringResource(Res.string.dashboard_create_trip_message),
-                    actionLabel = stringResource(Res.string.add),
-                    onAction = onCreateTripClick
-                )
-            } else {
-                // Enhanced stats row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Action buttons
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
+            ) {
+                OutlinedButton(
+                    onClick = onCreateTripClick,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    EnhancedStatusChip(
-                        label = stringResource(Res.string.dashboard_label_active),
-                        count = tripSummary.inProgress,
-                        color = FleetStatusColors.FleetOnRoute,
-                        modifier = Modifier.weight(1f)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
                     )
-                    EnhancedStatusChip(
-                        label = stringResource(Res.string.dashboard_label_planned),
-                        count = tripSummary.planned,
-                        color = FleetStatusColors.FleetPlanned,
-                        modifier = Modifier.weight(1f)
-                    )
-                    EnhancedStatusChip(
-                        label = stringResource(Res.string.dashboard_label_done),
-                        count = tripSummary.completed,
-                        color = MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.weight(1f)
-                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(Res.string.action_create_trip), style = MaterialTheme.typography.labelSmall)
                 }
-
-                // Show ongoing trips preview
-                if (ongoingTrips.isNotEmpty()) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-                    Text(
-                        text = stringResource(Res.string.dashboard_active_trips),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    ongoingTrips.take(2).forEach { trip ->
-                        OngoingTripItem(trip = trip)
-                    }
-                }
-
-                // Action buttons row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                OutlinedButton(
+                    onClick = onAddTripCostClick,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = onCreateTripClick,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(Res.string.action_create_trip), style = MaterialTheme.typography.labelSmall)
-                    }
-                    OutlinedButton(
-                        onClick = onAddTripCostClick,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
-                    }
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }

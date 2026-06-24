@@ -21,6 +21,7 @@ import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.ReportChartType
 import com.ijs.reports.presentation.ReportViewMode
 import com.ijs.reports.presentation.VehiclePLSortOption
+import com.ijs.reports.presentation.localizedLabel
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -66,7 +67,7 @@ internal fun FleetOverviewContent(
         if (hasError) {
             item {
                 FleetErrorCard(
-                    error = state.error!!,
+                    error = state.error!!.resolve(),
                     vehicleCount = state.vehicles.size,
                     onRetry = onRetry,
                     onSelectSingleVehicle = onSelectSingleVehicle
@@ -146,14 +147,14 @@ internal fun FleetOverviewContent(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text("🚛 Single Vehicle")
+                        Text("🚛 " + stringResource(Res.string.reports_single_vehicle))
                     }
                     Button(
                         onClick = onExport,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text("📄 Export Report")
+                        Text("📄 " + stringResource(Res.string.reports_export_report_btn))
                     }
                 }
             }
@@ -206,9 +207,9 @@ internal fun EmptyPLDataContent(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = if (period.isNotBlank())
-                    "No trips or costs recorded for $period"
+                    stringResource(Res.string.reports_fleet_no_data_period, period)
                 else
-                    "No trips or costs recorded for the selected period",
+                    stringResource(Res.string.reports_fleet_no_data_range),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -248,7 +249,7 @@ internal fun EmptyPLDataContent(
                 onClick = onSelectSingleVehicle,
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Text("🚛 View Single Vehicle")
+                Text("🚛 " + stringResource(Res.string.reports_view_single_vehicle))
             }
         }
     }
@@ -313,13 +314,13 @@ internal fun FleetErrorCard(
                     onClick = onSelectSingleVehicle,
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("🚛 Single Vehicle")
+                    Text("🚛 " + stringResource(Res.string.reports_single_vehicle))
                 }
                 Button(
                     onClick = onRetry,
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("🔄 Retry")
+                    Text("🔄 " + stringResource(Res.string.retry))
                 }
             }
         }
@@ -413,7 +414,7 @@ internal fun ViewModeAndFilterSection(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(mode.icon)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(mode.label, style = MaterialTheme.typography.labelSmall)
+                                Text(mode.localizedLabel(), style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     )
@@ -440,14 +441,14 @@ internal fun ViewModeAndFilterSection(
                     FilterChip(
                         selected = plStatusFilter == filter,
                         onClick = { onFilterChange(filter) },
-                        label = { Text(filter.label, style = MaterialTheme.typography.labelSmall) }
+                        label = { Text(filter.localizedLabel(), style = MaterialTheme.typography.labelSmall) }
                     )
                 }
             }
 
             // Result count
             Text(
-                text = "$resultCount of $totalCount",
+                text = stringResource(Res.string.reports_count_of_total, resultCount, totalCount),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -2,6 +2,8 @@ package com.ijs.dashboard.presentation
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.permission.PermissionChecker
+import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.data.model.dashboard.FinancialPeriod
@@ -36,8 +38,23 @@ class DashboardViewModel(
     private val getCostOverviewUseCase: GetCostOverviewUseCase? = null,
     private val getPendingPaymentsUseCase: GetPendingPaymentsUseCase? = null,
     private val getAlertsStatusUseCase: GetAlertsStatusUseCase? = null,
-    private val getFinancialSummaryUseCase: GetFinancialSummaryUseCase? = null
+    private val getFinancialSummaryUseCase: GetFinancialSummaryUseCase? = null,
+    private val permissionChecker: PermissionChecker,
+    // Authoritative display name saved at login/profile (single source of truth). Used as a
+    // fallback when the dashboard API returns empty user names so the drawer/header always
+    // show a real name instead of a blank/placeholder.
+    private val userLocalDataSource: UserLocalDataSource? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
+
+    /**
+     * Resolves the user's display name: the dashboard API name when present, otherwise the
+     * locally-saved name (login/profile), otherwise empty (the UI then shows its default).
+     */
+    private suspend fun resolveDisplayName(apiFullName: String): String {
+        val fromApi = apiFullName.trim()
+        if (fromApi.isNotBlank()) return fromApi
+        return userLocalDataSource?.getUserName()?.trim().orEmpty()
+    }
 
     companion object {
         // Cache pending payments data to survive ViewModel recreation
@@ -51,6 +68,8 @@ class DashboardViewModel(
     private var hasReceivedFreshData = false
 
     init {
+        // Compute financial-access permission flag from the user's actual permission set
+        updateState { copy(hasFinancialAccessPermission = permissionChecker.canViewFinancials()) }
         // Restore cached pending payments data if available (survives ViewModel recreation)
         if (pendingPaymentsLoaded && cachedPendingPayments != null) {
             updateState {
@@ -162,6 +181,7 @@ class DashboardViewModel(
                         val vehicleStatus = buildVehicleStatus(data.stats)
                         val driverStatus = buildDriverStatus(data.stats)
                         val tripSummary = buildTripSummary(data.stats)
+                        val displayName = resolveDisplayName(data.userInfo.fullName)
 
                         if (data.isFromCache) {
                             hasCachedEmission = true
@@ -170,7 +190,7 @@ class DashboardViewModel(
                                     isLoading = false,
                                     isRefreshing = false,
                                     stats = data.stats,
-                                    userName = data.userInfo.fullName,
+                                    userName = displayName,
                                     userRole = data.userInfo.role.replaceFirstChar {
                                         if (it.isLowerCase()) it.titlecase() else it.toString()
                                     },
@@ -190,7 +210,7 @@ class DashboardViewModel(
                                     isLoading = false,
                                     isRefreshing = false,
                                     stats = data.stats,
-                                    userName = data.userInfo.fullName,
+                                    userName = displayName,
                                     userRole = data.userInfo.role.replaceFirstChar {
                                         if (it.isLowerCase()) it.titlecase() else it.toString()
                                     },
@@ -209,8 +229,8 @@ class DashboardViewModel(
                             loadCostOverview()
                             loadPendingPayments()
                             loadAlertsStatus()
-                            // Load financial summary for Owner/GM
-                            if (data.userInfo.role.lowercase() in listOf("owner", "general_manager", "generalmanager")) {
+                            // Load financial summary only when the user has financials:read
+                            if (permissionChecker.canViewFinancials()) {
                                 loadFinancialSummary()
                             }
                         }
@@ -422,12 +442,13 @@ class DashboardViewModel(
                     val vehicleStatus = buildVehicleStatus(data.stats)
                     val driverStatus = buildDriverStatus(data.stats)
                     val tripSummary = buildTripSummary(data.stats)
+                    val displayName = resolveDisplayName(data.userInfo.fullName)
 
                     updateState {
                         copy(
                             isRefreshing = false,
                             stats = data.stats,
-                            userName = data.userInfo.fullName,
+                            userName = displayName,
                             userRole = data.userInfo.role.replaceFirstChar {
                                 if (it.isLowerCase()) it.titlecase() else it.toString()
                             },

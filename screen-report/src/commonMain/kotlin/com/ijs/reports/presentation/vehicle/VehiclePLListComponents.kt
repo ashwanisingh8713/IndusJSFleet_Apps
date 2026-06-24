@@ -14,9 +14,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.VehiclePLSortOption
+import com.ijs.reports.presentation.localizedLabel
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -32,17 +34,13 @@ fun MultiVehicleSummaryCard(
 ) {
     val isOverallProfit = totalNetProfit >= 0
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isOverallProfit)
-                com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.08f)
-            else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.08f)
-        )
+    FleetSectionCard(
+        containerColor = if (isOverallProfit)
+            com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.08f)
+        else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.08f),
+        border = null
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
@@ -196,15 +194,12 @@ fun SortingFilterSection(
     onSortChange: (VehiclePLSortOption) -> Unit,
     onFilterChange: (PLStatusFilter) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = null
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
@@ -218,7 +213,7 @@ fun SortingFilterSection(
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = sortOption.label,
+                    text = sortOption.localizedLabel(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -234,7 +229,7 @@ fun SortingFilterSection(
                         onClick = { onFilterChange(filter) },
                         label = {
                             Text(
-                                text = filter.label,
+                                text = filter.localizedLabel(),
                                 style = MaterialTheme.typography.labelSmall
                             )
                         },
@@ -259,16 +254,9 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
     val isProfit = result.netProfit >= 0
     val vehicleFallback = stringResource(Res.string.reports_vehicle_id_fallback, result.vehicleId)
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    FleetSectionCard {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(

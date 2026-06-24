@@ -1,7 +1,9 @@
 package com.indusjs.fleet.core.auth
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -41,4 +43,18 @@ object JwtHelper {
 
     /** `true` when the JWT contains a non-blank `tid` claim. */
     fun hasTenantContext(jwt: String): Boolean = extractTenantId(jwt) != null
+
+    /**
+     * Returns the user's role names from the JWT — the tenant-scoped `global_roles`
+     * claim is preferred, falling back to `roles`. Empty if absent / malformed.
+     */
+    fun extractRoles(jwt: String): List<String> {
+        val claims = decodeClaims(jwt) ?: return emptyList()
+        val arr = (claims["global_roles"] as? JsonArray)
+            ?: (claims["roles"] as? JsonArray)
+            ?: return emptyList()
+        return arr.mapNotNull { el ->
+            (el as? JsonPrimitive)?.takeIf { it.isString }?.content
+        }
+    }
 }

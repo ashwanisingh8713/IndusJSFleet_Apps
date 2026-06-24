@@ -15,7 +15,7 @@ object PaymentDetailContract {
         val paymentId: String = "",
         val isLoading: Boolean = false,
         val payment: TripPayment? = null,
-        val error: String? = null,
+        val error: UiText? = null,
 
         // Delete confirmation
         val showDeleteConfirmation: Boolean = false,

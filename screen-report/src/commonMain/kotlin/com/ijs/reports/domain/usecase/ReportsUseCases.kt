@@ -17,8 +17,8 @@ class GetPLSummaryUseCase(
     private val reportsRepository: ReportsRepository
 ) {
     suspend operator fun invoke(
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): Result<PLSummary> {
         return reportsRepository.getPLSummary(startDate, endDate)
     }
@@ -84,8 +84,8 @@ class GetCostTypeAnalysisUseCase(
 ) {
     suspend operator fun invoke(
         costType: String,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): Result<CostTypeAnalysis> {
         return reportsRepository.getCostTypeAnalysis(costType, startDate, endDate)
     }
@@ -112,8 +112,8 @@ class GetFleetProfitLossUseCase(
 ) {
     suspend operator fun invoke(
         period: String? = null,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): Result<FleetProfitLoss> {
         return reportsRepository.getFleetProfitLoss(period, startDate, endDate)
     }
@@ -128,6 +128,14 @@ class GetConsolidatedPLUseCase(
 ) {
     suspend operator fun invoke(request: ConsolidatedPLRequest): Result<ConsolidatedPL> {
         return reportsRepository.getConsolidatedPL(request)
+    }
+}
+
+class GetCustomerPLUseCase(
+    private val reportsRepository: ReportsRepository
+) {
+    suspend operator fun invoke(period: String): Result<CustomerPLReport> {
+        return reportsRepository.getCustomerProfitLoss(period)
     }
 }
 

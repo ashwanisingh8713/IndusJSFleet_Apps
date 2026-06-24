@@ -80,57 +80,9 @@ fun formatLastUpdated(isoDateString: String?): String {
     }
 }
 
-// ============ ISO 8601 CONVERSION UTILITIES FOR API ============
-
-/**
- * Convert date (DDMMYYYY digits) and time (HHMM digits) to ISO 8601 format.
- * The v2 API backend expects all date/time fields in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
- *
- * @param rawDate Date in DDMMYYYY format (8 digits, no separators)
- * @param rawTime Time in HHMM format (4 digits, no separators). Defaults to "0000" if blank.
- * @return ISO 8601 formatted string (e.g., "2026-01-04T11:30:00Z") or empty string if invalid
- */
-fun convertToIsoDateTime(rawDate: String, rawTime: String = ""): String {
-    if (rawDate.isBlank()) return ""
-
-    val dateDigits = rawDate.filter { it.isDigit() }
-    if (dateDigits.length != 8) return ""
-
-    val day = dateDigits.substring(0, 2)
-    val month = dateDigits.substring(2, 4)
-    val year = dateDigits.substring(4, 8)
-
-    val timeDigits = rawTime.filter { it.isDigit() }
-    val hours = if (timeDigits.length >= 2) timeDigits.substring(0, 2) else "00"
-    val minutes = if (timeDigits.length >= 4) timeDigits.substring(2, 4) else "00"
-
-    return "$year-$month-${day}T$hours:$minutes:00Z"
-}
-
-/**
- * Convert date in DD-MM-YYYY format and time in HH:MM format to ISO 8601 format.
- * Used when date/time already have separators (e.g., from DateInputField).
- *
- * @param formattedDate Date in DD-MM-YYYY format
- * @param formattedTime Time in HH:MM format. Defaults to "00:00" if blank.
- * @return ISO 8601 formatted string (e.g., "2026-01-04T11:30:00Z") or empty string if invalid
- */
-fun convertFormattedToIsoDateTime(formattedDate: String, formattedTime: String = ""): String {
-    if (formattedDate.isBlank()) return ""
-
-    val dateParts = formattedDate.split("-")
-    if (dateParts.size != 3) return ""
-
-    val day = dateParts[0].padStart(2, '0')
-    val month = dateParts[1].padStart(2, '0')
-    val year = dateParts[2]
-
-    val timeParts = if (formattedTime.isNotBlank()) formattedTime.split(":") else emptyList()
-    val hours = timeParts.getOrNull(0)?.padStart(2, '0') ?: "00"
-    val minutes = timeParts.getOrNull(1)?.padStart(2, '0') ?: "00"
-
-    return "$year-$month-${day}T$hours:$minutes:00Z"
-}
+// NOTE: The legacy ISO-8601 request builders (convertToIsoDateTime /
+// convertFormattedToIsoDateTime) were removed in the epoch-millis migration —
+// build request payloads with convertToEpochMillis(rawDate, rawTime) instead.
 
 /**
  * Get current date formatted as "DD-MMM-YYYY" (e.g., "10-Jan-2026").
@@ -216,4 +168,73 @@ fun formatCostTime(timeString: String?): String =
  */
 fun formatDateTimeForDisplay(date: String?, time: String? = null): String =
     com.indusjs.datetimeutils.FleetDateTime.formatAnyToDisplayDateTime12Hour(date, time)
+
+// ============ EPOCH-MILLIS API (canonical; backend sends/accepts numbers) ============
+// These are the Long-based counterparts of the ISO-string helpers above. All API
+// timestamps are now UTC epoch millis (Long); use these instead of the String
+// variants. See docs/UTC_MILLIS_APP_MIGRATION_PLAN.md.
+
+/**
+ * Convert a picked date (DD-MM-YYYY or DDMMYYYY) and time (HH:MM or HHMM) to UTC
+ * epoch milliseconds. The picker collects a local wall-clock value; it is
+ * interpreted in [timeZone] (device zone) and returned as a UTC instant.
+ * Returns null when the date is blank/invalid. Replaces convertToIsoDateTime/
+ * convertFormattedToIsoDateTime for building request payloads.
+ */
+fun convertToEpochMillis(rawDate: String, rawTime: String = ""): Long? {
+    if (rawDate.isBlank()) return null
+    val d = rawDate.filter { it.isDigit() }
+    if (d.length != 8) return null
+    val day = d.substring(0, 2).toIntOrNull() ?: return null
+    val month = d.substring(2, 4).toIntOrNull() ?: return null
+    val year = d.substring(4, 8).toIntOrNull() ?: return null
+    val t = rawTime.filter { it.isDigit() }
+    val hour = if (t.length >= 2) t.substring(0, 2).toIntOrNull() ?: 0 else 0
+    val minute = if (t.length >= 4) t.substring(2, 4).toIntOrNull() ?: 0 else 0
+    val value = com.indusjs.datetimeutils.FleetDateTimeValue(
+        year = year, month = month, day = day, hour = hour, minute = minute, second = 0
+    )
+    // FleetEpoch.fromValue interprets the wall-clock value in the device zone
+    // (its default) and returns a UTC instant.
+    return com.indusjs.datetimeutils.FleetEpoch.fromValue(value)
+}
+
+/** Epoch millis → "DD-MMM-YYYY" (e.g. "04-Jan-2026"). Empty string when null. */
+fun formatDateToHumanReadable(timestampMillis: Long?, shortMonth: Boolean = false): String {
+    val value = com.indusjs.datetimeutils.FleetEpoch.toValue(timestampMillis) ?: return ""
+    return com.indusjs.datetimeutils.FleetDateTime.formatDisplayDate(value)
+}
+
+/** Epoch millis → "DD-MMM-YYYY hh:mm AM/PM". Empty string when null. */
+fun formatDateTimeForDisplay(timestampMillis: Long?): String {
+    val value = com.indusjs.datetimeutils.FleetEpoch.toValue(timestampMillis) ?: return ""
+    val date = com.indusjs.datetimeutils.FleetDateTime.formatDisplayDate(value)
+    val time = com.indusjs.datetimeutils.FleetDateTime.formatTime12Hour(value)
+    return "$date $time"
+}
+
+/**
+ * Epoch millis → relative "last updated" label ("Just now", "5 min ago",
+ * "Yesterday, 10:30 AM", or "04-Jan-2026 10:30 AM" beyond a week).
+ */
+fun formatLastUpdated(timestampMillis: Long?): String {
+    if (timestampMillis == null || timestampMillis <= 0L) return "Just now"
+    val now = currentTimeMillis()
+    val diffMs = now - timestampMillis
+    val diffMinutes = diffMs / 60_000L
+    val diffHours = diffMs / 3_600_000L
+    val diffDays = diffMs / 86_400_000L
+    val value = com.indusjs.datetimeutils.FleetEpoch.toValue(timestampMillis)
+    val timeFormatted = value?.let { com.indusjs.datetimeutils.FleetDateTime.formatTime12Hour(it) } ?: ""
+    return when {
+        diffMinutes < 1L -> "Just now"
+        diffMinutes < 60L -> "$diffMinutes min ago"
+        diffHours < 24L -> if (diffHours == 1L) "1 hour ago" else "$diffHours hours ago"
+        diffDays == 1L -> "Yesterday, $timeFormatted"
+        diffDays < 7L -> "$diffDays days ago"
+        else -> value?.let {
+            "${com.indusjs.datetimeutils.FleetDateTime.formatDisplayDate(it)} $timeFormatted"
+        } ?: "Just now"
+    }
+}
 

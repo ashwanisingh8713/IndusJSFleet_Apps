@@ -32,7 +32,7 @@ data class ForgotPasswordRequest(
 
 @Serializable
 data class ResetPasswordRequest(
-    val identifier: String,
+    // identifier removed — backend identifies the user from the reset_token.
     @SerialName("reset_token")
     val resetToken: String,
     @SerialName("new_password")
@@ -78,10 +78,11 @@ data class UserDto(
     val tenantId: String = "",
     @SerialName("is_active")
     val isActive: Boolean = true,
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("created_at")
-    val createdAt: String = "",
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 ) : Dto
 
 @JsonIgnoreUnknownKeys
@@ -89,7 +90,45 @@ data class UserDto(
 data class AuthResponseDto(
     val user: UserDto,
     // token is absent in the IsResend signup case (existing unverified account)
-    val token: String? = null
+    val token: String? = null,
+    // Refresh pair returned additively by login + OTP-login (alongside legacy `token`).
+    // access_token mirrors `token`; refresh_token ROTATES and must be persisted each time.
+    @SerialName("access_token")
+    val accessToken: String? = null,
+    @SerialName("refresh_token")
+    val refreshToken: String? = null,
+    @SerialName("token_type")
+    val tokenType: String? = null,
+    // Access-token TTL in seconds (0 = unknown).
+    @SerialName("expires_in")
+    val expiresIn: Long = 0
+) : Dto
+
+/**
+ * Body for POST /auth/refresh — the opaque (rotating) refresh token.
+ */
+@Serializable
+data class RefreshTokenRequest(
+    @SerialName("refresh_token")
+    val refreshToken: String
+) : Dto
+
+/**
+ * Data payload of POST /auth/refresh on success:
+ * { access_token, refresh_token (NEW, rotated), token_type, expires_in }.
+ */
+@JsonIgnoreUnknownKeys
+@Serializable
+data class RefreshResponseDto(
+    @SerialName("access_token")
+    val accessToken: String = "",
+    @SerialName("refresh_token")
+    val refreshToken: String = "",
+    @SerialName("token_type")
+    val tokenType: String = "Bearer",
+    // Access-token TTL in seconds (0 = unknown).
+    @SerialName("expires_in")
+    val expiresIn: Long = 0
 ) : Dto
 
 @JsonIgnoreUnknownKeys
@@ -128,10 +167,11 @@ data class UserProfileDto(
     val ownerId: Int? = null,
     @SerialName("is_active")
     val isActive: Boolean = true,
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("created_at")
-    val createdAt: String = "",
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null,
+    val updatedAt: Long? = null,
     @SerialName("owner_stats")
     val ownerStats: OwnerStatsDto? = null,
     @SerialName("owner_info")
@@ -227,6 +267,9 @@ data class VerifyLoginOtpRequest(
 @Serializable
 data class VerifyMobileResponseDto(
     val token: String? = null,
+    // Backend dropped the legacy `token` key for verify-mobile → read `access_token`.
+    @SerialName("access_token")
+    val accessToken: String? = null,
     @SerialName("refresh_token")
     val refreshToken: String? = null,
     @SerialName("expires_in")

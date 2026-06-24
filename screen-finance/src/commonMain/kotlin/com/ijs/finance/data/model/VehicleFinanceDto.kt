@@ -15,7 +15,7 @@ data class VehiclePurchaseDto(
     val vehicleId: Int = 0,
     val vehicle: VehicleBasicInfoDto? = null,
     @SerialName("purchase_date")
-    val purchaseDate: String = "",
+    val purchaseDate: Long? = null,
     @SerialName("purchase_price")
     val purchasePrice: Double = 0.0,
     @SerialName("vendor_name")
@@ -35,9 +35,9 @@ data class VehiclePurchaseDto(
     @SerialName("emi_amount")
     val emiAmount: Double? = null,
     @SerialName("loan_start_date")
-    val loanStartDate: String? = null,
+    val loanStartDate: Long? = null,
     @SerialName("loan_end_date")
-    val loanEndDate: String? = null,
+    val loanEndDate: Long? = null,
     @SerialName("financier_name")
     val financierName: String? = null,
     @SerialName("loan_account_number")
@@ -59,16 +59,16 @@ data class VehiclePurchaseDto(
     @SerialName("emis_remaining")
     val emisRemaining: Int = 0,
     @SerialName("next_emi_due_date")
-    val nextEmiDueDate: String? = null,
+    val nextEmiDueDate: Long? = null,
     @SerialName("loan_status")
     val loanStatus: String = "not_applicable",
     val notes: String? = null,
     @SerialName("owner_id")
     val ownerId: Int = 0,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**
@@ -89,7 +89,7 @@ data class VehicleBasicInfoDto(
 @Serializable
 data class CreatePurchaseRequest(
     @SerialName("purchase_date")
-    val purchaseDate: String,
+    val purchaseDate: Long,
     @SerialName("purchase_price")
     val purchasePrice: Double,
     @SerialName("vendor_name")
@@ -109,7 +109,7 @@ data class CreatePurchaseRequest(
     @SerialName("emi_amount")
     val emiAmount: Double? = null,
     @SerialName("loan_start_date")
-    val loanStartDate: String? = null,
+    val loanStartDate: Long? = null,
     @SerialName("financier_name")
     val financierName: String? = null,
     @SerialName("loan_account_number")
@@ -160,10 +160,10 @@ data class LoanPaymentDto(
     @SerialName("emi_number")
     val emiNumber: Int? = null,
     @SerialName("due_date")
-    val dueDate: String? = null,
+    val dueDate: Long? = null,
     val amount: Double = 0.0,
     @SerialName("payment_date")
-    val paymentDate: String? = null,
+    val paymentDate: Long? = null,
     @SerialName("principal_amount")
     val principalAmount: Double? = null,
     @SerialName("interest_amount")
@@ -186,9 +186,9 @@ data class LoanPaymentDto(
     @SerialName("owner_id")
     val ownerId: Int = 0,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**
@@ -200,7 +200,7 @@ data class RecordPaymentRequest(
     val vehiclePurchaseId: Int,
     val amount: Double,
     @SerialName("payment_date")
-    val paymentDate: String,
+    val paymentDate: Long,
     @SerialName("payment_mode")
     val paymentMode: String? = null,
     @SerialName("payment_source")
@@ -220,7 +220,7 @@ data class RecordPaymentRequest(
 @Serializable
 data class MarkEmiPaidRequest(
     @SerialName("payment_date")
-    val paymentDate: String,
+    val paymentDate: Long,
     @SerialName("payment_mode")
     val paymentMode: String? = null,
     @SerialName("transaction_ref")
@@ -268,7 +268,7 @@ data class LoanSummaryDto(
     @SerialName("emis_remaining")
     val emisRemaining: Int = 0,
     @SerialName("next_emi_due_date")
-    val nextEmiDueDate: String? = null,
+    val nextEmiDueDate: Long? = null,
     @SerialName("next_emi_amount")
     val nextEmiAmount: Double = 0.0,
     @SerialName("loan_status")
@@ -291,7 +291,7 @@ data class EmiAlertDto(
     @SerialName("emi_number")
     val emiNumber: Int = 0,
     @SerialName("due_date")
-    val dueDate: String = "",
+    val dueDate: Long? = null,
     val amount: Double = 0.0,
     @SerialName("days_until_due")
     val daysUntilDue: Int = 0,

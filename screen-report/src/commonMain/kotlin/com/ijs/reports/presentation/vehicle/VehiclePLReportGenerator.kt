@@ -3,13 +3,21 @@ package com.ijs.reports.presentation.vehicle
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.reports.TAG_VEHICLE_PL_VM
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.core.util.currentTimeMillis
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.data.model.MultiVehiclePLRequest
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.domain.usecase.GetMultiVehiclePLUseCase
 import com.ijs.reports.domain.usecase.GetVehicleProfitLossUseCase
 import com.ijs.reports.presentation.RecentReport
 import com.ijs.vehicle.domain.entity.Vehicle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_failed_generate
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_failed_load_fleet_overview
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_invalid_vehicle_id
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_no_valid_ids
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_select_date_range
 
 /**
  * Handles report generation logic for Vehicle P&L.
@@ -47,6 +55,12 @@ class VehiclePLReportGenerator(
         )
         logger.d(TAG_VEHICLE_PL_VM, "loadFleetOverview: Date range $startDate to $endDate, vehicles=${vehicleIdsToUse.size}")
 
+        // Backend requires non-zero start_date/end_date on the multi-vehicle request.
+        if (startDate == null || endDate == null) {
+            logger.e(TAG_VEHICLE_PL_VM, "loadFleetOverview: could not resolve date range for period=$period")
+            return FleetOverviewResult.Error(UiText.StringRes(Res.string.report_failed_load_fleet_overview))
+        }
+
         val request = MultiVehiclePLRequest(
             vehicleIds = vehicleIdsToUse,
             startDate = startDate,
@@ -55,7 +69,7 @@ class VehiclePLReportGenerator(
 
         return when (val result = getMultiVehiclePLUseCase(request)) {
             is Result.Success -> FleetOverviewResult.Success(result.data)
-            is Result.Error -> FleetOverviewResult.Error(result.message ?: "Failed to load fleet overview")
+            is Result.Error -> FleetOverviewResult.Error(result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_load_fleet_overview))
             is Result.Loading -> FleetOverviewResult.Loading
         }
     }
@@ -72,7 +86,7 @@ class VehiclePLReportGenerator(
         existingRecentReports: List<RecentReport>
     ): SingleVehicleResult {
         val numericId = vehicleId.toIntOrNull()
-            ?: return SingleVehicleResult.Error("Invalid vehicle ID")
+            ?: return SingleVehicleResult.Error(UiText.StringRes(Res.string.report_invalid_vehicle_id))
 
         return when (val result = getVehicleProfitLossUseCase(numericId, period)) {
             is Result.Success -> {
@@ -95,7 +109,7 @@ class VehiclePLReportGenerator(
                 }
                 SingleVehicleResult.Success(plResult, updatedReports)
             }
-            is Result.Error -> SingleVehicleResult.Error(result.message ?: "Failed to generate report")
+            is Result.Error -> SingleVehicleResult.Error(result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_generate))
             is Result.Loading -> SingleVehicleResult.Loading
         }
     }
@@ -112,18 +126,26 @@ class VehiclePLReportGenerator(
     ): MultiVehicleResult {
         val numericIds = vehicleIds.mapNotNull { it.toIntOrNull() }
         if (numericIds.isEmpty()) {
-            return MultiVehicleResult.Error("No valid vehicle IDs")
+            return MultiVehicleResult.Error(UiText.StringRes(Res.string.report_no_valid_ids))
+        }
+
+        // Picker state holds DD-MM-YYYY; convert to UTC epoch millis at the request boundary.
+        // Backend requires non-zero start_date/end_date, so bail out if either is missing/unparseable.
+        val startMillis = startDate.takeIf { it.isNotBlank() }?.let { convertToEpochMillis(it) }
+        val endMillis = endDate.takeIf { it.isNotBlank() }?.let { convertToEpochMillis(it) }
+        if (startMillis == null || endMillis == null) {
+            return MultiVehicleResult.Error(UiText.StringRes(Res.string.report_select_date_range))
         }
 
         val request = MultiVehiclePLRequest(
             vehicleIds = numericIds,
-            startDate = startDate.takeIf { it.isNotBlank() },
-            endDate = endDate.takeIf { it.isNotBlank() }
+            startDate = startMillis,
+            endDate = endMillis
         )
 
         return when (val result = getMultiVehiclePLUseCase(request)) {
             is Result.Success -> MultiVehicleResult.Success(result.data)
-            is Result.Error -> MultiVehicleResult.Error(result.message ?: "Failed to generate report")
+            is Result.Error -> MultiVehicleResult.Error(result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_generate))
             is Result.Loading -> MultiVehicleResult.Loading
         }
     }
@@ -132,7 +154,7 @@ class VehiclePLReportGenerator(
 
     sealed interface FleetOverviewResult {
         data class Success(val data: List<VehicleProfitLoss>) : FleetOverviewResult
-        data class Error(val message: String) : FleetOverviewResult
+        data class Error(val message: UiText) : FleetOverviewResult
         data object Empty : FleetOverviewResult
         data object Loading : FleetOverviewResult
     }
@@ -142,13 +164,13 @@ class VehiclePLReportGenerator(
             val data: VehicleProfitLoss?,
             val updatedRecentReports: List<RecentReport>
         ) : SingleVehicleResult
-        data class Error(val message: String) : SingleVehicleResult
+        data class Error(val message: UiText) : SingleVehicleResult
         data object Loading : SingleVehicleResult
     }
 
     sealed interface MultiVehicleResult {
         data class Success(val data: List<VehicleProfitLoss>) : MultiVehicleResult
-        data class Error(val message: String) : MultiVehicleResult
+        data class Error(val message: UiText) : MultiVehicleResult
         data object Loading : MultiVehicleResult
     }
 }

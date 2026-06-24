@@ -3,6 +3,7 @@ package com.ijs.reports.presentation.vehicle
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.RecentReport
@@ -21,7 +22,7 @@ object VehiclePLContract {
     data class State(
         val isLoading: Boolean = false,
         val isLoadingVehicles: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         val vehicles: List<Vehicle> = emptyList(),
         val selectedVehicleId: String? = null,
         val period: String = "monthly",
@@ -200,7 +201,7 @@ object VehiclePLContract {
     }
 
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data class ExportGenerated(val fileName: String, val format: ReportExportFormat) : Effect
     }
 }

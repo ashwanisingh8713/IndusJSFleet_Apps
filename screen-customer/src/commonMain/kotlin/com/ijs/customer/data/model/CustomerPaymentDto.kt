@@ -14,7 +14,7 @@ data class CustomerPendingPaymentDto(
     @SerialName("trip_id")
     val tripId: Int,
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long? = null,
     @SerialName("start_location")
     val startLocation: String? = null,
     @SerialName("end_location")
@@ -124,7 +124,7 @@ data class CustomerPaymentDto(
     @SerialName("payment_status")
     val paymentStatus: String? = null,
     @SerialName("payment_date")
-    val paymentDate: String? = null,
+    val paymentDate: Long? = null,
     @SerialName("receipt_number")
     val receiptNumber: String? = null,
     @SerialName("financial_year")
@@ -136,7 +136,7 @@ data class CustomerPaymentDto(
     @SerialName("notes")
     val notes: String? = null,
     @SerialName("created_at")
-    val createdAt: String? = null
+    val createdAt: Long? = null
 )
 
 /**
@@ -260,18 +260,8 @@ data class PaymentTotalsDto(
 )
 
 /**
- * Date range for payment summary.
- */
-@Serializable
-data class DateRangeDto(
-    @SerialName("start_date")
-    val startDate: String? = null,
-    @SerialName("end_date")
-    val endDate: String? = null
-)
-
-/**
  * Nested data object for customer payment summary response.
+ * Backend emits flat top-level start_date/end_date (int64, only when filtered).
  */
 @Serializable
 data class CustomerPaymentSummaryDataDto(
@@ -285,8 +275,10 @@ data class CustomerPaymentSummaryDataDto(
     val byType: List<PaymentByTypeDto> = emptyList(),
     @SerialName("by_month")
     val byMonth: List<MonthlyPaymentDto> = emptyList(),
-    @SerialName("date_range")
-    val dateRange: DateRangeDto? = null
+    @SerialName("start_date")
+    val startDate: Long? = null,
+    @SerialName("end_date")
+    val endDate: Long? = null
 )
 
 /**

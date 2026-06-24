@@ -16,8 +16,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetSectionHeader
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.ReportChartType
+import com.ijs.reports.presentation.localizedLabel
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlin.math.abs
 import org.jetbrains.compose.resources.painterResource
@@ -37,25 +41,18 @@ internal fun FleetSummaryKPICard(
     val isProfit = netProfit >= 0
     val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.profitLossColor(netProfit)
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    FleetSectionCard {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = stringResource(Res.string.reports_fleet_financial_summary),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                FleetSectionHeader(
+                    title = stringResource(Res.string.reports_fleet_financial_summary),
+                    modifier = Modifier.weight(1f)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
@@ -137,26 +134,16 @@ internal fun KPIItem(
     color: Color,
     isHighlighted: Boolean = false
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            modifier = Modifier.size(28.dp),
-            tint = color
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = value,
-            style = if (isHighlighted) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(
+        value = value,
+        label = label,
+        iconRes = icon,
+        accent = color,
+        valueColor = color,
+        // Highlighted KPI (Net Profit) keeps the tinted box for emphasis vs the others.
+        showBackground = isHighlighted,
+        centered = true
+    )
 }
 
 
@@ -166,19 +153,14 @@ internal fun SecondaryStatItem(
     value: String,
     color: Color
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(
+        value = value,
+        label = label,
+        accent = color,
+        valueColor = color,
+        showBackground = false,
+        centered = true
+    )
 }
 
 // ============================================================================
@@ -197,83 +179,77 @@ internal fun PerformersCard(
     ) {
         topPerformer?.let {
             val vehicleFallback = stringResource(Res.string.reports_vehicle_id_fallback, it.vehicleId)
-            Card(
+            FleetSectionCard(
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
-                )
+                containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f),
+                border = null,
+                contentPadding = 12.dp
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_trophy),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(Res.string.reports_top_performer),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = it.vehicleNumber ?: vehicleFallback,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_trophy),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
                     )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "+${formatCurrency(it.netProfit)}",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = stringResource(Res.string.reports_top_performer),
+                        style = MaterialTheme.typography.labelMedium,
                         color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it.vehicleNumber ?: vehicleFallback,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "+${formatCurrency(it.netProfit)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 
         worstPerformer?.let {
             val vehicleFallback = stringResource(Res.string.reports_vehicle_id_fallback, it.vehicleId)
-            Card(
+            FleetSectionCard(
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f)
-                )
+                containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f),
+                border = null,
+                contentPadding = 12.dp
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_warning),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(Res.string.reports_needs_attention),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = it.vehicleNumber ?: vehicleFallback,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_warning),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                     )
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = formatCurrency(it.netProfit),
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = stringResource(Res.string.reports_needs_attention),
+                        style = MaterialTheme.typography.labelMedium,
                         color = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it.vehicleNumber ?: vehicleFallback,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = formatCurrency(it.netProfit),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -291,29 +267,24 @@ internal fun ChartViewContent(
     chartType: ReportChartType,
     onChartTypeChange: (ReportChartType) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    FleetSectionCard {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = stringResource(Res.string.reports_pl_chart_top_10),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                FleetSectionHeader(
+                    title = stringResource(Res.string.reports_pl_chart_top_10),
+                    modifier = Modifier.weight(1f)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     ReportChartType.entries.forEach { type ->
                         FilterChip(
                             selected = chartType == type,
                             onClick = { onChartTypeChange(type) },
-                            label = { Text(type.label, style = MaterialTheme.typography.labelSmall) }
+                            label = { Text(type.localizedLabel(), style = MaterialTheme.typography.labelSmall) }
                         )
                     }
                 }
@@ -416,36 +387,16 @@ internal fun SummaryGridContent(results: List<VehicleProfitLoss>) {
 @Composable
 internal fun VehiclePLSummaryChip(result: VehicleProfitLoss) {
     val isProfit = result.netProfit >= 0
-    val bgColor = if (isProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f) else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f)
-    val textColor = if (isProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
+    val accent = if (isProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
 
-    Surface(
-        shape = RoundedCornerShape(10.dp),
-        color = bgColor
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = result.vehicleNumber ?: "#${result.vehicleId}",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = formatCurrency(result.netProfit),
-                style = MaterialTheme.typography.bodyMedium,
-                color = textColor,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = stringResource(Res.string.reports_trips_count, result.totalTrips),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
+    FleetMetricTile(
+        value = formatCurrency(result.netProfit),
+        label = result.vehicleNumber ?: "#${result.vehicleId}",
+        subLabel = stringResource(Res.string.reports_trips_count, result.totalTrips),
+        accent = accent,
+        valueColor = accent,
+        centered = true
+    )
 }
 
 // ============================================================================

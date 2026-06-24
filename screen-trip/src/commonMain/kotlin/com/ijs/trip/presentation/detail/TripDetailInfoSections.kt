@@ -9,9 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
+import com.indusjs.fleet.core.util.formatDateTimeForDisplay
 import com.indusjs.uicomponents.components.PhoneChip
 import com.ijs.trip.domain.entity.Trip
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -28,7 +28,7 @@ internal fun ActualTimesSection(trip: Trip) {
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             // Actual Start Time
-            trip.actualStartTime?.let { startTime ->
+            trip.actualStartTime?.takeIf { it > 0L }?.let { startTime ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -52,7 +52,7 @@ internal fun ActualTimesSection(trip: Trip) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = formatIsoDateTime(startTime),
+                                text = formatEpochDateTime(startTime),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -63,14 +63,14 @@ internal fun ActualTimesSection(trip: Trip) {
             }
 
             // Separator if both times exist
-            if (trip.actualStartTime != null && trip.actualEndTime != null) {
+            if ((trip.actualStartTime ?: 0L) > 0L && (trip.actualEndTime ?: 0L) > 0L) {
                 Spacer(modifier = Modifier.height(12.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
             // Actual End Time
-            trip.actualEndTime?.let { endTime ->
+            trip.actualEndTime?.takeIf { it > 0L }?.let { endTime ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -94,7 +94,7 @@ internal fun ActualTimesSection(trip: Trip) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = formatIsoDateTime(endTime),
+                                text = formatDateTimeForDisplay(endTime),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -105,7 +105,7 @@ internal fun ActualTimesSection(trip: Trip) {
             }
 
             // Duration if available
-            if (trip.displayInfo.durationValue != "NA" && trip.actualStartTime != null) {
+            if (trip.displayInfo.durationValue != "NA" && (trip.actualStartTime ?: 0L) > 0L) {
                 Spacer(modifier = Modifier.height(12.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Spacer(modifier = Modifier.height(12.dp))
@@ -276,7 +276,7 @@ internal fun AdditionalInfoSection(trip: Trip) {
                 value = it
             )
         }
-        trip.createdAt?.let {
+        trip.createdAt?.takeIf { it > 0L }?.let {
             EnhancedInfoRow(
                 icon = "📅",
                 label = stringResource(Res.string.trip_detail_created_on),
@@ -288,31 +288,22 @@ internal fun AdditionalInfoSection(trip: Trip) {
 }
 
 /**
- * Formats schedule date/time from ISO or separate date/time fields.
- * Output format: DD-MMM-YYYY hh:mm AM/PM
+ * Formats a schedule timestamp (UTC epoch-millis) to "DD-MMM-YYYY hh:mm AM/PM".
+ * Prefers [dateTimeMs], falling back to [fallbackDateMs]. Treats null/0 as unset.
  */
 internal fun formatScheduleDateTime(
-    isoDateTime: String?,
-    date: String?,
-    time: String?
+    dateTimeMs: Long?,
+    fallbackDateMs: Long? = null
 ): String {
-    if (!isoDateTime.isNullOrBlank()) {
-        return FleetDateTime.formatIsoToDisplayDateTime12Hour(isoDateTime)
-    }
-    if (!date.isNullOrBlank() && !time.isNullOrBlank()) {
-        return FleetDateTime.formatAnyToDisplayDateTime12Hour(date, time)
-    }
-    if (!date.isNullOrBlank()) {
-        return FleetDateTime.formatAnyToDisplayDate(date)
-    }
-    return ""
+    val ms = dateTimeMs?.takeIf { it > 0L } ?: fallbackDateMs?.takeIf { it > 0L } ?: return ""
+    return formatDateTimeForDisplay(ms)
 }
 
 /**
- * Formats ISO 8601 datetime string to human-readable format.
+ * Formats a timestamp (UTC epoch-millis) to "DD-MMM-YYYY hh:mm AM/PM".
  */
-internal fun formatIsoDateTime(isoDateTime: String): String {
-    if (isoDateTime.isBlank()) return ""
-    return FleetDateTime.formatIsoToDisplayDateTime12Hour(isoDateTime)
+internal fun formatEpochDateTime(timestampMs: Long?): String {
+    val ms = timestampMs?.takeIf { it > 0L } ?: return ""
+    return formatDateTimeForDisplay(ms)
 }
 

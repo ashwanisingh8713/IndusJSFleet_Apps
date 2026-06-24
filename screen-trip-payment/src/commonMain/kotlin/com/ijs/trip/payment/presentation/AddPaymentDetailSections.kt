@@ -104,8 +104,8 @@ internal fun TransactionDetailsSection(
                 OutlinedTextField(
                     value = transactionId,
                     onValueChange = onTransactionIdChange,
-                    label = { Text("Transaction ID") },
-                    placeholder = { Text("Enter card transaction ID") },
+                    label = { Text(stringResource(Res.string.payment_label_transaction_id)) },
+                    placeholder = { Text(stringResource(Res.string.payment_placeholder_card_txn)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -151,7 +151,7 @@ internal fun AdditionalInfoSection(
             OutlinedTextField(
                 value = receivedBy,
                 onValueChange = onReceivedByChange,
-                label = { Text("Received By") },
+                label = { Text(stringResource(Res.string.payment_label_received_by)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true
             )

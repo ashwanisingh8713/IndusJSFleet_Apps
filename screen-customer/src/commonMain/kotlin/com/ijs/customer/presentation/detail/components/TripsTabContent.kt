@@ -14,10 +14,13 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.TripStateFilter
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
+import com.ijs.customer.presentation.localizedDisplayName
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -47,7 +50,7 @@ fun TripsTabContent(
     // Calculate values from trips if summary is null
     val totalTrips = state.tripsSummary?.totalTrips ?: state.trips.size
     val completedTrips = state.tripsSummary?.completedTrips ?: state.trips.count { it.state?.lowercase() == "completed" }
-    val activeTrips = state.tripsSummary?.activeTrips ?: state.trips.count { it.state?.lowercase() == "on_route" }
+    val activeTrips = state.tripsSummary?.activeTrips ?: state.trips.count { it.state?.lowercase() == "in_progress" }
     val totalRevenue = state.tripsSummary?.totalRevenueDisplay ?: formatCurrency(state.trips.sumOf { it.tripPrice ?: 0.0 })
     val totalPending = state.tripsSummary?.totalPendingDisplay ?: formatCurrency(state.trips.sumOf {
         val price = it.tripPrice ?: 0.0
@@ -58,7 +61,7 @@ fun TripsTabContent(
     when {
         isLoading -> LoadingContent()
         state.tripsError != null && state.trips.isEmpty() -> ErrorContent(
-            error = state.tripsError ?: tripsErrorFallback,
+            error = state.tripsError?.resolve() ?: tripsErrorFallback,
             onRetry = { onIntent(Intent.RefreshTrips) }
         )
         else -> {
@@ -140,14 +143,11 @@ private fun TripsSummaryCard(
     onExportPdf: () -> Unit,
     isExporting: Boolean
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        shape = RoundedCornerShape(12.dp)
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentPadding = FleetTokens.Spacing.M
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column {
             // Header with title and export
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -275,7 +275,7 @@ private fun TripFilterChips(
             FilterChip(
                 selected = selectedFilter == filter,
                 onClick = { onFilterSelected(filter) },
-                label = { Text(filter.displayName, style = MaterialTheme.typography.labelMedium) },
+                label = { Text(filter.localizedDisplayName(), style = MaterialTheme.typography.labelMedium) },
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.height(32.dp)
             )

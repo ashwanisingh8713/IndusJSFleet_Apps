@@ -3,6 +3,7 @@ package com.ijs.reports.presentation.consolidated
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.domain.entity.ConsolidatedPL
 import com.ijs.vehicle.domain.entity.Vehicle
 
@@ -14,7 +15,7 @@ object ConsolidatedPLContract {
     data class State(
         val isLoading: Boolean = false,
         val isLoadingVehicles: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         val vehicles: List<Vehicle> = emptyList(),
         val selectedVehicleIds: Set<String> = emptySet(),
         val selectedCostTypes: Set<String> = emptySet(),
@@ -102,7 +103,7 @@ object ConsolidatedPLContract {
     }
 
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
     }
 }
 

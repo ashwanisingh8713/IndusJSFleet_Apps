@@ -17,6 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetSectionHeader
 import com.ijs.reports.domain.entity.CostBreakdownItem
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.RecentReport
@@ -31,17 +34,12 @@ internal fun ResultHeaderCard(
     period: String,
     onNewReport: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        )
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        border = null
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -93,18 +91,14 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
     val expenseColor = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isProfit) profitColor.copy(alpha = 0.1f)
-                                else lossColor.copy(alpha = 0.1f)
-            )
+        FleetSectionCard(
+            containerColor = if (isProfit) profitColor.copy(alpha = 0.1f)
+                            else lossColor.copy(alpha = 0.1f),
+            border = null,
+            contentPadding = 20.dp
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row(
@@ -149,69 +143,25 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Card(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = profitColor.copy(alpha = 0.1f)
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_trending_up),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = profitColor
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(Res.string.reports_revenue),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = formatCurrency(result.totalRevenue),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = profitColor
-                    )
-                }
-            }
+            FleetMetricTile(
+                value = formatCurrency(result.totalRevenue),
+                label = stringResource(Res.string.reports_revenue),
+                iconRes = Res.drawable.ic_trending_up,
+                accent = profitColor,
+                valueColor = profitColor,
+                centered = true,
+                modifier = Modifier.weight(1f)
+            )
 
-            Card(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = expenseColor.copy(alpha = 0.1f)
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_trending_down),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = expenseColor
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(Res.string.reports_expenses),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = formatCurrency(result.totalExpenses),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = expenseColor
-                    )
-                }
-            }
+            FleetMetricTile(
+                value = formatCurrency(result.totalExpenses),
+                label = stringResource(Res.string.reports_expenses),
+                iconRes = Res.drawable.ic_trending_down,
+                accent = expenseColor,
+                valueColor = expenseColor,
+                centered = true,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -225,32 +175,16 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
 internal fun PLCostBreakdownCard(costs: List<CostBreakdownItem>) {
     var expanded by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = null
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(Res.string.reports_cost_breakdown),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = if (expanded) stringResource(Res.string.reports_hide) else stringResource(Res.string.reports_show),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            FleetSectionHeader(
+                title = stringResource(Res.string.reports_cost_breakdown),
+                actionLabel = if (expanded) stringResource(Res.string.reports_hide) else stringResource(Res.string.reports_show),
+                onActionClick = { expanded = !expanded }
+            )
 
             AnimatedVisibility(visible = expanded) {
                 Column(

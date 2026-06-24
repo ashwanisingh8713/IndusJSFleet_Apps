@@ -2,6 +2,7 @@ package com.ijs.team.presentation.list
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.permission.PermissionChecker
 import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.ijs.team.domain.entity.TeamMember
@@ -21,12 +22,23 @@ import kotlinx.coroutines.withContext
 class TeamListViewModel(
     private val dispatcherProvider: DispatcherProvider,
     private val teamRepository: TeamRepository,
-    private val userLocalDataSource: UserLocalDataSource
+    private val userLocalDataSource: UserLocalDataSource,
+    private val permissionChecker: PermissionChecker
 ) : MviViewModel<TeamListContract.State, TeamListContract.Intent, TeamListContract.Effect>(
     TeamListContract.State()
 ) {
 
     init {
+        // Compute permission flags from the user's actual permission set.
+        updateState {
+            copy(
+                canCreateTeamMember = permissionChecker.canCreateTeamMember(),
+                canEditPermission = permissionChecker.canManageTeam(),
+                canTogglePermission = permissionChecker.canToggleTeamMemberStatus(),
+                canResetPasswordPermission = permissionChecker.canResetPassword(),
+                canDeletePermission = permissionChecker.canDeleteTeamMember()
+            )
+        }
         sendIntent(TeamListContract.Intent.LoadTeamMembers)
     }
 
@@ -52,11 +64,7 @@ class TeamListViewModel(
 
         withContext(dispatcherProvider.io) {
             try {
-                // Load current user info
-                val userRole = try {
-                    userLocalDataSource.getUserRole() ?: "user"
-                } catch (e: Exception) { "user" }
-
+                // Current user id is identity used only for the self-guard, not authorization.
                 val userId = try {
                     userLocalDataSource.getUserId() ?: ""
                 } catch (e: Exception) { "" }
@@ -72,32 +80,32 @@ class TeamListViewModel(
                                     isLoading = false,
                                     teamMembers = members,
                                     filteredMembers = applyFilters(members, selectedFilter, searchQuery),
-                                    currentUserRole = userRole,
                                     currentUserId = userId
                                 )
                             }
                         } else {
                             // Cache is empty, fetch from API
-                            fetchFromApi(userRole, userId)
+                            fetchFromApi(userId)
                         }
                     },
                     onFailure = {
                         // Cache failed, fetch from API
-                        fetchFromApi(userRole, userId)
+                        fetchFromApi(userId)
                     }
                 )
             } catch (e: Exception) {
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to load team members"
+                        error = e.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_load_team)
                     )
                 }
             }
         }
     }
 
-    private suspend fun fetchFromApi(userRole: String, userId: String) {
+    private suspend fun fetchFromApi(userId: String) {
         val result = teamRepository.refreshTeamMembers()
 
         result.fold(
@@ -108,7 +116,6 @@ class TeamListViewModel(
                         isRefreshing = false,
                         teamMembers = members,
                         filteredMembers = applyFilters(members, selectedFilter, searchQuery),
-                        currentUserRole = userRole,
                         currentUserId = userId
                     )
                 }
@@ -118,8 +125,8 @@ class TeamListViewModel(
                     copy(
                         isLoading = false,
                         isRefreshing = false,
-                        error = error.message ?: "Failed to load team members",
-                        currentUserRole = userRole,
+                        error = error.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_load_team),
                         currentUserId = userId
                     )
                 }
@@ -132,22 +139,19 @@ class TeamListViewModel(
 
         withContext(dispatcherProvider.io) {
             try {
-                // Load current user info
-                val userRole = try {
-                    userLocalDataSource.getUserRole() ?: "user"
-                } catch (e: Exception) { "user" }
-
+                // Current user id is identity used only for the self-guard, not authorization.
                 val userId = try {
                     userLocalDataSource.getUserId() ?: ""
                 } catch (e: Exception) { "" }
 
                 // Refresh from API and update local cache
-                fetchFromApi(userRole, userId)
+                fetchFromApi(userId)
             } catch (e: Exception) {
                 updateState {
                     copy(
                         isRefreshing = false,
-                        error = e.message ?: "Failed to refresh team members"
+                        error = e.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_refresh_team)
                     )
                 }
             }
@@ -195,7 +199,8 @@ class TeamListViewModel(
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = error.message ?: "Failed to delete team member"
+                                error = error.message?.let { UiText.Raw(it) }
+                                    ?: UiText.StringRes(Res.string.error_delete_team_member)
                             )
                         }
                     }
@@ -204,7 +209,8 @@ class TeamListViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to delete team member"
+                        error = e.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_delete_team_member)
                     )
                 }
             }

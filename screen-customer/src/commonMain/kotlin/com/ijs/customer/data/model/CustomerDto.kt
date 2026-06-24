@@ -33,9 +33,9 @@ data class CustomerDto(
     @SerialName("created_by_id")
     val createdById: Int? = null,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null,
+    val updatedAt: Long? = null,
     @SerialName("total_trips")
     val totalTrips: Int = 0,
     @SerialName("total_revenue")
@@ -106,64 +106,88 @@ data class UpdateCustomerRequest(
 )
 
 /**
- * Customer statistics - trips breakdown.
+ * Customer statistics - summary block.
+ * Backend keys: counts are int, money is Double.
  */
 @Serializable
-data class CustomerStatisticsTripsDto(
-    @SerialName("total")
-    val total: Int = 0,
-    @SerialName("completed")
-    val completed: Int = 0,
-    @SerialName("on_route")
-    val onRoute: Int = 0,
-    @SerialName("planned")
-    val planned: Int = 0,
-    @SerialName("cancelled")
-    val cancelled: Int = 0
-)
-
-/**
- * Customer statistics - financials breakdown.
- */
-@Serializable
-data class CustomerStatisticsFinancialsDto(
+data class CustomerStatisticsSummaryDto(
+    @SerialName("total_trips")
+    val totalTrips: Int = 0,
+    @SerialName("completed_trips")
+    val completedTrips: Int = 0,
+    @SerialName("cancelled_trips")
+    val cancelledTrips: Int = 0,
+    @SerialName("active_trips")
+    val activeTrips: Int = 0,
+    @SerialName("planned_trips")
+    val plannedTrips: Int = 0,
     @SerialName("total_revenue")
     val totalRevenue: Double = 0.0,
-    @SerialName("total_received")
-    val totalReceived: Double = 0.0,
+    @SerialName("total_paid")
+    val totalPaid: Double = 0.0,
     @SerialName("total_pending")
     val totalPending: Double = 0.0,
-    @SerialName("average_trip_value")
-    val averageTripValue: Double = 0.0
+    @SerialName("collection_rate")
+    val collectionRate: Double = 0.0,
+    @SerialName("total_trip_costs")
+    val totalTripCosts: Double = 0.0,
+    // Additive backend field: driver costs attributed to this customer's trips (net of deductions).
+    // net_profit already subtracts both trip and driver costs server-side.
+    @SerialName("total_driver_costs")
+    val totalDriverCosts: Double = 0.0,
+    @SerialName("net_profit")
+    val netProfit: Double = 0.0
 )
 
 /**
- * Customer statistics - performance breakdown.
+ * Customer statistics - trips grouped by state.
  */
 @Serializable
-data class CustomerStatisticsPerformanceDto(
-    @SerialName("on_time_delivery_rate")
-    val onTimeDeliveryRate: Double = 0.0,
-    @SerialName("relationship_since")
-    val relationshipSince: String? = null,
-    @SerialName("last_trip_date")
-    val lastTripDate: String? = null
+data class CustomerStatisticsTripsByStateDto(
+    @SerialName("completed")
+    val completed: Int = 0,
+    @SerialName("cancelled")
+    val cancelled: Int = 0,
+    // Backend emits canonical trip state key "in_progress" (was "on_route", which is not a valid backend state).
+    @SerialName("in_progress")
+    val inProgress: Int = 0,
+    @SerialName("planned")
+    val planned: Int = 0
+)
+
+/**
+ * Customer statistics - monthly revenue item.
+ */
+@Serializable
+data class CustomerStatisticsMonthlyRevenueDto(
+    @SerialName("month")
+    val month: String? = null,
+    @SerialName("trips")
+    val trips: Int = 0,
+    @SerialName("revenue")
+    val revenue: Double = 0.0,
+    @SerialName("collected")
+    val collected: Double = 0.0
 )
 
 /**
  * Customer statistics data DTO from API.
- * New API response format with nested objects.
+ * Matches backend GetCustomerStatistics response shape.
  */
 @Serializable
 data class CustomerStatisticsDataDto(
-    @SerialName("customer")
-    val customer: CustomerSummaryDto? = null,
-    @SerialName("trips")
-    val trips: CustomerStatisticsTripsDto? = null,
-    @SerialName("financials")
-    val financials: CustomerStatisticsFinancialsDto? = null,
-    @SerialName("performance")
-    val performance: CustomerStatisticsPerformanceDto? = null
+    @SerialName("summary")
+    val summary: CustomerStatisticsSummaryDto? = null,
+    @SerialName("trips_by_state")
+    val tripsByState: CustomerStatisticsTripsByStateDto? = null,
+    @SerialName("payment_by_mode")
+    val paymentByMode: Map<String, Double> = emptyMap(),
+    @SerialName("monthly_revenue")
+    val monthlyRevenue: List<CustomerStatisticsMonthlyRevenueDto> = emptyList(),
+    @SerialName("start_date")
+    val startDate: Long? = null,
+    @SerialName("end_date")
+    val endDate: Long? = null
 )
 
 /**
@@ -233,7 +257,7 @@ data class CustomerListResponse(
 
 /**
  * API response wrapper for customer statistics.
- * Response: { success, message, data: { customer, trips, financials, performance } }
+ * Response: { success, message, data: { summary, trips_by_state, payment_by_mode, monthly_revenue, start_date, end_date } }
  */
 @Serializable
 data class CustomerStatisticsResponse(

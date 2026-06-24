@@ -12,9 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDatePicker
@@ -22,6 +19,9 @@ import com.indusjs.datetimepicker.DateTimeUtils
 import com.indusjs.uicomponents.components.CaretakerSectionCard
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetPasswordField
+import com.indusjs.uicomponents.components.FleetSectionHeader
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
@@ -44,19 +44,27 @@ fun CreateDriverScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    var passwordVisible by remember { mutableStateOf(false) }
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // Handle effects
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is CreateDriverContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is CreateDriverContract.Effect.NavigateBack -> onNavigateBack()
                 is CreateDriverContract.Effect.DriverCreated -> onDriverCreated(effect.driverId)
                 is CreateDriverContract.Effect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
             }
         }
@@ -150,7 +158,7 @@ fun CreateDriverScreen(
                         label = { Text(stringResource(Res.string.driver_create_first_name)) },
                         placeholder = { Text(stringResource(Res.string.driver_create_first_name_placeholder)) },
                         isError = state.firstNameError != null,
-                        supportingText = state.firstNameError?.let { { Text(it) } },
+                        supportingText = state.firstNameError?.let { { Text(it.resolve()) } },
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words,
                             imeAction = ImeAction.Next
@@ -165,7 +173,7 @@ fun CreateDriverScreen(
                         label = { Text(stringResource(Res.string.driver_create_last_name)) },
                         placeholder = { Text(stringResource(Res.string.driver_create_last_name_placeholder)) },
                         isError = state.lastNameError != null,
-                        supportingText = state.lastNameError?.let { { Text(it) } },
+                        supportingText = state.lastNameError?.let { { Text(it.resolve()) } },
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words,
                             imeAction = ImeAction.Next
@@ -188,45 +196,18 @@ fun CreateDriverScreen(
                     label = stringResource(Res.string.driver_label_mobile_required),
                     placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
                     isError = state.mobileError != null,
-                    errorMessage = state.mobileError
+                    errorMessage = state.mobileError?.resolve()
                 )
             }
 
             item {
-                OutlinedTextField(
+                FleetPasswordField(
                     value = state.password,
                     onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdatePassword(it)) },
-                    label = { Text(stringResource(Res.string.driver_create_password_label)) },
-                    placeholder = { Text(stringResource(Res.string.driver_create_password_placeholder)) },
-                    supportingText = {
-                        Text(
-                            state.passwordError
-                                ?: stringResource(Res.string.driver_create_password_supporting)
-                        )
-                    },
+                    label = stringResource(Res.string.driver_create_password_label),
+                    placeholder = stringResource(Res.string.driver_create_password_placeholder),
                     isError = state.passwordError != null,
-                    visualTransformation = if (passwordVisible) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                painter = painterResource(
-                                    if (passwordVisible) Res.drawable.ic_visibility_off else Res.drawable.ic_visibility
-                                ),
-                                contentDescription = stringResource(
-                                    if (passwordVisible) Res.string.cd_hide_password else Res.string.cd_show_password
-                                )
-                            )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Next
-                    ),
-                    singleLine = true,
+                    errorMessage = state.passwordError?.resolve(),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -236,10 +217,10 @@ fun CreateDriverScreen(
                     value = state.email,
                     onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateEmail(it)) },
                     fieldType = FieldType.EMAIL,
-                    label = stringResource(Res.string.driver_label_email_optional),
+                    label = stringResource(Res.string.driver_label_email_required),
                     placeholder = stringResource(Res.string.driver_placeholder_email_example),
                     isError = state.emailError != null,
-                    errorMessage = state.emailError
+                    errorMessage = state.emailError?.resolve()
                 )
             }
 
@@ -260,7 +241,7 @@ fun CreateDriverScreen(
                     placeholder = { Text(stringResource(Res.string.driver_create_license_placeholder)) },
                     leadingIcon = { Text("🪪", modifier = Modifier.padding(start = 12.dp)) },
                     isError = state.licenseNumberError != null,
-                    supportingText = state.licenseNumberError?.let { { Text(it) } },
+                    supportingText = state.licenseNumberError?.let { { Text(it.resolve()) } },
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Characters,
                         imeAction = ImeAction.Next
@@ -284,7 +265,7 @@ fun CreateDriverScreen(
                     label = stringResource(Res.string.driver_label_license_expiry_required),
                     minDate = DateTimeUtils.getCurrentDate(),  // License expiry must be in future
                     isError = state.licenseExpiryError != null,
-                    errorMessage = state.licenseExpiryError
+                    errorMessage = state.licenseExpiryError?.resolve()
                 )
             }
 
@@ -410,33 +391,14 @@ private fun SectionHeader(
     subtitle: String? = null,
     icon: String? = null
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        icon?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            subtitle?.let {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+    FleetSectionHeader(title = title, emoji = icon)
+    subtitle?.let {
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = it,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
     Spacer(modifier = Modifier.height(12.dp))
 }

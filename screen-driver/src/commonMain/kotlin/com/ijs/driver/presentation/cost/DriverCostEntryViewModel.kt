@@ -5,8 +5,9 @@ import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
 import com.indusjs.uicomponents.components.CostTypeSelection
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.core.util.ValidationUtils
-import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.data.model.driver.BulkCreateDriverCostsRequest
 import com.indusjs.fleet.data.model.driver.BulkDriverCostItem
 import com.indusjs.fleet.data.model.driver.DriverCostTypes
@@ -18,6 +19,17 @@ import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.ijs.driver.domain.repository.DriverRepository
 import com.indusjs.fleet.domain.usecase.costs.GetDriverCostTypesUseCase
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.driver_cost_types_refreshed
+import indusjsfleet.ijs_ui_components_lib.generated.resources.driver_no_cost_types
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_valid_amount
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_select_driver
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_select_cost_type
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_date_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_fill_required_fields
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_refresh_cost_types_prefixed
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_drivers_prefixed
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_save_costs_prefixed
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -149,15 +161,15 @@ class DriverCostEntryViewModel(
                                 costTypeGroups = groups
                             )
                         }
-                        sendEffect(DriverCostEntryContract.Effect.ShowSnackbar("Cost types refreshed"))
+                        sendEffect(DriverCostEntryContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.driver_cost_types_refreshed)))
                     } else {
                         updateState { copy(isRefreshingCostTypes = false) }
-                        sendEffect(DriverCostEntryContract.Effect.ShowSnackbar("No cost types found"))
+                        sendEffect(DriverCostEntryContract.Effect.ShowSnackbar(UiText.StringRes(Res.string.driver_no_cost_types)))
                     }
                 }
                 is Result.Error -> {
                     updateState { copy(isRefreshingCostTypes = false) }
-                    sendEffect(DriverCostEntryContract.Effect.ShowError("Failed to refresh: ${result.message}"))
+                    sendEffect(DriverCostEntryContract.Effect.ShowError(UiText.StringRes(Res.string.error_refresh_cost_types_prefixed, args = listOf(result.errorMessage))))
                 }
                 else -> {
                     updateState { copy(isRefreshingCostTypes = false) }
@@ -184,7 +196,7 @@ class DriverCostEntryViewModel(
                     }
                     is Result.Error -> {
                         updateState { copy(isLoadingData = false) }
-                        sendEffect(DriverCostEntryContract.Effect.ShowError("Failed to load drivers: ${result.message}"))
+                        sendEffect(DriverCostEntryContract.Effect.ShowError(UiText.StringRes(Res.string.error_load_drivers_prefixed, args = listOf(result.errorMessage))))
                     }
                     is Result.Loading -> { /* ignore */ }
                 }
@@ -251,7 +263,7 @@ class DriverCostEntryViewModel(
     private fun updateAmount(rowId: String, value: String) {
         // Validate and update
         val error = if (value.isNotEmpty() && (value.toDoubleOrNull() == null || (value.toDoubleOrNull() ?: 0.0) <= 0)) {
-            "Enter a valid amount"
+            UiText.StringRes(Res.string.error_valid_amount)
         } else null
 
         updateRowField(rowId) { it.copy(amount = value, amountError = error) }
@@ -292,7 +304,7 @@ class DriverCostEntryViewModel(
     private suspend fun saveCosts() {
         val driver = state.value.selectedDriver
         if (driver == null) {
-            updateState { copy(driverError = "Please select a driver") }
+            updateState { copy(driverError = UiText.StringRes(Res.string.error_select_driver)) }
             return
         }
 
@@ -302,22 +314,22 @@ class DriverCostEntryViewModel(
 
             // Validate cost type
             if (entry.costType.isBlank()) {
-                updated = updated.copy(costTypeError = "Select a cost type")
+                updated = updated.copy(costTypeError = UiText.StringRes(Res.string.error_select_cost_type))
             }
 
             // Validate date
             if (entry.date.isBlank()) {
-                updated = updated.copy(dateError = "Date is required")
+                updated = updated.copy(dateError = UiText.StringRes(Res.string.error_date_required))
             } else {
                 val dateValidation = ValidationUtils.validateDate(entry.date)
                 if (dateValidation is com.indusjs.fleet.core.util.ValidationResult.Error) {
-                    updated = updated.copy(dateError = dateValidation.message)
+                    updated = updated.copy(dateError = UiText.Raw(dateValidation.message))
                 }
             }
 
             // Validate amount
             if (entry.amount.isBlank() || (entry.amount.toDoubleOrNull() ?: 0.0) <= 0) {
-                updated = updated.copy(amountError = "Enter a valid amount")
+                updated = updated.copy(amountError = UiText.StringRes(Res.string.error_valid_amount))
             }
 
             updated
@@ -329,7 +341,7 @@ class DriverCostEntryViewModel(
         // Check if all entries are valid
         val validEntries = validatedEntries.filter { it.isValid }
         if (validEntries.isEmpty()) {
-            sendEffect(DriverCostEntryContract.Effect.ShowError("Please fill in all required fields correctly"))
+            sendEffect(DriverCostEntryContract.Effect.ShowError(UiText.StringRes(Res.string.error_fill_required_fields)))
             return
         }
 
@@ -342,10 +354,12 @@ class DriverCostEntryViewModel(
                     entry.costType.startsWith("DC-003")
 
 
-            // Driver-costs API expects date in DD-MM-YYYY format (per API spec).
-            // The UI already captures the date in DD-MM-YYYY via FleetDatePicker,
-            // so we send it as-is. We also derive `month` (YYYY-MM) for backend filtering.
+            // Driver-costs API now expects the date as UTC epoch millis (JSON number).
+            // The UI captures the date as DD-MM-YYYY via FleetDatePicker; convert it
+            // to an epoch instant, and derive `month` (YYYY-MM) from the same string
+            // for backend filtering (month stays a String label).
             val ddmmyyyyDate = entry.date.trim()
+            val dateMillis = convertToEpochMillis(ddmmyyyyDate) ?: 0L
             val derivedMonth = runCatching {
                 val parts = ddmmyyyyDate.split("-")
                 if (parts.size == 3 && parts[2].length == 4) "${parts[2]}-${parts[1]}" else null
@@ -357,7 +371,7 @@ class DriverCostEntryViewModel(
                 groupId = entry.selectedGroupId,
                 customCostLabel = entry.customCostTypeName.takeIf { it.isNotBlank() },
                 amount = entry.amount.toDouble(),
-                date = ddmmyyyyDate,
+                date = dateMillis,
                 month = derivedMonth,
                 notes = entry.notes.takeIf { it.isNotBlank() },
                 isDeduction = isDeduction
@@ -375,7 +389,7 @@ class DriverCostEntryViewModel(
                 }
                 is Result.Error -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(DriverCostEntryContract.Effect.ShowError("Failed to save: ${result.message}"))
+                    sendEffect(DriverCostEntryContract.Effect.ShowError(UiText.StringRes(Res.string.error_save_costs_prefixed, args = listOf(result.errorMessage))))
                 }
                 else -> {
                     updateState { copy(isSaving = false) }

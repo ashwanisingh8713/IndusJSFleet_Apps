@@ -6,6 +6,10 @@ import com.ijs.customer.domain.entity.FinancialPeriod
 import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.core.util.convertToEpochMillis
+import com.indusjs.uicomponents.components.UiText
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_generic
 
 /**
  * Handles financials tab data loading, period filtering,
@@ -27,8 +31,10 @@ class CustomerDetailFinancialsHandler(
         when (val result = customerRepository.getCustomerFinancialReport(
             customerId = customerId,
             period = state.financialsPeriod.apiValue,
-            startDate = state.financialsStartDate.takeIf { it.isNotBlank() },
+            startDate = state.financialsStartDate.takeIf { it.isNotBlank() }
+                ?.let { convertToEpochMillis(it) },
             endDate = state.financialsEndDate.takeIf { it.isNotBlank() }
+                ?.let { convertToEpochMillis(it) }
         )) {
             is Result.Success -> {
                 setState {
@@ -43,7 +49,8 @@ class CustomerDetailFinancialsHandler(
                 setState {
                     copy(
                         isLoadingFinancials = false,
-                        financialsError = result.message ?: "Failed to load financial report"
+                        financialsError = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_generic)
                     )
                 }
             }

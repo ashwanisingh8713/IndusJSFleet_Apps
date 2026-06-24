@@ -42,8 +42,9 @@ object TripDetailContract {
         val trip: Trip? = null,
         val tripId: String = "",
 
-        // User role for permission check
-        val userRole: String = "",
+        // Permission flags (computed from PermissionChecker — never role names)
+        val canEditTripPermission: Boolean = false,
+        val canViewTripPricePermission: Boolean = false,
 
         // Edit mode
         val isEditMode: Boolean = false,
@@ -106,13 +107,22 @@ object TripDetailContract {
         val notes: String = "",
 
         // Editable fields - Pricing
+        // tripPrice = the quoted/expected price (expected_trip_price).
         val tripPrice: String = "",
+        // actualPrice = the ACTUAL price (revenue) the customer owes; defaults to the quote
+        // (tripPrice) but is user-overridable. Sent to the backend as selling_value.
+        val actualPrice: String = "",
+        // purchasePrice = COGS (purchase_price); forwarded on update too, not only create.
+        val purchasePrice: String = "",
 
         // Trip costs
         val costs: List<TripCostDto> = emptyList(),
         val totalCost: Double = 0.0,
         val costsByType: Map<String, List<TripCostDto>> = emptyMap(),
         val isLoadingCosts: Boolean = false,
+        // Non-null when the costs fetch failed (e.g. backend 500) — drives an error/retry state
+        // distinct from the empty (200 + []) state, per the loading/error/empty rule.
+        val costsError: String? = null,
 
         // Trip payments
         val payments: List<TripPayment> = emptyList(),
@@ -189,43 +199,26 @@ object TripDetailContract {
 
         /**
          * Determines if the user can edit this trip.
-         * - Owner and General Manager can edit trips in any state
-         * - Manager can only edit trips in PLANNED state
-         * - Supervisor cannot edit trips
+         * Gated purely on the trips:update permission (backend enforces any
+         * state-based rules). State is never combined with a role name.
          */
         val canEdit: Boolean
-            get() {
-                if (trip == null) return false
-                val role = userRole.lowercase().replace("_", "")
-                // Owner and General Manager can edit any trip state
-                if (role == "owner" || role == "generalmanager") return true
-                // Manager can only edit planned trips
-                if (role == "manager") return trip.status == TripStatus.PLANNED
-                // Supervisor cannot edit
-                return false
-            }
+            get() = trip != null && canEditTripPermission
 
         /**
          * Determines if the user can view trip_price.
-         * Only Owner and General Manager can see trip pricing.
+         * Gated on the financials:read permission.
          */
         val canViewTripPrice: Boolean
-            get() {
-                val role = userRole.lowercase().replace("_", "")
-                return role == "owner" || role == "generalmanager"
-            }
+            get() = canViewTripPricePermission
 
         /**
          * Determines if the user can edit trip_price only (not full trip).
-         * Owner and General Manager can edit trip_price in ANY state including completed.
-         * This allows price adjustments even after trip completion.
+         * Gated on the financials:read permission so price can be adjusted in any
+         * state including completed.
          */
         val canEditTripPriceOnly: Boolean
-            get() {
-                if (trip == null) return false
-                val role = userRole.lowercase().replace("_", "")
-                return role == "owner" || role == "generalmanager"
-            }
+            get() = trip != null && canViewTripPricePermission
 
         /**
          * Shows edit button if user can fully edit OR can edit price only.
@@ -240,6 +233,9 @@ object TripDetailContract {
     sealed interface Intent : UiIntent {
         // Load trip
         data class LoadTrip(val tripId: String) : Intent
+
+        // Retry just the trip-costs fetch after an error
+        data object RetryLoadCosts : Intent
 
         // Edit mode
         data object EnterEditMode : Intent
@@ -299,6 +295,10 @@ object TripDetailContract {
 
         // Pricing updates
         data class UpdateTripPrice(val value: String) : Intent
+        // Actual price (revenue) the customer owes — sent as selling_value.
+        data class UpdateActualPrice(val value: String) : Intent
+        // Purchase price (COGS).
+        data class UpdatePurchasePrice(val value: String) : Intent
 
         // Status update (quick action)
         data class UpdateStatus(val status: TripStatus) : Intent

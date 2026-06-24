@@ -18,8 +18,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.pdfreport.handler.DriverCostsPdfHandler
 import com.indusjs.pdfreport.model.DriverCostsPdfData
+import com.indusjs.uicomponents.components.EmptyContent
+import com.indusjs.uicomponents.components.ErrorContent
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -63,64 +66,22 @@ internal fun DriverCostsTabContent(
 
             // Error state
             state.costsError != null && state.costs.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "⚠️",
-                            style = MaterialTheme.typography.displayMedium
-                        )
-                        Text(
-                            text = state.costsError ?: stringResource(Res.string.driver_costs_error),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        OutlinedButton(onClick = { viewModel.sendIntent(DriverDetailContract.Intent.LoadCosts) }) {
-                            Text(stringResource(Res.string.retry))
-                        }
-                    }
-                }
+                ErrorContent(
+                    error = state.costsError?.resolve() ?: stringResource(Res.string.driver_costs_error),
+                    screenContext = FleetErrorContext.DRIVER_DETAIL,
+                    onRetry = { viewModel.sendIntent(DriverDetailContract.Intent.LoadCosts) }
+                )
             }
 
             // Empty state
             state.costs.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.padding(32.dp)
-                    ) {
-                        Text(
-                            text = "💰",
-                            style = MaterialTheme.typography.displayLarge
-                        )
-                        Text(
-                            text = stringResource(Res.string.driver_costs_no_costs),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = stringResource(Res.string.driver_costs_hint),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = { viewModel.sendIntent(DriverDetailContract.Intent.NavigateToAddDriverCost) }
-                        ) {
-                            Text(stringResource(Res.string.driver_costs_add))
-                        }
-                    }
-                }
+                EmptyContent(
+                    icon = "💰",
+                    title = stringResource(Res.string.driver_costs_no_costs),
+                    message = stringResource(Res.string.driver_costs_hint),
+                    actionLabel = stringResource(Res.string.driver_costs_add),
+                    onAction = { viewModel.sendIntent(DriverDetailContract.Intent.NavigateToAddDriverCost) }
+                )
             }
 
             // Content with costs
@@ -351,7 +312,7 @@ internal fun DriverCostsHeroCard(
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = "📄 Export",
+                        text = "📄 " + stringResource(Res.string.driver_costs_export),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -545,7 +506,7 @@ internal fun CostsFilterSheet(
             )
 
             Text(
-                text = "— OR —",
+                text = stringResource(Res.string.driver_costs_or_separator),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally)

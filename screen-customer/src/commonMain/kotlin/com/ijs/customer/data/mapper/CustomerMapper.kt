@@ -49,18 +49,21 @@ object CustomerMapper {
 
     /**
      * Map CustomerStatisticsDataDto to CustomerStatistics domain entity.
-     * Updated to match new API response with nested trips/financials/performance.
+     * Matches backend statistics response (summary / trips_by_state / ...).
      */
     fun CustomerStatisticsDataDto.toDomain(): CustomerStatistics = CustomerStatistics(
-        customerId = customer?.id?.toString() ?: "",
-        totalTrips = trips?.total ?: 0,
-        completedTrips = trips?.completed ?: 0,
-        activeTrips = trips?.onRoute ?: 0,
-        totalRevenue = financials?.totalRevenue ?: 0.0,
-        totalPendingPayment = financials?.totalPending ?: 0.0,
-        totalReceivedPayment = financials?.totalReceived ?: 0.0,
-        averageTripValue = financials?.averageTripValue ?: 0.0,
-        lastTripDate = performance?.lastTripDate
+        customerId = "",
+        totalTrips = summary?.totalTrips ?: 0,
+        completedTrips = summary?.completedTrips ?: 0,
+        cancelledTrips = summary?.cancelledTrips ?: 0,
+        activeTrips = summary?.activeTrips ?: 0,
+        plannedTrips = summary?.plannedTrips ?: 0,
+        totalRevenue = summary?.totalRevenue ?: 0.0,
+        totalPendingPayment = summary?.totalPending ?: 0.0,
+        totalReceivedPayment = summary?.totalPaid ?: 0.0,
+        collectionRate = summary?.collectionRate ?: 0.0,
+        totalTripCosts = summary?.totalTripCosts ?: 0.0,
+        netProfit = summary?.netProfit ?: 0.0
     )
 
     /**
@@ -107,19 +110,6 @@ object CustomerMapper {
         priority = priority,
         cargoType = cargoType,
         createdAt = createdAt
-    )
-
-    /**
-     * Map CustomerTripsSummaryDto to CustomerTripsSummary domain entity.
-     */
-    fun CustomerTripsSummaryDto.toDomain(): CustomerTripsSummary = CustomerTripsSummary(
-        totalTrips = totalTrips,
-        completedTrips = completedTrips,
-        activeTrips = activeTrips,
-        plannedTrips = plannedTrips,
-        cancelledTrips = cancelledTrips,
-        totalRevenue = totalRevenue,
-        totalPending = totalPending
     )
 
     /**
@@ -215,17 +205,21 @@ object CustomerMapper {
         byMode = byMode.map { it.toDomain() },
         byMonth = byMonth.map { it.toDomain() },
         totalTds = totals?.tdsAmount ?: 0.0,
-        totalAmount = totals?.grossAmount ?: 0.0,
+        // "Total Received" header must match the sum of the per-mode rows (net); TDS shown separately above.
+        totalAmount = totals?.netAmount ?: 0.0,
         totalPayments = byMode.sumOf { it.count }
     )
 
     // ============= Financial Report Mapping =============
 
     /**
-     * Map MonthlyTrendDto to PeriodBreakdown domain entity.
+     * Map FinancialPeriodBreakdownDto to PeriodBreakdown domain entity.
+     * Backend gives per-period trip costs (driver costs excluded, per P&L) and
+     * profit (= revenue − costs) alongside revenue/collected; map them through so
+     * the column shows real profit.
      */
-    fun MonthlyTrendDto.toPeriodBreakdown(): PeriodBreakdown = PeriodBreakdown(
-        period = month,
+    fun FinancialPeriodBreakdownDto.toPeriodBreakdown(): PeriodBreakdown = PeriodBreakdown(
+        period = period ?: "",
         revenue = revenue,
         costs = costs,
         profit = profit,
@@ -233,29 +227,51 @@ object CustomerMapper {
     )
 
     /**
+     * Map FinancialTopVehicleDto to TopVehicle domain entity.
+     */
+    fun FinancialTopVehicleDto.toDomain(): TopVehicle = TopVehicle(
+        vehicleId = vehicleId.toString(),
+        vehicleRegistration = registrationNumber ?: "-",
+        trips = tripCount,
+        revenue = totalRevenue,
+        costs = 0.0,
+        profit = 0.0
+    )
+
+    /**
      * Map CustomerFinancialReportDataDto to CustomerFinancialReport domain entity.
+     * Matches backend financial-report response shape.
      */
     fun CustomerFinancialReportDataDto.toDomain(): CustomerFinancialReport = CustomerFinancialReport(
         customerId = customer?.id?.toString() ?: "",
         customerName = customer?.companyName ?: customer?.personName,
-        period = FinancialPeriod.fromApiValue(period),
-        startDate = dateRange?.startDate,
-        endDate = dateRange?.endDate,
-        totalRevenue = summary?.totalRevenue ?: 0.0,
-        totalCosts = summary?.totalCosts ?: 0.0,
-        netProfit = summary?.grossProfit ?: 0.0,
-        profitMargin = summary?.profitMargin ?: 0.0,
-        tripSummary = summary?.let {
+        period = FinancialPeriod.MONTHLY,
+        startDate = startDate,
+        endDate = endDate,
+        // Display the BILLED revenue (total_revenue = SUM selling_value) so it lines up
+        // with net_profit/net_margin; fall back to total_expected (the quote) on older responses.
+        totalRevenue = revenueSummary?.totalRevenue?.takeIf { it != 0.0 } ?: revenueSummary?.totalExpected ?: 0.0,
+        totalCosts = costSummary?.totalTripCosts ?: 0.0,
+        totalDriverCosts = costSummary?.totalDriverCosts ?: 0.0,
+        // Driver costs are EXCLUDED from the P&L, so NET == GROSS profit (both are
+        // BILLED total_revenue − total_trip_costs); total_driver_costs is 0.
+        grossProfit = profitLoss?.grossProfit ?: 0.0,
+        netProfit = profitLoss?.netProfit ?: 0.0,
+        profitMargin = profitLoss?.profitMargin ?: 0.0,
+        netMargin = profitLoss?.netMargin ?: 0.0,
+        tripSummary = tripSummary?.let {
             FinancialTripSummary(
                 totalTrips = it.totalTrips,
-                completedTrips = it.totalTrips, // API returns total as completed
-                averageTripValue = if (it.totalTrips > 0) it.totalRevenue / it.totalTrips else 0.0,
+                completedTrips = it.completedTrips,
+                averageTripValue = if (it.totalTrips > 0) {
+                    (revenueSummary?.totalExpected ?: 0.0) / it.totalTrips
+                } else 0.0,
                 totalDistance = 0.0
             )
         },
-        periodBreakdown = monthlyTrend.map { it.toPeriodBreakdown() },
-        topVehicles = emptyList(), // Not in current API response
-        paymentReceived = summary?.totalReceived ?: 0.0,
-        paymentPending = summary?.totalPending ?: 0.0
+        periodBreakdown = periodBreakdown.map { it.toPeriodBreakdown() },
+        topVehicles = topVehicles.map { it.toDomain() },
+        paymentReceived = revenueSummary?.totalReceived ?: 0.0,
+        paymentPending = revenueSummary?.totalPending ?: 0.0
     )
 }

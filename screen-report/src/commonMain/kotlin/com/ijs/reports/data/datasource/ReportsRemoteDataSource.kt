@@ -84,14 +84,38 @@ class ReportsRemoteDataSource(
     }
 
     /**
+     * Get P&L by customer (fleet-wide per-customer comparison).
+     * GET /reports/profit-loss/customers?period=monthly
+     */
+    suspend fun getCustomerProfitLoss(token: String, period: String = "monthly"): CustomerPLReportDto? {
+        val url = "${ApiConfig.BASE_URL}${ApiConfig.Endpoints.REPORTS_PL_CUSTOMERS}"
+        logger.d(TAG_REPORTS_REMOTE_DS, "Fetching customer P&L, period: $period")
+
+        val response: HttpResponse = httpClient.get(url) {
+            header(HttpHeaders.Authorization, "Bearer $token")
+            parameter("period", period)
+        }
+        val body = response.bodyAsText()
+        logger.d(TAG_REPORTS_REMOTE_DS, "Response: $body")
+
+        if (!response.status.isSuccess()) {
+            val msg = extractErrorMessage(body, "Failed to fetch customer P&L (HTTP ${response.status.value})")
+            logger.e(TAG_REPORTS_REMOTE_DS, msg)
+            throw ApiException(msg, response.status.value)
+        }
+        val result = json.decodeFromString<ProfitLossResponse<CustomerPLReportDto>>(body)
+        return result.data
+    }
+
+    /**
      * Get fleet profit/loss report
      * GET /reports/profit-loss?period=monthly or ?start_date=&end_date=
      */
     suspend fun getFleetProfitLoss(
         token: String,
         period: String? = null,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): FleetProfitLossDto? {
         val url = "${ApiConfig.BASE_URL}/reports/profit-loss"
         logger.d(TAG_REPORTS_REMOTE_DS, "Fetching fleet P&L: period=$period, startDate=$startDate, endDate=$endDate")
@@ -113,10 +137,10 @@ class ReportsRemoteDataSource(
         }
         val result = json.decodeFromString<ProfitLossResponse<FleetProfitLossDto>>(body)
         result.data?.let { dto ->
-            logger.d(TAG_REPORTS_REMOTE_DS, "Fleet P&L parsed: vehicles=${dto.vehicles?.size}, summary=${dto.summary}")
-            dto.summary?.let { s ->
-                logger.d(TAG_REPORTS_REMOTE_DS, "  summary: revenue=${s.totalRevenue}, expenses=${s.totalExpenses}, totalCost=${s.totalCost}")
-                logger.d(TAG_REPORTS_REMOTE_DS, "  summary: grossProfit=${s.grossProfit}, totalProfit=${s.totalProfit}, netProfit=${s.netProfit}")
+            logger.d(TAG_REPORTS_REMOTE_DS, "Fleet P&L parsed: vehicles=${dto.vehicles?.size}, vehicleCount=${dto.vehicleCount}, fleetSummary=${dto.fleetSummary}")
+            dto.fleetSummary?.let { s ->
+                logger.d(TAG_REPORTS_REMOTE_DS, "  fleetSummary: revenue=${s.totalRevenue}, totalCost=${s.totalCost}, driverCost=${s.driverCost}")
+                logger.d(TAG_REPORTS_REMOTE_DS, "  fleetSummary: netProfit=${s.netProfit}, trips=${s.totalTrips}, activeVehicles=${s.activeVehicles}")
             }
         }
         return result.data
@@ -173,8 +197,9 @@ class ReportsRemoteDataSource(
             logger.e(TAG_REPORTS_REMOTE_DS, msg)
             throw ApiException(msg, response.status.value)
         }
-        val result = json.decodeFromString<ProfitLossResponse<List<TripProfitLossDto>>>(body)
-        return result.data
+        // Backend returns { period, trips, summary }, not a bare array.
+        val result = json.decodeFromString<ProfitLossResponse<MultiTripPLResponseDto>>(body)
+        return result.data?.trips
     }
 
     /**
@@ -184,8 +209,8 @@ class ReportsRemoteDataSource(
     suspend fun getCostTypeAnalysis(
         token: String,
         costType: String,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): CostTypeAnalysisDto? {
         val url = "${ApiConfig.BASE_URL}/reports/profit-loss/cost-type/$costType"
         logger.d(TAG_REPORTS_REMOTE_DS, "Fetching cost type analysis: $costType")
@@ -203,8 +228,9 @@ class ReportsRemoteDataSource(
             logger.e(TAG_REPORTS_REMOTE_DS, msg)
             throw ApiException(msg, response.status.value)
         }
-        val result = json.decodeFromString<ProfitLossResponse<CostTypeAnalysisDto>>(body)
-        return result.data
+        // Backend returns { period, cost_type_analysis }, not a flat object.
+        val result = json.decodeFromString<ProfitLossResponse<CostTypePLResponseDto>>(body)
+        return result.data?.costTypeAnalysis
     }
 
     /**
@@ -213,7 +239,7 @@ class ReportsRemoteDataSource(
      */
     suspend fun getMultiCostTypeAnalysis(token: String, request: MultiCostTypePLRequest): List<CostTypeAnalysisDto>? {
         val url = "${ApiConfig.BASE_URL}/reports/profit-loss/cost-types"
-        logger.d(TAG_REPORTS_REMOTE_DS, "Fetching multi cost type analysis: ${request.costTypes}")
+        logger.d(TAG_REPORTS_REMOTE_DS, "Fetching multi cost type analysis: ${request.costIds}")
 
         val response: HttpResponse = httpClient.post(url) {
             header(HttpHeaders.Authorization, "Bearer $token")
@@ -228,8 +254,9 @@ class ReportsRemoteDataSource(
             logger.e(TAG_REPORTS_REMOTE_DS, msg)
             throw ApiException(msg, response.status.value)
         }
-        val result = json.decodeFromString<ProfitLossResponse<List<CostTypeAnalysisDto>>>(body)
-        return result.data
+        // Backend returns { period, cost_types, summary }, not a bare array.
+        val result = json.decodeFromString<ProfitLossResponse<MultiCostTypePLResponseDto>>(body)
+        return result.data?.costTypes
     }
 
     /**
@@ -263,8 +290,8 @@ class ReportsRemoteDataSource(
      */
     suspend fun getPLSummary(
         token: String,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): PLSummaryDto? {
         val url = "${ApiConfig.BASE_URL}/reports/profit-loss/summary"
         logger.d(TAG_REPORTS_REMOTE_DS, "Fetching P&L summary: start_date=$startDate, end_date=$endDate")

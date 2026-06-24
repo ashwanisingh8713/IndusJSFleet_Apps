@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,6 +23,7 @@ import com.indusjs.uicomponents.components.CaretakerSectionCard
 import com.indusjs.uicomponents.components.DateVisualTransformation
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetSectionHeader
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.components.convertDdMmYyyyToIso
 import com.indusjs.uicomponents.components.convertIsoToDdMmYyyyRaw
@@ -49,7 +49,7 @@ internal fun EditModeContent(
                 onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateFirstName(it)) },
                 label = { Text(stringResource(Res.string.driver_create_first_name)) },
                 isError = state.firstNameError != null,
-                supportingText = state.firstNameError?.let { { Text(it) } },
+                supportingText = state.firstNameError?.let { { Text(it.resolve()) } },
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
                     imeAction = ImeAction.Next
@@ -61,9 +61,9 @@ internal fun EditModeContent(
             OutlinedTextField(
                 value = state.lastName,
                 onValueChange = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateLastName(it)) },
-                label = { Text("Last Name *") },
+                label = { Text(stringResource(Res.string.driver_create_last_name)) },
                 isError = state.lastNameError != null,
-                supportingText = state.lastNameError?.let { { Text(it) } },
+                supportingText = state.lastNameError?.let { { Text(it.resolve()) } },
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
                     imeAction = ImeAction.Next
@@ -84,7 +84,7 @@ internal fun EditModeContent(
             label = stringResource(Res.string.driver_label_mobile_required),
             placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
             isError = state.mobileError != null,
-            errorMessage = state.mobileError
+            errorMessage = state.mobileError?.resolve()
         )
 
         FleetInputField(
@@ -93,13 +93,13 @@ internal fun EditModeContent(
             fieldType = FieldType.EMAIL,
             label = stringResource(Res.string.driver_overview_email),
             isError = state.emailError != null,
-            errorMessage = state.emailError
+            errorMessage = state.emailError?.resolve()
         )
 
         HorizontalDivider()
 
         // License Section
-        EditSectionHeader(icon = "🪪", title = "License Details")
+        EditSectionHeader(icon = "🪪", title = stringResource(Res.string.driver_edit_license_details))
 
         OutlinedTextField(
             value = state.licenseNumber,
@@ -256,20 +256,5 @@ internal fun EditSectionHeader(
     icon: String,
     title: String
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 4.dp)
-    ) {
-        Text(
-            text = icon,
-            style = MaterialTheme.typography.titleMedium
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
+    FleetSectionHeader(title = title, emoji = icon)
 }

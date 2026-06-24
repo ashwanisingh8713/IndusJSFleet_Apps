@@ -11,9 +11,13 @@ import com.indusjs.fleet.domain.entity.user.OwnerInfo
 import com.indusjs.fleet.domain.entity.user.User
 import com.indusjs.fleet.domain.entity.user.UserProfile
 import com.indusjs.fleet.domain.entity.user.UserRole
+import com.indusjs.fleet.core.util.formatDateTimeForDisplay
 
 /**
  * Mapper for converting between User DTOs and domain entities.
+ *
+ * Wire timestamps are UTC epoch-millis (Long). The [User] domain entity keeps
+ * createdAt/updatedAt as display Strings, so we format here.
  */
 object UserMapper {
 
@@ -26,13 +30,15 @@ object UserMapper {
         role = role.toUserRole(),
         ownerId = ownerId?.toString(),
         isActive = isActive,
-        createdAt = createdAt,
-        updatedAt = updatedAt ?: createdAt
+        createdAt = formatDateTimeForDisplay(createdAt),
+        updatedAt = formatDateTimeForDisplay(updatedAt ?: createdAt)
     )
 
     fun AuthResponseDto.toDomain(): AuthResult = AuthResult(
         user = user.toDomain(),
-        token = token ?: ""
+        // Backend dropped the legacy `token` key — read `access_token` (fall back to
+        // the old `token` only for safety on a stale server).
+        token = accessToken ?: token ?: ""
     )
 
     fun OwnerStatsDto.toDomain(): OrganizationStats = OrganizationStats(
@@ -62,8 +68,8 @@ object UserMapper {
             role = role.toUserRole(),
             ownerId = ownerId?.toString(),
             isActive = isActive,
-            createdAt = createdAt,
-            updatedAt = updatedAt ?: createdAt
+            createdAt = formatDateTimeForDisplay(createdAt),
+            updatedAt = formatDateTimeForDisplay(updatedAt ?: createdAt)
         )
 
         return UserProfile(

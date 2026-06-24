@@ -9,7 +9,7 @@ import com.indusjs.error.result.Result
 import com.indusjs.uicomponents.components.CostTypeSelection
 import com.ijs.trip.presentation.cost.util.TripCostToDriverCostMapper
 import com.indusjs.fleet.core.util.ValidationUtils
-import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.data.model.costs.BulkCostItem
 import com.indusjs.fleet.data.model.costs.BulkCreateTripCostsRequest
 import com.indusjs.fleet.data.model.costs.TripCostTypes
@@ -389,8 +389,8 @@ class TripCostEntryViewModel(
 
         updateState { copy(isSaving = true) }
 
-        // Build bulk request - trip_id is in URL, vehicle_id from trip record
-        // Convert date/time to ISO 8601 format for v2 API
+        // Build bulk request - trip_id is in URL, vehicle_id from trip record.
+        // date -> UTC epoch millis (combined wall-clock instant); time -> HH:MM string.
         val bulkItems = validEntries.map { entry ->
             BulkCostItem(
                 // New structured cost fields
@@ -407,8 +407,10 @@ class TripCostEntryViewModel(
                     entry.costType
                 },
                 amount = entry.amount.toDoubleOrNull() ?: 0.0,
-                date = convertFormattedToIsoDateTime(entry.date, entry.time),
-                time = if (entry.time.isNotBlank()) convertFormattedToIsoDateTime(entry.date, entry.time) else null,
+                // date is backend-required; validEntries already passed getDateError, so this is non-null
+                // in practice — fall back to 0L defensively (backend also rejects a missing/invalid date).
+                date = convertToEpochMillis(entry.date, entry.time) ?: 0L,
+                time = entry.time.takeIf { it.isNotBlank() },
                 notes = entry.notes.takeIf { it.isNotBlank() },
                 fuelType = if (entry.isFuelCostType) entry.fuelType else null,
                 fuelQuantity = if (entry.isFuelCostType) entry.fuelQuantity.toDoubleOrNull() else null,

@@ -164,18 +164,18 @@ data class Trip(
     val distance: Double = 0.0,
     val estimatedDuration: Long = 0L,
     val actualDuration: Long? = null,
-    // Schedule - Departure
-    val scheduledStartTime: String? = null,
-    val plannedStart: String? = null,  // ISO 8601 format
-    val scheduledDate: String? = null,  // DD-MM-YYYY format
-    val startTime: String? = null,      // HH:MM format
-    // Schedule - Arrival
-    val plannedEnd: String? = null,     // ISO 8601 format
-    val deliveryDate: String? = null,   // DD-MM-YYYY format
-    val deliveryTime: String? = null,   // HH:MM format
-    // Actual times
-    val actualStartTime: String? = null,
-    val actualEndTime: String? = null,
+    // Schedule - Departure (all UTC epoch-millis; 0/null = unset)
+    val scheduledStartTime: Long? = null,
+    val plannedStart: Long? = null,
+    val scheduledDate: Long? = null,
+    val startTime: Long? = null,
+    // Schedule - Arrival (UTC epoch-millis)
+    val plannedEnd: Long? = null,
+    val deliveryDate: Long? = null,
+    val deliveryTime: Long? = null,
+    // Actual times (UTC epoch-millis)
+    val actualStartTime: Long? = null,
+    val actualEndTime: Long? = null,
     val cargoType: String? = null,
     val cargoDescription: String? = null,
     val cargoLoadingWeight: Double? = null,
@@ -186,10 +186,16 @@ data class Trip(
     val customerContact: String? = null,
     val priority: String? = null,
     val notes: String? = null,
-    val createdAt: String? = null,
+    val createdAt: Long? = null,  // UTC epoch-millis
     // Pricing
     val tripPrice: Double? = null,
+    // purchase_price (COGS) and selling_value (ACTUAL revenue) round-tripped from the API.
+    val purchasePrice: Double? = null,
+    val sellingValue: Double? = null,
     val paidTripPrice: Double? = null,
+    // Server-derived outstanding balance (selling_value − paid); authoritative, prefer
+    // over computing quote − paid (quote can differ from the actual selling_value).
+    val pendingAmount: Double? = null,
     val paymentStatus: String? = null,
     // Cost summary - null means not loaded, 0.0 means no costs
     val totalCost: Double? = null,
@@ -200,19 +206,19 @@ data class Trip(
 /**
  * Data class for creating a new trip.
  * Updated to match API v2 fields.
- * Note: v2 API requires plannedStart and plannedEnd in ISO 8601 format.
+ * Note: schedule timestamps are UTC epoch-millis.
  */
 data class CreateTripData(
     val vehicleId: Int,
     val driverId: Int,
-    // v2 API requires planned_start and planned_end (ISO 8601 format)
-    val plannedStart: String,
-    val plannedEnd: String,
-    // Legacy fields (optional, for backward compatibility)
-    val scheduledDate: String? = null,
-    val startTime: String? = null,
-    val deliveryDate: String? = null,
-    val deliveryTime: String? = null,
+    // v2 API requires planned_start and planned_end (UTC epoch-millis)
+    val plannedStart: Long,
+    val plannedEnd: Long,
+    // Legacy fields (optional) - UTC epoch-millis
+    val scheduledDate: Long? = null,
+    val startTime: Long? = null,
+    val deliveryDate: Long? = null,
+    val deliveryTime: Long? = null,
     val startLocation: String,
     val startLat: Double? = null,
     val startLng: Double? = null,
@@ -234,18 +240,23 @@ data class CreateTripData(
     val kmPerLiter: Double? = null,
     // Pricing
     val purchasePrice: Double? = null,
+    // Actual price (revenue) the customer owes; defaults to tripPrice (the quote)
+    // when not explicitly overridden. Sent as selling_value to the backend.
     val sellingValue: Double? = null,
     val estimatedExpense: Double? = null,
     val tripPrice: Double? = null,
-    // Payment
-    val paymentStatus: String? = null,
-    val pendingAmount: Double? = null,
-    val paymentMode: String? = null,
+    // NOTE: payment_status / pending_amount / payment_mode are derived server-side
+    // from payment records and are intentionally NOT part of the create payload.
     // Customer - New API supports customer_id for Customer entity association
     val customerId: Int? = null,
     // Customer - Legacy fields (fallback when customerId not provided)
     val customerName: String? = null,
     val customerContact: String? = null,
+    // Consignee / delivery (receiver) details — REQUIRED by the backend on create.
+    // Distinct from the billing customer, though they usually start the same.
+    val deliveryAddress: String? = null,
+    val deliveryPersonName: String? = null,
+    val deliveryContactNumber: String? = null,
     val priority: String? = null,
     val notes: String? = null
 )
@@ -260,14 +271,15 @@ data class TripStop(
     val location: String,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val arrivalTime: String? = null,
-    val departureTime: String? = null,
+    // UTC epoch-millis
+    val arrivalTime: Long? = null,
+    val departureTime: Long? = null,
     val stopDuration: Int? = null,
     val notes: String? = null,
     val isCompleted: Boolean = false,
-    val completedAt: String? = null,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
+    val completedAt: Long? = null,
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null
 )
 
 /**
@@ -278,7 +290,7 @@ data class CreateTripStopData(
     val location: String,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val arrivalTime: String? = null,
+    val arrivalTime: Long? = null,  // UTC epoch-millis
     val stopDuration: Int? = null,
     val notes: String? = null
 )
@@ -291,7 +303,7 @@ data class UpdateTripStopData(
     val location: String? = null,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val arrivalTime: String? = null,
+    val arrivalTime: Long? = null,  // UTC epoch-millis
     val stopDuration: Int? = null,
     val notes: String? = null
 )

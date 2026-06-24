@@ -82,12 +82,13 @@ sealed interface FleetRoute : NavKey {
     @Serializable data object TripProfitLoss : FleetRoute
     @Serializable data object CostAnalysis : FleetRoute
     @Serializable data object ConsolidatedPL : FleetRoute
+    @Serializable data object CustomerProfitLoss : FleetRoute
 
     // ==================== Customer Routes ====================
 
     @Serializable data object Customers : FleetRoute
     @Serializable data class CustomerDetail(val customerId: String) : FleetRoute
-    @Serializable data object CreateCustomer : FleetRoute
+    @Serializable data class CreateCustomer(val selectForTrip: Boolean = false) : FleetRoute
 
     // ==================== Payment Routes ====================
 

@@ -3,8 +3,10 @@ package com.ijs.reports.presentation
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.domain.entity.CostBreakdownItem
 import com.ijs.reports.domain.entity.PLSummary
+import com.indusjs.pdfreport.model.FleetProfitLossPdfData
 // ReportPeriod and ProfitStatus are now in ReportEnums.kt (same package)
 
 /**
@@ -14,7 +16,7 @@ object ReportsContract {
 
     data class State(
         val isLoading: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         val summary: PLSummary? = null,
         // Period selection
         val selectedPeriod: ReportPeriod = ReportPeriod.MONTHLY,
@@ -26,7 +28,10 @@ object ReportsContract {
         // Export
         val isExporting: Boolean = false,
         val exportSuccess: Boolean = false,
-        val exportedFilePath: String? = null
+        val exportedFilePath: String? = null,
+        // Non-null while a PDF export is in flight; drives FleetProfitLossPdfHandler in the screen
+        // (which generates the real PDF and shows the open/share dialog).
+        val pdfExportData: FleetProfitLossPdfData? = null
     ) : UiState {
         val hasSummary: Boolean get() = summary != null
         val hasExpenseData: Boolean get() = expenseBreakdown.isNotEmpty()
@@ -50,6 +55,7 @@ object ReportsContract {
         data object NavigateToVehiclePL : Intent
         data object NavigateToTripPL : Intent
         data object NavigateToConsolidatedPL : Intent
+        data object NavigateToCustomerPL : Intent
         // Navigation - Cost Analysis Reports
         data object NavigateToCostAnalysis : Intent
         data object NavigateToMaintenanceCostReport : Intent
@@ -63,11 +69,12 @@ object ReportsContract {
     }
 
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         // Navigation effects - P&L Reports
         data object NavigateToVehiclePL : Effect
         data object NavigateToTripPL : Effect
         data object NavigateToConsolidatedPL : Effect
+        data object NavigateToCustomerPL : Effect
         // Navigation effects - Cost Analysis Reports
         data object NavigateToCostAnalysis : Effect
         data object NavigateToMaintenanceCostReport : Effect
@@ -77,6 +84,6 @@ object ReportsContract {
         data object NavigateToCombinedReport : Effect
         // Export
         data class ShowExportSuccess(val filePath: String) : Effect
-        data class ShowExportError(val message: String) : Effect
+        data class ShowExportError(val message: UiText) : Effect
     }
 }

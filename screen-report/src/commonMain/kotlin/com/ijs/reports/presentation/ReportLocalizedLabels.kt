@@ -65,3 +65,10 @@ fun ReportChartType.localizedLabel(): String = when (this) {
     ReportChartType.BAR -> stringResource(Res.string.report_chart_bar)
     ReportChartType.PIE -> stringResource(Res.string.report_chart_pie)
 }
+
+@Composable
+fun ReportExportFormat.localizedLabel(): String = when (this) {
+    ReportExportFormat.PDF -> stringResource(Res.string.export_format_pdf)
+    ReportExportFormat.CSV -> stringResource(Res.string.export_format_csv)
+    ReportExportFormat.EXCEL -> stringResource(Res.string.export_format_excel)
+}

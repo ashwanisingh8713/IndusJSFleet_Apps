@@ -15,18 +15,17 @@ import org.jetbrains.compose.resources.stringResource
 fun driverStatusLabelsByApi(): Map<String, String> {
     val inactive = stringResource(Res.string.driver_state_inactive)
     val active = stringResource(Res.string.driver_state_active)
-    val onRoute = stringResource(Res.string.driver_state_on_route)
+    val onTrip = stringResource(Res.string.driver_state_on_trip)
     val onLeave = stringResource(Res.string.driver_state_on_leave)
     val suspended = stringResource(Res.string.driver_state_suspended)
-    val terminated = stringResource(Res.string.driver_state_terminated)
     return mapOf(
         StatusConstants.DriverState.INACTIVE to inactive,
         StatusConstants.DriverState.ACTIVE to active,
-        StatusConstants.DriverState.ON_ROUTE to onRoute,
+        StatusConstants.DriverState.ON_TRIP to onTrip,
         StatusConstants.DriverState.ON_LEAVE to onLeave,
         StatusConstants.DriverState.SUSPENDED to suspended,
-        StatusConstants.DriverState.TERMINATED to terminated,
-        "on_trip" to onRoute
+        // Legacy wire value tolerated on read; reuses the "On Trip" label.
+        "on_route" to onTrip
     )
 }
 

@@ -12,11 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetAvatar
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.UiText
@@ -160,48 +162,6 @@ fun TeamMemberDetailScreen(
     }
 }
 
-/**
- * Simplified overload for use without ViewModel (backward compatibility).
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TeamMemberDetailScreen(
-    memberId: String,
-    onNavigateBack: () -> Unit = {}
-) {
-    // Placeholder for when no ViewModel is provided
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.team_detail)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = stringResource(Res.string.back),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(Res.string.team_detail_viewmodel_required, memberId),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
 @Composable
 private fun ViewMemberContent(
     member: TeamMember,
@@ -215,30 +175,23 @@ private fun ViewMemberContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Header with Avatar
-        Box(
-            modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
-                .background(
-                    when (member.role) {
-                        TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
-                        TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
-                        TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
-                    }
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = member.initials.uppercase(),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = when (member.role) {
-                    TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.onTertiary
-                    TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.onPrimary
-                    TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.onSecondary
-                }
-            )
+        val roleColor = when (member.role) {
+            TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
+            TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
+            TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
         }
+        val onRoleColor = when (member.role) {
+            TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.onTertiary
+            TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.onPrimary
+            TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.onSecondary
+        }
+        FleetAvatar(
+            name = member.fullName,
+            size = 100.dp,
+            background = roleColor,
+            contentColor = onRoleColor,
+            textStyle = MaterialTheme.typography.headlineLarge
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -313,71 +266,39 @@ private fun ViewMemberContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         // Contact Information Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+        FleetTitledSectionCard(
+            title = stringResource(Res.string.team_section_contact_information)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.team_section_contact_information),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+            DetailRow(
+                icon = "✉️",
+                label = stringResource(Res.string.team_label_email),
+                value = member.email
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                DetailRow(
-                    icon = "✉️",
-                    label = stringResource(Res.string.team_label_email),
-                    value = member.email
-                )
-
-                // Mobile with call icon
-                ClickablePhoneRow(
-                    phoneNumber = member.mobile,
-                    label = stringResource(Res.string.team_label_mobile),
-                    icon = "📱"
-                )
-            }
+            // Mobile with call icon
+            ClickablePhoneRow(
+                phoneNumber = member.mobile,
+                label = stringResource(Res.string.team_label_mobile),
+                icon = "📱"
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Additional Information Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+        FleetTitledSectionCard(
+            title = stringResource(Res.string.team_section_additional_info)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.team_section_additional_info),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                DetailRow(
-                    icon = "🆔",
-                    label = stringResource(Res.string.team_label_member_id),
-                    value = member.id
-                )
-                DetailRow(
-                    icon = "📅",
-                    label = stringResource(Res.string.team_label_created_on),
-                    value = formatDate(member.createdAt)
-                )
-            }
+            DetailRow(
+                icon = "🆔",
+                label = stringResource(Res.string.team_label_member_id),
+                value = member.id
+            )
+            DetailRow(
+                icon = "📅",
+                label = stringResource(Res.string.team_label_created_on),
+                value = formatDateToHumanReadable(member.createdAt).ifBlank { "—" }
+            )
         }
     }
 }
@@ -395,122 +316,75 @@ private fun EditMemberContent(
             .padding(16.dp)
     ) {
         // Personal Information Section
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+        FleetTitledSectionCard(
+            title = stringResource(Res.string.team_section_personal_information)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.team_section_personal_information),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+            FleetInputField(
+                value = state.editFirstName,
+                onValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateFirstName(it)) },
+                fieldType = FieldType.DEFAULT,
+                label = stringResource(Res.string.team_label_first_name),
+                placeholder = stringResource(Res.string.team_placeholder_first_name),
+                isError = state.firstNameError != null,
+                errorMessage = state.firstNameError?.resolve(),
+                enabled = !state.isSaving
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-                FleetInputField(
-                    value = state.editFirstName,
-                    onValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateFirstName(it)) },
-                    fieldType = FieldType.DEFAULT,
-                    label = stringResource(Res.string.team_label_first_name),
-                    placeholder = stringResource(Res.string.team_placeholder_first_name),
-                    isError = state.firstNameError != null,
-                    errorMessage = state.firstNameError?.resolve(),
-                    enabled = !state.isSaving
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                FleetInputField(
-                    value = state.editLastName,
-                    onValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateLastName(it)) },
-                    fieldType = FieldType.DEFAULT,
-                    label = stringResource(Res.string.team_label_last_name),
-                    placeholder = stringResource(Res.string.team_placeholder_last_name),
-                    isError = state.lastNameError != null,
-                    errorMessage = state.lastNameError?.resolve(),
-                    enabled = !state.isSaving
-                )
-            }
+            FleetInputField(
+                value = state.editLastName,
+                onValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateLastName(it)) },
+                fieldType = FieldType.DEFAULT,
+                label = stringResource(Res.string.team_label_last_name),
+                placeholder = stringResource(Res.string.team_placeholder_last_name),
+                isError = state.lastNameError != null,
+                errorMessage = state.lastNameError?.resolve(),
+                enabled = !state.isSaving
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Contact Information Section
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+        FleetTitledSectionCard(
+            title = stringResource(Res.string.team_section_contact_information)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.team_section_contact_information),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+            FleetInputField(
+                value = state.editEmail,
+                onValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateEmail(it)) },
+                fieldType = FieldType.EMAIL,
+                label = stringResource(Res.string.team_label_email),
+                placeholder = stringResource(Res.string.team_placeholder_email),
+                isError = state.emailError != null,
+                errorMessage = state.emailError?.resolve(),
+                enabled = !state.isSaving
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-                FleetInputField(
-                    value = state.editEmail,
-                    onValueChange = { viewModel.sendIntent(TeamMemberDetailContract.Intent.UpdateEmail(it)) },
-                    fieldType = FieldType.EMAIL,
-                    label = stringResource(Res.string.team_label_email),
-                    placeholder = stringResource(Res.string.team_placeholder_email),
-                    isError = state.emailError != null,
-                    errorMessage = state.emailError?.resolve(),
-                    enabled = !state.isSaving
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                FleetInputField(
-                    value = state.editMobile,
-                    onValueChange = {
-                        viewModel.sendIntent(
-                            TeamMemberDetailContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
-                        )
-                    },
-                    fieldType = FieldType.PHONE,
-                    label = stringResource(Res.string.team_label_mobile),
-                    placeholder = stringResource(Res.string.team_placeholder_mobile),
-                    isError = state.mobileError != null,
-                    errorMessage = state.mobileError?.resolve(),
-                    enabled = !state.isSaving
-                )
-            }
+            FleetInputField(
+                value = state.editMobile,
+                onValueChange = {
+                    viewModel.sendIntent(
+                        TeamMemberDetailContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
+                    )
+                },
+                fieldType = FieldType.PHONE,
+                label = stringResource(Res.string.team_label_mobile),
+                placeholder = stringResource(Res.string.team_placeholder_mobile),
+                isError = state.mobileError != null,
+                errorMessage = state.mobileError?.resolve(),
+                enabled = !state.isSaving
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Role & Status Section
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+        FleetTitledSectionCard(
+            title = stringResource(Res.string.team_section_role_status)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = stringResource(Res.string.team_section_role_status),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 // Role Selection (based on permissions and not editing self)
                 if (state.canChangeRole && state.availableRoles.isNotEmpty() && !state.isSelf) {
                     Text(
@@ -589,7 +463,6 @@ private fun EditMemberContent(
                         enabled = !state.isSaving && state.canToggleActive
                     )
                 }
-            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -725,21 +598,6 @@ private fun RolePermissionPreview(role: TeamMemberRole) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-    }
-}
-
-private fun formatDate(dateString: String): String {
-    return try {
-        // Parse ISO date and format to DD-MM-YYYY
-        if (dateString.contains("T")) {
-            val datePart = dateString.substringBefore("T")
-            val parts = datePart.split("-")
-            if (parts.size == 3) {
-                "${parts[2]}-${parts[1]}-${parts[0]}"
-            } else dateString
-        } else dateString
-    } catch (e: Exception) {
-        dateString
     }
 }
 

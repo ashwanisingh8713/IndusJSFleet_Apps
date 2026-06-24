@@ -262,7 +262,7 @@ private fun ProfileDrawerHeader(
     userRole: String,
     onClick: () -> Unit
 ) {
-    val initials = remember(userName) { computeInitials(userName) }
+    val initials = remember(userName) { com.indusjs.uicomponents.components.initialsOf(userName) }
     val primary = MaterialTheme.colorScheme.primary
     val onSurface = MaterialTheme.colorScheme.onSurface
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
@@ -416,12 +416,4 @@ private fun ProfileDrawerHeader(
     }
 }
 
-private fun computeInitials(name: String): String {
-    val parts = name.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
-    return when {
-        parts.isEmpty() -> "?"
-        parts.size == 1 -> parts[0].take(1).uppercase()
-        else -> (parts.first().take(1) + parts.last().take(1)).uppercase()
-    }
-}
 

@@ -29,8 +29,8 @@ interface ReportsRepository : Repository {
      */
     suspend fun getFleetProfitLoss(
         period: String? = null,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): Result<FleetProfitLoss>
 
     /**
@@ -48,8 +48,8 @@ interface ReportsRepository : Repository {
      */
     suspend fun getCostTypeAnalysis(
         costType: String,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): Result<CostTypeAnalysis>
 
     /**
@@ -63,12 +63,17 @@ interface ReportsRepository : Repository {
     suspend fun getConsolidatedPL(request: ConsolidatedPLRequest): Result<ConsolidatedPL>
 
     /**
+     * Get P&L grouped by customer for a period (daily|weekly|monthly|quarterly|yearly).
+     */
+    suspend fun getCustomerProfitLoss(period: String): Result<CustomerPLReport>
+
+    /**
      * Get P&L summary with alerts
-     * @param startDate Start date for filtering (YYYY-MM-DD format)
-     * @param endDate End date for filtering (YYYY-MM-DD format)
+     * @param startDate Start of range as UTC epoch millis (null = unset)
+     * @param endDate End of range as UTC epoch millis (null = unset)
      */
     suspend fun getPLSummary(
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): Result<PLSummary>
 }

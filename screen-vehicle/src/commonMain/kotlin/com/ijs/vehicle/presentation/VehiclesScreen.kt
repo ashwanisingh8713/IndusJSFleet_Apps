@@ -21,9 +21,11 @@ import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FilterDefinition
 import com.indusjs.uicomponents.components.FleetFilterBar
+import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.vehicle.domain.entity.VehicleStatus
 import com.ijs.vehicle.domain.entity.VehicleType
@@ -46,6 +48,15 @@ fun VehiclesScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val pullRefreshState = rememberPullToRefreshState()
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
@@ -53,7 +64,7 @@ fun VehiclesScreen(
                 is VehiclesContract.Effect.NavigateToVehicleDetail -> onNavigateToDetail(effect.vehicleId)
                 is VehiclesContract.Effect.NavigateToAddVehicle -> onNavigateToAdd()
                 is VehiclesContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
             }
         }
@@ -162,7 +173,7 @@ fun VehiclesScreen(
                 state.error != null -> {
                     // Using reusable ErrorContent component
                     ErrorContent(
-                        error = state.error!!,
+                        error = state.error!!.resolve(),
                         screenContext = FleetErrorContext.VEHICLES,
                         onRetry = { viewModel.sendIntent(VehiclesContract.Intent.LoadVehicles) }
                     )
@@ -344,8 +355,8 @@ private fun VehicleCard(
                     icon = "👤",
                     value = vehicle.assignedDriver?.fullName()?.take(12)
                         ?: vehicle.assignedDriverName?.take(12)
-                        ?: "N/A",
-                    label = "Driver"
+                        ?: stringResource(Res.string.label_not_applicable),
+                    label = stringResource(Res.string.vehicle_list_label_driver)
                 )
             }
 
@@ -385,32 +396,17 @@ private fun VehicleInfoItem(
     label: String,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    // Transparent, centered stat (no tinted box) — preserve original look via
+    // showBackground = false + centered = true; emoji passes through, valueColor = onSurface.
+    FleetMetricTile(
+        value = value,
+        label = label,
+        emoji = icon,
+        valueColor = MaterialTheme.colorScheme.onSurface,
+        showBackground = false,
+        centered = true,
         modifier = modifier.padding(horizontal = 8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    )
 }
 
 @Composable

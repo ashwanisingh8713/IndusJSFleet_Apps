@@ -13,7 +13,11 @@ import androidx.compose.ui.unit.dp
 import com.ijs.customer.presentation.toSelectableCustomer
 import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.FleetDropdown
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.customer.CustomerDetailsSection
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Cargo and customer editing section for trip edit mode.
@@ -24,33 +28,7 @@ internal fun EditCargoCustomerSection(
     state: TripDetailContract.State,
     viewModel: TripDetailViewModel
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    modifier = Modifier.size(36.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("📦", style = MaterialTheme.typography.titleMedium)
-                    }
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Cargo & Customer",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+    FleetTitledSectionCard(title = stringResource(Res.string.trip_edit_section_cargo_customer), emoji = "📦") {
             // Cargo Type Dropdown
             CargoTypeDropdown(state = state, viewModel = viewModel)
 
@@ -59,7 +37,7 @@ internal fun EditCargoCustomerSection(
             OutlinedTextField(
                 value = state.cargoDescription,
                 onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateCargoDescription(it)) },
-                label = { Text("Cargo Description") },
+                label = { Text(stringResource(Res.string.trip_create_cargo_desc_label)) },
                 leadingIcon = { Text("📝", modifier = Modifier.padding(start = 8.dp)) },
                 singleLine = false,
                 maxLines = 2,
@@ -95,16 +73,43 @@ internal fun EditCargoCustomerSection(
                 OutlinedTextField(
                     value = state.tripPrice,
                     onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateTripPrice(it)) },
-                    label = { Text("Trip Price (Expected) *") },
+                    label = { Text(stringResource(Res.string.trip_edit_label_trip_price)) },
                     leadingIcon = { Text("💰", modifier = Modifier.padding(start = 8.dp)) },
-                    placeholder = { Text("Enter trip price") },
+                    placeholder = { Text(stringResource(Res.string.trip_edit_enter_trip_price)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     supportingText = {
                         Text(
-                            text = "Expected Cost + Profit",
+                            text = stringResource(Res.string.trip_edit_trip_price_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Actual Price (Revenue) - editable, defaults to the quoted trip price.
+                // Sent to the backend as selling_value (the actual amount the customer owes).
+                OutlinedTextField(
+                    value = state.actualPrice,
+                    onValueChange = { newValue ->
+                        if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                            viewModel.sendIntent(TripDetailContract.Intent.UpdateActualPrice(newValue))
+                        }
+                    },
+                    label = { Text(stringResource(Res.string.trip_actual_price_revenue_label)) },
+                    leadingIcon = { Text("₹", modifier = Modifier.padding(start = 8.dp)) },
+                    placeholder = { Text(stringResource(Res.string.trip_edit_enter_trip_price)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    supportingText = {
+                        Text(
+                            text = stringResource(Res.string.trip_actual_price_revenue_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -115,7 +120,7 @@ internal fun EditCargoCustomerSection(
             }
 
             // Priority selector
-            Text("Priority", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+            Text(stringResource(Res.string.trip_edit_priority), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
             Spacer(modifier = Modifier.height(8.dp))
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -136,7 +141,6 @@ internal fun EditCargoCustomerSection(
                     )
                 }
             }
-        }
     }
 }
 
@@ -158,8 +162,8 @@ private fun CargoTypeDropdown(
             value = state.cargoType.takeIf { it.isNotBlank() }?.replaceFirstChar { it.uppercaseChar() } ?: "",
             onValueChange = {},
             readOnly = true,
-            label = { Text("Cargo Type") },
-            placeholder = { Text("Select cargo type") },
+            label = { Text(stringResource(Res.string.trip_label_cargo_type)) },
+            placeholder = { Text(stringResource(Res.string.trip_edit_select_cargo_type)) },
             leadingIcon = { Text("📦", modifier = Modifier.padding(start = 8.dp)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCargoTypeDropdown) },
             modifier = Modifier
@@ -217,8 +221,8 @@ private fun CargoWeightRow(
                     viewModel.sendIntent(TripDetailContract.Intent.UpdateCargoWeight(newValue))
                 }
             },
-            label = { Text("Cargo Weight") },
-            placeholder = { Text("e.g., 500") },
+            label = { Text(stringResource(Res.string.trip_edit_cargo_weight)) },
+            placeholder = { Text(stringResource(Res.string.trip_create_cargo_weight_placeholder)) },
             leadingIcon = { Text("⚖️", modifier = Modifier.padding(start = 8.dp)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             singleLine = true,
@@ -227,11 +231,11 @@ private fun CargoWeightRow(
         )
 
         FleetDropdown(
-            label = "Unit",
+            label = stringResource(Res.string.trip_edit_unit),
             options = state.weightUnitOptions.map { DropdownOption(id = it, label = it) },
             selectedOptionId = state.weightUnit.takeIf { it.isNotBlank() },
             onOptionSelected = { viewModel.sendIntent(TripDetailContract.Intent.UpdateWeightUnit(it)) },
-            placeholder = "Unit",
+            placeholder = stringResource(Res.string.trip_edit_unit),
             modifier = Modifier.weight(0.6f)
         )
     }
@@ -245,44 +249,17 @@ internal fun EditNotesSection(
     state: TripDetailContract.State,
     viewModel: TripDetailViewModel
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    modifier = Modifier.size(36.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("📝", style = MaterialTheme.typography.titleMedium)
-                    }
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Notes",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = state.notes,
-                onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateNotes(it)) },
-                label = { Text("Additional Notes") },
-                placeholder = { Text("Add any additional notes or instructions...") },
-                singleLine = false,
-                maxLines = 4,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            )
-        }
+    FleetTitledSectionCard(title = stringResource(Res.string.trip_edit_section_notes), emoji = "📝") {
+        OutlinedTextField(
+            value = state.notes,
+            onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateNotes(it)) },
+            label = { Text(stringResource(Res.string.trip_edit_additional_notes)) },
+            placeholder = { Text(stringResource(Res.string.trip_edit_notes_placeholder)) },
+            singleLine = false,
+            maxLines = 4,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        )
     }
 }
 

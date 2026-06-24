@@ -57,9 +57,9 @@ data class PLSummaryDto(
 @Serializable
 data class PLPeriodDto(
     @SerialName("start_date")
-    val startDate: String? = null,
+    val startDate: Long? = null,
     @SerialName("end_date")
-    val endDate: String? = null
+    val endDate: Long? = null
 )
 
 /**

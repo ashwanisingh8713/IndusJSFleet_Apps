@@ -14,8 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.util.formatCostAmount
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -194,7 +194,7 @@ internal fun EnhancedDriverCostItem(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "📅 ${FleetDateTime.formatAnyToDisplayDate(cost.date)}",
+                            text = "📅 ${formatDateToHumanReadable(cost.date)}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -241,184 +241,3 @@ internal fun EnhancedDriverCostItem(
         }
     }
 }
-
-/**
- * Summary card showing earnings, deductions, and net amount.
- * @deprecated Use DriverCostsHeroCard instead
- */
-@Composable
-internal fun DriverCostsSummaryCard(
-    earnings: Double,
-    deductions: Double,
-    netAmount: Double,
-    costCount: Int
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Net Amount Header
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = stringResource(Res.string.driver_costs_net_amount),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                )
-                Text(
-                    text = "₹${formatCostAmount(netAmount)}",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (netAmount >= 0) MaterialTheme.colorScheme.onPrimaryContainer
-                            else MaterialTheme.colorScheme.error
-                )
-                Text(
-                    text = stringResource(Res.string.driver_costs_n_entries, costCount),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
-                )
-            }
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
-
-            // Earnings and Deductions Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "💰 ${stringResource(Res.string.driver_costs_earnings)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = "₹${formatCostAmount(earnings)}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "📉 ${stringResource(Res.string.driver_costs_deductions)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = "- ₹${formatCostAmount(deductions)}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Single driver cost item row.
- */
-
-@Composable
-internal fun DriverCostItem(cost: com.indusjs.fleet.data.model.driver.DriverCostDto) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                // Cost Label
-                Text(
-                    text = cost.displayLabel,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Date and Description
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "📅 ${FleetDateTime.formatAnyToDisplayDate(cost.date)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (!cost.description.isNullOrBlank()) {
-                        Text(
-                            text = " • ${cost.description}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
-                        )
-                    }
-                }
-
-                // Month if available
-                cost.month?.let { month ->
-                    Text(
-                        text = "📆 $month",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Amount
-            Column(horizontalAlignment = Alignment.End) {
-                val isDeduction = cost.isDeductionCost
-                Text(
-                    text = "${if (isDeduction) "- " else "+ "}₹${formatCostAmount(cost.amount)}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isDeduction) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.primary
-                )
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = if (isDeduction) MaterialTheme.colorScheme.errorContainer
-                            else MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Text(
-                        text = if (isDeduction) {
-                            stringResource(Res.string.driver_cost_deduction)
-                        } else {
-                            stringResource(Res.string.driver_costs_earning)
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isDeduction) MaterialTheme.colorScheme.onErrorContainer
-                                else MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Active filters display row.
- */
-

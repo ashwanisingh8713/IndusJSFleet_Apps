@@ -21,8 +21,9 @@ data class CustomerEntity(
     val isActive: Boolean = true,
     val ownerId: Int? = null,
     val createdById: Int? = null,
-    val createdAt: String? = null,
-    val updatedAt: String? = null,
+    // UTC epoch-millis (mirrors CustomerDto). 0/null = unset.
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null,
     val cachedAt: Long = 0 // Timestamp when cached
 )
 

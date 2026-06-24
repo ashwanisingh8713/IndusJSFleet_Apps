@@ -45,8 +45,13 @@ data class TripCostsListApiResponse(
 data class TripCostsListDataDto(
     @SerialName("costs")
     val costs: List<TripCostDto> = emptyList(),
-    @SerialName("total_amount")
-    val totalAmount: Double = 0.0
+    // Backend (GET /trips/:id/costs) returns "total_cost", "cost_by_group" and "count".
+    @SerialName("total_cost")
+    val totalCost: Double = 0.0,
+    @SerialName("cost_by_group")
+    val costByGroup: Map<String, Double> = emptyMap(),
+    @SerialName("count")
+    val count: Int = 0
 ) : Dto
 
 @Serializable
@@ -145,7 +150,9 @@ data class DeleteCostApiResponse(
 
 @Serializable
 data class BulkCostsResultDto(
-    @SerialName("created")
+    // Backend returns the saved count as "created_count" (see tripcost/maintenance
+    // BulkCreateResponse). Must match exactly or it deserializes to 0 → "0 cost(s) saved".
+    @SerialName("created_count")
     val created: Int = 0
 )
 

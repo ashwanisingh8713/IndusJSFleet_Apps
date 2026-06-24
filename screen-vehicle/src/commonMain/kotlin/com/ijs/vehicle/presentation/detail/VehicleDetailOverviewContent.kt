@@ -2,7 +2,6 @@ package com.ijs.vehicle.presentation.detail
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -12,6 +11,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.ClickablePhoneRow
 import com.indusjs.uicomponents.components.CaretakerInfoCard
+import com.indusjs.uicomponents.components.FleetAvatar
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.vehicle.domain.entity.VehicleStatus
@@ -145,15 +146,12 @@ internal fun AssignedDriverSection(vehicle: Vehicle) {
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text("👤", style = MaterialTheme.typography.titleMedium)
-                }
-            }
+            // Filled primary-container avatar (40dp, titleMedium) — FleetAvatar defaults match the
+            // original fill; the "👤" glyph becomes real driver initials.
+            FleetAvatar(
+                name = driverName,
+                size = 40.dp
+            )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -293,45 +291,7 @@ internal fun EnhancedSectionCard(
     icon: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Section Header
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Surface(
-                    modifier = Modifier.size(36.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = icon,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            content()
-        }
-    }
+    FleetTitledSectionCard(title = title, emoji = icon, content = content)
 }
 
 @Composable

@@ -122,7 +122,7 @@ fun PaymentDetailScreen(
                 }
                 state.error != null -> {
                     ErrorContent(
-                        error = state.error ?: stringResource(Res.string.error_generic),
+                        error = state.error?.resolve() ?: stringResource(Res.string.error_generic),
                         onRetry = { viewModel.sendIntent(PaymentDetailContract.Intent.Refresh) }
                     )
                 }
@@ -186,7 +186,7 @@ private fun PaymentDetailTopBar(
                     } else {
                         Icon(
                             painter = painterResource(Res.drawable.ic_download),
-                            contentDescription = "Download Receipt"
+                            contentDescription = stringResource(Res.string.action_download_receipt)
                         )
                     }
                 }
@@ -346,7 +346,7 @@ private fun generatePdfData(
         netAmount = payment.netAmount,
         paymentType = payment.typeDisplay,
         paymentMode = payment.modeDisplay,
-        paymentDate = payment.paymentDate?.take(10) ?: "",
+        paymentDate = com.indusjs.fleet.core.util.formatDateToHumanReadable(payment.paymentDate),
         paymentStatus = paymentStateLabels[payment.paymentStatus.apiValue] ?: payment.paymentStatus.displayName,
         transactionId = payment.transactionId,
         bankName = payment.bankName,

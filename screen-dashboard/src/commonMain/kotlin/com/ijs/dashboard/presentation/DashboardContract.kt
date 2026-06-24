@@ -31,7 +31,10 @@ object DashboardContract {
         val error: String? = null,
         val isRefreshing: Boolean = false,
         val userName: String = "",
+        // userRole is kept for DISPLAY only (shown in the nav drawer), never for authorization.
         val userRole: String = "",
+        // Permission flag (computed from PermissionChecker — never role names)
+        val hasFinancialAccessPermission: Boolean = false,
         val hasCachedData: Boolean = false,
         val isOffline: Boolean = false,
         val lastUpdated: String? = null,
@@ -77,13 +80,10 @@ object DashboardContract {
     ) : UiState {
         /**
          * Determines if the user can view financial data.
-         * Only Owner and General Manager have financial access.
+         * Gated on the financials:read permission.
          */
         val hasFinancialAccess: Boolean
-            get() {
-                val role = userRole.lowercase()
-                return role == "owner" || role == "general_manager" || role == "generalmanager" || role == "general manager"
-            }
+            get() = hasFinancialAccessPermission
 
         /**
          * Whether financial summary is loaded and available.

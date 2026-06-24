@@ -76,23 +76,41 @@ class TripRepositoryImpl(
     override suspend fun createTripWithData(data: CreateTripData): Result<Trip> {
         return try {
             val token = requireAuthToken()
+            // Backend requires a managed customer_id (binding:required, rejects 0).
+            val customerId = data.customerId
+            if (customerId == null || customerId == 0) {
+                return Result.Error(
+                    ApiException("A customer must be selected"),
+                    "A customer must be selected"
+                )
+            }
+            // Backend requires non-zero start/end coordinates (float64 binding:required).
+            val startLat = data.startLat
+            val startLng = data.startLng
+            val endLat = data.endLat
+            val endLng = data.endLng
+            if (startLat == null || startLng == null || endLat == null || endLng == null) {
+                return Result.Error(
+                    ApiException("Start and end locations must have coordinates"),
+                    "Start and end locations must have coordinates"
+                )
+            }
             val request = CreateTripRequest(
                 vehicleId = data.vehicleId,
                 driverId = data.driverId,
-                // v2 API requires planned_start and planned_end
+                // Backend requires planned_start, planned_end, scheduled_date, start_time
                 plannedStart = data.plannedStart,
                 plannedEnd = data.plannedEnd,
-                // Legacy fields (optional)
-                scheduledDate = data.scheduledDate,
-                startTime = data.startTime,
+                scheduledDate = data.scheduledDate ?: data.plannedStart,
+                startTime = data.startTime ?: data.plannedStart,
                 deliveryDate = data.deliveryDate,
                 deliveryTime = data.deliveryTime,
                 startLocation = data.startLocation,
-                startLat = data.startLat,
-                startLng = data.startLng,
+                startLat = startLat,
+                startLng = startLng,
                 endLocation = data.endLocation,
-                endLat = data.endLat,
-                endLng = data.endLng,
+                endLat = endLat,
+                endLng = endLng,
                 estimatedDistance = data.estimatedDistance,
                 cargoType = data.cargoType,
                 cargoDescription = data.cargoDescription,
@@ -106,17 +124,18 @@ class TripRepositoryImpl(
                 fuelRate = data.fuelRate,
                 kmPerLiter = data.kmPerLiter,
                 purchasePrice = data.purchasePrice,
+                // selling_value = the ACTUAL price (revenue). Defaults to the quoted
+                // tripPrice when the user did not override it.
                 sellingValue = data.sellingValue ?: data.tripPrice,
                 estimatedExpense = data.estimatedExpense,
                 tripPrice = data.tripPrice,
-                rawTripPrice = data.tripPrice,
-                paymentStatus = data.paymentStatus,
-                pendingAmount = data.pendingAmount,
-                paymentMode = data.paymentMode,
-                // Customer - prefer customerId for entity association
-                customerId = data.customerId,
-                customerName = data.customerName,
-                customerContact = data.customerContact,
+                // payment_status / pending_amount / payment_mode are derived server-side.
+                // Customer - backend requires customer_id only; it snapshots name/contact server-side.
+                customerId = customerId,
+                // Consignee / delivery (receiver) details — backend requires all three on create.
+                deliveryAddress = data.deliveryAddress,
+                deliveryPersonName = data.deliveryPersonName,
+                deliveryContactNumber = data.deliveryContactNumber,
                 priority = data.priority,
                 notes = data.notes
             )
@@ -145,10 +164,14 @@ class TripRepositoryImpl(
                 estimatedDistance = trip.distance.takeIf { it > 0 },
                 cargoType = trip.cargoType,
                 cargoDescription = trip.cargoDescription,
-                customerName = trip.customerName,
+                // Backend update binds customer_id only (re-snapshots name/contact server-side).
+                customerId = trip.customerId?.toIntOrNull(),
+                // purchase_price (COGS) — forwarded on update too, not just create.
+                purchasePrice = trip.purchasePrice,
                 tripPrice = trip.tripPrice,
-                rawTripPrice = trip.tripPrice,
-                sellingValue = trip.tripPrice,
+                // selling_value = the ACTUAL price (revenue). This Trip-based builder has no
+                // separate actual field, so it falls back to the quoted tripPrice.
+                sellingValue = trip.sellingValue ?: trip.tripPrice,
                 priority = trip.priority,
                 notes = trip.notes
             )

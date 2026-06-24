@@ -3,6 +3,8 @@ package com.ijs.trip.payment.presentation
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.trip.payment.TAG_ADD_PAYMENT_VM
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.datetimeutils.FleetEpoch
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.states.StatesRepository
@@ -45,7 +47,14 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
             // Trip selection
             is AddPaymentContract.Intent.LoadTrips -> loadTrips()
             is AddPaymentContract.Intent.SearchTrips -> searchTrips(intent.query)
-            is AddPaymentContract.Intent.SelectTrip -> selectTrip(intent.trip)
+            is AddPaymentContract.Intent.SelectTrip -> {
+                // Select the picked list item immediately for responsiveness, then re-fetch
+                // the trip DETAIL — the trips LIST (TripListItemResponse) has no payment
+                // rollup, so its received/pending are stale (Received 0 / Pending = full
+                // quote). The detail carries the server-derived paid/pending + customer.
+                selectTrip(intent.trip)
+                loadTripAndSelect(intent.trip.id)
+            }
             is AddPaymentContract.Intent.ShowTripSelector -> updateState { copy(showTripSelector = true) }
             is AddPaymentContract.Intent.HideTripSelector -> updateState { copy(showTripSelector = false) }
 
@@ -115,9 +124,10 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
         if (paymentId != null) {
             loadPaymentForEdit(paymentId)
         } else {
-            val defaultReceiver = userLocalDataSource.getUserName()?.takeIf { it.isNotBlank() }
-                ?: userLocalDataSource.getUserRole()?.lowercase()?.replace("_", " ")?.replaceFirstChar { if (it.isLowerCase()) it.uppercase() else it.toString() }
-                ?: "Staff"
+            // Pre-fill "Received by" with the current user's NAME only. Never fall back to a role
+            // (e.g. "owner") or a placeholder — those aren't valid receiver names; leave it blank
+            // so the user can enter the actual receiver. receivedBy is optional on submit.
+            val defaultReceiver = userLocalDataSource.getUserName()?.trim().orEmpty()
             updateState { copy(receivedBy = defaultReceiver) }
             loadTrips()
             if (tripId != null) {
@@ -160,7 +170,13 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
             }
             is Result.Error -> {
                 logger.e(TAG_ADD_PAYMENT_VM, "Failed to load payment for edit", result.exception)
-                updateState { copy(isLoading = false, error = result.message) }
+                updateState {
+                    copy(
+                        isLoading = false,
+                        error = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_generic)
+                    )
+                }
             }
             is Result.Loading -> { /* Already handled */ }
         }
@@ -255,7 +271,12 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
         val amount = currentState.amount.toDoubleOrNull() ?: return
         val tds = currentState.tdsAmount.toDoubleOrNull() ?: 0.0
         val discount = currentState.discountAmount.toDoubleOrNull() ?: 0.0
-        val paymentDateTime = formatDateTimeForApi(currentState.paymentDate, currentState.paymentTime)
+        // Convert picked DD-MM-YYYY + HH:MM to UTC epoch millis for the request.
+        val paymentDateTime = convertToEpochMillis(currentState.paymentDate, currentState.paymentTime)
+        if (paymentDateTime == null) {
+            updateState { copy(isSaving = false, dateError = UiText.StringRes(Res.string.error_payment_date_required)) }
+            return
+        }
 
         val result = if (currentState.isEditMode && currentState.paymentId != null) {
             paymentRepository.updatePayment(
@@ -311,7 +332,13 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
             }
             is Result.Error -> {
                 logger.e(TAG_ADD_PAYMENT_VM, "Failed to save payment", result.exception)
-                updateState { copy(isSaving = false, error = result.message) }
+                updateState {
+                    copy(
+                        isSaving = false,
+                        error = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_generic)
+                    )
+                }
                 sendEffect(
                     AddPaymentContract.Effect.ShowError(
                         result.message?.let { UiText.Raw(it) }
@@ -323,74 +350,16 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
         }
     }
 
-    private fun formatDateForInput(isoDate: String?): String {
-        if (isoDate == null) return ""
-        return try {
-            val parts = isoDate.take(10).split("-")
-            if (parts.size == 3) {
-                "${parts[2]}-${parts[1]}-${parts[0]}"
-            } else {
-                isoDate.take(10)
-            }
-        } catch (e: Exception) {
-            ""
-        }
+    /** Epoch millis → DD-MM-YYYY for the date picker input (device zone). */
+    private fun formatDateForInput(timestampMillis: Long?): String {
+        if (timestampMillis == null || timestampMillis == 0L) return ""
+        return FleetEpoch.toDisplayDate(timestampMillis) ?: ""
     }
 
-    private fun formatTimeForInput(isoDate: String?): String {
-        if (isoDate == null) return ""
-        return try {
-            isoDate.substring(11, 16)
-        } catch (e: Exception) {
-            ""
-        }
-    }
-
-    private fun formatDateTimeForApi(date: String, time: String): String {
-        // Convert DD-MM-YYYY HH:MM to ISO 8601
-        return try {
-            val dateParts = date.split("-")
-            if (dateParts.size == 3) {
-                val isoDate = "${dateParts[2]}-${dateParts[1]}-${dateParts[0]}"
-                val timeStr = if (time.isNotBlank()) time else "00:00"
-                "${isoDate}T${timeStr}:00Z"
-            } else {
-                "${date}T${time}:00Z"
-            }
-        } catch (e: Exception) {
-            "${date}T${time}:00Z"
-        }
-    }
-
-    /**
-     * Extract date in DD-MM-YYYY format from ISO 8601 datetime string.
-     * Falls back to the input if it's already in DD-MM-YYYY format.
-     */
-    private fun extractDateFromIso(isoOrDate: String?): String? {
-        if (isoOrDate.isNullOrBlank()) return null
-
-        return try {
-            // Try parsing as ISO 8601 first
-            val parsed = FleetDateTime.fromIso8601(isoOrDate)
-            if (parsed != null) {
-                FleetDateTime.formatDate(parsed)
-            } else {
-                // Might already be in DD-MM-YYYY format
-                isoOrDate
-            }
-        } catch (e: Exception) {
-            isoOrDate
-        }
-    }
-
-    private fun extractTimeFromIso(isoDate: String?): String? {
-        if (isoDate.isNullOrBlank()) return null
-
-        return try {
-            // Extract time portion (HH:mm) from ISO 8601 string
-            isoDate.substring(11, 16)
-        } catch (e: Exception) {
-            null
-        }
+    /** Epoch millis → HH:mm for the time picker input (device zone). */
+    private fun formatTimeForInput(timestampMillis: Long?): String {
+        if (timestampMillis == null || timestampMillis == 0L) return ""
+        val value = FleetEpoch.toValue(timestampMillis) ?: return ""
+        return FleetDateTime.formatTime(value)
     }
 }

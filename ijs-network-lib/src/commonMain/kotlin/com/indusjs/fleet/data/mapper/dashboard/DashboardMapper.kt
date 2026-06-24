@@ -26,9 +26,16 @@ import com.indusjs.fleet.domain.entity.dashboard.LiveVehicle
 import com.indusjs.fleet.domain.entity.dashboard.OngoingTrip
 import com.indusjs.fleet.domain.entity.dashboard.QuickActions
 import com.indusjs.fleet.domain.entity.dashboard.TeamStats
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
+import com.indusjs.fleet.core.util.formatDateTimeForDisplay
+import com.indusjs.fleet.core.util.formatLastUpdated
 
 /**
  * Mapper for dashboard DTOs to domain entities.
+ *
+ * Wire timestamps are UTC epoch-millis (Long). The dashboard domain entities
+ * keep their timestamp fields as display Strings (their consumers render them
+ * directly), so we format here at the DTO -> domain boundary.
  */
 object DashboardMapper {
 
@@ -53,6 +60,9 @@ object DashboardMapper {
             completedTripsToday = todaySummary.completedTripsToday,
             totalDistanceToday = todaySummary.totalDistanceToday,
             fuelConsumption = todaySummary.fuelConsumption,
+            totalFuelFilled = todaySummary.totalFuelFilled,
+            totalFuelUsed = todaySummary.totalFuelUsed,
+            totalFuelCost = todaySummary.totalFuelCost,
             activeVehiclesNow = todaySummary.activeVehiclesNow,
             newTripsToday = todaySummary.newTripsToday,
             alertsCount = todaySummary.alertsCount,
@@ -74,7 +84,7 @@ object DashboardMapper {
             documentStats = documentStats?.toDomain(),
 
             // Metadata
-            lastUpdated = lastUpdated
+            lastUpdated = formatLastUpdated(lastUpdated)
         )
     }
 
@@ -98,15 +108,15 @@ object DashboardMapper {
             entityType = entityType,
             entityId = entityId,
             entityName = entityName,
-            createdAt = createdAt,
-            timestamp = 0L,
+            createdAt = formatDateTimeForDisplay(createdAt),
+            timestamp = createdAt ?: 0L,
             // NEW: Enhanced alert fields
             vehicleId = vehicleId,
             vehicleRegistrationNumber = vehicleRegistrationNumber,
             driverId = driverId,
             driverName = driverName,
             daysUntilExpiry = daysUntilExpiry,
-            expiryDate = expiryDate
+            expiryDate = formatDateToHumanReadable(expiryDate)
         )
     }
 
@@ -137,7 +147,7 @@ object DashboardMapper {
             startLocation = startLocation,
             endLocation = endLocation,
             status = status,
-            startedAt = startedAt
+            startedAt = formatDateTimeForDisplay(startedAt)
         )
     }
 
@@ -148,7 +158,7 @@ object DashboardMapper {
             latitude = latitude,
             longitude = longitude,
             speed = speed,
-            lastUpdated = lastUpdated,
+            lastUpdated = formatLastUpdated(lastUpdated),
             driverName = driverName,
             tripId = tripId
         )
@@ -156,8 +166,6 @@ object DashboardMapper {
 
     fun TeamStatsDto.toDomain(): TeamStats {
         return TeamStats(
-            totalManagers = totalManagers,
-            totalSupervisors = totalSupervisors,
             totalMembers = totalMembers
         )
     }
@@ -170,22 +178,29 @@ object DashboardMapper {
         )
     }
 
-    // NEW: Cost Overview mapper with detailed breakdowns
+    // Cost Overview mapper with detailed breakdowns.
+    // Backend reports total_profit/total_loss/net_profit_loss; the UI renders a
+    // single signed profit/loss figure, so derive profitLoss/isProfit here.
+    // `filter` is the requested filter; the wire payload carries `period`.
     fun CostOverviewDto.toDomain(): CostOverview {
         return CostOverview(
-            filter = filter,
-            periodLabel = periodLabel,
+            filter = period,
+            periodLabel = "",
             totalExpenses = totalExpenses,
             totalRevenue = totalRevenue,
-            profitLoss = profitLoss,
-            isProfit = isProfit,
+            totalProfit = totalProfit,
+            totalLoss = totalLoss,
+            netProfitLoss = netProfitLoss,
+            profitLoss = netProfitLoss,
+            isProfit = netProfitLoss >= 0.0,
             completedTrips = completedTrips,
-            tripCosts = tripCosts,
-            maintenanceCosts = maintenanceCosts,
-            fuelCosts = fuelCosts,
-            tollCosts = tollCosts,
-            otherCosts = otherCosts,
-            // NEW: Detailed cost breakdowns
+            fuelExpenses = fuelExpenses,
+            tollExpenses = tollExpenses,
+            maintenanceExpenses = maintenanceExpenses,
+            otherExpenses = otherExpenses,
+            pendingPayments = pendingPayments,
+            receivedPayments = receivedPayments,
+            // Detailed trip-cost expense breakdowns
             driverAllowanceExpenses = driverAllowanceExpenses,
             parkingExpenses = parkingExpenses,
             loadingCharges = loadingCharges,
@@ -200,7 +215,9 @@ object DashboardMapper {
 
     fun CostBreakdownItemDto.toDomain(): CostBreakdownItem {
         return CostBreakdownItem(
-            costType = costType,
+            costId = costId,
+            costLabel = costLabel,
+            groupId = groupId,
             amount = amount,
             count = count
         )

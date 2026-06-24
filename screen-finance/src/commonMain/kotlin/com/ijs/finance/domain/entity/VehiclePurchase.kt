@@ -7,7 +7,7 @@ data class VehiclePurchase(
     val id: Int = 0,
     val vehicleId: Int = 0,
     val vehicle: VehicleBasicInfo? = null,
-    val purchaseDate: String = "",
+    val purchaseDate: Long? = null,
     val purchasePrice: Double = 0.0,
     val vendorName: String? = null,
     val invoiceNumber: String? = null,
@@ -17,8 +17,8 @@ data class VehiclePurchase(
     val interestRate: Double = 0.0,
     val tenureMonths: Int = 0,
     val emiAmount: Double = 0.0,
-    val loanStartDate: String? = null,
-    val loanEndDate: String? = null,
+    val loanStartDate: Long? = null,
+    val loanEndDate: Long? = null,
     val financierName: String? = null,
     val loanAccountNumber: String? = null,
     val bankName: String? = null,
@@ -29,12 +29,12 @@ data class VehiclePurchase(
     val outstandingBalance: Double = 0.0,
     val emisPaid: Int = 0,
     val emisRemaining: Int = 0,
-    val nextEmiDueDate: String? = null,
+    val nextEmiDueDate: Long? = null,
     val loanStatus: LoanStatus = LoanStatus.NOT_APPLICABLE,
     val notes: String? = null,
     val ownerId: Int = 0,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null
 ) {
     /**
      * Check if this is a financed purchase (loan)
@@ -103,11 +103,11 @@ enum class PaymentType(val value: String, val label: String) {
 /**
  * Loan status
  */
-enum class LoanStatus(val value: String, val label: String) {
-    NOT_APPLICABLE("not_applicable", "Not Applicable"),
-    ACTIVE("active", "Active"),
-    CLOSED("closed", "Closed"),
-    DEFAULTED("defaulted", "Defaulted");
+enum class LoanStatus(val value: String) {
+    NOT_APPLICABLE("not_applicable"),
+    ACTIVE("active"),
+    CLOSED("closed"),
+    DEFAULTED("defaulted");
 
     companion object {
         fun fromValue(value: String): LoanStatus {

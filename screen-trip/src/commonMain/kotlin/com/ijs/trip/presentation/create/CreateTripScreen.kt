@@ -11,13 +11,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.fleet.core.util.formatDateTimeForDisplay
 import com.indusjs.uicomponents.components.DropdownOption
+import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetDropdown
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.customer.CustomerDetailsSection
 import com.indusjs.uicomponents.customer.CustomerSelectionBottomSheet
 import com.ijs.customer.presentation.toSelectableCustomer
@@ -86,9 +93,11 @@ fun CreateTripScreen(
                             trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                         Text(
+                            // compose-resources does NOT collapse "%%", so pass a pre-formatted
+                            // "<n>%" string. The string becomes "%1$s complete" (see needsString).
                             text = stringResource(
                                 Res.string.trip_create_percent_complete,
-                                state.formCompletionPercentage
+                                "${state.formCompletionPercentage}%"
                             ),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -137,7 +146,10 @@ fun CreateTripScreen(
 
                         if (errorCount > 0) {
                             Text(
-                                text = "⚠️ $errorCount field(s) need attention",
+                                text = "⚠️ " + stringResource(
+                                    Res.string.trip_create_fields_need_attention,
+                                    errorCount
+                                ),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.error,
                                 modifier = Modifier
@@ -191,19 +203,28 @@ fun CreateTripScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(
+                    horizontal = FleetTokens.Spacing.S,
+                    vertical = FleetTokens.Spacing.M
+                ),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
                 // Schedule Section - First (when is the trip?)
                 item {
-                    SectionCard(title = stringResource(Res.string.trip_create_section_schedule)) {
+                    SectionCard(
+                        title = stringResource(Res.string.trip_create_section_schedule),
+                        leadingEmoji = "🗓️"
+                    ) {
                         ScheduleSection(state = state, viewModel = viewModel)
                     }
                 }
 
                 // Vehicle & Driver Selection
                 item {
-                    SectionCard(title = stringResource(Res.string.trip_create_section_vehicle_driver)) {
+                    SectionCard(
+                        title = stringResource(Res.string.trip_create_section_vehicle_driver),
+                        leadingEmoji = "🚚"
+                    ) {
                         VehicleDriverSelectionSection(
                             state = state,
                             viewModel = viewModel
@@ -213,22 +234,22 @@ fun CreateTripScreen(
 
                 // Route Section
                 item {
-                    SectionCard(title = stringResource(Res.string.trip_create_section_route)) {
+                    SectionCard(
+                        title = stringResource(Res.string.trip_create_section_route),
+                        leadingEmoji = "📍"
+                    ) {
                         RouteSection(state = state, viewModel = viewModel)
                     }
                 }
 
-                // Cargo Section
+                // Cargo & Priority Section (Priority merged in here; the standalone
+                // Priority SectionCard + PrioritySection composable were removed).
                 item {
-                    SectionCard(title = stringResource(Res.string.trip_create_section_cargo)) {
+                    SectionCard(
+                        title = stringResource(Res.string.trip_create_section_cargo),
+                        leadingEmoji = "📦"
+                    ) {
                         CargoSection(state = state, viewModel = viewModel)
-                    }
-                }
-
-                // Priority Section (above Customer Details)
-                item {
-                    SectionCard(title = stringResource(Res.string.trip_create_section_priority)) {
-                        PrioritySection(state = state, viewModel = viewModel)
                     }
                 }
 
@@ -241,11 +262,22 @@ fun CreateTripScreen(
                         isRefreshing = state.isRefreshingCustomers,
                         hasCustomers = state.allCustomers.isNotEmpty(),
                         validationError = state.customerNameError,
+                        isRequired = true,
                         onSelectClick = { viewModel.sendIntent(CreateTripContract.Intent.ToggleCustomerBottomSheet) },
                         onClearClick = { viewModel.sendIntent(CreateTripContract.Intent.ClearCustomerSelection) },
                         onRefreshClick = { viewModel.sendIntent(CreateTripContract.Intent.RefreshCustomers) },
                         onAddNewClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateToAddCustomer) }
                     )
+                }
+
+                // Delivery / Consignee Section — REQUIRED (distinct from the billing customer above)
+                item {
+                    SectionCard(
+                        title = stringResource(Res.string.trip_create_section_delivery),
+                        leadingEmoji = "🚛"
+                    ) {
+                        DeliverySection(state = state, viewModel = viewModel)
+                    }
                 }
 
                 // Pricing Section - Only visible to Owner and General Manager
@@ -257,14 +289,16 @@ fun CreateTripScreen(
 
                 // Notes Section
                 item {
-                    SectionCard(title = stringResource(Res.string.trip_create_section_notes)) {
-                        OutlinedTextField(
+                    SectionCard(
+                        title = stringResource(Res.string.trip_create_section_notes),
+                        leadingEmoji = "📝"
+                    ) {
+                        FleetInputField(
                             value = state.notes,
                             onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateNotes(it)) },
-                            label = { Text(stringResource(Res.string.trip_create_notes_label)) },
-                            placeholder = { Text(stringResource(Res.string.trip_create_notes_placeholder)) },
-                            singleLine = false,
-                            maxLines = 4,
+                            fieldType = FieldType.NOTES,
+                            label = stringResource(Res.string.trip_create_notes_label),
+                            placeholder = stringResource(Res.string.trip_create_notes_placeholder),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -315,28 +349,40 @@ fun CreateTripScreen(
     }
 }
 
+/**
+ * Local section card. [leadingEmoji] renders an optional leading icon (emoji — the established
+ * section-header pattern in this app) before the title. Note: the section title strings already
+ * embed a leading emoji of their own; when a [leadingEmoji] is supplied we strip a leading emoji
+ * token from [title] so the header shows exactly one icon.
+ */
 @Composable
 private fun SectionCard(
     title: String,
+    leadingEmoji: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetSectionCard(
+        border = null,
+        elevation = FleetTokens.Elevation.Raised
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (leadingEmoji != null) {
+                    Text(
+                        text = leadingEmoji,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+                }
+                Text(
+                    // Section strings carry their own leading emoji; drop it when we render an
+                    // explicit leading icon so the header never shows two icons.
+                    text = if (leadingEmoji != null) title.stripLeadingEmoji() else title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             HorizontalDivider(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                 thickness = 1.dp
@@ -346,13 +392,23 @@ private fun SectionCard(
     }
 }
 
+/**
+ * Strips a leading emoji + whitespace from a section title. The title strings (e.g. "📅 Schedule")
+ * embed an icon; when the card renders its own leading icon we remove that prefix so only the words
+ * remain ("Schedule"). Conservative: only trims a leading run of non-letter/non-digit symbols.
+ */
+private fun String.stripLeadingEmoji(): String {
+    val firstWord = indexOfFirst { it.isLetterOrDigit() }
+    return if (firstWord > 0) substring(firstWord).trimStart() else this
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun VehicleDriverSelectionSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
         // Vehicle Dropdown
         ExposedDropdownMenuBox(
             expanded = state.showVehicleDropdown,
@@ -367,6 +423,7 @@ private fun VehicleDriverSelectionSection(
                 isError = state.vehicleError != null,
                 supportingText = state.vehicleError?.let { { Text(it) } },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = state.showVehicleDropdown) },
+                shape = RoundedCornerShape(FleetTokens.Radius.L),
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor()
@@ -418,8 +475,13 @@ private fun VehicleDriverSelectionSection(
                                     if (isOccupied) {
                                         val assignment = vehicle.tripAssignment
                                         if (assignment != null) {
+                                        val na = stringResource(Res.string.vehicle_route_na)
+                                        val startStr = assignment.plannedStart?.takeIf { it > 0L }
+                                            ?.let { formatDateTimeForDisplay(it) } ?: na
+                                        val endStr = assignment.plannedEnd?.takeIf { it > 0L }
+                                            ?.let { formatDateTimeForDisplay(it) } ?: na
                                         Text(
-                                            text = "🕐 ${assignment.plannedStart ?: stringResource(Res.string.vehicle_route_na)} - ${assignment.plannedEnd ?: stringResource(Res.string.vehicle_route_na)}",
+                                            text = "🕐 $startStr - $endStr",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.error
                                         )
@@ -449,6 +511,7 @@ private fun VehicleDriverSelectionSection(
                 isError = state.driverError != null,
                 supportingText = state.driverError?.let { { Text(it) } },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = state.showDriverDropdown) },
+                shape = RoundedCornerShape(FleetTokens.Radius.L),
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor()
@@ -500,8 +563,13 @@ private fun VehicleDriverSelectionSection(
                                     if (isOccupied) {
                                         val assignment = driver.tripAssignment
                                         if (assignment != null) {
+                                        val na = stringResource(Res.string.vehicle_route_na)
+                                        val startStr = assignment.plannedStart?.takeIf { it > 0L }
+                                            ?.let { formatDateTimeForDisplay(it) } ?: na
+                                        val endStr = assignment.plannedEnd?.takeIf { it > 0L }
+                                            ?.let { formatDateTimeForDisplay(it) } ?: na
                                         Text(
-                                            text = "🕐 ${assignment.plannedStart ?: stringResource(Res.string.vehicle_route_na)} - ${assignment.plannedEnd ?: stringResource(Res.string.vehicle_route_na)}",
+                                            text = "🕐 $startStr - $endStr",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.error
                                         )
@@ -525,7 +593,7 @@ private fun RouteSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
         // Start Location with Autocomplete
         LocationSearchField(
             value = state.startLocation,
@@ -551,8 +619,8 @@ private fun RouteSection(
         LocationSearchField(
             value = state.endLocation,
             onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.SearchEndLocation(it)) },
-            label = "End Location *",
-            placeholder = "Search for a location...",
+            label = stringResource(Res.string.trip_edit_end_location),
+            placeholder = stringResource(Res.string.trip_edit_search_location),
             leadingEmoji = "🔴",
             isError = state.endLocationError != null,
             errorText = state.endLocationError,
@@ -586,6 +654,7 @@ private fun RouteSection(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
+                shape = RoundedCornerShape(FleetTokens.Radius.L),
                 modifier = Modifier.fillMaxWidth(),
                 supportingText = {
                     when {
@@ -663,6 +732,7 @@ private fun LocationSearchField(
             isError = isError,
             supportingText = errorText?.let { { Text(it) } },
             singleLine = true,
+            shape = RoundedCornerShape(FleetTokens.Radius.L),
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor()
@@ -712,7 +782,10 @@ private fun ScheduleSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    // FleetDateTimePicker is a single combined date+time field (it fires the date and time
+    // intents together). The departure picker and the optional arrival picker are kept as two
+    // full-width combined fields to preserve 100% of the existing picker behaviour.
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
         // Departure Date & Time (Required)
         FleetDateTimePicker(
             date = state.departureDate,
@@ -748,13 +821,18 @@ private fun CargoSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    // Show the Hindi label when the app is running in Hindi (same locale that Compose Resources
+    // uses to pick values-hi); falls back to English otherwise. Drives both the cargo-type labels
+    // and the unit dropdown labels (the unit VALUE/id is unchanged — labels are display only).
+    val isHindi = Locale.current.language == "hi"
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
         FleetDropdown(
             label = stringResource(Res.string.trip_create_cargo_type_required),
+            // Label comes from the loaded material config (falls back to the capitalized id).
             options = state.cargoTypeOptions.map { cargo ->
                 DropdownOption(
                     id = cargo,
-                    label = cargo.replaceFirstChar { it.uppercaseChar() }
+                    label = state.cargoLabelFor(cargo, isHindi)
                 )
             },
             selectedOptionId = state.cargoType.takeIf { it.isNotBlank() },
@@ -766,23 +844,26 @@ private fun CargoSection(
         )
 
         // Cargo Description - single line
-        OutlinedTextField(
+        FleetInputField(
             value = state.cargoDescription,
             onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoDescription(it)) },
-            label = { Text(stringResource(Res.string.trip_create_cargo_desc_label)) },
-            placeholder = { Text(stringResource(Res.string.trip_create_cargo_desc_placeholder)) },
-            singleLine = true,
+            fieldType = FieldType.DEFAULT,
+            label = stringResource(Res.string.trip_create_cargo_desc_label),
+            placeholder = stringResource(Res.string.trip_create_cargo_desc_placeholder),
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Cargo Weight with Unit dropdown and error support
+        // Cargo Weight with Unit dropdown and error support.
+        // The unit list is config-driven by the selected material: it stays disabled (with a hint)
+        // until a cargo type is chosen, and the material's default unit is auto-selected on pick.
+        val isCargoTypeSelected = state.cargoType.isNotBlank()
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M),
             verticalAlignment = Alignment.Top
         ) {
             // Weight input - accepts only decimal numbers - NOW REQUIRED
-            OutlinedTextField(
+            FleetInputField(
                 value = state.cargoWeight,
                 onValueChange = { newValue ->
                     // Only allow digits and decimal point
@@ -790,50 +871,112 @@ private fun CargoSection(
                         viewModel.sendIntent(CreateTripContract.Intent.UpdateCargoWeight(newValue))
                     }
                 },
-                label = { Text(stringResource(Res.string.trip_create_cargo_weight_required)) },
-                placeholder = { Text(stringResource(Res.string.trip_create_cargo_weight_placeholder)) },
+                fieldType = FieldType.DECIMAL,
+                label = stringResource(Res.string.trip_create_cargo_weight_required),
+                placeholder = stringResource(Res.string.trip_create_cargo_weight_placeholder),
                 isError = state.cargoWeightError != null,
-                supportingText = state.cargoWeightError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
+                errorMessage = state.cargoWeightError,
                 modifier = Modifier.weight(1f)
             )
 
             FleetDropdown(
                 label = stringResource(Res.string.trip_create_unit_required),
-                options = state.weightUnitOptions.map { DropdownOption(id = it, label = it) },
+                // Display label is localized via unitLabelFor(value, isHindi); the option id stays
+                // the unit VALUE so the value sent to the backend is unchanged.
+                options = state.unitOptionsForSelectedCargo.map {
+                    DropdownOption(id = it, label = state.unitLabelFor(it, isHindi))
+                },
                 selectedOptionId = state.weightUnit.takeIf { it.isNotBlank() },
                 onOptionSelected = { viewModel.sendIntent(CreateTripContract.Intent.UpdateWeightUnit(it)) },
                 modifier = Modifier.weight(0.6f),
-                placeholder = stringResource(Res.string.trip_create_select_placeholder),
+                // Until a material is picked the units are unknown, so disable + hint.
+                enabled = isCargoTypeSelected,
+                placeholder = stringResource(
+                    if (isCargoTypeSelected) Res.string.trip_create_select_placeholder
+                    else Res.string.trip_create_select_material_first
+                ),
                 isError = state.weightUnitError != null,
                 errorMessage = state.weightUnitError
             )
         }
+
+        // Priority — merged in from the former standalone Priority section. Rendered as a dropdown
+        // (was chips). The option id stays the raw priority VALUE; the label preserves the old
+        // chip display (capitalized value), so the value sent to the backend is unchanged.
+        FleetDropdown(
+            label = stringResource(Res.string.trip_edit_label_priority),
+            options = state.priorityOptions.map { priority ->
+                DropdownOption(
+                    id = priority,
+                    label = priority.replaceFirstChar { it.uppercaseChar() }
+                )
+            },
+            selectedOptionId = state.priority.takeIf { it.isNotBlank() },
+            onOptionSelected = { viewModel.sendIntent(CreateTripContract.Intent.UpdatePriority(it)) },
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = { Text("🚩", modifier = Modifier.padding(start = FleetTokens.Spacing.M)) }
+        )
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * Delivery / Consignee Details section. The consignee (receiver) is REQUIRED and is
+ * conceptually distinct from the billing customer, though it is usually pre-filled
+ * from the selected customer as editable defaults.
+ */
 @Composable
-private fun PrioritySection(
+private fun DeliverySection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        state.priorityOptions.forEach { priority ->
-            FilterChip(
-                selected = state.priority.equals(priority, ignoreCase = true),
-                onClick = { viewModel.sendIntent(CreateTripContract.Intent.UpdatePriority(priority)) },
-                label = { Text(priority.replaceFirstChar { it.uppercaseChar() }) }
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+        // Delivery Address (multi-line, required)
+        FleetInputField(
+            value = state.deliveryAddress,
+            onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateDeliveryAddress(it)) },
+            fieldType = FieldType.ADDRESS,
+            label = stringResource(Res.string.trip_create_delivery_address_required),
+            placeholder = stringResource(Res.string.trip_create_delivery_address_placeholder),
+            isError = state.deliveryAddressError != null,
+            errorMessage = state.deliveryAddressError,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Delivery person + contact in a 2-col Row.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M),
+            verticalAlignment = Alignment.Top
+        ) {
+            // Delivery Person Name (required)
+            FleetInputField(
+                value = state.deliveryPersonName,
+                onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateDeliveryPersonName(it)) },
+                fieldType = FieldType.DEFAULT,
+                label = stringResource(Res.string.trip_create_delivery_person_required),
+                placeholder = stringResource(Res.string.trip_create_delivery_person_placeholder),
+                isError = state.deliveryPersonNameError != null,
+                errorMessage = state.deliveryPersonNameError,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Delivery Contact Number (phone keyboard, digit-filtered + capped at 10, required)
+            FleetInputField(
+                value = state.deliveryContactNumber,
+                onValueChange = { newValue ->
+                    val digits = newValue.filter { it.isDigit() }.take(10)
+                    viewModel.sendIntent(CreateTripContract.Intent.UpdateDeliveryContactNumber(digits))
+                },
+                fieldType = FieldType.PHONE,
+                label = stringResource(Res.string.trip_create_delivery_contact_required),
+                placeholder = stringResource(Res.string.trip_create_delivery_contact_placeholder),
+                isError = state.deliveryContactNumberError != null,
+                errorMessage = state.deliveryContactNumberError,
+                modifier = Modifier.weight(1f)
             )
         }
     }
 }
-
 
 /**
  * Enhanced Pricing Section with compact UI
@@ -843,91 +986,141 @@ private fun PricingSection(
     state: CreateTripContract.State,
     viewModel: CreateTripViewModel
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.trip_create_pricing_title),
+        emoji = "💰",
+        accent = MaterialTheme.colorScheme.primary
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            // Compact header with title and info in single row
+            // Subtitle pill
+            Surface(
+                shape = RoundedCornerShape(FleetTokens.Radius.S),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+            ) {
+                Text(
+                    text = stringResource(Res.string.trip_create_pricing_subtitle),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(
+                        horizontal = FleetTokens.Spacing.S,
+                        vertical = FleetTokens.Spacing.XXS
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+
+            // ₹ leading icon shared by the price inputs.
+            val rupeeIcon: @Composable () -> Unit = {
+                Text(
+                    text = "₹",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = FleetTokens.Spacing.M)
+                )
+            }
+
+            // Quoted (Total Amount) | Actual (Revenue) in a 2-col Row.
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M),
+                verticalAlignment = Alignment.Top
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "💰",
-                        style = MaterialTheme.typography.titleMedium
+                // Quoted price (expected_trip_price) - inline error.
+                FleetInputField(
+                    value = state.tripPrice,
+                    onValueChange = { newValue ->
+                        // Only allow digits and decimal point
+                        if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                            viewModel.sendIntent(CreateTripContract.Intent.UpdateTripPrice(newValue))
+                        }
+                    },
+                    fieldType = FieldType.DECIMAL,
+                    label = stringResource(Res.string.trip_create_total_amount_inr),
+                    placeholder = stringResource(Res.string.trip_edit_placeholder_trip_price),
+                    isError = state.tripPriceError != null,
+                    errorMessage = state.tripPriceError,
+                    leadingIcon = rupeeIcon,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Actual Price (Revenue) - editable, defaults to the quoted Total Amount.
+                // Sent to the backend as selling_value (the actual amount the customer owes).
+                Column(modifier = Modifier.weight(1f)) {
+                    FleetInputField(
+                        value = state.actualPrice,
+                        onValueChange = { newValue ->
+                            if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                                viewModel.sendIntent(CreateTripContract.Intent.UpdateActualPrice(newValue))
+                            }
+                        },
+                        fieldType = FieldType.DECIMAL,
+                        label = stringResource(Res.string.trip_actual_price_revenue_label),
+                        placeholder = state.tripPrice.ifBlank { stringResource(Res.string.trip_edit_placeholder_trip_price) },
+                        leadingIcon = rupeeIcon,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    // FleetInputField only shows supporting text in the error state, so the
+                    // (non-error) revenue hint is rendered explicitly below the field.
                     Text(
-                        text = stringResource(Res.string.trip_create_pricing_title),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                ) {
-                    Text(
-                        text = stringResource(Res.string.trip_create_pricing_subtitle),
+                        text = stringResource(Res.string.trip_actual_price_revenue_hint),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(
+                            start = FleetTokens.Spacing.L,
+                            top = FleetTokens.Spacing.XS
+                        )
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
-            // Price input - compact with inline error
-            OutlinedTextField(
-                value = state.tripPrice,
+            // Purchase Price (COGS) - editable cost of goods sold for this trip, full-width.
+            // Sent to the backend as purchase_price; blank → backend default applies.
+            FleetInputField(
+                value = state.purchasePrice,
                 onValueChange = { newValue ->
-                    // Only allow digits and decimal point
                     if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
-                        viewModel.sendIntent(CreateTripContract.Intent.UpdateTripPrice(newValue))
+                        viewModel.sendIntent(CreateTripContract.Intent.UpdatePurchasePrice(newValue))
                     }
                 },
-                label = { Text(stringResource(Res.string.trip_create_total_amount_inr)) },
-                placeholder = { Text(stringResource(Res.string.trip_edit_placeholder_trip_price)) },
-                singleLine = true,
-                isError = state.tripPriceError != null,
-                supportingText = if (state.tripPriceError != null) {
-                    { Text(state.tripPriceError!!, color = MaterialTheme.colorScheme.error) }
-                } else null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                leadingIcon = {
-                    Text(
-                        text = "₹",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = 12.dp)
-                    )
-                },
+                fieldType = FieldType.DECIMAL,
+                label = stringResource(Res.string.trip_purchase_price_cogs_label),
+                placeholder = stringResource(Res.string.trip_edit_placeholder_trip_price),
+                leadingIcon = rupeeIcon,
                 modifier = Modifier.fillMaxWidth()
             )
+            // Non-error COGS hint (FleetInputField only shows supporting text on error).
+            Text(
+                text = stringResource(Res.string.trip_purchase_price_cogs_hint),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(
+                    start = FleetTokens.Spacing.L,
+                    top = FleetTokens.Spacing.XS
+                )
+            )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
 
             // Info banner - below Total Amount
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(6.dp)
+                shape = RoundedCornerShape(FleetTokens.Radius.M)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(
+                        horizontal = FleetTokens.Spacing.M,
+                        vertical = FleetTokens.Spacing.S
+                    ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "📊",
                         style = MaterialTheme.typography.labelMedium
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     Text(
                         text = stringResource(Res.string.trip_create_pricing_banner),
                         style = MaterialTheme.typography.labelSmall,
@@ -935,6 +1128,5 @@ private fun PricingSection(
                     )
                 }
             }
-        }
     }
 }

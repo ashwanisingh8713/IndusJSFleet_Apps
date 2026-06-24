@@ -76,6 +76,6 @@ data class StateHistoryItemDto(
     @SerialName("performed_by_role")
     val performedByRole: String? = null,
     @SerialName("created_at")
-    val createdAt: String? = null
+    val createdAt: Long? = null
 ) : Dto
 

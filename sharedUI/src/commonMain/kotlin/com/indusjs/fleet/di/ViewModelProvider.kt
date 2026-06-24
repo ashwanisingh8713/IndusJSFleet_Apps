@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.indusjs.dispatcher.DispatcherProvider
+import com.indusjs.fleet.core.permission.PermissionChecker
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.ijs.user.presentation.login.LoginViewModel
 import com.ijs.onboarding.presentation.OnboardingViewModel
@@ -50,6 +51,13 @@ interface ViewModelProvider {
     val dispatcherProvider: DispatcherProvider
     val userRepository: UserRepository
 
+    /**
+     * Shared permission gate for UI. Reads the current user's ACTUAL permission
+     * set (fetched from the backend) — used to gate UI for UX only; the backend
+     * remains the security authority. ViewModels receive this via DI.
+     */
+    val permissionChecker: PermissionChecker
+
     // Onboarding
     fun hasCompletedOnboarding(): Boolean
     fun onboardingViewModel(): OnboardingViewModel
@@ -94,6 +102,7 @@ interface ViewModelProvider {
     fun tripPLViewModel(): TripPLViewModel
     fun costAnalysisViewModel(): CostAnalysisViewModel
     fun consolidatedPLViewModel(): ConsolidatedPLViewModel
+    fun customerPLViewModel(): com.ijs.reports.presentation.customer.CustomerPLViewModel
 
     // Customer ViewModels
     fun customersListViewModel(): com.ijs.customer.presentation.list.CustomersListViewModel

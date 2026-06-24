@@ -5,6 +5,8 @@ import com.indusjs.fleet.core.auth.AuthenticationManager
 import com.indusjs.fleet.core.auth.JwtHelper
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.permission.PermissionStore
+import com.indusjs.fleet.core.permission.Permissions
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.ijs.subscription.TAG_SUBSCRIPTION_REPO
 import com.ijs.subscription.data.datasource.SubscriptionRemoteDataSource
@@ -133,6 +135,14 @@ class SubscriptionRepositoryImpl(
             val hasTid = JwtHelper.hasTenantContext(tenantResult.accessToken)
             logger.d(TAG_SUBSCRIPTION_REPO, "createTenant: new access_token received, hasTid=$hasTid")
             userLocalDataSource.saveAuthToken(tenantResult.accessToken)
+            // The new tenant-scoped token carries the owner role. Refresh the UI
+            // permission gate in-session so a freshly-onboarded owner isn't locked out
+            // of fleet screens until an app restart (IAM grants the role, not yet the
+            // full permission set). Owner expansion is centralized in Permissions.
+            val roles = JwtHelper.extractRoles(tenantResult.accessToken)
+            val basePerms = userLocalDataSource.getUserPermissions()
+            PermissionStore.update(Permissions.effectivePermissions(basePerms, roles))
+            logger.d(TAG_SUBSCRIPTION_REPO, "createTenant: permission gate refreshed (roles=$roles)")
         } else {
             // IAM's IssueTokensForUser likely failed — the old pre-tenant JWT remains.
             // Force re-login so the next JWT carries the tenant context + owner permissions.

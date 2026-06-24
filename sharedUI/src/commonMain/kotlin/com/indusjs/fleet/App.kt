@@ -81,6 +81,9 @@ fun App(
                 val isLoggedIn = viewModelProvider.userRepository.isLoggedIn()
                 fleetLogger.d(TAG_APP, "Auth check result: isLoggedIn=$isLoggedIn")
                 if (isLoggedIn) {
+                    // Restore the user's permission set into the in-memory store for UI
+                    // gating (fetches fresh, falls back to last cached set on failure).
+                    viewModelProvider.userRepository.refreshPermissions()
                     val gate = viewModelProvider.checkSubscriptionGate()
                     fleetLogger.d(TAG_APP, "Subscription gate result: $gate")
                     initialRoute = when (gate) {

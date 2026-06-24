@@ -75,22 +75,30 @@ data class ResetPasswordRequest(
 @JsonIgnoreUnknownKeys
 @Serializable
 data class TeamMemberDto(
-    val id: Int,
-    val email: String,
-    val mobile: String,
+    val id: Int = 0,
+    // Backend marks email/mobile as omitempty — they are absent from JSON when blank
+    // (e.g. a member created with only a mobile, or only an email). Defaults prevent
+    // a MissingFieldException that would blank the screen.
+    val email: String = "",
+    val mobile: String = "",
     @SerialName("first_name")
-    val firstName: String,
+    val firstName: String = "",
     @SerialName("last_name")
-    val lastName: String,
-    val role: String,
+    val lastName: String = "",
+    val role: String = "",
+    // Backend owner_id is omitempty *uint — absent for an owner's own record (nil OwnerID).
     @SerialName("owner_id")
-    val ownerId: Int,
+    val ownerId: Int = 0,
     @SerialName("is_active")
     val isActive: Boolean = true,
+    // Backend-computed: role is non-empty and not "owner". Source of truth for caretaker pickers.
+    @SerialName("is_caretaker_eligible")
+    val isCaretakerEligible: Boolean = false,
+    // UTC epoch-millis (JSON number). 0 = unset.
     @SerialName("created_at")
-    val createdAt: String,
+    val createdAt: Long = 0L,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**

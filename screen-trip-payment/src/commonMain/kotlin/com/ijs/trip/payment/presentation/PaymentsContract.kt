@@ -3,6 +3,7 @@ package com.ijs.trip.payment.presentation
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.core.model.shared.SelectableCustomer
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 
@@ -18,7 +19,7 @@ object PaymentsContract {
         val payments: List<TripPayment> = emptyList(),
         val summary: TripPaymentSummary? = null,
         val pendingSummary: PendingPaymentsSummary? = null,
-        val error: String? = null,
+        val error: UiText? = null,
         val page: Int = 1,
         val hasMore: Boolean = false,
         val isLoadingMore: Boolean = false,
@@ -27,6 +28,10 @@ object PaymentsContract {
         val showFilterSheet: Boolean = false,
         val filter: TripPaymentFilter = TripPaymentFilter(),
         val tempFilter: TripPaymentFilter = TripPaymentFilter(),
+
+        // Customer list for the customer filter (loaded once)
+        val customers: List<SelectableCustomer> = emptyList(),
+        val isLoadingCustomers: Boolean = false,
 
         // Delete confirmation
         val showDeleteConfirmation: Boolean = false,
@@ -41,6 +46,11 @@ object PaymentsContract {
     ) : UiState {
         val hasFilters: Boolean get() = filter.hasFilters
         val isEmpty: Boolean get() = payments.isEmpty() && !isLoading
+
+        /** Display name of the currently applied customer filter, if any. */
+        val selectedCustomerName: String? get() = filter.customerId?.let { id ->
+            customers.find { it.id == id }?.let { it.companyName.ifBlank { it.personName } }
+        }
 
         // Computed summary from payments when API doesn't provide summary
         private val computedReceived: Double get() =
@@ -120,7 +130,6 @@ object PaymentsContract {
         data class UpdateTempFilterTrip(val tripId: String?) : Intent
         data class UpdateTempFilterCustomer(val customerId: String?) : Intent
         data class UpdateTempFilterType(val type: PaymentType?) : Intent
-        data class UpdateTempFilterMode(val mode: PaymentMode?) : Intent
         data class UpdateTempFilterStatus(val status: PaymentStatus?) : Intent
         data class UpdateTempFilterDateRange(val startDate: String?, val endDate: String?) : Intent
         data object ApplyFilter : Intent

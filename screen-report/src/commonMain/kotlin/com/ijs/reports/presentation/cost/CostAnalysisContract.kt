@@ -4,6 +4,7 @@ import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.uicomponents.components.CostTypeGroup
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.data.model.costs.MaintenanceCostTypes
 import com.indusjs.fleet.data.model.costs.TripCostTypes
 import com.ijs.reports.domain.entity.CostTypeAnalysis
@@ -15,7 +16,7 @@ object CostAnalysisContract {
 
     data class State(
         val isLoading: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         val selectedCostTypes: Set<String> = emptySet(),
         val startDate: String = "",
         val endDate: String = "",
@@ -67,7 +68,7 @@ object CostAnalysisContract {
     }
 
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
     }
 }
 

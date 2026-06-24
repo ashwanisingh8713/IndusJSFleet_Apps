@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,12 +80,15 @@ fun ErrorContent(
     error: String,
     screenContext: FleetErrorContext = FleetErrorContext.GENERIC,
     onRetry: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fillMaxSize: Boolean = true,
+    secondaryActionLabel: String? = null,
+    onSecondaryAction: (() -> Unit)? = null
 ) {
     val errorInfo = error.toErrorInfo(screenContext)
 
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = if (fillMaxSize) modifier.fillMaxSize() else modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -115,6 +120,12 @@ fun ErrorContent(
                     Text(errorInfo.actionLabel)
                 }
             }
+            if (secondaryActionLabel != null && onSecondaryAction != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                TextButton(onClick = onSecondaryAction) {
+                    Text(secondaryActionLabel)
+                }
+            }
         }
     }
 }
@@ -129,10 +140,11 @@ fun EmptyContent(
     message: String? = null,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fillMaxSize: Boolean = true
 ) {
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = if (fillMaxSize) modifier.fillMaxSize() else modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -179,10 +191,11 @@ fun EmptyContent(
     message: String? = null,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fillMaxSize: Boolean = true
 ) {
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = if (fillMaxSize) modifier.fillMaxSize() else modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
         Column(

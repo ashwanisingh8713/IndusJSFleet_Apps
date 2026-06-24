@@ -4,8 +4,7 @@ import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.customer.TAG_CUSTOMER_DETAIL_VM
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.util.ValidationUtils
-import com.indusjs.fleet.core.util.PermissionUtils
-import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
+import com.indusjs.fleet.core.permission.PermissionChecker
 import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.customer.domain.entity.FinancialPeriod
 import com.ijs.customer.presentation.detail.CustomerDetailContract.CustomerDetailTab
@@ -14,7 +13,21 @@ import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import com.indusjs.error.result.Result
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_company_name_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_contact_person_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_email_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_gst_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_customer
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_toggle_status
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_update_customer
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_customer_status_activated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_customer_status_deactivated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_customer_updated
 
 /**
  * ViewModel for Customer Detail Screen.
@@ -23,7 +36,7 @@ import dev.zacsweers.metro.Inject
 @Inject
 class CustomerDetailViewModel(
     private val customerRepository: CustomerRepository,
-    private val userLocalDataSource: UserLocalDataSource,
+    private val permissionChecker: PermissionChecker,
     private val logger: FleetLogger
 ) : MviViewModel<State, Intent, Effect>(State()) {
 private var customerId: String = ""
@@ -117,9 +130,6 @@ private var customerId: String = ""
         when (val result = customerRepository.getCustomer(id)) {
             is Result.Success -> {
                 val customer = result.data
-                val userRole = try {
-                    userLocalDataSource.getUserRole() ?: "supervisor"
-                } catch (_: Exception) { "supervisor" }
                 updateState {
                     copy(
                         isLoading = false,
@@ -132,7 +142,7 @@ private var customerId: String = ""
                         email = customer.email ?: "",
                         gstNumber = customer.gstNumber ?: "",
                         notes = customer.notes ?: "",
-                        canViewFinancials = PermissionUtils.canViewFinancials(userRole)
+                        canViewFinancials = permissionChecker.canViewFinancials()
                     )
                 }
                 if (state.value.canViewFinancials) {
@@ -143,7 +153,9 @@ private var customerId: String = ""
                 updateState {
                     copy(
                         isLoading = false,
-                        error = result.message ?: result.exception.message ?: "Failed to load customer"
+                        error = (result.message ?: result.exception.message)
+                            ?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_load_customer)
                     )
                 }
             }
@@ -230,11 +242,15 @@ private var customerId: String = ""
         )) {
             is Result.Success -> {
                 updateState { copy(isSaving = false, isEditMode = false, customer = result.data) }
-                sendEffect(Effect.ShowSnackbar("Customer updated successfully"))
+                sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_customer_updated)))
             }
             is Result.Error -> {
                 updateState {
-                    copy(isSaving = false, error = result.message ?: "Failed to update customer")
+                    copy(
+                        isSaving = false,
+                        error = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_update_customer)
+                    )
                 }
             }
             is Result.Loading -> { }
@@ -265,12 +281,22 @@ private var customerId: String = ""
         updateState { copy(isSaving = true) }
         when (val result = customerRepository.toggleCustomerStatus(customerId)) {
             is Result.Success -> {
-                val status = if (result.data.isActive) "activated" else "deactivated"
+                val statusMessage = if (result.data.isActive) {
+                    UiText.StringRes(Res.string.success_customer_status_activated)
+                } else {
+                    UiText.StringRes(Res.string.success_customer_status_deactivated)
+                }
                 updateState { copy(isSaving = false, customer = result.data) }
-                sendEffect(Effect.ShowSnackbar("Customer $status successfully"))
+                sendEffect(Effect.ShowSnackbar(statusMessage))
             }
             is Result.Error -> {
-                updateState { copy(isSaving = false, error = result.message ?: "Failed to toggle status") }
+                updateState {
+                    copy(
+                        isSaving = false,
+                        error = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_toggle_status)
+                    )
+                }
             }
             is Result.Loading -> { }
         }
@@ -279,21 +305,20 @@ private var customerId: String = ""
     // ============= Validation =============
 
     private fun updateCompanyName(value: String) {
-        val error = if (value.isBlank()) "Company name is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_company_name_required) else null
         updateState { copy(companyName = value, companyNameError = error) }
     }
 
     private fun updatePersonName(value: String) {
-        val error = if (value.isBlank()) "Contact person is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_contact_person_required) else null
         updateState { copy(personName = value, personNameError = error) }
     }
 
     private fun updatePrimaryContact(value: String) {
         val digits = value.filter { it.isDigit() }.take(10)
         val error = when {
-            digits.isBlank() -> "Mobile number is required"
-            digits.length != 10 -> "Enter 10-digit mobile number"
-            !digits.first().toString().matches(Regex("[6-9]")) -> "Mobile must start with 6-9"
+            digits.isBlank() -> UiText.StringRes(Res.string.error_mobile_required)
+            !ValidationUtils.isValidIndianMobile(digits) -> UiText.StringRes(Res.string.error_mobile_invalid)
             else -> null
         }
         updateState { copy(primaryContact = digits, primaryContactError = error) }
@@ -301,19 +326,15 @@ private var customerId: String = ""
 
     private fun updateSecondaryContact(value: String) {
         val digits = value.filter { it.isDigit() }.take(10)
-        val error = if (digits.isNotBlank()) {
-            when {
-                digits.length != 10 -> "Enter valid 10-digit mobile"
-                !digits.first().toString().matches(Regex("[6-9]")) -> "Mobile must start with 6-9"
-                else -> null
-            }
+        val error = if (digits.isNotBlank() && !ValidationUtils.isValidIndianMobile(digits)) {
+            UiText.StringRes(Res.string.error_mobile_invalid)
         } else null
         updateState { copy(secondaryContact = digits, secondaryContactError = error) }
     }
 
     private fun updateEmail(value: String) {
         val error = if (value.isNotBlank() && !ValidationUtils.isValidEmail(value)) {
-            "Invalid email format"
+            UiText.StringRes(Res.string.error_email_invalid)
         } else null
         updateState { copy(email = value, emailError = error) }
     }
@@ -322,8 +343,8 @@ private var customerId: String = ""
         val gst = value.uppercase().filter { it.isLetterOrDigit() }.take(15)
         val error = if (gst.isNotBlank()) {
             when {
-                gst.length != 15 -> "GST must be 15 characters"
-                !gst.matches(Regex("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")) -> "Invalid GST format"
+                gst.length != 15 -> UiText.StringRes(Res.string.error_gst_invalid)
+                !gst.matches(Regex("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")) -> UiText.StringRes(Res.string.error_gst_invalid)
                 else -> null
             }
         } else null
@@ -332,31 +353,24 @@ private var customerId: String = ""
 
     private fun validateFields(): Boolean {
         val s = state.value
-        val companyNameError = if (s.companyName.isBlank()) "Company name is required" else null
-        val personNameError = if (s.personName.isBlank()) "Contact person is required" else null
+        val companyNameError = if (s.companyName.isBlank()) UiText.StringRes(Res.string.error_company_name_required) else null
+        val personNameError = if (s.personName.isBlank()) UiText.StringRes(Res.string.error_contact_person_required) else null
         val primaryContactError = s.primaryContact.let { c ->
             when {
-                c.isBlank() -> "Mobile number is required"
-                c.length != 10 -> "Enter 10-digit mobile number"
-                !c.first().toString().matches(Regex("[6-9]")) -> "Mobile must start with 6-9"
+                c.isBlank() -> UiText.StringRes(Res.string.error_mobile_required)
+                !ValidationUtils.isValidIndianMobile(c) -> UiText.StringRes(Res.string.error_mobile_invalid)
                 else -> null
             }
         }
         val secondaryContactError = s.secondaryContact.let { c ->
-            if (c.isNotBlank()) {
-                when {
-                    c.length != 10 -> "Enter valid 10-digit mobile"
-                    !c.first().toString().matches(Regex("[6-9]")) -> "Mobile must start with 6-9"
-                    else -> null
-                }
-            } else null
+            if (c.isNotBlank() && !ValidationUtils.isValidIndianMobile(c)) UiText.StringRes(Res.string.error_mobile_invalid) else null
         }
-        val emailError = if (s.email.isNotBlank() && !ValidationUtils.isValidEmail(s.email)) "Invalid email format" else null
+        val emailError = if (s.email.isNotBlank() && !ValidationUtils.isValidEmail(s.email)) UiText.StringRes(Res.string.error_email_invalid) else null
         val gstNumberError = s.gstNumber.let { g ->
             if (g.isNotBlank()) {
                 when {
-                    g.length != 15 -> "GST must be 15 characters"
-                    !g.matches(Regex("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")) -> "Invalid GST format"
+                    g.length != 15 -> UiText.StringRes(Res.string.error_gst_invalid)
+                    !g.matches(Regex("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")) -> UiText.StringRes(Res.string.error_gst_invalid)
                     else -> null
                 }
             } else null

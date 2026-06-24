@@ -1,6 +1,7 @@
 package com.indusjs.fleet.di.adapter
 
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.datetimeutils.FleetEpoch
 import com.indusjs.error.result.Result
 import com.ijs.trip.payment.domain.repository.TripProviderForPayment
 import com.ijs.trip.payment.presentation.TripSummaryForPayment
@@ -35,8 +36,11 @@ class TripProviderAdapter(
     }
 
     private fun com.ijs.trip.domain.entity.Trip.toSummary(): TripSummaryForPayment {
-        val startDateSource = plannedStart ?: scheduledDate
-        val endDateSource = plannedEnd ?: deliveryDate
+        // Trip timestamps are UTC epoch-millis (Long?). TripSummaryForPayment
+        // still expects display Strings (DD-MM-YYYY date, HH:mm time), so we
+        // format at this boundary.
+        val startDateSource: Long? = plannedStart ?: scheduledDate
+        val endDateSource: Long? = plannedEnd ?: deliveryDate
 
         return TripSummaryForPayment(
             id = id,
@@ -48,28 +52,24 @@ class TripProviderAdapter(
             endLocation = endLocation?.address ?: "Unknown",
             tripPrice = tripPrice ?: 0.0,
             paidAmount = paidTripPrice ?: 0.0,
-            pendingAmount = (tripPrice ?: 0.0) - (paidTripPrice ?: 0.0),
+            // Prefer the backend's authoritative pending (selling_value − paid); fall back
+            // to quote − paid only when the API didn't send it.
+            pendingAmount = this.pendingAmount ?: ((tripPrice ?: 0.0) - (paidTripPrice ?: 0.0)),
             customerId = customerId,
             customerName = customerName,
             customerContact = customerContact,
             state = status.name,
-            scheduledDate = startDateSource,
+            scheduledDate = FleetDateTime.timestampToDateString(startDateSource),
             paymentStatus = paymentStatus,
-            tripStartDate = FleetDateTime.getMinDateForTripCost(startDateSource),
-            tripEndDate = FleetDateTime.getMinDateForTripCost(endDateSource),
-            tripStartTime = extractTimeFromIso(plannedStart),
-            tripEndTime = extractTimeFromIso(plannedEnd)
+            tripStartDate = FleetDateTime.timestampToDateString(startDateSource),
+            tripEndDate = FleetDateTime.timestampToDateString(endDateSource),
+            tripStartTime = extractTime(plannedStart),
+            tripEndTime = extractTime(plannedEnd)
         )
     }
 
-    private fun extractTimeFromIso(isoDate: String?): String? {
-        if (isoDate.isNullOrBlank()) return null
-        return try {
-            // Extract time portion (HH:mm) from ISO 8601 string
-            isoDate.substring(11, 16)
-        } catch (_: Exception) {
-            null
-        }
-    }
+    /** Epoch-millis -> "HH:mm" (device zone), or null when unset. */
+    private fun extractTime(timestampMillis: Long?): String? =
+        FleetEpoch.toValue(timestampMillis)?.toTimeString()
 }
 

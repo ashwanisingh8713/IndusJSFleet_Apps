@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import com.indusjs.uicomponents.theme.FleetTokens
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -158,134 +160,81 @@ internal fun VehicleStatusSection(
     onAddVehicleClick: () -> Unit,
     onAddMaintenanceCostClick: () -> Unit = {}
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header with icon and View All
+    DashboardSectionCard {
+        DashboardSectionHeader(
+            title = stringResource(Res.string.org_stats_vehicles),
+            iconRes = Res.drawable.ic_truck,
+            accent = MaterialTheme.colorScheme.primary,
+            actionLabel = stringResource(Res.string.action_view_all),
+            onActionClick = onClick
+        )
+
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+
+        if (vehicleStatus.total == 0) {
+            SectionEmptyState(
+                iconRes = Res.drawable.ic_vehicle,
+                title = stringResource(Res.string.dashboard_no_vehicles_yet),
+                message = stringResource(Res.string.dashboard_add_vehicle_message),
+                actionLabel = stringResource(Res.string.add),
+                onAction = onAddVehicleClick
+            )
+        } else {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(onClick = onClick)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_truck),
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = stringResource(Res.string.org_stats_vehicles),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(Res.string.dashboard_count_total, vehicleStatus.total),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                TextButton(onClick = onClick) {
-                    Text(
-                        text = stringResource(Res.string.action_view_all),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_chevron_right),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                MetricTile(
+                    value = vehicleStatus.onTripInProgress.toString(),
+                    label = stringResource(Res.string.dashboard_label_on_route),
+                    accent = FleetStatusColors.FleetOnRoute,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    value = vehicleStatus.onTripPlanned.toString(),
+                    label = stringResource(Res.string.dashboard_label_planned),
+                    accent = FleetStatusColors.FleetPlanned,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    value = vehicleStatus.available.toString(),
+                    label = stringResource(Res.string.dashboard_label_available),
+                    accent = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f)
+                )
             }
 
-            if (vehicleStatus.total == 0) {
-                SectionEmptyState(
-                    iconRes = Res.drawable.ic_vehicle,
-                    title = stringResource(Res.string.dashboard_no_vehicles_yet),
-                    message = stringResource(Res.string.dashboard_add_vehicle_message),
-                    actionLabel = stringResource(Res.string.add),
-                    onAction = onAddVehicleClick
-                )
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    EnhancedStatusChip(
-                        label = stringResource(Res.string.dashboard_label_on_route),
-                        count = vehicleStatus.onTripInProgress,
-                        color = FleetStatusColors.FleetOnRoute,
-                        modifier = Modifier.weight(1f)
-                    )
-                    EnhancedStatusChip(
-                        label = stringResource(Res.string.dashboard_label_planned),
-                        count = vehicleStatus.onTripPlanned,
-                        color = FleetStatusColors.FleetPlanned,
-                        modifier = Modifier.weight(1f)
-                    )
-                    EnhancedStatusChip(
-                        label = stringResource(Res.string.dashboard_label_available),
-                        count = vehicleStatus.available,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
+            ) {
+                OutlinedButton(
+                    onClick = onAddVehicleClick,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = onAddVehicleClick,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(Res.string.action_add_vehicle), style = MaterialTheme.typography.labelSmall)
-                    }
-                    OutlinedButton(
-                        onClick = onAddMaintenanceCostClick,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
-                    }
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(Res.string.action_add_vehicle), style = MaterialTheme.typography.labelSmall)
+                }
+                OutlinedButton(
+                    onClick = onAddMaintenanceCostClick,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -302,134 +251,81 @@ internal fun DriversStatusSection(
     onAddDriverClick: () -> Unit,
     onAddDriverCostClick: () -> Unit = {}
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header with icon and View All
+    DashboardSectionCard {
+        DashboardSectionHeader(
+            title = stringResource(Res.string.org_stats_drivers),
+            iconRes = Res.drawable.ic_driver,
+            accent = MaterialTheme.colorScheme.secondary,
+            actionLabel = stringResource(Res.string.action_view_all),
+            onActionClick = onClick
+        )
+
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+
+        if (driverStatus.total == 0) {
+            SectionEmptyState(
+                iconRes = Res.drawable.ic_driver,
+                title = stringResource(Res.string.dashboard_no_drivers_yet),
+                message = stringResource(Res.string.dashboard_add_driver_message),
+                actionLabel = stringResource(Res.string.add),
+                onAction = onAddDriverClick
+            )
+        } else {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(onClick = onClick)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_driver),
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = stringResource(Res.string.org_stats_drivers),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = stringResource(Res.string.dashboard_count_total, driverStatus.total),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                TextButton(onClick = onClick) {
-                    Text(
-                        text = stringResource(Res.string.action_view_all),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_chevron_right),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                MetricTile(
+                    value = driverStatus.onTripInProgress.toString(),
+                    label = stringResource(Res.string.dashboard_label_on_route),
+                    accent = FleetStatusColors.FleetOnRoute,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    value = driverStatus.onTripPlanned.toString(),
+                    label = stringResource(Res.string.dashboard_label_planned),
+                    accent = FleetStatusColors.FleetPlanned,
+                    modifier = Modifier.weight(1f)
+                )
+                MetricTile(
+                    value = driverStatus.available.toString(),
+                    label = stringResource(Res.string.dashboard_label_available),
+                    accent = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f)
+                )
             }
 
-            if (driverStatus.total == 0) {
-                SectionEmptyState(
-                    iconRes = Res.drawable.ic_driver,
-                    title = stringResource(Res.string.dashboard_no_drivers_yet),
-                    message = stringResource(Res.string.dashboard_add_driver_message),
-                    actionLabel = stringResource(Res.string.add),
-                    onAction = onAddDriverClick
-                )
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    EnhancedStatusChip(
-                        label = stringResource(Res.string.dashboard_label_on_route),
-                        count = driverStatus.onTripInProgress,
-                        color = FleetStatusColors.FleetOnRoute,
-                        modifier = Modifier.weight(1f)
-                    )
-                    EnhancedStatusChip(
-                        label = stringResource(Res.string.dashboard_label_planned),
-                        count = driverStatus.onTripPlanned,
-                        color = FleetStatusColors.FleetPlanned,
-                        modifier = Modifier.weight(1f)
-                    )
-                    EnhancedStatusChip(
-                        label = stringResource(Res.string.dashboard_label_available),
-                        count = driverStatus.available,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
+            ) {
+                OutlinedButton(
+                    onClick = onAddDriverClick,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = onAddDriverClick,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(Res.string.action_add_driver), style = MaterialTheme.typography.labelSmall)
-                    }
-                    OutlinedButton(
-                        onClick = onAddDriverCostClick,
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
-                    }
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(Res.string.action_add_driver), style = MaterialTheme.typography.labelSmall)
+                }
+                OutlinedButton(
+                    onClick = onAddDriverCostClick,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }

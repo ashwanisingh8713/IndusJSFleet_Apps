@@ -23,6 +23,9 @@ data class DashboardStats(
     val completedTripsToday: Int = 0,
     val totalDistanceToday: Double = 0.0,
     val fuelConsumption: Double = 0.0,
+    val totalFuelFilled: Double = 0.0,
+    val totalFuelUsed: Double = 0.0,
+    val totalFuelCost: Double = 0.0,
     val activeVehiclesNow: Int = 0,
     val newTripsToday: Int = 0,
     val alertsCount: Int = 0,
@@ -171,10 +174,9 @@ data class LiveVehicle(
 
 /**
  * Team statistics (Owner only).
+ * Backend dashboard.TeamStats exposes only total_members.
  */
 data class TeamStats(
-    val totalManagers: Int = 0,
-    val totalSupervisors: Int = 0,
     val totalMembers: Int = 0
 )
 
@@ -197,37 +199,51 @@ data class DashboardUserInfo(
     val role: String,
     val email: String
 ) {
-    val fullName: String get() = "$firstName $lastName"
+    val fullName: String get() = "$firstName $lastName".trim()
 }
 
 // ============ DASHBOARD V2 Domain Entities ============
 
 /**
  * Cost breakdown item for detailed expense tracking.
+ * Mirrors backend report.CostTypeBreakdown (cost_id/cost_label/group_id).
  */
 data class CostBreakdownItem(
-    val costType: String = "",
+    val costId: String = "",
+    val costLabel: String = "",
+    val groupId: String = "",
     val amount: Double = 0.0,
     val count: Int = 0
 )
 
 /**
  * Cost Overview domain entity.
+ *
+ * Backend report.CostOverview reports `total_profit`/`total_loss`/
+ * `net_profit_loss`; `profitLoss`/`isProfit` are derived at the data boundary
+ * for the UI (it renders a single signed profit/loss figure). `filter`/
+ * `periodLabel` are filled from the requested filter, not the wire payload.
  */
 data class CostOverview(
     val filter: String = "today",
     val periodLabel: String = "",
     val totalExpenses: Double = 0.0,
     val totalRevenue: Double = 0.0,
+    val totalProfit: Double = 0.0,
+    val totalLoss: Double = 0.0,
+    val netProfitLoss: Double = 0.0,
+    // Derived for the UI from net_profit_loss.
     val profitLoss: Double = 0.0,
     val isProfit: Boolean = true,
     val completedTrips: Int = 0,
-    val tripCosts: Double = 0.0,
-    val maintenanceCosts: Double = 0.0,
-    val fuelCosts: Double = 0.0,
-    val tollCosts: Double = 0.0,
-    val otherCosts: Double = 0.0,
-    // NEW: Detailed cost breakdowns
+    // Expense category totals (backend *_expenses).
+    val fuelExpenses: Double = 0.0,
+    val tollExpenses: Double = 0.0,
+    val maintenanceExpenses: Double = 0.0,
+    val otherExpenses: Double = 0.0,
+    val pendingPayments: Double = 0.0,
+    val receivedPayments: Double = 0.0,
+    // Detailed trip-cost expense breakdowns
     val driverAllowanceExpenses: Double = 0.0,
     val parkingExpenses: Double = 0.0,
     val loadingCharges: Double = 0.0,
@@ -265,18 +281,18 @@ data class AlertsSummary(
 
 /**
  * Pending Payment domain entity.
+ * Mirrors backend report.PendingPayment.
  */
 data class PendingPayment(
-    val tripId: Int,
+    val tripId: Int = 0,
+    val vehicleId: Int = 0,
     val vehicleRegistration: String = "",
     val customerName: String = "",
-    val customerContact: String? = null,
-    val sellingValue: Double = 0.0,
+    val customerContact: String = "",
+    val totalAmount: Double = 0.0,
+    val receivedAmount: Double = 0.0,
     val pendingAmount: Double = 0.0,
-    val paymentStatus: String = "pending",
     val tripDate: String? = null,
-    val startLocation: String = "",
-    val endLocation: String = "",
     val daysOverdue: Int = 0
 )
 
@@ -373,18 +389,20 @@ data class FinancialSummary(
     val periodLabel: String = "",
     val totalRevenue: Double = 0.0,
     val totalExpenses: Double = 0.0,
+    // Backend report.FinancialSummary cost split.
+    val tripCosts: Double = 0.0,
+    val maintenanceCosts: Double = 0.0,
+    val driverCosts: Double = 0.0,
     val netProfit: Double = 0.0,
     val profitMargin: Double = 0.0,
     val profitStatus: String = "neutral", // "profit", "loss", "break_even"
     val pendingPayments: Double = 0.0,
+    val receivedPayments: Double = 0.0,
     val completedTrips: Int = 0,
+    val totalTrips: Int = 0,
     val avgTripRevenue: Double = 0.0,
-    val avgTripProfit: Double = 0.0,
-    // Cost breakdown
-    val fuelCost: Double = 0.0,
-    val tollCost: Double = 0.0,
-    val maintenanceCost: Double = 0.0,
-    val otherCost: Double = 0.0
+    val avgTripCost: Double = 0.0,
+    val avgTripProfit: Double = 0.0
 ) {
     val isProfit: Boolean get() = profitStatus == "profit"
     val isLoss: Boolean get() = profitStatus == "loss"

@@ -32,6 +32,11 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kermit)
+
+            // Live-location WebSocket client (ws://<origin>/ws?token=<JWT>).
+            // ktor-client-core is pulled in transitively via ijs-network-lib; the
+            // WebSockets plugin must be declared explicitly so install(WebSockets) resolves.
+            implementation(libs.ktor.client.websockets)
         }
 
         commonTest.dependencies {

@@ -221,8 +221,8 @@ class CustomerRepositoryImpl(
 
     override suspend fun getCustomerStatistics(
         customerId: String,
-        startDate: String?,
-        endDate: String?
+        startDate: Long?,
+        endDate: Long?
     ): Result<CustomerStatistics> = try {
         val token = requireAuthToken()
         val response = remoteDataSource.getCustomerStatistics(token, customerId.toInt(), startDate, endDate)
@@ -331,7 +331,6 @@ class CustomerRepositoryImpl(
         if (response.success) {
             // Use the convenience accessor 'trips' which gets items from data.items
             val trips = response.trips.map { it.toDomain() }
-            val summary = response.summary?.toDomain()
             val totalPages = response.totalPages ?: 1
             val total = response.total ?: trips.size
             logger.d(TAG_CUSTOMER_REPO, "Customer trips loaded: ${trips.size} trips, total: $total, totalPages: $totalPages")
@@ -339,7 +338,8 @@ class CustomerRepositoryImpl(
             Result.Success(
                 CustomerTripsResult(
                     trips = trips,
-                    summary = summary,
+                    // Trips endpoint returns no summary; computed client-side in presentation.
+                    summary = null,
                     page = page,
                     totalPages = totalPages,
                     total = total,
@@ -424,8 +424,8 @@ class CustomerRepositoryImpl(
 
     override suspend fun getCustomerPaymentSummary(
         customerId: String,
-        startDate: String?,
-        endDate: String?
+        startDate: Long?,
+        endDate: Long?
     ): Result<CustomerPaymentSummary> = try {
         val token = requireAuthToken()
         val response = remoteDataSource.getCustomerPaymentSummary(token, customerId.toInt(), startDate, endDate)
@@ -445,8 +445,8 @@ class CustomerRepositoryImpl(
     override suspend fun getCustomerFinancialReport(
         customerId: String,
         period: String,
-        startDate: String?,
-        endDate: String?
+        startDate: Long?,
+        endDate: Long?
     ): Result<CustomerFinancialReport> = try {
         val token = requireAuthToken()
         val response = remoteDataSource.getCustomerFinancialReport(token, customerId.toInt(), period, startDate, endDate)

@@ -6,6 +6,8 @@ import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.ijs.customer.domain.entity.Customer
 import com.ijs.driver.domain.entity.Driver
+import com.ijs.trip.domain.entity.CargoMaterial
+import com.ijs.trip.domain.entity.UnitLabel
 import com.ijs.vehicle.domain.entity.Vehicle
 
 /**
@@ -32,8 +34,8 @@ object CreateTripContract {
      * UI State for the Create Trip screen.
      */
     data class State(
-        // User role for permission checks
-        val userRole: String = "",
+        // Permission flag (computed from PermissionChecker — never role names)
+        val canViewTripPricePermission: Boolean = false,
 
         // Vehicle & Driver selection
         val vehicles: List<Vehicle> = emptyList(),
@@ -64,6 +66,11 @@ object CreateTripContract {
         val weightUnit: String = "",
         val customerName: String = "",
         val customerContact: String = "",
+        // Consignee / delivery (receiver) details — REQUIRED by the backend on create.
+        // Distinct from the billing customer above, though they usually start the same.
+        val deliveryAddress: String = "",
+        val deliveryPersonName: String = "",
+        val deliveryContactNumber: String = "",
         val priority: String = "normal",
         val notes: String = "",
 
@@ -79,7 +86,14 @@ object CreateTripContract {
         val allCustomers: List<Customer> = emptyList(),
 
         // Pricing
+        // tripPrice = the quoted/expected price (expected_trip_price).
         val tripPrice: String = "",
+        // actualPrice = the ACTUAL price (revenue) the customer owes; defaults to the
+        // quote (tripPrice) but is user-overridable. Sent as selling_value to the backend.
+        val actualPrice: String = "",
+        // purchasePrice = the COGS (cost of goods sold) for this trip. Sent as
+        // purchase_price to the backend; null when blank so the backend default applies.
+        val purchasePrice: String = "",
 
         // Validation errors
         val vehicleError: String? = null,
@@ -94,6 +108,10 @@ object CreateTripContract {
         val weightUnitError: String? = null,
         val customerNameError: String? = null,
         val customerContactError: String? = null,
+        // Consignee / delivery (receiver) validation errors.
+        val deliveryAddressError: String? = null,
+        val deliveryPersonNameError: String? = null,
+        val deliveryContactNumberError: String? = null,
         val tripPriceError: String? = null,
 
         // Form state
@@ -120,28 +138,80 @@ object CreateTripContract {
 
         // Available options
         val priorityOptions: List<String> = priorities,
-        val cargoTypeOptions: List<String> = cargoTypes,
-        val weightUnitOptions: List<String> = weightUnits
+
+        // Config-driven cargo materials (loaded in the background from the bundled asset).
+        // Empty until loaded; the option helpers below fall back to the static lists meanwhile.
+        val cargoMaterials: List<CargoMaterial> = emptyList(),
+
+        // Config-driven, language-aware display labels for unit VALUES (loaded from the asset).
+        // The unit VALUE (weightUnit) is never changed by this — labels are display only.
+        val unitLabels: List<UnitLabel> = emptyList()
     ) : UiState {
 
         /**
-         * Determines if the user can view and set trip_price.
-         * Only Owner and General Manager can see trip pricing.
+         * Cargo-type ids for the cargo dropdown: config materials' ids when loaded, else the
+         * static [cargoTypes].
          */
-        val canViewTripPrice: Boolean
+        val cargoTypeOptions: List<String>
+            get() = if (cargoMaterials.isNotEmpty()) cargoMaterials.map { it.id } else cargoTypes
+
+        /**
+         * Units valid for the currently-selected cargo type. Resolution order:
+         *  1. the selected material's own units (matched by id),
+         *  2. the config's global unit set (allUnits, derived from the loaded materials),
+         *  3. the static [weightUnits].
+         * Empty when no cargo type is selected yet (the unit dropdown is gated on this).
+         */
+        val unitOptionsForSelectedCargo: List<String>
             get() {
-                val role = userRole.lowercase().replace("_", "")
-                return role == "owner" || role == "generalmanager"
+                if (cargoType.isBlank()) return emptyList()
+                cargoMaterials.firstOrNull { it.id == cargoType }?.let { material ->
+                    if (material.units.isNotEmpty()) return material.units
+                }
+                val configAllUnits = cargoMaterials.flatMap { it.units }.distinct()
+                return configAllUnits.ifEmpty { weightUnits }
             }
 
         /**
+         * Resolve a cargo material's display label by id. Picks the Hindi label when [hindi]
+         * is set (and present), else the English label, falling back to the capitalized id
+         * when the material is unknown (e.g. config not loaded yet).
+         */
+        fun cargoLabelFor(id: String, hindi: Boolean = false): String {
+            val material = cargoMaterials.firstOrNull { it.id == id }
+            val name = if (hindi) material?.labelHi?.takeIf { it.isNotBlank() } ?: material?.label
+                       else material?.label
+            return name ?: id.replaceFirstChar { it.uppercaseChar() }
+        }
+
+        /**
+         * Resolve a unit VALUE to its display label. Picks the Hindi label when [hindi] is set
+         * (falling back to the English label when blank), else the English label. Falls back to
+         * the raw [value] when no label entry exists. Never changes the value itself.
+         */
+        fun unitLabelFor(value: String, hindi: Boolean = false): String =
+            unitLabels.firstOrNull { it.value == value }?.let {
+                if (hindi) it.labelHi.ifBlank { it.label } else it.label
+            } ?: value
+
+        /**
+         * Determines if the user can view and set trip_price.
+         * Gated on the financials:read permission.
+         */
+        val canViewTripPrice: Boolean
+            get() = canViewTripPricePermission
+
+        /**
          * Form completion percentage for progress indicator.
-         * Includes: Vehicle, Driver, Route (2), Schedule, Cargo (3), Customer (1), Pricing = 10 fields
+         * Includes: Vehicle, Driver, Route (2), Schedule, Cargo (3), Customer (1),
+         * Delivery/Consignee (3), Pricing = 13 fields.
+         * Customer is REQUIRED (backend customer_id is binding:required), so it IS counted.
+         * The three delivery/consignee fields are also REQUIRED, so each IS counted.
          */
         val formCompletionPercentage: Int
             get() {
                 var completed = 0
-                val total = if (canViewTripPrice) 10 else 9
+                val total = if (canViewTripPrice) 13 else 12
 
                 if (selectedVehicle != null) completed++
                 if (selectedDriver != null) completed++
@@ -151,8 +221,11 @@ object CreateTripContract {
                 if (cargoType.isNotBlank()) completed++
                 if (cargoWeight.isNotBlank()) completed++
                 if (weightUnit.isNotBlank()) completed++
-                // Customer is valid only if selected from DB
                 if (selectedCustomer != null) completed++
+                // Delivery / Consignee — all three are REQUIRED.
+                if (deliveryAddress.isNotBlank()) completed++
+                if (deliveryPersonName.isNotBlank()) completed++
+                if (deliveryContactNumber.isNotBlank()) completed++
                 if (canViewTripPrice && tripPrice.isNotBlank()) completed++
 
                 return (completed * 100) / total
@@ -178,7 +251,17 @@ object CreateTripContract {
                         cargoType.isNotBlank() &&
                         cargoWeight.isNotBlank() &&
                         weightUnit.isNotBlank() &&
+                        // Customer is REQUIRED — backend CreateTripRequest.customer_id is
+                        // binding:"required", so a trip cannot be created without one.
                         isCustomerValid &&
+                        // Consignee / delivery fields are REQUIRED (backend binding:required) —
+                        // each must be non-blank AND have no validation error.
+                        deliveryAddress.isNotBlank() &&
+                        deliveryPersonName.isNotBlank() &&
+                        deliveryContactNumber.isNotBlank() &&
+                        deliveryAddressError == null &&
+                        deliveryPersonNameError == null &&
+                        deliveryContactNumberError == null &&
                         vehicleError == null &&
                         driverError == null &&
                         startLocationError == null &&
@@ -255,11 +338,17 @@ object CreateTripContract {
         data class UpdateWeightUnit(val value: String) : Intent
         data class UpdateCustomerName(val value: String) : Intent
         data class UpdateCustomerContact(val value: String) : Intent
+        // Consignee / delivery (receiver) updates — all three are REQUIRED.
+        data class UpdateDeliveryAddress(val value: String) : Intent
+        data class UpdateDeliveryPersonName(val value: String) : Intent
+        data class UpdateDeliveryContactNumber(val value: String) : Intent
         data class UpdatePriority(val value: String) : Intent
         data class UpdateNotes(val value: String) : Intent
 
         // Customer selection from local DB
         data class SelectCustomer(val customer: Customer) : Intent
+        /** Select a customer by id after it was just created from this screen (refreshes then selects). */
+        data class SelectCustomerById(val customerId: String) : Intent
         data class SearchCustomers(val query: String) : Intent
         data class UpdateCustomerSearchQuery(val query: String) : Intent
         data object ToggleCustomerBottomSheet : Intent
@@ -270,6 +359,10 @@ object CreateTripContract {
 
         // Pricing updates
         data class UpdateTripPrice(val value: String) : Intent
+        // Actual price (revenue) the customer owes — sent as selling_value.
+        data class UpdateActualPrice(val value: String) : Intent
+        // Purchase price (COGS) for the trip — sent as purchase_price.
+        data class UpdatePurchasePrice(val value: String) : Intent
 
         // Actions
         data object CreateTrip : Intent

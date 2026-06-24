@@ -22,9 +22,7 @@ object ForgotPasswordContract {
         val isResetMode: Boolean = false,
         val resetToken: String = "",
         val newPassword: String = "",
-        val confirmPassword: String = "",
-        val isPasswordVisible: Boolean = false,
-        val isConfirmPasswordVisible: Boolean = false
+        val confirmPassword: String = ""
     ) : UiState
 
     /**
@@ -36,8 +34,6 @@ object ForgotPasswordContract {
         data class UpdateResetToken(val token: String) : Intent
         data class UpdateNewPassword(val password: String) : Intent
         data class UpdateConfirmPassword(val password: String) : Intent
-        data object TogglePasswordVisibility : Intent
-        data object ToggleConfirmPasswordVisibility : Intent
         data object ResetPassword : Intent
         data object ClearError : Intent
         data object NavigateToLogin : Intent

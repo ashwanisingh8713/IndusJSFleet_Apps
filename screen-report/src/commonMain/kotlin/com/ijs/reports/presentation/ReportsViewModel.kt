@@ -4,14 +4,23 @@ import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.reports.TAG_REPORTS_VM
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.core.util.currentTimeMillis
 import com.ijs.reports.domain.entity.CostBreakdownItem
 import com.ijs.reports.domain.usecase.GetPLSummaryUseCase
+import com.indusjs.pdfreport.model.CostBreakdownPdfItem
+import com.indusjs.pdfreport.model.FleetProfitLossPdfData
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.presentation.ReportsContract.Effect
 import com.ijs.reports.presentation.ReportsContract.Intent
 import com.ijs.reports.presentation.ReportsContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_failed_load_summary
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_no_data_export
 import kotlinx.datetime.*
+
+private const val MILLIS_PER_DAY = 86_400_000L
 
 /**
  * ViewModel for Reports Hub Screen
@@ -42,6 +51,7 @@ init {
             is Intent.NavigateToVehiclePL -> sendEffect(Effect.NavigateToVehiclePL)
             is Intent.NavigateToTripPL -> sendEffect(Effect.NavigateToTripPL)
             is Intent.NavigateToConsolidatedPL -> sendEffect(Effect.NavigateToConsolidatedPL)
+            is Intent.NavigateToCustomerPL -> sendEffect(Effect.NavigateToCustomerPL)
             // Navigation - Cost Analysis Reports
             is Intent.NavigateToCostAnalysis -> sendEffect(Effect.NavigateToCostAnalysis)
             is Intent.NavigateToMaintenanceCostReport -> sendEffect(Effect.NavigateToMaintenanceCostReport)
@@ -51,7 +61,9 @@ init {
             is Intent.NavigateToCombinedReport -> sendEffect(Effect.NavigateToCombinedReport)
             // Export
             is Intent.ExportToPdf -> exportToPdf()
-            is Intent.DismissExportDialog -> updateState { copy(exportSuccess = false, exportedFilePath = null) }
+            is Intent.DismissExportDialog -> updateState {
+                copy(exportSuccess = false, exportedFilePath = null, pdfExportData = null, isExporting = false)
+            }
         }
     }
 
@@ -113,6 +125,15 @@ init {
         return if (parts[0].length == 4) {
             "${parts[2]}-${parts[1]}-${parts[0]}"
         } else date // Already in DD-MM-YYYY or unknown format
+    }
+
+    /**
+     * Converts an internal YYYY-MM-DD range string to UTC epoch millis for the
+     * request boundary. Returns null when blank/invalid.
+     */
+    private fun rangeStringToEpochMillis(date: String): Long? {
+        if (date.isBlank()) return null
+        return convertToEpochMillis(convertYyyyMmDdToDdMmYyyy(date))
     }
 
     /**
@@ -214,8 +235,15 @@ init {
         logger.d(TAG_REPORTS_VM, "=== CALLING API ===")
         logger.d(TAG_REPORTS_VM, "API Request: startDate=$startDate, endDate=$endDate")
 
-        // Call API with start_date and end_date only (no period param)
-        when (val result = getPLSummaryUseCase(startDate, endDate)) {
+        // Call API with start_date and end_date only (no period param).
+        // Internal range strings are YYYY-MM-DD; convert to epoch millis at the boundary.
+        // start_date = start-of-day; end_date = INCLUSIVE end-of-day (start-of-day + 23:59:59.999).
+        // Without the end-of-day adjustment "Today" becomes a zero-width window and "This Month"
+        // ends at start-of-today, excluding everything that happened today (e.g. a trip completed
+        // today shows Revenue/Expenses ₹0).
+        val startMs = rangeStringToEpochMillis(startDate)
+        val endMs = rangeStringToEpochMillis(endDate)?.let { it + MILLIS_PER_DAY - 1 }
+        when (val result = getPLSummaryUseCase(startMs, endMs)) {
             is Result.Success -> {
                 val summary = result.data
                 logger.d(TAG_REPORTS_VM, "=== API SUCCESS ===")
@@ -247,7 +275,7 @@ init {
                 logger.e(TAG_REPORTS_VM, "=== API ERROR ===")
                 logger.e(TAG_REPORTS_VM, "Failed to load summary: ${result.message}")
                 logger.e(TAG_REPORTS_VM, "Exception: ${result.exception}")
-                updateState { copy(isLoading = false, error = result.message ?: "Failed to load summary") }
+                updateState { copy(isLoading = false, error = result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_load_summary)) }
             }
             is Result.Loading -> {
                 logger.d(TAG_REPORTS_VM, "Result.Loading received")
@@ -255,27 +283,45 @@ init {
         }
     }
 
-    private suspend fun exportToPdf() {
-        val summary = state.value.summary ?: run {
-            sendEffect(Effect.ShowExportError("No data to export"))
+    private fun exportToPdf() {
+        val s = state.value
+        val summary = s.summary ?: run {
+            sendEffect(Effect.ShowExportError(UiText.StringRes(Res.string.report_no_data_export)))
             return
         }
-
-        updateState { copy(isExporting = true) }
-
-        try {
-            updateState {
-                copy(
-                    isExporting = false,
-                    exportSuccess = true,
-                    exportedFilePath = "/sdcard/IndusJSFleet/reports/report.pdf"
-                )
-            }
-            sendEffect(Effect.ShowExportSuccess("/sdcard/IndusJSFleet/reports/report.pdf"))
-        } catch (e: Exception) {
-            logger.e(TAG_REPORTS_VM, "Failed to export PDF: ${e.message}", e)
-            updateState { copy(isExporting = false) }
-            sendEffect(Effect.ShowExportError(e.message ?: "Failed to export PDF"))
+        val now = Instant.fromEpochMilliseconds(currentTimeMillis())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+        val dateRange = if (s.startDate.isNotBlank() && s.endDate.isNotBlank()) {
+            "${s.startDate} to ${s.endDate}"
+        } else {
+            s.selectedPeriod.label
         }
+        // Build the real PDF model from the loaded summary. The summary screen has no
+        // per-vehicle rows, so `vehicles` is empty — the report shows fleet totals + the
+        // expense breakdown. Setting pdfExportData drives FleetProfitLossPdfHandler in the
+        // screen, which generates the PDF and shows the open/share dialog.
+        val pdfData = FleetProfitLossPdfData(
+            dateRange = dateRange,
+            periodType = s.selectedPeriod.value,
+            totalVehicles = summary.totalVehicles,
+            profitableVehicles = summary.profitableVehicles,
+            lossMakingVehicles = summary.lossMakingVehicles,
+            totalRevenue = summary.totalRevenue,
+            totalExpenses = summary.totalExpenses,
+            netProfitLoss = summary.netProfit,
+            profitMargin = summary.profitMarginPercentage,
+            vehicles = emptyList(),
+            costBreakdown = summary.expenseBreakdown.map { item ->
+                CostBreakdownPdfItem(
+                    costId = item.type,
+                    costLabel = item.type,
+                    amount = item.amount,
+                    count = 0,
+                    percentage = item.percentage
+                )
+            },
+            generatedAt = now.date.toString()
+        )
+        updateState { copy(isExporting = true, pdfExportData = pdfData) }
     }
 }

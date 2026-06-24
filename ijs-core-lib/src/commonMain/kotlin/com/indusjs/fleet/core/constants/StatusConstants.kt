@@ -103,31 +103,37 @@ object StatusConstants {
     /**
      * Driver status constants matching API values.
      *
+     * Backend contract: PATCH /drivers/:id/status accepts oneof =
+     * active | inactive | on_trip | on_leave | suspended
+     * (see IndusJSFleet_GoLang_Backend internal/application/driver/dto.go).
+     *
      * States:
      * - inactive: Driver is disabled/not working
      * - active: Driver is available for assignment
-     * - on_route: Driver is currently on a trip
+     * - on_trip: Driver is currently on a trip
      * - on_leave: Driver is on approved leave
      * - suspended: Driver privileges suspended
-     * - terminated: Driver employment terminated (optional)
+     *
+     * Note: legacy "on_route" / "terminated" are NOT accepted by the backend
+     * (returns 400). The "on_route" wire value is still tolerated on READ via
+     * the legacy branches below so old data renders, but it is never sent.
      */
     object DriverState {
         const val INACTIVE = "inactive"
         const val ACTIVE = "active"
-        const val ON_ROUTE = "on_route"
+        const val ON_TRIP = "on_trip"
         const val ON_LEAVE = "on_leave"
         const val SUSPENDED = "suspended"
-        const val TERMINATED = "terminated"
 
         /**
-         * All valid driver states.
+         * All valid driver states (matches backend status oneof).
          */
-        val ALL = listOf(INACTIVE, ACTIVE, ON_ROUTE, ON_LEAVE, SUSPENDED, TERMINATED)
+        val ALL = listOf(INACTIVE, ACTIVE, ON_TRIP, ON_LEAVE, SUSPENDED)
 
         /**
-         * Core driver states (excluding optional).
+         * Core driver states.
          */
-        val CORE = listOf(INACTIVE, ACTIVE, ON_ROUTE, ON_LEAVE, SUSPENDED)
+        val CORE = listOf(INACTIVE, ACTIVE, ON_TRIP, ON_LEAVE, SUSPENDED)
 
         /**
          * States where driver is available for assignment.
@@ -137,7 +143,7 @@ object StatusConstants {
         /**
          * States where driver is unavailable.
          */
-        val UNAVAILABLE = listOf(INACTIVE, ON_ROUTE, ON_LEAVE, SUSPENDED, TERMINATED)
+        val UNAVAILABLE = listOf(INACTIVE, ON_TRIP, ON_LEAVE, SUSPENDED)
 
         /**
          * Display labels for each state.
@@ -145,10 +151,9 @@ object StatusConstants {
         fun getDisplayLabel(state: String): String = when (state.lowercase()) {
             INACTIVE -> "Inactive"
             ACTIVE -> "Active"
-            ON_ROUTE -> "On Route"
+            ON_TRIP, "on_route" -> "On Trip" // legacy "on_route" tolerated on read
             ON_LEAVE -> "On Leave"
             SUSPENDED -> "Suspended"
-            TERMINATED -> "Terminated"
             else -> state.replaceFirstChar { it.uppercase() }
         }
 
@@ -158,10 +163,9 @@ object StatusConstants {
         fun getIcon(state: String): String = when (state.lowercase()) {
             INACTIVE -> "⚫"
             ACTIVE -> "🟢"
-            ON_ROUTE -> "🚗"
+            ON_TRIP, "on_route" -> "🚗" // legacy "on_route" tolerated on read
             ON_LEAVE -> "🏖️"
             SUSPENDED -> "⏸️"
-            TERMINATED -> "🚫"
             else -> "❓"
         }
 
@@ -171,17 +175,18 @@ object StatusConstants {
         fun getColorScheme(state: String): StateColorScheme = when (state.lowercase()) {
             INACTIVE -> StateColorScheme.NEUTRAL
             ACTIVE -> StateColorScheme.SUCCESS
-            ON_ROUTE -> StateColorScheme.INFO
+            ON_TRIP, "on_route" -> StateColorScheme.INFO // legacy "on_route" tolerated on read
             ON_LEAVE -> StateColorScheme.WARNING
             SUSPENDED -> StateColorScheme.ERROR
-            TERMINATED -> StateColorScheme.NEUTRAL
             else -> StateColorScheme.NEUTRAL
         }
 
         /**
          * Check if state is valid.
+         * Accepts legacy "on_route" for backward compatibility on read.
          */
-        fun isValid(state: String): Boolean = state.lowercase() in ALL
+        fun isValid(state: String): Boolean =
+            state.lowercase() in ALL || state.lowercase() == "on_route"
 
         /**
          * Check if driver is available for trip assignment.
@@ -399,18 +404,20 @@ object StatusConstants {
     /**
      * Valid state transitions for drivers.
      *
+     * Backend only validates the target status oneof
+     * (active|inactive|on_trip|on_leave|suspended); these transitions are a
+     * client-side UX guide for the status-change dialog.
+     *
      * Transitions:
      * - Inactive → Active (Activate driver)
-     * - Active → On Route (Trip started)
+     * - Active → On Trip (Trip started)
      * - Active → On Leave (Leave approved)
      * - Active → Suspended (Suspension applied)
      * - Active → Inactive (Disable driver)
-     * - Active → Terminated (Terminate employment)
-     * - On Route → Active (Trip completed)
+     * - On Trip → Active (Trip completed)
      * - On Leave → Active (Leave ended)
      * - On Leave → Inactive (Disable during leave)
      * - Suspended → Active (Suspension lifted)
-     * - Suspended → Terminated (Termination)
      * - Suspended → Inactive (Disable suspended driver)
      */
     object DriverTransitions {
@@ -418,29 +425,32 @@ object StatusConstants {
             DriverState.INACTIVE to listOf(DriverState.ACTIVE),
             DriverState.ACTIVE to listOf(
                 DriverState.INACTIVE,
-                DriverState.ON_ROUTE,
+                DriverState.ON_TRIP,
                 DriverState.ON_LEAVE,
-                DriverState.SUSPENDED,
-                DriverState.TERMINATED
+                DriverState.SUSPENDED
             ),
-            DriverState.ON_ROUTE to listOf(DriverState.ACTIVE),
+            DriverState.ON_TRIP to listOf(DriverState.ACTIVE),
             DriverState.ON_LEAVE to listOf(DriverState.ACTIVE, DriverState.INACTIVE),
-            DriverState.SUSPENDED to listOf(DriverState.ACTIVE, DriverState.TERMINATED, DriverState.INACTIVE),
-            DriverState.TERMINATED to emptyList<String>()
+            DriverState.SUSPENDED to listOf(DriverState.ACTIVE, DriverState.INACTIVE)
         )
 
         /**
          * Check if transition from one state to another is valid.
+         * Legacy "on_route" is treated as "on_trip".
          */
         fun canTransition(from: String, to: String): Boolean {
-            return transitions[from.lowercase()]?.contains(to.lowercase()) == true
+            val normalizedFrom = if (from.lowercase() == "on_route") DriverState.ON_TRIP else from.lowercase()
+            val normalizedTo = if (to.lowercase() == "on_route") DriverState.ON_TRIP else to.lowercase()
+            return transitions[normalizedFrom]?.contains(normalizedTo) == true
         }
 
         /**
          * Get list of valid states to transition to from current state.
+         * Legacy "on_route" is treated as "on_trip".
          */
         fun getValidTransitions(from: String): List<String> {
-            return transitions[from.lowercase()] ?: emptyList()
+            val normalizedFrom = if (from.lowercase() == "on_route") DriverState.ON_TRIP else from.lowercase()
+            return transitions[normalizedFrom] ?: emptyList()
         }
 
         /**

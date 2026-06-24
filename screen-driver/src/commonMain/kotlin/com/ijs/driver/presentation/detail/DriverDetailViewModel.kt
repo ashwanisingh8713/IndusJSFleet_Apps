@@ -2,7 +2,9 @@ package com.ijs.driver.presentation.detail
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.permission.PermissionChecker
 import com.indusjs.error.result.Result
+import com.indusjs.fleet.core.util.ValidationUtils
 import com.ijs.team.data.model.TeamMemberDto
 import com.ijs.driver.domain.entity.DriverStatus
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
@@ -17,8 +19,31 @@ import com.ijs.driver.domain.usecase.UpdateDriverUseCase
 import com.ijs.driver.presentation.detail.DriverDetailContract.Effect
 import com.ijs.driver.presentation.detail.DriverDetailContract.Intent
 import com.ijs.driver.presentation.detail.DriverDetailContract.State
+import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
 import androidx.lifecycle.viewModelScope
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_first_name_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_last_name_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_email_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_fill_required_fields
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_no_costs_export
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_updated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_deleted
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_activated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_deactivated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_status_updated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_driver
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_update_status
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_toggle_active
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_update_driver
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_delete_driver
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_costs
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_more_costs
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_history
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_update_driver_status
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -36,20 +61,13 @@ class DriverDetailViewModel(
     private val driverRepository: DriverRepository,
     private val teamRepository: TeamRepository,
     private val costsRepository: CostsRepository,
-    private val userLocalDataSource: com.indusjs.fleet.data.datasource.user.UserLocalDataSource? = null,
+    private val permissionChecker: PermissionChecker,
     private val statesRepository: StatesRepository? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     init {
-        // Load user role on init
-        viewModelScope.launch(dispatcherProvider.io) {
-            val userRole = try {
-                userLocalDataSource?.getUserRole() ?: ""
-            } catch (e: Exception) {
-                ""
-            }
-            updateState { copy(currentUserRole = userRole) }
-        }
+        // Compute permission flag from the user's actual permission set
+        updateState { copy(canViewCostsPermission = permissionChecker.canViewFinancials()) }
         // Load DB-cached state labels
         viewModelScope.launch {
             try {
@@ -183,13 +201,15 @@ class DriverDetailViewModel(
                     }
                 }
                 is Result.Error -> {
+                    val errorText = result.message?.let { UiText.Raw(it) }
+                        ?: UiText.StringRes(Res.string.error_load_driver)
                     updateState {
                         copy(
                             isLoading = false,
-                            error = result.message ?: "Failed to load driver"
+                            error = errorText
                         )
                     }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to load driver"))
+                    sendEffect(Effect.ShowError(errorText))
                 }
                 is Result.Loading -> { /* Already handled */ }
             }
@@ -236,17 +256,17 @@ class DriverDetailViewModel(
     }
 
     private fun updateFirstName(value: String) {
-        val error = if (value.isBlank()) "First name is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_first_name_required) else null
         updateState { copy(firstName = value, firstNameError = error) }
     }
 
     private fun updateLastName(value: String) {
-        val error = if (value.isBlank()) "Last name is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_last_name_required) else null
         updateState { copy(lastName = value, lastNameError = error) }
     }
 
     private fun updateEmail(value: String) {
-        val error = if (value.isNotBlank() && !isValidEmail(value)) "Invalid email format" else null
+        val error = if (value.isNotBlank() && !isValidEmail(value)) UiText.StringRes(Res.string.error_email_invalid) else null
         updateState { copy(email = value, emailError = error) }
     }
 
@@ -255,19 +275,15 @@ class DriverDetailViewModel(
         updateState { copy(mobile = value, mobileError = error) }
     }
 
-    private fun validateMobile(value: String): String? {
+    private fun validateMobile(value: String): UiText? {
         return when {
-            value.isBlank() -> "Mobile number is required"
-            value.length < 10 -> "Mobile number must be at least 10 digits"
-            !value.all { it.isDigit() } -> "Mobile number must contain only digits"
+            value.isBlank() -> UiText.StringRes(Res.string.error_mobile_required)
+            !ValidationUtils.isValidIndianMobile(value) -> UiText.StringRes(Res.string.error_mobile_invalid)
             else -> null
         }
     }
 
-    private fun isValidEmail(email: String): Boolean {
-        val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
-        return emailRegex.matches(email)
-    }
+    private fun isValidEmail(email: String): Boolean = ValidationUtils.isValidEmail(email)
 
     private suspend fun updateStatus(status: DriverStatus) {
         val driverId = currentState.driver?.id ?: return
@@ -282,11 +298,26 @@ class DriverDetailViewModel(
                             driver = result.data
                         )
                     }
-                    sendEffect(Effect.ShowSnackbar("Status updated to ${DriverStatus.toApiString(status)}"))
+                    val apiValue = DriverStatus.toApiString(status)
+                    val label = currentState.stateLabels[apiValue]
+                        ?: DriverStatus.getDisplayLabel(status)
+                    sendEffect(
+                        Effect.ShowSnackbar(
+                            UiText.StringRes(
+                                Res.string.success_driver_status_updated,
+                                args = listOf(label)
+                            )
+                        )
+                    )
                 }
                 is Result.Error -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to update status"))
+                    sendEffect(
+                        Effect.ShowError(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_update_status)
+                        )
+                    )
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
@@ -306,12 +337,21 @@ class DriverDetailViewModel(
                             driver = result.data
                         )
                     }
-                    val message = if (result.data.isActive) "Driver activated" else "Driver deactivated"
+                    val message = if (result.data.isActive) {
+                        UiText.StringRes(Res.string.success_driver_activated)
+                    } else {
+                        UiText.StringRes(Res.string.success_driver_deactivated)
+                    }
                     sendEffect(Effect.ShowSnackbar(message))
                 }
                 is Result.Error -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to toggle active state"))
+                    sendEffect(
+                        Effect.ShowError(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_toggle_active)
+                        )
+                    )
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
@@ -320,7 +360,7 @@ class DriverDetailViewModel(
 
     private suspend fun saveChanges() {
         if (!validateForm()) {
-            sendEffect(Effect.ShowSnackbar("Please fill all required fields correctly"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.error_fill_required_fields)))
             return
         }
 
@@ -360,12 +400,17 @@ class DriverDetailViewModel(
                             mobile = result.data.mobile
                         )
                     }
-                    sendEffect(Effect.ShowSnackbar("Driver updated successfully"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_driver_updated)))
                     sendEffect(Effect.DriverUpdated)
                 }
                 is Result.Error -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to update driver"))
+                    sendEffect(
+                        Effect.ShowError(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_update_driver)
+                        )
+                    )
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
@@ -373,10 +418,10 @@ class DriverDetailViewModel(
     }
 
     private fun validateForm(): Boolean {
-        val firstNameError = if (currentState.firstName.isBlank()) "First name is required" else null
-        val lastNameError = if (currentState.lastName.isBlank()) "Last name is required" else null
+        val firstNameError = if (currentState.firstName.isBlank()) UiText.StringRes(Res.string.error_first_name_required) else null
+        val lastNameError = if (currentState.lastName.isBlank()) UiText.StringRes(Res.string.error_last_name_required) else null
         val mobileError = validateMobile(currentState.mobile)
-        val emailError = if (currentState.email.isNotBlank() && !isValidEmail(currentState.email)) "Invalid email format" else null
+        val emailError = if (currentState.email.isNotBlank() && !isValidEmail(currentState.email)) UiText.StringRes(Res.string.error_email_invalid) else null
 
         updateState {
             copy(
@@ -398,53 +443,49 @@ class DriverDetailViewModel(
             when (val result = deleteDriverUseCase(driverId)) {
                 is Result.Success -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowSnackbar("Driver deleted successfully"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_driver_deleted)))
                     sendEffect(Effect.DriverDeleted(driverId))
                     sendEffect(Effect.NavigateBack)
                 }
                 is Result.Error -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to delete driver"))
+                    sendEffect(
+                        Effect.ShowError(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_delete_driver)
+                        )
+                    )
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
         }
     }
 
+    /**
+     * Epoch millis -> ISO "YYYY-MM-DD" form string (the format the edit fields hold).
+     */
     private fun formatTimestamp(timestamp: Long): String {
-        if (timestamp <= 0) return ""
-        return try {
-            val days = timestamp / (24 * 60 * 60 * 1000)
-            val years = (days / 365.25).toInt() + 1970
-            val remainingDays = (days % 365.25).toInt()
-            val months = (remainingDays / 30) + 1
-            val dayOfMonth = (remainingDays % 30) + 1
-            val monthStr = months.coerceIn(1, 12).toString().padStart(2, '0')
-            val dayStr = dayOfMonth.coerceIn(1, 28).toString().padStart(2, '0')
-            "$years-$monthStr-$dayStr"
-        } catch (_: Exception) {
-            ""
-        }
+        if (timestamp <= 0L) return ""
+        val value = com.indusjs.datetimeutils.FleetEpoch.toValue(timestamp) ?: return ""
+        val monthStr = value.month.toString().padStart(2, '0')
+        val dayStr = value.day.toString().padStart(2, '0')
+        return "${value.year}-$monthStr-$dayStr"
     }
 
+    /**
+     * ISO "YYYY-MM-DD" form string -> UTC epoch millis (canonical, via FleetEpoch).
+     */
     private fun parseDateToTimestamp(dateString: String): Long {
         if (dateString.isBlank()) return 0L
-        return try {
-            val parts = dateString.split("-")
-            if (parts.size == 3) {
-                val year = parts[0].toInt()
-                val month = parts[1].toInt()
-                val day = parts[2].toInt()
-                val baseYear = 1970
-                val daysFromBase = ((year - baseYear) * 365.25).toLong() +
-                        (month - 1) * 30L + day
-                daysFromBase * 24 * 60 * 60 * 1000
-            } else {
-                0L
-            }
-        } catch (_: Exception) {
-            0L
-        }
+        val parts = dateString.split("-")
+        if (parts.size != 3) return 0L
+        val year = parts[0].toIntOrNull() ?: return 0L
+        val month = parts[1].toIntOrNull() ?: return 0L
+        val day = parts[2].toIntOrNull() ?: return 0L
+        val value = com.indusjs.datetimeutils.FleetDateTimeValue(
+            year = year, month = month, day = day, hour = 0, minute = 0, second = 0
+        )
+        return com.indusjs.datetimeutils.FleetEpoch.fromValue(value) ?: 0L
     }
 
     // ==================== Costs Tab Functions ====================
@@ -545,7 +586,8 @@ class DriverDetailViewModel(
                     updateState {
                         copy(
                             isLoadingCosts = false,
-                            costsError = result.message ?: "Failed to load costs"
+                            costsError = result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_load_costs)
                         )
                     }
                 }
@@ -588,7 +630,12 @@ class DriverDetailViewModel(
                 }
                 is Result.Error -> {
                     updateState { copy(isLoadingCosts = false) }
-                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load more costs"))
+                    sendEffect(
+                        Effect.ShowSnackbar(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_load_more_costs)
+                        )
+                    )
                 }
                 is Result.Loading -> {}
             }
@@ -656,7 +703,7 @@ class DriverDetailViewModel(
         val costs = currentState.costs
 
         if (costs.isEmpty()) {
-            sendEffect(Effect.ShowSnackbar("No costs to export"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.error_no_costs_export)))
             return
         }
 
@@ -685,7 +732,8 @@ class DriverDetailViewModel(
                 groupId = cost.groupId,
                 groupName = groupNames[cost.groupId] ?: "Other",
                 amount = cost.amount,
-                date = cost.date,
+                date = cost.date?.takeIf { it > 0L }
+                    ?.let { com.indusjs.fleet.core.util.formatDateToHumanReadable(it) } ?: "",
                 isDeduction = cost.isDeductionCost,
                 tripId = cost.tripId,
                 description = cost.description,
@@ -745,7 +793,8 @@ class DriverDetailViewModel(
                     updateState {
                         copy(
                             isLoadingHistory = false,
-                            historyError = result.message ?: "Failed to load history"
+                            historyError = result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_load_history)
                         )
                     }
                 }
@@ -827,7 +876,7 @@ class DriverDetailViewModel(
             onSuccess = { teamMembers ->
                 val caretakers = teamMembers
                     .filter { member ->
-                        member.role.name.lowercase() in listOf("supervisor", "manager")
+                        member.isCaretakerEligible
                     }
                     .map { it.toDto() }
                 updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
@@ -848,6 +897,7 @@ class DriverDetailViewModel(
             role = role.toApiString(),
             ownerId = ownerId.toIntOrNull() ?: 0,
             isActive = isActive,
+            isCaretakerEligible = isCaretakerEligible,
             createdAt = createdAt,
             updatedAt = updatedAt
         )
@@ -875,11 +925,23 @@ class DriverDetailViewModel(
                     sendEffect(Effect.StateUpdated(newStatus))
                     val label = currentState.stateLabels[newStatus]
                         ?: com.indusjs.fleet.core.constants.StatusConstants.DriverState.getDisplayLabel(newStatus)
-                    sendEffect(Effect.ShowSnackbar("Status updated to $label"))
+                    sendEffect(
+                        Effect.ShowSnackbar(
+                            UiText.StringRes(
+                                Res.string.success_driver_status_updated,
+                                args = listOf(label)
+                            )
+                        )
+                    )
                 }
                 is Result.Error -> {
                     updateState { copy(isUpdatingState = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to update driver status"))
+                    sendEffect(
+                        Effect.ShowError(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_update_driver_status)
+                        )
+                    )
                 }
                 is Result.Loading -> { /* Already handled */ }
             }

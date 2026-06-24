@@ -6,19 +6,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.presentation.create.CreateCustomerContract.Effect
 import com.ijs.customer.presentation.create.CreateCustomerContract.Intent
 import com.ijs.customer.presentation.create.CreateCustomerContract.State
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -35,14 +36,22 @@ fun CreateCustomerScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is Effect.NavigateBack -> onNavigateBack()
                 is Effect.NavigateToCustomerDetail -> onNavigateToCustomerDetail(effect.customerId)
-                is Effect.ShowSnackbar -> scope.launch { snackbarHostState.showSnackbar(effect.message) }
+                is Effect.ShowSnackbar -> pendingSnackbar = effect.message
             }
         }
     }
@@ -123,25 +132,7 @@ fun CreateCustomerScreen(
         ) {
             // Error message
             state.error?.let { error ->
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("⚠️", style = MaterialTheme.typography.bodyLarge)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = error,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
+                FleetInlineErrorBanner(message = error.resolve())
             }
 
             // Company & Contact Card
@@ -155,7 +146,7 @@ fun CreateCustomerScreen(
                     label = stringResource(Res.string.customer_label_company_name),
                     placeholder = stringResource(Res.string.customer_placeholder_company_name),
                     isError = state.companyNameError != null,
-                    errorMessage = state.companyNameError
+                    errorMessage = state.companyNameError?.resolve()
                 )
 
                 FleetInputField(
@@ -164,7 +155,7 @@ fun CreateCustomerScreen(
                     label = stringResource(Res.string.customer_label_contact_person),
                     placeholder = stringResource(Res.string.customer_placeholder_contact_person),
                     isError = state.personNameError != null,
-                    errorMessage = state.personNameError
+                    errorMessage = state.personNameError?.resolve()
                 )
 
                 // Primary Contact (full width)
@@ -175,7 +166,7 @@ fun CreateCustomerScreen(
                     label = stringResource(Res.string.customer_label_primary_contact),
                     placeholder = stringResource(Res.string.customer_placeholder_primary_contact),
                     isError = state.primaryContactError != null,
-                    errorMessage = state.primaryContactError
+                    errorMessage = state.primaryContactError?.resolve()
                 )
 
                 // Secondary Contact (full width)
@@ -186,7 +177,7 @@ fun CreateCustomerScreen(
                     label = stringResource(Res.string.customer_label_secondary_contact),
                     placeholder = stringResource(Res.string.customer_placeholder_secondary_contact),
                     isError = state.secondaryContactError != null,
-                    errorMessage = state.secondaryContactError
+                    errorMessage = state.secondaryContactError?.resolve()
                 )
 
                 FleetInputField(
@@ -196,7 +187,7 @@ fun CreateCustomerScreen(
                     label = stringResource(Res.string.customer_label_email),
                     placeholder = stringResource(Res.string.customer_placeholder_email),
                     isError = state.emailError != null,
-                    errorMessage = state.emailError
+                    errorMessage = state.emailError?.resolve()
                 )
             }
 
@@ -211,7 +202,7 @@ fun CreateCustomerScreen(
                     label = stringResource(Res.string.customer_label_gst),
                     placeholder = stringResource(Res.string.customer_placeholder_gst),
                     isError = state.gstNumberError != null,
-                    errorMessage = state.gstNumberError
+                    errorMessage = state.gstNumberError?.resolve()
                 )
 
                 FleetInputField(
@@ -239,6 +230,7 @@ fun CreateCustomerScreen(
 
 /**
  * Compact section card with reduced padding.
+ * Delegates to the shared [FleetTitledSectionCard].
  */
 @Composable
 private fun CompactSectionCard(
@@ -246,32 +238,9 @@ private fun CompactSectionCard(
     icon: String?,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // Header
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                thickness = 1.dp
-            )
-            content()
-        }
-    }
+    FleetTitledSectionCard(
+        title = title,
+        emoji = icon,
+        content = content
+    )
 }

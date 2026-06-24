@@ -8,6 +8,9 @@ import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import com.ijs.customer.presentation.detail.CustomerDetailContract.TripStateFilter
 import com.indusjs.error.result.Result
+import com.indusjs.uicomponents.components.UiText
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.customer_trips_error_generic
 
 /**
  * Handles trips tab data loading, pagination, and filtering
@@ -51,7 +54,8 @@ class CustomerDetailTripsHandler(
                 setState {
                     copy(
                         isLoadingTrips = false,
-                        tripsError = result.message ?: "Failed to load trips"
+                        tripsError = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.customer_trips_error_generic)
                     )
                 }
             }

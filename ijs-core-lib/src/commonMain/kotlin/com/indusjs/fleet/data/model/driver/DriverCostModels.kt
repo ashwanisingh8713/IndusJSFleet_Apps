@@ -69,16 +69,17 @@ data class DriverCostDto(
     @SerialName("group_id") val groupId: String = "",
     @SerialName("custom_cost_label") val customCostLabel: String? = null,
     @SerialName("amount") val amount: Double = 0.0,
-    /** Backend returns `time.Time` → ISO 8601 string (e.g. `"2025-12-31T00:00:00Z"`). */
-    @SerialName("date") val date: String = "",
+    /** UTC epoch millis (backend sends/accepts a JSON number). */
+    @SerialName("date") val date: Long? = null,
+    /** "YYYY-MM" label — stays a String. */
     @SerialName("month") val month: String? = null,
     @SerialName("description") val description: String? = null,
     @SerialName("notes") val notes: String? = null,
     @SerialName("is_deduction") val isDeduction: Boolean = false,
     @SerialName("owner_id") val ownerId: Int? = null,
     @SerialName("created_by") val createdBy: Int? = null,
-    @SerialName("created_at") val createdAt: String? = null,
-    @SerialName("updated_at") val updatedAt: String? = null
+    @SerialName("created_at") val createdAt: Long? = null,
+    @SerialName("updated_at") val updatedAt: Long? = null
 ) : Dto {
     val displayLabel: String get() = customCostLabel ?: costLabel
     val isDeductionCost: Boolean get() = groupId == DriverCostTypes.DEDUCTION_GROUP_ID || isDeduction
@@ -94,7 +95,9 @@ data class CreateDriverCostRequest(
     @SerialName("group_id") val groupId: String,
     @SerialName("custom_cost_label") val customCostLabel: String? = null,
     @SerialName("amount") val amount: Double,
-    @SerialName("date") val date: String,
+    /** UTC epoch millis. */
+    @SerialName("date") val date: Long,
+    /** "YYYY-MM" label — stays a String. */
     @SerialName("month") val month: String? = null,
     @SerialName("description") val description: String? = null,
     @SerialName("notes") val notes: String? = null,
@@ -212,7 +215,9 @@ data class BulkDriverCostItem(
     @SerialName("group_id") val groupId: String,
     @SerialName("custom_cost_label") val customCostLabel: String? = null,
     @SerialName("amount") val amount: Double,
-    @SerialName("date") val date: String,
+    /** UTC epoch millis. */
+    @SerialName("date") val date: Long,
+    /** "YYYY-MM" label — stays a String. */
     @SerialName("month") val month: String? = null,
     @SerialName("description") val description: String? = null,
     @SerialName("notes") val notes: String? = null,

@@ -5,8 +5,9 @@ import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
 import com.indusjs.uicomponents.components.CostTypeSelection
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.core.util.ValidationUtils
-import com.indusjs.fleet.core.util.convertFormattedToIsoDateTime
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.data.model.costs.BulkCreateMaintenanceCostsRequest
 import com.indusjs.fleet.data.model.costs.BulkMaintenanceCostItem
 import com.indusjs.fleet.data.model.costs.MaintenanceCostTypes
@@ -21,6 +22,14 @@ import com.ijs.vehicle.presentation.costs.MaintenanceCostEntryContract.Effect
 import com.ijs.vehicle.presentation.costs.MaintenanceCostEntryContract.Intent
 import com.ijs.vehicle.presentation.costs.MaintenanceCostEntryContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_add_valid_cost_entry
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_cost_entry_indexed
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_invalid_amount
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_refresh_cost_types
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_save_maintenance_costs
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_select_vehicle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_cost_types_updated
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -163,15 +172,18 @@ class MaintenanceCostEntryViewModel(
                                 costTypeGroups = groups
                             )
                         }
-                        sendEffect(Effect.ShowSnackbar("Cost types updated"))
+                        sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_cost_types_updated)))
                     } else {
                         updateState { copy(isRefreshingCostTypes = false) }
-                        sendEffect(Effect.ShowSnackbar("Cost types updated"))
+                        sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_cost_types_updated)))
                     }
                 }
                 is Result.Error -> {
                     updateState { copy(isRefreshingCostTypes = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to refresh cost types"))
+                    sendEffect(Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_refresh_cost_types)
+                    ))
                 }
                 is Result.Loading -> { /* ignore */ }
             }
@@ -193,12 +205,7 @@ class MaintenanceCostEntryViewModel(
                         }
                     }
                     is Result.Error -> {
-                        updateState {
-                            copy(
-                                isLoadingData = false,
-                                error = result.message ?: "Failed to load vehicles"
-                            )
-                        }
+                        updateState { copy(isLoadingData = false) }
                     }
                     is Result.Loading -> { /* ignore */ }
                 }
@@ -307,8 +314,8 @@ class MaintenanceCostEntryViewModel(
 
     private fun updateAmount(rowId: String, value: String) {
         val filtered = value.filter { it.isDigit() || it == '.' }
-        val error = if (filtered.isNotEmpty() && filtered.toDoubleOrNull() == null) {
-            "Invalid amount"
+        val error: UiText? = if (filtered.isNotEmpty() && filtered.toDoubleOrNull() == null) {
+            UiText.StringRes(Res.string.error_invalid_amount)
         } else null
 
         updateRowField(rowId) { it.copy(amount = filtered, amountError = error) }
@@ -355,14 +362,14 @@ class MaintenanceCostEntryViewModel(
 
         // Validate vehicle selection
         if (currentState.selectedVehicle == null) {
-            updateState { copy(vehicleError = "Please select a vehicle") }
+            updateState { copy(vehicleError = UiText.StringRes(Res.string.error_select_vehicle)) }
             return
         }
 
         // Get valid entries
         val validEntries = currentState.costEntries.filter { it.isValid }
         if (validEntries.isEmpty()) {
-            sendEffect(Effect.ShowError("Please add at least one valid cost entry"))
+            sendEffect(Effect.ShowError(UiText.StringRes(Res.string.error_add_valid_cost_entry)))
             return
         }
 
@@ -370,27 +377,27 @@ class MaintenanceCostEntryViewModel(
         for ((index, entry) in validEntries.withIndex()) {
             val dateError = ValidationUtils.getDateError(entry.date)
             if (dateError != null) {
-                sendEffect(Effect.ShowError("Entry ${index + 1}: $dateError"))
+                sendEffect(Effect.ShowError(UiText.StringRes(Res.string.error_cost_entry_indexed, args = listOf(index + 1, dateError))))
                 return
             }
 
             val timeError = ValidationUtils.getTimeError(entry.time, required = false)
             if (timeError != null) {
-                sendEffect(Effect.ShowError("Entry ${index + 1}: $timeError"))
+                sendEffect(Effect.ShowError(UiText.StringRes(Res.string.error_cost_entry_indexed, args = listOf(index + 1, timeError))))
                 return
             }
 
             val amountError = ValidationUtils.getAmountError(entry.amount)
             if (amountError != null) {
-                sendEffect(Effect.ShowError("Entry ${index + 1}: $amountError"))
+                sendEffect(Effect.ShowError(UiText.StringRes(Res.string.error_cost_entry_indexed, args = listOf(index + 1, amountError))))
                 return
             }
         }
 
         updateState { copy(isSaving = true) }
 
-        // Build bulk request
-        // Convert date/time to ISO 8601 format for v2 API
+        // Build bulk request.
+        // dateTime -> combined wall-clock instant as UTC epoch millis (JSON number).
         val bulkItems = validEntries.map { entry ->
             BulkMaintenanceCostItem(
                 // New structured cost fields
@@ -399,7 +406,7 @@ class MaintenanceCostEntryViewModel(
                 groupId = entry.selectedGroupId.ifBlank { "VMC-G-006" }, // Default to Miscellaneous
                 customCostLabel = null, // Can be extended for custom cost types
                 amount = entry.amount.toDoubleOrNull() ?: 0.0,
-                dateTime = convertFormattedToIsoDateTime(entry.date, entry.time),
+                date = convertToEpochMillis(entry.date, entry.time) ?: 0L,
                 description = entry.description.takeIf { it.isNotBlank() },
                 notes = entry.notes.takeIf { it.isNotBlank() }
             )
@@ -420,13 +427,11 @@ class MaintenanceCostEntryViewModel(
                     sendEffect(Effect.CostsSaved(result.data))
                 }
                 is Result.Error -> {
-                    updateState {
-                        copy(
-                            isSaving = false,
-                            error = result.message ?: "Failed to save maintenance costs"
-                        )
-                    }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to save maintenance costs"))
+                    updateState { copy(isSaving = false) }
+                    sendEffect(Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_save_maintenance_costs)
+                    ))
                 }
                 is Result.Loading -> { /* ignore */ }
             }

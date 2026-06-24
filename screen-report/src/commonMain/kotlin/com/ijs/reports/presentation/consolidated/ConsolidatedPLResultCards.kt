@@ -1,7 +1,6 @@
  package com.ijs.reports.presentation.consolidated
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -10,9 +9,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
+import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.ijs.reports.domain.entity.ConsolidatedPL
 import com.ijs.reports.domain.entity.PeriodBreakdown
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Result card composables for Consolidated P&L Screen.
@@ -21,23 +25,16 @@ import com.ijs.reports.domain.entity.PeriodBreakdown
 
 @Composable
 internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (report.isProfitable)
-                FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
-            else
-                FleetStatusColors.LossRed.copy(alpha = 0.1f)
-        )
+    FleetSectionCard(
+        containerColor = if (report.isProfitable)
+            FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
+        else
+            FleetStatusColors.LossRed.copy(alpha = 0.1f),
+        border = null
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "CONSOLIDATED SUMMARY",
+                text = stringResource(Res.string.reports_consolidated_summary_title),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -49,9 +46,9 @@ internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                SummaryColumn(label = "Total Revenue", value = formatCurrency(report.totalRevenue))
+                SummaryColumn(label = stringResource(Res.string.reports_total_revenue), value = formatCurrency(report.totalRevenue))
                 SummaryColumn(
-                    label = "Total Expenses",
+                    label = stringResource(Res.string.reports_total_expenses),
                     value = formatCurrency(report.totalExpenses),
                     alignment = Alignment.End
                 )
@@ -67,7 +64,11 @@ internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "NET ${if (report.isProfitable) "PROFIT" else "LOSS"}",
+                    text = stringResource(
+                        Res.string.reports_net_label,
+                        if (report.isProfitable) stringResource(Res.string.reports_word_profit_caps)
+                        else stringResource(Res.string.reports_word_loss_caps)
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -80,7 +81,7 @@ internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
                     )
                     if (report.profitMargin > 0) {
                         Text(
-                            text = "Margin: ${formatPercentage(report.profitMargin)}",
+                            text = stringResource(Res.string.reports_label_margin_pct, formatPercentage(report.profitMargin)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -94,9 +95,9 @@ internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatColumn(value = "${report.totalVehicles}", label = "Vehicles")
-                StatColumn(value = "${report.totalTrips}", label = "Total Trips")
-                StatColumn(value = "${report.completedTrips}", label = "Completed")
+                StatColumn(value = "${report.totalVehicles}", label = stringResource(Res.string.reports_stat_vehicles))
+                StatColumn(value = "${report.totalTrips}", label = stringResource(Res.string.reports_label_total_trips))
+                StatColumn(value = "${report.completedTrips}", label = stringResource(Res.string.reports_label_completed_trips))
             }
         }
     }
@@ -124,30 +125,19 @@ internal fun SummaryColumn(
 
 @Composable
 internal fun StatColumn(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(
+        value = value,
+        label = label,
+        showBackground = false,
+        centered = true
+    )
 }
 
 @Composable
 internal fun PeriodBreakdownCard(period: PeriodBreakdown) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp)
-    ) {
+    FleetSectionCard {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -158,7 +148,7 @@ internal fun PeriodBreakdownCard(period: PeriodBreakdown) {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${period.tripCount} trips",
+                    text = stringResource(Res.string.reports_trips_count, period.tripCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -172,7 +162,7 @@ internal fun PeriodBreakdownCard(period: PeriodBreakdown) {
                     color = if (period.isProfitable) FleetStatusColors.ProfitGreen else FleetStatusColors.LossRed
                 )
                 Text(
-                    text = "Rev: ${formatCurrency(period.revenue)}",
+                    text = stringResource(Res.string.reports_label_rev_short, formatCurrency(period.revenue)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -190,15 +180,8 @@ internal fun VehicleSummaryCard(
     profit: Double,
     isProfitable: Boolean
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
+    FleetSectionCard {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -211,7 +194,7 @@ internal fun VehicleSummaryCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "$tripCount trips",
+                        text = stringResource(Res.string.reports_trips_count, tripCount),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -232,11 +215,11 @@ internal fun VehicleSummaryCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Revenue: ${formatCurrency(revenue)}",
+                    text = stringResource(Res.string.reports_label_revenue_amount, formatCurrency(revenue)),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Expenses: ${formatCurrency(expenses)}",
+                    text = stringResource(Res.string.reports_label_expenses_amount, formatCurrency(expenses)),
                     style = MaterialTheme.typography.bodySmall
                 )
             }

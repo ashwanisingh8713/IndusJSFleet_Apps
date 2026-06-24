@@ -3,6 +3,7 @@ package com.ijs.vehicle.presentation.detail
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.data.model.TeamMemberDto
 import com.ijs.driver.domain.entity.Driver
 import com.ijs.vehicle.domain.entity.VehicleType
@@ -20,6 +21,36 @@ import com.ijs.vehicle.presentation.detail.VehicleDetailContract.Effect
 import com.ijs.vehicle.presentation.detail.VehicleDetailContract.Intent
 import com.ijs.vehicle.presentation.detail.VehicleDetailContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_delete_cost
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_delete_vehicle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_document_id_unavailable_download
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_document_id_unavailable_preview
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_download_document
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_download_document_preview
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_fill_required_fields
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_costs_detail
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_documents
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_history
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_more_trips
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_route
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_trips
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_vehicle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_make_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_model_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_no_costs_to_export
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_update_vehicle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_update_vehicle_state
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_upload_document
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_vehicle_data_unavailable
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_year_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_year_range
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_year_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_cost_deleted
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_document_uploaded
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_status_updated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_vehicle_deleted
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_vehicle_updated
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -171,13 +202,15 @@ class VehicleDetailViewModel(
                     }
                 }
                 is Result.Error -> {
+                    val errorText = result.message?.let { UiText.Raw(it) }
+                        ?: UiText.StringRes(Res.string.error_load_vehicle)
                     updateState {
                         copy(
                             isLoading = false,
-                            error = result.message ?: "Failed to load vehicle"
+                            error = errorText
                         )
                     }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to load vehicle"))
+                    sendEffect(Effect.ShowError(errorText))
                 }
                 is Result.Loading -> { /* Already handled */ }
             }
@@ -256,21 +289,21 @@ class VehicleDetailViewModel(
     }
 
     private fun updateMake(value: String) {
-        val error = if (value.isBlank()) "Make is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_make_required) else null
         updateState { copy(make = value, makeError = error) }
     }
 
     private fun updateModel(value: String) {
-        val error = if (value.isBlank()) "Model is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_model_required) else null
         updateState { copy(model = value, modelError = error) }
     }
 
     private fun updateYear(value: String) {
         val currentYear = Clock.System.todayIn(TimeZone.currentSystemDefault()).year
-        val error = when {
-            value.isBlank() -> "Year is required"
-            value.toIntOrNull() == null -> "Invalid year"
-            value.toInt() < 1900 || value.toInt() > currentYear + 1 -> "Year must be between 1900 and ${currentYear + 1}"
+        val error: UiText? = when {
+            value.isBlank() -> UiText.StringRes(Res.string.error_year_required)
+            value.toIntOrNull() == null -> UiText.StringRes(Res.string.error_year_invalid)
+            value.toInt() < 1900 || value.toInt() > currentYear + 1 -> UiText.StringRes(Res.string.error_year_range, args = listOf(currentYear + 1))
             else -> null
         }
         updateState { copy(year = value, yearError = error) }
@@ -278,7 +311,7 @@ class VehicleDetailViewModel(
 
     private suspend fun saveChanges() {
         if (!validateForm()) {
-            sendEffect(Effect.ShowSnackbar("Please fill all required fields correctly"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.error_fill_required_fields)))
             return
         }
 
@@ -314,12 +347,15 @@ class VehicleDetailViewModel(
                             capacity = result.data.capacity.toString()
                         )
                     }
-                    sendEffect(Effect.ShowSnackbar("Vehicle updated successfully"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_vehicle_updated)))
                     sendEffect(Effect.VehicleUpdated)
                 }
                 is Result.Error -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to update vehicle"))
+                    sendEffect(Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_update_vehicle)
+                    ))
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
@@ -327,11 +363,11 @@ class VehicleDetailViewModel(
     }
 
     private fun validateForm(): Boolean {
-        val makeError = if (currentState.make.isBlank()) "Make is required" else null
-        val modelError = if (currentState.model.isBlank()) "Model is required" else null
-        val yearError = when {
-            currentState.year.isBlank() -> "Year is required"
-            currentState.year.toIntOrNull() == null -> "Invalid year"
+        val makeError: UiText? = if (currentState.make.isBlank()) UiText.StringRes(Res.string.error_make_required) else null
+        val modelError: UiText? = if (currentState.model.isBlank()) UiText.StringRes(Res.string.error_model_required) else null
+        val yearError: UiText? = when {
+            currentState.year.isBlank() -> UiText.StringRes(Res.string.error_year_required)
+            currentState.year.toIntOrNull() == null -> UiText.StringRes(Res.string.error_year_invalid)
             else -> null
         }
 
@@ -354,13 +390,16 @@ class VehicleDetailViewModel(
             when (val result = deleteVehicleUseCase(vehicleId)) {
                 is Result.Success -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowSnackbar("Vehicle deleted successfully"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_vehicle_deleted)))
                     sendEffect(Effect.VehicleDeleted(vehicleId))
                     sendEffect(Effect.NavigateBack)
                 }
                 is Result.Error -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to delete vehicle"))
+                    sendEffect(Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_delete_vehicle)
+                    ))
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
@@ -420,7 +459,8 @@ class VehicleDetailViewModel(
                     updateState {
                         copy(
                             isLoadingTrips = false,
-                            tripsError = result.message ?: "Failed to load trips"
+                            tripsError = result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_load_trips)
                         )
                     }
                 }
@@ -452,7 +492,10 @@ class VehicleDetailViewModel(
                 }
                 is Result.Error -> {
                     updateState { copy(isLoadingTrips = false) }
-                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load more trips"))
+                    sendEffect(Effect.ShowSnackbar(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_load_more_trips)
+                    ))
                 }
                 is Result.Loading -> { /* Already handled */ }
             }
@@ -484,7 +527,8 @@ class VehicleDetailViewModel(
                     updateState {
                         copy(
                             isLoadingRoute = false,
-                            routeError = result.message ?: "Failed to load route"
+                            routeError = result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_load_route)
                         )
                     }
                 }
@@ -519,7 +563,8 @@ class VehicleDetailViewModel(
                     updateState {
                         copy(
                             isLoadingDocuments = false,
-                            documentsError = result.message ?: "Failed to load documents"
+                            documentsError = result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_load_documents)
                         )
                     }
                 }
@@ -584,19 +629,17 @@ class VehicleDetailViewModel(
                             selectedDocumentTypeName = null
                         )
                     }
-                    sendEffect(Effect.ShowSnackbar("Document uploaded successfully"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_document_uploaded)))
                     sendEffect(Effect.DocumentUploaded)
                     // Refresh documents list
                     loadDocuments()
                 }
                 is Result.Error -> {
-                    updateState {
-                        copy(
-                            isUploading = false,
-                            uploadError = result.message ?: "Failed to upload document"
-                        )
-                    }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to upload document"))
+                    updateState { copy(isUploading = false) }
+                    sendEffect(Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_upload_document)
+                    ))
                 }
                 is Result.Loading -> { /* Already handled */ }
             }
@@ -608,7 +651,7 @@ class VehicleDetailViewModel(
     private suspend fun previewDocument(intent: Intent.PreviewDocument) {
         val documentId = intent.documentId
         if (documentId.isBlank()) {
-            sendEffect(Effect.ShowError("Document ID not available for preview"))
+            sendEffect(Effect.ShowError(UiText.StringRes(Res.string.error_document_id_unavailable_preview)))
             return
         }
 
@@ -634,7 +677,10 @@ class VehicleDetailViewModel(
                     ))
                 }
                 is Result.Error -> {
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to download document for preview"))
+                    sendEffect(Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_download_document_preview)
+                    ))
                 }
                 is Result.Loading -> { /* Ignored */ }
             }
@@ -644,7 +690,7 @@ class VehicleDetailViewModel(
     private suspend fun downloadDocument(intent: Intent.DownloadDocument) {
         val documentId = intent.documentId
         if (documentId.isBlank()) {
-            sendEffect(Effect.ShowError("Document ID not available for download"))
+            sendEffect(Effect.ShowError(UiText.StringRes(Res.string.error_document_id_unavailable_download)))
             return
         }
 
@@ -670,7 +716,10 @@ class VehicleDetailViewModel(
                     ))
                 }
                 is Result.Error -> {
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to download document"))
+                    sendEffect(Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_download_document)
+                    ))
                 }
                 is Result.Loading -> { /* Ignored */ }
             }
@@ -837,14 +886,14 @@ class VehicleDetailViewModel(
                         costsTotalAmount = tripTotal + maintenanceTotal,
                         isLoadingCosts = false,
                         hasMoreCosts = hasMore,
-                        costsError = if (tripCosts.isEmpty() && maintenanceCosts.isEmpty() && errorMessage != null) errorMessage else null
+                        costsError = if (tripCosts.isEmpty() && maintenanceCosts.isEmpty() && errorMessage != null) UiText.Raw(errorMessage) else null
                     )
                 }
             } catch (e: Exception) {
                 updateState {
                     copy(
                         isLoadingCosts = false,
-                        costsError = "Failed to load costs: ${e.message}"
+                        costsError = UiText.StringRes(Res.string.error_load_costs_detail, args = listOf(e.message.toString()))
                     )
                 }
             }
@@ -1016,12 +1065,15 @@ class VehicleDetailViewModel(
                 is Result.Success -> {
                     updateState { copy(isSaving = false, costToDeleteId = null, costToDeleteType = null) }
                     sendEffect(Effect.CostDeleted(costId))
-                    sendEffect(Effect.ShowSnackbar("Cost deleted successfully"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_cost_deleted)))
                     loadCosts()
                 }
                 is Result.Error -> {
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to delete cost"))
+                    sendEffect(Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_delete_cost)
+                    ))
                 }
                 is Result.Loading -> {}
             }
@@ -1037,12 +1089,12 @@ class VehicleDetailViewModel(
         val vehicle = state.vehicle
 
         if (state.maintenanceCosts.isEmpty()) {
-            sendEffect(Effect.ShowSnackbar("No costs to export"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.error_no_costs_to_export)))
             return
         }
 
         if (vehicle == null) {
-            sendEffect(Effect.ShowSnackbar("Vehicle data not available"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.error_vehicle_data_unavailable)))
             return
         }
 
@@ -1100,13 +1152,10 @@ class VehicleDetailViewModel(
     /**
      * Format date for PDF display (DD-MMM-YYYY format).
      */
-    private fun formatDateForPdf(date: String?): String {
-        if (date.isNullOrBlank()) return "N/A"
-        return try {
-            com.indusjs.datetimeutils.FleetDateTime.formatAnyToDisplayDate(date)
-        } catch (e: Exception) {
-            date
-        }
+    private fun formatDateForPdf(date: Long?): String {
+        if (date == null || date <= 0L) return "N/A"
+        return com.indusjs.fleet.core.util.formatDateToHumanReadable(date)
+            .ifBlank { "N/A" }
     }
 
     // ==================== History Tab Functions ====================
@@ -1134,7 +1183,8 @@ class VehicleDetailViewModel(
                     updateState {
                         copy(
                             isLoadingHistory = false,
-                            historyError = result.message ?: "Failed to load history"
+                            historyError = result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_load_history)
                         )
                     }
                 }
@@ -1215,7 +1265,7 @@ class VehicleDetailViewModel(
             onSuccess = { teamMembers ->
                 val caretakers = teamMembers
                     .filter { member ->
-                        member.role.name.lowercase() in listOf("supervisor", "manager")
+                        member.isCaretakerEligible
                     }
                     .map { it.toDto() }
                 updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
@@ -1236,6 +1286,7 @@ class VehicleDetailViewModel(
             role = role.toApiString(),
             ownerId = ownerId.toIntOrNull() ?: 0,
             isActive = isActive,
+            isCaretakerEligible = isCaretakerEligible,
             createdAt = createdAt,
             updatedAt = updatedAt
         )
@@ -1263,11 +1314,16 @@ class VehicleDetailViewModel(
                     sendEffect(Effect.StateUpdated(newState))
                     val label = currentState.stateLabels[newState]
                         ?: com.indusjs.fleet.core.constants.StatusConstants.VehicleState.getDisplayLabel(newState)
-                    sendEffect(Effect.ShowSnackbar("Status updated to $label"))
+                    sendEffect(Effect.ShowSnackbar(
+                        UiText.StringRes(Res.string.success_driver_status_updated, args = listOf(label))
+                    ))
                 }
                 is Result.Error -> {
                     updateState { copy(isUpdatingState = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to update vehicle state"))
+                    sendEffect(Effect.ShowError(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_update_vehicle_state)
+                    ))
                 }
                 is Result.Loading -> { /* Already handled */ }
             }

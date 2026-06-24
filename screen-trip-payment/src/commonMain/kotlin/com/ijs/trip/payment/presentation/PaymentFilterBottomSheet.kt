@@ -15,7 +15,9 @@ import androidx.compose.ui.unit.dp
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.datetimeutils.FleetDateTime
-import com.ijs.trip.payment.domain.entity.PaymentMode
+import com.indusjs.fleet.core.model.shared.SelectableCustomer
+import com.indusjs.uicomponents.components.DropdownOption
+import com.indusjs.uicomponents.components.FleetDropdown
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.PaymentType
 import com.ijs.trip.payment.domain.entity.TripPaymentFilter
@@ -27,9 +29,10 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun PaymentFilterBottomSheet(
     filter: TripPaymentFilter,
+    customers: List<SelectableCustomer>,
     onDismiss: () -> Unit,
+    onUpdateCustomer: (String?) -> Unit,
     onUpdateType: (PaymentType?) -> Unit,
-    onUpdateMode: (PaymentMode?) -> Unit,
     onUpdateStatus: (PaymentStatus?) -> Unit,
     onUpdateDateRange: (String?, String?) -> Unit,
     onApply: () -> Unit,
@@ -49,6 +52,7 @@ internal fun PaymentFilterBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp)
         ) {
@@ -74,6 +78,30 @@ internal fun PaymentFilterBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Customer Section (most-used filter, kept at the top for quick access)
+            if (customers.isNotEmpty()) {
+                val allCustomersLabel = stringResource(Res.string.payment_filter_all_customers)
+                val customerOptions = remember(customers, allCustomersLabel) {
+                    listOf(DropdownOption<String?>(null, allCustomersLabel)) +
+                        customers.map { customer ->
+                            val label = customer.companyName.ifBlank { customer.personName }
+                            DropdownOption<String?>(customer.id, label)
+                        }
+                }
+                FleetDropdown(
+                    label = stringResource(Res.string.payment_filter_customer),
+                    options = customerOptions,
+                    selectedOptionId = filter.customerId,
+                    onOptionSelected = { onUpdateCustomer(it) },
+                    placeholder = allCustomersLabel,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             // Payment Type Section
             Text(
                 text = stringResource(Res.string.payment_filter_type),
@@ -95,35 +123,6 @@ internal fun PaymentFilterBottomSheet(
                         selected = filter.paymentType == type,
                         onClick = { onUpdateType(type) },
                         label = { Text(type.localizedDisplayName(), style = MaterialTheme.typography.bodySmall) }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Payment Mode Section
-            Text(
-                text = stringResource(Res.string.payment_filter_mode),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = filter.paymentMode == null,
-                    onClick = { onUpdateMode(null) },
-                    label = { Text(stringResource(Res.string.action_select_all), style = MaterialTheme.typography.bodySmall) }
-                )
-                PaymentMode.entries.forEach { mode ->
-                    FilterChip(
-                        selected = filter.paymentMode == mode,
-                        onClick = { onUpdateMode(mode) },
-                        label = { Text("${mode.icon} ${mode.localizedDisplayName()}", style = MaterialTheme.typography.bodySmall) }
                     )
                 }
             }

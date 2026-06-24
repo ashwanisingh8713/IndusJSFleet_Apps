@@ -31,27 +31,32 @@ data class ProfitLossResponse<T>(
 @Serializable
 data class PeriodDto(
     @SerialName("start_date")
-    val startDate: String? = null,
+    val startDate: Long? = null,
     @SerialName("end_date")
-    val endDate: String? = null
+    val endDate: Long? = null
 )
 
 /**
  * Cost Breakdown Item DTO.
- * Updated to include structured cost fields (cost_id, cost_label, group_id).
+ *
+ * Mirrors backend domain.CostTypeBreakdown (cost_breakdown in trip / vehicle /
+ * fleet / consolidated P&L responses): cost_id, cost_label, group_id (omitempty),
+ * amount, count. The backend does NOT send cost_type or percentage here, so both
+ * are optional with defaults (cost_type kept only as a defensive fallback;
+ * required-no-default would crash the whole response decode when absent).
  */
 @Serializable
 data class CostBreakdownItemDto(
-    // New structured cost fields per API
+    // Structured cost fields per backend domain.CostTypeBreakdown
     @SerialName("cost_id")
     val costId: String? = null,
     @SerialName("cost_label")
     val costLabel: String? = null,
     @SerialName("group_id")
     val groupId: String? = null,
-    // Legacy field (kept for backward compatibility)
+    // Legacy/defensive field (backend no longer emits cost_type in cost_breakdown)
     @SerialName("cost_type")
-    val costType: String,
+    val costType: String? = null,
     @SerialName("amount")
     val amount: Double = 0.0,
     @SerialName("count")
@@ -60,8 +65,10 @@ data class CostBreakdownItemDto(
     val percentage: Double = 0.0
 ) {
     /**
-     * Returns the display label - prefers cost_label, falls back to cost_type.
+     * Returns the display label - prefers cost_label, then cost_id, then cost_type.
      */
     val displayLabel: String
-        get() = costLabel ?: costType.replace("_", " ").replaceFirstChar { it.uppercase() }
+        get() = costLabel
+            ?: (costId ?: costType)?.replace("_", " ")?.replaceFirstChar { it.uppercase() }
+            ?: ""
 }

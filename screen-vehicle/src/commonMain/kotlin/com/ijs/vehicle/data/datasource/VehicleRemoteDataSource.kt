@@ -285,7 +285,14 @@ class VehicleRemoteDataSourceImpl(
             if (response.status.isSuccess()) {
                 VehicleApiResponse(success = true, message = "Vehicle deleted successfully")
             } else {
-                VehicleApiResponse(success = false, message = "Failed to delete vehicle")
+                // Route the error body through ApiErrorHandler so the delete-guard
+                // 409 (vehicle_has_active_trips) surfaces a friendly message instead
+                // of a generic "Failed to delete vehicle".
+                val errorBody = runCatching { response.bodyAsText() }.getOrNull().orEmpty()
+                VehicleApiResponse(
+                    success = false,
+                    message = ApiErrorHandler.extractErrorMessage(response.status, errorBody)
+                )
             }
         } catch (e: Exception) {
             logger.e(TAG_VEHICLE_REMOTE_DS, "Failed to delete vehicle: ${e.message}", e)
@@ -425,10 +432,25 @@ class VehicleRemoteDataSourceImpl(
         logger.d(TAG_VEHICLE_REMOTE_DS, "API Response: $bodyText")
         return if (response.status.isSuccess()) {
             try {
-                val apiResponse = json.decodeFromString<VehicleApiResponse<VehicleDto>>(bodyText)
-                // Handle both 'data' and 'vehicle' fields
-                val vehicleData = apiResponse.data ?: apiResponse.vehicle
-                apiResponse.copy(data = vehicleData)
+                val root = json.parseToJsonElement(bodyText).jsonObject
+                val success = root["success"]?.jsonPrimitive?.boolean == true
+                val message = root["message"]?.jsonPrimitive?.contentOrNull
+
+                // The vehicle may arrive as:
+                //  - data = { ...vehicle fields... }                (POST/PUT/PATCH /vehicles)
+                //  - data = { vehicle: {...}, document_upload: {...} } (POST /vehicles/with-documents)
+                //  - vehicle = { ... }                               (legacy top-level)
+                val dataElement = root["data"]
+                val vehicleElement = when {
+                    dataElement is kotlinx.serialization.json.JsonObject &&
+                        dataElement["vehicle"] is kotlinx.serialization.json.JsonObject ->
+                        dataElement["vehicle"]
+                    dataElement is kotlinx.serialization.json.JsonObject -> dataElement
+                    else -> root["vehicle"]
+                }
+                val vehicleData = vehicleElement?.let { json.decodeFromJsonElement<VehicleDto>(it) }
+
+                VehicleApiResponse(success = success, message = message, data = vehicleData)
             } catch (e: Exception) {
                 logger.e(TAG_VEHICLE_REMOTE_DS, "Failed to parse response: $bodyText", e)
                 VehicleApiResponse(success = false, message = "Failed to parse response: ${e.message}")

@@ -3,6 +3,7 @@ package com.ijs.customer.presentation.list
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.customer.domain.entity.Customer
 
 /**
@@ -19,7 +20,7 @@ object CustomersListContract {
         val customers: List<Customer> = emptyList(),
         val filteredCustomers: List<Customer> = emptyList(),
         val searchQuery: String = "",
-        val error: String? = null,
+        val error: UiText? = null,
         val currentPage: Int = 1,
         val hasMore: Boolean = false
     ) : UiState {
@@ -47,7 +48,7 @@ object CustomersListContract {
     sealed interface Effect : UiEffect {
         data class NavigateToCustomerDetail(val customerId: String) : Effect
         data object NavigateToCreateCustomer : Effect
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
     }
 }
 

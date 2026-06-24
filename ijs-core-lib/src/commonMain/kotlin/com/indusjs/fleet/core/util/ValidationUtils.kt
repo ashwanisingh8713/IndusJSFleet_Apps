@@ -279,9 +279,15 @@ object ValidationUtils {
      * @param mobile The mobile number to validate
      * @return true if the mobile is valid
      */
-    fun isValidMobile(mobile: String): Boolean {
-        val digitsOnly = mobile.filter { it.isDigit() }
-        return digitsOnly.length >= 10
+    fun isValidMobile(mobile: String): Boolean = isValidIndianMobile(mobile)
+
+    /**
+     * Canonical mobile rule for the app: exactly 10 digits, starting 6-9 (Indian mobile).
+     * Non-digit characters (spaces, etc.) are ignored before checking.
+     */
+    fun isValidIndianMobile(mobile: String): Boolean {
+        val digits = mobile.filter { it.isDigit() }
+        return digits.length == 10 && digits.first() in '6'..'9'
     }
 
     /**

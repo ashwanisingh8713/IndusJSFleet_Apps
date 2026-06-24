@@ -51,8 +51,8 @@ data class Customer(
     val isActive: Boolean = true,
     val ownerId: String? = null,
     val createdById: String? = null,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null
 ) : Entity
 
 /**
@@ -63,12 +63,15 @@ data class CustomerStatistics(
     val customerId: String,
     val totalTrips: Int = 0,
     val completedTrips: Int = 0,
+    val cancelledTrips: Int = 0,
     val activeTrips: Int = 0,
+    val plannedTrips: Int = 0,
     val totalRevenue: Double = 0.0,
     val totalPendingPayment: Double = 0.0,
     val totalReceivedPayment: Double = 0.0,
-    val averageTripValue: Double = 0.0,
-    val lastTripDate: String? = null
+    val collectionRate: Double = 0.0,
+    val totalTripCosts: Double = 0.0,
+    val netProfit: Double = 0.0
 ) {
     val totalRevenueLabel: String
         get() = formatAmountWithSuffix(totalRevenue)
@@ -79,8 +82,8 @@ data class CustomerStatistics(
     val receivedPaymentsLabel: String
         get() = formatAmountWithSuffix(totalReceivedPayment)
 
-    val averageTripValueLabel: String
-        get() = formatAmountWithSuffix(averageTripValue)
+    val netProfitLabel: String
+        get() = formatAmountWithSuffix(netProfit)
 }
 
 /**
@@ -108,11 +111,11 @@ data class CustomerTrip(
     val startLocation: String? = null,
     val endLocation: String? = null,
     val estimatedDistance: Double? = null,
-    val scheduledDate: String? = null,
-    val plannedStart: String? = null,
-    val plannedEnd: String? = null,
-    val actualStart: String? = null,
-    val actualEnd: String? = null,
+    val scheduledDate: Long? = null,
+    val plannedStart: Long? = null,
+    val plannedEnd: Long? = null,
+    val actualStart: Long? = null,
+    val actualEnd: Long? = null,
     val tripPrice: Double? = null,
     val paidAmount: Double? = null,
     val pendingAmount: Double? = null,
@@ -120,7 +123,7 @@ data class CustomerTrip(
     val state: String? = null,
     val priority: String? = null,
     val cargoType: String? = null,
-    val createdAt: String? = null
+    val createdAt: Long? = null
 ) {
     val routeDisplay: String
         get() = buildString {
@@ -144,7 +147,7 @@ data class CustomerTrip(
     val stateDisplay: String
         get() = when (state?.lowercase()) {
             "planned" -> "Planned"
-            "on_route" -> "On Route"
+            "in_progress" -> "On Route"
             "completed" -> "Completed"
             "cancelled" -> "Cancelled"
             "delayed" -> "Delayed"
@@ -155,7 +158,7 @@ data class CustomerTrip(
     val stateIcon: String
         get() = when (state?.lowercase()) {
             "planned" -> "📋"
-            "on_route" -> "🚛"
+            "in_progress" -> "🚛"
             "completed" -> "✅"
             "cancelled" -> "❌"
             "delayed" -> "⏰"
@@ -193,7 +196,7 @@ data class CustomerPendingPayment(
     val vehicleRegistration: String? = null,
     val startLocation: String? = null,
     val endLocation: String? = null,
-    val tripDate: String? = null,
+    val tripDate: Long? = null,
     val tripPrice: Double = 0.0,
     val paidAmount: Double = 0.0,
     val pendingAmount: Double = 0.0,
@@ -268,11 +271,11 @@ data class CustomerPayment(
     val paymentType: String? = null,
     val mode: PaymentMode? = null,
     val status: String? = null,
-    val date: String? = null,
+    val date: Long? = null,
     val receiptNumber: String? = null,
     val referenceNumber: String? = null,
     val notes: String? = null,
-    val createdAt: String? = null
+    val createdAt: Long? = null
 ) {
     val amountDisplay: String
         get() = "₹${amount.toInt()}"
@@ -433,12 +436,20 @@ data class CustomerFinancialReport(
     val customerId: String,
     val customerName: String? = null,
     val period: FinancialPeriod = FinancialPeriod.MONTHLY,
-    val startDate: String? = null,
-    val endDate: String? = null,
+    val startDate: Long? = null,
+    val endDate: Long? = null,
     val totalRevenue: Double = 0.0,
     val totalCosts: Double = 0.0,
+    // Driver costs are EXCLUDED from P&L profit (backend returns 0); kept for reference only.
+    val totalDriverCosts: Double = 0.0,
+    // GROSS profit = BILLED total_revenue (SUM selling_value) − total_trip_costs.
+    val grossProfit: Double = 0.0,
+    // NET profit = revenue − trip_costs; driver costs excluded, so net == gross. The shown profit.
     val netProfit: Double = 0.0,
+    // Gross margin against BILLED total_revenue.
     val profitMargin: Double = 0.0,
+    // Net margin = net_profit / BILLED total_revenue * 100.
+    val netMargin: Double = 0.0,
     val tripSummary: FinancialTripSummary? = null,
     val periodBreakdown: List<PeriodBreakdown> = emptyList(),
     val topVehicles: List<TopVehicle> = emptyList(),
@@ -451,12 +462,22 @@ data class CustomerFinancialReport(
     val totalCostsDisplay: String
         get() = "₹${formatAmountWithSuffix(totalCosts)}"
 
+    val totalDriverCostsDisplay: String
+        get() = "₹${formatAmountWithSuffix(totalDriverCosts)}"
+
+    val grossProfitDisplay: String
+        get() = "₹${formatAmountWithSuffix(grossProfit)}"
+
     val netProfitDisplay: String
         get() = "₹${formatAmountWithSuffix(netProfit)}"
 
     val profitMarginDisplay: String
         get() = "${profitMargin.toInt()}%"
 
+    val netMarginDisplay: String
+        get() = "${netMargin.toInt()}%"
+
+    // Profitability is judged on NET profit (driver costs excluded), matching backend.
     val isProfitable: Boolean
         get() = netProfit >= 0
 
@@ -468,7 +489,9 @@ data class CustomerFinancialReport(
 
     val periodDisplay: String
         get() = when {
-            startDate != null && endDate != null -> "$startDate to $endDate"
+            startDate != null && endDate != null ->
+                "${com.indusjs.fleet.core.util.formatDateToHumanReadable(startDate)} to " +
+                    com.indusjs.fleet.core.util.formatDateToHumanReadable(endDate)
             else -> period.displayName
         }
 }

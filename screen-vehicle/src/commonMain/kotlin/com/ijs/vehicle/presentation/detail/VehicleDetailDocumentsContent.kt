@@ -18,7 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.vehicle.domain.entity.DocumentTypeDetail
 import com.ijs.vehicle.domain.entity.VehicleDocumentsData
@@ -146,12 +148,14 @@ internal fun DocumentsTabContent(
                             onUploadClick = { onUploadClick(doc.type, doc.typeName) },
                             onPreviewClick = {
                                 val documentId = doc.document?.id ?: ""
-                                val fileUrl = doc.document?.fileUrl
+                                // Backend download_url is relative and already includes /api/v1,
+                                // so prefix with BASE_ORIGIN (NOT BASE_URL) to build the full URL.
+                                val fileUrl = doc.document?.fileUrl?.let { ApiConfig.BASE_ORIGIN + it }
                                 onPreviewClick(documentId, doc.typeName, fileUrl)
                             },
                             onDownloadClick = {
                                 val documentId = doc.document?.id ?: ""
-                                val fileUrl = doc.document?.fileUrl
+                                val fileUrl = doc.document?.fileUrl?.let { ApiConfig.BASE_ORIGIN + it }
                                 onDownloadClick(documentId, doc.typeName, fileUrl)
                             },
                             onReplaceClick = { onReplaceClick(doc.type, doc.typeName) }
@@ -176,21 +180,7 @@ internal fun DocumentsTabContent(
 
 @Composable
 internal fun DocumentStatItem(count: String, label: String, icon: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = icon, style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = count,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(value = count, label = label, emoji = icon, showBackground = false, centered = true)
 }
 
 @Composable
@@ -406,7 +396,7 @@ internal fun DocumentTypeCard(
                         }
 
                         // Upload date if available
-                        doc.document?.uploadedAt?.let { uploadedAt ->
+                        doc.document?.uploadedAt?.takeIf { it > 0L }?.let { uploadedAt ->
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
@@ -415,7 +405,10 @@ internal fun DocumentTypeCard(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = stringResource(Res.string.vehicle_docs_uploaded_at, uploadedAt),
+                                    text = stringResource(
+                                        Res.string.vehicle_docs_uploaded_at,
+                                        com.indusjs.fleet.core.util.formatDateTimeForDisplay(uploadedAt)
+                                    ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

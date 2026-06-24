@@ -54,7 +54,10 @@ class CostsRepositoryImpl(
             val response = remoteDataSource.bulkCreateTripCosts(token, tripId, request)
 
             if (response.success) {
-                Result.Success(response.data?.created ?: request.costs.size)
+                // On a successful bulk create, every requested cost was saved (failures
+                // take the error/partial path), so fall back to the requested count when
+                // the response's created_count is absent/0 — avoids a "0 cost(s) saved".
+                Result.Success(response.data?.created?.takeIf { it > 0 } ?: request.costs.size)
             } else {
                 Result.Error(ApiException(response.message ?: "Failed to create trip costs"))
             }

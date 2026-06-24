@@ -23,7 +23,8 @@ import com.indusjs.uicomponents.components.CostTypeSelection
 import com.indusjs.uicomponents.components.CostTypeTwoLevelSelector
 import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.FleetDropdown
-import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetFormSection
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -55,6 +56,15 @@ fun MaintenanceCostEntryScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val maintCostsSavedFmt = stringResource(Res.string.vehicle_maint_costs_saved)
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // Pre-select vehicle if initialVehicleId is provided
     LaunchedEffect(initialVehicleId) {
@@ -68,10 +78,10 @@ fun MaintenanceCostEntryScreen(
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is MaintenanceCostEntryContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is MaintenanceCostEntryContract.Effect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is MaintenanceCostEntryContract.Effect.NavigateBack -> onNavigateBack()
                 is MaintenanceCostEntryContract.Effect.CostsSaved -> {
@@ -165,7 +175,7 @@ fun MaintenanceCostEntryScreen(
             ) {
                 // Section 1: Vehicle Selection
                 item {
-                    FleetSectionCard(title = stringResource(Res.string.maint_section_select_vehicle)) {
+                    FleetFormSection(title = stringResource(Res.string.maint_section_select_vehicle)) {
                         FleetDropdown(
                             label = stringResource(Res.string.maint_label_vehicle),
                             options = state.vehicles.map {
@@ -182,7 +192,7 @@ fun MaintenanceCostEntryScreen(
                             },
                             placeholder = stringResource(Res.string.maint_placeholder_vehicle),
                             isError = state.vehicleError != null,
-                            errorMessage = state.vehicleError
+                            errorMessage = state.vehicleError?.resolve()
                         )
                     }
                 }
@@ -598,7 +608,7 @@ private fun MaintenanceCostRowCard(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         isError = row.amountError != null,
-                        supportingText = row.amountError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                        supportingText = row.amountError?.let { { Text(it.resolve(), color = MaterialTheme.colorScheme.error) } },
                         leadingIcon = { Text("₹", style = MaterialTheme.typography.bodyLarge) }
                     )
 
@@ -744,7 +754,7 @@ private fun MaintenanceHistoryItem(cost: MaintenanceCostDto) {
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "${cost.date} ${cost.time ?: ""}".trim(),
+                    text = "${cost.date?.takeIf { it > 0L }?.let { com.indusjs.fleet.core.util.formatDateToHumanReadable(it) } ?: ""} ${cost.time ?: ""}".trim(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -161,108 +161,104 @@ private fun OtpSection(
     otpLength: Int = 6,
     placeholder: String = ""
 ) {
-    Card(
+    // Tinted card -> FleetSectionCard with the original conditional tint as containerColor,
+    // border = null. The bespoke header Row (title/subtitle + solid "Verified" pill) and the
+    // OTP input/buttons stay custom because FleetSectionHeader can't express the trailing pill.
+    com.indusjs.uicomponents.components.FleetSectionCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isVerified)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        ),
-        shape = RoundedCornerShape(16.dp)
+        containerColor = if (isVerified)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        else
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        border = null,
+        contentPadding = 20.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (subtitle.isNotBlank()) {
                     Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (subtitle.isNotBlank()) {
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                if (isVerified) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Text(
-                            text = "Verified",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                        )
-                    }
                 }
             }
-
-            if (!isVerified) {
-                Spacer(modifier = Modifier.height(16.dp))
-
-                FleetInputField(
-                    value = otpValue,
-                    onValueChange = onOtpChange,
-                    fieldType = FieldType.NUMBER,
-                    modifier = Modifier.fillMaxWidth(),
-                    label = stringResource(Res.string.otp_enter_code),
-                    placeholder = placeholder,
-                    isError = error != null,
-                    errorMessage = error,
-                    enabled = !isVerifying
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+            if (isVerified) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(20.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = onResend,
-                        enabled = !isResending && !isVerifying,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (isResending) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(text = resendButtonText, style = MaterialTheme.typography.labelMedium)
-                        }
-                    }
+                    Text(
+                        text = stringResource(Res.string.otp_verified_badge),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
 
-                    Button(
-                        onClick = onVerify,
-                        enabled = otpValue.length == otpLength && !isVerifying,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (isVerifying) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(text = verifyButtonText, style = MaterialTheme.typography.labelMedium)
-                        }
+        if (!isVerified) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            FleetInputField(
+                value = otpValue,
+                onValueChange = onOtpChange,
+                fieldType = FieldType.NUMBER,
+                modifier = Modifier.fillMaxWidth(),
+                label = stringResource(Res.string.otp_enter_code),
+                placeholder = placeholder,
+                isError = error != null,
+                errorMessage = error,
+                enabled = !isVerifying
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onResend,
+                    enabled = !isResending && !isVerifying,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    if (isResending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(text = resendButtonText, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+
+                Button(
+                    onClick = onVerify,
+                    enabled = otpValue.length == otpLength && !isVerifying,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    if (isVerifying) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(text = verifyButtonText, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }

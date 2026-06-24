@@ -3,6 +3,7 @@ package com.ijs.finance.presentation
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.finance.domain.entity.*
 import com.ijs.vehicle.domain.entity.Vehicle
 import kotlin.math.pow
@@ -21,7 +22,7 @@ object VehicleFinanceContract {
         val isSaving: Boolean = false,
 
         // Error
-        val error: String? = null,
+        val error: UiText? = null,
 
         // Vehicles list (all vehicles to show finance status)
         val vehicles: List<Vehicle> = emptyList(),
@@ -88,15 +89,15 @@ object VehicleFinanceContract {
         val selectedPaymentForDetail: LoanPayment? = null,
 
         // Validation errors
-        val purchaseDateError: String? = null,
-        val purchasePriceError: String? = null,
-        val downPaymentError: String? = null,
-        val interestRateError: String? = null,
-        val tenureError: String? = null,
-        val financierError: String? = null,
-        val loanStartDateError: String? = null,
-        val paymentAmountError: String? = null,
-        val paymentDateError: String? = null
+        val purchaseDateError: UiText? = null,
+        val purchasePriceError: UiText? = null,
+        val downPaymentError: UiText? = null,
+        val interestRateError: UiText? = null,
+        val tenureError: UiText? = null,
+        val financierError: UiText? = null,
+        val loanStartDateError: UiText? = null,
+        val paymentAmountError: UiText? = null,
+        val paymentDateError: UiText? = null
     ) : UiState {
 
         // Computed properties
@@ -254,7 +255,7 @@ object VehicleFinanceContract {
     // ==================== Effect ====================
 
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data class NavigateToDetail(val vehicleId: Int) : Effect
         data object NavigateToAddPurchase : Effect
         data object NavigateBack : Effect
@@ -271,11 +272,11 @@ data class VehicleFinanceItem(
     val status: FinanceStatus
 )
 
-enum class FinanceFilter(val label: String) {
-    ALL("All"),
-    LOAN("Financed"),
-    CASH("Cash Purchase"),
-    PENDING("Not Recorded")
+enum class FinanceFilter {
+    ALL,
+    LOAN,
+    CASH,
+    PENDING
 }
 
 enum class FinanceStatus {

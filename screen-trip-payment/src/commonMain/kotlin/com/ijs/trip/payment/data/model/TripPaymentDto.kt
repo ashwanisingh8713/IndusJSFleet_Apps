@@ -23,69 +23,44 @@ data class TripPaymentDto(
     @SerialName("vehicle_registration_number") val vehicleRegistrationNumber: String? = null,
     @SerialName("trip_start_location") val tripStartLocation: String? = null,
     @SerialName("trip_end_location") val tripEndLocation: String? = null,
-    @SerialName("trip_scheduled_date") val tripScheduledDate: String? = null,
-    @SerialName("trip_start_time") val tripStartTime: String? = null,
-    @SerialName("trip_delivery_date") val tripDeliveryDate: String? = null,
-    @SerialName("trip_delivery_time") val tripDeliveryTime: String? = null,
+    @SerialName("trip_scheduled_date") val tripScheduledDate: Long? = null,
+    @SerialName("trip_start_time") val tripStartTime: Long? = null,
+    @SerialName("trip_delivery_date") val tripDeliveryDate: Long? = null,
+    @SerialName("trip_delivery_time") val tripDeliveryTime: Long? = null,
     @SerialName("trip_state") val tripState: String? = null,
     // Payment amounts
     @SerialName("amount") val amount: Double = 0.0,
     @SerialName("tds_amount") val tdsAmount: Double = 0.0,
-    @SerialName("tdsAmount") val tdsAmountCamel: Double? = null,
     @SerialName("discount_amount") val discountAmount: Double = 0.0,
-    @SerialName("discountAmount") val discountAmountCamel: Double? = null,
     @SerialName("net_amount") val netAmount: Double = 0.0,
-    @SerialName("netAmount") val netAmountCamel: Double? = null,
     @SerialName("payment_type") val paymentType: String? = null,
-    @SerialName("paymentType") val paymentTypeCamel: String? = null,
     @SerialName("payment_mode") val paymentMode: String? = null,
-    @SerialName("paymentMode") val paymentModeCamel: String? = null,
     @SerialName("payment_source") val paymentSource: String? = null,
-    @SerialName("paymentSource") val paymentSourceCamel: String? = null,
-    @SerialName("payment_date") val paymentDate: String? = null,
-    @SerialName("paymentDate") val paymentDateCamel: String? = null,
-    @SerialName("due_date") val dueDate: String? = null,
-    @SerialName("dueDate") val dueDateCamel: String? = null,
+    @SerialName("payment_date") val paymentDate: Long? = null,
+    @SerialName("due_date") val dueDate: Long? = null,
     @SerialName("payment_status") val paymentStatus: String? = null,
-    @SerialName("paymentStatus") val paymentStatusCamel: String? = null,
     @SerialName("transaction_id") val transactionId: String? = null,
-    @SerialName("transactionId") val transactionIdCamel: String? = null,
     @SerialName("reference_number") val referenceNumber: String? = null,
-    @SerialName("referenceNumber") val referenceNumberCamel: String? = null,
     @SerialName("bank_name") val bankName: String? = null,
-    @SerialName("bankName") val bankNameCamel: String? = null,
     @SerialName("bank_branch") val bankBranch: String? = null,
-    @SerialName("bankBranch") val bankBranchCamel: String? = null,
     @SerialName("account_number") val accountNumber: String? = null,
-    @SerialName("accountNumber") val accountNumberCamel: String? = null,
     @SerialName("ifsc_code") val ifscCode: String? = null,
-    @SerialName("ifscCode") val ifscCodeCamel: String? = null,
     @SerialName("invoice_number") val invoiceNumber: String? = null,
-    @SerialName("invoiceNumber") val invoiceNumberCamel: String? = null,
-    @SerialName("invoice_date") val invoiceDate: String? = null,
-    @SerialName("invoiceDate") val invoiceDateCamel: String? = null,
+    @SerialName("invoice_date") val invoiceDate: Long? = null,
     @SerialName("invoice_amount") val invoiceAmount: Double = 0.0,
-    @SerialName("invoiceAmount") val invoiceAmountCamel: Double? = null,
     @SerialName("receipt_number") val receiptNumber: String? = null,
-    @SerialName("receiptNumber") val receiptNumberCamel: String? = null,
     @SerialName("financial_year") val financialYear: String? = null,
-    @SerialName("financialYear") val financialYearCamel: String? = null,
     @SerialName("financial_month") val financialMonth: String? = null,
-    @SerialName("financialMonth") val financialMonthCamel: String? = null,
     @SerialName("financial_quarter") val financialQuarter: String? = null,
-    @SerialName("financialQuarter") val financialQuarterCamel: String? = null,
     @SerialName("notes") val notes: String? = null,
     @SerialName("remarks") val remarks: String? = null,
     @SerialName("received_by") val receivedBy: String? = null,
-    @SerialName("receivedBy") val receivedByCamel: String? = null,
     @SerialName("received_at_location") val receivedAtLocation: String? = null,
-    @SerialName("receivedAtLocation") val receivedAtLocationCamel: String? = null,
     @SerialName("owner_id") val ownerId: Int? = null,
     @SerialName("created_by") val createdBy: Int? = null,
     @SerialName("created_by_user") val createdByUser: CreatedByUserDto? = null,
-    @SerialName("createdByUser") val createdByUserCamel: CreatedByUserDto? = null,
-    @SerialName("created_at") val createdAt: String? = null,
-    @SerialName("updated_at") val updatedAt: String? = null,
+    @SerialName("created_at") val createdAt: Long? = null,
+    @SerialName("updated_at") val updatedAt: Long? = null,
     // Nested objects for detail response
     @SerialName("trip") val trip: TripPaymentTripInfoDto? = null,
     @SerialName("vehicle") val vehicle: TripPaymentVehicleDto? = null,
@@ -107,13 +82,11 @@ data class TripPaymentDto(
 data class CreatedByUserDto(
     @SerialName("id") val id: Int,
     @SerialName("first_name") val firstName: String? = null,
-    @SerialName("firstName") val firstNameCamel: String? = null,
     @SerialName("last_name") val lastName: String? = null,
-    @SerialName("lastName") val lastNameCamel: String? = null,
     @SerialName("role") val role: String? = null
 ) {
     val fullName: String
-        get() = listOfNotNull(firstName ?: firstNameCamel, lastName ?: lastNameCamel).joinToString(" ").ifBlank { "Unknown" }
+        get() = listOfNotNull(firstName, lastName).joinToString(" ").ifBlank { "Unknown" }
 }
 
 /**
@@ -131,12 +104,12 @@ data class TripPaymentTripInfoDto(
     @SerialName("customer_name") val customerName: String? = null,
     @SerialName("start_location") val startLocation: String? = null,
     @SerialName("end_location") val endLocation: String? = null,
-    @SerialName("planned_start") val plannedStart: String? = null,
-    @SerialName("planned_end") val plannedEnd: String? = null,
-    @SerialName("scheduled_date") val scheduledDate: String? = null,
-    @SerialName("start_time") val startTime: String? = null,
-    @SerialName("delivery_date") val deliveryDate: String? = null,
-    @SerialName("delivery_time") val deliveryTime: String? = null,
+    @SerialName("planned_start") val plannedStart: Long? = null,
+    @SerialName("planned_end") val plannedEnd: Long? = null,
+    @SerialName("scheduled_date") val scheduledDate: Long? = null,
+    @SerialName("start_time") val startTime: Long? = null,
+    @SerialName("delivery_date") val deliveryDate: Long? = null,
+    @SerialName("delivery_time") val deliveryTime: Long? = null,
     @SerialName("expected_trip_price") val expectedTripPrice: Double? = null,
     @SerialName("paid_trip_price") val paidTripPrice: Double? = null,
     @SerialName("pending_amount") val pendingAmount: Double? = null,
@@ -212,36 +185,20 @@ data class TripPaymentListResponse(
 
 /**
  * Nested data object in trip payment list response.
+ *
+ * Mirrors backend PaymentListResponse: items, count, page, per_page,
+ * total_pages, has_more. The backend does NOT send an inline `summary`
+ * or a separate `total` — pagination total is derived from `count`, and
+ * summary stats come from GET /trip-payments/summary instead.
  */
 @Serializable
 data class TripPaymentListDataDto(
     @SerialName("count") val count: Int = 0,
     @SerialName("has_more") val hasMore: Boolean = false,
     @SerialName("items") val items: List<TripPaymentDto> = emptyList(),
-    @SerialName("summary") val summary: TripPaymentSummaryDto? = null,
     @SerialName("page") val page: Int = 1,
     @SerialName("per_page") val perPage: Int = 20,
-    @SerialName("total") val total: Int = 0,
     @SerialName("total_pages") val totalPages: Int = 1
-)
-
-/**
- * Payment summary DTO.
- */
-@Serializable
-data class TripPaymentSummaryDto(
-    @SerialName("total_received") val totalReceived: Double = 0.0,
-    @SerialName("total_pending") val totalPending: Double = 0.0,
-    @SerialName("total_cancelled") val totalCancelled: Double = 0.0,
-    @SerialName("total_tds") val totalTds: Double = 0.0,
-    @SerialName("total_discount") val totalDiscount: Double = 0.0,
-    @SerialName("total_net_amount") val totalNetAmount: Double = 0.0,
-    @SerialName("payment_count") val paymentCount: Int = 0,
-    @SerialName("received_count") val receivedCount: Int = 0,
-    @SerialName("pending_count") val pendingCount: Int = 0,
-    @SerialName("this_month_total") val thisMonthTotal: Double = 0.0,
-    @SerialName("by_mode") val byMode: Map<String, Double>? = null,
-    @SerialName("by_type") val byType: Map<String, Double>? = null
 )
 
 /**
@@ -256,19 +213,34 @@ data class TripPaymentsHistoryResponse(
 
 /**
  * Trip payments history data.
+ *
+ * Mirrors backend TripPaymentsHistoryResponse: payments, summary, count,
+ * page, per_page, total_pages, has_more. The backend now sends a nested
+ * `summary` block carrying the authoritative per-trip payment rollup
+ * (paid_amount, pending_amount, receipt_count, payment_status).
  */
 @Serializable
 data class TripPaymentsHistoryDataDto(
-    @SerialName("trip_id") val tripId: Int = 0,
-    @SerialName("trip_info") val tripInfo: TripPaymentTripInfoDto? = null,
-    @SerialName("expected_trip_price") val expectedTripPrice: Double = 0.0,
-    @SerialName("paid_trip_price") val paidTripPrice: Double = 0.0,
-    @SerialName("pending_amount") val pendingAmount: Double = 0.0,
-    @SerialName("payment_status") val paymentStatus: String? = null,
-    @SerialName("payment_count") val paymentCount: Int = 0,
     @SerialName("payments") val payments: List<TripPaymentDto> = emptyList(),
+    @SerialName("summary") val summary: TripPaymentsHistorySummaryDto? = null,
+    @SerialName("count") val count: Int = 0,
     @SerialName("page") val page: Int = 1,
     @SerialName("per_page") val perPage: Int = 20,
-    @SerialName("total") val total: Int = 0,
-    @SerialName("total_pages") val totalPages: Int = 1
+    @SerialName("total_pages") val totalPages: Int = 1,
+    @SerialName("has_more") val hasMore: Boolean = false
+)
+
+/**
+ * Per-trip payment rollup nested in the trip payments history response
+ * (GET /trips/{id}/payments). Mirrors backend TripPaymentSummary:
+ * paid_amount, pending_amount, receipt_count, payment_status — authoritative
+ * values from the trip row, so the app need not derive them from a
+ * paginated payment list.
+ */
+@Serializable
+data class TripPaymentsHistorySummaryDto(
+    @SerialName("paid_amount") val paidAmount: Double = 0.0,
+    @SerialName("pending_amount") val pendingAmount: Double = 0.0,
+    @SerialName("receipt_count") val receiptCount: Long = 0L,
+    @SerialName("payment_status") val paymentStatus: String? = null
 )

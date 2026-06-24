@@ -44,17 +44,12 @@ data class TeamMember(
     val role: TeamMemberRole,
     val ownerId: String,
     val isActive: Boolean,
-    val createdAt: String,
-    val updatedAt: String
+    // Backend-computed eligibility to be a vehicle/driver caretaker.
+    val isCaretakerEligible: Boolean = false,
+    // UTC epoch-millis. 0 = unset.
+    val createdAt: Long,
+    val updatedAt: Long?
 ) {
     val fullName: String get() = "$firstName $lastName"
-
-    val roleDisplayName: String get() = when (role) {
-        TeamMemberRole.GENERAL_MANAGER -> "Owner"
-        TeamMemberRole.MANAGER -> "Administrator"
-        TeamMemberRole.SUPERVISOR -> "Team member"
-    }
-
-    val initials: String get() = "${firstName.firstOrNull() ?: ""}${lastName.firstOrNull() ?: ""}"
 }
 

@@ -37,6 +37,7 @@ import com.indusjs.uicomponents.components.CaretakerInfoCard
 import com.indusjs.uicomponents.components.CaretakerSectionCard
 import com.indusjs.uicomponents.components.HistoryTabContent
 import com.indusjs.uicomponents.components.StateChangeDialog
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.vehicle.presentation.getVehicleStateOptions
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
@@ -108,6 +109,15 @@ fun VehicleDetailScreen(
     val scope = rememberCoroutineScope()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isDownloading by remember { mutableStateOf(false) }
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // PDF Export state
     var pdfExportData by remember { mutableStateOf<VehicleMaintenanceCostsPdfData?>(null) }
@@ -135,11 +145,11 @@ fun VehicleDetailScreen(
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is VehicleDetailContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is VehicleDetailContract.Effect.ShowError -> {
                     isDownloading = false
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is VehicleDetailContract.Effect.NavigateBack -> onNavigateBack()
                 is VehicleDetailContract.Effect.ShowDeleteConfirmation -> {
@@ -424,7 +434,7 @@ fun VehicleDetailScreen(
             }
             state.error != null && state.vehicle == null -> {
                 ErrorContent(
-                    error = state.error!!,
+                    error = state.error!!.resolve(),
                     screenContext = FleetErrorContext.VEHICLE_DETAIL,
                     onRetry = { viewModel.sendIntent(VehicleDetailContract.Intent.Refresh) }
                 )
@@ -557,7 +567,7 @@ private fun VehicleDetailTabbedContent(
                     tripsList = state.tripsList,
                     tripsSummary = state.tripsSummary,
                     isLoading = state.isLoadingTrips,
-                    error = state.tripsError,
+                    error = state.tripsError?.resolve(),
                     hasMore = state.hasMoreTrips,
                     onLoadMore = { viewModel.sendIntent(VehicleDetailContract.Intent.LoadMoreTrips) },
                     onRefresh = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshTrips) }
@@ -569,13 +579,13 @@ private fun VehicleDetailTabbedContent(
                 VehicleDetailTab.ROUTE -> RouteTabContent(
                     routeInfo = state.routeInfo,
                     isLoading = state.isLoadingRoute,
-                    error = state.routeError,
+                    error = state.routeError?.resolve(),
                     onRefresh = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshRoute) }
                 )
                 VehicleDetailTab.DOCUMENTS -> DocumentsTabContent(
                     documentsData = state.documentsData,
                     isLoading = state.isLoadingDocuments,
-                    error = state.documentsError,
+                    error = state.documentsError?.resolve(),
                     onRefresh = { viewModel.sendIntent(VehicleDetailContract.Intent.RefreshDocuments) },
                     onUploadClick = { documentType, documentTypeName ->
                         viewModel.sendIntent(VehicleDetailContract.Intent.ShowUploadDialog(documentType, documentTypeName))
@@ -593,7 +603,7 @@ private fun VehicleDetailTabbedContent(
                 VehicleDetailTab.HISTORY -> HistoryTabContent(
                     items = state.historyItems,
                     isLoading = state.isLoadingHistory,
-                    error = state.historyError,
+                    error = state.historyError?.resolve(),
                     hasMore = state.hasMoreHistory,
                     onLoadMore = { viewModel.sendIntent(VehicleDetailContract.Intent.LoadMoreHistory) },
                     onRetry = { viewModel.sendIntent(VehicleDetailContract.Intent.LoadHistory) }

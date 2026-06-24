@@ -321,7 +321,7 @@ fun fleetEntryProvider(
                     backStack.add(FleetRoute.AddPayment(tripId = tripId, vehicleId = vehicleId))
                 },
                 onNavigateToAddCustomer = {
-                    backStack.add(FleetRoute.CreateCustomer)
+                    backStack.add(FleetRoute.CreateCustomer())
                 }
             )
         }
@@ -340,7 +340,7 @@ fun fleetEntryProvider(
                     backStack.popAndNavigate(FleetRoute.TripDetail(tripId))
                 },
                 onNavigateToAddCustomer = {
-                    backStack.add(FleetRoute.CreateCustomer)
+                    backStack.add(FleetRoute.CreateCustomer(selectForTrip = true))
                 }
             )
         }
@@ -460,7 +460,16 @@ fun fleetEntryProvider(
                 onNavigateToVehiclePL = { backStack.add(FleetRoute.VehicleProfitLoss) },
                 onNavigateToTripPL = { backStack.add(FleetRoute.TripProfitLoss) },
                 onNavigateToCostAnalysis = { backStack.add(FleetRoute.CostAnalysis) },
-                onNavigateToConsolidatedPL = { backStack.add(FleetRoute.ConsolidatedPL) }
+                onNavigateToConsolidatedPL = { backStack.add(FleetRoute.ConsolidatedPL) },
+                onNavigateToCustomerPL = { backStack.add(FleetRoute.CustomerProfitLoss) }
+            )
+        }
+
+        is FleetRoute.CustomerProfitLoss -> NavEntry(route) {
+            val viewModel = rememberViewModel { customerPLViewModel() }
+            ReportsFeatureFacade.CustomerPLEntry(
+                viewModel = viewModel,
+                onNavigateBack = { backStack.removeLastOrNull() }
             )
         }
 
@@ -504,7 +513,7 @@ fun fleetEntryProvider(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onNavigateToCustomerDetail = { customerId -> backStack.add(FleetRoute.CustomerDetail(customerId)) },
-                onNavigateToCreateCustomer = { backStack.add(FleetRoute.CreateCustomer) }
+                onNavigateToCreateCustomer = { backStack.add(FleetRoute.CreateCustomer()) }
             )
         }
 
@@ -523,7 +532,17 @@ fun fleetEntryProvider(
                 viewModel = viewModel,
                 onNavigateBack = { backStack.removeLastOrNull() },
                 onNavigateToCustomerDetail = { customerId ->
-                    backStack.popAndNavigate(FleetRoute.CustomerDetail(customerId))
+                    if (route.selectForTrip) {
+                        // Came from Create Trip: pop back and auto-select the new customer there.
+                        com.indusjs.fleet.di.SharedViewModelStore
+                            .get<com.ijs.trip.presentation.create.CreateTripViewModel>("create_trip")
+                            ?.sendIntent(
+                                com.ijs.trip.presentation.create.CreateTripContract.Intent.SelectCustomerById(customerId)
+                            )
+                        backStack.removeLastOrNull()
+                    } else {
+                        backStack.popAndNavigate(FleetRoute.CustomerDetail(customerId))
+                    }
                 }
             )
         }
@@ -649,6 +668,8 @@ fun fleetEntryProvider(
         is FleetRoute.SubscriptionPlans -> NavEntry(route) {
             val mode = if (route.isPaymentPending) PlanPageMode.COMPLETE_PAYMENT else PlanPageMode.CHOOSE
             val viewModel = rememberViewModel { subscriptionPlansViewModel(mode) }
+            val viewModelProvider = LocalViewModelProvider.current
+            val scope = rememberCoroutineScope()
             SubscriptionFeatureFacade.PlansEntry(
                 viewModel = viewModel,
                 onNavigateToPayment = { plan, interval ->
@@ -667,7 +688,26 @@ fun fleetEntryProvider(
                         )
                     )
                 },
-                onNavigateToDashboard = { backStack.navigateAndClear(FleetRoute.Dashboard) },
+                // Free-plan activation completes the PLAN step, not onboarding. Re-evaluate
+                // the gate and route to the next step (tenant/org creation) instead of jumping
+                // straight to Dashboard — going to Dashboard pre-tenant triggers a /dashboard
+                // 401 ("user is not linked to an owner") that wipes the session.
+                onNavigateToDashboard = {
+                    scope.launch {
+                        when (viewModelProvider.checkSubscriptionGate()) {
+                            SubscriptionGateResult.RequiresPlanSelection ->
+                                backStack.navigateAndClear(FleetRoute.SubscriptionPlans(isPaymentPending = false))
+                            SubscriptionGateResult.RequiresPayment ->
+                                backStack.navigateAndClear(FleetRoute.SubscriptionPlans(isPaymentPending = true))
+                            SubscriptionGateResult.RequiresTenantCreation ->
+                                backStack.navigateAndClear(FleetRoute.CreateOrganization)
+                            SubscriptionGateResult.RequiresTeamMemberCreation ->
+                                backStack.navigateAndClear(FleetRoute.CreateTeamMember())
+                            SubscriptionGateResult.NoGate ->
+                                backStack.navigateAndClear(FleetRoute.Dashboard)
+                        }
+                    }
+                },
                 onLogout = { backStack.navigateAndClear(FleetRoute.Login) }
             )
         }
@@ -725,8 +765,13 @@ fun fleetEntryProvider(
                     backStack.navigateAndClear(FleetRoute.CreateTeamMember())
                 },
                 onSkipToTeamMember = {
-                    scope.launch { viewModelProvider.markTeamSetupCompleted() }
-                    backStack.navigateAndClear(FleetRoute.Dashboard)
+                    // Await markTeamSetupCompleted() (which re-fetches /me/permissions so the
+                    // freshly-onboarded owner gets their full permission set) BEFORE navigating
+                    // into the app — otherwise Dashboard could render on a stale minimal set.
+                    scope.launch {
+                        viewModelProvider.markTeamSetupCompleted()
+                        backStack.navigateAndClear(FleetRoute.Dashboard)
+                    }
                 }
             )
         }

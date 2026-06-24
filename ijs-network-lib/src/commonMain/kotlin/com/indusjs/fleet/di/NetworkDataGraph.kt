@@ -75,7 +75,7 @@ class NetworkDataGraph private constructor(
         ): NetworkDataGraph {
             // --- Data Sources ---
             val userLocalDS = UserLocalDataSourceImpl(settings, logger)
-            val userRemoteDS = UserRemoteDataSourceImpl(httpClient, logger)
+            val userRemoteDS = UserRemoteDataSourceImpl(httpClient, userLocalDS, logger)
             val dashboardRemoteDS = DashboardRemoteDataSourceImpl(httpClient, logger)
             val costsRemoteDS = CostsRemoteDataSourceImpl(httpClient, logger)
             val statesRemoteDS = StatesRemoteDataSourceImpl(httpClient, logger)

@@ -39,6 +39,7 @@ import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.uicomponents.components.FleetDateRangePickerDialog
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
 import com.ijs.reports.domain.entity.CostBreakdownItem
@@ -50,12 +51,12 @@ import com.ijs.reports.presentation.vehicle.VehiclePLContract.Intent
 import com.ijs.reports.presentation.vehicle.VehiclePLContract.State
 import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.RecentReport
+import com.ijs.reports.presentation.localizedLabel
 import com.ijs.reports.presentation.ReportChartType as ChartType
 import com.ijs.reports.presentation.ReportExportFormat as ExportFormat
 import com.ijs.reports.presentation.ReportViewMode as ViewMode
 import com.ijs.reports.presentation.VehiclePLSortOption as SortOption
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
@@ -71,18 +72,26 @@ fun VehicleProfitLossScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     val filterSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val vehicleSelectorSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is Effect.ShowSnackbar -> {
-                    scope.launch { snackbarHostState.showSnackbar(effect.message) }
+                    pendingSnackbar = effect.message
                 }
                 is Effect.ExportGenerated -> {
-                    scope.launch { snackbarHostState.showSnackbar("Report exported: ${effect.fileName}") }
+                    pendingSnackbar = UiText.StringRes(Res.string.reports_exported_path, args = listOf(effect.fileName))
                 }
             }
         }
@@ -107,7 +116,7 @@ fun VehicleProfitLossScreen(
                 title = {
                     Column {
                         Text(
-                            text = "Vehicle P&L",
+                            text = stringResource(Res.string.reports_vehicle_pl_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -130,7 +139,7 @@ fun VehicleProfitLossScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
@@ -149,7 +158,7 @@ fun VehicleProfitLossScreen(
                             IconButton(onClick = { viewModel.sendIntent(Intent.ShowVehicleFilterSheet) }) {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_filter),
-                                    contentDescription = "Filter",
+                                    contentDescription = stringResource(Res.string.reports_cd_filter),
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -160,7 +169,7 @@ fun VehicleProfitLossScreen(
                         IconButton(onClick = { viewModel.sendIntent(Intent.ShowExportOptions) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_download),
-                                contentDescription = "Export",
+                                contentDescription = stringResource(Res.string.reports_cd_export),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -169,7 +178,7 @@ fun VehicleProfitLossScreen(
                     IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
-                            contentDescription = "Refresh",
+                            contentDescription = stringResource(Res.string.refresh),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -191,7 +200,7 @@ fun VehicleProfitLossScreen(
                 // Loading vehicles or initial data (only show full-screen loading before initial load)
                 (state.isLoading || state.isLoadingVehicles) && !state.initialLoadComplete -> {
                     LoadingContent(
-                        message = if (state.isLoadingVehicles) "Loading vehicles..." else "Loading fleet data..."
+                        message = if (state.isLoadingVehicles) stringResource(Res.string.reports_loading_vehicles) else stringResource(Res.string.reports_loading_fleet)
                     )
                 }
                 // No vehicles available - show helpful empty state
@@ -220,7 +229,7 @@ fun VehicleProfitLossScreen(
                 // Single Vehicle Mode - error state
                 state.error != null && state.result == null -> {
                     com.indusjs.uicomponents.components.ErrorContent(
-                        error = state.error!!,
+                        error = state.error!!.resolve(),
                         onRetry = { viewModel.sendIntent(Intent.Refresh) }
                     )
                 }
@@ -259,7 +268,7 @@ fun VehicleProfitLossScreen(
                         ) {
                             CircularProgressIndicator()
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("Updating...", fontWeight = FontWeight.Medium)
+                            Text(stringResource(Res.string.reports_updating), fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -284,7 +293,7 @@ fun VehicleProfitLossScreen(
                         ) {
                             CircularProgressIndicator()
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("Generating Report...", fontWeight = FontWeight.Medium)
+                            Text(stringResource(Res.string.reports_generating), fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -349,9 +358,9 @@ private fun NoVehiclesContent(onRefresh: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("No vehicles available", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(Res.string.reports_no_vehicles_available), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(12.dp))
-            Button(onClick = onRefresh) { Text("Refresh") }
+            Button(onClick = onRefresh) { Text(stringResource(Res.string.refresh)) }
         }
     }
 }
@@ -363,17 +372,17 @@ private fun ExportOptionsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Export Report") },
+        title = { Text(stringResource(Res.string.reports_export_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ExportFormat.entries.forEach { format ->
                     Button(onClick = { onExport(format) }, modifier = Modifier.fillMaxWidth()) {
-                        Text(format.label)
+                        Text(format.localizedLabel())
                     }
                 }
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) } }
     )
 }

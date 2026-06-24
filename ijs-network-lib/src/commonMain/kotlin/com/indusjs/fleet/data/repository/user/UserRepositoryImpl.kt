@@ -23,7 +23,10 @@ import com.indusjs.fleet.domain.entity.user.UserProfile
 import com.indusjs.fleet.domain.entity.user.UserRole
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.fleet.core.logger.FleetLogger
+import com.indusjs.fleet.core.permission.PermissionStore
+import com.indusjs.fleet.core.permission.Permissions
 import com.indusjs.fleet.network.TAG_USER_REPO
+import com.indusjs.datetimeutils.FleetEpoch
 import dev.zacsweers.metro.Inject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
@@ -84,11 +87,15 @@ class UserRepositoryImpl(
         logger.d(TAG_USER_REPO, "Login successful - User: ${authResult.user.email}, Role enum: ${authResult.user.role}, Role to save: '$roleToSave', tenantId: '${authData.user.tenantId}'")
 
         localDataSource.saveAuthToken(authResult.token)
+        // Persist the rotated refresh pair + expiry so the app can silently refresh.
+        persistRefreshSession(authData.refreshToken, authData.expiresIn)
         localDataSource.saveUserRole(roleToSave)
         localDataSource.saveUserId(authResult.user.id)
         localDataSource.saveTenantId(authData.user.tenantId)
         val fullName = "${authResult.user.firstName} ${authResult.user.lastName}".trim()
         localDataSource.saveUserName(fullName)
+        // Load the user's actual permission set (UI gating). Non-fatal on failure.
+        refreshPermissions()
         authResult
     }
 
@@ -103,13 +110,11 @@ class UserRepositoryImpl(
     }
 
     override suspend fun resetPassword(
-        identifier: String,
         resetToken: String,
         newPassword: String
     ): Result<Unit> = runCatching {
         val response = remoteDataSource.resetPassword(
             ResetPasswordRequest(
-                identifier = identifier,
                 resetToken = resetToken,
                 newPassword = newPassword
             )
@@ -189,9 +194,11 @@ class UserRepositoryImpl(
         if (!response.success) {
             throw ApiException(response.message ?: "Mobile verification failed")
         }
-        val accessToken = response.data?.token
+        val accessToken = response.data?.accessToken ?: response.data?.token
         if (!accessToken.isNullOrBlank()) {
             localDataSource.saveAuthToken(accessToken)
+            // Persist the rotated refresh pair + expiry so the app can silently refresh.
+            persistRefreshSession(response.data?.refreshToken, response.data?.expiresIn?.toLong() ?: 0L)
         }
         accessToken
     }
@@ -205,11 +212,16 @@ class UserRepositoryImpl(
 
     override suspend fun verifyLoginOtp(mobile: String, otp: String): Result<AuthResult> = runCatching {
         val response = remoteDataSource.verifyLoginOtp(VerifyLoginOtpRequest(mobile = mobile, otp = otp))
-        val authResult = response.data?.toDomain()
+        val authData = response.data
             ?: throw ApiException(response.message ?: "OTP verification failed")
+        val authResult = authData.toDomain()
         localDataSource.saveAuthToken(authResult.token)
+        // Persist the rotated refresh pair + expiry so the app can silently refresh.
+        persistRefreshSession(authData.refreshToken, authData.expiresIn)
         localDataSource.saveUserRole(UserRole.toApiString(authResult.user.role))
         localDataSource.saveUserId(authResult.user.id)
+        // Load the user's actual permission set (UI gating). Non-fatal on failure.
+        refreshPermissions()
         authResult
     }
 
@@ -217,9 +229,63 @@ class UserRepositoryImpl(
 
     override suspend fun saveAuthToken(token: String) = localDataSource.saveAuthToken(token)
 
-    override suspend fun logout() = localDataSource.clearSession()
+    override suspend fun logout() {
+        localDataSource.clearSession()
+        PermissionStore.clear()
+    }
 
     override suspend fun isLoggedIn(): Boolean = localDataSource.isLoggedIn()
+
+    override suspend fun refreshPermissions() {
+        val response = remoteDataSource.fetchMyPermissions()
+        val fetched = response.data?.data?.permissions
+        val base: Set<String> = if (response.success && fetched != null) {
+            val perms = fetched.toSet()
+            localDataSource.saveUserPermissions(perms)
+            perms
+        } else {
+            // Fall back to the last cached set so the UI still gates sensibly.
+            logger.w(TAG_USER_REPO, "Permissions fetch failed (${response.message}); using cached set")
+            localDataSource.getUserPermissions()
+        }
+        // Expand to full owner access when the signed-in user is an owner. IAM grants
+        // the owner role but not the full permission set, so without this a freshly
+        // onboarded owner would be locked out of every fleet screen. Owner detection
+        // lives only here (see Permissions.effectivePermissions) — call sites stay
+        // permission-based.
+        val effective = Permissions.effectivePermissions(base, currentUserRoles())
+        PermissionStore.update(effective)
+        logger.d(
+            TAG_USER_REPO,
+            "Permissions updated: ${base.size} from backend, ${effective.size} effective" +
+                (if (effective.size != base.size) " (owner-expanded)" else "")
+        )
+    }
+
+    /** Roles for the signed-in user, from the JWT (preferred) plus the saved role. */
+    private suspend fun currentUserRoles(): Set<String> {
+        val fromToken = localDataSource.getAuthToken()?.let { JwtHelper.extractRoles(it) }.orEmpty()
+        val saved = localDataSource.getUserRole()
+        return (fromToken + listOfNotNull(saved)).toSet()
+    }
+
+    /**
+     * Persists the (rotating) refresh token and the absolute access-token expiry
+     * derived from the per-response [expiresInSeconds] (no hardcoded TTL). Called on
+     * every login / OTP / verify-mobile success. Backward-compatible: a null/blank
+     * refresh token (older backend) leaves the stored value untouched-as-absent, so
+     * a later silent refresh treats the session as needs-relogin.
+     */
+    private suspend fun persistRefreshSession(refreshToken: String?, expiresInSeconds: Long) {
+        if (!refreshToken.isNullOrBlank()) {
+            localDataSource.saveRefreshToken(refreshToken)
+        } else {
+            logger.w(TAG_USER_REPO, "Auth response carried no refresh_token; session cannot be silently refreshed")
+        }
+        if (expiresInSeconds > 0) {
+            localDataSource.saveTokenExpiresAt(FleetEpoch.now() + expiresInSeconds * 1000L)
+        }
+    }
 
     /**
      * Retrieves auth token or emits session expired event and throws AuthException.

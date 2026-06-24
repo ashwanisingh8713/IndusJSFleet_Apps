@@ -1,5 +1,6 @@
 package com.ijs.trip.presentation.cost.util
 
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.data.model.driver.CreateDriverCostRequest
 import com.ijs.trip.presentation.cost.CostEntryRow
 
@@ -75,7 +76,7 @@ object TripCostToDriverCostMapper {
      * @param entry The trip cost entry row
      * @param driverId The driver ID from the trip
      * @param tripId The trip ID for linking
-     * @param date The date in DD-MM-YYYY format (for driver cost API)
+     * @param date The date in DD-MM-YYYY format (used to derive month + epoch instant)
      * @return CreateDriverCostRequest or null if not a driver expense
      */
     fun mapToDriverCost(
@@ -85,6 +86,9 @@ object TripCostToDriverCostMapper {
         date: String
     ): CreateDriverCostRequest? {
         if (!isDriverExpense(entry)) return null
+
+        // Driver cost API now expects the date as UTC epoch millis (JSON number).
+        val dateMillis = convertToEpochMillis(date) ?: return null
 
         val mapping = costIdMapping[entry.costType]
         val (driverCostId, defaultLabel) = mapping ?: Pair("DC-004-001", entry.costTypeLabel)
@@ -109,7 +113,7 @@ object TripCostToDriverCostMapper {
                 entry.customCostTypeName
             } else null,
             amount = entry.amount.toDoubleOrNull() ?: 0.0,
-            date = date, // DD-MM-YYYY format for driver cost API
+            date = dateMillis, // UTC epoch millis
             month = month,
             description = "Trip expense: $costLabel (Trip #$tripId)",
             notes = entry.notes.takeIf { it.isNotBlank() },

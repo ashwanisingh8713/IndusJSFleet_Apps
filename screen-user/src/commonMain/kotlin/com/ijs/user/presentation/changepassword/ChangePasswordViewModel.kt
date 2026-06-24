@@ -22,9 +22,6 @@ class ChangePasswordViewModel(
             is ChangePasswordContract.Intent.UpdateCurrentPassword -> updateState { copy(currentPassword = intent.password) }
             is ChangePasswordContract.Intent.UpdateNewPassword -> updateState { copy(newPassword = intent.password) }
             is ChangePasswordContract.Intent.UpdateConfirmPassword -> updateState { copy(confirmPassword = intent.password) }
-            is ChangePasswordContract.Intent.ToggleCurrentPasswordVisibility -> updateState { copy(isCurrentPasswordVisible = !isCurrentPasswordVisible) }
-            is ChangePasswordContract.Intent.ToggleNewPasswordVisibility -> updateState { copy(isNewPasswordVisible = !isNewPasswordVisible) }
-            is ChangePasswordContract.Intent.ToggleConfirmPasswordVisibility -> updateState { copy(isConfirmPasswordVisible = !isConfirmPasswordVisible) }
             is ChangePasswordContract.Intent.ChangePassword -> changePassword()
             is ChangePasswordContract.Intent.ClearError -> updateState { copy(error = null) }
         }
@@ -46,10 +43,7 @@ class ChangePasswordViewModel(
             return
         }
 
-        if (newPassword.length < 6) {
-            updateState { copy(error = UiText.StringRes(Res.string.error_password_min_chars)) }
-            return
-        }
+        // Password policy (length/complexity) is enforced by the backend only.
 
         if (confirmPassword.isEmpty()) {
             updateState { copy(error = UiText.StringRes(Res.string.error_confirm_new_password_required)) }

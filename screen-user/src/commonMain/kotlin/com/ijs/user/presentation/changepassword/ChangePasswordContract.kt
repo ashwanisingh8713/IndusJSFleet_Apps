@@ -17,9 +17,6 @@ object ChangePasswordContract {
         val currentPassword: String = "",
         val newPassword: String = "",
         val confirmPassword: String = "",
-        val isCurrentPasswordVisible: Boolean = false,
-        val isNewPasswordVisible: Boolean = false,
-        val isConfirmPasswordVisible: Boolean = false,
         val isLoading: Boolean = false,
         val error: UiText? = null
     ) : UiState
@@ -31,9 +28,6 @@ object ChangePasswordContract {
         data class UpdateCurrentPassword(val password: String) : Intent
         data class UpdateNewPassword(val password: String) : Intent
         data class UpdateConfirmPassword(val password: String) : Intent
-        data object ToggleCurrentPasswordVisibility : Intent
-        data object ToggleNewPasswordVisibility : Intent
-        data object ToggleConfirmPasswordVisibility : Intent
         data object ChangePassword : Intent
         data object ClearError : Intent
     }

@@ -29,6 +29,23 @@ class FleetDatabase(
     json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true },
     logger: FleetLogger
 ) {
+    init {
+        // Cache-version gate. When the on-wire/cached timestamp representation
+        // changes (e.g. ISO-8601 String -> UTC epoch-millis Long), old JSON
+        // blobs can no longer be deserialized into the new entity shapes.
+        // Bumping CACHE_SCHEMA_VERSION drops every known cache key on first
+        // launch so we start clean. No data migration (dev phase).
+        val storedVersion = settings.getIntOrNull(KEY_CACHE_SCHEMA_VERSION)
+        if (storedVersion != CACHE_SCHEMA_VERSION) {
+            logger.i(
+                "FleetDatabase",
+                "Cache schema $storedVersion -> $CACHE_SCHEMA_VERSION; clearing local caches"
+            )
+            CACHE_KEYS.forEach { settings.remove(it) }
+            settings.putInt(KEY_CACHE_SCHEMA_VERSION, CACHE_SCHEMA_VERSION)
+        }
+    }
+
     private val dashboardDaoImpl = SettingsDashboardDao(settings, json)
     private val costTypesDaoImpl = SettingsCostTypesDao(settings, json)
     private val statesDaoImpl = SettingsStatesDao(settings, json)
@@ -66,6 +83,31 @@ class FleetDatabase(
 
     companion object {
         const val DATABASE_NAME = "fleet_database"
+
+        /**
+         * Local cache schema version. Bump this whenever a cached entity's
+         * shape changes in a non-backward-compatible way (e.g. the UTC
+         * epoch-millis migration: timestamp String -> Long). On mismatch,
+         * [CACHE_KEYS] are cleared on first launch.
+         */
+        private const val CACHE_SCHEMA_VERSION = 3
+        private const val KEY_CACHE_SCHEMA_VERSION = "cache_schema_version"
+
+        /**
+         * Every multiplatform-settings key holding a serialized cache blob.
+         * Keep in sync with the per-DAO key constants. Auth/session keys are
+         * intentionally excluded so the user stays logged in.
+         */
+        private val CACHE_KEYS = listOf(
+            "dashboard_cache",
+            "dashboard_cache_time",
+            "trip_cost_types_cache",
+            "maintenance_cost_types_cache",
+            "driver_cost_types_cache",
+            "entity_states_cache",
+            "team_members_cache",
+            "customers_cache"
+        )
     }
 }
 

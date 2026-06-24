@@ -16,11 +16,10 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.uicomponents.components.FleetPasswordField
 import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -76,7 +75,7 @@ fun ForgotPasswordScreen(
                     IconButton(onClick = onNavigateToLogin) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -97,15 +96,11 @@ fun ForgotPasswordScreen(
                     resetToken = state.resetToken,
                     newPassword = state.newPassword,
                     confirmPassword = state.confirmPassword,
-                    isPasswordVisible = state.isPasswordVisible,
-                    isConfirmPasswordVisible = state.isConfirmPasswordVisible,
                     isLoading = state.isLoading,
                     error = state.error,
                     onResetTokenChange = { viewModel.sendIntent(ForgotPasswordContract.Intent.UpdateResetToken(it)) },
                     onNewPasswordChange = { viewModel.sendIntent(ForgotPasswordContract.Intent.UpdateNewPassword(it)) },
                     onConfirmPasswordChange = { viewModel.sendIntent(ForgotPasswordContract.Intent.UpdateConfirmPassword(it)) },
-                    onTogglePasswordVisibility = { viewModel.sendIntent(ForgotPasswordContract.Intent.TogglePasswordVisibility) },
-                    onToggleConfirmPasswordVisibility = { viewModel.sendIntent(ForgotPasswordContract.Intent.ToggleConfirmPasswordVisibility) },
                     onResetPassword = { viewModel.sendIntent(ForgotPasswordContract.Intent.ResetPassword) },
                     focusManager = focusManager
                 )
@@ -228,15 +223,11 @@ private fun ResetPasswordContent(
     resetToken: String,
     newPassword: String,
     confirmPassword: String,
-    isPasswordVisible: Boolean,
-    isConfirmPasswordVisible: Boolean,
     isLoading: Boolean,
     error: com.indusjs.uicomponents.components.UiText?,
     onResetTokenChange: (String) -> Unit,
     onNewPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
-    onTogglePasswordVisibility: () -> Unit,
-    onToggleConfirmPasswordVisibility: () -> Unit,
     onResetPassword: () -> Unit,
     focusManager: FocusManager
 ) {
@@ -294,92 +285,36 @@ private fun ResetPasswordContent(
 
     Spacer(modifier = Modifier.height(12.dp))
 
-    // New Password Field
-    OutlinedTextField(
+    // New Password Field (policy enforced by backend; no client min-length hint)
+    FleetPasswordField(
         value = newPassword,
         onValueChange = onNewPasswordChange,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text(stringResource(Res.string.reset_password_new_label)) },
-        placeholder = { Text(stringResource(Res.string.reset_password_new_placeholder)) },
-        leadingIcon = { Text("🔑") },
-        trailingIcon = {
-            IconButton(onClick = onTogglePasswordVisibility) {
-                Icon(
-                    painter = painterResource(
-                        if (isPasswordVisible) Res.drawable.ic_visibility_off
-                        else Res.drawable.ic_visibility
-                    ),
-                    contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        },
-        visualTransformation = if (isPasswordVisible) {
-            VisualTransformation.None
-        } else {
-            PasswordVisualTransformation()
-        },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-        ),
-        singleLine = true,
-        enabled = !isLoading,
-        shape = RoundedCornerShape(FleetTokens.Radius.L),
-        supportingText = {
-            Text(stringResource(Res.string.reset_password_min_chars))
-        }
+        label = stringResource(Res.string.reset_password_new_label),
+        placeholder = stringResource(Res.string.reset_password_new_placeholder),
+        enabled = !isLoading
     )
 
     Spacer(modifier = Modifier.height(12.dp))
 
-    // Confirm Password Field
-    OutlinedTextField(
+    // Confirm Password Field (UI-only match check)
+    FleetPasswordField(
         value = confirmPassword,
         onValueChange = onConfirmPasswordChange,
         modifier = Modifier.fillMaxWidth(),
-        label = { Text(stringResource(Res.string.reset_password_confirm_label)) },
-        placeholder = { Text(stringResource(Res.string.reset_password_confirm_placeholder)) },
-        leadingIcon = { Text("🔑") },
-        trailingIcon = {
-            IconButton(onClick = onToggleConfirmPasswordVisibility) {
-                Icon(
-                    painter = painterResource(
-                        if (isConfirmPasswordVisible) Res.drawable.ic_visibility_off
-                        else Res.drawable.ic_visibility
-                    ),
-                    contentDescription = if (isConfirmPasswordVisible) "Hide password" else "Show password",
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        },
-        visualTransformation = if (isConfirmPasswordVisible) {
-            VisualTransformation.None
-        } else {
-            PasswordVisualTransformation()
-        },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done
-        ),
+        label = stringResource(Res.string.reset_password_confirm_label),
+        placeholder = stringResource(Res.string.reset_password_confirm_placeholder),
+        isError = confirmPassword.isNotEmpty() && confirmPassword != newPassword,
+        errorMessage = if (confirmPassword.isNotEmpty() && confirmPassword != newPassword) {
+            stringResource(Res.string.reset_password_mismatch)
+        } else null,
+        enabled = !isLoading,
         keyboardActions = KeyboardActions(
             onDone = {
                 focusManager.clearFocus()
                 onResetPassword()
             }
-        ),
-        singleLine = true,
-        enabled = !isLoading,
-        isError = confirmPassword.isNotEmpty() && confirmPassword != newPassword,
-        shape = RoundedCornerShape(FleetTokens.Radius.L),
-        supportingText = {
-            if (confirmPassword.isNotEmpty() && confirmPassword != newPassword) {
-                Text(stringResource(Res.string.reset_password_mismatch), color = MaterialTheme.colorScheme.error)
-            }
-        }
+        )
     )
 
     // Error Message

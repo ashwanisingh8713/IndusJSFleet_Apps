@@ -55,16 +55,18 @@ data class VehicleProfitLossDto(
     val vehicleNumber: String? = null,
     @SerialName("vehicle_registration")
     val vehicleRegistration: String? = null,
-    @SerialName("make")
+    // Backend (domain.VehicleProfitLoss / application.VehiclePLResult) emits
+    // "vehicle_make" / "vehicle_model" — NOT bare "make" / "model".
+    @SerialName("vehicle_make")
     val make: String? = null,
-    @SerialName("model")
+    @SerialName("vehicle_model")
     val model: String? = null,
     @SerialName("period")
     val period: PeriodDto? = null,
     @SerialName("start_date")
-    val startDate: String? = null,
+    val startDate: Long? = null,
     @SerialName("end_date")
-    val endDate: String? = null,
+    val endDate: Long? = null,
     @SerialName("total_trips")
     val totalTrips: Int = 0,
     @SerialName("completed_trips")
@@ -83,6 +85,8 @@ data class VehicleProfitLossDto(
     val fuelCost: Double = 0.0,
     @SerialName("maintenance_cost")
     val maintenanceCost: Double = 0.0,
+    @SerialName("driver_cost")
+    val driverCost: Double = 0.0,
     @SerialName("other_cost")
     val otherCost: Double = 0.0,
     @SerialName("total_expenses")
@@ -111,61 +115,60 @@ data class VehicleProfitLossDto(
  * Fleet Profit/Loss DTO
  * GET /reports/profit-loss
  *
- * API Response structure (from Docs/api_modules/11-reports.md):
+ * Mirrors backend application/report.FleetPLResult:
  * {
- *   "period": { "start_date": "...", "end_date": "..." },
- *   "vehicles": [...],
- *   "summary": { "total_vehicles": ..., "total_revenue": ..., ... }
+ *   "period": "monthly",            // period NAME (string), not an object
+ *   "start_date": <epoch-millis>,
+ *   "end_date": <epoch-millis>,
+ *   "fleet_summary": { ...FleetTotal },
+ *   "vehicles": [ ...VehicleProfitLoss ],
+ *   "vehicle_count": <int>
  * }
  */
 @Serializable
 data class FleetProfitLossDto(
+    // Backend emits the period NAME as a string ("monthly"), not a {start,end} object.
     @SerialName("period")
-    val period: PeriodDto? = null,
+    val period: String? = null,
+    @SerialName("start_date")
+    val startDate: Long? = null,
+    @SerialName("end_date")
+    val endDate: Long? = null,
+    @SerialName("fleet_summary")
+    val fleetSummary: FleetPLSummaryDto? = null,
     @SerialName("vehicles")
     val vehicles: List<VehicleProfitLossDto>? = null,
-    @SerialName("summary")
-    val summary: FleetPLSummaryDto? = null,
-    @SerialName("cost_breakdown")
-    val costBreakdown: List<CostBreakdownItemDto>? = null
+    @SerialName("vehicle_count")
+    val vehicleCount: Int = 0
 )
 
 /**
- * Nested summary object within Fleet P&L response.
+ * Fleet totals (backend application/report.FleetTotal). The backend emits:
+ * total_trips, total_distance, total_revenue, total_cost, driver_cost,
+ * net_profit, profit_margin, completed_trips, active_vehicles.
+ *
+ * NOTE: This is an opex P&L (no gross_profit / COGS at the fleet level — the
+ * consolidated endpoint is the gross/COGS source).
  */
 @Serializable
 data class FleetPLSummaryDto(
-    @SerialName("total_vehicles")
-    val totalVehicles: Int = 0,
     @SerialName("total_trips")
     val totalTrips: Int = 0,
-    @SerialName("completed_trips")
-    val completedTrips: Int = 0,
     @SerialName("total_distance")
     val totalDistance: Double = 0.0,
     @SerialName("total_revenue")
     val totalRevenue: Double = 0.0,
-    @SerialName("total_expenses")
-    val totalExpenses: Double = 0.0,
     @SerialName("total_cost")
     val totalCost: Double = 0.0,
-    @SerialName("total_trip_costs")
-    val totalTripCosts: Double = 0.0,
-    @SerialName("total_maintenance_costs")
-    val totalMaintenanceCosts: Double = 0.0,
-    @SerialName("gross_profit")
-    val grossProfit: Double = 0.0,
-    @SerialName("total_profit")
-    val totalProfit: Double = 0.0,
+    @SerialName("driver_cost")
+    val driverCost: Double = 0.0,
     @SerialName("net_profit")
     val netProfit: Double = 0.0,
     @SerialName("profit_margin")
     val profitMargin: Double = 0.0,
-    @SerialName("is_profitable")
-    val isProfitable: Boolean = false,
-    @SerialName("profitable_vehicles")
-    val profitableVehicles: Int = 0,
-    @SerialName("loss_making_vehicles")
-    val lossMakingVehicles: Int = 0
+    @SerialName("completed_trips")
+    val completedTrips: Int = 0,
+    @SerialName("active_vehicles")
+    val activeVehicles: Int = 0
 )
 

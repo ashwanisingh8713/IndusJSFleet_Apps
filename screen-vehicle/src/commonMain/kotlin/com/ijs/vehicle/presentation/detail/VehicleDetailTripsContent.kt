@@ -14,7 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.vehicle.domain.entity.TripsSummary
 import com.ijs.vehicle.domain.entity.VehicleTripItem
@@ -44,25 +46,11 @@ internal fun TripsTabContent(
         }
         tripsList.isEmpty() -> {
             // Empty state
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("🚀", style = MaterialTheme.typography.displayMedium)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(Res.string.vehicle_trips_no_trips),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = stringResource(Res.string.vehicle_trips_no_trips_message),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            EmptyContent(
+                icon = "🚀",
+                title = stringResource(Res.string.vehicle_trips_no_trips),
+                message = stringResource(Res.string.vehicle_trips_no_trips_message)
+            )
         }
         else -> {
             LazyColumn(
@@ -151,19 +139,7 @@ internal fun TripsTabContent(
 
 @Composable
 internal fun TripStatItem(count: String, label: String, color: androidx.compose.ui.graphics.Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = count,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(value = count, label = label, valueColor = color, accent = color, showBackground = false, centered = true)
 }
 
 @Composable

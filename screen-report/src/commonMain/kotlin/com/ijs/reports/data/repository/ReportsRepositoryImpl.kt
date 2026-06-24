@@ -63,8 +63,8 @@ class ReportsRepositoryImpl(
 
     override suspend fun getFleetProfitLoss(
         period: String?,
-        startDate: String?,
-        endDate: String?
+        startDate: Long?,
+        endDate: Long?
     ): Result<FleetProfitLoss> {
         return try {
             val token = requireAuthToken()
@@ -109,14 +109,14 @@ class ReportsRepositoryImpl(
 
     override suspend fun getCostTypeAnalysis(
         costType: String,
-        startDate: String?,
-        endDate: String?
+        startDate: Long?,
+        endDate: Long?
     ): Result<CostTypeAnalysis> {
         return try {
             val token = requireAuthToken()
             val dto = remoteDataSource.getCostTypeAnalysis(token, costType, startDate, endDate)
             if (dto != null) {
-                Result.Success(ProfitLossMapper.toCostTypeAnalysis(dto))
+                Result.Success(ProfitLossMapper.toCostTypeAnalysis(dto, startDate, endDate))
             } else {
                 Result.Error(Exception("Cost type analysis not found"), "Failed to fetch cost type analysis")
             }
@@ -130,7 +130,7 @@ class ReportsRepositoryImpl(
             val token = requireAuthToken()
             val dtos = remoteDataSource.getMultiCostTypeAnalysis(token, request)
             if (dtos != null) {
-                Result.Success(dtos.map { ProfitLossMapper.toCostTypeAnalysis(it) })
+                Result.Success(dtos.map { ProfitLossMapper.toCostTypeAnalysis(it, request.startDate, request.endDate) })
             } else {
                 Result.Error(Exception("Multi cost type analysis not found"), "Failed to fetch multi cost type analysis")
             }
@@ -153,9 +153,23 @@ class ReportsRepositoryImpl(
         }
     }
 
+    override suspend fun getCustomerProfitLoss(period: String): Result<CustomerPLReport> {
+        return try {
+            val token = requireAuthToken()
+            val dto = remoteDataSource.getCustomerProfitLoss(token, period)
+            if (dto != null) {
+                Result.Success(ProfitLossMapper.toCustomerPLReport(dto))
+            } else {
+                Result.Error(Exception("Customer P&L not found"), "Failed to fetch customer P&L report")
+            }
+        } catch (e: Exception) {
+            Result.Error(e, e.message ?: "Failed to fetch customer P&L report")
+        }
+    }
+
     override suspend fun getPLSummary(
-        startDate: String?,
-        endDate: String?
+        startDate: Long?,
+        endDate: Long?
     ): Result<PLSummary> {
         logger.d(TAG_REPORTS_REPO, "=== getPLSummary Repository ===")
         logger.d(TAG_REPORTS_REPO, "Request: startDate=$startDate, endDate=$endDate")

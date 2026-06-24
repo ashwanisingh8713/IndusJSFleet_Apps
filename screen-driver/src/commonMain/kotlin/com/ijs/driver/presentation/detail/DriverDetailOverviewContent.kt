@@ -3,13 +3,11 @@ package com.ijs.driver.presentation.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,9 +18,12 @@ import com.ijs.driver.presentation.driverStatusLabel
 import com.ijs.team.presentation.toCaretakerInfo
 import com.indusjs.uicomponents.components.CaretakerInfoCard
 import com.indusjs.uicomponents.components.ClickablePhoneRow
+import com.indusjs.uicomponents.components.FleetAvatar
+import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetStatusBadge
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -99,35 +100,20 @@ internal fun DriverHeader(
     driverStatusLabels: Map<String, String>,
     onStatusClick: () -> Unit = {}
 ) {
-    Card(
+    FleetSectionCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        contentPadding = 20.dp
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Avatar
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "${driver.firstName.firstOrNull() ?: ""}${driver.lastName.firstOrNull() ?: ""}".uppercase(),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
+            FleetAvatar(
+                name = driver.fullName,
+                size = 80.dp,
+                textStyle = MaterialTheme.typography.headlineMedium
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -234,30 +220,14 @@ internal fun QuickStatItem(
     value: String,
     label: String
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    FleetMetricTile(
+        value = value,
+        label = label,
+        emoji = icon,
+        showBackground = false,
+        centered = true,
         modifier = Modifier.padding(horizontal = 8.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    )
 }
 
 
@@ -338,34 +308,10 @@ internal fun SectionCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                thickness = 0.5.dp
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            content()
-        }
-    }
+    FleetTitledSectionCard(
+        title = title,
+        content = content
+    )
 }
 
 
@@ -402,18 +348,9 @@ internal fun getStatusColor(status: DriverStatus): androidx.compose.ui.graphics.
 
 
 internal fun formatDate(timestamp: Long, naLabel: String): String {
-    if (timestamp <= 0) return naLabel
-    return try {
-        val days = timestamp / (24 * 60 * 60 * 1000)
-        val years = (days / 365.25).toInt() + 1970
-        val remainingDays = (days % 365.25).toInt()
-        val months = (remainingDays / 30) + 1
-        val dayOfMonth = (remainingDays % 30) + 1
-        val monthStr = months.coerceIn(1, 12).toString().padStart(2, '0')
-        val dayStr = dayOfMonth.coerceIn(1, 28).toString().padStart(2, '0')
-        "$dayStr-$monthStr-$years" // DD-MM-YYYY format
-    } catch (_: Exception) {
-        naLabel
-    }
+    if (timestamp <= 0L) return naLabel
+    // Canonical epoch-millis -> "DD-MMM-YYYY" display (e.g. "04-Jan-2026").
+    return com.indusjs.fleet.core.util.formatDateToHumanReadable(timestamp)
+        .ifBlank { naLabel }
 }
 

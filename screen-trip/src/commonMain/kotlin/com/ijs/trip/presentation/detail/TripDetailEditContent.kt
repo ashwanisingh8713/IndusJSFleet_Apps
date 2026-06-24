@@ -16,7 +16,22 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.fleet.core.util.formatDateTimeForDisplay
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
+
+/**
+ * Formats a trip-assignment window (UTC epoch-millis start/end) for the
+ * "occupied" hint. Treats null/0 as unset.
+ */
+private fun formatAssignmentWindow(startMs: Long?, endMs: Long?): String {
+    val start = startMs?.takeIf { it > 0L }?.let { formatDateTimeForDisplay(it) } ?: ""
+    val end = endMs?.takeIf { it > 0L }?.let { formatDateTimeForDisplay(it) } ?: ""
+    return "$start - $end"
+}
 
 /**
  * Edit mode content for the trip detail screen.
@@ -65,7 +80,7 @@ private fun EditLoadingCard() {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator(modifier = Modifier.size(32.dp))
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Loading vehicles and drivers...", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(Res.string.trip_detail_loading_vehicles_drivers), style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
@@ -79,21 +94,11 @@ private fun EditVehicleDriverSection(
     state: TripDetailContract.State,
     viewModel: TripDetailViewModel
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            EditSectionHeader(icon = "🚛", title = "Vehicle & Driver")
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+    FleetTitledSectionCard(title = stringResource(Res.string.trip_edit_section_vehicle_driver), emoji = "🚛") {
             // Vehicle Dropdown
             EditDropdownField(
-                label = "Select Vehicle",
-                selectedText = state.selectedVehicle?.registrationNumber ?: "Choose a vehicle",
+                label = stringResource(Res.string.trip_edit_label_vehicle),
+                selectedText = state.selectedVehicle?.registrationNumber ?: stringResource(Res.string.trip_edit_placeholder_vehicle),
                 isExpanded = state.showVehicleDropdown,
                 onToggle = { viewModel.sendIntent(TripDetailContract.Intent.ToggleVehicleDropdown) },
                 error = state.vehicleError,
@@ -106,8 +111,8 @@ private fun EditVehicleDriverSection(
                     getLabel = { it.registrationNumber },
                     getIsOccupied = { it.isOccupied },
                     getOccupiedInfo = { vehicle ->
-                        vehicle.tripAssignment?.let { a -> "${a.plannedStart ?: ""} - ${a.plannedEnd ?: ""}" }
-                            ?: "Currently assigned"
+                        vehicle.tripAssignment?.let { a -> formatAssignmentWindow(a.plannedStart, a.plannedEnd) }
+                            ?: stringResource(Res.string.trip_edit_currently_assigned)
                     },
                     onSelect = { viewModel.sendIntent(TripDetailContract.Intent.SelectVehicle(it)) }
                 )
@@ -117,8 +122,8 @@ private fun EditVehicleDriverSection(
 
             // Driver Dropdown
             EditDropdownField(
-                label = "Select Driver",
-                selectedText = state.selectedDriver?.let { "${it.firstName} ${it.lastName}" } ?: "Choose a driver",
+                label = stringResource(Res.string.trip_edit_label_driver),
+                selectedText = state.selectedDriver?.let { "${it.firstName} ${it.lastName}" } ?: stringResource(Res.string.trip_edit_placeholder_driver),
                 isExpanded = state.showDriverDropdown,
                 onToggle = { viewModel.sendIntent(TripDetailContract.Intent.ToggleDriverDropdown) },
                 error = state.driverError,
@@ -131,13 +136,12 @@ private fun EditVehicleDriverSection(
                     getLabel = { "${it.firstName} ${it.lastName}" },
                     getIsOccupied = { it.isOccupied },
                     getOccupiedInfo = { driver ->
-                        driver.tripAssignment?.let { a -> "${a.plannedStart ?: ""} - ${a.plannedEnd ?: ""}" }
-                            ?: "Currently assigned"
+                        driver.tripAssignment?.let { a -> formatAssignmentWindow(a.plannedStart, a.plannedEnd) }
+                            ?: stringResource(Res.string.trip_edit_currently_assigned)
                     },
                     onSelect = { viewModel.sendIntent(TripDetailContract.Intent.SelectDriver(it)) }
                 )
             }
-        }
     }
 }
 
@@ -149,7 +153,7 @@ private fun <T> SelectionDropdownList(
     items: List<T>,
     getLabel: (T) -> String,
     getIsOccupied: (T) -> Boolean,
-    getOccupiedInfo: (T) -> String,
+    getOccupiedInfo: @Composable (T) -> String,
     onSelect: (T) -> Unit
 ) {
     Card(
@@ -180,7 +184,7 @@ private fun <T> SelectionDropdownList(
                             )
                             if (isOccupied) {
                                 Text(
-                                    text = "Occupied: ${getOccupiedInfo(item)}",
+                                    text = stringResource(Res.string.trip_edit_occupied_window, getOccupiedInfo(item)),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.error
                                 )
@@ -205,22 +209,12 @@ private fun EditRouteSection(
     state: TripDetailContract.State,
     viewModel: TripDetailViewModel
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            EditSectionHeader(icon = "📍", title = "Route")
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+    FleetTitledSectionCard(title = stringResource(Res.string.trip_edit_section_route), emoji = "📍") {
             // Start Location with Search
             OutlinedTextField(
                 value = state.startLocationAddress,
                 onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.SearchStartLocation(it)) },
-                label = { Text("Start Location *") },
+                label = { Text(stringResource(Res.string.trip_edit_start_location)) },
                 leadingIcon = { Text("🟢", modifier = Modifier.padding(start = 8.dp)) },
                 trailingIcon = {
                     if (state.isSearchingStartLocation) {
@@ -248,7 +242,7 @@ private fun EditRouteSection(
             OutlinedTextField(
                 value = state.endLocationAddress,
                 onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.SearchEndLocation(it)) },
-                label = { Text("End Location *") },
+                label = { Text(stringResource(Res.string.trip_edit_end_location)) },
                 leadingIcon = { Text("🔴", modifier = Modifier.padding(start = 8.dp)) },
                 trailingIcon = {
                     if (state.isSearchingEndLocation) {
@@ -280,7 +274,7 @@ private fun EditRouteSection(
                 OutlinedTextField(
                     value = state.estimatedDistance,
                     onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEstimatedDistance(it)) },
-                    label = { Text("Distance (km)") },
+                    label = { Text(stringResource(Res.string.trip_edit_distance)) },
                     leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 8.dp)) },
                     trailingIcon = {
                         if (state.isCalculatingDistance) {
@@ -296,7 +290,7 @@ private fun EditRouteSection(
                 OutlinedTextField(
                     value = state.estimatedDuration.ifBlank { "—" },
                     onValueChange = { },
-                    label = { Text("Est. Duration") },
+                    label = { Text(stringResource(Res.string.trip_edit_est_duration)) },
                     leadingIcon = { Text("⏱️", modifier = Modifier.padding(start = 8.dp)) },
                     enabled = false,
                     singleLine = true,
@@ -304,7 +298,6 @@ private fun EditRouteSection(
                     shape = RoundedCornerShape(12.dp)
                 )
             }
-        }
     }
 }
 
@@ -350,17 +343,7 @@ private fun EditScheduleSection(
     state: TripDetailContract.State,
     viewModel: TripDetailViewModel
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            EditSectionHeader(icon = "📅", title = "Schedule (Optional)")
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+    FleetTitledSectionCard(title = stringResource(Res.string.trip_edit_section_schedule), emoji = "📅") {
             FleetDateTimePicker(
                 date = state.departureDate,
                 time = state.departureTime,
@@ -368,7 +351,7 @@ private fun EditScheduleSection(
                     viewModel.sendIntent(TripDetailContract.Intent.UpdateDepartureDate(newDate))
                     viewModel.sendIntent(TripDetailContract.Intent.UpdateDepartureTime(newTime))
                 },
-                label = "Departure",
+                label = stringResource(Res.string.trip_edit_departure),
                 mode = PickerMode.DATE_TIME,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -382,36 +365,12 @@ private fun EditScheduleSection(
                     viewModel.sendIntent(TripDetailContract.Intent.UpdateArrivalDate(newDate))
                     viewModel.sendIntent(TripDetailContract.Intent.UpdateArrivalTime(newTime))
                 },
-                label = "Arrival",
+                label = stringResource(Res.string.trip_edit_arrival),
                 mode = PickerMode.DATE_TIME,
                 minDate = state.departureDate.ifBlank { null },
                 modifier = Modifier.fillMaxWidth()
             )
-        }
     }
 }
 
-/**
- * Reusable section header used across edit cards.
- */
-@Composable
-private fun EditSectionHeader(icon: String, title: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Surface(
-            modifier = Modifier.size(36.dp),
-            shape = RoundedCornerShape(10.dp),
-            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(icon, style = MaterialTheme.typography.titleMedium)
-            }
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-}
 

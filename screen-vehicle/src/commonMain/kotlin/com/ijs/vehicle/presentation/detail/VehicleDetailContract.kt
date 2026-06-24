@@ -3,6 +3,7 @@ package com.ijs.vehicle.presentation.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.CostTypeGroup
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import com.indusjs.fleet.data.model.costs.TripCostDto
@@ -67,14 +68,14 @@ object VehicleDetailContract {
         val isLoadingCaretakers: Boolean = false,
 
         // Validation errors
-        val makeError: String? = null,
-        val modelError: String? = null,
-        val yearError: String? = null,
+        val makeError: UiText? = null,
+        val modelError: UiText? = null,
+        val yearError: UiText? = null,
 
         // Form state
         val isLoading: Boolean = false,
         val isSaving: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
 
         // Available options
         val vehicleTypes: List<VehicleType> = VehicleType.entries,
@@ -92,19 +93,19 @@ object VehicleDetailContract {
         val tripsList: List<VehicleTripItem> = emptyList(),
         val tripsSummary: TripsSummary = TripsSummary(),
         val isLoadingTrips: Boolean = false,
-        val tripsError: String? = null,
+        val tripsError: UiText? = null,
         val tripsPage: Int = 1,
         val hasMoreTrips: Boolean = false,
 
         // Route & Stops Tab
         val routeInfo: RouteInfo? = null,
         val isLoadingRoute: Boolean = false,
-        val routeError: String? = null,
+        val routeError: UiText? = null,
 
         // Documents Tab
         val documentsData: VehicleDocumentsData? = null,
         val isLoadingDocuments: Boolean = false,
-        val documentsError: String? = null,
+        val documentsError: UiText? = null,
 
         // Document Upload
         val isUploadDialogVisible: Boolean = false,
@@ -121,7 +122,7 @@ object VehicleDetailContract {
         val maintenanceCostsTotalAmount: Double = 0.0,
         val costsByType: Map<String, Double> = emptyMap(),
         val isLoadingCosts: Boolean = false,
-        val costsError: String? = null,
+        val costsError: UiText? = null,
         val costsPage: Int = 1,
         val hasMoreCosts: Boolean = false,
         // Costs Filters
@@ -143,7 +144,7 @@ object VehicleDetailContract {
         // History Tab
         val historyItems: List<HistoryItemDto> = emptyList(),
         val isLoadingHistory: Boolean = false,
-        val historyError: String? = null,
+        val historyError: UiText? = null,
         val historyPage: Int = 1,
         val hasMoreHistory: Boolean = false,
         val historyTotalCount: Int = 0,
@@ -285,8 +286,8 @@ object VehicleDetailContract {
      * Side effects for the Vehicle Detail screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
-        data class ShowError(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
+        data class ShowError(val message: UiText) : Effect
         data object NavigateBack : Effect
         data object ShowDeleteConfirmation : Effect
         data class VehicleDeleted(val vehicleId: String) : Effect

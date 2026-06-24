@@ -23,6 +23,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetInlineErrorBanner
+import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetSectionHeader
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.domain.entity.TripProfitLoss
 import com.ijs.trip.domain.entity.Trip
 import com.ijs.trip.domain.entity.TripStatus
@@ -30,8 +36,8 @@ import com.ijs.reports.presentation.trip.TripPLContract.Effect
 import com.ijs.reports.presentation.trip.TripPLContract.Intent
 import com.ijs.reports.presentation.trip.TripPLContract.State
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Trip Profit/Loss Screen - Trip-centric design
@@ -45,15 +51,21 @@ fun TripProfitLossScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is Effect.ShowSnackbar -> {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(effect.message)
-                    }
+                    pendingSnackbar = effect.message
                 }
             }
         }
@@ -65,12 +77,12 @@ fun TripProfitLossScreen(
                 title = {
                     Column {
                         Text(
-                            text = "Trip P&L Report",
+                            text = stringResource(Res.string.reports_trip_pl_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Profit & Loss by Trip",
+                            text = stringResource(Res.string.reports_trip_pl_subtitle),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -80,7 +92,7 @@ fun TripProfitLossScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -90,7 +102,7 @@ fun TripProfitLossScreen(
                         IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
-                                contentDescription = "Refresh",
+                                contentDescription = stringResource(Res.string.refresh),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -133,7 +145,7 @@ fun TripProfitLossScreen(
                             CircularProgressIndicator()
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = if (state.isLoadingTrips) "Loading Trips..." else "Generating Report...",
+                                text = if (state.isLoadingTrips) stringResource(Res.string.reports_loading_trips) else stringResource(Res.string.reports_generating),
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -186,7 +198,7 @@ private fun TripPLContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (state.tripsLoaded) "Reload Trips" else "Load Trips",
+                    text = if (state.tripsLoaded) stringResource(Res.string.reports_reload_trips) else stringResource(Res.string.reports_load_trips),
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -223,7 +235,7 @@ private fun TripPLContent(
                     Text("📊", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Generate Report (${state.selectedCount} trips)",
+                        text = stringResource(Res.string.reports_generate_pl_count, state.selectedCount),
                         fontWeight = FontWeight.SemiBold,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -234,7 +246,7 @@ private fun TripPLContent(
         // Error message
         if (state.error != null && state.results.isEmpty()) {
             item {
-                ErrorCard(error = state.error)
+                ErrorCard(error = state.error.resolve())
             }
         }
 
@@ -248,7 +260,7 @@ private fun TripPLContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "📈 P&L Results (${state.results.size} trips)",
+                        text = "📈 " + stringResource(Res.string.reports_pl_results_count, state.results.size),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -260,7 +272,7 @@ private fun TripPLContent(
                         color = profitColor.copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = "Total: ${formatCurrency(totalProfit)}",
+                            text = stringResource(Res.string.reports_total_profit, formatCurrency(totalProfit)),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = profitColor,
@@ -281,17 +293,12 @@ private fun TripPLContent(
 
 @Composable
 private fun HeaderCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        )
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        border = null
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
@@ -306,12 +313,12 @@ private fun HeaderCard() {
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
-                    text = "Trip Analysis",
+                    text = stringResource(Res.string.reports_trip_analysis),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Select date range → Load trips → Generate P&L",
+                    text = stringResource(Res.string.reports_trip_analysis_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -327,47 +334,31 @@ private fun DateRangeCard(
     onStartDateChange: (String) -> Unit,
     onEndDateChange: (String) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.reports_step_select_date_range),
+        emoji = "📅"
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("📅", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Step 1: Select Date Range",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                FleetDateTimePicker(
-                    date = startDate,
-                    time = "",
-                    onDateTimeChange = { newDate, _ -> onStartDateChange(newDate) },
-                    label = "From Date",
-                    mode = PickerMode.DATE_ONLY,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                FleetDateTimePicker(
-                    date = endDate,
-                    time = "",
-                    onDateTimeChange = { newDate, _ -> onEndDateChange(newDate) },
-                    label = "To Date",
-                    mode = PickerMode.DATE_ONLY,
-                    minDate = startDate.ifBlank { null },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            FleetDateTimePicker(
+                date = startDate,
+                time = "",
+                onDateTimeChange = { newDate, _ -> onStartDateChange(newDate) },
+                label = stringResource(Res.string.reports_label_from_date),
+                mode = PickerMode.DATE_ONLY,
+                modifier = Modifier.fillMaxWidth()
+            )
+            FleetDateTimePicker(
+                date = endDate,
+                time = "",
+                onDateTimeChange = { newDate, _ -> onEndDateChange(newDate) },
+                label = stringResource(Res.string.reports_label_to_date),
+                mode = PickerMode.DATE_ONLY,
+                minDate = startDate.ifBlank { null },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -383,25 +374,18 @@ private fun TripSelectionCard(
     onSelectAll: () -> Unit,
     onClearSelection: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    FleetSectionCard {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("🚀", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Step 2: Select Trips",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                FleetSectionHeader(
+                    title = stringResource(Res.string.reports_step_select_trips),
+                    emoji = "🚀",
+                    modifier = Modifier.weight(1f)
                 )
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "${selectedTripIds.size}/$allTripsCount",
                     style = MaterialTheme.typography.labelMedium,
@@ -421,7 +405,7 @@ private fun TripSelectionCard(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = onSearchChange,
-                    placeholder = { Text("Search trips...", style = MaterialTheme.typography.bodySmall) },
+                    placeholder = { Text(stringResource(Res.string.reports_search_trips_placeholder), style = MaterialTheme.typography.bodySmall) },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(Res.drawable.ic_search),
@@ -435,10 +419,10 @@ private fun TripSelectionCard(
                     textStyle = MaterialTheme.typography.bodySmall
                 )
                 TextButton(onClick = onSelectAll) {
-                    Text("All", style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelMedium)
                 }
                 TextButton(onClick = onClearSelection) {
-                    Text("Clear", style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelMedium)
                 }
             }
 
@@ -447,7 +431,7 @@ private fun TripSelectionCard(
             // Trip list
             if (trips.isEmpty()) {
                 Text(
-                    text = if (searchQuery.isNotBlank()) "No trips match \"$searchQuery\"" else "No trips found",
+                    text = if (searchQuery.isNotBlank()) stringResource(Res.string.reports_no_trips_match, searchQuery) else stringResource(Res.string.reports_no_trips_found),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp)
@@ -467,7 +451,7 @@ private fun TripSelectionCard(
                     }
                     if (trips.size > 100) {
                         Text(
-                            text = "Showing first 100 of ${trips.size} trips. Use search to filter.",
+                            text = stringResource(Res.string.reports_trips_showing_cap, trips.size),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(8.dp)
@@ -512,7 +496,7 @@ private fun TripSelectionItem(
             Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Trip #${trip.id}",
+                        text = stringResource(Res.string.reports_trip_number, trip.id),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                     )
@@ -559,50 +543,30 @@ private fun TripSelectionItem(
 
 @Composable
 private fun ErrorCard(error: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("⚠️", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = "Error",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.error
-                )
-                Text(
-                    text = error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-    }
+    FleetInlineErrorBanner(
+        title = stringResource(Res.string.reports_error_title),
+        message = error
+    )
 }
 
 @Composable
 private fun TripPLResultCard(result: TripProfitLoss) {
-    val isProfit = result.isProfitable
-    val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.profitLossColor(result.netProfit)
+    // Badge is driven off the backend P&L status (profit / loss / break_even),
+    // not the net-profit sign: break_even renders neutral, not as a loss.
+    val profitClass = result.profitClass
+    val profitColor = when (profitClass) {
+        com.ijs.reports.domain.entity.PLProfitClass.PROFIT ->
+            com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+        com.ijs.reports.domain.entity.PLProfitClass.LOSS ->
+            com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
+        com.ijs.reports.domain.entity.PLProfitClass.BREAK_EVEN ->
+            com.indusjs.uicomponents.theme.FleetStatusColors.NeutralGray
+    }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetSectionCard(
+        modifier = Modifier.animateContentSize()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             // Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -622,7 +586,7 @@ private fun TripPLResultCard(result: TripProfitLoss) {
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Trip #${result.tripId}",
+                            text = stringResource(Res.string.reports_trip_number, result.tripId),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -633,6 +597,15 @@ private fun TripPLResultCard(result: TripProfitLoss) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        result.customerName?.takeIf { it.isNotBlank() }?.let {
+                            Text(
+                                text = it,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
                 // Profit/Loss Badge
@@ -640,8 +613,16 @@ private fun TripPLResultCard(result: TripProfitLoss) {
                     shape = RoundedCornerShape(16.dp),
                     color = profitColor.copy(alpha = 0.15f)
                 ) {
+                    val badgeText = when (profitClass) {
+                        com.ijs.reports.domain.entity.PLProfitClass.PROFIT ->
+                            "✅ " + stringResource(Res.string.reports_badge_profit)
+                        com.ijs.reports.domain.entity.PLProfitClass.LOSS ->
+                            "⚠️ " + stringResource(Res.string.reports_badge_loss)
+                        com.ijs.reports.domain.entity.PLProfitClass.BREAK_EVEN ->
+                            "➖ " + stringResource(Res.string.profit_status_break_even)
+                    }
                     Text(
-                        text = if (isProfit) "✅ Profit" else "⚠️ Loss",
+                        text = badgeText,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = profitColor,
@@ -658,17 +639,17 @@ private fun TripPLResultCard(result: TripProfitLoss) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 MiniKPI(
-                    label = "Revenue",
+                    label = stringResource(Res.string.reports_revenue),
                     value = formatCurrency(result.sellingValue),
                     color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
                 )
                 MiniKPI(
-                    label = "Expenses",
+                    label = stringResource(Res.string.reports_expenses),
                     value = formatCurrency(result.totalExpenses),
                     color = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
                 )
                 MiniKPI(
-                    label = "Net Profit",
+                    label = stringResource(Res.string.reports_net_profit_label),
                     value = formatCurrency(result.netProfit),
                     color = profitColor
                 )
@@ -703,7 +684,7 @@ private fun TripPLResultCard(result: TripProfitLoss) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "💰 Cost Breakdown",
+                    text = "💰 " + stringResource(Res.string.reports_cost_breakdown),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -739,17 +720,12 @@ private fun MiniKPI(
     value: String,
     color: Color
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(
+        value = value,
+        label = label,
+        accent = color,
+        valueColor = color,
+        showBackground = false,
+        centered = true
+    )
 }

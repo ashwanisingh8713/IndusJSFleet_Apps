@@ -2,6 +2,8 @@ package com.ijs.reports.presentation.cost
 
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.convertToEpochMillis
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.data.model.MultiCostTypePLRequest
 import com.ijs.reports.domain.usecase.GetMultiCostTypeAnalysisUseCase
 import com.ijs.reports.presentation.cost.CostAnalysisContract.COST_TYPES
@@ -9,6 +11,10 @@ import com.ijs.reports.presentation.cost.CostAnalysisContract.Effect
 import com.ijs.reports.presentation.cost.CostAnalysisContract.Intent
 import com.ijs.reports.presentation.cost.CostAnalysisContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_failed_generate
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_select_cost_types
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_select_date_range
 
 /**
  * ViewModel for Cost Analysis Screen
@@ -51,16 +57,25 @@ class CostAnalysisViewModel(
         val currentState = state.value
 
         if (currentState.selectedCostTypes.isEmpty()) {
-            sendEffect(Effect.ShowSnackbar("Please select at least one cost type"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.report_select_cost_types)))
+            return
+        }
+
+        // Picker state holds DD-MM-YYYY digits; convert to UTC epoch millis at the request boundary.
+        // Backend requires non-zero start_date/end_date, so bail out if conversion fails.
+        val startMillis = convertToEpochMillis(currentState.startDate)
+        val endMillis = convertToEpochMillis(currentState.endDate)
+        if (startMillis == null || endMillis == null) {
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.report_select_date_range)))
             return
         }
 
         updateState { copy(isLoading = true, error = null) }
 
         val request = MultiCostTypePLRequest(
-            costTypes = currentState.selectedCostTypes.toList(),
-            startDate = currentState.startDate.takeIf { it.isNotBlank() },
-            endDate = currentState.endDate.takeIf { it.isNotBlank() }
+            costIds = currentState.selectedCostTypes.toList(),
+            startDate = startMillis,
+            endDate = endMillis
         )
 
         when (val result = getMultiCostTypeAnalysisUseCase(request)) {
@@ -68,7 +83,7 @@ class CostAnalysisViewModel(
                 updateState { copy(isLoading = false, results = result.data) }
             }
             is Result.Error -> {
-                updateState { copy(isLoading = false, error = result.message ?: "Failed to generate report") }
+                updateState { copy(isLoading = false, error = result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_generate)) }
             }
             is Result.Loading -> { /* Already handled */ }
         }

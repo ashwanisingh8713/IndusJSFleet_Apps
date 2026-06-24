@@ -19,6 +19,14 @@ object ApiErrorHandler {
         ignoreUnknownKeys = true
     }
 
+    // Friendly message for the delete-guard 409 (DELETE /vehicles/:id or
+    // /drivers/:id when the entity is on a planned/in-progress trip). Backend
+    // envelope key: "vehicle_has_active_trips" / "driver_has_active_trips".
+    // ApiErrorHandler returns a raw String (non-composable), so this is a
+    // hardcoded EN line; see needsString for the EN/HI to localise later.
+    private const val ACTIVE_TRIP_DELETE_GUARD_MESSAGE =
+        "Can't delete — finish or cancel the active trip first"
+
     /**
      * Extracts a user-friendly error message from an API response.
      *
@@ -88,6 +96,17 @@ object ApiErrorHandler {
                 return messageField
             }
 
+            // The v1 'errorMessage' field carries the backend i18n key (e.g.
+            // "vehicle_has_active_trips" / "driver_has_active_trips" for the
+            // delete-guard 409). Map known keys before the generic handling
+            // below, which otherwise skips underscore codes and would surface
+            // the raw developerMessage sentence instead.
+            val errorMessageKey = jsonObject["errorMessage"]?.jsonPrimitive?.contentOrNull
+            if (!errorMessageKey.isNullOrBlank() && errorMessageKey != "null"
+                && errorMessageKey.contains("has_active_trip", ignoreCase = true)) {
+                return ACTIVE_TRIP_DELETE_GUARD_MESSAGE
+            }
+
             // Try 'developerMessage' which carries the actual IAM/backend error detail
             val developerMessage = jsonObject["developerMessage"]?.jsonPrimitive?.contentOrNull
             if (!developerMessage.isNullOrBlank() && developerMessage != "null") {
@@ -127,6 +146,15 @@ object ApiErrorHandler {
      */
     fun parseDbConstraintError(error: String): String {
         return when {
+            // Delete-guard 409: vehicle/driver is on a planned/in-progress trip.
+            // Matches the backend i18n key ("vehicle_has_active_trips" /
+            // "driver_has_active_trips") or its developerMessage sentence
+            // ("cannot delete ... while it has active or planned trips").
+            error.contains("has_active_trip", ignoreCase = true) ||
+            (error.contains("cannot delete", ignoreCase = true) &&
+                error.contains("active or planned trip", ignoreCase = true)) ->
+                ACTIVE_TRIP_DELETE_GUARD_MESSAGE
+
             // Email duplicates
             error.contains("duplicate key", ignoreCase = true) && error.contains("email", ignoreCase = true) ->
                 "An account with this email already exists"

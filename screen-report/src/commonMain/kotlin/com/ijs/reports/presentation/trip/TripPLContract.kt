@@ -3,6 +3,8 @@ package com.ijs.reports.presentation.trip
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
+import com.ijs.reports.domain.entity.PLProfitClass
 import com.ijs.reports.domain.entity.TripProfitLoss
 import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.TripPLSortOption
@@ -18,7 +20,7 @@ object TripPLContract {
     data class State(
         val isLoading: Boolean = false,
         val isLoadingTrips: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
         val startDate: String = "",
         val endDate: String = "",
         val trips: List<Trip> = emptyList(),
@@ -46,21 +48,28 @@ object TripPLContract {
         val sortedFilteredResults: List<TripProfitLoss> get() {
             val filtered = when (plStatusFilter) {
                 PLStatusFilter.ALL -> results
-                PLStatusFilter.PROFITABLE -> results.filter { it.isProfitable }
-                PLStatusFilter.LOSS_MAKING -> results.filter { !it.isProfitable }
+                // Bucket by tri-state profitClass so break_even is excluded from both
+                // buckets (neutral), matching the per-row badge. profitClass falls back
+                // to the net sign when the backend sends no plStatus.
+                PLStatusFilter.PROFITABLE -> results.filter { it.profitClass == PLProfitClass.PROFIT }
+                PLStatusFilter.LOSS_MAKING -> results.filter { it.profitClass == PLProfitClass.LOSS }
             }
             return when (sortOption) {
                 TripPLSortOption.PROFIT_HIGH_LOW -> filtered.sortedByDescending { it.netProfit }
                 TripPLSortOption.PROFIT_LOW_HIGH -> filtered.sortedBy { it.netProfit }
                 TripPLSortOption.LOSS_HIGH_LOW -> filtered.sortedBy { it.netProfit }
-                TripPLSortOption.DATE_NEWEST -> filtered.sortedByDescending { it.scheduledDate ?: "" }
-                TripPLSortOption.DATE_OLDEST -> filtered.sortedBy { it.scheduledDate ?: "" }
+                // scheduledDate is UTC epoch millis; sort numerically, treating 0/null as unset.
+                TripPLSortOption.DATE_NEWEST -> filtered.sortedByDescending { it.scheduledDate ?: 0L }
+                TripPLSortOption.DATE_OLDEST -> filtered.sortedBy { it.scheduledDate ?: Long.MAX_VALUE }
                 TripPLSortOption.REVENUE_HIGH_LOW -> filtered.sortedByDescending { it.sellingValue }
             }
         }
 
-        val totalProfitableTrips: Int get() = results.count { it.isProfitable }
-        val totalLossMakingTrips: Int get() = results.count { !it.isProfitable }
+        // Count by tri-state profitClass so break_even trips are neutral (counted in
+        // neither bucket), consistent with the per-row badge and the status filter.
+        val totalProfitableTrips: Int get() = results.count { it.profitClass == PLProfitClass.PROFIT }
+        val totalLossMakingTrips: Int get() = results.count { it.profitClass == PLProfitClass.LOSS }
+        val totalBreakEvenTrips: Int get() = results.count { it.profitClass == PLProfitClass.BREAK_EVEN }
         val totalRevenue: Double get() = results.sumOf { it.sellingValue }
         val totalExpenses: Double get() = results.sumOf { it.totalExpenses }
         val totalNetProfit: Double get() = results.sumOf { it.netProfit }
@@ -87,6 +96,6 @@ object TripPLContract {
     }
 
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
     }
 }

@@ -9,8 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.util.rememberPhoneDialer
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -29,26 +29,10 @@ internal fun CustomerDetailsCard(payment: TripPayment) {
     // Phone dialer for customer contact
     val phoneDialer = payment.customerContact?.let { rememberPhoneDialer(it) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.payment_section_customer),
+        accent = MaterialTheme.colorScheme.primary
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Text(
-                text = "Customer",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             payment.customerName?.let {
                 CompactDetailRow(label = stringResource(Res.string.payment_detail_name), value = it)
             }
@@ -104,7 +88,6 @@ internal fun CustomerDetailsCard(payment: TripPayment) {
             payment.customerGst?.let {
                 CompactDetailRow(label = stringResource(Res.string.payment_detail_gst), value = it)
             }
-        }
     }
 }
 
@@ -173,32 +156,15 @@ internal fun AdditionalInfoCard(payment: TripPayment) {
 
     if (!hasAdditionalInfo) return
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.payment_section_additional_info)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Text(
-                text = stringResource(Res.string.payment_section_additional_info),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             payment.notes?.let {
                 CompactDetailRow(label = stringResource(Res.string.payment_label_notes), value = it)
             }
 
             payment.receivedBy?.let {
-                CompactDetailRow(label = "Received By", value = it)
+                CompactDetailRow(label = stringResource(Res.string.payment_label_received_by), value = it)
             }
 
             payment.receivedAtLocation?.let {
@@ -212,7 +178,6 @@ internal fun AdditionalInfoCard(payment: TripPayment) {
             payment.createdAt?.let {
                 CompactDetailRow(label = stringResource(Res.string.payment_detail_created), value = formatDisplayDate(it))
             }
-        }
     }
 }
 
@@ -253,7 +218,7 @@ internal fun CompactDetailRow(
 /**
  * Format ISO date to display format: "DD-MMM-YYYY hh:mm AM/PM"
  */
-internal fun formatDisplayDate(isoDate: String): String {
-    return FleetDateTime.formatIsoToDisplayDateTime12Hour(isoDate)
+internal fun formatDisplayDate(timestampMillis: Long): String {
+    return com.indusjs.fleet.core.util.formatDateTimeForDisplay(timestampMillis)
 }
 

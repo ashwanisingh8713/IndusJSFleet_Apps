@@ -14,6 +14,7 @@ import com.ijs.trip.payment.data.mapper.TripPaymentMapper.toDomain
 import com.ijs.trip.payment.data.mapper.TripPaymentMapper.toDomainList
 import com.ijs.trip.payment.domain.entity.*
 import com.ijs.trip.payment.domain.repository.TripPaymentRepository
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import dev.zacsweers.metro.Inject
 
 /**
@@ -43,7 +44,7 @@ class TripPaymentRepositoryImpl(
         paymentType: PaymentType,
         paymentMode: PaymentMode,
         paymentSource: String?,
-        paymentDate: String,
+        paymentDate: Long,
         transactionId: String?,
         bankName: String?,
         notes: String?,
@@ -98,7 +99,7 @@ class TripPaymentRepositoryImpl(
         paymentType: PaymentType,
         paymentMode: PaymentMode,
         paymentSource: String?,
-        paymentDate: String,
+        paymentDate: Long,
         transactionId: String?,
         bankName: String?,
         notes: String?,
@@ -153,8 +154,10 @@ class TripPaymentRepositoryImpl(
             paymentType = filter.paymentType?.apiValue,
             paymentMode = filter.paymentMode?.apiValue,
             paymentStatus = filter.paymentStatus?.apiValue,
-            startDate = filter.startDate,
-            endDate = filter.endDate
+            // Picker collects DD-MM-YYYY; backend now expects UTC epoch millis. Start of
+            // day for the "from" bound, end of day for the "to" bound.
+            startDate = filter.startDate?.let { convertToEpochMillis(it, "0000") },
+            endDate = filter.endDate?.let { convertToEpochMillis(it, "2359") }
         )
 
         if (response.success) {
@@ -181,7 +184,7 @@ class TripPaymentRepositoryImpl(
         // 1. Try nested endpoint first
         val nestedResponse = remoteDataSource.getTripPayments(token, tripIdInt, page, perPage)
         nestedResponse.data?.payments?.forEach { dto ->
-            logger.d(TAG_PAYMENT_REPO, "PARSE_DTO_TEST - id: ${dto.id}, received_by: '${dto.receivedBy}', receivedByCamel: '${dto.receivedByCamel}'")
+            logger.d(TAG_PAYMENT_REPO, "PARSE_DTO_TEST - id: ${dto.id}, received_by: '${dto.receivedBy}'")
         }
         if (nestedResponse.success && nestedResponse.data != null && nestedResponse.data.payments.isNotEmpty()) {
             val result = nestedResponse.data.toDomain()
@@ -247,7 +250,7 @@ class TripPaymentRepositoryImpl(
         paymentType: PaymentType?,
         paymentMode: PaymentMode?,
         paymentSource: String?,
-        paymentDate: String?,
+        paymentDate: Long?,
         paymentStatus: PaymentStatus?,
         transactionId: String?,
         bankName: String?,
@@ -259,13 +262,12 @@ class TripPaymentRepositoryImpl(
         val paymentIdInt = paymentId.toIntOrNull() ?: throw IllegalArgumentException("Invalid payment ID")
 
         val request = TripPaymentMapper.createUpdateRequest(
-            amount = amount,
             tdsAmount = tdsAmount,
             discountAmount = discountAmount,
-            paymentType = paymentType,
-            paymentMode = paymentMode,
+            // Backend requires payment_mode on update; the edit screen always
+            // supplies it. Fall back to CASH only as a non-null safety net.
+            paymentMode = paymentMode ?: PaymentMode.CASH,
             paymentSource = paymentSource,
-            paymentDate = paymentDate,
             paymentStatus = paymentStatus,
             transactionId = transactionId,
             bankName = bankName,
@@ -313,16 +315,31 @@ class TripPaymentRepositoryImpl(
         endDate: String?
     ): Result<TripPaymentSummary> = try {
         val token = requireAuthToken()
-        val response = remoteDataSource.getPaymentSummary(token, startDate, endDate)
+        // Picker collects DD-MM-YYYY; backend now expects UTC epoch millis.
+        val response = remoteDataSource.getPaymentSummary(
+            token,
+            startDate?.let { convertToEpochMillis(it, "0000") },
+            endDate?.let { convertToEpochMillis(it, "2359") }
+        )
 
         if (response.success && response.data != null) {
             val data = response.data
             val summary = TripPaymentSummary(
-                totalReceived = data.totalAmount,
+                totalReceived = data.totalReceived,
+                totalPending = data.totalPending,
+                totalCancelled = data.totalCancelled,
                 totalTds = data.totalTds,
                 totalDiscount = data.totalDiscount,
-                totalNetAmount = data.totalNetAmount,
-                paymentCount = data.paymentCount
+                totalNetAmount = data.netPayments,
+                paymentCount = data.receiptCount,
+                byMode = data.byMode
+                    ?.mapNotNull { item -> item.paymentMode?.let { PaymentMode.fromApiValue(it) to item.amount } }
+                    ?.toMap()
+                    ?: emptyMap(),
+                byType = data.byType
+                    ?.mapNotNull { item -> item.paymentType?.let { PaymentType.fromApiValue(it) to item.amount } }
+                    ?.toMap()
+                    ?: emptyMap()
             )
             logger.d(TAG_PAYMENT_REPO, "Fetched payment summary")
             Result.Success(summary)

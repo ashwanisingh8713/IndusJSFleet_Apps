@@ -3,6 +3,7 @@ package com.ijs.driver.presentation.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.data.model.driver.DriverCostDto
 import com.indusjs.fleet.data.model.history.HistoryItemDto
 import com.ijs.team.data.model.TeamMemberDto
@@ -47,15 +48,15 @@ object DriverDetailContract {
         val joiningDate: String = "",
 
         // Validation errors
-        val firstNameError: String? = null,
-        val lastNameError: String? = null,
-        val mobileError: String? = null,
-        val emailError: String? = null,
+        val firstNameError: UiText? = null,
+        val lastNameError: UiText? = null,
+        val mobileError: UiText? = null,
+        val emailError: UiText? = null,
 
         // Form state
         val isLoading: Boolean = false,
         val isSaving: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
 
         // Available options
         val licenseTypes: List<LicenseType> = LicenseType.entries,
@@ -74,7 +75,7 @@ object DriverDetailContract {
         val costsDeductionsAmount: Double = 0.0,
         val costsNetAmount: Double = 0.0,
         val isLoadingCosts: Boolean = false,
-        val costsError: String? = null,
+        val costsError: UiText? = null,
         val costsPage: Int = 1,
         val hasMoreCosts: Boolean = false,
 
@@ -96,7 +97,7 @@ object DriverDetailContract {
         // History Tab (Tab index 2)
         val historyItems: List<HistoryItemDto> = emptyList(),
         val isLoadingHistory: Boolean = false,
-        val historyError: String? = null,
+        val historyError: UiText? = null,
         val historyPage: Int = 1,
         val hasMoreHistory: Boolean = false,
         val historyTotalCount: Int = 0,
@@ -108,8 +109,8 @@ object DriverDetailContract {
         // Current selected tab (0 = Overview, 1 = Costs, 2 = History)
         val selectedTab: Int = 0,
 
-        // User role for permission checks
-        val currentUserRole: String = "",
+        // Permission flag (computed from PermissionChecker — never role names)
+        val canViewCostsPermission: Boolean = false,
 
         /** DB-cached driver state labels (apiValue -> displayLabel) */
         val stateLabels: Map<String, String> = emptyMap()
@@ -117,13 +118,10 @@ object DriverDetailContract {
 
         /**
          * Determines if the user can view driver costs.
-         * Only Owner and General Manager can view driver costs.
+         * Gated on the financials:read permission.
          */
         val canViewCosts: Boolean
-            get() {
-                val role = currentUserRole.lowercase().replace("_", "")
-                return role == "owner" || role == "generalmanager"
-            }
+            get() = canViewCostsPermission
 
         val isFormValid: Boolean
             get() = firstName.isNotBlank() &&
@@ -243,8 +241,8 @@ object DriverDetailContract {
      * Side effects for the Driver Detail screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
-        data class ShowError(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
+        data class ShowError(val message: UiText) : Effect
         data object NavigateBack : Effect
         data object ShowDeleteConfirmation : Effect
         data class DriverDeleted(val driverId: String) : Effect

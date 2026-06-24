@@ -101,16 +101,19 @@ class TripMapper {
             cargoDescription = dto.cargoDescription,
             cargoLoadingWeight = dto.cargoLoadingWeight,
             weightUnit = dto.weightUnit,
-            // Customer info
+            // Customer info - backend sends customer_id plus snapshot name/contact fields
             customerId = dto.customerId?.toString(),
-            customerName = dto.customerName,
-            customerContact = dto.customerContact,
+            customerName = dto.customerName?.takeIf { it.isNotBlank() },
+            customerContact = dto.customerContact?.takeIf { it.isNotBlank() },
             priority = dto.priority,
             notes = dto.notes,
             createdAt = dto.createdAt,
-            // Pricing
+            // Pricing - backend exposes amount-paid as partial_payment_amount (no paid_trip_price)
             tripPrice = dto.tripPrice,
-            paidTripPrice = dto.paidTripPrice,
+            purchasePrice = dto.purchasePrice,
+            sellingValue = dto.sellingValue,
+            paidTripPrice = dto.partialPaymentAmount,
+            pendingAmount = dto.pendingAmount,
             paymentStatus = dto.paymentStatus,
             // Map cost summary - use flat totalCost from v2 API or embedded cost_summary
             totalCost = dto.totalCost?.takeIf { it > 0 } ?: dto.costSummary?.totalCost?.takeIf { it > 0 },
@@ -228,8 +231,9 @@ class TripMapper {
             ?: dto.cargoTypeLabel
             ?: dto.cargoType
 
-        // Progress info (In Progress only)
-        val progressPercent = progressInfo?.progressPercent
+        // Progress info (In Progress only). Backend percent is fractional (Double);
+        // the domain/UI use a whole-number percent, so round down here.
+        val progressPercent = progressInfo?.progressPercent?.toInt()
         val remainingDistance = progressInfo?.remainingDistance
         val estimatedArrival = progressInfo?.estimatedArrival
 

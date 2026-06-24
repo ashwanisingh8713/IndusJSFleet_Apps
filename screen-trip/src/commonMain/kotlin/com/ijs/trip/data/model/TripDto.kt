@@ -43,22 +43,23 @@ data class TripDto(
     val estimatedDistance: Double? = null,
     @SerialName("actual_distance")
     val actualDistance: Double? = null,
+    // All timestamps are UTC epoch-millis (JSON numbers). See UTC_MILLIS_APP_MIGRATION_PLAN.md.
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long? = null,
     @SerialName("start_time")
-    val startTime: String? = null,
+    val startTime: Long? = null,
     @SerialName("delivery_date")
-    val deliveryDate: String? = null,
+    val deliveryDate: Long? = null,
     @SerialName("delivery_time")
-    val deliveryTime: String? = null,
+    val deliveryTime: Long? = null,
     @SerialName("planned_start")
-    val plannedStart: String? = null,
+    val plannedStart: Long? = null,
     @SerialName("planned_end")
-    val plannedEnd: String? = null,
+    val plannedEnd: Long? = null,
     @SerialName("actual_start")
-    val actualStart: String? = null,
+    val actualStart: Long? = null,
     @SerialName("actual_end")
-    val actualEnd: String? = null,
+    val actualEnd: Long? = null,
     @SerialName("cargo_type")
     val cargoType: String? = null,
     @SerialName("cargo_description")
@@ -93,27 +94,36 @@ data class TripDto(
     val estimatedExpense: Double? = null,
     @SerialName("expected_trip_price")
     val expectedTripPrice: Double? = null,
-    @SerialName("trip_price")
-    val tripPriceFallback: Double? = null,
     // Payment
     @SerialName("payment_status")
     val paymentStatus: String? = null,
+    @SerialName("partial_payment_amount")
+    val partialPaymentAmount: Double? = null,
     @SerialName("pending_amount")
     val pendingAmount: Double? = null,
+    @SerialName("payment_received_date")
+    val paymentReceivedDate: Long? = null,
     @SerialName("payment_mode")
     val paymentMode: String? = null,
-    @SerialName("paid_trip_price")
-    val paidTripPrice: Double? = null,
-    // Customer - New API supports customer_id for Customer entity association
+    // Customer - backend sends customer_id plus snapshot fields customer_name / customer_contact
+    // (and customer_email / customer_address). There is no embedded `customer` object.
     @SerialName("customer_id")
     val customerId: Int? = null,
-    @SerialName("customer")
-    val customer: TripCustomerDto? = null,
-    // Legacy customer fields (still supported for backward compatibility)
     @SerialName("customer_name")
     val customerName: String? = null,
     @SerialName("customer_contact")
     val customerContact: String? = null,
+    @SerialName("customer_email")
+    val customerEmail: String? = null,
+    @SerialName("customer_address")
+    val customerAddress: String? = null,
+    // Consignee / delivery (receiver) — distinct from the billing customer above.
+    @SerialName("delivery_address")
+    val deliveryAddress: String? = null,
+    @SerialName("delivery_person_name")
+    val deliveryPersonName: String? = null,
+    @SerialName("delivery_contact_number")
+    val deliveryContactNumber: String? = null,
     @SerialName("priority")
     val priority: String? = null,
     @SerialName("notes")
@@ -123,9 +133,9 @@ data class TripDto(
     @SerialName("created_by_id")
     val createdById: Int? = null,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null,
+    val updatedAt: Long? = null,
     // Cost summary - included in List/Get Trip responses
     @SerialName("cost_summary")
     val costSummary: TripCostSummaryEmbeddedDto? = null,
@@ -163,7 +173,7 @@ data class TripDto(
     val hasCosts: Boolean? = null
 ) {
     val tripPrice: Double?
-        get() = expectedTripPrice ?: tripPriceFallback ?: sellingValue
+        get() = expectedTripPrice ?: sellingValue
 }
 
 /**
@@ -192,7 +202,7 @@ data class TripCostSummaryEmbeddedDto(
     @SerialName("cost_by_type")
     val costByType: Map<String, Double> = emptyMap(),
     @SerialName("last_updated")
-    val lastUpdated: String? = null
+    val lastUpdated: Long? = null
 )
 
 /**
@@ -286,7 +296,9 @@ data class CostInfoDto(
 @Serializable
 data class ProgressInfoDto(
     @SerialName("progress_percent")
-    val progressPercent: Int? = null,
+    // Backend sends a fractional percent (float64, e.g. 33.33). Decoding it into an
+    // Int throws and blows up the whole TripResponse, so this MUST be Double.
+    val progressPercent: Double? = null,
     @SerialName("progress_percent_label")
     val progressPercentLabel: String? = null,
     @SerialName("remaining_distance")
@@ -330,19 +342,6 @@ data class TripDriverDto(
 )
 
 /**
- * Embedded customer info in trip response.
- */
-@Serializable
-data class TripCustomerDto(
-    @SerialName("id")
-    val id: Int,
-    @SerialName("name")
-    val name: String? = null,
-    @SerialName("contact")
-    val contact: String? = null
-)
-
-/**
  * API response wrapper for trip operations.
  */
 @Serializable
@@ -358,7 +357,7 @@ data class TripApiResponse<T>(
 /**
  * Request body for creating a trip.
  * Updated to match API v2 fields.
- * Note: v2 API requires planned_start and planned_end in ISO 8601 format.
+ * Note: timestamps are sent as UTC epoch-millis (JSON numbers).
  */
 @Serializable
 data class CreateTripRequest(
@@ -366,32 +365,34 @@ data class CreateTripRequest(
     val vehicleId: Int,
     @SerialName("driver_id")
     val driverId: Int,
-    // v2 API requires planned_start and planned_end (ISO 8601 format)
+    // Backend requires planned_start and planned_end (UTC epoch-millis), binding:required
     @SerialName("planned_start")
-    val plannedStart: String,
+    val plannedStart: Long,
     @SerialName("planned_end")
-    val plannedEnd: String,
-    // Legacy fields (optional, for backward compatibility)
+    val plannedEnd: Long,
+    // Backend requires scheduled_date and start_time (UTC epoch-millis), binding:required
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long,
     @SerialName("start_time")
-    val startTime: String? = null,
+    val startTime: Long,
+    // delivery_date / delivery_time stay optional (backend *int64, no binding)
     @SerialName("delivery_date")
-    val deliveryDate: String? = null,
+    val deliveryDate: Long? = null,
     @SerialName("delivery_time")
-    val deliveryTime: String? = null,
+    val deliveryTime: Long? = null,
     @SerialName("start_location")
     val startLocation: String,
+    // Backend requires start_lat/start_lng/end_lat/end_lng (float64, binding:required → must be non-zero)
     @SerialName("start_lat")
-    val startLat: Double? = null,
+    val startLat: Double,
     @SerialName("start_lng")
-    val startLng: Double? = null,
+    val startLng: Double,
     @SerialName("end_location")
     val endLocation: String,
     @SerialName("end_lat")
-    val endLat: Double? = null,
+    val endLat: Double,
     @SerialName("end_lng")
-    val endLng: Double? = null,
+    val endLng: Double,
     @SerialName("estimated_distance")
     val estimatedDistance: Double? = null,
     @SerialName("cargo_type")
@@ -420,31 +421,29 @@ data class CreateTripRequest(
     // Pricing
     @SerialName("purchase_price")
     val purchasePrice: Double? = null,
+    // selling_value = the ACTUAL price (revenue) the customer owes. The backend uses
+    // this as the revenue anchor, falling back to expected_trip_price when 0/absent.
     @SerialName("selling_value")
     val sellingValue: Double? = null,
     @SerialName("estimated_expense")
     val estimatedExpense: Double? = null,
     @SerialName("expected_trip_price")
     val tripPrice: Double? = null,
-    @SerialName("trip_price")
-    val rawTripPrice: Double? = null,
-    // Payment
-    @SerialName("payment_status")
-    val paymentStatus: String? = null,
-    @SerialName("pending_amount")
-    val pendingAmount: Double? = null,
-    @SerialName("payment_mode")
-    val paymentMode: String? = null,
-    // Customer - New API supports customer_id for Customer entity association
+    // NOTE: payment_status / pending_amount / payment_mode are derived server-side from
+    // payment records and are intentionally NOT sent on create.
+    // Customer - backend requires customer_id (binding:required); the server snapshots
+    // name/contact/email/address from the customer record. Free-text customer fields
+    // (customer / customer_name / customer_contact) are no longer accepted by the backend.
     @SerialName("customer_id")
-    val customerId: Int? = null,
-    @SerialName("customer")
-    val customer: TripCustomerDto? = null,
-    // Legacy customer fields (still supported for backward compatibility)
-    @SerialName("customer_name")
-    val customerName: String? = null,
-    @SerialName("customer_contact")
-    val customerContact: String? = null,
+    val customerId: Int,
+    // Consignee / delivery (receiver) details. Backend requires all three on create
+    // (binding:required). DISTINCT from the billing customer (customer_id above).
+    @SerialName("delivery_address")
+    val deliveryAddress: String? = null,
+    @SerialName("delivery_person_name")
+    val deliveryPersonName: String? = null,
+    @SerialName("delivery_contact_number")
+    val deliveryContactNumber: String? = null,
     @SerialName("priority")
     val priority: String? = null,
     @SerialName("notes")
@@ -468,19 +467,19 @@ data class UpdateTripRequest(
     @SerialName("driver_id")
     val driverId: Int? = null,
 
-    // Schedule - ISO 8601 format
+    // Schedule - UTC epoch-millis
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long? = null,
     @SerialName("start_time")
-    val startTime: String? = null,
+    val startTime: Long? = null,
     @SerialName("delivery_date")
-    val deliveryDate: String? = null,
+    val deliveryDate: Long? = null,
     @SerialName("delivery_time")
-    val deliveryTime: String? = null,
+    val deliveryTime: Long? = null,
     @SerialName("planned_start")
-    val plannedStart: String? = null,
+    val plannedStart: Long? = null,
     @SerialName("planned_end")
-    val plannedEnd: String? = null,
+    val plannedEnd: Long? = null,
 
     // Location
     @SerialName("start_location")
@@ -512,19 +511,19 @@ data class UpdateTripRequest(
     @SerialName("weight_unit")
     val weightUnit: String? = null,
 
-    // Customer
+    // Customer - backend UpdateTripRequest binds only customer_id. A non-zero value
+    // reassigns the trip to a different managed customer (re-snapshotted server-side);
+    // omit/null leaves the customer unchanged. Free-text customer fields are not accepted.
     @SerialName("customer_id")
     val customerId: Int? = null,
-    @SerialName("customer_name")
-    val customerName: String? = null,
-    @SerialName("customer_contact")
-    val customerContact: String? = null,
 
     // Pricing - API expects expected_trip_price for update
+    // purchase_price (COGS) is accepted on update (previously only on create).
+    @SerialName("purchase_price")
+    val purchasePrice: Double? = null,
     @SerialName("expected_trip_price")
     val tripPrice: Double? = null,
-    @SerialName("trip_price")
-    val rawTripPrice: Double? = null,
+    // selling_value = the ACTUAL price (revenue) the customer owes.
     @SerialName("selling_value")
     val sellingValue: Double? = null,
 
@@ -605,21 +604,22 @@ data class TripStopDto(
     val location: String,
     val latitude: Double? = null,
     val longitude: Double? = null,
+    // UTC epoch-millis
     @SerialName("arrival_time")
-    val arrivalTime: String? = null,
+    val arrivalTime: Long? = null,
     @SerialName("departure_time")
-    val departureTime: String? = null,
+    val departureTime: Long? = null,
     @SerialName("stop_duration")
     val stopDuration: Int? = null,
     val notes: String? = null,
     @SerialName("is_completed")
     val isCompleted: Boolean = false,
     @SerialName("completed_at")
-    val completedAt: String? = null,
+    val completedAt: Long? = null,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**
@@ -633,7 +633,7 @@ data class CreateTripStopRequest(
     val latitude: Double? = null,
     val longitude: Double? = null,
     @SerialName("arrival_time")
-    val arrivalTime: String? = null,
+    val arrivalTime: Long? = null,
     @SerialName("stop_duration")
     val stopDuration: Int? = null,
     val notes: String? = null
@@ -650,7 +650,7 @@ data class UpdateTripStopRequest(
     val latitude: Double? = null,
     val longitude: Double? = null,
     @SerialName("arrival_time")
-    val arrivalTime: String? = null,
+    val arrivalTime: Long? = null,
     @SerialName("stop_duration")
     val stopDuration: Int? = null,
     val notes: String? = null

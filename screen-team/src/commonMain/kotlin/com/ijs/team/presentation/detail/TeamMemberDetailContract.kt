@@ -35,30 +35,16 @@ object TeamMemberDetailContract {
         val lastNameError: UiText? = null,
         val emailError: UiText? = null,
         val mobileError: UiText? = null,
-        // Current user permissions
-        val currentUserRole: String = "owner",
+        // Current user identity (for the self-guard; NOT authorization)
         val currentUserId: String = "",
         val availableRoles: List<TeamMemberRole> = emptyList(),
-        val canEdit: Boolean = true,
-        val canChangeRole: Boolean = true,
-        val canToggleActive: Boolean = true
+        // Permission flags (computed from PermissionChecker — never role names).
+        // The self-guard (cannot act on own record) is applied on top of these.
+        val canEdit: Boolean = false,
+        val canChangeRole: Boolean = false,
+        val canToggleActive: Boolean = false
     ) : UiState {
-        val isOwner: Boolean get() = currentUserRole.lowercase() == "owner"
-        val isAdmin: Boolean get() = currentUserRole.lowercase() in setOf("admin", "manager", "general_manager")
         val isSelf: Boolean get() = member?.id == currentUserId
-        val displayName: String get() = member?.fullName.orEmpty()
-        val initials: String get() = member?.initials.orEmpty()
-
-        // Computed: Can change role based on permissions and not editing self
-        val canChangeRoleComputed: Boolean get() {
-            if (isSelf) return false
-            val memberRole = member?.role ?: return false
-            return when {
-                isOwner -> true  // Owner can change any role
-                isAdmin -> memberRole == TeamMemberRole.SUPERVISOR
-                else -> false
-            }
-        }
     }
 
     /**

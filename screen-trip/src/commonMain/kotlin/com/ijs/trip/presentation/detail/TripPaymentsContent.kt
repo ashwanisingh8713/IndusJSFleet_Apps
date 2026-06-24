@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.EmptyContent
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -295,9 +296,9 @@ private fun PaymentListItem(
                     println("TRIP_PAYMENTS_CONTENT - id: ${payment.id}, receivedBy: '${payment.receivedBy}', createdByName: '${payment.createdByName}'")
                     val receiverName = payment.receivedBy?.takeIf { it.isNotBlank() && it != "Unknown" && it.lowercase() != "null" }
                         ?: payment.createdByName?.takeIf { it.isNotBlank() && it != "Unknown" && it.lowercase() != "null" }
-                        ?: "Staff"
+                        ?: stringResource(Res.string.trip_payment_receiver_staff)
                     Text(
-                        text = "Received by: $receiverName",
+                        text = stringResource(Res.string.trip_payment_received_by, receiverName),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -307,12 +308,10 @@ private fun PaymentListItem(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     // Date & Time on two lines
-                    payment.paymentDate?.let { date ->
-                        val formattedDate = try {
-                            com.indusjs.datetimeutils.FleetDateTime.formatIsoToDisplayDateTime12Hour(date)
-                        } catch (_: Exception) {
-                            date
-                        }
+                    payment.paymentDate?.takeIf { it > 0L }?.let { date ->
+                        // payment_date is UTC epoch-millis → "DD-MMM-YYYY hh:mm AM/PM"
+                        val formattedDate =
+                            com.indusjs.fleet.core.util.formatDateTimeForDisplay(date)
                         val parts = formattedDate.split(" ", limit = 2)
                         val dateString = parts.firstOrNull() ?: ""
                         val timeString = parts.getOrNull(1) ?: ""
@@ -421,33 +420,14 @@ private fun PaymentStatusBadge(
  */
 @Composable
 private fun PaymentsEmptyContent(onAddPayment: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(text = "💳", style = MaterialTheme.typography.displaySmall)
-        Text(
-            text = stringResource(Res.string.trip_payments_empty_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = stringResource(Res.string.trip_payments_empty_message),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(
-            onClick = onAddPayment,
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text(stringResource(Res.string.trip_payment_record_plus))
-        }
-    }
+    EmptyContent(
+        icon = "💳",
+        title = stringResource(Res.string.trip_payments_empty_title),
+        message = stringResource(Res.string.trip_payments_empty_message),
+        actionLabel = stringResource(Res.string.trip_payment_record_plus),
+        onAction = onAddPayment,
+        fillMaxSize = false
+    )
 }
 
 /**

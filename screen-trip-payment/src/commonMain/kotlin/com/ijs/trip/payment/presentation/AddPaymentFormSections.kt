@@ -6,7 +6,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -100,17 +102,12 @@ internal fun SelectedTripInfoCard(
     startDateTimeDisplay: String,
     endDateTimeDisplay: String
 ) {
-    Card(
+    FleetSectionCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = null,
+        contentPadding = FleetTokens.Spacing.M
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
             // Row 1: Trip Price, Pending, Customer
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -193,7 +190,6 @@ internal fun SelectedTripInfoCard(
                     )
                 }
             }
-        }
     }
 }
 

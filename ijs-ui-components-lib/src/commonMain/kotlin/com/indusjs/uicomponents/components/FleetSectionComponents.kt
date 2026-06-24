@@ -1,0 +1,251 @@
+package com.indusjs.uicomponents.components
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.theme.FleetTokens
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_chevron_right
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+
+/**
+ * App-wide "section" building blocks (the canonical replacements for the ~10 per-module
+ * SectionCard / EnhancedSectionCard / SectionHeader / EnhancedProfileCard / DashboardSectionCard
+ * copies). All dimensions come from [FleetTokens]; all colours from the theme / passed-in accents
+ * (no hardcoded values). Light/dark safe.
+ */
+
+/**
+ * Subtly bordered, lightly elevated surface card with consistent radius + padding.
+ *
+ * [containerColor] supports tinted hero/alert cards (pass a tint and usually [border]=null);
+ * [border]/[elevation]/[contentPadding] are overridable so a single card covers the
+ * plain-surface, tinted-fill, and flat variants the modules previously hand-rolled.
+ */
+@Composable
+fun FleetSectionCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    border: BorderStroke? = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+    elevation: Dp = FleetTokens.Elevation.Card,
+    contentPadding: Dp = FleetTokens.Spacing.L,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val shape = RoundedCornerShape(FleetTokens.Radius.XL)
+    val base = modifier
+        .fillMaxWidth()
+        .clip(shape)
+        .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+    Surface(
+        modifier = base,
+        shape = shape,
+        color = containerColor,
+        shadowElevation = elevation,
+        border = border
+    ) {
+        Column(modifier = Modifier.padding(contentPadding), content = content)
+    }
+}
+
+/** A titled section card = [FleetSectionCard] + [FleetSectionHeader] + content. */
+@Composable
+fun FleetTitledSectionCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    emoji: String? = null,
+    iconRes: DrawableResource? = null,
+    accent: Color = MaterialTheme.colorScheme.primary,
+    actionLabel: String? = null,
+    onActionClick: (() -> Unit)? = null,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    FleetSectionCard(modifier = modifier, containerColor = containerColor) {
+        FleetSectionHeader(
+            title = title,
+            emoji = emoji,
+            iconRes = iconRes,
+            accent = accent,
+            actionLabel = actionLabel,
+            onActionClick = onActionClick
+        )
+        if (subtitle != null) {
+            Spacer(modifier = Modifier.size(FleetTokens.Spacing.XS))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.size(FleetTokens.Spacing.L))
+        content()
+    }
+}
+
+/** Accent icon chip + bold title + optional trailing action ("View all" + chevron). */
+@Composable
+fun FleetSectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    emoji: String? = null,
+    iconRes: DrawableResource? = null,
+    accent: Color = MaterialTheme.colorScheme.primary,
+    actionLabel: String? = null,
+    onActionClick: (() -> Unit)? = null
+) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        if (emoji != null || iconRes != null) {
+            FleetAccentIconChip(emoji = emoji, iconRes = iconRes, accent = accent, chipSize = 32.dp, iconSize = 18.dp)
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        if (actionLabel != null && onActionClick != null) {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(FleetTokens.Radius.Pill))
+                    .clickable(onClick = onActionClick)
+                    .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = actionLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = accent
+                )
+                Icon(
+                    painter = painterResource(Res.drawable.ic_chevron_right),
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                )
+            }
+        }
+    }
+}
+
+/** Number-forward metric tile: optional accent icon chip, large value, label, optional sub-label. */
+@Composable
+fun FleetMetricTile(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier,
+    accent: Color = MaterialTheme.colorScheme.primary,
+    emoji: String? = null,
+    iconRes: DrawableResource? = null,
+    subLabel: String? = null,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    showBackground: Boolean = true,
+    centered: Boolean = false,
+    onClick: (() -> Unit)? = null
+) {
+    val shape = RoundedCornerShape(FleetTokens.Radius.L)
+    val container = modifier
+        .clip(shape)
+        .let { if (showBackground) it.background(accent.copy(alpha = 0.08f)) else it }
+        .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+        .padding(if (showBackground) FleetTokens.Spacing.M else FleetTokens.Spacing.XS)
+    val align = if (centered) Alignment.CenterHorizontally else Alignment.Start
+    val textAlign = if (centered) TextAlign.Center else TextAlign.Start
+    Column(
+        modifier = container,
+        horizontalAlignment = align,
+        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
+    ) {
+        if (emoji != null || iconRes != null) {
+            FleetAccentIconChip(emoji = emoji, iconRes = iconRes, accent = accent, chipSize = 36.dp, iconSize = 20.dp)
+        }
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = valueColor,
+            textAlign = textAlign,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = textAlign,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (subLabel != null) {
+            Text(
+                text = subLabel,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = accent,
+                textAlign = textAlign,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+/** Small rounded accent chip holding an emoji or a vector icon. */
+@Composable
+fun FleetAccentIconChip(
+    accent: Color,
+    chipSize: Dp,
+    iconSize: Dp,
+    emoji: String? = null,
+    iconRes: DrawableResource? = null
+) {
+    Box(
+        modifier = Modifier
+            .size(chipSize)
+            .clip(RoundedCornerShape(FleetTokens.Radius.ML))
+            .background(accent.copy(alpha = 0.16f)),
+        contentAlignment = Alignment.Center
+    ) {
+        when {
+            iconRes != null -> Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(iconSize)
+            )
+            emoji != null -> Text(emoji, style = MaterialTheme.typography.titleMedium)
+        }
+    }
+}

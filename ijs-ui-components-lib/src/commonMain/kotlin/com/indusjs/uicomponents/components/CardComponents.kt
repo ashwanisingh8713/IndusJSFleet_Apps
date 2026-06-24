@@ -149,33 +149,9 @@ fun FleetIconAvatar(
     }
 }
 
-/**
- * Section header for grouped lists.
- * Enhanced with better typography.
- */
-@Composable
-fun FleetSectionHeader(
-    title: String,
-    modifier: Modifier = Modifier,
-    action: @Composable (() -> Unit)? = null
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title.uppercase(),
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.2.sp
-        )
-        action?.invoke()
-    }
-}
+// NOTE: the section header/card/enhanced-card here were superseded by the canonical
+// FleetSectionHeader / FleetSectionCard / FleetTitledSectionCard in FleetSectionComponents.kt.
+// The plain-column form variant below is retained as FleetFormSection.
 
 /**
  * Divider with padding.
@@ -192,11 +168,11 @@ fun FleetDivider(
 }
 
 /**
- * Section card with title and content.
- * Used for grouping related content in forms.
+ * Plain titled column for grouping related content in forms (no card chrome).
+ * Distinct from [FleetSectionCard]/[FleetTitledSectionCard] which render a bordered surface card.
  */
 @Composable
-fun FleetSectionCard(
+fun FleetFormSection(
     title: String,
     modifier: Modifier = Modifier,
     trailingAction: @Composable (() -> Unit)? = null,
@@ -221,45 +197,6 @@ fun FleetSectionCard(
             )
             trailingAction?.invoke()
         }
-        content()
-    }
-}
-
-/**
- * Enhanced section card with icon and title.
- * Used for detail screens with more prominent sections.
- */
-@Composable
-fun FleetEnhancedSectionCard(
-    title: String,
-    icon: String,
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        // Section Header
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
         content()
     }
 }

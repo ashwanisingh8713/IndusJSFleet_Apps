@@ -13,6 +13,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.ClickablePhoneRow
+import com.indusjs.uicomponents.components.FleetInlineErrorBanner
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.domain.entity.Customer
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
@@ -36,7 +40,7 @@ fun OverviewTabContent(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         state.error?.let { error ->
-            ErrorCard(error)
+            ErrorCard(error.resolve())
         }
 
         CustomerHeroCard(state.customer!!, state.isSaving)
@@ -47,25 +51,7 @@ fun OverviewTabContent(
 
 @Composable
 internal fun ErrorCard(error: String) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        ),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("⚠️", style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
+    FleetInlineErrorBanner(message = error)
 }
 
 @Composable
@@ -73,16 +59,12 @@ private fun CustomerHeroCard(
     customer: Customer,
     isSaving: Boolean
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ),
-        elevation = CardDefaults.cardElevation(0.dp),
-        shape = RoundedCornerShape(16.dp)
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        border = null,
+        elevation = FleetTokens.Elevation.None
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
@@ -152,24 +134,12 @@ internal fun CustomerStatusChip(
 
 @Composable
 private fun CustomerContactCard(customer: Customer) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(2.dp),
-        shape = RoundedCornerShape(12.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.customer_section_contact_details)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.customer_section_contact_details),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
             ClickablePhoneRow(
                 label = stringResource(Res.string.customer_phone_label_primary),
                 phoneNumber = customer.primaryContact
@@ -198,24 +168,12 @@ private fun CustomerContactCard(customer: Customer) {
 
 @Composable
 private fun CustomerBusinessCard(customer: Customer) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(2.dp),
-        shape = RoundedCornerShape(12.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.customer_section_business)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.customer_section_business),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
             customer.gstNumber?.takeIf { it.isNotBlank() }?.let { gst ->
                 DetailRow(stringResource(Res.string.customer_label_gst), gst)
             }

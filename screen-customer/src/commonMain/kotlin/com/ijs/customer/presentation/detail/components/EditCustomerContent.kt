@@ -12,6 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
@@ -36,7 +38,7 @@ fun EditCustomerContent(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Error message
-        state.error?.let { ErrorCard(it) }
+        state.error?.let { ErrorCard(it.resolve()) }
 
         // Company Details Section
         CompanyDetailsSection(state, onIntent)
@@ -107,30 +109,18 @@ fun EditModeBottomBar(
 
 @Composable
 private fun CompanyDetailsSection(state: State, onIntent: (Intent) -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(2.dp),
-        shape = RoundedCornerShape(12.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.customer_section_company_card)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.customer_section_company_card),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
             OutlinedTextField(
                 value = state.companyName,
                 onValueChange = { onIntent(Intent.UpdateCompanyName(it)) },
                 label = { Text(stringResource(Res.string.customer_label_company_name)) },
                 isError = state.companyNameError != null,
-                supportingText = state.companyNameError?.let { { Text(it) } },
+                supportingText = state.companyNameError?.let { error -> { Text(error.resolve()) } },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
@@ -141,7 +131,7 @@ private fun CompanyDetailsSection(state: State, onIntent: (Intent) -> Unit) {
                 onValueChange = { onIntent(Intent.UpdatePersonName(it)) },
                 label = { Text(stringResource(Res.string.customer_label_contact_person)) },
                 isError = state.personNameError != null,
-                supportingText = state.personNameError?.let { { Text(it) } },
+                supportingText = state.personNameError?.let { error -> { Text(error.resolve()) } },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
@@ -152,31 +142,19 @@ private fun CompanyDetailsSection(state: State, onIntent: (Intent) -> Unit) {
 
 @Composable
 private fun ContactDetailsSection(state: State, onIntent: (Intent) -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(2.dp),
-        shape = RoundedCornerShape(12.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.customer_section_contact_details)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.customer_section_contact_details),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
             FleetInputField(
                 value = state.primaryContact,
                 onValueChange = { onIntent(Intent.UpdatePrimaryContact(filterDigitsOnly(it, 10))) },
                 fieldType = FieldType.PHONE,
                 label = stringResource(Res.string.customer_label_primary_mobile),
                 isError = state.primaryContactError != null,
-                errorMessage = state.primaryContactError
+                errorMessage = state.primaryContactError?.resolve()
             )
 
             FleetInputField(
@@ -185,7 +163,7 @@ private fun ContactDetailsSection(state: State, onIntent: (Intent) -> Unit) {
                 fieldType = FieldType.PHONE,
                 label = stringResource(Res.string.customer_label_secondary_contact),
                 isError = state.secondaryContactError != null,
-                errorMessage = state.secondaryContactError
+                errorMessage = state.secondaryContactError?.resolve()
             )
 
             FleetInputField(
@@ -194,7 +172,7 @@ private fun ContactDetailsSection(state: State, onIntent: (Intent) -> Unit) {
                 fieldType = FieldType.EMAIL,
                 label = stringResource(Res.string.customer_label_email),
                 isError = state.emailError != null,
-                errorMessage = state.emailError
+                errorMessage = state.emailError?.resolve()
             )
         }
     }
@@ -202,31 +180,19 @@ private fun ContactDetailsSection(state: State, onIntent: (Intent) -> Unit) {
 
 @Composable
 private fun BusinessDetailsSection(state: State, onIntent: (Intent) -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(2.dp),
-        shape = RoundedCornerShape(12.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.customer_section_business)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.customer_section_business),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
             OutlinedTextField(
                 value = state.gstNumber,
                 onValueChange = { onIntent(Intent.UpdateGstNumber(it)) },
                 label = { Text(stringResource(Res.string.customer_label_gst)) },
                 placeholder = { Text(stringResource(Res.string.customer_placeholder_gst)) },
                 isError = state.gstNumberError != null,
-                supportingText = state.gstNumberError?.let { { Text(it) } },
+                supportingText = state.gstNumberError?.let { error -> { Text(error.resolve()) } },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp)
@@ -257,16 +223,9 @@ private fun BusinessDetailsSection(state: State, onIntent: (Intent) -> Unit) {
 
 @Composable
 private fun StatusToggleSection(state: State, onIntent: (Intent) -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(2.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
+    FleetSectionCard {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

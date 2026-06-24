@@ -24,7 +24,9 @@ import com.ijs.vehicle.data.model.CreateVehicleRequest
 import com.ijs.vehicle.data.model.UpdateVehicleRequest
 import com.ijs.vehicle.data.model.DocumentAlertDto
 import com.ijs.vehicle.data.model.DocumentsSummaryDto
+import com.ijs.vehicle.data.model.DetailRouteDto
 import com.ijs.vehicle.data.model.DocumentTypeDetailDto
+import com.ijs.vehicle.data.model.GeoPointDto
 import com.ijs.vehicle.data.model.LocationDto
 import com.ijs.vehicle.data.model.RouteProgressDto
 import com.ijs.vehicle.data.model.RouteStopDto
@@ -59,14 +61,9 @@ class VehicleMapper {
         val driverName = assignedDriver?.fullName()
             ?: dto.assignedDriverName
 
-        // Convert createdAt from ISO 8601 to DD-MM-YYYY format
-        val createdAtFormatted = dto.createdAt?.let { isoDate ->
-            try {
-                com.indusjs.datetimeutils.FleetDateTime.fromIso8601ToDate(isoDate)
-            } catch (e: Exception) {
-                null
-            }
-        }
+        // Convert createdAt (epoch millis) to DD-MM-YYYY for date-picker constraints.
+        val createdAtFormatted =
+            com.indusjs.datetimeutils.FleetDateTime.timestampToDateString(dto.createdAt)
 
         return Vehicle(
             id = dto.id.toString(),
@@ -78,15 +75,15 @@ class VehicleMapper {
             status = parseVehicleStatus(dto.status),
             fuelType = dto.fuelType ?: "petrol",
             color = dto.color ?: "white",
-            capacity = dto.capacity ?: 4,
+            capacity = dto.capacity?.toInt() ?: 4,
             fuelLevel = dto.fuelLevel,
             mileage = dto.mileage,
             lastLocation = dto.lastLocation?.let { mapLocationToDomain(it) },
             assignedDriverId = dto.assignedDriver?.id?.toString() ?: dto.assignedDriverId?.toString(),
             assignedDriverName = driverName,
             assignedDriver = assignedDriver,
-            lastServiceDate = dto.lastServiceDate?.let { parseTimestamp(it) },
-            nextServiceDate = dto.nextServiceDate?.let { parseTimestamp(it) },
+            lastServiceDate = dto.lastServiceDate,
+            nextServiceDate = dto.nextServiceDate,
             isOccupied = dto.isOccupied,
             tripAssignment = dto.tripAssignment?.let { mapTripAssignmentToDomain(it) },
             createdAt = createdAtFormatted
@@ -140,8 +137,8 @@ class VehicleMapper {
         lastLocation = vehicle.lastLocation?.let { mapLocationToData(it) },
         assignedDriverId = vehicle.assignedDriverId?.toIntOrNull(),
         assignedDriverName = vehicle.assignedDriverName,
-        lastServiceDate = vehicle.lastServiceDate?.toString(),
-        nextServiceDate = vehicle.nextServiceDate?.toString()
+        lastServiceDate = vehicle.lastServiceDate,
+        nextServiceDate = vehicle.nextServiceDate
     )
 
     /**
@@ -219,18 +216,6 @@ class VehicleMapper {
     private fun vehicleStatusToApiString(status: VehicleStatus): String =
         VehicleStatus.toApiString(status)
 
-    /**
-     * Parse timestamp string to Long.
-     * Handles ISO8601 format or epoch milliseconds.
-     */
-    private fun parseTimestamp(timestamp: String): Long? {
-        return try {
-            timestamp.toLongOrNull()
-        } catch (e: Exception) {
-            null
-        }
-    }
-
     // ==================== Vehicle Detail Mapping Functions ====================
 
     /**
@@ -247,7 +232,8 @@ class VehicleMapper {
             stats = dto.stats?.let { mapVehicleStatsToDomain(it) } ?: VehicleStats(),
             documents = dto.documents?.let { mapDocumentsSummaryToDomain(it) } ?: DocumentsSummary(),
             trips = dto.trips?.let { mapTripsSummaryToDomain(it) } ?: TripsSummary(),
-            route = dto.route?.let { mapToRouteInfo(it) }
+            // /detail returns the FLAT DetailRouteDto, not the nested VehicleRouteDto.
+            route = dto.route?.let { mapDetailRouteToRouteInfo(it) }
         )
     }
 
@@ -279,13 +265,31 @@ class VehicleMapper {
     /**
      * Maps DocumentAlertDto to DocumentAlert domain entity.
      */
-    private fun mapDocumentAlertToDomain(dto: DocumentAlertDto): DocumentAlert = DocumentAlert(
-        type = dto.type,
-        typeName = dto.typeName,
-        alertType = dto.alertType,
-        message = dto.message,
-        daysRemaining = dto.daysRemaining
-    )
+    private fun mapDocumentAlertToDomain(dto: DocumentAlertDto): DocumentAlert {
+        // Backend sends name/tag/expiry_date/days_remaining/status/is_expired.
+        // Derive the app's alertType + message from those (backend has no such fields).
+        val days = dto.daysRemaining
+        // A required-but-not-uploaded doc has no expiry_date and is not expired — must not be labeled "Expired".
+        val notUploaded = dto.expiryDate == null && !dto.isExpired
+        val alertType = when {
+            notUploaded -> "not_uploaded"
+            dto.isExpired || (days != null && days <= 0) -> "expired"
+            else -> "expiring_soon"
+        }
+        val message = when {
+            notUploaded -> "Not uploaded"
+            dto.isExpired || (days != null && days <= 0) -> "Expired"
+            days != null -> "Expiring in $days days"
+            else -> dto.status
+        }
+        return DocumentAlert(
+            type = dto.type,
+            typeName = dto.name,
+            alertType = alertType,
+            message = message,
+            daysRemaining = days
+        )
+    }
 
     /**
      * Maps TripsSummaryDto to TripsSummary domain entity.
@@ -312,7 +316,7 @@ class VehicleMapper {
         scheduledDate = dto.scheduledDate,
         startTime = dto.startTime,
         endTime = dto.endTime,
-        driverName = dto.driverName,
+        driverName = dto.resolvedDriverName,
         distance = dto.distance,
         duration = dto.duration
     )
@@ -326,59 +330,113 @@ class VehicleMapper {
         page = dto.page,
         perPage = dto.perPage,
         totalPages = dto.totalPages,
-        hasMore = dto.hasMore
+        // backend TripsTabResponse has no has_more → derive from pagination
+        hasMore = dto.page < dto.totalPages
     )
 
     /**
      * Maps VehicleRouteDto to RouteInfo domain entity.
      */
-    fun mapToRouteInfo(dto: VehicleRouteDto): RouteInfo = RouteInfo(
-        hasActiveTrip = dto.hasActiveTrip,
-        tripId = dto.tripId?.toString(),
-        tripNumber = dto.tripNumber,
-        driverName = dto.driverName,
-        origin = dto.origin,
-        destination = dto.destination,
-        currentPosition = dto.currentPosition?.let { mapLocationToDomain(it) },
-        progress = dto.progress?.let { mapRouteProgressToDomain(it) },
-        stops = dto.stops.map { mapRouteStopToDomain(it) }
+    fun mapToRouteInfo(dto: VehicleRouteDto): RouteInfo {
+        // Backend nests the active trip under "trip", geo under "route", and the
+        // current position inside route.current — flatten into the flat domain shape.
+        val driverName = dto.trip?.driver?.let {
+            "${it.firstName ?: ""} ${it.lastName ?: ""}".trim().takeIf { n -> n.isNotBlank() }
+        }
+        val current = dto.route?.current?.let { mapGeoPointToLocation(it) }
+        return RouteInfo(
+            hasActiveTrip = dto.hasActiveTrip,
+            tripId = dto.trip?.id?.toString(),
+            tripNumber = null, // backend route response has no trip_number
+            driverName = driverName,
+            origin = dto.route?.origin?.location,
+            destination = dto.route?.destination?.location,
+            currentPosition = current,
+            progress = dto.progress?.let { mapRouteProgressToDomain(it) },
+            stops = dto.stops.map { mapRouteStopToDomain(it) }
+        )
+    }
+
+    /**
+     * Maps the FLAT DetailRouteDto (GET /vehicles/{id}/detail → DetailRouteResponse)
+     * to RouteInfo. The flat shape carries no nested trip/geo/stops blocks, so:
+     *  - start_location/end_location become origin/destination
+     *  - total_stops/completed_stops are folded into a RouteProgress (percentage)
+     *  - currentPosition/stops/driverName/tripNumber are unavailable here and stay
+     *    null/empty (use GET /vehicles/{id}/route for the full nested route).
+     */
+    fun mapDetailRouteToRouteInfo(dto: DetailRouteDto): RouteInfo {
+        val progress = if (dto.totalStops > 0) {
+            RouteProgress(
+                percentage = (dto.completedStops * 100) / dto.totalStops,
+                distanceCovered = 0.0,
+                distanceRemaining = 0.0,
+                timeElapsed = null,
+                eta = null
+            )
+        } else {
+            null
+        }
+        return RouteInfo(
+            hasActiveTrip = dto.hasActiveTrip,
+            tripId = dto.tripId.takeIf { it > 0 }?.toString(),
+            tripNumber = null,
+            driverName = null,
+            origin = dto.startLocation.takeIf { it.isNotBlank() },
+            destination = dto.endLocation.takeIf { it.isNotBlank() },
+            currentPosition = null,
+            progress = progress,
+            stops = emptyList()
+        )
+    }
+
+    private fun mapGeoPointToLocation(dto: GeoPointDto): Location = Location(
+        latitude = dto.latitude,
+        longitude = dto.longitude,
+        address = dto.location
     )
 
     /**
      * Maps RouteProgressDto to RouteProgress domain entity.
+     * Backend has no distance covered/remaining; those stay 0.
      */
     private fun mapRouteProgressToDomain(dto: RouteProgressDto): RouteProgress = RouteProgress(
-        percentage = dto.percentage,
-        distanceCovered = dto.distanceCovered,
-        distanceRemaining = dto.distanceRemaining,
+        percentage = dto.percentage.toInt(),
+        distanceCovered = 0.0,
+        distanceRemaining = 0.0,
         timeElapsed = dto.timeElapsed,
         eta = dto.eta
     )
 
     /**
      * Maps RouteStopDto to RouteStop domain entity.
+     * Backend has no type/address/scheduled_time/actual_time; those stay null/blank.
      */
     private fun mapRouteStopToDomain(dto: RouteStopDto): RouteStop = RouteStop(
         id = dto.id.toString(),
         sequence = dto.sequence,
-        type = dto.type,
+        type = "",
         location = dto.location,
-        address = dto.address,
+        address = dto.location.takeIf { it.isNotBlank() },
         status = dto.status,
-        scheduledTime = dto.scheduledTime,
-        actualTime = dto.actualTime,
+        scheduledTime = null,
+        actualTime = null,
         notes = dto.notes
     )
 
     /**
      * Maps VehicleDocumentsDetailDto to VehicleDocumentsData domain entity.
      */
-    fun mapToVehicleDocumentsData(dto: VehicleDocumentsDetailDto): VehicleDocumentsData = VehicleDocumentsData(
-        summary = dto.summary?.let { mapDocumentsSummaryToDomain(it) } ?: DocumentsSummary(),
-        documentTypes = dto.documentTypes.map { mapDocumentTypeDetailToDomain(it) },
-        alertDocs = dto.alertDocs.map { mapDocumentAlertToDomain(it) },
-        otherDocuments = dto.otherDocuments.map { mapVehicleDocumentInfoToDomain(it) }
-    )
+    fun mapToVehicleDocumentsData(dto: VehicleDocumentsDetailDto): VehicleDocumentsData {
+        // Alerts live inside summary.alert_docs (backend DocSummaryResponse), not top-level.
+        val summaryDto = dto.summary
+        return VehicleDocumentsData(
+            summary = summaryDto?.let { mapDocumentsSummaryToDomain(it) } ?: DocumentsSummary(),
+            documentTypes = dto.documentTypes.map { mapDocumentTypeDetailToDomain(it) },
+            alertDocs = summaryDto?.alerts?.map { mapDocumentAlertToDomain(it) } ?: emptyList(),
+            otherDocuments = dto.otherDocuments.map { mapVehicleDocumentInfoToDomain(it) }
+        )
+    }
 
     /**
      * Maps DocumentTypeDetailDto to DocumentTypeDetail domain entity.
@@ -404,7 +462,8 @@ class VehicleMapper {
         status = dto.status,
         statusLabel = dto.statusLabel,
         daysRemaining = dto.daysRemaining,
-        fileUrl = dto.fileUrl,
+        // Backend DocItemResponse now sends download_url (relative, includes /api/v1).
+        fileUrl = dto.downloadUrl,
         uploadedAt = dto.uploadedAt
     )
 
@@ -513,7 +572,8 @@ class VehicleMapper {
             status = dto.status,
             statusLabel = statusLabel,
             daysRemaining = daysRemaining,
-            fileUrl = dto.fileUrl,
+            // Backend DocumentResponse now sends download_url (relative, includes /api/v1).
+            fileUrl = dto.downloadUrl,
             uploadedAt = dto.createdAt
         )
     }
@@ -575,29 +635,21 @@ class VehicleMapper {
         )
     }
 
-    // Helper functions for date calculations
-    private fun isExpiringSoon(expiryDate: String?): Boolean {
-        if (expiryDate == null) return false
+    // Helper functions for date calculations (epoch-millis via FleetEpoch).
+    private fun isExpiringSoon(expiryDate: Long?): Boolean {
         val daysRemaining = calculateDaysRemaining(expiryDate)
-        return daysRemaining in 1..30
+        return daysRemaining != null && daysRemaining in 1..30
     }
 
-    private fun isExpired(expiryDate: String?): Boolean {
-        if (expiryDate == null) return false
+    private fun isExpired(expiryDate: Long?): Boolean {
         val daysRemaining = calculateDaysRemaining(expiryDate)
         return daysRemaining != null && daysRemaining <= 0
     }
 
-    private fun calculateDaysRemaining(expiryDate: String?): Int? {
-        if (expiryDate == null) return null
-        return try {
-            // Simple calculation - in production use kotlinx-datetime
-            // For now return a placeholder based on string comparison
-            // Format expected: YYYY-MM-DD
-            30 // Placeholder
-        } catch (e: Exception) {
-            null
-        }
+    /** Whole UTC days from now until [expiryDate] (negative if past), or null when unset. */
+    private fun calculateDaysRemaining(expiryDate: Long?): Int? {
+        if (expiryDate == null || expiryDate <= 0L) return null
+        return com.indusjs.datetimeutils.FleetEpoch.daysUntil(expiryDate)?.toInt()
     }
 }
 

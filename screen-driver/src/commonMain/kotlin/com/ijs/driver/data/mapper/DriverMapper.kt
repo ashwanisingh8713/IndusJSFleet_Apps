@@ -28,9 +28,9 @@ class DriverMapper {
         email = dto.email ?: "",
         mobile = dto.mobile,
         licenseNumber = dto.licenseNumber,
-        licenseExpiry = dto.licenseExpiry?.let { parseTimestamp(it) } ?: 0L,
+        licenseExpiry = dto.licenseExpiry ?: 0L,
         licenseType = dto.licenseType?.let { LicenseType.fromApiString(it) } ?: LicenseType.LMV,
-        dateOfBirth = dto.dateOfBirth?.let { parseTimestamp(it) },
+        dateOfBirth = dto.dateOfBirth,
         address = dto.address,
         emergencyContact = dto.emergencyContact,
         bloodGroup = dto.bloodGroup,
@@ -43,9 +43,9 @@ class DriverMapper {
         owner = dto.owner?.let { mapOwnerToDomain(it) },
         createdById = dto.createdById?.toString(),
         createdBy = dto.createdBy?.let { mapOwnerToDomain(it) },
-        joiningDate = dto.joiningDate?.let { parseTimestamp(it) },
-        createdAt = dto.createdAt?.let { parseTimestamp(it) },
-        updatedAt = dto.updatedAt?.let { parseTimestamp(it) }
+        joiningDate = dto.joiningDate,
+        createdAt = dto.createdAt,
+        updatedAt = dto.updatedAt
     )
 
     /**
@@ -93,13 +93,13 @@ class DriverMapper {
         email = driver.email.takeIf { it.isNotBlank() },
         mobile = driver.mobile,
         licenseNumber = driver.licenseNumber,
-        licenseExpiry = formatTimestamp(driver.licenseExpiry),
+        licenseExpiry = driver.licenseExpiry.takeIf { it > 0L },
         licenseType = LicenseType.toApiString(driver.licenseType),
-        dateOfBirth = driver.dateOfBirth?.let { formatTimestamp(it) },
+        dateOfBirth = driver.dateOfBirth,
         address = driver.address,
         emergencyContact = driver.emergencyContact,
         bloodGroup = driver.bloodGroup,
-        joiningDate = driver.joiningDate?.let { formatTimestamp(it) },
+        joiningDate = driver.joiningDate,
         caretakerId = caretakerId
     )
 
@@ -112,59 +112,13 @@ class DriverMapper {
         email = driver.email.takeIf { it.isNotBlank() },
         mobile = driver.mobile,
         licenseNumber = driver.licenseNumber,
-        licenseExpiry = formatTimestamp(driver.licenseExpiry),
+        licenseExpiry = driver.licenseExpiry.takeIf { it > 0L },
         licenseType = LicenseType.toApiString(driver.licenseType),
-        dateOfBirth = driver.dateOfBirth?.let { formatTimestamp(it) },
+        dateOfBirth = driver.dateOfBirth,
         address = driver.address,
         emergencyContact = driver.emergencyContact,
         bloodGroup = driver.bloodGroup,
-        joiningDate = driver.joiningDate?.let { formatTimestamp(it) },
+        joiningDate = driver.joiningDate,
         caretakerId = caretakerId
     )
-
-    /**
-     * Parse ISO timestamp string to Long.
-     * Handles formats like: 2027-12-31T00:00:00Z
-     */
-    private fun parseTimestamp(timestamp: String): Long {
-        return try {
-            // Simple parsing - in production use kotlinx-datetime
-            // For now, extract year-month-day and convert to approximate epoch
-            val datePattern = Regex("(\\d{4})-(\\d{2})-(\\d{2})")
-            val match = datePattern.find(timestamp)
-            if (match != null) {
-                val (year, month, day) = match.destructured
-                // Approximate conversion to epoch milliseconds
-                val baseYear = 1970
-                val daysFromBase = ((year.toInt() - baseYear) * 365.25).toLong() +
-                        (month.toInt() - 1) * 30L + day.toInt()
-                daysFromBase * 24 * 60 * 60 * 1000
-            } else {
-                0L
-            }
-        } catch (_: Exception) {
-            0L
-        }
-    }
-
-    /**
-     * Format Long timestamp to ISO 8601 date string for API.
-     * API expects format: YYYY-MM-DDTHH:MM:SSZ (e.g., "2026-12-31T00:00:00Z")
-     */
-    private fun formatTimestamp(timestamp: Long): String? {
-        if (timestamp <= 0) return null
-        return try {
-            // Approximate conversion from epoch - in production use kotlinx-datetime
-            val days = timestamp / (24 * 60 * 60 * 1000)
-            val years = (days / 365.25).toInt() + 1970
-            val remainingDays = (days % 365.25).toInt()
-            val months = (remainingDays / 30) + 1
-            val dayOfMonth = (remainingDays % 30) + 1
-            val monthStr = months.coerceIn(1, 12).toString().padStart(2, '0')
-            val dayStr = dayOfMonth.coerceIn(1, 28).toString().padStart(2, '0')
-            "$years-$monthStr-${dayStr}T00:00:00Z"  // ISO 8601 format for API
-        } catch (_: Exception) {
-            null
-        }
-    }
 }

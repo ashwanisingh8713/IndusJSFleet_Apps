@@ -3,22 +3,17 @@ package com.ijs.user.presentation.changepassword
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.uicomponents.components.FleetPasswordField
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -120,108 +115,43 @@ fun ChangePasswordScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Current Password Field
-            OutlinedTextField(
+            FleetPasswordField(
                 value = state.currentPassword,
                 onValueChange = { viewModel.sendIntent(ChangePasswordContract.Intent.UpdateCurrentPassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(Res.string.change_password_current_label)) },
-                placeholder = { Text(stringResource(Res.string.change_password_current_placeholder)) },
-                leadingIcon = { Text("🔒") },
-                trailingIcon = {
-                    IconButton(
-                        onClick = { viewModel.sendIntent(ChangePasswordContract.Intent.ToggleCurrentPasswordVisibility) }
-                    ) {
-                        Text(if (state.isCurrentPasswordVisible) "👁️" else "👁️‍🗨️")
-                    }
-                },
-                visualTransformation = if (state.isCurrentPasswordVisible) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                ),
-                singleLine = true,
+                label = stringResource(Res.string.change_password_current_label),
+                placeholder = stringResource(Res.string.change_password_current_placeholder),
                 enabled = !state.isLoading
             )
 
-            // New Password Field
-            OutlinedTextField(
+            // New Password Field (policy is enforced by the backend; no client min-length hint)
+            FleetPasswordField(
                 value = state.newPassword,
                 onValueChange = { viewModel.sendIntent(ChangePasswordContract.Intent.UpdateNewPassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(Res.string.change_password_new_label)) },
-                placeholder = { Text(stringResource(Res.string.change_password_new_placeholder)) },
-                leadingIcon = { Text("🔑") },
-                trailingIcon = {
-                    IconButton(
-                        onClick = { viewModel.sendIntent(ChangePasswordContract.Intent.ToggleNewPasswordVisibility) }
-                    ) {
-                        Text(if (state.isNewPasswordVisible) "👁️" else "👁️‍🗨️")
-                    }
-                },
-                visualTransformation = if (state.isNewPasswordVisible) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                ),
-                singleLine = true,
-                enabled = !state.isLoading,
-                supportingText = {
-                    Text(stringResource(Res.string.change_password_min_chars))
-                }
+                label = stringResource(Res.string.change_password_new_label),
+                placeholder = stringResource(Res.string.change_password_new_placeholder),
+                enabled = !state.isLoading
             )
 
-            // Confirm Password Field
-            OutlinedTextField(
+            // Confirm Password Field (UI-only match check)
+            FleetPasswordField(
                 value = state.confirmPassword,
                 onValueChange = { viewModel.sendIntent(ChangePasswordContract.Intent.UpdateConfirmPassword(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(Res.string.change_password_confirm_label)) },
-                placeholder = { Text(stringResource(Res.string.change_password_confirm_placeholder)) },
-                leadingIcon = { Text("🔑") },
-                trailingIcon = {
-                    IconButton(
-                        onClick = { viewModel.sendIntent(ChangePasswordContract.Intent.ToggleConfirmPasswordVisibility) }
-                    ) {
-                        Text(if (state.isConfirmPasswordVisible) "👁️" else "👁️‍🗨️")
-                    }
-                },
-                visualTransformation = if (state.isConfirmPasswordVisible) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
-                ),
+                label = stringResource(Res.string.change_password_confirm_label),
+                placeholder = stringResource(Res.string.change_password_confirm_placeholder),
+                isError = state.confirmPassword.isNotEmpty() && state.confirmPassword != state.newPassword,
+                errorMessage = if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.newPassword) {
+                    stringResource(Res.string.change_password_mismatch)
+                } else null,
+                enabled = !state.isLoading,
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
                         viewModel.sendIntent(ChangePasswordContract.Intent.ChangePassword)
                     }
-                ),
-                singleLine = true,
-                enabled = !state.isLoading,
-                isError = state.confirmPassword.isNotEmpty() && state.confirmPassword != state.newPassword,
-                supportingText = {
-                    if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.newPassword) {
-                        Text(stringResource(Res.string.change_password_mismatch), color = MaterialTheme.colorScheme.error)
-                    }
-                }
+                )
             )
 
             // Error Message

@@ -5,6 +5,7 @@ import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.uicomponents.components.CostTypeGroup
 import com.indusjs.uicomponents.components.CostTypeSelection
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.fleet.data.model.costs.FuelTypes
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
@@ -39,13 +40,13 @@ object MaintenanceCostEntryContract {
         val isLoading: Boolean = false,
         val isLoadingData: Boolean = false,
         val isSaving: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
 
         // Refresh cost types
         val isRefreshingCostTypes: Boolean = false,
 
         // Validation errors
-        val vehicleError: String? = null,
+        val vehicleError: UiText? = null,
 
         // Available options
         val costTypeOptions: List<Pair<String, String>> = MaintenanceCostTypes.types,
@@ -112,8 +113,8 @@ object MaintenanceCostEntryContract {
      * Side effects for Maintenance Cost Entry screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
-        data class ShowError(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
+        data class ShowError(val message: UiText) : Effect
         data object NavigateBack : Effect
         data class CostsSaved(val count: Int) : Effect
     }
@@ -141,7 +142,7 @@ data class MaintenanceCostRow @OptIn(ExperimentalUuidApi::class) constructor(
 
     // Amount
     val amount: String = "",
-    val amountError: String? = null,
+    val amountError: UiText? = null,
 
     // Fuel specific fields (shown when Fuel & Energy category is selected)
     val fuelType: String = "TC-001-002", // Default to Diesel

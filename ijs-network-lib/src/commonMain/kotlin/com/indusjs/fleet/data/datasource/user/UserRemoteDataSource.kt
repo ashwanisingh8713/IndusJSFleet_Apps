@@ -9,7 +9,11 @@ import com.indusjs.fleet.data.model.user.AuthResponseDto
 import com.indusjs.fleet.data.model.user.ChangePasswordRequest
 import com.indusjs.fleet.data.model.user.ForgotPasswordRequest
 import com.indusjs.fleet.data.model.user.LoginRequest
+import com.indusjs.fleet.data.model.user.MyPermissionsResponse
 import com.indusjs.fleet.data.model.user.ProfileApiResponse
+import com.indusjs.fleet.data.model.user.RefreshResponseDto
+import com.indusjs.fleet.data.model.user.RefreshTokenRequest
+import com.indusjs.fleet.data.model.user.TeamRolesResponse
 import com.indusjs.fleet.data.model.user.ResetPasswordRequest
 import com.indusjs.fleet.data.model.user.SignUpApiResponse
 import com.indusjs.fleet.data.model.user.SignUpRequest
@@ -45,6 +49,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.decodeFromString
 
@@ -54,6 +59,8 @@ import kotlinx.serialization.decodeFromString
 interface UserRemoteDataSource : RemoteDataSource {
     suspend fun signUp(request: SignUpRequest): SignUpApiResponse
     suspend fun login(request: LoginRequest): ApiResponse<AuthResponseDto>
+    /** Exchanges a (rotating) refresh token for a NEW access+refresh pair. */
+    suspend fun refreshToken(request: RefreshTokenRequest): ApiResponse<RefreshResponseDto>
     suspend fun forgotPassword(request: ForgotPasswordRequest): ApiResponse<Unit>
     suspend fun resetPassword(request: ResetPasswordRequest): ApiResponse<Unit>
     suspend fun getProfile(token: String): ApiResponse<UserProfileDto>
@@ -63,6 +70,8 @@ interface UserRemoteDataSource : RemoteDataSource {
     suspend fun verifyMobile(request: VerifyMobileRequest): ApiResponse<VerifyMobileResponseDto>
     suspend fun sendLoginOtp(request: SendLoginOtpRequest): ApiResponse<Unit>
     suspend fun verifyLoginOtp(request: VerifyLoginOtpRequest): ApiResponse<AuthResponseDto>
+    suspend fun fetchMyPermissions(): ApiResponse<MyPermissionsResponse>
+    suspend fun fetchTeamRoles(): ApiResponse<TeamRolesResponse>
 }
 
 /**
@@ -71,6 +80,7 @@ interface UserRemoteDataSource : RemoteDataSource {
 @Inject
 class UserRemoteDataSourceImpl(
     private val httpClient: HttpClient,
+    private val localDataSource: UserLocalDataSource,
     private val logger: FleetLogger
 ) : UserRemoteDataSource {
 
@@ -112,6 +122,38 @@ class UserRemoteDataSourceImpl(
         }
     }
 
+    override suspend fun refreshToken(request: RefreshTokenRequest): ApiResponse<RefreshResponseDto> {
+        return try {
+            logger.d(TAG_USER_REMOTE_DS, "Refreshing token via /auth/refresh")
+            val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.REFRESH}") {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }
+            val raw = response.bodyAsText()
+            if (!response.status.isSuccess()) {
+                // 401 here means invalid/expired/REUSED refresh token — caller must re-login.
+                return ApiResponse(success = false, message = parseErrorMessage(response.status, raw))
+            }
+            val jsonEl = json.parseToJsonElement(raw) as? JsonObject
+                ?: return ApiResponse(success = false, message = "Invalid response")
+            val success = try { jsonEl["success"]?.jsonPrimitive?.boolean ?: false } catch (_: Exception) { false }
+            if (!success) {
+                return ApiResponse(success = false, message = jsonEl["message"]?.jsonPrimitive?.contentOrNull ?: "Token refresh failed")
+            }
+            val dataObj = jsonEl["data"] as? JsonObject
+            val dto = if (dataObj != null) {
+                try { json.decodeFromJsonElement<RefreshResponseDto>(dataObj) } catch (_: Exception) { null }
+            } else null
+            if (dto == null || dto.accessToken.isBlank()) {
+                return ApiResponse(success = false, message = "Token refresh returned no access token")
+            }
+            ApiResponse(success = true, message = jsonEl["message"]?.jsonPrimitive?.contentOrNull, data = dto)
+        } catch (e: Exception) {
+            logger.e(TAG_USER_REMOTE_DS, "Token refresh failed: ${e.message}", e)
+            ApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
     override suspend fun forgotPassword(request: ForgotPasswordRequest): ApiResponse<Unit> {
         return try {
             logger.d(TAG_USER_REMOTE_DS, "Forgot password for: ${request.identifier}")
@@ -128,7 +170,7 @@ class UserRemoteDataSourceImpl(
 
     override suspend fun resetPassword(request: ResetPasswordRequest): ApiResponse<Unit> {
         return try {
-            logger.d(TAG_USER_REMOTE_DS, "Reset password for: ${request.identifier}")
+            logger.d(TAG_USER_REMOTE_DS, "Reset password request")
             val response: HttpResponse = httpClient.post("$baseUrl${ApiConfig.Endpoints.RESET_PASSWORD}") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
@@ -261,15 +303,80 @@ class UserRemoteDataSourceImpl(
             }
             val dataObj = jsonEl["data"] as? JsonObject
             val accessToken = dataObj?.get("access_token")?.jsonPrimitive?.contentOrNull ?: ""
-            // Build AuthResponseDto with a minimal user and the token
+            val refreshToken = dataObj?.get("refresh_token")?.jsonPrimitive?.contentOrNull
+            val tokenType = dataObj?.get("token_type")?.jsonPrimitive?.contentOrNull
+            val expiresIn = dataObj?.get("expires_in")?.jsonPrimitive?.let {
+                it.longOrNull ?: it.contentOrNull?.toLongOrNull()
+            } ?: 0L
+            // Build AuthResponseDto with a minimal user, the access token AND the rotated
+            // refresh pair so the repository can persist all of it for silent refresh.
             val authDto = AuthResponseDto(
                 user = UserDto(email = "", mobile = request.mobile, role = "owner"),
-                token = accessToken
+                token = accessToken,
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                tokenType = tokenType,
+                expiresIn = expiresIn
             )
             ApiResponse(success = true, message = jsonEl["message"]?.jsonPrimitive?.contentOrNull, data = authDto)
         } catch (e: Exception) {
             logger.e(TAG_USER_REMOTE_DS, "Verify login OTP failed: ${e.message}", e)
             ApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun fetchMyPermissions(): ApiResponse<MyPermissionsResponse> {
+        return try {
+            logger.d(TAG_USER_REMOTE_DS, "Fetching my permissions")
+            val token = localDataSource.getAuthToken()
+            val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.ME_PERMISSIONS}") {
+                if (!token.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            handleDataResponse(response) { json.decodeFromString<MyPermissionsResponse>(it) }
+        } catch (e: Exception) {
+            logger.e(TAG_USER_REMOTE_DS, "Fetch my permissions failed: ${e.message}", e)
+            ApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    override suspend fun fetchTeamRoles(): ApiResponse<TeamRolesResponse> {
+        return try {
+            logger.d(TAG_USER_REMOTE_DS, "Fetching team roles")
+            val token = localDataSource.getAuthToken()
+            val response: HttpResponse = httpClient.get("$baseUrl${ApiConfig.Endpoints.TEAM_ROLES}") {
+                if (!token.isNullOrBlank()) header(HttpHeaders.Authorization, "Bearer $token")
+            }
+            handleDataResponse(response) { json.decodeFromString<TeamRolesResponse>(it) }
+        } catch (e: Exception) {
+            logger.e(TAG_USER_REMOTE_DS, "Fetch team roles failed: ${e.message}", e)
+            ApiResponse(success = false, message = e.message ?: "Network error occurred")
+        }
+    }
+
+    /**
+     * Handles a plain `{ "data": { ... } }` response (no top-level success/message
+     * envelope). Maps the raw body to [T] via [parse] on HTTP success.
+     */
+    private suspend fun <T> handleDataResponse(
+        response: HttpResponse,
+        parse: (String) -> T
+    ): ApiResponse<T> {
+        val raw = try {
+            response.bodyAsText()
+        } catch (e: Exception) {
+            logger.e(TAG_USER_REMOTE_DS, "Failed to read response body", e)
+            return ApiResponse(success = false, message = "Failed to read response body")
+        }
+
+        if (!response.status.isSuccess()) {
+            return ApiResponse(success = false, message = parseErrorMessage(response.status, raw))
+        }
+
+        return try {
+            ApiResponse(success = true, message = null, data = parse(raw))
+        } catch (e: Exception) {
+            logger.e(TAG_USER_REMOTE_DS, "Failed to parse data response: $raw", e)
+            ApiResponse(success = false, message = "Failed to parse response: ${e.message}")
         }
     }
 
@@ -344,15 +451,21 @@ class UserRemoteDataSourceImpl(
 
         return try {
             val apiResp = json.decodeFromString<AuthApiResponse>(raw)
+            // A successful login/signup carries a usable access token. The backend dropped the
+            // legacy `token` key in favour of `access_token`, so accept EITHER. The IsResend
+            // case (existing-but-unverified account) is success=true with NEITHER token present.
+            val data = apiResp.data
+            val hasToken = data != null &&
+                (!data.accessToken.isNullOrBlank() || !data.token.isNullOrBlank())
             when {
-                apiResp.success && apiResp.data != null && !apiResp.data.token.isNullOrBlank() -> {
-                    // Normal success: new account created or successful login
-                    ApiResponse(success = true, message = apiResp.message, data = apiResp.data)
+                apiResp.success && data != null && hasToken -> {
+                    // Normal success: new account created or successful login.
+                    ApiResponse(success = true, message = apiResp.message, data = data)
                 }
-                apiResp.success && apiResp.data != null && apiResp.data.token.isNullOrBlank() -> {
-                    // IsResend case: account exists but unverified — server sent verification again
-                    // Inform the user with the server message; they must verify before logging in
-                    logger.d(TAG_USER_REMOTE_DS, "IsResend case: success=true but token absent. Server: ${apiResp.message}")
+                apiResp.success && data != null && !hasToken -> {
+                    // IsResend case: account exists but unverified — server re-sent verification.
+                    // The user must verify before logging in.
+                    logger.d(TAG_USER_REMOTE_DS, "IsResend case: success=true but no token. Server: ${apiResp.message}")
                     ApiResponse(success = false, message = apiResp.message ?: "Account already exists. Please check your email or mobile to verify your account.")
                 }
                 else -> {
@@ -364,12 +477,13 @@ class UserRemoteDataSourceImpl(
 
             try {
                 val jsonEl = json.parseToJsonElement(raw)
-                val tokenFound = findInJson(jsonEl, "token")
+                // Prefer access_token; the legacy `token` key was dropped by the backend.
+                val tokenFound = findInJson(jsonEl, "access_token") ?: findInJson(jsonEl, "token")
                 val userEl = findElementInJson(jsonEl, "user")
 
                 if (tokenFound != null && userEl != null) {
                     val userDto = json.decodeFromJsonElement<UserDto>(userEl)
-                    val auth = AuthResponseDto(user = userDto, token = tokenFound)
+                    val auth = AuthResponseDto(user = userDto, accessToken = tokenFound)
                     return ApiResponse(success = true, message = null, data = auth)
                 }
 

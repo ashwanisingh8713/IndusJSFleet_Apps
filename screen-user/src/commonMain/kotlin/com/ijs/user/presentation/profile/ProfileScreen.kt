@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.domain.entity.user.OrganizationStats
@@ -243,53 +244,43 @@ private fun ProfileContent(
 
 @Composable
 private fun ProfileHeader(user: User) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Avatar with border
-            Surface(
-                modifier = Modifier.size(100.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shadowElevation = 4.dp
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
+    // Delegates to the shared section card (promoted to ijs-ui-components-lib).
+    com.indusjs.uicomponents.components.FleetSectionCard {
+        // Compact identity row: avatar + name/email
+        Row(verticalAlignment = Alignment.CenterVertically) {
+                com.indusjs.uicomponents.components.FleetAvatar(
+                    name = user.fullName.ifBlank { user.email },
+                    size = 72.dp,
+                    textStyle = MaterialTheme.typography.headlineSmall
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "${user.firstName.firstOrNull()?.uppercaseChar() ?: ""}${user.lastName.firstOrNull()?.uppercaseChar() ?: ""}",
-                        style = MaterialTheme.typography.headlineLarge,
+                        text = user.fullName.ifBlank { user.email.ifBlank { "—" } },
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    if (user.email.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = user.email,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Full Name
-            Text(
-                text = user.fullName.ifBlank { user.email },
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Role + Account Status row
+            // Role + Account Status badges
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -297,7 +288,6 @@ private fun ProfileHeader(user: User) {
                 RoleBadge(role = user.role)
                 AccountStatusBadge(isActive = user.isActive)
             }
-        }
     }
 }
 
@@ -439,45 +429,12 @@ private fun EnhancedProfileCard(
     icon: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Section Header
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Surface(
-                    modifier = Modifier.size(36.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = icon,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            content()
-        }
-    }
+    // Delegates to the shared section card (promoted to ijs-ui-components-lib).
+    com.indusjs.uicomponents.components.FleetTitledSectionCard(
+        title = title,
+        emoji = icon,
+        content = content
+    )
 }
 
 @Composable
@@ -630,16 +587,11 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
 
 @Composable
 private fun SectionLabel(text: String, icon: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = icon, style = MaterialTheme.typography.titleSmall)
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = text,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
+    // Delegates to the shared section header (promoted to ijs-ui-components-lib).
+    com.indusjs.uicomponents.components.FleetSectionHeader(
+        title = text,
+        emoji = icon
+    )
 }
 
 @Composable
@@ -649,35 +601,17 @@ private fun EnhancedStatItem(
     label: String,
     color: androidx.compose.ui.graphics.Color
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    // Transparent, centered stat tile (no tinted box) -> showBackground=false, centered=true.
+    com.indusjs.uicomponents.components.FleetMetricTile(
+        value = value,
+        label = label,
+        emoji = icon,
+        accent = color,
+        valueColor = color,
+        showBackground = false,
+        centered = true,
         modifier = Modifier.padding(horizontal = 8.dp)
-    ) {
-        Surface(
-            modifier = Modifier.size(48.dp),
-            shape = RoundedCornerShape(12.dp),
-            color = color.copy(alpha = 0.15f)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = icon,
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    )
 }
 
 @Composable
@@ -687,37 +621,17 @@ private fun EnhancedStatItemWithIcon(
     label: String,
     color: androidx.compose.ui.graphics.Color
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    // Transparent, centered stat tile (no tinted box) -> showBackground=false, centered=true.
+    com.indusjs.uicomponents.components.FleetMetricTile(
+        value = value,
+        label = label,
+        iconRes = iconRes,
+        accent = color,
+        valueColor = color,
+        showBackground = false,
+        centered = true,
         modifier = Modifier.padding(horizontal = 8.dp)
-    ) {
-        Surface(
-            modifier = Modifier.size(48.dp),
-            shape = RoundedCornerShape(12.dp),
-            color = color.copy(alpha = 0.15f)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = label,
-                    modifier = Modifier.size(28.dp),
-                    tint = color
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    )
 }
 
 @Composable
@@ -851,18 +765,19 @@ private fun EditProfileContent(
     ) {
         // Header
         item {
-            Card(
+            // Tinted hero card -> FleetSectionCard with containerColor = the original
+            // primaryContainer .3 tint, border = null. The centered hero layout (64dp chip
+            // above a centered title/subtitle) can't be expressed by FleetSectionHeader's
+            // left-aligned row, so the inner centered content stays bespoke.
+            com.indusjs.uicomponents.components.FleetSectionCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                border = null,
+                elevation = 0.dp,
+                contentPadding = 20.dp
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Surface(
@@ -896,45 +811,14 @@ private fun EditProfileContent(
 
         // Form Card
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            com.indusjs.uicomponents.components.FleetTitledSectionCard(
+                title = stringResource(Res.string.profile_personal_details),
+                emoji = "📋",
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Section Header
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            modifier = Modifier.size(36.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = "📋",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = stringResource(Res.string.profile_personal_details),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     OutlinedTextField(
                         value = firstName,
                         onValueChange = onFirstNameChange,
@@ -1040,18 +924,8 @@ private fun EditProfileContent(
 
 private fun formatDate(isoDate: String): String {
     if (isoDate.isBlank()) return "—"
-    // Convert ISO date (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ) to DD-MM-YYYY format
-    return try {
-        val datePart = isoDate.split("T").firstOrNull() ?: isoDate
-        val parts = datePart.split("-")
-        if (parts.size == 3) {
-            "${parts[2]}-${parts[1]}-${parts[0]}" // DD-MM-YYYY
-        } else {
-            datePart
-        }
-    } catch (_: Exception) {
-        isoDate
-    }
+    // Canonical app-wide date display (ISO/epoch -> "DD-MMM-YYYY").
+    return com.indusjs.fleet.core.util.formatDateToHumanReadable(isoDate).ifBlank { "—" }
 }
 
 /**

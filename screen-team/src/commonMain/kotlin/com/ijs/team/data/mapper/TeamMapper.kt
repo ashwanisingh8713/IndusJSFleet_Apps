@@ -18,8 +18,9 @@ object TeamMapper {
         role = role.toTeamMemberRole(),
         ownerId = ownerId.toString(),
         isActive = isActive,
+        isCaretakerEligible = isCaretakerEligible,
         createdAt = createdAt,
-        updatedAt = updatedAt ?: createdAt
+        updatedAt = updatedAt
     )
 
     fun List<TeamMemberDto>.toDomain(): List<TeamMember> = map { it.toDomain() }

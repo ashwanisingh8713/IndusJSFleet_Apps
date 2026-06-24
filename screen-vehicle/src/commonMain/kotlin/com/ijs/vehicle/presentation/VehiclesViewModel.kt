@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.domain.repository.states.StatesRepository
 import com.ijs.vehicle.domain.entity.VehicleStatus
 import com.ijs.vehicle.domain.usecase.DeleteVehicleUseCase
@@ -12,6 +13,10 @@ import com.ijs.vehicle.presentation.VehiclesContract.Effect
 import com.ijs.vehicle.presentation.VehiclesContract.Intent
 import com.ijs.vehicle.presentation.VehiclesContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_delete_vehicle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_vehicles
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_vehicle_deleted
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -85,13 +90,15 @@ class VehiclesViewModel(
                         applyFilters()
                     }
                     is Result.Error -> {
+                        val errorText = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_load_vehicles)
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = result.message ?: "Failed to load vehicles"
+                                error = errorText
                             )
                         }
-                        sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load vehicles"))
+                        sendEffect(Effect.ShowSnackbar(errorText))
                     }
                 }
             }
@@ -153,10 +160,13 @@ class VehiclesViewModel(
                         )
                     }
                     applyFilters()
-                    sendEffect(Effect.ShowSnackbar("Vehicle deleted successfully"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_vehicle_deleted)))
                 }
                 is Result.Error -> {
-                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to delete vehicle"))
+                    sendEffect(Effect.ShowSnackbar(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_delete_vehicle)
+                    ))
                 }
                 is Result.Loading -> { /* Not applicable for suspend function */ }
             }

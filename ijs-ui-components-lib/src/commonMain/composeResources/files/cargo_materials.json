@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "materials": [
+    { "id": "gitti_0.5_inch", "label": "Gitti Half Inch", "label_hi": "गिट्टी Half Inch", "units": ["M.Ton", "Quintal", "CFT", "KG"],            "defaultUnit": "M.Ton" },
+    { "id": "gitti_1_inch",   "label": "Gitti One Inch",  "label_hi": "गिट्टी One Inch",  "units": ["M.Ton", "Quintal", "CFT", "KG"],            "defaultUnit": "M.Ton" },
+    { "id": "stone_4_inch",   "label": "Stone Four Inch", "label_hi": "Stone Four Inch",  "units": ["M.Ton", "Quintal", "CFT", "KG"],            "defaultUnit": "M.Ton" },
+    { "id": "balu",           "label": "Sand",            "label_hi": "बालू (रेत)",        "units": ["CFT", "M.Ton", "Quintal", "KG"],            "defaultUnit": "CFT" },
+    { "id": "bhakshi",        "label": "Bhakshi",         "label_hi": "भकशी",              "units": ["M.Ton", "Quintal", "KG"],                   "defaultUnit": "M.Ton" },
+    { "id": "enta",           "label": "Enta (Bricks)",   "label_hi": "ईंट",               "units": ["M.Ton", "Unit", "Bags", "KG"],              "defaultUnit": "Unit" },
+    { "id": "hazardous",      "label": "Hazardous",       "label_hi": "खतरनाक सामग्री",     "units": ["Liter", "KG", "M.Ton", "Quintal"],          "defaultUnit": "Liter" },
+    { "id": "valuable",       "label": "Valuable",        "label_hi": "मूल्यवान सामान",     "units": ["KG", "Quintal", "Bags"],                    "defaultUnit": "KG" },
+    { "id": "others",         "label": "Others",          "label_hi": "अन्य",              "units": ["KG", "M.Ton", "Quintal", "Liter", "CFT", "Bags"], "defaultUnit": "KG" }
+  ],
+  "allUnits": ["KG", "M.Ton", "Quintal", "Liter", "CFT", "Bags"],
+  "unitLabels": [
+    { "value": "KG",      "label": "KG",      "label_hi": "किग्रा" },
+    { "value": "M.Ton",   "label": "M.Ton",   "label_hi": "मीट्रिक टन" },
+    { "value": "Quintal", "label": "Quintal", "label_hi": "क्विंटल" },
+    { "value": "Liter",   "label": "Liter",   "label_hi": "लीटर" },
+    { "value": "CFT",     "label": "CFT",     "label_hi": "घन फीट" },
+    { "value": "Bags",    "label": "Bags",    "label_hi": "बोरी" },
+    { "value": "Unit",    "label": "Unit",    "label_hi": "नग" }
+  ]
+}

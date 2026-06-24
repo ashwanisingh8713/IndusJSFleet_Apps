@@ -206,8 +206,8 @@ fun PaymentsScreen(
                                         "${state.filter.startDate ?: ""} - ${state.filter.endDate ?: ""}"
                                     } else null
                                     val filterInfo = listOfNotNull(
+                                        state.selectedCustomerName,
                                         state.filter.paymentType?.displayName,
-                                        state.filter.paymentMode?.displayName,
                                         state.filter.paymentStatus?.let { status ->
                                             state.paymentStateLabels[status.apiValue] ?: status.displayName
                                         }
@@ -223,7 +223,7 @@ fun PaymentsScreen(
                                                 amount = payment.amount,
                                                 paymentType = payment.typeDisplay,
                                                 paymentMode = payment.modeDisplay,
-                                                paymentDate = payment.paymentDate?.take(10) ?: "",
+                                                paymentDate = com.indusjs.fleet.core.util.formatDateToHumanReadable(payment.paymentDate),
                                                 paymentStatus = state.paymentStateLabels[payment.paymentStatus.apiValue] ?: payment.paymentStatus.displayName,
                                                 receiptNumber = payment.receiptNumber,
                                                 startLocation = payment.tripInfo?.startLocation,
@@ -371,7 +371,7 @@ fun PaymentsScreen(
                 state.error != null && state.payments.isEmpty() -> {
                     // Actual error occurred - show error content
                     PaymentsErrorContent(
-                        error = state.error ?: "Something went wrong",
+                        error = state.error?.resolve() ?: stringResource(Res.string.finance_error_generic),
                         onRetry = { viewModel.sendIntent(PaymentsContract.Intent.LoadPayments) },
                         onAddPayment = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToAddPayment) }
                     )
@@ -405,6 +405,7 @@ fun PaymentsScreen(
                                 FilterChipRow(
                                     filter = state.filter,
                                     onClear = { viewModel.sendIntent(PaymentsContract.Intent.ResetFilter) },
+                                    customerName = state.selectedCustomerName,
                                     paymentStateLabels = state.paymentStateLabels
                                 )
                             }
@@ -481,9 +482,10 @@ fun PaymentsScreen(
     if (state.showFilterSheet) {
         PaymentFilterBottomSheet(
             filter = state.tempFilter,
+            customers = state.customers,
             onDismiss = { viewModel.sendIntent(PaymentsContract.Intent.HideFilterSheet) },
+            onUpdateCustomer = { viewModel.sendIntent(PaymentsContract.Intent.UpdateTempFilterCustomer(it)) },
             onUpdateType = { viewModel.sendIntent(PaymentsContract.Intent.UpdateTempFilterType(it)) },
-            onUpdateMode = { viewModel.sendIntent(PaymentsContract.Intent.UpdateTempFilterMode(it)) },
             onUpdateStatus = { viewModel.sendIntent(PaymentsContract.Intent.UpdateTempFilterStatus(it)) },
             onUpdateDateRange = { start: String?, end: String? ->
                 viewModel.sendIntent(PaymentsContract.Intent.UpdateTempFilterDateRange(start, end))

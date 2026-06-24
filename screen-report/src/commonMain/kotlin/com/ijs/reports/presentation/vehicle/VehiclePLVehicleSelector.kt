@@ -69,7 +69,7 @@ internal fun VehicleFilterSheetContent(
         FleetSearchField(
             query = searchQuery,
             onQueryChange = onSearchChange,
-            placeholder = "Search vehicles...",
+            placeholder = stringResource(Res.string.reports_search_vehicles_placeholder),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -78,10 +78,10 @@ internal fun VehicleFilterSheetContent(
         // Select All / Clear All
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onSelectAll) {
-                Text("Select All (${vehicles.size})")
+                Text(stringResource(Res.string.reports_select_all_count, vehicles.size))
             }
             TextButton(onClick = onClearAll) {
-                Text("Clear All")
+                Text(stringResource(Res.string.reports_clear_all))
             }
         }
 
@@ -145,7 +145,7 @@ internal fun VehicleFilterSheetContent(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(10.dp)
             ) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
             Button(
                 onClick = onApply,
@@ -153,7 +153,7 @@ internal fun VehicleFilterSheetContent(
                 shape = RoundedCornerShape(10.dp),
                 enabled = selectedIds.isNotEmpty()
             ) {
-                Text("Apply Filter")
+                Text(stringResource(Res.string.reports_apply_filter))
             }
         }
     }
@@ -164,15 +164,6 @@ internal fun VehicleFilterSheetContent(
 // ============================================================================
 
 
-@Composable
-internal fun StickyVehicleHeader(
-    selectedVehicle: Vehicle?,
-    vehicleCount: Int,
-    isLoading: Boolean,
-    onChangeVehicle: () -> Unit
-) {
-    // Legacy - not used anymore
-}
 
 // ============================================================================
 // Vehicle Selector Bottom Sheet Content
@@ -227,7 +218,7 @@ internal fun VehicleSelectorContent(
         FleetSearchField(
             query = searchQuery,
             onQueryChange = onSearchChange,
-            placeholder = "Search vehicle number, make, driver...",
+            placeholder = stringResource(Res.string.reports_search_vehicle_hint),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -314,7 +305,7 @@ internal fun VehicleSelectorContent(
 
                 item {
                     Text(
-                        text = if (searchQuery.isNotBlank()) "Results" else "All Vehicles",
+                        text = if (searchQuery.isNotBlank()) stringResource(Res.string.reports_results_heading) else stringResource(Res.string.reports_all_vehicles_heading),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -332,8 +323,8 @@ internal fun VehicleSelectorContent(
                         ) {
                             Text(
                                 text = if (searchQuery.isNotBlank())
-                                    "No vehicles match \"$searchQuery\""
-                                else "No vehicles available",
+                                    stringResource(Res.string.reports_no_vehicles_match, searchQuery)
+                                else stringResource(Res.string.reports_no_vehicles_available),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -399,7 +390,7 @@ internal fun VehicleSelectorContent(
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_check),
-                                        contentDescription = "Selected",
+                                        contentDescription = stringResource(Res.string.reports_cd_selected),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(18.dp)
                                     )

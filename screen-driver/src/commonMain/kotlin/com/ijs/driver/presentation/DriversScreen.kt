@@ -1,19 +1,15 @@
 package com.ijs.driver.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,10 +17,14 @@ import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FilterDefinition
+import com.indusjs.uicomponents.components.FleetAvatar
 import com.indusjs.uicomponents.components.FleetFilterBar
+import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSearchField
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.driver.domain.entity.Driver
 import com.ijs.driver.domain.entity.DriverStatus
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -51,6 +51,15 @@ fun DriversScreen(
     }
     val snackbarHostState = remember { SnackbarHostState() }
     val pullRefreshState = rememberPullToRefreshState()
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
@@ -58,10 +67,10 @@ fun DriversScreen(
                 is DriversContract.Effect.NavigateToDriverDetail -> onNavigateToDetail(effect.driverId)
                 is DriversContract.Effect.NavigateToAddDriver -> onNavigateToAdd()
                 is DriversContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is DriversContract.Effect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
             }
         }
@@ -165,7 +174,7 @@ fun DriversScreen(
                 state.error != null -> {
                     // Using reusable ErrorContent component
                     ErrorContent(
-                        error = state.error!!,
+                        error = state.error?.resolve() ?: stringResource(Res.string.error_generic),
                         screenContext = FleetErrorContext.DRIVERS,
                         onRetry = { viewModel.sendIntent(DriversContract.Intent.LoadDrivers) }
                     )
@@ -253,19 +262,11 @@ private fun DriverCard(
     onClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetSectionCard(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column {
             // Header Row - Avatar, Name, Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -277,20 +278,7 @@ private fun DriverCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     // Avatar
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "${driver.firstName.firstOrNull() ?: ""}${driver.lastName.firstOrNull() ?: ""}".uppercase(),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
+                    FleetAvatar(name = driver.fullName)
 
                     Spacer(modifier = Modifier.width(12.dp))
 
@@ -398,32 +386,14 @@ private fun DriverInfoItem(
     label: String,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    FleetMetricTile(
+        value = value,
+        label = label,
+        emoji = icon,
+        showBackground = false,
+        centered = true,
         modifier = modifier.padding(horizontal = 8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    )
 }
 
 @Composable

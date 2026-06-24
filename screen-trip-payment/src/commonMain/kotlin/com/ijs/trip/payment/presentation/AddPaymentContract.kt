@@ -58,7 +58,7 @@ object AddPaymentContract {
         val receivedAtLocation: String = "",
 
         // Errors
-        val error: String? = null,
+        val error: UiText? = null,
         val amountError: UiText? = null,
         val tripError: UiText? = null,
         val dateError: UiText? = null,
@@ -107,9 +107,6 @@ object AddPaymentContract {
 
         val showDueDate: Boolean
             get() = paymentType == PaymentType.ADVANCE || paymentType == PaymentType.PARTIAL
-
-        val title: String
-            get() = if (isEditMode) "Edit Payment" else "Add Payment"
 
         /**
          * Minimum date for payment and due date (Trip Start Date).

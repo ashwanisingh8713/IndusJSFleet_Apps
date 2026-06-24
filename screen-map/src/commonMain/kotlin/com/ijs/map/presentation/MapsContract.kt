@@ -12,6 +12,24 @@ import com.indusjs.fleet.domain.entity.maps.MapVehicle
 object MapsContract {
 
     /**
+     * Live-location WebSocket connection status, surfaced in the UI so the user
+     * knows whether markers are updating in real time or are last-known seeds.
+     */
+    enum class LiveConnectionStatus {
+        /** Not attempting a connection (live tracking toggled off, or no session). */
+        IDLE,
+
+        /** Handshake in progress. */
+        CONNECTING,
+
+        /** Socket open; markers update from the live feed. */
+        CONNECTED,
+
+        /** Connect failed or socket dropped; seeded markers still shown. */
+        DISCONNECTED
+    }
+
+    /**
      * UI State for the Maps screen.
      */
     data class State(
@@ -24,7 +42,8 @@ object MapsContract {
         val showGeofences: Boolean = true,
         val mapZoom: Float = 5f,
         val centerLatitude: Double = 20.5937,
-        val centerLongitude: Double = 78.9629
+        val centerLongitude: Double = 78.9629,
+        val liveConnectionStatus: LiveConnectionStatus = LiveConnectionStatus.IDLE
     ) : UiState
 
     /**

@@ -290,14 +290,13 @@ class DriverRemoteDataSourceImpl(
             if (response.status.isSuccess()) {
                 DriverApiResponse(success = true, message = "Driver deleted successfully")
             } else {
-                val errorResponse = try {
-                    json.decodeFromString<DriverApiResponse<Unit>>(body)
-                } catch (e: Exception) {
-                    null
-                }
+                // The backend error envelope carries the message in errorMessage/
+                // developerMessage, NOT a `message` field — so route the body through
+                // ApiErrorHandler, which reads those and maps the delete-guard 409
+                // (driver_has_active_trips) to a friendly message.
                 DriverApiResponse(
                     success = false,
-                    message = errorResponse?.message ?: "Request failed with status ${response.status}"
+                    message = ApiErrorHandler.extractErrorMessage(response.status, body)
                 )
             }
         } catch (e: Exception) {

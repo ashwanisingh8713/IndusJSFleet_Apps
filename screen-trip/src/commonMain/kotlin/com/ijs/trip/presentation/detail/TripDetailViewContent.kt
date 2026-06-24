@@ -11,7 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetMetricTile
 import com.ijs.trip.domain.entity.Trip
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Trip header card showing trip number, status, vehicle, driver, and quick stats.
@@ -38,7 +42,7 @@ internal fun TripHeader(
         ) {
             // Trip Title
             Text(
-                text = trip.tripNumber ?: "Trip #${trip.id}",
+                text = trip.tripNumber ?: stringResource(Res.string.payment_trip_id, trip.id),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -53,7 +57,7 @@ internal fun TripHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Status",
+                    text = stringResource(Res.string.trip_detail_label_status),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -73,7 +77,7 @@ internal fun TripHeader(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Trip Price",
+                        text = stringResource(Res.string.payment_add_trip_price),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -82,7 +86,7 @@ internal fun TripHeader(
                         text = if (price != null && price > 0) {
                             formatCurrency(price)
                         } else {
-                            "Not Set"
+                            stringResource(Res.string.trip_detail_price_not_set)
                         },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
@@ -103,12 +107,12 @@ internal fun TripHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Vehicle",
+                    text = stringResource(Res.string.trip_detail_label_vehicle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = trip.vehicleNumber ?: "Not Assigned",
+                    text = trip.vehicleNumber ?: stringResource(Res.string.not_assigned),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
@@ -123,12 +127,12 @@ internal fun TripHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Driver",
+                    text = stringResource(Res.string.trip_detail_label_driver),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = trip.driverName ?: "Not Assigned",
+                    text = trip.driverName ?: stringResource(Res.string.not_assigned),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
@@ -145,45 +149,25 @@ internal fun TripHeader(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = trip.displayInfo.distanceValue,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = trip.displayInfo.distanceLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = trip.displayInfo.durationValue,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = trip.displayInfo.durationLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = trip.priority?.replaceFirstChar { it.uppercaseChar() } ?: "Normal",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Priority",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                FleetMetricTile(
+                    value = trip.displayInfo.distanceValue,
+                    label = trip.displayInfo.distanceLabel,
+                    showBackground = false,
+                    centered = true
+                )
+                FleetMetricTile(
+                    value = trip.displayInfo.durationValue,
+                    label = trip.displayInfo.durationLabel,
+                    showBackground = false,
+                    centered = true
+                )
+                FleetMetricTile(
+                    value = trip.priority?.replaceFirstChar { it.uppercaseChar() }
+                        ?: stringResource(Res.string.trip_detail_priority_normal),
+                    label = stringResource(Res.string.trip_detail_label_priority),
+                    showBackground = false,
+                    centered = true
+                )
             }
         }
     }
@@ -195,7 +179,7 @@ internal fun TripHeader(
 @Composable
 internal fun RouteAndScheduleSection(trip: Trip) {
     EnhancedSectionCard(
-        title = "Route & Schedule",
+        title = stringResource(Res.string.trip_detail_route_schedule),
         icon = "📍"
     ) {
         // Departure Section
@@ -225,14 +209,14 @@ internal fun RouteAndScheduleSection(trip: Trip) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Departure",
+                        text = stringResource(Res.string.trip_detail_departure),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = trip.startLocation?.address ?: "Not specified",
+                        text = trip.startLocation?.address ?: stringResource(Res.string.trip_detail_not_specified),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2
@@ -241,9 +225,8 @@ internal fun RouteAndScheduleSection(trip: Trip) {
             }
 
             val departureDateTime = formatScheduleDateTime(
-                isoDateTime = trip.plannedStart,
-                date = trip.scheduledDate,
-                time = trip.startTime
+                dateTimeMs = trip.plannedStart,
+                fallbackDateMs = trip.scheduledDate
             )
             if (departureDateTime.isNotBlank()) {
                 Column(horizontalAlignment = Alignment.End) {
@@ -305,14 +288,14 @@ internal fun RouteAndScheduleSection(trip: Trip) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Arrival",
+                        text = stringResource(Res.string.trip_detail_arrival),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = trip.endLocation?.address ?: "Not specified",
+                        text = trip.endLocation?.address ?: stringResource(Res.string.trip_detail_not_specified),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2
@@ -321,9 +304,8 @@ internal fun RouteAndScheduleSection(trip: Trip) {
             }
 
             val arrivalDateTime = formatScheduleDateTime(
-                isoDateTime = trip.plannedEnd,
-                date = trip.deliveryDate,
-                time = trip.deliveryTime
+                dateTimeMs = trip.plannedEnd,
+                fallbackDateMs = trip.deliveryDate
             )
             if (arrivalDateTime.isNotBlank()) {
                 Column(horizontalAlignment = Alignment.End) {

@@ -7,7 +7,19 @@ import com.ijs.customer.presentation.create.CreateCustomerContract.Effect
 import com.ijs.customer.presentation.create.CreateCustomerContract.Intent
 import com.ijs.customer.presentation.create.CreateCustomerContract.State
 import com.indusjs.error.result.Result
+import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_company_name_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_contact_person_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_create_customer
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_email_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_gst_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_10_digits
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_start_digit
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_customer_created
 
 /**
  * ViewModel for Create Customer Screen.
@@ -33,21 +45,20 @@ class CreateCustomerViewModel(
     }
 
     private fun updateCompanyName(value: String) {
-        val error = if (value.isBlank()) "Company name is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_company_name_required) else null
         updateState { copy(companyName = value, companyNameError = error) }
     }
 
     private fun updatePersonName(value: String) {
-        val error = if (value.isBlank()) "Contact person is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_contact_person_required) else null
         updateState { copy(personName = value, personNameError = error) }
     }
 
     private fun updatePrimaryContact(value: String) {
         val digits = value.filter { it.isDigit() }.take(10)
         val error = when {
-            digits.isBlank() -> "Mobile number is required"
-            digits.length != 10 -> "Enter 10-digit mobile number"
-            !digits.first().toString().matches(Regex("[6-9]")) -> "Mobile must start with 6-9"
+            digits.isBlank() -> UiText.StringRes(Res.string.error_mobile_required)
+            !ValidationUtils.isValidIndianMobile(digits) -> UiText.StringRes(Res.string.error_mobile_invalid)
             else -> null
         }
         updateState { copy(primaryContact = digits, primaryContactError = error) }
@@ -55,19 +66,15 @@ class CreateCustomerViewModel(
 
     private fun updateSecondaryContact(value: String) {
         val digits = value.filter { it.isDigit() }.take(10)
-        val error = if (digits.isNotBlank()) {
-            when {
-                digits.length != 10 -> "Enter valid 10-digit mobile"
-                !digits.first().toString().matches(Regex("[6-9]")) -> "Mobile must start with 6-9"
-                else -> null
-            }
+        val error = if (digits.isNotBlank() && !ValidationUtils.isValidIndianMobile(digits)) {
+            UiText.StringRes(Res.string.error_mobile_invalid)
         } else null
         updateState { copy(secondaryContact = digits, secondaryContactError = error) }
     }
 
     private fun updateEmail(value: String) {
         val error = if (value.isNotBlank() && !ValidationUtils.isValidEmail(value)) {
-            "Invalid email format"
+            UiText.StringRes(Res.string.error_email_invalid)
         } else null
         updateState { copy(email = value, emailError = error) }
     }
@@ -76,8 +83,8 @@ class CreateCustomerViewModel(
         val gst = value.uppercase().filter { it.isLetterOrDigit() }.take(15)
         val error = if (gst.isNotBlank()) {
             when {
-                gst.length != 15 -> "GST must be 15 characters"
-                !gst.matches(Regex("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")) -> "Invalid GST format"
+                gst.length != 15 -> UiText.StringRes(Res.string.error_gst_invalid)
+                !gst.matches(Regex("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")) -> UiText.StringRes(Res.string.error_gst_invalid)
                 else -> null
             }
         } else null
@@ -101,14 +108,16 @@ class CreateCustomerViewModel(
         )) {
             is Result.Success -> {
                 updateState { copy(isSaving = false) }
-                sendEffect(Effect.ShowSnackbar("Customer created successfully"))
+                sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_customer_created)))
                 sendEffect(Effect.NavigateToCustomerDetail(result.data.id))
             }
             is Result.Error -> {
                 updateState {
                     copy(
                         isSaving = false,
-                        error = result.message ?: result.exception.message ?: "Failed to create customer"
+                        error = (result.message ?: result.exception.message)
+                            ?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_create_customer)
                     )
                 }
             }
@@ -117,14 +126,14 @@ class CreateCustomerViewModel(
     }
 
     private fun validateFields(): Boolean {
-        val companyNameError = if (state.value.companyName.isBlank()) "Company name is required" else null
-        val personNameError = if (state.value.personName.isBlank()) "Contact person is required" else null
+        val companyNameError = if (state.value.companyName.isBlank()) UiText.StringRes(Res.string.error_company_name_required) else null
+        val personNameError = if (state.value.personName.isBlank()) UiText.StringRes(Res.string.error_contact_person_required) else null
 
         val primaryContactError = state.value.primaryContact.let { contact ->
             when {
-                contact.isBlank() -> "Mobile number is required"
-                contact.length != 10 -> "Enter 10-digit mobile number"
-                !contact.first().toString().matches(Regex("[6-9]")) -> "Mobile must start with 6-9"
+                contact.isBlank() -> UiText.StringRes(Res.string.error_mobile_required)
+                contact.length != 10 -> UiText.StringRes(Res.string.error_mobile_10_digits)
+                !contact.first().toString().matches(Regex("[6-9]")) -> UiText.StringRes(Res.string.error_mobile_start_digit)
                 else -> null
             }
         }
@@ -132,22 +141,22 @@ class CreateCustomerViewModel(
         val secondaryContactError = state.value.secondaryContact.let { contact ->
             if (contact.isNotBlank()) {
                 when {
-                    contact.length != 10 -> "Enter valid 10-digit mobile"
-                    !contact.first().toString().matches(Regex("[6-9]")) -> "Mobile must start with 6-9"
+                    contact.length != 10 -> UiText.StringRes(Res.string.error_mobile_invalid)
+                    !contact.first().toString().matches(Regex("[6-9]")) -> UiText.StringRes(Res.string.error_mobile_start_digit)
                     else -> null
                 }
             } else null
         }
 
         val emailError = if (state.value.email.isNotBlank() && !ValidationUtils.isValidEmail(state.value.email)) {
-            "Invalid email format"
+            UiText.StringRes(Res.string.error_email_invalid)
         } else null
 
         val gstNumberError = state.value.gstNumber.let { gst ->
             if (gst.isNotBlank()) {
                 when {
-                    gst.length != 15 -> "GST must be 15 characters"
-                    !gst.matches(Regex("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")) -> "Invalid GST format"
+                    gst.length != 15 -> UiText.StringRes(Res.string.error_gst_invalid)
+                    !gst.matches(Regex("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")) -> UiText.StringRes(Res.string.error_gst_invalid)
                     else -> null
                 }
             } else null

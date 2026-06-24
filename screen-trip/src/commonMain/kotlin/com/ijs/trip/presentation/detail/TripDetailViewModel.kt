@@ -4,8 +4,8 @@ import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.trip.TAG_TRIP_DETAIL_VM
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.permission.PermissionChecker
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
-import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.states.StatesRepository
 import com.ijs.customer.domain.entity.Customer
@@ -44,7 +44,7 @@ class TripDetailViewModel(
     private val tripRepository: TripRepository,
     private val getVehiclesUseCase: GetVehiclesUseCase,
     private val getDriversUseCase: GetDriversUseCase,
-    private val userLocalDataSource: UserLocalDataSource,
+    private val permissionChecker: PermissionChecker,
     private val googlePlacesService: GooglePlacesService? = null,
     private val customerRepository: CustomerRepository? = null,
     private val tripPaymentRepository: TripPaymentRepository? = null,
@@ -67,7 +67,7 @@ class TripDetailViewModel(
         costsRepository = costsRepository,
         getVehiclesUseCase = getVehiclesUseCase,
         getDriversUseCase = getDriversUseCase,
-        userLocalDataSource = userLocalDataSource,
+        permissionChecker = permissionChecker,
         customerRepository = customerRepository,
         tripPaymentRepository = tripPaymentRepository,
         logger = logger
@@ -111,6 +111,10 @@ class TripDetailViewModel(
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
             is Intent.LoadTrip -> dataLoader.loadTrip(intent.tripId)
+            is Intent.RetryLoadCosts -> {
+                val tid = currentState.trip?.id ?: currentState.tripId
+                tid?.let { dataLoader.loadTripCosts(it) }
+            }
             is Intent.Refresh -> {
                 if (!currentState.isLoading && !currentState.isLoadingPayments && !currentState.isLoadingCosts) {
                     val tid = currentState.trip?.id ?: currentState.tripId
@@ -188,6 +192,8 @@ class TripDetailViewModel(
 
             // Pricing updates
             is Intent.UpdateTripPrice -> updateState { copy(tripPrice = intent.value) }
+            is Intent.UpdateActualPrice -> updateState { copy(actualPrice = intent.value) }
+            is Intent.UpdatePurchasePrice -> updateState { copy(purchasePrice = intent.value) }
 
             // Actions
             is Intent.UpdateStatus -> actionHandler.updateStatus(intent.status)
@@ -220,12 +226,7 @@ class TripDetailViewModel(
         }
 
         if (!currentState.canEdit) {
-            val message = if (currentState.userRole.lowercase().replace("_", "") == "supervisor") {
-                "Supervisors cannot edit trips"
-            } else {
-                "Only planned trips can be edited"
-            }
-            sendEffect(Effect.ShowSnackbar(message))
+            sendEffect(Effect.ShowSnackbar("You don't have permission to edit this trip"))
             return
         }
 
@@ -238,10 +239,10 @@ class TripDetailViewModel(
         val trip = currentState.trip
         if (trip != null) {
             val (depDate, depTime) = dataLoader.parseScheduleDateTime(
-                isoDateTime = trip.plannedStart, date = trip.scheduledDate, time = trip.startTime
+                timestampMs = trip.plannedStart ?: trip.scheduledDate, fallbackTimeMs = trip.startTime
             )
             val (arrDate, arrTime) = dataLoader.parseScheduleDateTime(
-                isoDateTime = trip.plannedEnd, date = trip.deliveryDate, time = trip.deliveryTime
+                timestampMs = trip.plannedEnd ?: trip.deliveryDate, fallbackTimeMs = trip.deliveryTime
             )
 
             updateState {
@@ -272,6 +273,9 @@ class TripDetailViewModel(
                     priority = trip.priority ?: "",
                     notes = trip.notes ?: "",
                     tripPrice = trip.tripPrice?.toString() ?: "",
+                    // Actual price (revenue) defaults to the quote; purchase price = COGS.
+                    actualPrice = (trip.sellingValue ?: trip.tripPrice)?.toString() ?: "",
+                    purchasePrice = trip.purchasePrice?.toString() ?: "",
                     vehicleError = null,
                     driverError = null,
                     startLocationError = null,

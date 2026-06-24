@@ -29,6 +29,7 @@ import com.indusjs.fleet.domain.entity.dashboard.AlertType
 import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import com.indusjs.fleet.domain.entity.dashboard.DocumentStats
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -46,70 +47,18 @@ internal fun AlertsSection(
     onAlertDismiss: (String) -> Unit,
     onViewAllClick: () -> Unit = {}
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    DashboardSectionCard {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            // Header with View All button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "⚠️",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(Res.string.dashboard_alerts),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val alertCount = if (alertsSummary.totalAlerts > 0) alertsSummary.totalAlerts else alerts.size
-                    if (alertCount > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.errorContainer
-                        ) {
-                            Text(
-                                text = "$alertCount",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-                    TextButton(onClick = onViewAllClick) {
-                        Text(
-                            text = stringResource(Res.string.action_view_all),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_chevron_right),
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
+            val alertCount = if (alertsSummary.totalAlerts > 0) alertsSummary.totalAlerts else alerts.size
+            DashboardSectionHeader(
+                title = stringResource(Res.string.dashboard_alerts) + if (alertCount > 0) " ($alertCount)" else "",
+                emoji = "⚠️",
+                accent = MaterialTheme.colorScheme.error,
+                actionLabel = stringResource(Res.string.action_view_all),
+                onActionClick = onViewAllClick
+            )
 
             // Enhanced Alerts Summary with detailed counts
             if (alertsSummary.totalAlerts > 0) {
@@ -238,6 +187,18 @@ internal fun AlertsSection(
                     successStyle = true
                 )
             } else {
+                // The missing/expired-document banners are DERIVED nudges, separate from the
+                // counted alerts shown in the header badge (and the "View All" list). Label them
+                // so the badge count doesn't look wrong vs the number of cards rendered.
+                if (hasMissingDocuments || hasDocumentIssues) {
+                    Text(
+                        text = stringResource(Res.string.alerts_other_reminders),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                }
                 // Show missing documents warning
                 if (hasMissingDocuments) {
                     AlertWarningBanner(

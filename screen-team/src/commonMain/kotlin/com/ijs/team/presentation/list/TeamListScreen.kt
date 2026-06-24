@@ -18,8 +18,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetAvatar
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.components.FleetPasswordField
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.theme.FleetStatusColors
@@ -180,7 +184,7 @@ fun TeamListScreen(
 
                     state.error != null -> {
                         ErrorContent(
-                            error = state.error ?: stringResource(Res.string.error_generic),
+                            error = state.error?.resolve() ?: stringResource(Res.string.error_generic),
                             screenContext = FleetErrorContext.TEAM,
                             onRetry = { viewModel.sendIntent(TeamListContract.Intent.LoadTeamMembers) }
                         )
@@ -296,70 +300,22 @@ private fun EmptyTeamContent(
     searchQuery: String,
     onAddMember: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        // Icon
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(100.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = if (searchQuery.isNotEmpty()) "🔍" else "👥",
-                    style = MaterialTheme.typography.displaySmall
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = if (searchQuery.isNotEmpty()) {
-                stringResource(Res.string.team_no_results)
-            } else {
-                stringResource(Res.string.team_no_members_yet)
-            },
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = if (searchQuery.isNotEmpty()) {
-                stringResource(Res.string.team_no_results_message)
-            } else {
-                stringResource(Res.string.team_empty_description)
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-
-        if (searchQuery.isEmpty()) {
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = onAddMember,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_add),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(Res.string.team_add_member))
-            }
-        }
-    }
+    val isSearching = searchQuery.isNotEmpty()
+    EmptyContent(
+        icon = if (isSearching) "🔍" else "👥",
+        title = if (isSearching) {
+            stringResource(Res.string.team_no_results)
+        } else {
+            stringResource(Res.string.team_no_members_yet)
+        },
+        message = if (isSearching) {
+            stringResource(Res.string.team_no_results_message)
+        } else {
+            stringResource(Res.string.team_empty_description)
+        },
+        actionLabel = if (isSearching) null else stringResource(Res.string.team_add_member),
+        onAction = if (isSearching) null else onAddMember
+    )
 }
 
 /**
@@ -412,48 +368,35 @@ private fun EnhancedTeamMemberCard(
     onDelete: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showDisableDialog by remember { mutableStateOf(false) }
     var showActionsMenu by remember { mutableStateOf(false) }
 
-    Card(
-        onClick = onClick,
+    FleetSectionCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        onClick = onClick
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar with role-based color
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when (member.role) {
-                            TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
-                            TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
-                            TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
-                        }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = member.initials.uppercase(),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = when (member.role) {
-                        TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.onTertiary
-                        TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.onPrimary
-                        TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.onSecondary
-                    }
-                )
+            val roleColor = when (member.role) {
+                TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
+                TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
+                TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
             }
+            val onRoleColor = when (member.role) {
+                TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.onTertiary
+                TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.onPrimary
+                TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.onSecondary
+            }
+            FleetAvatar(
+                name = member.fullName,
+                size = 56.dp,
+                background = roleColor,
+                contentColor = onRoleColor,
+                textStyle = MaterialTheme.typography.titleLarge
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -573,7 +516,13 @@ private fun EnhancedTeamMemberCard(
                             },
                             onClick = {
                                 showActionsMenu = false
-                                onToggleActive()
+                                // Disabling access is consequential — confirm first.
+                                // Enabling is non-destructive and applied immediately.
+                                if (member.isActive) {
+                                    showDisableDialog = true
+                                } else {
+                                    onToggleActive()
+                                }
                             },
                             leadingIcon = {
                                 Text(if (member.isActive) "🚫" else "✅")
@@ -667,57 +616,47 @@ private fun EnhancedTeamMemberCard(
             shape = RoundedCornerShape(16.dp)
         )
     }
-}
 
-// Legacy components (kept for backward compatibility)
-@Composable
-private fun StatsCard(
-    title: String,
-    count: Int,
-    emoji: String,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+    // Disable Access Confirmation Dialog
+    if (showDisableDialog) {
+        AlertDialog(
+            onDismissRequest = { showDisableDialog = false },
+            icon = {
+                Text("🚫", style = MaterialTheme.typography.headlineSmall)
+            },
+            title = {
+                Text(
+                    stringResource(Res.string.team_disable_title),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    stringResource(Res.string.team_disable_message, member.fullName),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDisableDialog = false
+                        onToggleActive()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(Res.string.team_action_disable))
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDisableDialog = false }) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            },
+            shape = RoundedCornerShape(16.dp)
         )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = emoji, style = MaterialTheme.typography.headlineMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = count.toString(), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-            Text(text = title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
     }
-}
-
-@Composable
-private fun FilterTabs(
-    selectedFilter: TeamListContract.FilterType,
-    onFilterSelected: (TeamListContract.FilterType) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    EnhancedFilterTabs(selectedFilter, onFilterSelected, modifier)
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TeamMemberCard(
-    member: TeamMember,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    EnhancedTeamMemberCard(
-        member = member,
-        onClick = onClick,
-        onDelete = onDelete
-    )
 }
 
 /**
@@ -732,7 +671,6 @@ private fun ResetPasswordDialog(
 ) {
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
     var passwordError by remember { mutableStateOf<UiText?>(null) }
 
     AlertDialog(
@@ -753,15 +691,14 @@ private fun ResetPasswordDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
+                FleetPasswordField(
                     value = password,
                     onValueChange = {
                         password = it
                         passwordError = null
                     },
-                    label = { Text(stringResource(Res.string.team_label_new_password)) },
-                    placeholder = { Text(stringResource(Res.string.team_placeholder_new_password)) },
-                    singleLine = true,
+                    label = stringResource(Res.string.team_label_new_password),
+                    placeholder = stringResource(Res.string.team_placeholder_new_password),
                     isError = passwordError != null,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
@@ -769,15 +706,14 @@ private fun ResetPasswordDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                OutlinedTextField(
+                FleetPasswordField(
                     value = confirmPassword,
                     onValueChange = {
                         confirmPassword = it
                         passwordError = null
                     },
-                    label = { Text(stringResource(Res.string.team_label_confirm_new_password)) },
-                    placeholder = { Text(stringResource(Res.string.team_placeholder_confirm_new_password)) },
-                    singleLine = true,
+                    label = stringResource(Res.string.team_label_confirm_new_password),
+                    placeholder = stringResource(Res.string.team_placeholder_confirm_new_password),
                     isError = passwordError != null,
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
@@ -796,16 +732,12 @@ private fun ResetPasswordDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    when {
-                        password.length < 6 -> {
-                            passwordError = UiText.StringRes(Res.string.error_password_min_chars)
-                        }
-                        password != confirmPassword -> {
-                            passwordError = UiText.StringRes(Res.string.error_passwords_mismatch)
-                        }
-                        else -> {
-                            onConfirm(password)
-                        }
+                    // Password policy is enforced by the backend; only the UI-level
+                    // confirm-match is checked here before submitting.
+                    if (password != confirmPassword) {
+                        passwordError = UiText.StringRes(Res.string.error_passwords_mismatch)
+                    } else {
+                        onConfirm(password)
                     }
                 },
                 enabled = !isLoading && password.isNotEmpty() && confirmPassword.isNotEmpty()

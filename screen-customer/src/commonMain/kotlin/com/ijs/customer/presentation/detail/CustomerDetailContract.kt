@@ -3,6 +3,7 @@ package com.ijs.customer.presentation.detail
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.customer.domain.entity.*
 import com.indusjs.pdfreport.model.CustomerTripsPdfData
 import com.indusjs.pdfreport.model.CustomerPaymentsPdfData
@@ -24,7 +25,9 @@ object CustomerDetailContract {
     enum class TripStateFilter(val apiValue: String?, val displayName: String) {
         ALL(null, "All"),
         PLANNED("planned", "Planned"),
-        ON_ROUTE("on_route", "On Route"),
+        // apiValue is the canonical backend trip state "in_progress" (was "on_route", which matched zero rows).
+        // Enum constant + displayName kept as ON_ROUTE / "On Route" so UI labels and string resources are unchanged.
+        ON_ROUTE("in_progress", "On Route"),
         COMPLETED("completed", "Completed"),
         CANCELLED("cancelled", "Cancelled")
     }
@@ -37,7 +40,7 @@ object CustomerDetailContract {
         val canViewFinancials: Boolean = false,
         val isEditMode: Boolean = false,
         val isSaving: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
 
         // Tab management
         val selectedTab: CustomerDetailTab = CustomerDetailTab.OVERVIEW,
@@ -53,18 +56,18 @@ object CustomerDetailContract {
         val notes: String = "",
 
         // Validation errors
-        val companyNameError: String? = null,
-        val personNameError: String? = null,
-        val primaryContactError: String? = null,
-        val secondaryContactError: String? = null,
-        val emailError: String? = null,
-        val gstNumberError: String? = null,
+        val companyNameError: UiText? = null,
+        val personNameError: UiText? = null,
+        val primaryContactError: UiText? = null,
+        val secondaryContactError: UiText? = null,
+        val emailError: UiText? = null,
+        val gstNumberError: UiText? = null,
 
         // Trips Tab State
         val trips: List<CustomerTrip> = emptyList(),
         val tripsSummary: CustomerTripsSummary? = null,
         val isLoadingTrips: Boolean = false,
-        val tripsError: String? = null,
+        val tripsError: UiText? = null,
         val tripsPage: Int = 1,
         val hasMoreTrips: Boolean = false,
         val tripStateFilter: TripStateFilter = TripStateFilter.ALL,
@@ -73,7 +76,7 @@ object CustomerDetailContract {
         // Pending Payments State
         val pendingPayments: List<CustomerPendingPayment> = emptyList(),
         val isLoadingPendingPayments: Boolean = false,
-        val pendingPaymentsError: String? = null,
+        val pendingPaymentsError: UiText? = null,
         val totalPendingAmount: Double = 0.0,
         val overdueCount: Int = 0,
         val pendingPaymentsPage: Int = 1,
@@ -83,7 +86,7 @@ object CustomerDetailContract {
         // Received Payments State
         val receivedPayments: List<CustomerPayment> = emptyList(),
         val isLoadingPayments: Boolean = false,
-        val paymentsError: String? = null,
+        val paymentsError: UiText? = null,
         val totalReceivedAmount: Double = 0.0,
         val paymentModeFilter: PaymentMode? = null,
         val paymentsPage: Int = 1,
@@ -94,7 +97,7 @@ object CustomerDetailContract {
         // Financials State
         val financialReport: CustomerFinancialReport? = null,
         val isLoadingFinancials: Boolean = false,
-        val financialsError: String? = null,
+        val financialsError: UiText? = null,
         val financialsPeriod: FinancialPeriod = FinancialPeriod.MONTHLY,
         val financialsStartDate: String = "",
         val financialsEndDate: String = "",
@@ -204,7 +207,7 @@ object CustomerDetailContract {
 
     sealed interface Effect : UiEffect {
         data object NavigateBack : Effect
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data class PdfExported(val filePath: String) : Effect
         data class PdfExportError(val message: String) : Effect
         data class ExportHtml(val content: String, val fileName: String) : Effect

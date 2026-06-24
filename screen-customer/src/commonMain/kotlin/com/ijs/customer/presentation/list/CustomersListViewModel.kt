@@ -9,7 +9,12 @@ import com.ijs.customer.presentation.list.CustomersListContract.Effect
 import com.ijs.customer.presentation.list.CustomersListContract.Intent
 import com.ijs.customer.presentation.list.CustomersListContract.State
 import com.indusjs.error.result.Result
+import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_customers
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_customers_synced
+import indusjsfleet.ijs_ui_components_lib.generated.resources.customers_sync_failed
 
 /**
  * ViewModel for Customers List Screen.
@@ -87,7 +92,8 @@ class CustomersListViewModel(
                         copy(
                             isLoading = false,
                             isInitialLoadComplete = true,
-                            error = result.message ?: "Failed to load customers"
+                            error = result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_load_customers)
                         )
                     }
                 } else {
@@ -112,11 +118,23 @@ class CustomersListViewModel(
                         hasMore = result.data.size >= 50
                     )
                 }
-                sendEffect(Effect.ShowSnackbar("${result.data.size} customers synced"))
+                sendEffect(
+                    Effect.ShowSnackbar(
+                        UiText.StringRes(
+                            Res.string.success_customers_synced,
+                            args = listOf(result.data.size)
+                        )
+                    )
+                )
             }
             is Result.Error -> {
                 updateState { copy(isRefreshing = false) }
-                sendEffect(Effect.ShowSnackbar(result.message ?: "Sync failed"))
+                sendEffect(
+                    Effect.ShowSnackbar(
+                        result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.customers_sync_failed)
+                    )
+                )
             }
             is Result.Loading -> { }
         }
@@ -144,7 +162,9 @@ class CustomersListViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = result.message ?: result.exception.message
+                        error = (result.message ?: result.exception.message)
+                            ?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_load_customers)
                     )
                 }
             }

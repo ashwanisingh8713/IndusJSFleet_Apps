@@ -8,9 +8,9 @@ data class LoanPayment(
     val vehiclePurchaseId: Int = 0,
     val vehicleId: Int = 0,
     val emiNumber: Int? = null,
-    val dueDate: String? = null,
+    val dueDate: Long? = null,
     val amount: Double = 0.0,
-    val paymentDate: String? = null,
+    val paymentDate: Long? = null,
     val principalAmount: Double = 0.0,
     val interestAmount: Double = 0.0,
     val lateFee: Double = 0.0,
@@ -22,8 +22,8 @@ data class LoanPayment(
     val transactionRef: String? = null,
     val notes: String? = null,
     val ownerId: Int = 0,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null
 ) {
     /**
      * Check if payment is completed
@@ -39,21 +39,16 @@ data class LoanPayment(
      * Check if payment is pending
      */
     val isPending: Boolean get() = paymentStatus == PaymentStatus.PENDING
-
-    /**
-     * Get display label for EMI
-     */
-    val emiLabel: String get() = emiNumber?.let { "EMI #$it" } ?: "Payment"
 }
 
 /**
  * Entry type - how the payment record was created
  */
-enum class EntryType(val value: String, val label: String) {
-    SCHEDULED("scheduled", "Scheduled"),
-    MANUAL("manual", "Manual"),
-    APP_PAYMENT("app_payment", "App Payment"),
-    AUTO_DEBIT("auto_debit", "Auto Debit");
+enum class EntryType(val value: String) {
+    SCHEDULED("scheduled"),
+    MANUAL("manual"),
+    APP_PAYMENT("app_payment"),
+    AUTO_DEBIT("auto_debit");
 
     companion object {
         fun fromValue(value: String): EntryType {
@@ -84,12 +79,12 @@ enum class PaymentMode(val value: String, val label: String) {
 /**
  * Payment status
  */
-enum class PaymentStatus(val value: String, val label: String) {
-    PENDING("pending", "Pending"),
-    PAID("paid", "Paid"),
-    OVERDUE("overdue", "Overdue"),
-    FAILED("failed", "Failed"),
-    CANCELLED("cancelled", "Cancelled");
+enum class PaymentStatus(val value: String) {
+    PENDING("pending"),
+    PAID("paid"),
+    OVERDUE("overdue"),
+    FAILED("failed"),
+    CANCELLED("cancelled");
 
     companion object {
         fun fromValue(value: String): PaymentStatus {
@@ -113,7 +108,7 @@ data class LoanSummary(
     val outstandingBalance: Double = 0.0,
     val emisPaid: Int = 0,
     val emisRemaining: Int = 0,
-    val nextEmiDueDate: String? = null,
+    val nextEmiDueDate: Long? = null,
     val nextEmiAmount: Double = 0.0,
     val loanStatus: LoanStatus = LoanStatus.ACTIVE,
     val financierName: String? = null
@@ -133,7 +128,7 @@ data class EmiAlert(
     val vehiclePurchaseId: Int = 0,
     val vehicle: VehicleBasicInfo? = null,
     val emiNumber: Int = 0,
-    val dueDate: String = "",
+    val dueDate: Long? = null,
     val amount: Double = 0.0,
     val daysUntilDue: Int = 0,
     val daysOverdue: Int = 0,

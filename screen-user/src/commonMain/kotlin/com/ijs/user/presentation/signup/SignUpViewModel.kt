@@ -2,6 +2,7 @@ package com.ijs.user.presentation.signup
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
@@ -91,10 +92,7 @@ class SignUpViewModel(
             return
         }
 
-        if (password.length < 6) {
-            updateState { copy(error = UiText.StringRes(Res.string.error_password_min_chars)) }
-            return
-        }
+        // Password policy (length/complexity) is enforced by the backend only.
 
         if (confirmPassword.isEmpty()) {
             updateState { copy(error = UiText.StringRes(Res.string.error_confirm_password_required)) }
@@ -148,11 +146,7 @@ class SignUpViewModel(
         }
     }
 
-    private fun isValidEmail(email: String): Boolean {
-        if (email.isBlank()) return false
-        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
-        return emailRegex.matches(email)
-    }
+    private fun isValidEmail(email: String): Boolean = ValidationUtils.isValidEmail(email)
 
     /**
      * Validates Indian mobile number.
@@ -160,11 +154,6 @@ class SignUpViewModel(
      * - Must be exactly 10 digits
      * - Must start with 6, 7, 8, or 9
      */
-    private fun isValidIndianMobile(mobile: String): Boolean {
-        if (mobile.length != 10) return false
-        if (!mobile.all { it.isDigit() }) return false
-        val firstDigit = mobile.firstOrNull() ?: return false
-        return firstDigit in listOf('6', '7', '8', '9')
-    }
+    private fun isValidIndianMobile(mobile: String): Boolean = ValidationUtils.isValidIndianMobile(mobile)
 }
 

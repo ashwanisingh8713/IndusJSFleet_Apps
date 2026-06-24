@@ -22,6 +22,7 @@ import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FilterDefinition
 import com.indusjs.uicomponents.components.FleetFilterBar
+import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.LoadingContent
@@ -416,7 +417,9 @@ private fun TripProgressIndicator(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(Res.string.trip_list_progress_percent, progressPercent),
+                // compose-resources does NOT collapse "%%", so pass a pre-formatted "<n>%"
+                // string. The string becomes "Progress: %1$s" (see needsString).
+                text = stringResource(Res.string.trip_list_progress_percent, "$progressPercent%"),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -556,47 +559,16 @@ private fun TripInfoItem(
     icon: String? = null,
     isNA: Boolean = false
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.padding(horizontal = 8.dp)
-    ) {
-        if (icon != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = icon,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (isNA) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                           else MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = if (isNA) FontWeight.Normal else FontWeight.Bold,
-                    color = if (isNA) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                           else MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1
-                )
-            }
-        } else {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = if (isNA) FontWeight.Normal else FontWeight.SemiBold,
-                color = if (isNA) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                       else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1
-            )
-        }
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(
+        value = value,
+        label = label,
+        modifier = modifier,
+        emoji = icon,
+        valueColor = if (isNA) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        else MaterialTheme.colorScheme.onSurface,
+        showBackground = false,
+        centered = true
+    )
 }
 
 @Composable

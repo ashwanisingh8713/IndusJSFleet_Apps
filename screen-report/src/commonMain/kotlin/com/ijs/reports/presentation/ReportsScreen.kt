@@ -15,8 +15,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.uicomponents.components.FleetDateRangePickerDialog
+import com.indusjs.uicomponents.components.FleetInlineErrorBanner
+import com.indusjs.uicomponents.components.FleetSectionHeader
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.components.UiText
+import com.indusjs.pdfreport.handler.FleetProfitLossPdfHandler
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import com.ijs.reports.presentation.ReportsContract.Effect
 import com.ijs.reports.presentation.ReportsContract.Intent
 import com.ijs.reports.presentation.ReportsContract.State
@@ -33,6 +38,7 @@ fun ReportsScreen(
     onNavigateToTripPL: () -> Unit,
     onNavigateToCostAnalysis: () -> Unit,
     onNavigateToConsolidatedPL: () -> Unit,
+    onNavigateToCustomerPL: () -> Unit = {},
     onNavigateToMaintenanceCostReport: () -> Unit = {},
     onNavigateToTripCostReport: () -> Unit = {},
     onNavigateToDriverCostReport: () -> Unit = {},
@@ -40,7 +46,28 @@ fun ReportsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val exportScope = rememberCoroutineScope()
     var pendingExportPath by remember { mutableStateOf<String?>(null) }
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
+
+    // Generates the real Fleet P&L PDF when an export is triggered (state.pdfExportData != null)
+    // and shows the open/share dialog. Replaces the previous fake-success stub.
+    FleetProfitLossPdfHandler(
+        pdfData = state.pdfExportData,
+        onExportComplete = { viewModel.sendIntent(Intent.DismissExportDialog) },
+        onExportError = { message ->
+            viewModel.sendIntent(Intent.DismissExportDialog)
+            exportScope.launch { snackbarHostState.showSnackbar(message) }
+        }
+    )
 
     pendingExportPath?.let { path ->
         val msg = stringResource(Res.string.reports_exported_path, path)
@@ -65,17 +92,18 @@ fun ReportsScreen(
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
-                is Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
+                is Effect.ShowSnackbar -> pendingSnackbar = effect.message
                 is Effect.NavigateToVehiclePL -> onNavigateToVehiclePL()
                 is Effect.NavigateToTripPL -> onNavigateToTripPL()
                 is Effect.NavigateToCostAnalysis -> onNavigateToCostAnalysis()
                 is Effect.NavigateToConsolidatedPL -> onNavigateToConsolidatedPL()
+                is Effect.NavigateToCustomerPL -> onNavigateToCustomerPL()
                 is Effect.NavigateToMaintenanceCostReport -> onNavigateToMaintenanceCostReport()
                 is Effect.NavigateToTripCostReport -> onNavigateToTripCostReport()
                 is Effect.NavigateToDriverCostReport -> onNavigateToDriverCostReport()
                 is Effect.NavigateToCombinedReport -> onNavigateToCombinedReport()
                 is Effect.ShowExportSuccess -> pendingExportPath = effect.filePath
-                is Effect.ShowExportError -> snackbarHostState.showSnackbar(effect.message)
+                is Effect.ShowExportError -> pendingSnackbar = effect.message
             }
         }
     }
@@ -149,7 +177,7 @@ fun ReportsScreen(
         when {
             state.isLoading && !state.hasSummary -> LoadingContent()
             state.error != null && !state.hasSummary -> com.indusjs.uicomponents.components.ErrorContent(
-                error = state.error!!, onRetry = { viewModel.sendIntent(Intent.Refresh) }
+                error = state.error!!.resolve(), onRetry = { viewModel.sendIntent(Intent.Refresh) }
             )
             else -> ReportsDashboardContent(
                 state = state,
@@ -157,6 +185,7 @@ fun ReportsScreen(
                 onVehiclePLClick = { viewModel.sendIntent(Intent.NavigateToVehiclePL) },
                 onTripPLClick = { viewModel.sendIntent(Intent.NavigateToTripPL) },
                 onConsolidatedClick = { viewModel.sendIntent(Intent.NavigateToConsolidatedPL) },
+                onCustomerPLClick = { viewModel.sendIntent(Intent.NavigateToCustomerPL) },
                 onCombinedReportClick = { viewModel.sendIntent(Intent.NavigateToCombinedReport) },
                 onMaintenanceCostClick = { viewModel.sendIntent(Intent.NavigateToMaintenanceCostReport) },
                 onTripCostClick = { viewModel.sendIntent(Intent.NavigateToTripCostReport) },
@@ -172,14 +201,14 @@ fun ReportsScreen(
 @Composable
 private fun ReportsDashboardContent(
     state: State, onPeriodSelect: (ReportPeriod) -> Unit, onVehiclePLClick: () -> Unit, onTripPLClick: () -> Unit,
-    onConsolidatedClick: () -> Unit, onCombinedReportClick: () -> Unit, onMaintenanceCostClick: () -> Unit,
+    onConsolidatedClick: () -> Unit, onCustomerPLClick: () -> Unit, onCombinedReportClick: () -> Unit, onMaintenanceCostClick: () -> Unit,
     onTripCostClick: () -> Unit, onDriverCostClick: () -> Unit, onCostAnalysisClick: () -> Unit,
     onRetry: () -> Unit, modifier: Modifier = Modifier
 ) {
     LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { PeriodFilterGrid(state.selectedPeriod, onPeriodSelect) }
         if (state.isLoading && state.hasSummary) item { LinearProgressIndicator(Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))) }
-        state.error?.let { item { ErrorBanner(it, onRetry) } }
+        state.error?.let { item { ErrorBanner(it.resolve(), onRetry) } }
         state.summary?.let { summary ->
             item { FinancialHeroCard(summary) }
             item { FleetSnapshotCard(summary) }
@@ -194,7 +223,7 @@ private fun ReportsDashboardContent(
             item { DocumentCostsNotice() }
         }
         item { SectionLabel(stringResource(Res.string.reports_section_detailed_reports)) }
-        item { DetailedReportsSection(onVehiclePLClick, onTripPLClick, onConsolidatedClick, onCombinedReportClick, onMaintenanceCostClick, onTripCostClick, onDriverCostClick, onCostAnalysisClick) }
+        item { DetailedReportsSection(onVehiclePLClick, onTripPLClick, onConsolidatedClick, onCustomerPLClick, onCombinedReportClick, onMaintenanceCostClick, onTripCostClick, onDriverCostClick, onCostAnalysisClick) }
         item { Spacer(Modifier.height(24.dp)) }
     }
 }
@@ -251,20 +280,17 @@ private fun PeriodChip(modifier: Modifier, label: String, selected: Boolean, onC
 
 @Composable
 private fun SectionLabel(title: String) {
-    Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(top = 4.dp))
+    FleetSectionHeader(title = title)
 }
 
 @Composable
 private fun ErrorBanner(error: String, onRetry: () -> Unit) {
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer), shape = RoundedCornerShape(12.dp)) {
-        Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(Res.string.reports_error_loading), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
-                Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f))
-            }
-            TextButton(onClick = onRetry) { Text(stringResource(Res.string.retry), color = MaterialTheme.colorScheme.onErrorContainer) }
-        }
-    }
+    FleetInlineErrorBanner(
+        title = stringResource(Res.string.reports_error_loading),
+        message = error,
+        actionLabel = stringResource(Res.string.retry),
+        onAction = onRetry
+    )
 }
 
 /** Formats period label from state dates (YYYY-MM-DD format). */
@@ -277,23 +303,9 @@ private fun formatPeriodLabel(startDate: String, endDate: String): String {
 }
 
 /** Converts a date string (either DD-MM-YYYY or YYYY-MM-DD) to human-readable (e.g., "04 Apr 2026"). */
-private fun formatDateDisplay(date: String): String = try {
-    if (date.contains("-") && date.length >= 10) {
-        val parts = date.split("-")
-        if (parts.size >= 3) {
-            val months = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-            if (parts[0].length == 4) {
-                // YYYY-MM-DD format (API/state format)
-                val monthIdx = parts[1].toIntOrNull()?.minus(1)?.coerceIn(0, 11) ?: 0
-                "${parts[2].take(2)} ${months[monthIdx]} ${parts[0]}"
-            } else if (parts[0].length == 2 && parts[2].length == 4) {
-                // DD-MM-YYYY format (picker/legacy)
-                val monthIdx = parts[1].toIntOrNull()?.minus(1)?.coerceIn(0, 11) ?: 0
-                "${parts[0]} ${months[monthIdx]} ${parts[2]}"
-            } else date
-        } else date
-    } else date
-} catch (_: Exception) { date }
+private fun formatDateDisplay(date: String): String =
+    if (date.isBlank()) date
+    else com.indusjs.fleet.core.util.formatDateToHumanReadable(date).ifBlank { date }
 
 /**
  * Converts YYYY-MM-DD state date to DD-MM-YYYY for the picker.

@@ -3,10 +3,19 @@ package com.ijs.customer.presentation.detail
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.customer.TAG_CUSTOMER_PDF
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
+import com.indusjs.fleet.core.util.formatDateTimeForDisplay
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Effect
 import com.ijs.customer.presentation.detail.CustomerDetailContract.ReportType
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import com.indusjs.pdfreport.model.*
+import com.indusjs.uicomponents.components.UiText
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.customer_export_no_financial_data
+import indusjsfleet.ijs_ui_components_lib.generated.resources.customer_export_no_payments
+import indusjsfleet.ijs_ui_components_lib.generated.resources.customer_export_no_trips
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_export_pdf
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_export_pdf_detail
 
 /**
  * Handles PDF export logic for all customer report types.
@@ -31,7 +40,12 @@ class CustomerDetailPdfExporter(
             }
         } catch (e: Exception) {
             logger.e(TAG_CUSTOMER_PDF, "PDF export failed: ${e.message}")
-            sendEffect(Effect.ShowSnackbar("Failed to export PDF: ${e.message}"))
+            sendEffect(
+                Effect.ShowSnackbar(
+                    e.message?.let { UiText.StringRes(Res.string.error_export_pdf_detail, args = listOf(it)) }
+                        ?: UiText.StringRes(Res.string.error_export_pdf)
+                )
+            )
         } finally {
             setState { copy(isExportingPdf = false, exportType = null) }
         }
@@ -44,7 +58,7 @@ class CustomerDetailPdfExporter(
         val summary = state.tripsSummary
 
         if (trips.isEmpty()) {
-            sendEffect(Effect.ShowSnackbar("No trips to export"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.customer_export_no_trips)))
             return
         }
 
@@ -78,8 +92,8 @@ class CustomerDetailPdfExporter(
                     vehicleNumber = trip.vehicleRegistration ?: "-",
                     startLocation = trip.startLocation ?: "-",
                     endLocation = trip.endLocation ?: "-",
-                    startDate = FleetDateTime.formatIsoToDisplayDate(trip.plannedStart ?: trip.scheduledDate),
-                    endDate = FleetDateTime.formatIsoToDisplayDate(trip.plannedEnd),
+                    startDate = formatDateToHumanReadable(trip.plannedStart ?: trip.scheduledDate),
+                    endDate = formatDateToHumanReadable(trip.plannedEnd),
                     tripStatus = trip.stateDisplay,
                     tripPrice = trip.tripPrice ?: 0.0,
                     paidAmount = trip.paidAmount ?: 0.0,
@@ -98,7 +112,7 @@ class CustomerDetailPdfExporter(
         val payments = state.receivedPayments
 
         if (payments.isEmpty()) {
-            sendEffect(Effect.ShowSnackbar("No payments to export"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.customer_export_no_payments)))
             return
         }
 
@@ -118,7 +132,7 @@ class CustomerDetailPdfExporter(
                     amount = payment.amount,
                     paymentType = payment.paymentType ?: "payment",
                     paymentMode = payment.modeDisplay,
-                    paymentDate = payment.date?.let { FleetDateTime.formatIsoToDisplayDateTime12Hour(it) } ?: "-",
+                    paymentDate = payment.date?.let { formatDateTimeForDisplay(it) } ?: "-",
                     receiptNumber = payment.receiptNumber,
                     startLocation = null,
                     endLocation = null
@@ -136,7 +150,7 @@ class CustomerDetailPdfExporter(
         val report = state.financialReport
 
         if (report == null) {
-            sendEffect(Effect.ShowSnackbar("No financial data to export"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.customer_export_no_financial_data)))
             return
         }
 
@@ -153,7 +167,7 @@ class CustomerDetailPdfExporter(
             CustomerPaymentPdfItem(
                 paymentId = payment.id.toIntOrNull() ?: 0,
                 tripId = payment.tripId?.toIntOrNull() ?: 0,
-                paymentDate = payment.date?.let { FleetDateTime.formatIsoToDisplayDate(it) } ?: "-",
+                paymentDate = payment.date?.let { formatDateToHumanReadable(it) } ?: "-",
                 amount = payment.amount,
                 paymentType = payment.paymentType ?: "payment",
                 paymentMode = payment.modeDisplay,
@@ -170,7 +184,7 @@ class CustomerDetailPdfExporter(
             }
             CustomerTripSummaryPdfItem(
                 tripId = trip.id.toIntOrNull() ?: 0,
-                tripDate = FleetDateTime.formatIsoToDisplayDate(trip.plannedStart ?: trip.scheduledDate),
+                tripDate = formatDateToHumanReadable(trip.plannedStart ?: trip.scheduledDate),
                 route = trip.routeDisplay,
                 tripPrice = trip.tripPrice ?: 0.0,
                 paidAmount = trip.paidAmount ?: 0.0,
@@ -193,7 +207,7 @@ class CustomerDetailPdfExporter(
             dateRange = dateRange,
             totalTrips = report.tripSummary?.totalTrips ?: trips.size,
             completedTrips = report.tripSummary?.completedTrips ?: trips.count { it.state?.lowercase() == "completed" },
-            activeTrips = trips.count { it.state?.lowercase() == "on_route" },
+            activeTrips = trips.count { it.state?.lowercase() == "in_progress" },
             totalRevenue = report.totalRevenue ?: 0.0,
             totalReceived = report.paymentReceived ?: 0.0,
             totalPending = report.paymentPending ?: 0.0,

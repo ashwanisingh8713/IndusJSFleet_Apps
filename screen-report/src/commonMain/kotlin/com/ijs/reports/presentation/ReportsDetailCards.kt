@@ -2,7 +2,6 @@ package com.ijs.reports.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,11 +17,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.PieChart
 import com.indusjs.uicomponents.components.PieChartColors
 import com.indusjs.uicomponents.components.PieChartData
 import com.ijs.reports.domain.entity.ExpenseBreakdownItem
 import com.ijs.reports.domain.entity.VehiclePerformer
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 // ═══════════════════════════════════════════════════════════════════
@@ -34,15 +37,10 @@ internal fun ExpenseBreakdownSection(breakdown: List<ExpenseBreakdownItem>) {
     var expanded by remember { mutableStateOf(false) }
     val totalExpenses = breakdown.sumOf { it.amount }
 
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Column(Modifier.padding(14.dp)) {
+    FleetSectionCard {
+        Column {
             Text(
-                "Total: ${formatCurrency(totalExpenses)}",
+                stringResource(Res.string.reports_total_amount, formatCurrency(totalExpenses)),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -71,7 +69,10 @@ internal fun ExpenseBreakdownSection(breakdown: List<ExpenseBreakdownItem>) {
                     onClick = { expanded = !expanded },
                     Modifier.align(Alignment.CenterHorizontally)
                 ) {
-                    Text(if (expanded) "Show Less ▲" else "Show All ${breakdown.size} ▼")
+                    Text(
+                        if (expanded) stringResource(Res.string.reports_show_less_caps)
+                        else stringResource(Res.string.reports_show_all_caps, breakdown.size)
+                    )
                 }
             }
         }
@@ -162,7 +163,7 @@ internal fun VehicleInsightsSection(
                         Text("🏆", fontSize = 22.sp)
                         Column {
                             Text(
-                                "Top Performer",
+                                stringResource(Res.string.reports_top_performer),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -196,7 +197,7 @@ internal fun VehicleInsightsSection(
                     ) {
                         Text("⚠️", fontSize = 16.sp)
                         Text(
-                            "${lossMakingVehicles.size} Vehicle(s) Need Attention",
+                            stringResource(Res.string.reports_vehicles_need_attention, lossMakingVehicles.size),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = ReportsColors.LossRed
@@ -209,7 +210,7 @@ internal fun VehicleInsightsSection(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                vehicle.registrationNumber ?: "Unknown",
+                                vehicle.registrationNumber ?: stringResource(Res.string.reports_unknown),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
@@ -226,7 +227,7 @@ internal fun VehicleInsightsSection(
                             onClick = onViewDetails,
                             Modifier.align(Alignment.CenterHorizontally)
                         ) {
-                            Text("View All ${lossMakingVehicles.size} Vehicles →")
+                            Text(stringResource(Res.string.reports_view_all_vehicles, lossMakingVehicles.size))
                         }
                     }
                 }
@@ -254,7 +255,7 @@ internal fun DocumentCostsNotice() {
         ) {
             Text("ℹ️", fontSize = 14.sp)
             Text(
-                "Document costs (Insurance, Permits, PUC, etc.) are not yet included in P&L calculations.",
+                stringResource(Res.string.reports_pl_note_documents),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -271,6 +272,7 @@ internal fun DetailedReportsSection(
     onVehiclePLClick: () -> Unit,
     onTripPLClick: () -> Unit,
     onConsolidatedClick: () -> Unit,
+    onCustomerPLClick: () -> Unit,
     onCombinedReportClick: () -> Unit,
     onMaintenanceCostClick: () -> Unit,
     onTripCostClick: () -> Unit,
@@ -279,33 +281,44 @@ internal fun DetailedReportsSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            "Profit & Loss",
+            stringResource(Res.string.reports_section_pl_reports),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReportCard(Modifier.weight(1f), "🚛", "Vehicle P&L", "By vehicle", ReportsColors.InfoBlue, onVehiclePLClick)
-            ReportCard(Modifier.weight(1f), "🛣️", "Trip P&L", "By trip", ReportsColors.ProfitGreen, onTripPLClick)
+            ReportCard(Modifier.weight(1f), "🚛", stringResource(Res.string.reports_card_vehicle_pl), stringResource(Res.string.reports_card_subtitle_by_vehicle), ReportsColors.InfoBlue, onVehiclePLClick)
+            ReportCard(Modifier.weight(1f), "🛣️", stringResource(Res.string.reports_card_trip_pl), stringResource(Res.string.reports_card_subtitle_by_trip), ReportsColors.ProfitGreen, onTripPLClick)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReportCard(Modifier.weight(1f), "📈", "Fleet P&L", "Consolidated", ReportsColors.Purple, onConsolidatedClick)
-            ReportCard(Modifier.weight(1f), "🔀", "Combined", "Vehicle + Trip", ReportsColors.Cyan, onCombinedReportClick)
+            ReportCard(Modifier.weight(1f), "📈", stringResource(Res.string.reports_card_fleet_pl), stringResource(Res.string.reports_card_subtitle_consolidated), ReportsColors.Purple, onConsolidatedClick)
+            ReportCard(Modifier.weight(1f), "🔀", stringResource(Res.string.reports_card_combined), stringResource(Res.string.reports_card_subtitle_combined), ReportsColors.Cyan, onCombinedReportClick)
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ReportCard(
+                Modifier.weight(1f),
+                "👥",
+                stringResource(Res.string.customer_pl_card_title),
+                stringResource(Res.string.customer_pl_card_desc),
+                ReportsColors.Teal,
+                onCustomerPLClick
+            )
+            Spacer(Modifier.weight(1f))
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            "Cost Analysis",
+            stringResource(Res.string.reports_cost_analysis),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReportCard(Modifier.weight(1f), "🔧", "Maintenance", "By type", ReportsColors.WarningAmber, onMaintenanceCostClick)
-            ReportCard(Modifier.weight(1f), "⛽", "Trip Costs", "Fuel, Toll...", ReportsColors.Pink, onTripCostClick)
+            ReportCard(Modifier.weight(1f), "🔧", stringResource(Res.string.reports_card_maintenance), stringResource(Res.string.reports_card_maintenance_sub), ReportsColors.WarningAmber, onMaintenanceCostClick)
+            ReportCard(Modifier.weight(1f), "⛽", stringResource(Res.string.reports_card_trip_costs), stringResource(Res.string.reports_card_trip_costs_sub), ReportsColors.Pink, onTripCostClick)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReportCard(Modifier.weight(1f), "👨‍✈️", "Driver Costs", "Salary & more", ReportsColors.Teal, onDriverCostClick)
-            ReportCard(Modifier.weight(1f), "💰", "All Costs", "Full breakdown", ReportsColors.WarningAmber, onCostAnalysisClick)
+            ReportCard(Modifier.weight(1f), "👨‍✈️", stringResource(Res.string.reports_card_driver_costs), stringResource(Res.string.reports_card_driver_costs_sub), ReportsColors.Teal, onDriverCostClick)
+            ReportCard(Modifier.weight(1f), "💰", stringResource(Res.string.reports_card_all_costs), stringResource(Res.string.reports_card_all_costs_sub), ReportsColors.WarningAmber, onCostAnalysisClick)
         }
     }
 }
@@ -315,14 +328,16 @@ private fun ReportCard(
     modifier: Modifier, icon: String, title: String,
     description: String, color: Color, onClick: () -> Unit
 ) {
-    Card(
-        modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.06f)),
-        elevation = CardDefaults.cardElevation(0.dp)
+    FleetSectionCard(
+        modifier = modifier,
+        onClick = onClick,
+        containerColor = color.copy(alpha = 0.06f),
+        border = null,
+        elevation = 0.dp,
+        contentPadding = 12.dp
     ) {
         Row(
-            Modifier.fillMaxWidth().padding(12.dp),
+            Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {

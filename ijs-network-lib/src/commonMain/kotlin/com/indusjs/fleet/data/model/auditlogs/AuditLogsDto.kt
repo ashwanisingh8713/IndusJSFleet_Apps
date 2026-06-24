@@ -33,7 +33,8 @@ data class AuditLogItemDto(
     @SerialName("changes") val changes: JsonObject? = null,
     @SerialName("performed_by") val performedBy: AuditPerformedByDto? = null,
     @SerialName("ip_address") val ipAddress: String? = null,
-    @SerialName("created_at") val createdAt: String? = null
+    // UTC epoch-millis (JSON number). null = unset.
+    @SerialName("created_at") val createdAt: Long? = null
 )
 
 @Serializable

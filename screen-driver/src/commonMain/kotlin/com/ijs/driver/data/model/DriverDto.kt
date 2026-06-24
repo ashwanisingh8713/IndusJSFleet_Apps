@@ -22,11 +22,11 @@ data class DriverDto(
     @SerialName("license_number")
     val licenseNumber: String = "",
     @SerialName("license_expiry")
-    val licenseExpiry: String? = null,
+    val licenseExpiry: Long? = null,
     @SerialName("license_type")
     val licenseType: String? = null,
     @SerialName("date_of_birth")
-    val dateOfBirth: String? = null,
+    val dateOfBirth: Long? = null,
     @SerialName("address")
     val address: String? = null,
     @SerialName("emergency_contact")
@@ -52,11 +52,11 @@ data class DriverDto(
     @SerialName("created_by")
     val createdBy: DriverOwnerDto? = null,
     @SerialName("joining_date")
-    val joiningDate: String? = null,
+    val joiningDate: Long? = null,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**
@@ -69,13 +69,13 @@ data class TripAssignmentDto(
     @SerialName("trip_state")
     val tripState: String = "",
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long? = null,
     @SerialName("start_time")
-    val startTime: String? = null,
+    val startTime: Long? = null,
     @SerialName("planned_start")
-    val plannedStart: String? = null,
+    val plannedStart: Long? = null,
     @SerialName("planned_end")
-    val plannedEnd: String? = null,
+    val plannedEnd: Long? = null,
     @SerialName("start_location")
     val startLocation: String? = null,
     @SerialName("end_location")
@@ -104,9 +104,9 @@ data class DriverOwnerDto(
     @SerialName("is_active")
     val isActive: Boolean = true,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**
@@ -185,11 +185,11 @@ data class CreateDriverRequest(
     @SerialName("license_number")
     val licenseNumber: String,
     @SerialName("license_expiry")
-    val licenseExpiry: String? = null,
+    val licenseExpiry: Long? = null,
     @SerialName("license_type")
     val licenseType: String? = null,
     @SerialName("date_of_birth")
-    val dateOfBirth: String? = null,
+    val dateOfBirth: Long? = null,
     @SerialName("address")
     val address: String? = null,
     @SerialName("emergency_contact")
@@ -197,7 +197,7 @@ data class CreateDriverRequest(
     @SerialName("blood_group")
     val bloodGroup: String? = null,
     @SerialName("joining_date")
-    val joiningDate: String? = null,
+    val joiningDate: Long? = null,
     @SerialName("caretaker_id")
     val caretakerId: Int? = null
 )
@@ -218,11 +218,11 @@ data class UpdateDriverRequest(
     @SerialName("license_number")
     val licenseNumber: String? = null,
     @SerialName("license_expiry")
-    val licenseExpiry: String? = null,
+    val licenseExpiry: Long? = null,
     @SerialName("license_type")
     val licenseType: String? = null,
     @SerialName("date_of_birth")
-    val dateOfBirth: String? = null,
+    val dateOfBirth: Long? = null,
     @SerialName("address")
     val address: String? = null,
     @SerialName("emergency_contact")
@@ -230,7 +230,7 @@ data class UpdateDriverRequest(
     @SerialName("blood_group")
     val bloodGroup: String? = null,
     @SerialName("joining_date")
-    val joiningDate: String? = null,
+    val joiningDate: Long? = null,
     @SerialName("caretaker_id")
     val caretakerId: Int? = null
 )
@@ -240,7 +240,8 @@ data class UpdateDriverRequest(
  */
 @Serializable
 data class UpdateDriverStatusRequest(
+    // Backend oneof: active|inactive|on_trip|on_leave|suspended
     @SerialName("status")
-    val status: String
+    val status: String = "active"
 )
 

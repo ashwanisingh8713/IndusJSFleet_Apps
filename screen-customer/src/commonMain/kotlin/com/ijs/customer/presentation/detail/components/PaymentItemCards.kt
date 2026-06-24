@@ -11,94 +11,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
+import com.indusjs.fleet.core.util.formatDateTimeForDisplay
 import com.ijs.customer.domain.entity.CustomerPayment
+import com.ijs.customer.presentation.localizedModeDisplay
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
-
-/**
- * Basic payment item card (simple layout).
- */
-@Composable
-fun PaymentItem(
-    payment: CustomerPayment,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(1.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Mode Icon
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = payment.modeIcon,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-
-                Column {
-                    Text(
-                        text = stringResource(Res.string.customer_payment_mode_line, payment.modeDisplay),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = payment.tripDisplay,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        payment.date?.let { date ->
-                            Text(
-                                text = "• $date",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    payment.referenceNumber?.takeIf { it.isNotBlank() }?.let { ref ->
-                        Text(
-                            text = stringResource(Res.string.customer_payment_ref_line, ref),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            Text(
-                text = payment.amountDisplay,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}
 
 /**
  * Enhanced Payment Item with proper date format and compact layout.
@@ -146,7 +64,7 @@ fun EnhancedPaymentItem(
                     }
                     Column {
                         Text(
-                            text = payment.modeDisplay,
+                            text = payment.localizedModeDisplay(),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -184,7 +102,7 @@ fun EnhancedPaymentItem(
                         style = MaterialTheme.typography.labelSmall
                     )
                     Text(
-                        text = payment.date?.let { FleetDateTime.formatIsoToDisplayDateTime12Hour(it) } ?: "-",
+                        text = payment.date?.let { formatDateTimeForDisplay(it) } ?: "-",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

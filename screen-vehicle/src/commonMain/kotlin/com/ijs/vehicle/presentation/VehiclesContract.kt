@@ -3,6 +3,7 @@ package com.ijs.vehicle.presentation
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.vehicle.domain.entity.VehicleStatus
 
@@ -18,7 +19,7 @@ object VehiclesContract {
         val isLoading: Boolean = false,
         val vehicles: List<Vehicle> = emptyList(),
         val filteredVehicles: List<Vehicle> = emptyList(),
-        val error: String? = null,
+        val error: UiText? = null,
         val searchQuery: String = "",
         val selectedStatusFilter: VehicleStatus? = null,
         val isRefreshing: Boolean = false,
@@ -50,7 +51,7 @@ object VehiclesContract {
     sealed interface Effect : UiEffect {
         data class NavigateToVehicleDetail(val vehicleId: String) : Effect
         data object NavigateToAddVehicle : Effect
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
     }
 }
 

@@ -30,9 +30,13 @@ data class VehicleDto(
     @SerialName("mileage")
     val mileage: Double = 0.0,
     @SerialName("capacity")
-    val capacity: Int? = null,
+    val capacity: Double? = null,
     @SerialName("color")
     val color: String? = null,
+    @SerialName("caretaker_id")
+    val caretakerId: Int? = null,
+    @SerialName("updated_by_id")
+    val updatedById: Int? = null,
     @SerialName("last_location")
     val lastLocation: LocationDto? = null,
     @SerialName("assigned_driver_id")
@@ -42,9 +46,9 @@ data class VehicleDto(
     @SerialName("assigned_driver")
     val assignedDriver: AssignedDriverDto? = null,
     @SerialName("last_service_date")
-    val lastServiceDate: String? = null,
+    val lastServiceDate: Long? = null,
     @SerialName("next_service_date")
-    val nextServiceDate: String? = null,
+    val nextServiceDate: Long? = null,
     @SerialName("is_occupied")
     val isOccupied: Boolean = false,
     @SerialName("trip_assignment")
@@ -58,9 +62,9 @@ data class VehicleDto(
     @SerialName("registered_by")
     val registeredBy: VehicleOwnerDto? = null,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**
@@ -73,13 +77,13 @@ data class VehicleTripAssignmentDto(
     @SerialName("trip_state")
     val tripState: String = "",
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long? = null,
     @SerialName("start_time")
-    val startTime: String? = null,
+    val startTime: Long? = null,
     @SerialName("planned_start")
-    val plannedStart: String? = null,
+    val plannedStart: Long? = null,
     @SerialName("planned_end")
-    val plannedEnd: String? = null,
+    val plannedEnd: Long? = null,
     @SerialName("start_location")
     val startLocation: String? = null,
     @SerialName("end_location")
@@ -110,9 +114,9 @@ data class VehicleOwnerDto(
     @SerialName("is_active")
     val isActive: Boolean = true,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**
@@ -145,7 +149,7 @@ data class LocationDto(
     @SerialName("address")
     val address: String? = null,
     @SerialName("timestamp")
-    val timestamp: String? = null
+    val timestamp: Long? = null
 )
 
 /**
@@ -293,8 +297,37 @@ data class VehicleDetailDto(
     val documents: DocumentsSummaryDto? = null,
     @SerialName("trips")
     val trips: TripsSummaryDto? = null,
+    // Backend FullDetailResponse.route is the FLAT DetailRouteResponse, NOT the
+    // nested RouteTabResponse returned by GET /vehicles/{id}/route. Keep this
+    // typed as the flat DetailRouteDto so the flat fields decode correctly.
     @SerialName("route")
-    val route: VehicleRouteDto? = null
+    val route: DetailRouteDto? = null
+)
+
+/**
+ * Flat route block embedded in the vehicle detail response.
+ * GET /vehicles/{id}/detail — backend DetailRouteResponse (flat fields).
+ * This is distinct from VehicleRouteDto (nested RouteTabResponse) returned by
+ * GET /vehicles/{id}/route.
+ */
+@Serializable
+data class DetailRouteDto(
+    @SerialName("has_active_trip")
+    val hasActiveTrip: Boolean = false,
+    @SerialName("trip_id")
+    val tripId: Int = 0,
+    @SerialName("state")
+    val state: String = "",
+    @SerialName("state_label")
+    val stateLabel: String = "",
+    @SerialName("start_location")
+    val startLocation: String = "",
+    @SerialName("end_location")
+    val endLocation: String = "",
+    @SerialName("total_stops")
+    val totalStops: Int = 0,
+    @SerialName("completed_stops")
+    val completedStops: Int = 0
 )
 
 /**
@@ -306,10 +339,15 @@ data class VehicleStatsDto(
     val totalTrips: Int = 0,
     @SerialName("completed_trips")
     val completedTrips: Int = 0,
-    @SerialName("total_distance")
+    @SerialName("cancelled_trips")
+    val cancelledTrips: Int = 0,
+    @SerialName("active_trips")
+    val activeTrips: Int = 0,
+    @SerialName("total_distance_km")
     val totalDistance: Double = 0.0,
-    @SerialName("trips_this_month")
+    @SerialName("this_month_trips")
     val tripsThisMonth: Int = 0,
+    // Backend does not send a this-month distance; kept for domain compatibility (always 0).
     @SerialName("distance_this_month")
     val distanceThisMonth: Double = 0.0
 )
@@ -333,7 +371,7 @@ data class DocumentsSummaryDto(
     val expired: Int = 0,
     @SerialName("pending")
     val pending: Int = 0,
-    @SerialName("alerts")
+    @SerialName("alert_docs")
     val alerts: List<DocumentAlertDto> = emptyList()
 )
 
@@ -342,16 +380,22 @@ data class DocumentsSummaryDto(
  */
 @Serializable
 data class DocumentAlertDto(
+    @SerialName("id")
+    val id: Int = 0,
     @SerialName("type")
     val type: String = "",
-    @SerialName("type_name")
-    val typeName: String = "",
-    @SerialName("alert_type")
-    val alertType: String = "",
-    @SerialName("message")
-    val message: String = "",
+    @SerialName("tag")
+    val tag: String = "",
+    @SerialName("name")
+    val name: String = "",
+    @SerialName("expiry_date")
+    val expiryDate: Long? = null,
     @SerialName("days_remaining")
-    val daysRemaining: Int? = null
+    val daysRemaining: Int? = null,
+    @SerialName("status")
+    val status: String = "",
+    @SerialName("is_expired")
+    val isExpired: Boolean = false
 )
 
 /**
@@ -369,7 +413,9 @@ data class TripsSummaryDto(
     val completed: Int = 0,
     @SerialName("cancelled")
     val cancelled: Int = 0,
-    @SerialName("recent_trips")
+    // Backend /detail sends the recent-trips list under "recent" (DetailTripsResponse.recent).
+    // The /trips summary block carries no recent list, so this stays empty there.
+    @SerialName("recent")
     val recentTrips: List<VehicleTripItemDto> = emptyList()
 )
 
@@ -418,15 +464,25 @@ data class VehicleTripItemDto(
     @SerialName("state_label")
     val stateLabel: String = "",
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long? = null,
     @SerialName("start_time")
-    val startTime: String? = null,
+    val startTime: Long? = null,
     @SerialName("end_time")
-    val endTime: String? = null,
+    val endTime: Long? = null,
+    @SerialName("customer_name")
+    val customerName: String? = null,
+    // Backend sends a driver object (TripItemResponse.driver); driver_name is app-only.
     @SerialName("driver_name")
     val driverName: String? = null,
-    @SerialName("distance")
+    @SerialName("driver")
+    val driver: AssignedDriverDto? = null,
+    // Backend tag is distance_km (TripItemResponse.distance_km).
+    @SerialName("distance_km")
     val distance: Double? = null,
+    @SerialName("cargo_type")
+    val cargoType: String? = null,
+    @SerialName("priority")
+    val priority: String? = null,
     @SerialName("duration")
     val duration: String? = null
 ) {
@@ -435,28 +491,24 @@ data class VehicleTripItemDto(
 
     /** Resolved destination - prefers destination, falls back to endLocation */
     val resolvedDestination: String get() = destination?.takeIf { it.isNotBlank() } ?: endLocation ?: ""
+
+    /** Resolved driver name - prefers driver_name string, falls back to driver object. */
+    val resolvedDriverName: String? get() = driverName?.takeIf { it.isNotBlank() }
+        ?: driver?.let { "${it.firstName ?: ""} ${it.lastName ?: ""}".trim().takeIf { n -> n.isNotBlank() } }
 }
 
 /**
  * Vehicle Route DTO - Route & Stops tab.
- * GET /vehicles/{id}/route
+ * GET /vehicles/{id}/route — backend RouteTabResponse (nested trip/route blocks).
  */
 @Serializable
 data class VehicleRouteDto(
     @SerialName("has_active_trip")
     val hasActiveTrip: Boolean = false,
-    @SerialName("trip_id")
-    val tripId: Int? = null,
-    @SerialName("trip_number")
-    val tripNumber: String? = null,
-    @SerialName("driver_name")
-    val driverName: String? = null,
-    @SerialName("origin")
-    val origin: String? = null,
-    @SerialName("destination")
-    val destination: String? = null,
-    @SerialName("current_position")
-    val currentPosition: LocationDto? = null,
+    @SerialName("trip")
+    val trip: RouteTripDto? = null,
+    @SerialName("route")
+    val route: RouteGeoDto? = null,
     @SerialName("progress")
     val progress: RouteProgressDto? = null,
     @SerialName("stops")
@@ -464,43 +516,97 @@ data class VehicleRouteDto(
 )
 
 /**
- * Route progress DTO.
+ * Active-trip block within the route response (backend RouteTripResponse).
+ */
+@Serializable
+data class RouteTripDto(
+    @SerialName("id")
+    val id: Int? = null,
+    @SerialName("state")
+    val state: String? = null,
+    @SerialName("state_label")
+    val stateLabel: String? = null,
+    @SerialName("customer_name")
+    val customerName: String? = null,
+    @SerialName("scheduled_date")
+    val scheduledDate: Long? = null,
+    @SerialName("start_time")
+    val startTime: Long? = null,
+    @SerialName("planned_start")
+    val plannedStart: Long? = null,
+    @SerialName("planned_end")
+    val plannedEnd: Long? = null,
+    @SerialName("driver")
+    val driver: AssignedDriverDto? = null
+)
+
+/**
+ * Geo block within the route response (backend RouteGeoResponse).
+ */
+@Serializable
+data class RouteGeoDto(
+    @SerialName("origin")
+    val origin: GeoPointDto? = null,
+    @SerialName("destination")
+    val destination: GeoPointDto? = null,
+    @SerialName("current")
+    val current: GeoPointDto? = null,
+    @SerialName("distance_km")
+    val distanceKm: Double = 0.0
+)
+
+/**
+ * A single geo point (backend GeoPoint).
+ */
+@Serializable
+data class GeoPointDto(
+    @SerialName("location")
+    val location: String? = null,
+    @SerialName("latitude")
+    val latitude: Double = 0.0,
+    @SerialName("longitude")
+    val longitude: Double = 0.0
+)
+
+/**
+ * Route progress DTO (backend TripProgressResponse).
+ * Backend has no distance_covered/distance_remaining; those stay 0.
  */
 @Serializable
 data class RouteProgressDto(
     @SerialName("percentage")
-    val percentage: Int = 0,
-    @SerialName("distance_covered")
-    val distanceCovered: Double = 0.0,
-    @SerialName("distance_remaining")
-    val distanceRemaining: Double = 0.0,
+    val percentage: Double = 0.0,
+    @SerialName("stops_completed")
+    val stopsCompleted: Int = 0,
+    @SerialName("total_stops")
+    val totalStops: Int = 0,
     @SerialName("time_elapsed")
     val timeElapsed: String? = null,
-    @SerialName("eta")
+    @SerialName("eta_remaining")
     val eta: String? = null
 )
 
 /**
- * Route stop DTO.
+ * Route stop DTO (backend RouteStopResponse).
  */
 @Serializable
 data class RouteStopDto(
     @SerialName("id")
     val id: Int = 0,
-    @SerialName("sequence")
+    @SerialName("stop_order")
     val sequence: Int = 0,
-    @SerialName("type")
-    val type: String = "",
     @SerialName("location")
     val location: String = "",
-    @SerialName("address")
-    val address: String? = null,
+    @SerialName("latitude")
+    val latitude: Double = 0.0,
+    @SerialName("longitude")
+    val longitude: Double = 0.0,
+    @SerialName("stop_duration_minutes")
+    val stopDurationMinutes: Int = 0,
+    @SerialName("is_completed")
+    val isCompleted: Boolean = false,
     @SerialName("status")
     val status: String = "",
-    @SerialName("scheduled_time")
-    val scheduledTime: String? = null,
-    @SerialName("actual_time")
-    val actualTime: String? = null,
     @SerialName("notes")
     val notes: String? = null
 )
@@ -515,8 +621,7 @@ data class VehicleDocumentsDetailDto(
     val summary: DocumentsSummaryDto? = null,
     @SerialName("document_types")
     val documentTypes: List<DocumentTypeDetailDto> = emptyList(),
-    @SerialName("alert_docs")
-    val alertDocs: List<DocumentAlertDto> = emptyList(),
+    // Backend has no top-level alert_docs; alerts live in summary.alert_docs.
     @SerialName("other_documents")
     val otherDocuments: List<VehicleDocumentInfoDto> = emptyList()
 )
@@ -554,17 +659,32 @@ data class VehicleDocumentInfoDto(
     @SerialName("document_number")
     val documentNumber: String? = null,
     @SerialName("expiry_date")
-    val expiryDate: String? = null,
+    val expiryDate: Long? = null,
     @SerialName("status")
     val status: String = "",
     @SerialName("status_label")
     val statusLabel: String = "",
     @SerialName("days_remaining")
     val daysRemaining: Int? = null,
-    @SerialName("file_url")
-    val fileUrl: String? = null,
+    // Backend DocItemResponse now sends download_url (e.g. "/api/v1/documents/{id}/download").
+    @SerialName("download_url")
+    val downloadUrl: String? = null,
+    @SerialName("issue_date")
+    val issueDate: Long? = null,
+    @SerialName("is_expired")
+    val isExpired: Boolean = false,
+    @SerialName("is_expiring_soon")
+    val isExpiringSoon: Boolean = false,
+    @SerialName("file_size")
+    val fileSize: Long = 0,
+    @SerialName("file_size_label")
+    val fileSizeLabel: String = "",
+    @SerialName("mime_type")
+    val mimeType: String = "",
+    @SerialName("uploaded_by")
+    val uploadedBy: String? = null,
     @SerialName("uploaded_at")
-    val uploadedAt: String? = null
+    val uploadedAt: Long? = null
 )
 
 // ==================== Existing Backend API DTOs ====================
@@ -580,36 +700,47 @@ data class VehicleDocumentDto(
     val vehicleId: Int = 0,
     @SerialName("document_type")
     val documentType: String = "",
+    @SerialName("tag")
+    val tag: String = "",
     @SerialName("document_name")
     val documentName: String = "",
     @SerialName("document_number")
     val documentNumber: String? = null,
-    @SerialName("file_name")
-    val fileName: String? = null,
-    @SerialName("file_url")
-    val fileUrl: String? = null,
+    // Backend DocumentResponse sends file_path (server path), not file_url/file_name.
+    @SerialName("file_path")
+    val filePath: String? = null,
+    // Backend DocumentResponse now sends download_url (e.g. "/api/v1/documents/{id}/download").
+    @SerialName("download_url")
+    val downloadUrl: String? = null,
     @SerialName("file_size")
     val fileSize: Long = 0,
     @SerialName("mime_type")
     val mimeType: String = "",
     @SerialName("issue_date")
-    val issueDate: String? = null,
+    val issueDate: Long? = null,
     @SerialName("expiry_date")
-    val expiryDate: String? = null,
+    val expiryDate: Long? = null,
     @SerialName("issuing_authority")
     val issuingAuthority: String? = null,
     @SerialName("status")
     val status: String = "pending",
+    @SerialName("is_expired")
+    val isExpired: Boolean = false,
+    @SerialName("days_until_expiry")
+    val daysUntilExpiry: Int? = null,
     @SerialName("verified_at")
-    val verifiedAt: String? = null,
+    val verifiedAt: Long? = null,
     @SerialName("verified_by")
     val verifiedBy: Int? = null,
-    @SerialName("notes")
+    // Backend field is remarks (not notes).
+    @SerialName("remarks")
     val notes: String? = null,
+    @SerialName("uploaded_by")
+    val uploadedBy: Int = 0,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 
 /**
@@ -622,11 +753,11 @@ data class VehicleTripDto(
     @SerialName("state")
     val state: String = "",
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long? = null,
     @SerialName("start_time")
-    val startTime: String? = null,
+    val startTime: Long? = null,
     @SerialName("end_time")
-    val endTime: String? = null,
+    val endTime: Long? = null,
     @SerialName("start_location")
     val startLocation: String? = null,
     @SerialName("end_location")
@@ -648,8 +779,8 @@ data class VehicleTripDto(
     @SerialName("notes")
     val notes: String? = null,
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 )
 

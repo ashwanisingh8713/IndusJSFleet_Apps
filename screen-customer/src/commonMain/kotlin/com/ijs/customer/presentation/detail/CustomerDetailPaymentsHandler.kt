@@ -6,6 +6,9 @@ import com.ijs.customer.domain.entity.PaymentMode
 import com.ijs.customer.domain.repository.CustomerRepository
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import com.indusjs.error.result.Result
+import com.indusjs.uicomponents.components.UiText
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_generic
 
 /**
  * Handles payments tab data loading (pending + received),
@@ -43,7 +46,8 @@ class CustomerDetailPaymentsHandler(
                 setState {
                     copy(
                         isLoadingPendingPayments = false,
-                        pendingPaymentsError = result.message ?: "Failed to load pending payments"
+                        pendingPaymentsError = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_generic)
                     )
                 }
             }
@@ -109,7 +113,8 @@ class CustomerDetailPaymentsHandler(
                 setState {
                     copy(
                         isLoadingPayments = false,
-                        paymentsError = result.message ?: "Failed to load payments"
+                        paymentsError = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_generic)
                     )
                 }
             }

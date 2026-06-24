@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.uicomponents.components.ErrorContent
 import com.ijs.trip.payment.domain.entity.PaymentType
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -74,51 +76,19 @@ internal fun EmptyFilteredContent(
 
 @Composable
 internal fun PaymentsErrorContent(
-    @Suppress("UNUSED_PARAMETER") error: String,
+    error: String,
     onRetry: () -> Unit,
     onAddPayment: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 32.dp)
-        ) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_cost),
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = stringResource(Res.string.payment_unable_to_load),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(Res.string.payment_unable_to_load_message),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onRetry) {
-                Text(stringResource(Res.string.retry))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            TextButton(onClick = onAddPayment) {
-                Text(stringResource(Res.string.payment_add_new))
-            }
-        }
-    }
+    ErrorContent(
+        error = error,
+        screenContext = FleetErrorContext.GENERIC,
+        onRetry = onRetry,
+        modifier = modifier,
+        secondaryActionLabel = stringResource(Res.string.payment_add_new),
+        onSecondaryAction = onAddPayment
+    )
 }
 
 
@@ -324,7 +294,7 @@ internal fun CompactPaymentItem(
                         color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = "${payment.paymentType.icon} ${payment.typeDisplay}",
+                            text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()}",
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,

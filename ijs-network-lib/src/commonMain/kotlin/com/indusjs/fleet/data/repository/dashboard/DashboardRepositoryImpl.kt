@@ -5,6 +5,7 @@ import com.indusjs.error.exception.AuthException
 import com.indusjs.error.exception.NetworkException
 import com.indusjs.fleet.core.auth.AuthTokenHelper
 import com.indusjs.fleet.core.network.ApiErrorHandler
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.datasource.dashboard.DashboardLocalDataSource
 import com.indusjs.fleet.data.datasource.dashboard.DashboardRemoteDataSource
@@ -123,19 +124,26 @@ class DashboardRepositoryImpl(
                 val data = response.data
                 Result.Success(
                     CostOverview(
-                        filter = data.filter,
-                        periodLabel = data.periodLabel,
+                        // Use the requested filter; wire payload carries `period`.
+                        filter = filter.value,
+                        periodLabel = "",
                         totalExpenses = data.totalExpenses,
                         totalRevenue = data.totalRevenue,
-                        profitLoss = data.profitLoss,
-                        isProfit = data.isProfit,
+                        totalProfit = data.totalProfit,
+                        totalLoss = data.totalLoss,
+                        netProfitLoss = data.netProfitLoss,
+                        // Backend reports total_profit/total_loss/net_profit_loss;
+                        // derive a single signed profit/loss figure for the UI.
+                        profitLoss = data.netProfitLoss,
+                        isProfit = data.netProfitLoss >= 0.0,
                         completedTrips = data.completedTrips,
-                        tripCosts = data.tripCosts,
-                        maintenanceCosts = data.maintenanceCosts,
-                        fuelCosts = data.fuelCosts,
-                        tollCosts = data.tollCosts,
-                        otherCosts = data.otherCosts,
-                        // NEW: Detailed cost breakdowns
+                        fuelExpenses = data.fuelExpenses,
+                        tollExpenses = data.tollExpenses,
+                        maintenanceExpenses = data.maintenanceExpenses,
+                        otherExpenses = data.otherExpenses,
+                        pendingPayments = data.pendingPayments,
+                        receivedPayments = data.receivedPayments,
+                        // Detailed trip-cost expense breakdowns
                         driverAllowanceExpenses = data.driverAllowanceExpenses,
                         parkingExpenses = data.parkingExpenses,
                         loadingCharges = data.loadingCharges,
@@ -145,14 +153,18 @@ class DashboardRepositoryImpl(
                         insuranceExpenses = data.insuranceExpenses,
                         tripCostBreakdown = data.tripCostBreakdown.map { dto ->
                             CostBreakdownItem(
-                                costType = dto.costType,
+                                costId = dto.costId,
+                                costLabel = dto.costLabel,
+                                groupId = dto.groupId,
                                 amount = dto.amount,
                                 count = dto.count
                             )
                         },
                         maintenanceCostBreakdown = data.maintenanceCostBreakdown.map { dto ->
                             CostBreakdownItem(
-                                costType = dto.costType,
+                                costId = dto.costId,
+                                costLabel = dto.costLabel,
+                                groupId = dto.groupId,
                                 amount = dto.amount,
                                 count = dto.count
                             )
@@ -181,15 +193,14 @@ class DashboardRepositoryImpl(
                         payments = data.payments.map { dto ->
                             PendingPayment(
                                 tripId = dto.tripId,
+                                vehicleId = dto.vehicleId,
                                 vehicleRegistration = dto.vehicleRegistration,
                                 customerName = dto.customerName,
                                 customerContact = dto.customerContact,
-                                sellingValue = dto.sellingValue,
+                                totalAmount = dto.totalAmount,
+                                receivedAmount = dto.receivedAmount,
                                 pendingAmount = dto.pendingAmount,
-                                paymentStatus = dto.paymentStatus,
-                                tripDate = dto.tripDate,
-                                startLocation = dto.startLocation,
-                                endLocation = dto.endLocation,
+                                tripDate = formatDateToHumanReadable(dto.tripDate),
                                 daysOverdue = dto.daysOverdue
                             )
                         },
@@ -234,20 +245,23 @@ class DashboardRepositoryImpl(
                 Result.Success(
                     FinancialSummary(
                         period = data.period,
-                        periodLabel = data.periodLabel,
+                        // Backend report.FinancialSummary has no period_label.
+                        periodLabel = "",
                         totalRevenue = data.totalRevenue,
                         totalExpenses = data.totalExpenses,
+                        tripCosts = data.tripCosts,
+                        maintenanceCosts = data.maintenanceCosts,
+                        driverCosts = data.driverCosts,
                         netProfit = data.netProfit,
                         profitMargin = data.profitMargin,
                         profitStatus = data.profitStatus,
                         pendingPayments = data.pendingPayments,
+                        receivedPayments = data.receivedPayments,
                         completedTrips = data.completedTrips,
+                        totalTrips = data.totalTrips,
                         avgTripRevenue = data.avgTripRevenue,
-                        avgTripProfit = data.avgTripProfit,
-                        fuelCost = data.fuelCost,
-                        tollCost = data.tollCost,
-                        maintenanceCost = data.maintenanceCost,
-                        otherCost = data.otherCost
+                        avgTripCost = data.avgTripCost,
+                        avgTripProfit = data.avgTripProfit
                     )
                 )
             } else {

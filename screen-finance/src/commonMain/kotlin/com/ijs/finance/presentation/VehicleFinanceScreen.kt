@@ -19,11 +19,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.datetimeutils.FleetEpoch
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FinanceColors
 import com.indusjs.uicomponents.components.FinanceFilterChip
+import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.finance.domain.entity.*
 import com.ijs.finance.presentation.VehicleFinanceContract.Effect
@@ -50,11 +56,20 @@ fun VehicleFinanceScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val pullRefreshState = rememberPullToRefreshState()
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is Effect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
+                is Effect.ShowSnackbar -> pendingSnackbar = effect.message
                 is Effect.NavigateToDetail -> onNavigateToDetail(effect.vehicleId)
                 is Effect.NavigateToAddPurchase -> onNavigateToAddPurchase()
                 is Effect.NavigateBack -> onNavigateBack()
@@ -120,7 +135,7 @@ fun VehicleFinanceScreen(
             when {
                 state.isLoading && state.vehicles.isEmpty() -> LoadingContent()
                 state.error != null && state.vehicles.isEmpty() -> ErrorContent(
-                    error = state.error ?: stringResource(Res.string.finance_error_generic),
+                    error = state.error?.resolve() ?: stringResource(Res.string.finance_error_generic),
                     onRetry = { viewModel.sendIntent(Intent.LoadData) }
                 )
                 else -> VehicleFinanceContent(
@@ -195,7 +210,7 @@ private fun VehicleFinanceContent(
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = onSearchChange,
-                placeholder = { Text("Search vehicles...") },
+                placeholder = { Text(stringResource(Res.string.finance_search_vehicles_placeholder)) },
                 leadingIcon = {
                     Icon(
                         painter = painterResource(Res.drawable.ic_search),
@@ -232,7 +247,8 @@ private fun VehicleFinanceContent(
                     actionLabel = if (state.selectedFilter == FinanceFilter.PENDING) {
                         stringResource(Res.string.finance_add_purchase)
                     } else null,
-                    onAction = if (state.selectedFilter == FinanceFilter.PENDING) onAddPurchaseClick else null
+                    onAction = if (state.selectedFilter == FinanceFilter.PENDING) onAddPurchaseClick else null,
+                    fillMaxSize = false
                 )
             }
         } else {
@@ -262,59 +278,34 @@ private fun FinanceSummaryCard(
     totalPaid: Double,
     totalOutstanding: Double
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.finance_fleet_finance),
+        subtitle = stringResource(Res.string.finance_vehicles_in_fleet, totalVehicles)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(Res.string.finance_fleet_finance),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = stringResource(Res.string.finance_vehicles_in_fleet, totalVehicles),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Monthly EMI Badge
-                if (monthlyEmiTotal > 0) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = WarningOrange.copy(alpha = 0.12f)
+            // Monthly EMI Badge
+            if (monthlyEmiTotal > 0) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = WarningOrange.copy(alpha = 0.12f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = formatCurrency(monthlyEmiTotal),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = WarningOrange
-                            )
-                            Text(
-                                text = stringResource(Res.string.finance_monthly_emi_badge),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = WarningOrange.copy(alpha = 0.8f)
-                            )
-                        }
+                        Text(
+                            text = formatCurrency(monthlyEmiTotal),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = WarningOrange
+                        )
+                        Text(
+                            text = stringResource(Res.string.finance_monthly_emi_badge),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = WarningOrange.copy(alpha = 0.8f)
+                        )
                     }
                 }
             }
@@ -395,21 +386,14 @@ private fun CompactStatItem(
     label: String,
     color: Color
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(
+        value = value,
+        label = label,
+        accent = color,
+        valueColor = color,
+        showBackground = false,
+        centered = true
+    )
 }
 
 
@@ -419,18 +403,14 @@ private fun EmiAlertsCard(
     overdueAlerts: List<EmiAlert>,
     onRecordClick: (Int) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (overdueAlerts.isNotEmpty())
-                CriticalRed.copy(alpha = 0.1f)
-            else
-                WarningOrange.copy(alpha = 0.1f)
-        )
+    FleetSectionCard(
+        containerColor = if (overdueAlerts.isNotEmpty())
+            CriticalRed.copy(alpha = 0.1f)
+        else
+            WarningOrange.copy(alpha = 0.1f),
+        border = null
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
@@ -569,20 +549,10 @@ private fun VehicleFinanceCard(
     // Only make the card clickable if it's not a pending (not recorded) item
     val isClickable = item.status != FinanceStatus.PENDING
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (isClickable) Modifier.clickable(onClick = onClick) else Modifier
-            ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+    FleetSectionCard(
+        onClick = if (isClickable) onClick else null
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Header with vehicle info and status - without icon
@@ -765,7 +735,7 @@ private fun LoanCardContent(
                     contentColor = LoanBlue
                 )
             ) {
-                Text("Record EMI", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(Res.string.finance_record_emi), style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -798,7 +768,7 @@ private fun CashCardContent(purchase: VehiclePurchase, notAvailableLabel: String
                     color = CashGreen
                 )
                 Text(
-                    text = "Purchased on ${purchase.purchaseDate}",
+                    text = stringResource(Res.string.finance_purchased_on, formatDueDateDisplay(purchase.purchaseDate)),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -868,30 +838,31 @@ private fun NoInfoCardContent(onAddClick: () -> Unit) {
  * Calculates from loanStartDate + emisPaid months to ensure accuracy.
  */
 private fun getNextEmiDueDate(purchase: VehiclePurchase, notAvailableLabel: String): String {
-    // Calculate from loanStartDate + emisPaid months
+    // Calculate from loanStartDate (epoch-ms) + emisPaid months
     val loanStartDate = purchase.loanStartDate
-    if (!loanStartDate.isNullOrBlank()) {
-        val startParsed = FleetDateTime.fromIso8601(loanStartDate)
-        if (startParsed != null) {
-            val startDateStr = FleetDateTime.formatDate(startParsed)
+    if (loanStartDate != null && loanStartDate > 0L) {
+        val startValue = FleetEpoch.toValue(loanStartDate)
+        if (startValue != null) {
+            val startDateStr = FleetDateTime.formatDate(startValue)
             val nextDueDateStr = FleetDateTime.addMonths(startDateStr, purchase.emisPaid)
             if (nextDueDateStr != null) {
-                return formatDueDateDisplay(nextDueDateStr)
+                return FleetDateTime.formatAnyToDisplayDate(nextDueDateStr)
             }
         }
     }
 
-    // Fallback to API-provided nextEmiDueDate
-    if (!purchase.nextEmiDueDate.isNullOrBlank()) {
-        return formatDueDateDisplay(purchase.nextEmiDueDate)
+    // Fallback to API-provided nextEmiDueDate (epoch-ms)
+    val nextDue = purchase.nextEmiDueDate
+    if (nextDue != null && nextDue > 0L) {
+        return formatDueDateDisplay(nextDue)
     }
 
     return notAvailableLabel
 }
 
 /**
- * Format date for display using FleetDateTime.
- * Converts ISO 8601, YYYY-MM-DD, or DD-MM-YYYY format to "DD-MMM-YYYY" format.
+ * Format an epoch-ms timestamp for display ("DD-MMM-YYYY"). Treats null/0 as unset.
  */
-private fun formatDueDateDisplay(dateString: String?): String =
-    FleetDateTime.formatAnyToDisplayDate(dateString)
+private fun formatDueDateDisplay(timestampMillis: Long?): String =
+    if (timestampMillis == null || timestampMillis <= 0L) ""
+    else formatDateToHumanReadable(timestampMillis)

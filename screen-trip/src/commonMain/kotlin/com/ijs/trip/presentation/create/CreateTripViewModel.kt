@@ -5,12 +5,14 @@ import com.ijs.trip.TAG_CREATE_TRIP_VM
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
-import com.indusjs.fleet.core.util.convertToIsoDateTime
+import com.indusjs.fleet.core.permission.PermissionChecker
+import com.indusjs.fleet.core.util.ValidationUtils
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.data.datasource.location.GooglePlacesService
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
-import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.ijs.customer.domain.entity.Customer
 import com.ijs.driver.domain.entity.DriverStatus
+import com.ijs.trip.data.CargoConfigProvider
 import com.ijs.trip.domain.entity.CreateTripData
 import com.ijs.vehicle.domain.entity.VehicleStatus
 import com.ijs.customer.domain.repository.CustomerRepository
@@ -38,7 +40,7 @@ class CreateTripViewModel(
     private val getAvailableVehiclesUseCase: GetAvailableVehiclesUseCase,
     private val getAvailableDriversUseCase: GetAvailableDriversUseCase,
     private val createTripWithDataUseCase: CreateTripWithDataUseCase,
-    private val userLocalDataSource: UserLocalDataSource,
+    private val permissionChecker: PermissionChecker,
     private val googlePlacesService: GooglePlacesService? = null,
     private val customerRepository: CustomerRepository? = null,
     private val logger: FleetLogger
@@ -47,20 +49,23 @@ private var startLocationSearchJob: Job? = null
     private var endLocationSearchJob: Job? = null
 
     init {
-        // Load user role on init
-        viewModelScope.launch(dispatcherProvider.io) {
-            val userRole = try {
-                userLocalDataSource.getUserRole() ?: ""
-            } catch (e: Exception) {
-                logger.e(TAG_CREATE_TRIP_VM, "Failed to get user role: ${e.message}")
-                ""
-            }
-            val normalizedRole = userRole.lowercase().replace("_", "")
-            logger.d(TAG_CREATE_TRIP_VM, "CreateTripViewModel - userRole: '$userRole', normalized: '$normalizedRole', canViewTripPrice: ${normalizedRole == "owner" || normalizedRole == "generalmanager"}")
-            updateState { copy(userRole = userRole) }
+        // Compute permission flag from the user's actual permission set
+        updateState { copy(canViewTripPricePermission = permissionChecker.canViewTripPrice()) }
 
-            // Load customers for autocomplete
+        viewModelScope.launch(dispatcherProvider.io) {
+            // Load customers for autocomplete: local cache first (fast), then a silent API sync
+            // so a server-side customer that isn't cached yet still appears — without forcing the
+            // user to find the small manual "Refresh customers" icon.
             loadCustomersFromRepository()
+            refreshCustomersFromApi(silent = true)
+        }
+
+        // Load the cargo material → unit config from the bundled asset in the background.
+        // Non-fatal: the provider falls back to hardcoded defaults if the asset is missing/corrupt,
+        // so the form never breaks.
+        viewModelScope.launch {
+            val cfg = CargoConfigProvider.load(dispatcherProvider)
+            updateState { copy(cargoMaterials = cfg.materials, unitLabels = cfg.unitLabels) }
         }
     }
 
@@ -103,7 +108,7 @@ private var startLocationSearchJob: Job? = null
     /**
      * Refresh customers from API and update local cache.
      */
-    private suspend fun refreshCustomersFromApi() {
+    private suspend fun refreshCustomersFromApi(silent: Boolean = false) {
         updateState { copy(isRefreshingCustomers = true) }
         customerRepository?.let { repo ->
             try {
@@ -111,12 +116,12 @@ private var startLocationSearchJob: Job? = null
                     is Result.Success -> {
                         val activeCustomers = result.data.filter { it.isActive }
                         updateState { copy(allCustomers = activeCustomers, isRefreshingCustomers = false) }
-                        sendEffect(Effect.ShowSnackbar("Customers refreshed (${activeCustomers.size} found)"))
+                        if (!silent) sendEffect(Effect.ShowSnackbar("Customers refreshed (${activeCustomers.size} found)"))
                         logger.d(TAG_CREATE_TRIP_VM, "Refreshed ${activeCustomers.size} customers from API")
                     }
                     is Result.Error -> {
                         updateState { copy(isRefreshingCustomers = false) }
-                        sendEffect(Effect.ShowError("Failed to refresh customers: ${result.message}"))
+                        if (!silent) sendEffect(Effect.ShowError("Failed to refresh customers: ${result.message}"))
                         logger.e(TAG_CREATE_TRIP_VM, "Failed to refresh customers: ${result.message}")
                     }
                     is Result.Loading -> { }
@@ -192,7 +197,7 @@ private var startLocationSearchJob: Job? = null
             }
 
             // Cargo & Customer updates
-            is Intent.UpdateCargoType -> updateState { copy(cargoType = intent.value, cargoTypeError = null) }
+            is Intent.UpdateCargoType -> updateCargoType(intent.value)
             is Intent.UpdateCargoDescription -> updateState { copy(cargoDescription = intent.value) }
             is Intent.UpdateCargoWeight -> {
                 updateState { copy(cargoWeight = intent.value) }
@@ -207,11 +212,31 @@ private var startLocationSearchJob: Job? = null
                 updateState { copy(customerContact = intent.value, selectedCustomer = null) }
                 validateCustomerContact(intent.value)
             }
+            // Consignee / delivery (receiver) updates — all three REQUIRED.
+            is Intent.UpdateDeliveryAddress -> {
+                updateState { copy(deliveryAddress = intent.value) }
+                validateDeliveryAddress(intent.value)
+            }
+            is Intent.UpdateDeliveryPersonName -> {
+                updateState { copy(deliveryPersonName = intent.value) }
+                validateDeliveryPersonName(intent.value)
+            }
+            is Intent.UpdateDeliveryContactNumber -> {
+                // Digit-filter + cap at 10 like the other phone fields.
+                val digits = intent.value.filter { it.isDigit() }.take(10)
+                updateState { copy(deliveryContactNumber = digits) }
+                validateDeliveryContactNumber(digits)
+            }
             is Intent.UpdatePriority -> updateState { copy(priority = intent.value) }
             is Intent.UpdateNotes -> updateState { copy(notes = intent.value) }
 
             // Customer selection from local DB
             is Intent.SelectCustomer -> selectCustomer(intent.customer)
+            is Intent.SelectCustomerById -> {
+                // Just created from this screen: pull the latest list, then auto-select it.
+                refreshCustomersFromApi(silent = true)
+                currentState.allCustomers.firstOrNull { it.id == intent.customerId }?.let { selectCustomer(it) }
+            }
             is Intent.SearchCustomers -> searchCustomers(intent.query)
             is Intent.UpdateCustomerSearchQuery -> updateState { copy(customerSearchQuery = intent.query) }
             is Intent.ToggleCustomerBottomSheet -> updateState {
@@ -230,6 +255,8 @@ private var startLocationSearchJob: Job? = null
                 updateState { copy(tripPrice = intent.value) }
                 validateTripPrice(intent.value)
             }
+            is Intent.UpdateActualPrice -> updateState { copy(actualPrice = intent.value) }
+            is Intent.UpdatePurchasePrice -> updateState { copy(purchasePrice = intent.value) }
 
             // Actions
             is Intent.CreateTrip -> createTrip()
@@ -338,15 +365,67 @@ private var startLocationSearchJob: Job? = null
      * Validates customer contact - must be 10 digits.
      */
     private fun validateCustomerContact(contact: String) {
+        val error = if (contact.isNotBlank() && !ValidationUtils.isValidIndianMobile(contact)) {
+            "Enter a valid 10-digit mobile number"
+        } else null // Optional field
+        updateState { copy(customerContactError = error) }
+    }
+
+    /**
+     * Validates consignee/delivery address - REQUIRED, must be non-blank.
+     */
+    private fun validateDeliveryAddress(value: String) {
+        val error = if (value.isBlank()) "Delivery address is required" else null
+        updateState { copy(deliveryAddressError = error) }
+    }
+
+    /**
+     * Validates consignee/delivery person name - REQUIRED, must be non-blank.
+     */
+    private fun validateDeliveryPersonName(value: String) {
+        val error = if (value.isBlank()) "Delivery person name is required" else null
+        updateState { copy(deliveryPersonNameError = error) }
+    }
+
+    /**
+     * Validates consignee/delivery contact - REQUIRED, must be a valid 10-digit mobile.
+     */
+    private fun validateDeliveryContactNumber(value: String) {
         val error = when {
-            contact.isBlank() -> null // Optional field
-            contact.length != 10 -> "Enter valid 10-digit mobile"
-            !contact.all { it.isDigit() } -> "Only digits allowed"
-            !contact.startsWith("6") && !contact.startsWith("7") &&
-            !contact.startsWith("8") && !contact.startsWith("9") -> "Invalid mobile number"
+            value.isBlank() -> "Delivery contact number is required"
+            !ValidationUtils.isValidIndianMobile(value) -> "Enter a valid 10-digit mobile number"
             else -> null
         }
-        updateState { copy(customerContactError = error) }
+        updateState { copy(deliveryContactNumberError = error) }
+    }
+
+    /**
+     * Handle a cargo-type change. Units are config-driven per material, so recompute the valid
+     * units for the newly-selected material and reconcile the weight unit:
+     *  - keep the previously-selected unit if it's still valid for the new material,
+     *  - otherwise use that material's defaultUnit,
+     *  - or clear it if the material has no units (e.g. unknown id).
+     * Clears the cargo-type and weight-unit errors.
+     */
+    private fun updateCargoType(value: String) {
+        val state = currentState
+        val material = state.cargoMaterials.firstOrNull { it.id == value }
+        // Units available for the new material (config), falling back to whatever the State exposes.
+        val units = material?.units?.takeIf { it.isNotEmpty() }
+            ?: state.cargoMaterials.flatMap { it.units }.distinct()
+        val newUnit = when {
+            state.weightUnit.isNotBlank() && units.contains(state.weightUnit) -> state.weightUnit
+            material != null && material.defaultUnit.isNotBlank() -> material.defaultUnit
+            else -> ""
+        }
+        updateState {
+            copy(
+                cargoType = value,
+                cargoTypeError = null,
+                weightUnit = newUnit,
+                weightUnitError = null
+            )
+        }
     }
 
     /**
@@ -363,14 +442,11 @@ private var startLocationSearchJob: Job? = null
     }
 
     /**
-     * Validates customer name - must not be blank.
+     * Validates customer name - OPTIONAL (backend treats customer as optional for trip creation).
      */
     private fun validateCustomerName(name: String) {
-        val error = when {
-            name.isBlank() -> "Customer name is required"
-            else -> null
-        }
-        updateState { copy(customerNameError = error) }
+        // No error: customer name is optional. Kept for live-clearing of any stale error.
+        updateState { copy(customerNameError = null) }
     }
 
     /**
@@ -736,17 +812,25 @@ private var startLocationSearchJob: Job? = null
         withContext(dispatcherProvider.io) {
             val state = currentState
 
-            // Convert to ISO 8601 format for v2 API: YYYY-MM-DDTHH:MM:00Z
-            // Backend expects planned_start and planned_end in ISO 8601 format
-            val plannedStartIso = convertToIsoDateTime(state.departureDate, state.departureTime)
-            val plannedEndIso = if (state.arrivalDate.isNotBlank() && state.arrivalTime.isNotBlank()) {
-                convertToIsoDateTime(state.arrivalDate, state.arrivalTime)
-            } else {
-                // If no arrival date, use departure date as planned_end
-                plannedStartIso
+            // Customer is REQUIRED by the backend (trip must link to a managed customer).
+            val selectedCustomerId = state.selectedCustomer?.id?.toIntOrNull()
+            if (selectedCustomerId == null) {
+                updateState { copy(isSaving = false) }
+                sendEffect(Effect.ShowError("Please select a valid, active customer"))
+                return@withContext
             }
 
-            logger.d(TAG_CREATE_TRIP_VM, "Creating trip with ISO: plannedStart=$plannedStartIso, plannedEnd=$plannedEndIso")
+            // Convert picker (DD-MM-YYYY + HH:mm) to UTC epoch-millis for the API.
+            // Backend expects planned_start and planned_end as epoch-millis (numbers).
+            val plannedStartMs = convertToEpochMillis(state.departureDate, state.departureTime) ?: 0L
+            val plannedEndMs = if (state.arrivalDate.isNotBlank() && state.arrivalTime.isNotBlank()) {
+                convertToEpochMillis(state.arrivalDate, state.arrivalTime) ?: plannedStartMs
+            } else {
+                // If no arrival date, use departure as planned_end
+                plannedStartMs
+            }
+
+            logger.d(TAG_CREATE_TRIP_VM, "Creating trip: plannedStart=$plannedStartMs, plannedEnd=$plannedEndMs")
 
             val vehicleId = state.selectedVehicle!!.id.toIntOrNull() ?: 0
             val driverId = state.selectedDriver!!.id.toIntOrNull() ?: 0
@@ -759,13 +843,13 @@ private var startLocationSearchJob: Job? = null
                 vehicleId = vehicleId,
                 driverId = driverId,
                 // v2 API required fields
-                plannedStart = plannedStartIso,
-                plannedEnd = plannedEndIso,
+                plannedStart = plannedStartMs,
+                plannedEnd = plannedEndMs,
                 // Legacy fields (optional)
-                scheduledDate = plannedStartIso,
-                startTime = plannedStartIso,
-                deliveryDate = plannedEndIso,
-                deliveryTime = plannedEndIso,
+                scheduledDate = plannedStartMs,
+                startTime = plannedStartMs,
+                deliveryDate = plannedEndMs,
+                deliveryTime = plannedEndMs,
                 startLocation = state.startLocation.trim(),
                 startLat = state.startLat.toDoubleOrNull(),
                 startLng = state.startLng.toDoubleOrNull(),
@@ -778,21 +862,24 @@ private var startLocationSearchJob: Job? = null
                 cargoDescription = state.cargoDescription.takeIf { it.isNotBlank() },
                 cargoLoadingWeight = state.cargoWeight.toDoubleOrNull(),
                 weightUnit = state.weightUnit.takeIf { it.isNotBlank() }?.lowercase(),
-                // Customer - prefer customerId if selected, fallback to legacy fields
-                customerId = state.selectedCustomer?.id?.toIntOrNull(),
-                customerName = if (state.selectedCustomer != null) {
-                    state.selectedCustomer.companyName
-                } else {
-                    state.customerName.takeIf { it.isNotBlank() }
-                },
-                customerContact = if (state.selectedCustomer != null) {
-                    state.selectedCustomer.primaryContact
-                } else {
-                    state.customerContact.takeIf { it.isNotBlank() }
-                },
+                // Customer: send ONLY customer_id. The backend snapshots name/contact/etc. from the
+                // customer record, and rejects free-text customer fields, so we must not send them.
+                customerId = selectedCustomerId,
+                customerName = null,
+                customerContact = null,
+                // Consignee / delivery (receiver) details — REQUIRED by the backend on create.
+                deliveryAddress = state.deliveryAddress.trim(),
+                deliveryPersonName = state.deliveryPersonName.trim(),
+                deliveryContactNumber = state.deliveryContactNumber.trim(),
                 priority = state.priority.takeIf { it.isNotBlank() }?.lowercase(),
                 notes = state.notes.takeIf { it.isNotBlank() },
-                tripPrice = state.tripPrice.toDoubleOrNull()
+                tripPrice = state.tripPrice.toDoubleOrNull(),
+                // purchasePrice = the COGS for this trip. Null when blank so the
+                // backend default applies. Sent as purchase_price.
+                purchasePrice = state.purchasePrice.toDoubleOrNull(),
+                // sellingValue = the ACTUAL price (revenue). Defaults to the quoted
+                // tripPrice when the user left the actual-price field blank.
+                sellingValue = state.actualPrice.toDoubleOrNull() ?: state.tripPrice.toDoubleOrNull()
             )
 
             when (val result = createTripWithDataUseCase(createTripData)) {
@@ -806,7 +893,16 @@ private var startLocationSearchJob: Job? = null
                 is Result.Error -> {
                     logger.e(TAG_CREATE_TRIP_VM, "Failed to create trip: ${result.message}")
                     updateState { copy(isSaving = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to create trip"))
+                    val msg = result.message ?: "Failed to create trip"
+                    // Backend rejects unknown (404) / inactive (409) customers — surface a clear hint.
+                    val display = if (msg.contains("customer", ignoreCase = true) ||
+                        msg.contains("inactive", ignoreCase = true)
+                    ) {
+                        "Select a valid, active customer"
+                    } else {
+                        msg
+                    }
+                    sendEffect(Effect.ShowError(display))
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
@@ -853,17 +949,21 @@ private var startLocationSearchJob: Job? = null
         // Weight unit - now required
         val weightUnitError = if (currentState.weightUnit.isBlank()) "Please select weight unit" else null
 
-        // Customer name - now required
-        val customerNameError = if (currentState.customerName.isBlank()) "Customer name is required" else null
+        // Customer is REQUIRED — the trip must link to a managed customer selected from the list.
+        val customerNameError = if (currentState.selectedCustomer == null) "Please select a customer" else null
+        val customerContactError: String? = null
 
-        // Customer contact - now required
-        val customerContactError = currentState.customerContact.let { contact ->
+        // Consignee / delivery (receiver) — all three REQUIRED by the backend (binding:required).
+        val deliveryAddressError = if (currentState.deliveryAddress.isBlank()) {
+            "Delivery address is required"
+        } else null
+        val deliveryPersonNameError = if (currentState.deliveryPersonName.isBlank()) {
+            "Delivery person name is required"
+        } else null
+        val deliveryContactNumberError = currentState.deliveryContactNumber.let { contact ->
             when {
-                contact.isBlank() -> "Customer contact is required"
-                contact.length != 10 -> "Enter valid 10-digit mobile"
-                !contact.all { it.isDigit() } -> "Only digits allowed"
-                !contact.startsWith("6") && !contact.startsWith("7") &&
-                !contact.startsWith("8") && !contact.startsWith("9") -> "Invalid mobile number"
+                contact.isBlank() -> "Delivery contact number is required"
+                !ValidationUtils.isValidIndianMobile(contact) -> "Enter a valid 10-digit mobile number"
                 else -> null
             }
         }
@@ -909,6 +1009,9 @@ private var startLocationSearchJob: Job? = null
                 weightUnitError = weightUnitError,
                 customerNameError = customerNameError,
                 customerContactError = customerContactError,
+                deliveryAddressError = deliveryAddressError,
+                deliveryPersonNameError = deliveryPersonNameError,
+                deliveryContactNumberError = deliveryContactNumberError,
                 tripPriceError = tripPriceError,
                 arrivalDateError = arrivalDateError
             )
@@ -925,6 +1028,9 @@ private var startLocationSearchJob: Job? = null
                 weightUnitError == null &&
                 customerNameError == null &&
                 customerContactError == null &&
+                deliveryAddressError == null &&
+                deliveryPersonNameError == null &&
+                deliveryContactNumberError == null &&
                 arrivalDateError == null
 
         return if (currentState.canViewTripPrice) {
@@ -938,31 +1044,6 @@ private var startLocationSearchJob: Job? = null
     // UTILITY METHODS
     // ══════════════════════════════════════════════════════════════════════════════
 
-    /**
-     * Converts raw date digits (DDMMYYYY) and time (HHMM) to ISO 8601 format.
-     * The v2 API expects dates in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
-     * If time is not provided, uses 00:00:00.
-     */
-    private fun convertToIsoDateTime(rawDate: String, rawTime: String = ""): String {
-        if (rawDate.isBlank()) return ""
-
-        // Raw date format is DDMMYYYY (8 digits)
-        val dateDigits = rawDate.filter { it.isDigit() }
-        if (dateDigits.length != 8) return rawDate
-
-        val day = dateDigits.substring(0, 2)
-        val month = dateDigits.substring(2, 4)
-        val year = dateDigits.substring(4, 8)
-
-        // Raw time format is HHMM (4 digits)
-        val timeDigits = rawTime.filter { it.isDigit() }
-        val hours = if (timeDigits.length >= 2) timeDigits.substring(0, 2) else "00"
-        val minutes = if (timeDigits.length >= 4) timeDigits.substring(2, 4) else "00"
-
-        // Return ISO 8601 format: YYYY-MM-DDTHH:MM:00Z
-        return "$year-$month-${day}T$hours:$minutes:00Z"
-    }
-
     // ══════════════════════════════════════════════════════════════════════════════
     // CUSTOMER SELECTION METHODS
     // ══════════════════════════════════════════════════════════════════════════════
@@ -972,6 +1053,19 @@ private var startLocationSearchJob: Job? = null
      * Auto-populates customerName and customerContact.
      */
     private fun selectCustomer(customer: com.ijs.customer.domain.entity.Customer) {
+        // Pre-fill the consignee/delivery fields from the customer as EDITABLE defaults.
+        // The consignee is conceptually distinct from the billing customer but usually starts
+        // as the same party, so we seed blank delivery fields and never overwrite user input.
+        val prefilledAddress = if (currentState.deliveryAddress.isBlank()) {
+            customer.companyAddress.orEmpty()
+        } else currentState.deliveryAddress
+        val prefilledPersonName = if (currentState.deliveryPersonName.isBlank()) {
+            customer.personName.ifBlank { customer.companyName }
+        } else currentState.deliveryPersonName
+        val prefilledContact = if (currentState.deliveryContactNumber.isBlank()) {
+            customer.primaryContact.filter { it.isDigit() }.take(10)
+        } else currentState.deliveryContactNumber
+
         updateState {
             copy(
                 selectedCustomer = customer,
@@ -981,7 +1075,16 @@ private var startLocationSearchJob: Job? = null
                 showCustomerDropdown = false,
                 showCustomerBottomSheet = false,
                 customerNameError = null,
-                customerContactError = null
+                customerContactError = null,
+                deliveryAddress = prefilledAddress,
+                deliveryPersonName = prefilledPersonName,
+                deliveryContactNumber = prefilledContact,
+                // Clear stale errors for any field we just pre-filled with a value.
+                deliveryAddressError = if (prefilledAddress.isNotBlank()) null else deliveryAddressError,
+                deliveryPersonNameError = if (prefilledPersonName.isNotBlank()) null else deliveryPersonNameError,
+                deliveryContactNumberError = if (prefilledContact.isNotBlank() &&
+                    ValidationUtils.isValidIndianMobile(prefilledContact)
+                ) null else deliveryContactNumberError
             )
         }
         logger.d(TAG_CREATE_TRIP_VM, "Selected customer: ${customer.companyName} (ID: ${customer.id}")

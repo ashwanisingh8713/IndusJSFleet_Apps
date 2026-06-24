@@ -204,7 +204,6 @@
     <string name="change_password_new_placeholder">Enter your new password</string>
     <string name="change_password_confirm_label">Confirm New Password</string>
     <string name="change_password_confirm_placeholder">Re-enter your new password</string>
-    <string name="change_password_min_chars">Password must be at least 6 characters</string>
     <string name="change_password_mismatch">Passwords do not match</string>
     <string name="change_password_button">Change Password</string>
 
@@ -414,13 +413,12 @@
     <string name="drivers_license">License</string>
     <string name="drivers_cost">Driver Cost</string>
 
-    <!-- Driver States -->
+    <!-- Driver States (match backend status oneof: active|inactive|on_trip|on_leave|suspended) -->
     <string name="driver_state_inactive">Inactive</string>
     <string name="driver_state_active">Active</string>
-    <string name="driver_state_on_route">On Route</string>
+    <string name="driver_state_on_trip">On Trip</string>
     <string name="driver_state_on_leave">On Leave</string>
     <string name="driver_state_suspended">Suspended</string>
-    <string name="driver_state_terminated">Terminated</string>
 
     <!-- ==================== Trips ==================== -->
     <string name="trips_title">Trips</string>
@@ -534,6 +532,20 @@
 
     <!-- ==================== Reports ==================== -->
     <string name="reports_title">Reports</string>
+    <string name="customer_pl_title">P&amp;L by Customer</string>
+    <string name="customer_pl_card_title">Customer P&amp;L</string>
+    <string name="customer_pl_card_desc">By customer</string>
+    <string name="customer_pl_empty">No customer P&amp;L for this period</string>
+    <string name="customer_pl_active_customers">Active customers</string>
+    <string name="customer_pl_net">Net P&amp;L</string>
+    <string name="customer_pl_collection">Collection</string>
+    <string name="customer_pl_pending">Pending</string>
+    <string name="customer_pl_trips_count">%1$d trips</string>
+    <string name="customer_pl_period_daily">Daily</string>
+    <string name="customer_pl_period_weekly">Weekly</string>
+    <string name="customer_pl_period_monthly">Monthly</string>
+    <string name="customer_pl_period_quarterly">Quarterly</string>
+    <string name="customer_pl_period_yearly">Yearly</string>
     <string name="reports_vehicle_pl">Vehicle Profit &amp; Loss</string>
     <string name="reports_trip_pl">Trip Profit &amp; Loss</string>
     <string name="reports_cost_analysis">Cost Analysis</string>
@@ -586,6 +598,8 @@
     <string name="team_action_actions">Actions</string>
     <string name="team_delete_title">Delete Team Member</string>
     <string name="team_delete_message">Are you sure you want to remove %1$s from your team? This action cannot be undone.</string>
+    <string name="team_disable_title">Disable Access</string>
+    <string name="team_disable_message">Disable access for %1$s? They will not be able to sign in until re-enabled.</string>
     <string name="team_reset_password_title">Reset Password</string>
 
     <!-- ==================== Finance ==================== -->
@@ -604,6 +618,7 @@
     <string name="maps_sdk_required">Integration with map SDK required</string>
     <string name="maps_sdk_supports">Supports: Google Maps, MapBox, OpenStreetMap</string>
     <string name="maps_moving">Moving</string>
+    <string name="maps_no_live_vehicles">No vehicles are transmitting live location yet</string>
     <string name="maps_stopped">Stopped</string>
     <string name="maps_offline">Offline</string>
     <string name="maps_no_driver">No driver</string>
@@ -666,7 +681,6 @@
     <string name="error_mobile_10_digits">Enter 10-digit mobile number</string>
     <string name="error_mobile_start_digit">Mobile must start with 6, 7, 8, or 9</string>
     <string name="error_password_required">Please enter a password</string>
-    <string name="error_password_min_chars">Password must be at least 8 characters</string>
     <string name="error_password_contains_name">Password must not contain your name or email</string>
     <string name="error_confirm_password_required">Please confirm your password</string>
     <string name="error_passwords_mismatch">Passwords do not match</string>
@@ -926,6 +940,8 @@
     <string name="trip_cost_label_route">Route</string>
     <string name="trip_cost_select_type">Select Type</string>
     <string name="trip_cost_no_date">No Date</string>
+    <string name="trip_costs_empty_message">Trip expenses will appear here once added</string>
+    <string name="trip_costs_add">+ Add Trip Cost</string>
 
     <!-- ==================== Driver - Cost Entry ==================== -->
     <string name="driver_cost_label_driver">Driver *</string>
@@ -1128,6 +1144,7 @@
     <string name="alerts_loading">Loading alerts…</string>
     <string name="alerts_dismiss">Dismiss</string>
     <string name="alerts_missing_documents">Missing Documents</string>
+    <string name="alerts_other_reminders">Other reminders</string>
     <string name="alerts_vehicles_need_docs">%1$d vehicle(s) need documents uploaded</string>
     <string name="alerts_vehicles_missing_docs">Some vehicles are missing required documents</string>
     <string name="alerts_documents_expired">Documents Expired</string>
@@ -1245,7 +1262,7 @@
     <string name="trip_list_from">From</string>
     <string name="trip_list_to">To</string>
     <string name="trip_list_current">Current</string>
-    <string name="trip_list_progress_percent">Progress: %1$d%%</string>
+    <string name="trip_list_progress_percent">Progress: %1$s</string>
     <string name="trip_list_km_remaining">%1$d km remaining</string>
     <string name="trip_list_est_total">Est. Total</string>
     <string name="trip_list_status">Status</string>
@@ -1260,7 +1277,7 @@
 
     <!-- ==================== Create trip ==================== -->
     <string name="trip_create_title">Create Trip</string>
-    <string name="trip_create_percent_complete">%1$d%% complete</string>
+    <string name="trip_create_percent_complete">%1$s complete</string>
     <string name="trip_create_fields_need_attention">%1$d field(s) need attention</string>
     <string name="trip_create_creating_trip">Creating trip…</string>
     <string name="trip_create_section_schedule">📅 Schedule</string>
@@ -1269,6 +1286,11 @@
     <string name="trip_create_section_cargo">📦 Cargo Details</string>
     <string name="trip_create_section_priority">🎯 Priority</string>
     <string name="trip_create_section_notes">📝 Notes</string>
+    <string name="trip_edit_section_vehicle_driver">Vehicle &amp; Driver</string>
+    <string name="trip_edit_section_route">Route</string>
+    <string name="trip_edit_section_schedule">Schedule (Optional)</string>
+    <string name="trip_edit_section_cargo_customer">Cargo &amp; Customer</string>
+    <string name="trip_edit_section_notes">Notes</string>
     <string name="trip_create_cargo_type_required">Cargo Type *</string>
     <string name="trip_create_cargo_weight_required">Cargo Weight *</string>
     <string name="trip_create_cargo_weight_placeholder">e.g., 500</string>
@@ -1324,7 +1346,7 @@
     <string name="driver_create_license_placeholder">e.g., DL-1234567890</string>
     <string name="driver_create_password_label">Driver login password *</string>
     <string name="driver_create_password_placeholder">Create a secure password</string>
-    <string name="driver_create_password_supporting">Required by the driver account API. Minimum 8 characters; avoid using the driver name or email.</string>
+    <string name="driver_create_password_supporting">Required*.</string>
     <string name="driver_create_address">Address</string>
     <string name="driver_create_address_placeholder">e.g., 123 Main St…</string>
 
@@ -1533,7 +1555,7 @@
     <string name="reports_vehicle_id_fallback">Vehicle #%1$s</string>
     <string name="reports_trips_count">%1$d trips</string>
     <string name="reports_margin">Margin</string>
-    <string name="reports_margin_percent">%1$d%% margin</string>
+    <string name="reports_margin_percent">%1$s margin</string>
 
     <!-- Vehicle P&L - KPI / Summary -->
     <string name="reports_fleet_financial_summary">Fleet Financial Summary</string>
@@ -1568,6 +1590,8 @@
     <string name="payment_add_new">Add New Payment</string>
     <string name="payment_count_label">%1$d payment%2$s</string>
     <string name="payment_filter_title">Filter Payments</string>
+    <string name="payment_filter_customer">Customer</string>
+    <string name="payment_filter_all_customers">All Customers</string>
     <string name="payment_filter_type">Payment Type</string>
     <string name="payment_filter_mode">Payment Mode</string>
     <string name="payment_filter_status">Status</string>
@@ -1833,7 +1857,8 @@
     <string name="driver_create_personal_section_subtitle">Optional information</string>
     <string name="driver_label_mobile_required">Mobile Number *</string>
     <string name="driver_placeholder_mobile_10">Enter 10-digit mobile</string>
-    <string name="driver_label_email_optional">Email (Optional)</string>
+    <string name="driver_label_email_optional">Email</string>
+    <string name="driver_label_email_required">Email *</string>
     <string name="driver_placeholder_email_example">e.g., raj.kumar@example.com</string>
     <string name="driver_label_license_expiry_required">License Expiry Date *</string>
     <string name="driver_create_creating">Creating Driver…</string>
@@ -1998,4 +2023,188 @@
     <string name="create_org_name_placeholder">e.g. Sharma Transport Co.</string>
     <string name="create_org_name_supporting">This is how your company will appear across the app</string>
     <string name="create_org_button">Create &amp; Continue</string>
+    <!-- ==================== i18n sweep additions ==================== -->
+    <string name="trip_detail_label_status">Status</string>
+    <string name="trip_detail_price_not_set">Not Set</string>
+    <string name="trip_detail_label_vehicle">Vehicle</string>
+    <string name="trip_detail_label_driver">Driver</string>
+    <string name="trip_detail_priority_normal">Normal</string>
+    <string name="trip_detail_label_priority">Priority</string>
+    <string name="trip_detail_route_schedule">Route &amp; Schedule</string>
+    <string name="trip_detail_departure">Departure</string>
+    <string name="trip_detail_not_specified">Not specified</string>
+    <string name="trip_detail_arrival">Arrival</string>
+    <string name="trip_detail_loading_vehicles_drivers">Loading vehicles and drivers…</string>
+    <string name="trip_edit_est_duration">Est. Duration</string>
+    <string name="trip_edit_departure">Departure</string>
+    <string name="trip_edit_arrival">Arrival</string>
+    <string name="trip_edit_enter_trip_price">Enter trip price</string>
+    <string name="trip_edit_priority">Priority</string>
+    <string name="trip_edit_select_cargo_type">Select cargo type</string>
+    <string name="trip_edit_cargo_weight">Cargo Weight</string>
+    <string name="trip_edit_unit">Unit</string>
+    <string name="trip_edit_additional_notes">Additional Notes</string>
+    <string name="trip_edit_notes_placeholder">Add any additional notes or instructions…</string>
+    <string name="trip_detail_cost_breakdown">Cost Breakdown</string>
+    <string name="trip_payment_received_by">Received by: %1$s</string>
+    <string name="trip_payment_receiver_staff">Staff</string>
+    <string name="vehicle_edit_placeholder_make">e.g., Toyota</string>
+    <string name="vehicle_edit_placeholder_model">e.g., Fortuner</string>
+    <string name="vehicle_edit_placeholder_year">e.g., 2024</string>
+    <string name="vehicle_edit_no_driver_assigned">No driver assigned</string>
+    <string name="reports_perf_row_fleet">Fleet</string>
+    <string name="reports_perf_row_trips">Trips</string>
+    <string name="reports_perf_profit_loss_counts">%1$d profit · %2$d loss</string>
+    <string name="reports_total_amount">Total: %1$s</string>
+    <string name="reports_show_less_caps">Show Less ▲</string>
+    <string name="reports_show_all_caps">Show All %1$d ▼</string>
+    <string name="reports_vehicles_need_attention">%1$d Vehicle(s) Need Attention</string>
+    <string name="reports_unknown">Unknown</string>
+    <string name="reports_card_vehicle_pl">Vehicle P&amp;L</string>
+    <string name="reports_card_trip_pl">Trip P&amp;L</string>
+    <string name="reports_period_breakdown_header">%1$s Breakdown</string>
+    <string name="reports_filter_date_range_required">Date Range *</string>
+    <string name="reports_filter_vehicles_count">Vehicles (%1$d/%2$d)</string>
+    <string name="reports_action_all">All</string>
+    <string name="reports_filter_cost_types_count">Cost Types (%1$d)</string>
+    <string name="reports_filter_group_by">Group By</string>
+    <string name="reports_net_label">NET %1$s</string>
+    <string name="reports_word_profit_caps">PROFIT</string>
+    <string name="reports_word_loss_caps">LOSS</string>
+    <string name="reports_stat_vehicles">Vehicles</string>
+    <string name="reports_cost_total_expenses_caps">Total Expenses</string>
+    <string name="reports_entries_count">%1$d entries</string>
+    <string name="reports_pl_results_count">P&amp;L Results (%1$d trips)</string>
+    <string name="reports_no_trips_found">No trips found</string>
+    <string name="reports_trip_number">Trip #%1$s</string>
+    <string name="reports_badge_profit">Profit</string>
+    <string name="reports_badge_loss">Loss</string>
+    <string name="reports_vehicle_fallback">Vehicle</string>
+    <string name="reports_export_pdf">Export PDF</string>
+    <string name="reports_error_generic">Something went wrong</string>
+    <string name="reports_period_chip_custom">Custom</string>
+    <string name="reports_single_vehicle">Single Vehicle</string>
+    <string name="reports_export_report_btn">Export Report</string>
+    <string name="reports_view_single_vehicle">View Single Vehicle</string>
+    <string name="reports_count_of_total">%1$d of %2$d</string>
+    <string name="reports_cd_selected">Selected</string>
+    <string name="otp_verified_badge">Verified</string>
+    <string name="trip_edit_occupied_window">Occupied: %1$s</string>
+    <string name="customer_pl_margin">Margin</string>
+    <string name="success_driver_deleted">Driver deleted successfully</string>
+    <string name="success_driver_updated">Driver updated successfully</string>
+    <string name="success_driver_activated">Driver activated</string>
+    <string name="success_driver_deactivated">Driver deactivated</string>
+    <string name="success_driver_status_updated">Status updated to %1$s</string>
+    <string name="error_license_required">License number is required</string>
+    <string name="error_license_expiry_required">License expiry date is required</string>
+    <string name="error_fill_required_fields">Please fill all required fields correctly</string>
+    <string name="driver_no_cost_types">No cost types found</string>
+    <string name="driver_cost_types_refreshed">Cost types refreshed</string>
+    <string name="error_no_costs_export">No costs to export</string>
+    <string name="success_vehicle_deleted">Vehicle deleted successfully</string>
+    <string name="success_vehicle_updated">Vehicle updated successfully</string>
+    <string name="success_document_uploaded">Document uploaded successfully</string>
+    <string name="success_cost_deleted">Cost deleted successfully</string>
+    <string name="error_make_required">Make is required</string>
+    <string name="error_model_required">Model is required</string>
+    <string name="error_year_required">Year is required</string>
+    <string name="error_year_invalid">Invalid year</string>
+    <string name="error_reg_number_required">Registration number is required</string>
+    <string name="error_reg_number_format">Invalid Indian format (e.g., MH12AB1234)</string>
+    <string name="success_customer_status_activated">Customer activated successfully</string>
+    <string name="success_customer_status_deactivated">Customer deactivated successfully</string>
+    <string name="report_select_one_trip">Please select at least one trip</string>
+    <string name="report_select_one_vehicle">Please select at least one vehicle</string>
+    <string name="report_select_both_dates">Please select both start and end dates</string>
+    <string name="report_no_pl_data">No P&amp;L data available for selected trips</string>
+    <string name="report_invalid_vehicle_id">Invalid vehicle ID</string>
+    <string name="report_no_valid_ids">No valid IDs selected</string>
+    <string name="finance_payment_mode_cash">Cash</string>
+    <string name="finance_payment_mode_upi">UPI</string>
+    <string name="finance_payment_mode_netbanking">Netbanking</string>
+    <string name="finance_payment_mode_cheque">Cheque</string>
+    <string name="finance_payment_mode_auto_debit">Auto Debit</string>
+    <string name="finance_payment_mode_other">Other</string>
+    <string name="finance_payment_status_pending">Pending</string>
+    <string name="finance_payment_status_paid">Paid</string>
+    <string name="finance_payment_status_overdue">Overdue</string>
+    <string name="finance_payment_status_failed">Failed</string>
+    <string name="finance_payment_status_cancelled">Cancelled</string>
+    <string name="finance_emi_label">EMI #%1$d</string>
+    <string name="finance_emi_payment_fallback">Payment</string>
+    <string name="finance_save_failed">Failed to save purchase</string>
+    <string name="finance_payment_record_failed">Failed to record payment</string>
+    <string name="report_failed_load_summary">Failed to load summary</string>
+    <string name="report_failed_load_vehicles">Failed to load vehicles</string>
+    <string name="report_failed_load_fleet_overview">Failed to load fleet overview</string>
+    <string name="report_failed_generate">Failed to generate report</string>
+    <string name="report_failed_load_trips">Failed to load trips</string>
+    <string name="report_failed_load_report">Failed to load report</string>
+    <string name="report_no_valid_trip_ids">No valid trip IDs selected</string>
+    <string name="error_load_vehicles">Failed to load vehicles</string>
+    <string name="error_load_vehicle">Failed to load vehicle</string>
+    <string name="error_delete_vehicle">Failed to delete vehicle</string>
+    <string name="error_update_vehicle">Failed to update vehicle</string>
+    <string name="error_load_trips">Failed to load trips</string>
+    <string name="error_load_more_trips">Failed to load more trips</string>
+    <string name="error_load_route">Failed to load route</string>
+    <string name="error_load_documents">Failed to load documents</string>
+    <string name="error_load_history">Failed to load history</string>
+    <string name="error_upload_document">Failed to upload document</string>
+    <string name="error_download_document">Failed to download document</string>
+    <string name="error_download_document_preview">Failed to download document for preview</string>
+    <string name="error_document_id_unavailable_preview">Document ID not available for preview</string>
+    <string name="error_document_id_unavailable_download">Document ID not available for download</string>
+    <string name="error_load_costs_detail">Failed to load costs: %1$s</string>
+    <string name="error_delete_cost">Failed to delete cost</string>
+    <string name="error_update_vehicle_state">Failed to update vehicle state</string>
+    <string name="error_no_costs_to_export">No costs to export</string>
+    <string name="error_vehicle_data_unavailable">Vehicle data not available</string>
+    <string name="error_year_min_1990">Year must be 1990 or later</string>
+    <string name="error_year_future">Year cannot be in the future</string>
+    <string name="error_year_range">Year must be between 1900 and %1$s</string>
+    <string name="error_reg_number_short">Registration number is too short</string>
+    <string name="error_reg_number_long">Registration number is too long</string>
+    <string name="document_ready_for_upload">%1$s ready for upload</string>
+    <string name="error_add_document">Failed to add document: %1$s</string>
+    <string name="document_removed">Document removed</string>
+    <string name="success_cost_types_updated">Cost types updated</string>
+    <string name="error_refresh_cost_types">Failed to refresh cost types</string>
+    <string name="error_save_maintenance_costs">Failed to save maintenance costs</string>
+    <string name="error_add_valid_cost_entry">Please add at least one valid cost entry</string>
+    <string name="error_cost_entry_indexed">Entry %1$d: %2$s</string>
+    <string name="error_invalid_amount">Invalid amount</string>
+    <string name="error_load_drivers">Failed to load drivers</string>
+    <string name="error_delete_driver">Failed to delete driver</string>
+    <string name="error_update_driver_status">Failed to update driver status</string>
+    <string name="error_toggle_driver_active">Failed to toggle driver active state</string>
+    <string name="error_load_driver">Failed to load driver</string>
+    <string name="error_update_status">Failed to update status</string>
+    <string name="error_toggle_active">Failed to toggle active state</string>
+    <string name="error_update_driver">Failed to update driver</string>
+    <string name="error_load_costs">Failed to load costs</string>
+    <string name="error_load_more_costs">Failed to load more costs</string>
+    <string name="error_refresh_cost_types_prefixed">Failed to refresh: %1$s</string>
+    <string name="error_load_drivers_prefixed">Failed to load drivers: %1$s</string>
+    <string name="error_save_costs_prefixed">Failed to save: %1$s</string>
+    <string name="customer_tab_financials">Financials</string>
+    <string name="error_load_customer">Failed to load customer</string>
+    <string name="customer_export_no_trips">No trips to export</string>
+    <string name="customer_export_no_payments">No payments to export</string>
+    <string name="customer_export_no_financial_data">No financial data to export</string>
+    <string name="error_export_pdf_detail">Failed to export PDF: %1$s</string>
+    <string name="trip_actual_price_revenue_label">Actual Price (Revenue)</string>
+    <string name="trip_actual_price_revenue_hint">Defaults to the quoted price; edit if the customer is billed a different amount</string>
+    <string name="error_delete_blocked_active_trip">Can't delete — finish or cancel the active trip first</string>
+    <string name="trip_purchase_price_cogs_label">Purchase Price (COGS)</string>
+    <string name="trip_purchase_price_cogs_hint">Cost of goods sold for this trip (optional)</string>
+    <string name="trip_create_section_delivery">🚚 Delivery / Consignee Details</string>
+    <string name="trip_create_delivery_address_required">Delivery Address *</string>
+    <string name="trip_create_delivery_address_placeholder">Where the goods are delivered</string>
+    <string name="trip_create_delivery_person_required">Delivery Person Name *</string>
+    <string name="trip_create_delivery_person_placeholder">Who receives the goods</string>
+    <string name="trip_create_delivery_contact_required">Delivery Contact Number *</string>
+    <string name="trip_create_delivery_contact_placeholder">10-digit mobile number</string>
+    <string name="trip_create_select_material_first">Select material first</string>
 </resources>

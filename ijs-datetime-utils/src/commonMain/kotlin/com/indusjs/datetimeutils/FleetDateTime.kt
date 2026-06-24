@@ -221,35 +221,6 @@ object FleetDateTime {
     }
 
     /**
-     * Format ISO 8601 date string to "DD-MMM-YYYY" (e.g., "2026-02-05T10:30:00Z" -> "05-Feb-2026").
-     */
-    fun formatIsoToDisplayDate(isoString: String?): String {
-        if (isoString.isNullOrBlank()) return "N/A"
-        val value = fromIso8601(isoString) ?: return isoString.take(10)
-        return formatDisplayDate(value)
-    }
-
-    /**
-     * Format ISO 8601 datetime string to "DD-MMM-YYYY HH:mm".
-     */
-    fun formatIsoToDisplayDateTime(isoString: String?): String {
-        if (isoString.isNullOrBlank()) return "N/A"
-        val value = fromIso8601(isoString) ?: return isoString.take(16)
-        return formatDisplayDateTime(value)
-    }
-
-    /**
-     * Format ISO 8601 date string to "MMM YYYY" (e.g., "2026-02-05T10:30:00Z" -> "Feb 2026").
-     * Useful for grouping by month.
-     */
-    fun formatIsoToMonthYear(isoString: String?): String {
-        if (isoString.isNullOrBlank()) return "Unknown"
-        val value = fromIso8601(isoString) ?: return "Unknown"
-        val monthName = MONTHS_SHORT.getOrNull(value.month - 1) ?: "Unknown"
-        return "$monthName ${value.year}"
-    }
-
-    /**
      * Format DD-MM-YYYY to DD-MMM-YYYY (e.g., "05-02-2026" -> "05-Feb-2026").
      */
     fun formatToDisplayDate(dateString: String?): String {
@@ -295,16 +266,6 @@ object FleetDateTime {
         }
 
         return dateString
-    }
-
-    /**
-     * Format ISO 8601 datetime string to 12-hour time only (e.g., "02:30 PM").
-     * Useful for extracting time from ISO strings.
-     */
-    fun formatIsoToTime12Hour(isoString: String?): String {
-        if (isoString.isNullOrBlank()) return "N/A"
-        val value = fromIso8601(isoString) ?: return "N/A"
-        return formatTime12Hour(value)
     }
 
     /**
@@ -423,16 +384,6 @@ object FleetDateTime {
     }
 
     /**
-     * Format ISO 8601 datetime string to "DD-MMM-YYYY hh:mm AM/PM" (12-hour format).
-     * Primary display format for user-facing datetime.
-     */
-    fun formatIsoToDisplayDateTime12Hour(isoString: String?): String {
-        if (isoString.isNullOrBlank()) return "N/A"
-        val value = fromIso8601(isoString) ?: return isoString.take(16)
-        return formatDisplayDateTime12Hour(value)
-    }
-
-    /**
      * Format DD-MM-YYYY HH:mm to "DD-MMM-YYYY hh:mm AM/PM" (12-hour format).
      */
     fun formatToDisplayDateTime12Hour(dateTime: String?): String {
@@ -452,38 +403,67 @@ object FleetDateTime {
     }
 
     // ══════════════════════════════════════════════════════════════════════════════
+    // EPOCH-MILLIS DISPLAY ENTRY POINTS (canonical; backend sends/accepts numbers)
+    // ══════════════════════════════════════════════════════════════════════════════
+    // All API timestamps are now UTC epoch millis (Long). These delegate to
+    // FleetEpoch.toValue(ms) (device zone) and the existing FleetDateTimeValue
+    // formatters so display style stays consistent. 0/null => "N/A".
+    // See docs/UTC_MILLIS_APP_MIGRATION_PLAN.md.
+
+    /**
+     * Epoch millis → "DD-MMM-YYYY" (e.g., "05-Feb-2026"). "N/A" when null/0.
+     */
+    fun formatDate(
+        ms: Long?,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ): String {
+        if (ms == null || ms <= 0L) return "N/A"
+        val value = FleetEpoch.toValue(ms, timeZone) ?: return "N/A"
+        return formatDisplayDate(value)
+    }
+
+    /**
+     * Epoch millis → "DD-MMM-YYYY hh:mm AM/PM" (e.g., "05-Feb-2026 02:30 PM").
+     * "N/A" when null/0.
+     */
+    fun formatDateTime12Hour(
+        ms: Long?,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ): String {
+        if (ms == null || ms <= 0L) return "N/A"
+        val value = FleetEpoch.toValue(ms, timeZone) ?: return "N/A"
+        return formatDisplayDateTime12Hour(value)
+    }
+
+    /**
+     * Epoch millis → "hh:mm AM/PM" (e.g., "02:30 PM"). "N/A" when null/0.
+     */
+    fun formatTime12Hour(
+        ms: Long?,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ): String {
+        if (ms == null || ms <= 0L) return "N/A"
+        val value = FleetEpoch.toValue(ms, timeZone) ?: return "N/A"
+        return formatTime12Hour(value)
+    }
+
+    /**
+     * Epoch millis → relative "last updated" label ("Just now", "5 min ago",
+     * "Yesterday at 10:30 AM", or "05-Feb-2026 02:30 PM" beyond a week).
+     * "N/A" when null/0.
+     */
+    fun formatRelative(
+        ms: Long?,
+        timeZone: TimeZone = TimeZone.currentSystemDefault()
+    ): String {
+        if (ms == null || ms <= 0L) return "N/A"
+        val value = FleetEpoch.toValue(ms, timeZone) ?: return "N/A"
+        return toRelativeDescription(value, timeZone)
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════════
     // ISO 8601 CONVERSION
     // ══════════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Convert DD-MM-YYYY HH:mm to ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ).
-     * Useful for API calls.
-     */
-    fun toIso8601(dateTime: String): String? {
-        val parsed = parse(dateTime) ?: return null
-        return toIso8601(parsed)
-    }
-
-    /**
-     * Convert date and time strings to ISO 8601 format.
-     */
-    fun toIso8601(date: String, time: String): String? {
-        val parsed = parse(date, time) ?: return null
-        return toIso8601(parsed)
-    }
-
-    /**
-     * Convert FleetDateTimeValue to ISO 8601 format.
-     */
-    fun toIso8601(value: FleetDateTimeValue): String {
-        val year = value.year
-        val month = if (value.month < 10) "0${value.month}" else "${value.month}"
-        val day = if (value.day < 10) "0${value.day}" else "${value.day}"
-        val hour = if (value.hour < 10) "0${value.hour}" else "${value.hour}"
-        val minute = if (value.minute < 10) "0${value.minute}" else "${value.minute}"
-        val second = if (value.second < 10) "0${value.second}" else "${value.second}"
-        return "$year-$month-${day}T$hour:$minute:${second}Z"
-    }
 
     /**
      * Parse ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ) to FleetDateTimeValue.
@@ -513,27 +493,11 @@ object FleetDateTime {
     }
 
     /**
-     * Convert ISO 8601 to DD-MM-YYYY HH:mm format.
-     */
-    fun fromIso8601ToDateTime(isoString: String): String? {
-        val value = fromIso8601(isoString) ?: return null
-        return formatDateTime(value)
-    }
-
-    /**
      * Convert ISO 8601 to DD-MM-YYYY format (date only).
      */
     fun fromIso8601ToDate(isoString: String): String? {
         val value = fromIso8601(isoString) ?: return null
         return formatDate(value)
-    }
-
-    /**
-     * Convert ISO 8601 to HH:mm format (time only).
-     */
-    fun fromIso8601ToTime(isoString: String): String? {
-        val value = fromIso8601(isoString) ?: return null
-        return formatTime(value)
     }
 
     // ══════════════════════════════════════════════════════════════════════════════
@@ -1829,22 +1793,6 @@ fun String.toDisplayDate(): String = FleetDateTime.formatAnyToDisplayDate(this)
  * - "05-02-2026 14:30".toDisplayDateTime12Hour() -> "05-Feb-2026 02:30 PM"
  */
 fun String.toDisplayDateTime12Hour(): String = FleetDateTime.formatAnyToDisplayDateTime12Hour(this)
-
-/**
- * Extension function to convert ISO 8601 string to display date format.
- *
- * Example:
- * - "2026-02-05T14:30:00Z".isoToDisplayDate() -> "05-Feb-2026"
- */
-fun String.isoToDisplayDate(): String = FleetDateTime.formatIsoToDisplayDate(this)
-
-/**
- * Extension function to convert ISO 8601 string to 12-hour display format.
- *
- * Example:
- * - "2026-02-05T14:30:00Z".isoToDisplayDateTime12Hour() -> "05-Feb-2026 02:30 PM"
- */
-fun String.isoToDisplayDateTime12Hour(): String = FleetDateTime.formatIsoToDisplayDateTime12Hour(this)
 
 /**
  * Extension function to convert any time string to 12-hour format.

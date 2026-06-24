@@ -36,8 +36,9 @@ data class DashboardDataDto(
     val teamStats: TeamStatsDto? = null,
     @SerialName("document_stats")
     val documentStats: DocumentStatsDto? = null,
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("last_updated")
-    val lastUpdated: String? = null
+    val lastUpdated: Long? = null
 ) : Dto
 
 /**
@@ -45,13 +46,14 @@ data class DashboardDataDto(
  */
 @Serializable
 data class UserInfoDto(
-    val id: Int,
+    val id: Int = 0,
     @SerialName("first_name")
-    val firstName: String,
+    val firstName: String = "",
     @SerialName("last_name")
-    val lastName: String,
-    val role: String,
-    val email: String
+    val lastName: String = "",
+    val role: String = "",
+    // backend serializes email with omitempty → key absent for users with no email; default avoids MissingFieldException
+    val email: String = ""
 ) : Dto
 
 /**
@@ -98,6 +100,13 @@ data class TodaySummaryDto(
     val totalDistanceToday: Double = 0.0,
     @SerialName("fuel_consumption")
     val fuelConsumption: Double = 0.0,
+    // Additive fuel fields from backend TodaySummary.
+    @SerialName("total_fuel_filled")
+    val totalFuelFilled: Double = 0.0,
+    @SerialName("total_fuel_used")
+    val totalFuelUsed: Double = 0.0,
+    @SerialName("total_fuel_cost")
+    val totalFuelCost: Double = 0.0,
     @SerialName("active_vehicles_now")
     val activeVehiclesNow: Int = 0,
     @SerialName("new_trips_today")
@@ -122,8 +131,9 @@ data class AlertDto(
     val entityId: Int? = null,
     @SerialName("entity_name")
     val entityName: String? = null,
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("created_at")
-    val createdAt: String? = null,
+    val createdAt: Long? = null,
     // NEW: Enhanced alert fields for vehicle/driver association
     @SerialName("vehicle_id")
     val vehicleId: Int? = null,
@@ -135,8 +145,9 @@ data class AlertDto(
     val driverName: String? = null,
     @SerialName("days_until_expiry")
     val daysUntilExpiry: Int? = null,
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("expiry_date")
-    val expiryDate: String? = null
+    val expiryDate: Long? = null
 ) : Dto
 
 /**
@@ -187,8 +198,9 @@ data class OngoingTripDto(
     @SerialName("end_location")
     val endLocation: String,
     val status: String,
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("started_at")
-    val startedAt: String? = null
+    val startedAt: Long? = null
 ) : Dto
 
 /**
@@ -203,8 +215,9 @@ data class LiveVehicleDto(
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     val speed: Double = 0.0,
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("last_updated")
-    val lastUpdated: String? = null,
+    val lastUpdated: Long? = null,
     @SerialName("driver_name")
     val driverName: String? = null,
     @SerialName("trip_id")
@@ -216,10 +229,7 @@ data class LiveVehicleDto(
  */
 @Serializable
 data class TeamStatsDto(
-    @SerialName("total_managers")
-    val totalManagers: Int = 0,
-    @SerialName("total_supervisors")
-    val totalSupervisors: Int = 0,
+    // Backend dashboard.TeamStats exposes only total_members.
     @SerialName("total_members")
     val totalMembers: Int = 0
 ) : Dto
@@ -263,30 +273,34 @@ data class CostOverviewApiResponse(
  */
 @Serializable
 data class CostOverviewDto(
-    val filter: String = "today",
-    @SerialName("period_label")
-    val periodLabel: String = "",
+    // Backend report.CostOverview: "today" | "weekly" | "monthly".
+    @SerialName("period")
+    val period: String = "today",
     @SerialName("total_expenses")
     val totalExpenses: Double = 0.0,
     @SerialName("total_revenue")
     val totalRevenue: Double = 0.0,
-    @SerialName("profit_loss")
-    val profitLoss: Double = 0.0,
-    @SerialName("is_profit")
-    val isProfit: Boolean = true,
+    @SerialName("total_profit")
+    val totalProfit: Double = 0.0,
+    @SerialName("total_loss")
+    val totalLoss: Double = 0.0,
+    @SerialName("net_profit_loss")
+    val netProfitLoss: Double = 0.0,
     @SerialName("completed_trips")
     val completedTrips: Int = 0,
-    @SerialName("trip_costs")
-    val tripCosts: Double = 0.0,
-    @SerialName("maintenance_costs")
-    val maintenanceCosts: Double = 0.0,
-    @SerialName("fuel_costs")
-    val fuelCosts: Double = 0.0,
-    @SerialName("toll_costs")
-    val tollCosts: Double = 0.0,
-    @SerialName("other_costs")
-    val otherCosts: Double = 0.0,
-    // NEW: Detailed cost breakdowns
+    @SerialName("fuel_expenses")
+    val fuelExpenses: Double = 0.0,
+    @SerialName("toll_expenses")
+    val tollExpenses: Double = 0.0,
+    @SerialName("maintenance_expenses")
+    val maintenanceExpenses: Double = 0.0,
+    @SerialName("other_expenses")
+    val otherExpenses: Double = 0.0,
+    @SerialName("pending_payments")
+    val pendingPayments: Double = 0.0,
+    @SerialName("received_payments")
+    val receivedPayments: Double = 0.0,
+    // Detailed trip-cost expense breakdowns
     @SerialName("driver_allowance_expenses")
     val driverAllowanceExpenses: Double = 0.0,
     @SerialName("parking_expenses")
@@ -301,6 +315,7 @@ data class CostOverviewDto(
     val permitExpenses: Double = 0.0,
     @SerialName("insurance_expenses")
     val insuranceExpenses: Double = 0.0,
+    // omitempty on backend -> default to empty list
     @SerialName("trip_cost_breakdown")
     val tripCostBreakdown: List<CostBreakdownItemDto> = emptyList(),
     @SerialName("maintenance_cost_breakdown")
@@ -309,11 +324,17 @@ data class CostOverviewDto(
 
 /**
  * Cost breakdown item for detailed expense tracking.
+ * Mirrors backend report.CostTypeBreakdown.
  */
 @Serializable
 data class CostBreakdownItemDto(
-    @SerialName("cost_type")
-    val costType: String = "",
+    @SerialName("cost_id")
+    val costId: String = "",
+    @SerialName("cost_label")
+    val costLabel: String = "",
+    // omitempty on backend
+    @SerialName("group_id")
+    val groupId: String = "",
     val amount: Double = 0.0,
     val count: Int = 0
 ) : Dto
@@ -336,7 +357,8 @@ data class PendingPaymentsDataDto(
     val payments: List<PendingPaymentDto> = emptyList(),
     @SerialName("total_pending")
     val totalPending: Double = 0.0,
-    @SerialName("total_count")
+    // Backend application/report.PendingPaymentsResult uses "count".
+    @SerialName("count")
     val totalCount: Int = 0,
     val page: Int = 1,
     @SerialName("per_page")
@@ -351,27 +373,25 @@ data class PendingPaymentsDataDto(
 @Serializable
 data class PendingPaymentDto(
     @SerialName("trip_id")
-    val tripId: Int,
+    val tripId: Int = 0,
+    @SerialName("vehicle_id")
+    val vehicleId: Int = 0,
     @SerialName("vehicle_registration")
     val vehicleRegistration: String = "",
     @SerialName("customer_name")
     val customerName: String = "",
     @SerialName("customer_contact")
-    val customerContact: String? = null,
-    @SerialName("selling_value")
-    val sellingValue: Double = 0.0,
-    @SerialName("partial_payment")
-    val partialPayment: Double = 0.0,
+    val customerContact: String = "",
+    // Backend report.PendingPayment amount fields.
+    @SerialName("total_amount")
+    val totalAmount: Double = 0.0,
+    @SerialName("received_amount")
+    val receivedAmount: Double = 0.0,
     @SerialName("pending_amount")
     val pendingAmount: Double = 0.0,
-    @SerialName("payment_status")
-    val paymentStatus: String = "pending",
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("trip_date")
-    val tripDate: String? = null,
-    @SerialName("start_location")
-    val startLocation: String = "",
-    @SerialName("end_location")
-    val endLocation: String = "",
+    val tripDate: Long? = null,
     @SerialName("days_overdue")
     val daysOverdue: Int = 0
 ) : Dto
@@ -437,8 +457,9 @@ data class TripWithFuelDto(
     val endLocation: String = "",
     val status: String = "",
     val state: String = "",
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("scheduled_date")
-    val scheduledDate: String? = null,
+    val scheduledDate: Long? = null,
     @SerialName("fuel_type")
     val fuelType: String = "",
     @SerialName("filled_fuel_quantity")
@@ -475,8 +496,9 @@ data class ExpiryAlertDto(
     val vehicleRegistration: String = "",
     @SerialName("document_type")
     val documentType: String = "",
+    // UTC epoch-millis (JSON number). 0/null = unset.
     @SerialName("expiry_date")
-    val expiryDate: String = "",
+    val expiryDate: Long? = null,
     @SerialName("days_remaining")
     val daysRemaining: Int = 0,
     @SerialName("is_expired")
@@ -555,12 +577,22 @@ data class FinancialSummaryApiResponse(
 data class FinancialSummaryDto(
     @SerialName("period")
     val period: String = "monthly",
-    @SerialName("period_label")
-    val periodLabel: String = "",
+    // UTC epoch-millis (JSON number). 0 = unset.
+    @SerialName("start_date")
+    val startDate: Long = 0L,
+    @SerialName("end_date")
+    val endDate: Long = 0L,
     @SerialName("total_revenue")
     val totalRevenue: Double = 0.0,
     @SerialName("total_expenses")
     val totalExpenses: Double = 0.0,
+    // Backend report.FinancialSummary cost split.
+    @SerialName("trip_costs")
+    val tripCosts: Double = 0.0,
+    @SerialName("maintenance_costs")
+    val maintenanceCosts: Double = 0.0,
+    @SerialName("driver_costs")
+    val driverCosts: Double = 0.0,
     @SerialName("net_profit")
     val netProfit: Double = 0.0,
     @SerialName("profit_margin")
@@ -569,21 +601,18 @@ data class FinancialSummaryDto(
     val profitStatus: String = "neutral", // "profit", "loss", "break_even"
     @SerialName("pending_payments")
     val pendingPayments: Double = 0.0,
+    @SerialName("received_payments")
+    val receivedPayments: Double = 0.0,
     @SerialName("completed_trips")
     val completedTrips: Int = 0,
+    @SerialName("total_trips")
+    val totalTrips: Int = 0,
     @SerialName("avg_trip_revenue")
     val avgTripRevenue: Double = 0.0,
+    @SerialName("avg_trip_cost")
+    val avgTripCost: Double = 0.0,
     @SerialName("avg_trip_profit")
-    val avgTripProfit: Double = 0.0,
-    // Cost breakdown
-    @SerialName("fuel_cost")
-    val fuelCost: Double = 0.0,
-    @SerialName("toll_cost")
-    val tollCost: Double = 0.0,
-    @SerialName("maintenance_cost")
-    val maintenanceCost: Double = 0.0,
-    @SerialName("other_cost")
-    val otherCost: Double = 0.0
+    val avgTripProfit: Double = 0.0
 ) : Dto
 
 /**

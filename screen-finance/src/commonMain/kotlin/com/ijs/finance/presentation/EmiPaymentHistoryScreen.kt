@@ -12,13 +12,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FinanceColors
+import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.finance.domain.entity.*
@@ -80,7 +82,7 @@ fun EmiPaymentHistoryScreen(
         when {
             state.isLoading -> LoadingContent()
             state.error != null -> ErrorContent(
-                error = state.error ?: stringResource(Res.string.finance_error_generic),
+                error = state.error?.resolve() ?: stringResource(Res.string.finance_error_generic),
                 onRetry = { viewModel.sendIntent(Intent.SelectVehicle(vehicleId)) }
             )
             purchase == null || !purchase.isFinanced -> {
@@ -133,32 +135,15 @@ private fun EmiPaymentHistoryContent(
         }
         if (paidPayments.isEmpty()) {
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    )
+                FleetSectionCard(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    border = null
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.finance_no_payments_yet),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = stringResource(Res.string.finance_record_first_emi_hint),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    EmptyContent(
+                        title = stringResource(Res.string.finance_no_payments_yet),
+                        message = stringResource(Res.string.finance_record_first_emi_hint),
+                        fillMaxSize = false
+                    )
                 }
             }
         } else {
@@ -230,26 +215,13 @@ private fun PaymentSummaryCard(
     totalPaid: Double,
     notAvailableLabel: String
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.background
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.finance_payment_summary_title),
+        accent = LoanBlue
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
-            Text(
-                text = stringResource(Res.string.finance_payment_summary_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = LoanBlueDark
-            )
-
             // Loan Progress Bar
             Column {
                 Row(
@@ -383,52 +355,38 @@ private fun SummaryItem(
     label: String,
     color: Color
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(
+        value = value,
+        label = label,
+        accent = color,
+        valueColor = color,
+        showBackground = false,
+        centered = true
+    )
 }
 
 /**
- * Format date for display using FleetDateTime.
- * Output format: "DD-MMM-YYYY"
+ * Format an epoch-ms timestamp for display ("DD-MMM-YYYY"). Treats null/0 as unset.
  */
-private fun formatDateDisplay(dateString: String?): String =
-    FleetDateTime.formatAnyToDisplayDate(dateString)
+private fun formatDateDisplay(timestampMillis: Long?): String =
+    if (timestampMillis == null || timestampMillis <= 0L) ""
+    else formatDateToHumanReadable(timestampMillis)
 
 @Composable
 private fun PaymentHistoryCard(
     payment: LoanPayment,
     onClick: (() -> Unit)? = null
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.background
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    FleetSectionCard(
+        onClick = onClick
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = payment.emiLabel,
+                    text = payment.localizedEmiLabel(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = CashGreen
@@ -444,7 +402,7 @@ private fun PaymentHistoryCard(
                 )
                 payment.paymentMode?.let {
                     Text(
-                        text = it.label,
+                        text = it.localizedLabel(),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -478,18 +436,9 @@ private fun PaymentHistoryCard(
 private fun PendingPaymentCard(payment: LoanPayment) {
     val accentColor = if (payment.isOverdue) CriticalRed else WarningOrange
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.background
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
+    FleetSectionCard {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -498,7 +447,7 @@ private fun PendingPaymentCard(payment: LoanPayment) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = payment.emiLabel,
+                        text = payment.localizedEmiLabel(),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = accentColor

@@ -22,6 +22,8 @@ import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.components.CaretakerSectionCard
+import com.indusjs.uicomponents.components.FleetSectionHeader
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
 import com.ijs.vehicle.domain.entity.DocumentType
@@ -45,6 +47,15 @@ fun AddVehicleScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     // State for document upload dialog
     var documentToUpload by remember { mutableStateOf<DocumentType?>(null) }
@@ -72,7 +83,7 @@ fun AddVehicleScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is AddVehicleContract.Effect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    pendingSnackbar = effect.message
                 }
                 is AddVehicleContract.Effect.NavigateBack -> onNavigateBack()
                 is AddVehicleContract.Effect.VehicleRegistered -> onVehicleRegistered(effect.vehicleId)
@@ -285,7 +296,7 @@ private fun BasicInfoStep(
                 label = stringResource(Res.string.vehicle_label_registration),
                 placeholder = stringResource(Res.string.vehicle_placeholder_registration),
                 isError = state.registrationNumberError != null,
-                errorMessage = state.registrationNumberError,
+                errorMessage = state.registrationNumberError?.resolve(),
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -301,7 +312,7 @@ private fun BasicInfoStep(
                     label = stringResource(Res.string.vehicle_label_make),
                     placeholder = stringResource(Res.string.vehicle_placeholder_make),
                     isError = state.makeError != null,
-                    errorMessage = state.makeError,
+                    errorMessage = state.makeError?.resolve(),
                     modifier = Modifier.weight(1f)
                 )
 
@@ -311,7 +322,7 @@ private fun BasicInfoStep(
                     label = stringResource(Res.string.vehicle_label_model),
                     placeholder = stringResource(Res.string.vehicle_placeholder_model),
                     isError = state.modelError != null,
-                    errorMessage = state.modelError,
+                    errorMessage = state.modelError?.resolve(),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -329,7 +340,7 @@ private fun BasicInfoStep(
                     label = stringResource(Res.string.vehicle_label_year),
                     placeholder = stringResource(Res.string.vehicle_placeholder_year),
                     isError = state.yearError != null,
-                    errorMessage = state.yearError,
+                    errorMessage = state.yearError?.resolve(),
                     modifier = Modifier.weight(1f)
                 )
 
@@ -683,13 +694,7 @@ private fun FuelTypeSelector(
 
 @Composable
 private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(vertical = 8.dp)
-    )
+    FleetSectionHeader(title = title)
 }
 
 @Composable
@@ -735,16 +740,7 @@ private fun BottomActionBar(
 }
 
 @Composable
-private fun documentTypeDisplayName(type: DocumentType): String = when (type) {
-    DocumentType.REGISTRATION_CERTIFICATE -> stringResource(Res.string.vehicle_doc_type_rc)
-    DocumentType.INSURANCE -> stringResource(Res.string.vehicle_doc_type_insurance)
-    DocumentType.PUC_CERTIFICATE -> stringResource(Res.string.vehicle_doc_type_puc)
-    DocumentType.FITNESS_CERTIFICATE -> stringResource(Res.string.vehicle_doc_type_fitness)
-    DocumentType.ROAD_TAX -> stringResource(Res.string.vehicle_doc_type_road_tax)
-    DocumentType.PERMIT -> stringResource(Res.string.vehicle_doc_type_permit)
-    DocumentType.DRIVER_LICENSE -> stringResource(Res.string.vehicle_doc_type_driver_license)
-    DocumentType.OTHER -> stringResource(Res.string.vehicle_doc_type_other)
-}
+private fun documentTypeDisplayName(type: DocumentType): String = type.localizedDisplayName()
 
 @Composable
 private fun formatFileSizeDisplay(bytes: Long): String = when {

@@ -3,6 +3,7 @@ package com.ijs.customer.presentation.create
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 
 /**
  * MVI Contract for Create Customer Screen.
@@ -12,7 +13,7 @@ object CreateCustomerContract {
 
     data class State(
         val isSaving: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
 
         // Form fields
         val companyName: String = "",
@@ -25,12 +26,12 @@ object CreateCustomerContract {
         val notes: String = "",
 
         // Validation errors
-        val companyNameError: String? = null,
-        val personNameError: String? = null,
-        val primaryContactError: String? = null,
-        val secondaryContactError: String? = null,
-        val emailError: String? = null,
-        val gstNumberError: String? = null
+        val companyNameError: UiText? = null,
+        val personNameError: UiText? = null,
+        val primaryContactError: UiText? = null,
+        val secondaryContactError: UiText? = null,
+        val emailError: UiText? = null,
+        val gstNumberError: UiText? = null
     ) : UiState {
 
         val isValid: Boolean
@@ -78,7 +79,7 @@ object CreateCustomerContract {
     sealed interface Effect : UiEffect {
         data object NavigateBack : Effect
         data class NavigateToCustomerDetail(val customerId: String) : Effect
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
     }
 }
 

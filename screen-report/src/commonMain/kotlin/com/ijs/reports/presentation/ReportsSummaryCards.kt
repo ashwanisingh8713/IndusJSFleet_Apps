@@ -13,6 +13,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.ijs.reports.domain.entity.PLSummary
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -25,19 +28,17 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun FinancialHeroCard(summary: PLSummary) {
-    val isProfit = summary.isProfitable
+    val isProfit = summary.netProfit >= 0
     val profitStatus = ProfitStatus.fromMargin(summary.profitMarginPercentage)
     val statusColor = Color(profitStatus.colorHex)
-    val total = summary.totalRevenue + summary.totalExpenses
-    val expenseRatio = if (total > 0) (summary.totalExpenses / total).toFloat() else 0.5f
+    // Expense ratio = expenses as a fraction of REVENUE (the conventional reading), not of
+    // total cash flow (revenue+expenses). Capped at 1.0 so the bar/label stay ≤100% in a loss.
+    val expenseRatio = if (summary.totalRevenue > 0)
+        (summary.totalExpenses / summary.totalRevenue).toFloat().coerceIn(0f, 1f)
+    else 0f
 
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Column(Modifier.padding(14.dp)) {
+    FleetSectionCard {
+        Column {
             // Row 1: Revenue vs Expenses side by side
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Revenue
@@ -49,7 +50,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                 ) {
                     Column {
                         Text(
-                            "Revenue",
+                            stringResource(Res.string.reports_revenue),
                             style = MaterialTheme.typography.labelSmall,
                             color = ReportsColors.ProfitGreen
                         )
@@ -162,13 +163,13 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            "${if (isProfit) "+" else "-"}${formatCurrency(abs(summary.grossProfit))}",
+                            "${if (isProfit) "+" else "-"}${formatCurrency(abs(summary.netProfit))}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = statusColor
                         )
                         Text(
-                            stringResource(Res.string.reports_margin_percent, summary.profitMarginPercentage.roundToInt()),
+                            stringResource(Res.string.reports_margin_percent, "${summary.profitMarginPercentage.roundToInt()}%"),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = statusColor.copy(alpha = 0.7f)
@@ -186,24 +187,8 @@ internal fun FinancialHeroCard(summary: PLSummary) {
 
 @Composable
 internal fun FleetSnapshotCard(summary: PLSummary) {
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Column(Modifier.padding(14.dp)) {
-            // Header
-            Text(
-                stringResource(Res.string.reports_fleet_snapshot),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(Modifier.height(10.dp))
-
+    FleetTitledSectionCard(title = stringResource(Res.string.reports_fleet_snapshot)) {
+        Column {
             // Key metrics row — 3 compact items
             Row(
                 Modifier.fillMaxWidth(),
@@ -234,7 +219,7 @@ internal fun FleetSnapshotCard(summary: PLSummary) {
             // Fleet performance row
             PerformanceRow(
                 icon = "🚛",
-                title = "Fleet",
+                title = stringResource(Res.string.reports_perf_row_fleet),
                 total = summary.totalVehicles,
                 profitable = summary.profitableVehicles,
                 loss = summary.lossMakingVehicles
@@ -245,7 +230,7 @@ internal fun FleetSnapshotCard(summary: PLSummary) {
             // Trip performance row
             PerformanceRow(
                 icon = "🛣️",
-                title = "Trips",
+                title = stringResource(Res.string.reports_perf_row_trips),
                 total = summary.totalTrips,
                 profitable = summary.profitableTrips,
                 loss = summary.lossMakingTrips
@@ -256,26 +241,14 @@ internal fun FleetSnapshotCard(summary: PLSummary) {
 
 @Composable
 private fun SnapshotMetric(modifier: Modifier, value: String, label: String, color: Color) {
-    Box(
-        modifier.clip(RoundedCornerShape(10.dp))
-            .background(color.copy(alpha = 0.08f))
-            .padding(vertical = 8.dp, horizontal = 6.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                value,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
+    FleetMetricTile(
+        value = value,
+        label = label,
+        modifier = modifier,
+        accent = color,
+        valueColor = color,
+        centered = true
+    )
 }
 
 @Composable
@@ -311,7 +284,7 @@ private fun PerformanceRow(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    "$profitable profit · $loss loss",
+                    stringResource(Res.string.reports_perf_profit_loss_counts, profitable, loss),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -3,6 +3,8 @@ package com.ijs.reports.presentation
 import androidx.compose.runtime.Composable
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLScreen
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLViewModel
+import com.ijs.reports.presentation.customer.CustomerPLScreen
+import com.ijs.reports.presentation.customer.CustomerPLViewModel
 import com.ijs.reports.presentation.cost.CostAnalysisScreen
 import com.ijs.reports.presentation.cost.CostAnalysisViewModel
 import com.ijs.reports.presentation.trip.TripPLViewModel
@@ -22,7 +24,8 @@ object ReportsFeatureFacade {
         onNavigateToVehiclePL: () -> Unit,
         onNavigateToTripPL: () -> Unit,
         onNavigateToCostAnalysis: () -> Unit,
-        onNavigateToConsolidatedPL: () -> Unit
+        onNavigateToConsolidatedPL: () -> Unit,
+        onNavigateToCustomerPL: () -> Unit
     ) {
         ReportsScreen(
             viewModel = viewModel,
@@ -30,7 +33,19 @@ object ReportsFeatureFacade {
             onNavigateToVehiclePL = onNavigateToVehiclePL,
             onNavigateToTripPL = onNavigateToTripPL,
             onNavigateToCostAnalysis = onNavigateToCostAnalysis,
-            onNavigateToConsolidatedPL = onNavigateToConsolidatedPL
+            onNavigateToConsolidatedPL = onNavigateToConsolidatedPL,
+            onNavigateToCustomerPL = onNavigateToCustomerPL
+        )
+    }
+
+    @Composable
+    fun CustomerPLEntry(
+        viewModel: CustomerPLViewModel,
+        onNavigateBack: () -> Unit
+    ) {
+        CustomerPLScreen(
+            viewModel = viewModel,
+            onNavigateBack = onNavigateBack
         )
     }
 

@@ -69,8 +69,8 @@ interface CustomerRepository : Repository {
      */
     suspend fun getCustomerStatistics(
         customerId: String,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): Result<CustomerStatistics>
 
     /**
@@ -139,8 +139,8 @@ interface CustomerRepository : Repository {
      */
     suspend fun getCustomerPaymentSummary(
         customerId: String,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): Result<CustomerPaymentSummary>
 
     // ============= Customer Financial Report =============
@@ -152,8 +152,8 @@ interface CustomerRepository : Repository {
     suspend fun getCustomerFinancialReport(
         customerId: String,
         period: String = "monthly",
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): Result<CustomerFinancialReport>
 }
 

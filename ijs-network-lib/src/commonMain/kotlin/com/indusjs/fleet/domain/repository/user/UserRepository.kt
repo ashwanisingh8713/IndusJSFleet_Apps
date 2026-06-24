@@ -44,7 +44,6 @@ interface UserRepository : Repository {
      * @param newPassword the new password to set
      */
     suspend fun resetPassword(
-        identifier: String,
         resetToken: String,
         newPassword: String
     ): Result<Unit>
@@ -113,5 +112,14 @@ interface UserRepository : Repository {
      * Check if user is logged in.
      */
     suspend fun isLoggedIn(): Boolean
+
+    /**
+     * Fetch the current user's permission set from the backend, cache it locally,
+     * and publish it into the in-memory PermissionStore used for UI gating.
+     *
+     * On network failure, falls back to the last cached permission set (so the UI
+     * still gates sensibly offline / on transient errors).
+     */
+    suspend fun refreshPermissions()
 }
 

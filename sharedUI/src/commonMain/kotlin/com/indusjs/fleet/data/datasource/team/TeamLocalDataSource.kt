@@ -57,6 +57,7 @@ class TeamLocalDataSourceImpl(
         role = role,
         ownerId = ownerId,
         isActive = isActive,
+        isCaretakerEligible = isCaretakerEligible,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -70,6 +71,7 @@ class TeamLocalDataSourceImpl(
         role = role,
         ownerId = ownerId,
         isActive = isActive,
+        isCaretakerEligible = isCaretakerEligible,
         createdAt = createdAt,
         updatedAt = updatedAt
     )

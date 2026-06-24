@@ -41,6 +41,7 @@ import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -110,66 +111,16 @@ internal fun CostOverviewSection(
 
     val dateRangeText = remember(selectedFilter) { getDateRangeForFilter(selectedFilter) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
+    DashboardSectionCard {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
         ) {
-            // Header Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                brush = Brush.linearGradient(
-                                    colors = if (costOverview.isProfit)
-                                        listOf(FleetStatusColors.ProfitGreen, FleetStatusColors.ProfitGreenDark)
-                                    else
-                                        listOf(FleetStatusColors.InfoBlueDark, FleetStatusColors.AccentPurple)
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "💰",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column {
-                        Text(
-                            text = stringResource(Res.string.dashboard_financial_overview),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        if (!hasNoFleet) {
-                            Text(
-                                text = when (selectedFilter) {
-                                    CostOverviewFilter.TODAY -> stringResource(Res.string.dashboard_summary_today)
-                                    CostOverviewFilter.WEEKLY -> stringResource(Res.string.dashboard_summary_weekly)
-                                    CostOverviewFilter.MONTHLY -> stringResource(Res.string.dashboard_summary_monthly)
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
+            // Header (financial-themed accent: green on profit, primary otherwise)
+            DashboardSectionHeader(
+                title = stringResource(Res.string.dashboard_financial_overview),
+                emoji = "💰",
+                accent = if (costOverview.isProfit) profitColor else MaterialTheme.colorScheme.primary
+            )
 
             // Period Filter Tabs with date range (hide if no fleet)
             if (!hasNoFleet) {
@@ -288,20 +239,20 @@ internal fun CostOverviewSection(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            FinancialStatCard(
+                            MetricTile(
                                 modifier = Modifier.weight(1f),
-                                icon = "💸",
+                                emoji = "💸",
                                 label = stringResource(Res.string.dashboard_label_expenses),
                                 value = formatCurrency(costOverview.totalExpenses),
-                                backgroundColor = expenseColor.copy(alpha = 0.1f),
+                                accent = expenseColor,
                                 valueColor = expenseColor
                             )
-                            FinancialStatCard(
+                            MetricTile(
                                 modifier = Modifier.weight(1f),
-                                icon = if (costOverview.isProfit) "📈" else "📉",
+                                emoji = if (costOverview.isProfit) "📈" else "📉",
                                 label = if (costOverview.isProfit) stringResource(Res.string.reports_profit) else stringResource(Res.string.reports_loss),
                                 value = formatCurrency(kotlin.math.abs(costOverview.profitLoss)),
-                                backgroundColor = if (costOverview.isProfit) profitColor.copy(alpha = 0.1f) else lossColor.copy(alpha = 0.1f),
+                                accent = if (costOverview.isProfit) profitColor else lossColor,
                                 valueColor = if (costOverview.isProfit) profitColor else lossColor
                             )
                         }

@@ -3,6 +3,7 @@ package com.ijs.driver.presentation.create
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.data.model.TeamMemberDto
 import com.ijs.driver.domain.entity.LicenseType
 
@@ -38,18 +39,18 @@ object CreateDriverContract {
         val joiningDate: String = "", // YYYY-MM-DD format
 
         // Validation errors
-        val firstNameError: String? = null,
-        val lastNameError: String? = null,
-        val mobileError: String? = null,
-        val passwordError: String? = null,
-        val licenseNumberError: String? = null,
-        val licenseExpiryError: String? = null,
-        val emailError: String? = null,
+        val firstNameError: UiText? = null,
+        val lastNameError: UiText? = null,
+        val mobileError: UiText? = null,
+        val passwordError: UiText? = null,
+        val licenseNumberError: UiText? = null,
+        val licenseExpiryError: UiText? = null,
+        val emailError: UiText? = null,
 
         // Form state
         val isLoading: Boolean = false,
         val isSaving: Boolean = false,
-        val error: String? = null,
+        val error: UiText? = null,
 
         // Available options
         val licenseTypes: List<LicenseType> = LicenseType.entries,
@@ -69,6 +70,7 @@ object CreateDriverContract {
                     password.isNotBlank() &&
                     licenseNumber.isNotBlank() &&
                     licenseExpiry.isNotBlank() &&
+                    email.isNotBlank() &&
                     firstNameError == null &&
                     lastNameError == null &&
                     mobileError == null &&
@@ -119,9 +121,9 @@ object CreateDriverContract {
      * Side effects for the Create Driver screen.
      */
     sealed interface Effect : UiEffect {
-        data class ShowSnackbar(val message: String) : Effect
+        data class ShowSnackbar(val message: UiText) : Effect
         data object NavigateBack : Effect
         data class DriverCreated(val driverId: String) : Effect
-        data class ShowError(val message: String) : Effect
+        data class ShowError(val message: UiText) : Effect
     }
 }

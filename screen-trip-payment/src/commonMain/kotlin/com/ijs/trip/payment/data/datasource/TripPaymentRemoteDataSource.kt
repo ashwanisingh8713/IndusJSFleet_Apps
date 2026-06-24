@@ -113,8 +113,8 @@ class TripPaymentRemoteDataSource(
         paymentType: String? = null,
         paymentMode: String? = null,
         paymentStatus: String? = null,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): TripPaymentListResponse {
         logger.d(TAG_PAYMENT_REMOTE_DS, "Fetching trip payments: page=$page, tripId=$tripId, customerId=$customerId")
 
@@ -308,8 +308,8 @@ class TripPaymentRemoteDataSource(
      */
     suspend fun getPaymentSummary(
         token: String,
-        startDate: String? = null,
-        endDate: String? = null
+        startDate: Long? = null,
+        endDate: Long? = null
     ): PaymentSummaryReportResponse {
         logger.d(TAG_PAYMENT_REMOTE_DS, "Fetching payment summary: $startDate to $endDate")
 

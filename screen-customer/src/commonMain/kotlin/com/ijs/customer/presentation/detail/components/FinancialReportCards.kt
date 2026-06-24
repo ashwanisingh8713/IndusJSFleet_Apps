@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.ijs.customer.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -21,23 +22,13 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 internal fun TripSummaryCard(summary: FinancialTripSummary) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        shape = RoundedCornerShape(12.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.customer_financials_trip_summary),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.customer_financials_trip_summary),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -89,23 +80,13 @@ internal fun TripSummaryCard(summary: FinancialTripSummary) {
  */
 @Composable
 internal fun PaymentStatusCard(received: Double, pending: Double) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        shape = RoundedCornerShape(12.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.customer_payment_status_title),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.customer_payment_status_title),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -146,23 +127,13 @@ internal fun PaymentStatusCard(received: Double, pending: Double) {
  */
 @Composable
 internal fun PeriodBreakdownCard(breakdown: List<PeriodBreakdown>) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        shape = RoundedCornerShape(12.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.customer_period_breakdown),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.customer_period_breakdown),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
-
             breakdown.forEach { period ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -203,23 +174,13 @@ internal fun PeriodBreakdownCard(breakdown: List<PeriodBreakdown>) {
  */
 @Composable
 internal fun TopVehiclesCard(vehicles: List<TopVehicle>) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        shape = RoundedCornerShape(12.dp)
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.customer_top_vehicles),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(Res.string.customer_top_vehicles),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
-
             vehicles.forEachIndexed { index, vehicle ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),

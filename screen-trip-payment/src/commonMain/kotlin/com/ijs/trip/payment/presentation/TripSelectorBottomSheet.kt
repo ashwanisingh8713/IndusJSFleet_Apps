@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.components.EmptyContent
 import com.ijs.trip.payment.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
@@ -223,29 +224,22 @@ private fun TripSelectorEmptyContent(
     onShowAll: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    EmptyContent(
+        icon = "📋",
+        title = if (searchQuery.isBlank()) {
+            stringResource(Res.string.payment_no_trips_available)
+        } else {
+            stringResource(Res.string.payment_no_matching_trips)
+        },
+        actionLabel = if (showOnlyWithPending) {
+            stringResource(Res.string.payment_show_all_trips)
+        } else {
+            null
+        },
+        onAction = onShowAll.takeIf { showOnlyWithPending },
         modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("📋", style = MaterialTheme.typography.displayMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = if (searchQuery.isBlank()) {
-                    stringResource(Res.string.payment_no_trips_available)
-                } else {
-                    stringResource(Res.string.payment_no_matching_trips)
-                },
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (showOnlyWithPending) {
-                TextButton(onClick = onShowAll) {
-                    Text(stringResource(Res.string.payment_show_all_trips))
-                }
-            }
-        }
-    }
+        fillMaxSize = false
+    )
 }
 
 /**

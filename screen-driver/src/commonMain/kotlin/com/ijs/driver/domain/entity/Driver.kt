@@ -4,40 +4,40 @@ import com.indusjs.fleet.core.constants.StatusConstants
 
 /**
  * Driver status enumeration.
- * Matches API values: inactive, active, on_route, on_leave, suspended, terminated
+ * Matches backend status oneof: inactive, active, on_trip, on_leave, suspended
+ * (PATCH /drivers/:id/status). Legacy wire value "on_route" is tolerated on read
+ * and mapped to ON_TRIP; it is never sent back to the backend.
  */
 enum class DriverStatus {
     INACTIVE,
     ACTIVE,
-    ON_ROUTE,
+    ON_TRIP,
     ON_LEAVE,
-    SUSPENDED,
-    TERMINATED;
+    SUSPENDED;
 
     companion object {
         /**
          * Convert API string to DriverStatus enum.
+         * Accepts legacy "on_route" and maps it to ON_TRIP.
          */
         fun fromApiString(value: String): DriverStatus = when (value.lowercase()) {
             StatusConstants.DriverState.INACTIVE -> INACTIVE
             StatusConstants.DriverState.ACTIVE -> ACTIVE
-            StatusConstants.DriverState.ON_ROUTE, "on_trip" -> ON_ROUTE
+            StatusConstants.DriverState.ON_TRIP, "on_route" -> ON_TRIP
             StatusConstants.DriverState.ON_LEAVE -> ON_LEAVE
             StatusConstants.DriverState.SUSPENDED -> SUSPENDED
-            StatusConstants.DriverState.TERMINATED -> TERMINATED
             else -> ACTIVE
         }
 
         /**
-         * Convert DriverStatus enum to API string.
+         * Convert DriverStatus enum to API string (backend-accepted values only).
          */
         fun toApiString(status: DriverStatus): String = when (status) {
             INACTIVE -> StatusConstants.DriverState.INACTIVE
             ACTIVE -> StatusConstants.DriverState.ACTIVE
-            ON_ROUTE -> StatusConstants.DriverState.ON_ROUTE
+            ON_TRIP -> StatusConstants.DriverState.ON_TRIP
             ON_LEAVE -> StatusConstants.DriverState.ON_LEAVE
             SUSPENDED -> StatusConstants.DriverState.SUSPENDED
-            TERMINATED -> StatusConstants.DriverState.TERMINATED
         }
 
         /**
@@ -131,10 +131,10 @@ data class DriverOwner(
 data class DriverTripAssignment(
     val tripId: String,
     val tripState: String,
-    val scheduledDate: String?,
-    val startTime: String?,
-    val plannedStart: String?,
-    val plannedEnd: String?,
+    val scheduledDate: Long?,
+    val startTime: Long?,
+    val plannedStart: Long?,
+    val plannedEnd: Long?,
     val startLocation: String?,
     val endLocation: String?,
     val customerName: String?

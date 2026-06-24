@@ -55,6 +55,6 @@ data class DashboardCacheEntity(
     val documentStatsJson: String?,   // DocumentStatsDto (nullable)
 
     // ===== Cache Metadata =====
-    val lastUpdated: String?,
+    val lastUpdated: Long?,           // UTC epoch-millis (matches DashboardDataDto.lastUpdated)
     val cachedAt: Long                // Timestamp for cache validation
 ) : DbEntity

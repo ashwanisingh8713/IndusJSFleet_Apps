@@ -9,6 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -22,18 +25,12 @@ internal fun HeroSection(
     payment: TripPayment,
     paymentStateLabels: Map<String, String> = emptyMap()
 ) {
-    Card(
+    FleetSectionCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        shape = RoundedCornerShape(12.dp)
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        border = null,
+        contentPadding = FleetTokens.Spacing.L
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
             // Top row: Amount + Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -111,11 +108,10 @@ internal fun HeroSection(
             // Payment type
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "${payment.paymentType.icon} ${payment.typeDisplay} Payment",
+                text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()} " + stringResource(Res.string.payment_type_suffix_proper),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
-        }
     }
 }
 
@@ -127,26 +123,9 @@ internal fun TripInfoCard(payment: TripPayment) {
     val tripInfo = payment.tripInfo ?: return
     val na = stringResource(Res.string.label_not_applicable)
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.payment_section_trip_information)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Text(
-                text = stringResource(Res.string.payment_section_trip_information),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Vehicle & Driver in single row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -206,13 +185,40 @@ internal fun TripInfoCard(payment: TripPayment) {
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = tripInfo.endLocation?.take(20) ?: "N/A",
+                        text = tripInfo.endLocation?.take(20) ?: na,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.weight(1f),
                         maxLines = 1,
                         textAlign = TextAlign.End
                     )
                 }
+            }
+
+            // Trip state (from backend trip_state, now carried on the payment detail response)
+            tripInfo.tripState?.let { tripState ->
+                if (tripState.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    CompactDetailRow(
+                        label = stringResource(Res.string.payment_filter_status),
+                        value = tripState
+                    )
+                }
+            }
+
+            // Scheduled / start date & time (from backend trip_scheduled_date + trip_start_time)
+            tripInfo.startDateTimeDisplay.takeIf { it != na }?.let { startDisplay ->
+                CompactDetailRow(
+                    label = stringResource(Res.string.date_range_start_date),
+                    value = startDisplay
+                )
+            }
+
+            // Delivery date & time (from backend trip_delivery_date + trip_delivery_time)
+            tripInfo.endDateTimeDisplay.takeIf { it != na }?.let { endDisplay ->
+                CompactDetailRow(
+                    label = stringResource(Res.string.date_range_end_date),
+                    value = endDisplay
+                )
             }
 
             // Trip price
@@ -237,7 +243,6 @@ internal fun TripInfoCard(payment: TripPayment) {
                     }
                 }
             }
-        }
     }
 }
 
@@ -246,26 +251,9 @@ internal fun TripInfoCard(payment: TripPayment) {
  */
 @Composable
 internal fun PaymentDetailsCard(payment: TripPayment) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+    FleetTitledSectionCard(
+        title = stringResource(Res.string.payment_section_payment_details)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Text(
-                text = stringResource(Res.string.payment_section_payment_details),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             CompactDetailRow(label = stringResource(Res.string.label_amount), value = payment.amountDisplay)
 
             if (payment.hasTds) {
@@ -300,7 +288,6 @@ internal fun PaymentDetailsCard(payment: TripPayment) {
             payment.bankName?.let {
                 CompactDetailRow(label = stringResource(Res.string.payment_detail_bank), value = it)
             }
-        }
     }
 }
 

@@ -8,7 +8,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.data.model.costs.TripCostDto
+import com.indusjs.uicomponents.components.EmptyContent
+import com.indusjs.uicomponents.components.ErrorContent
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Trip Costs Section - Flat list displaying costs with dialog for details.
@@ -26,18 +32,23 @@ internal fun TripCostsSection(
     totalCost: Double,
     costsByType: Map<String, List<TripCostDto>>,
     isLoading: Boolean,
+    costsError: String? = null,
+    onRetryCosts: (() -> Unit)? = null,
     onExportPdf: (() -> Unit)? = null,
     onAddTripCost: (() -> Unit)? = null
 ) {
     var selectedCost by remember { mutableStateOf<TripCostDto?>(null) }
 
     EnhancedSectionCard(
-        title = "Trip Costs",
+        title = stringResource(Res.string.vehicle_costs_trip_costs),
         icon = "💰"
     ) {
         when {
             isLoading -> {
                 TripCostsLoadingContent()
+            }
+            costsError != null -> {
+                TripCostsErrorContent(message = costsError, onRetry = onRetryCosts)
             }
             costs.isEmpty() -> {
                 TripCostsEmptyContent(onAddTripCost = onAddTripCost)
@@ -62,7 +73,7 @@ internal fun TripCostsSection(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(10.dp)
                         ) {
-                            Text("+ Add Cost", fontWeight = FontWeight.SemiBold)
+                            Text("+ " + stringResource(Res.string.action_add_cost), fontWeight = FontWeight.SemiBold)
                         }
                     }
                     if (onExportPdf != null && costs.isNotEmpty()) {
@@ -71,7 +82,7 @@ internal fun TripCostsSection(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(10.dp)
                         ) {
-                            Text("📄 Export PDF", fontWeight = FontWeight.SemiBold)
+                            Text("📄 " + stringResource(Res.string.action_export_pdf), fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -80,7 +91,7 @@ internal fun TripCostsSection(
 
                 // Cost Breakdown Header
                 Text(
-                    text = "Cost Breakdown",
+                    text = stringResource(Res.string.trip_detail_cost_breakdown),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -116,35 +127,28 @@ internal fun TripCostsSection(
  */
 @Composable
 private fun TripCostsEmptyContent(onAddTripCost: (() -> Unit)?) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(text = "💸", style = MaterialTheme.typography.displaySmall)
-        Text(
-            text = "No costs recorded",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = "Trip expenses will appear here once added",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
-        if (onAddTripCost != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = onAddTripCost,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("+ Add Trip Cost")
-            }
-        }
-    }
+    EmptyContent(
+        icon = "💸",
+        title = stringResource(Res.string.no_costs_recorded),
+        message = stringResource(Res.string.trip_costs_empty_message),
+        actionLabel = if (onAddTripCost != null) stringResource(Res.string.trip_costs_add) else null,
+        onAction = onAddTripCost,
+        fillMaxSize = false
+    )
+}
+
+/**
+ * Error state for Trip Costs section — shown when the costs fetch fails (distinct from empty),
+ * with a retry action so a backend error (e.g. 500) is visible rather than hidden as "no costs".
+ */
+@Composable
+private fun TripCostsErrorContent(message: String, onRetry: (() -> Unit)?) {
+    ErrorContent(
+        error = message,
+        screenContext = FleetErrorContext.TRIP_DETAIL,
+        onRetry = onRetry,
+        fillMaxSize = false
+    )
 }
 
 /**

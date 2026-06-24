@@ -5,7 +5,17 @@ import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.domain.repository.states.StatesRepository
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.driver.domain.entity.DriverStatus
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_deleted
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_activated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_deactivated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_driver_status_updated
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_load_drivers
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_delete_driver
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_update_driver_status
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_toggle_driver_active
 import com.ijs.driver.domain.usecase.DeleteDriverUseCase
 import com.ijs.driver.domain.usecase.GetDriversUseCase
 import com.ijs.driver.domain.usecase.ToggleDriverActiveUseCase
@@ -83,13 +93,15 @@ class DriversViewModel(
                         applyFilters()
                     }
                     is Result.Error -> {
+                        val errorText = result.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.error_load_drivers)
                         updateState {
                             copy(
                                 isLoading = false,
-                                error = result.message ?: "Failed to load drivers"
+                                error = errorText
                             )
                         }
-                        sendEffect(Effect.ShowError(result.message ?: "Failed to load drivers"))
+                        sendEffect(Effect.ShowError(errorText))
                     }
                 }
             }
@@ -177,11 +189,16 @@ class DriversViewModel(
                             }
                         )
                     }
-                    sendEffect(Effect.ShowSnackbar("Driver deleted successfully"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_driver_deleted)))
                 }
                 is Result.Error -> {
                     updateState { copy(isDeleting = false) }
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to delete driver"))
+                    sendEffect(
+                        Effect.ShowError(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_delete_driver)
+                        )
+                    )
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
@@ -208,10 +225,25 @@ class DriversViewModel(
                             }
                         )
                     }
-                    sendEffect(Effect.ShowSnackbar("Driver status updated to ${DriverStatus.toApiString(status)}"))
+                    val apiValue = DriverStatus.toApiString(status)
+                    val label = currentState.stateLabels[apiValue]
+                        ?: DriverStatus.getDisplayLabel(status)
+                    sendEffect(
+                        Effect.ShowSnackbar(
+                            UiText.StringRes(
+                                Res.string.success_driver_status_updated,
+                                args = listOf(label)
+                            )
+                        )
+                    )
                 }
                 is Result.Error -> {
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to update driver status"))
+                    sendEffect(
+                        Effect.ShowError(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_update_driver_status)
+                        )
+                    )
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }
@@ -238,11 +270,20 @@ class DriversViewModel(
                             }
                         )
                     }
-                    val message = if (result.data.isActive) "Driver activated" else "Driver deactivated"
+                    val message = if (result.data.isActive) {
+                        UiText.StringRes(Res.string.success_driver_activated)
+                    } else {
+                        UiText.StringRes(Res.string.success_driver_deactivated)
+                    }
                     sendEffect(Effect.ShowSnackbar(message))
                 }
                 is Result.Error -> {
-                    sendEffect(Effect.ShowError(result.message ?: "Failed to toggle driver active state"))
+                    sendEffect(
+                        Effect.ShowError(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_toggle_driver_active)
+                        )
+                    )
                 }
                 is Result.Loading -> { /* Not applicable */ }
             }

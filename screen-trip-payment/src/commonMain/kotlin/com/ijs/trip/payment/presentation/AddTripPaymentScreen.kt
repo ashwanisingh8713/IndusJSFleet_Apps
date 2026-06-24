@@ -250,7 +250,7 @@ fun CreateTripPaymentScreen(
                 // Error message
                 state.error?.let { error ->
                     Text(
-                        text = error,
+                        text = error.resolve(),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium
                     )

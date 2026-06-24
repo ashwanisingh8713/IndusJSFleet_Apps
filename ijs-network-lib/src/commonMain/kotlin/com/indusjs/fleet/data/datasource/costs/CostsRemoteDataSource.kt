@@ -396,10 +396,19 @@ class CostsRemoteDataSourceImpl(
     private suspend fun handleBulkTripCostsResponse(response: HttpResponse): BulkTripCostsApiResponse {
         val responseBody = response.bodyAsText()
         return try {
-            if (response.status.isSuccess()) {
-                json.decodeFromString<BulkTripCostsApiResponse>(responseBody)
-            } else {
-                BulkTripCostsApiResponse(
+            when {
+                // 206 Partial Content: the backend returns the UNWRAPPED result body
+                // ({created_count, error_count, ...}), NOT the {success, message, data}
+                // envelope — so decode it directly and wrap it as a success, else
+                // created_count is lost and the toast reads "0 cost(s) saved".
+                response.status.value == 206 -> {
+                    val result = json.decodeFromString<BulkCostsResultDto>(responseBody)
+                    BulkTripCostsApiResponse(success = true, data = result)
+                }
+                response.status.isSuccess() -> {
+                    json.decodeFromString<BulkTripCostsApiResponse>(responseBody)
+                }
+                else -> BulkTripCostsApiResponse(
                     success = false,
                     message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
                 )
@@ -415,10 +424,24 @@ class CostsRemoteDataSourceImpl(
     private suspend fun handleBulkMaintenanceCostsResponse(response: HttpResponse): BulkMaintenanceCostsApiResponse {
         val responseBody = response.bodyAsText()
         return try {
-            if (response.status.isSuccess()) {
-                json.decodeFromString<BulkMaintenanceCostsApiResponse>(responseBody)
-            } else {
-                BulkMaintenanceCostsApiResponse(
+            when {
+                // 206 Partial Content: the backend returns the UNWRAPPED result body
+                // ({created_count, error_count, ...}), NOT the {success, message, data}
+                // envelope (mirrors the trip-cost bulk handler). Decode it directly and
+                // wrap it as a success, else created_count is lost and the partial save
+                // is reported as a total failure ("0 cost(s) saved").
+                response.status.value == 206 -> {
+                    val result = json.decodeFromString<BulkCostsResultDto>(responseBody)
+                    BulkMaintenanceCostsApiResponse(
+                        success = true,
+                        message = "Some entries were saved; some failed",
+                        data = result
+                    )
+                }
+                response.status.isSuccess() -> {
+                    json.decodeFromString<BulkMaintenanceCostsApiResponse>(responseBody)
+                }
+                else -> BulkMaintenanceCostsApiResponse(
                     success = false,
                     message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
                 )
@@ -484,8 +507,8 @@ class CostsRemoteDataSourceImpl(
                 url {
                     parameters.append("page", page.toString())
                     parameters.append("per_page", perPage.toString())
-                    // API uses cost_id parameter for filtering
-                    costType?.let { parameters.append("cost_id", it) }
+                    // Maintenance list filter param is cost_type (the cost_id alias was removed).
+                    costType?.let { parameters.append("cost_type", it) }
                     startDate?.let { parameters.append("start_date", it) }
                     endDate?.let { parameters.append("end_date", it) }
                     parameters.append("sort_by", sortBy)
@@ -695,13 +718,24 @@ class CostsRemoteDataSourceImpl(
     private suspend fun handleBulkDriverCostsResponse(response: HttpResponse): com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse {
         val responseBody = response.bodyAsText()
         return try {
-            if (response.status.isSuccess()) {
-                json.decodeFromString<com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse>(responseBody)
-            } else {
-                com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse(
-                    success = false,
-                    message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
-                )
+            when {
+                // 206 Partial Content: backend returns the UNWRAPPED result (some rows failed validation).
+                // Treat as success so the created rows + per-row errors surface, instead of a total failure.
+                response.status.value == 206 -> {
+                    val result = json.decodeFromString<com.indusjs.fleet.data.model.driver.BulkDriverCostsResultDto>(responseBody)
+                    com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse(
+                        success = true,
+                        message = "Some entries were saved; some failed",
+                        data = result
+                    )
+                }
+                response.status.isSuccess() ->
+                    json.decodeFromString<com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse>(responseBody)
+                else ->
+                    com.indusjs.fleet.data.model.driver.BulkDriverCostsApiResponse(
+                        success = false,
+                        message = ApiErrorHandler.extractErrorMessage(response.status, responseBody)
+                    )
             }
         } catch (e: Exception) {
             logger.e(TAG_COSTS_REMOTE_DS, "Failed to parse bulk driver costs response: ${e.message}", e)

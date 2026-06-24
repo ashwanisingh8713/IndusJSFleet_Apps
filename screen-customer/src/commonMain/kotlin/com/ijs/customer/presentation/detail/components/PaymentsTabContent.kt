@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.datetimeutils.FleetDateTime
+import com.indusjs.datetimeutils.FleetEpoch
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
@@ -54,8 +55,10 @@ fun PaymentsTabContent(
     // Group payments by month for better navigation
     val groupedPayments = remember(filteredPayments, unknownMonthLabel) {
         filteredPayments.groupBy { payment ->
-            payment.date?.let { date ->
-                FleetDateTime.formatIsoToMonthYear(date)
+            payment.date?.let { ms ->
+                FleetEpoch.toValue(ms)?.let { value ->
+                    "${FleetDateTime.getMonthNameShort(value.month)} ${value.year}"
+                }
             } ?: unknownMonthLabel
         }
     }
@@ -95,7 +98,7 @@ fun PaymentsTabContent(
             }
             state.paymentsError != null && state.receivedPayments.isEmpty() -> {
                 ErrorContent(
-                    error = state.paymentsError,
+                    error = state.paymentsError.resolve(),
                     onRetry = { onIntent(Intent.RefreshPayments) }
                 )
             }

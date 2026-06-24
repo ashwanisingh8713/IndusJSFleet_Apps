@@ -3,6 +3,7 @@ package com.ijs.vehicle.presentation
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.error.result.Result
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.data.model.TeamMemberDto
 import com.ijs.vehicle.domain.entity.DocumentStatus
 import com.ijs.vehicle.domain.entity.DocumentType
@@ -15,6 +16,23 @@ import com.ijs.vehicle.presentation.AddVehicleContract.Effect
 import com.ijs.vehicle.presentation.AddVehicleContract.Intent
 import com.ijs.vehicle.presentation.AddVehicleContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.document_ready_for_upload
+import indusjsfleet.ijs_ui_components_lib.generated.resources.document_removed
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_add_document
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_fill_required_fields
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_make_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_model_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_reg_number_format
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_reg_number_long
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_reg_number_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_reg_number_short
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_register_vehicle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_year_future
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_year_invalid
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_year_min_1990
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_year_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.success_vehicle_registered
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
@@ -92,28 +110,28 @@ class AddVehicleViewModel(
     }
 
     private fun updateMake(value: String) {
-        val error = if (value.isBlank()) "Make is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_make_required) else null
         updateState { copy(make = value, makeError = error) }
     }
 
     private fun updateModel(value: String) {
-        val error = if (value.isBlank()) "Model is required" else null
+        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_model_required) else null
         updateState { copy(model = value, modelError = error) }
     }
 
     private fun updateYear(value: String) {
         val currentYear = Clock.System.todayIn(TimeZone.currentSystemDefault()).year
-        val error = when {
-            value.isBlank() -> "Year is required"
-            value.toIntOrNull() == null -> "Invalid year"
-            value.toInt() < 1990 -> "Year must be 1990 or later"
-            value.toInt() > currentYear + 1 -> "Year cannot be in the future"
+        val error: UiText? = when {
+            value.isBlank() -> UiText.StringRes(Res.string.error_year_required)
+            value.toIntOrNull() == null -> UiText.StringRes(Res.string.error_year_invalid)
+            value.toInt() < 1990 -> UiText.StringRes(Res.string.error_year_min_1990)
+            value.toInt() > currentYear + 1 -> UiText.StringRes(Res.string.error_year_future)
             else -> null
         }
         updateState { copy(year = value, yearError = error) }
     }
 
-    private fun validateRegistrationNumber(value: String): String? {
+    private fun validateRegistrationNumber(value: String): UiText? {
         // Indian vehicle registration format: SS DD XX YYYY
         // SS = State code (2 letters): MH, DL, KA, TN, UP, GJ, RJ, etc.
         // DD = District code (1-2 digits): 01-99
@@ -124,22 +142,22 @@ class AddVehicleViewModel(
         val indianRegex = Regex("^[A-Z]{2}[0-9]{1,2}[A-Z]{1,4}[0-9]{1,4}$")
 
         return when {
-            value.isBlank() -> "Registration number is required"
-            value.length < 6 -> "Registration number is too short"
-            value.length > 13 -> "Registration number is too long"
+            value.isBlank() -> UiText.StringRes(Res.string.error_reg_number_required)
+            value.length < 6 -> UiText.StringRes(Res.string.error_reg_number_short)
+            value.length > 13 -> UiText.StringRes(Res.string.error_reg_number_long)
             !indianRegex.matches(value) ->
-                "Invalid Indian format (e.g., MH12AB1234, DL1C1234, KA01MG1234)"
+                UiText.StringRes(Res.string.error_reg_number_format)
             else -> null
         }
     }
 
     private fun validateBasicInfo(): Boolean {
         val regError = validateRegistrationNumber(currentState.registrationNumber)
-        val makeError = if (currentState.make.isBlank()) "Make is required" else null
-        val modelError = if (currentState.model.isBlank()) "Model is required" else null
-        val yearError = when {
-            currentState.year.isBlank() -> "Year is required"
-            currentState.year.toIntOrNull() == null -> "Invalid year"
+        val makeError: UiText? = if (currentState.make.isBlank()) UiText.StringRes(Res.string.error_make_required) else null
+        val modelError: UiText? = if (currentState.model.isBlank()) UiText.StringRes(Res.string.error_model_required) else null
+        val yearError: UiText? = when {
+            currentState.year.isBlank() -> UiText.StringRes(Res.string.error_year_required)
+            currentState.year.toIntOrNull() == null -> UiText.StringRes(Res.string.error_year_invalid)
             else -> null
         }
 
@@ -161,7 +179,7 @@ class AddVehicleViewModel(
                 if (validateBasicInfo()) {
                     updateState { copy(currentStep = 1) }
                 } else {
-                    sendEffect(Effect.ShowSnackbar("Please fill all required fields correctly"))
+                    sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.error_fill_required_fields)))
                 }
             }
             1 -> {
@@ -225,10 +243,10 @@ class AddVehicleViewModel(
                     )
                 }
 
-                sendEffect(Effect.ShowSnackbar("${getDocumentTypeName(type)} ready for upload"))
+                sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.document_ready_for_upload, args = listOf(getDocumentTypeName(type)))))
             } catch (e: Exception) {
                 updateState { copy(uploadingDocument = null, uploadProgress = 0f) }
-                sendEffect(Effect.ShowSnackbar("Failed to add document: ${e.message}"))
+                sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.error_add_document, args = listOf(e.message.toString()))))
             }
         }
     }
@@ -237,7 +255,7 @@ class AddVehicleViewModel(
         updateState {
             copy(documents = documents.filter { it.id != documentId })
         }
-        sendEffect(Effect.ShowSnackbar("Document removed"))
+        sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.document_removed)))
     }
 
     private fun updateDocumentExpiry(documentId: String, expiryDate: Long) {
@@ -281,7 +299,7 @@ class AddVehicleViewModel(
 
     private suspend fun submitVehicle() {
         if (!currentState.isBasicInfoValid) {
-            sendEffect(Effect.ShowSnackbar("Please fill all required fields correctly"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.error_fill_required_fields)))
             return
         }
 
@@ -313,29 +331,25 @@ class AddVehicleViewModel(
                 when (result) {
                     is Result.Success -> {
                         updateState { copy(isSaving = false) }
-                        sendEffect(Effect.ShowSnackbar("Vehicle registered successfully!"))
+                        sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_vehicle_registered)))
                         sendEffect(Effect.VehicleRegistered(result.data.id))
                         sendEffect(Effect.NavigateBack)
                     }
                     is Result.Error -> {
-                        updateState {
-                            copy(
-                                isSaving = false,
-                                error = result.message ?: "Failed to register vehicle"
-                            )
-                        }
-                        sendEffect(Effect.ShowSnackbar("Failed to register vehicle: ${result.message}"))
+                        updateState { copy(isSaving = false) }
+                        sendEffect(Effect.ShowSnackbar(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_register_vehicle)
+                        ))
                     }
                     is Result.Loading -> { /* Not applicable for suspend function */ }
                 }
             } catch (e: Exception) {
-                updateState {
-                    copy(
-                        isSaving = false,
-                        error = e.message ?: "Failed to register vehicle"
-                    )
-                }
-                sendEffect(Effect.ShowSnackbar("Failed to register vehicle: ${e.message}"))
+                updateState { copy(isSaving = false) }
+                sendEffect(Effect.ShowSnackbar(
+                    e.message?.let { UiText.Raw(it) }
+                        ?: UiText.StringRes(Res.string.error_register_vehicle)
+                ))
             }
         }
     }
@@ -398,7 +412,7 @@ class AddVehicleViewModel(
                 // Filter to only supervisors and managers
                 val caretakers = teamMembers
                     .filter { member ->
-                        member.role.name.lowercase() in listOf("supervisor", "manager")
+                        member.isCaretakerEligible
                     }
                     .map { it.toDto() }
                 updateState { copy(isLoadingCaretakers = false, caretakers = caretakers) }
@@ -419,6 +433,7 @@ class AddVehicleViewModel(
             role = role.toApiString(),
             ownerId = ownerId.toIntOrNull() ?: 0,
             isActive = isActive,
+            isCaretakerEligible = isCaretakerEligible,
             createdAt = createdAt,
             updatedAt = updatedAt
         )

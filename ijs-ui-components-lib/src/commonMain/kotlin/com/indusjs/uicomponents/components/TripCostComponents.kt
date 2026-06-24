@@ -406,8 +406,8 @@ fun CostDetailDialog(
                         )
                     }
 
-                    // Created At / Added on timestamp
-                    cost.createdAt?.takeIf { it.isNotBlank() }?.let { createdAt ->
+                    // Created At / Added on timestamp (epoch millis; treat 0 as unset)
+                    cost.createdAt?.takeIf { it > 0L }?.let { createdAt ->
                         DetailRow(
                             icon = "➕",
                             label = "Added on",

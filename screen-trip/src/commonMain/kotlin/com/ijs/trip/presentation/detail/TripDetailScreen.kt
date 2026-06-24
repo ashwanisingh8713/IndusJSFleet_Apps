@@ -415,6 +415,8 @@ private fun TripDetailContent(
                     totalCost = state.totalCost,
                     costsByType = state.costsByType,
                     isLoading = state.isLoadingCosts,
+                    costsError = state.costsError,
+                    onRetryCosts = { viewModel.sendIntent(TripDetailContract.Intent.RetryLoadCosts) },
                     onExportPdf = if (state.hasCosts) {
                         { viewModel.sendIntent(TripDetailContract.Intent.ExportCostsToPdf) }
                     } else null,

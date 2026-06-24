@@ -26,6 +26,9 @@ fun CustomerDetailsSection(
     isRefreshing: Boolean = false,
     hasCustomers: Boolean = true,
     validationError: String? = null,
+    // When true, the section title shows a required "*" (e.g. create-trip, where
+    // the backend requires customer_id).
+    isRequired: Boolean = false,
     onSelectClick: () -> Unit,
     onClearClick: () -> Unit,
     onRefreshClick: () -> Unit,
@@ -48,7 +51,7 @@ fun CustomerDetailsSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "👤 ${stringResource(Res.string.customer_section_details)}",
+                    text = "👤 ${stringResource(Res.string.customer_section_details)}${if (isRequired) " *" else ""}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary

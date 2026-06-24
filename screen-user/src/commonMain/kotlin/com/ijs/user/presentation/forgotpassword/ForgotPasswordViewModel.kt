@@ -24,8 +24,6 @@ class ForgotPasswordViewModel(
             is ForgotPasswordContract.Intent.UpdateResetToken -> updateState { copy(resetToken = intent.token) }
             is ForgotPasswordContract.Intent.UpdateNewPassword -> updateState { copy(newPassword = intent.password) }
             is ForgotPasswordContract.Intent.UpdateConfirmPassword -> updateState { copy(confirmPassword = intent.password) }
-            is ForgotPasswordContract.Intent.TogglePasswordVisibility -> updateState { copy(isPasswordVisible = !isPasswordVisible) }
-            is ForgotPasswordContract.Intent.ToggleConfirmPasswordVisibility -> updateState { copy(isConfirmPasswordVisible = !isConfirmPasswordVisible) }
             is ForgotPasswordContract.Intent.ResetPassword -> resetPassword()
             is ForgotPasswordContract.Intent.ClearError -> updateState { copy(error = null) }
             is ForgotPasswordContract.Intent.NavigateToLogin -> sendEffect(ForgotPasswordContract.Effect.NavigateToLogin)
@@ -80,7 +78,6 @@ class ForgotPasswordViewModel(
     }
 
     private suspend fun resetPassword() {
-        val identifier = currentState.identifier.trim()
         val resetToken = currentState.resetToken.trim()
         val newPassword = currentState.newPassword
         val confirmPassword = currentState.confirmPassword
@@ -96,10 +93,7 @@ class ForgotPasswordViewModel(
             return
         }
 
-        if (newPassword.length < 6) {
-            updateState { copy(error = UiText.StringRes(Res.string.error_password_min_chars)) }
-            return
-        }
+        // Password policy (length/complexity) is enforced by the backend only.
 
         if (confirmPassword.isEmpty()) {
             updateState { copy(error = UiText.StringRes(Res.string.error_confirm_password_required)) }
@@ -116,7 +110,6 @@ class ForgotPasswordViewModel(
         withContext(dispatcherProvider.io) {
             try {
                 val result = userRepository.resetPassword(
-                    identifier = identifier,
                     resetToken = resetToken,
                     newPassword = newPassword
                 )

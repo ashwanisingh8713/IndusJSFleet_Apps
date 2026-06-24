@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.vehicle.domain.entity.RouteInfo
@@ -201,32 +202,12 @@ internal fun RouteTabContent(
                 } else {
                     // No Active Trip
                     item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(32.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text("🛣️", style = MaterialTheme.typography.displaySmall)
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = stringResource(Res.string.vehicle_route_no_trip),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = stringResource(Res.string.vehicle_route_no_trip_message),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+                        EmptyContent(
+                            icon = "🛣️",
+                            title = stringResource(Res.string.vehicle_route_no_trip),
+                            message = stringResource(Res.string.vehicle_route_no_trip_message),
+                            fillMaxSize = false
+                        )
                     }
                 }
 
@@ -325,8 +306,11 @@ internal fun StopItemWithTimeline(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                val stopTime = stop.scheduledTime ?: stop.actualTime
                 Text(
-                    text = stop.scheduledTime ?: stop.actualTime ?: "",
+                    text = stopTime?.takeIf { it > 0L }
+                        ?.let { com.indusjs.fleet.core.util.formatDateTimeForDisplay(it) }
+                        ?: "",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

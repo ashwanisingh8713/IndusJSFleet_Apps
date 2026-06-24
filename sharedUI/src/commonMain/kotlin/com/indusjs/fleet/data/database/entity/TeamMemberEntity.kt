@@ -18,10 +18,14 @@ data class TeamMemberEntity(
     val ownerId: Int,
     @SerialName("is_active")
     val isActive: Boolean = true,
+    // Backend-computed caretaker eligibility (mirrors TeamMemberDto). Default false for legacy cache rows.
+    @SerialName("is_caretaker_eligible")
+    val isCaretakerEligible: Boolean = false,
+    // UTC epoch-millis (mirrors TeamMemberDto). 0 = unset.
     @SerialName("created_at")
-    val createdAt: String,
+    val createdAt: Long = 0L,
     @SerialName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: Long? = null
 ) {
     val fullName: String get() = "$firstName $lastName"
 }

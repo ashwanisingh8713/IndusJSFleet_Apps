@@ -4,7 +4,7 @@ import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.trip.TAG_TRIP_DETAIL_ACTION
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.error.result.Result
-import com.indusjs.fleet.core.util.convertToIsoDateTime
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.ijs.trip.presentation.detail.TripDetailContract.Effect
 import com.ijs.trip.data.model.UpdateTripRequest
 import com.ijs.trip.domain.entity.TripStatus
@@ -38,23 +38,23 @@ suspend fun saveChanges() {
         stateManager.updateTripState { copy(isSaving = true) }
 
         withContext(dispatcherProvider.io) {
-            val plannedStartIso = if (state.departureDate.isNotBlank() && state.departureTime.isNotBlank()) {
-                convertToIsoDateTime(state.departureDate, state.departureTime)
+            val plannedStartMs = if (state.departureDate.isNotBlank() && state.departureTime.isNotBlank()) {
+                convertToEpochMillis(state.departureDate, state.departureTime)
             } else null
 
-            val plannedEndIso = if (state.arrivalDate.isNotBlank() && state.arrivalTime.isNotBlank()) {
-                convertToIsoDateTime(state.arrivalDate, state.arrivalTime)
+            val plannedEndMs = if (state.arrivalDate.isNotBlank() && state.arrivalTime.isNotBlank()) {
+                convertToEpochMillis(state.arrivalDate, state.arrivalTime)
             } else null
 
             val request = UpdateTripRequest(
                 vehicleId = state.selectedVehicle?.id?.toIntOrNull(),
                 driverId = state.selectedDriver?.id?.toIntOrNull(),
-                plannedStart = plannedStartIso,
-                plannedEnd = plannedEndIso,
-                scheduledDate = plannedStartIso,
-                startTime = plannedStartIso,
-                deliveryDate = plannedEndIso,
-                deliveryTime = plannedEndIso,
+                plannedStart = plannedStartMs,
+                plannedEnd = plannedEndMs,
+                scheduledDate = plannedStartMs,
+                startTime = plannedStartMs,
+                deliveryDate = plannedEndMs,
+                deliveryTime = plannedEndMs,
                 startLocation = state.startLocationAddress.trim().takeIf { it.isNotBlank() },
                 startLat = state.startLat.toDoubleOrNull(),
                 startLng = state.startLng.toDoubleOrNull(),
@@ -66,11 +66,15 @@ suspend fun saveChanges() {
                 cargoDescription = state.cargoDescription.takeIf { it.isNotBlank() },
                 cargoLoadingWeight = state.cargoWeight.toDoubleOrNull(),
                 weightUnit = state.weightUnit.takeIf { it.isNotBlank() },
-                customerName = state.customerName.takeIf { it.isNotBlank() },
-                customerContact = state.customerContact.takeIf { it.isNotBlank() },
+                // Customer: send only customer_id (optional reassign; null/omitted leaves it unchanged).
+                // Backend snapshots name/contact from the customer record — do not send free-text.
+                customerId = state.selectedCustomer?.id?.toIntOrNull(),
+                // purchase_price (COGS) — now forwarded on update too, not only on create.
+                purchasePrice = state.purchasePrice.toDoubleOrNull(),
                 tripPrice = state.tripPrice.toDoubleOrNull(),
-                rawTripPrice = state.tripPrice.toDoubleOrNull(),
-                sellingValue = state.tripPrice.toDoubleOrNull(),
+                // selling_value = the ACTUAL price (revenue). Use the editable actual-price
+                // field, falling back to the quoted tripPrice when the user left it blank.
+                sellingValue = state.actualPrice.toDoubleOrNull() ?: state.tripPrice.toDoubleOrNull(),
                 priority = state.priority.lowercase().takeIf { it.isNotBlank() },
                 notes = state.notes.takeIf { it.isNotBlank() }
             )
@@ -98,6 +102,10 @@ suspend fun saveChanges() {
                             priority = trip.priority ?: "",
                             notes = trip.notes ?: "",
                             tripPrice = trip.tripPrice?.toString() ?: "",
+                            // Re-seed the actual-price (revenue) and purchase-price (COGS) editors
+                            // from the saved trip, defaulting the actual price to the quote.
+                            actualPrice = (trip.sellingValue ?: trip.tripPrice)?.toString() ?: "",
+                            purchasePrice = trip.purchasePrice?.toString() ?: "",
                             vehicles = emptyList(),
                             drivers = emptyList(),
                             selectedVehicle = null,
@@ -225,12 +233,8 @@ suspend fun saveChanges() {
         }
 
 
-        val (departureDate, _) = extractDateTime(
-            isoDateTime = trip?.plannedStart, date = trip?.scheduledDate, time = trip?.startTime
-        )
-        val (arrivalDate, _) = extractDateTime(
-            isoDateTime = trip?.plannedEnd, date = trip?.deliveryDate, time = trip?.deliveryTime
-        )
+        val departureDate = resolveDate(trip?.plannedStart, trip?.scheduledDate)
+        val arrivalDate = resolveDate(trip?.plannedEnd, trip?.deliveryDate)
 
         val pdfData = TripCostsPdfData(
             tripId = (trip?.id ?: state.tripId).toIntOrNull() ?: 0,
@@ -247,7 +251,8 @@ suspend fun saveChanges() {
                     costId = cost.costId ?: "",
                     costLabel = cost.costLabel ?: "Unknown",
                     amount = cost.amount,
-                    date = cost.date,
+                    date = cost.date?.takeIf { it > 0L }
+                        ?.let { FleetDateTime.timestampToDateString(it) } ?: "",
                     time = cost.time,
                     notes = cost.notes
                 )
@@ -284,35 +289,12 @@ suspend fun saveChanges() {
     }
 
     /**
-     * Extract date and time from ISO datetime or separate date/time fields.
-     * Returns Pair(date as DD-MM-YYYY, time as HH:MM)
+     * Resolve a display date (DD-MM-YYYY) from epoch-millis fields, preferring
+     * [primary] then [fallback]. Treats null/0 as unset.
      */
-    private fun extractDateTime(
-        isoDateTime: String?,
-        date: String?,
-        time: String?
-    ): Pair<String?, String?> {
-        if (!isoDateTime.isNullOrBlank()) {
-            return try {
-                val parts = isoDateTime.replace("Z", "").split("T")
-                if (parts.size == 2) {
-                    val datePart = parts[0]
-                    val timePart = parts[1].take(5)
-                    val dateComponents = datePart.split("-")
-                    val formattedDate = if (dateComponents.size == 3) {
-                        "${dateComponents[2]}-${dateComponents[1]}-${dateComponents[0]}"
-                    } else {
-                        datePart
-                    }
-                    Pair(formattedDate, timePart)
-                } else {
-                    Pair(isoDateTime, null)
-                }
-            } catch (_: Exception) {
-                Pair(isoDateTime, null)
-            }
-        }
-        return Pair(date, time)
+    private fun resolveDate(primary: Long?, fallback: Long?): String? {
+        val ms = primary?.takeIf { it > 0L } ?: fallback?.takeIf { it > 0L } ?: return null
+        return FleetDateTime.timestampToDateString(ms)
     }
 }
 

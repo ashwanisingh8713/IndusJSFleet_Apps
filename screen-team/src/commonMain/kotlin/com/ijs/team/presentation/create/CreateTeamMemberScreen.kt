@@ -15,14 +15,13 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetPasswordField
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.ijs.team.domain.entity.AssignableTeamRole
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -229,112 +228,34 @@ fun CreateTeamMemberScreen(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Password Field
-                    OutlinedTextField(
+                    // Password Field (policy enforced by the backend; no client min-length hint)
+                    FleetPasswordField(
                         value = state.password,
                         onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdatePassword(it)) },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.team_label_password)) },
-                        placeholder = { Text(stringResource(Res.string.team_placeholder_password)) },
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_lock),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(
-                                onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.TogglePasswordVisibility) }
-                            ) {
-                                Icon(
-                                    painter = painterResource(
-                                        if (state.isPasswordVisible) Res.drawable.ic_visibility_off
-                                        else Res.drawable.ic_visibility
-                                    ),
-                                    contentDescription = if (state.isPasswordVisible) {
-                                        stringResource(Res.string.team_cd_hide_password)
-                                    } else {
-                                        stringResource(Res.string.team_cd_show_password)
-                                    },
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        },
-                        visualTransformation = if (state.isPasswordVisible) {
-                            VisualTransformation.None
-                        } else {
-                            PasswordVisualTransformation()
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Next
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                        ),
-                        singleLine = true,
-                        enabled = !state.isLoading,
-                        supportingText = {
-                            Text(stringResource(Res.string.team_password_min_chars), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        label = stringResource(Res.string.team_label_password),
+                        placeholder = stringResource(Res.string.team_placeholder_password),
+                        enabled = !state.isLoading
                     )
 
-                    // Confirm Password Field
-                    OutlinedTextField(
+                    // Confirm Password Field (UI-only match check)
+                    FleetPasswordField(
                         value = state.confirmPassword,
                         onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateConfirmPassword(it)) },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.team_label_confirm_password)) },
-                        placeholder = { Text(stringResource(Res.string.team_placeholder_confirm_password)) },
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_lock),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(
-                                onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.ToggleConfirmPasswordVisibility) }
-                            ) {
-                                Icon(
-                                    painter = painterResource(
-                                        if (state.isConfirmPasswordVisible) Res.drawable.ic_visibility_off
-                                        else Res.drawable.ic_visibility
-                                    ),
-                                    contentDescription = if (state.isConfirmPasswordVisible) {
-                                        stringResource(Res.string.team_cd_hide_password)
-                                    } else {
-                                        stringResource(Res.string.team_cd_show_password)
-                                    },
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        },
-                        visualTransformation = if (state.isConfirmPasswordVisible) {
-                            VisualTransformation.None
-                        } else {
-                            PasswordVisualTransformation()
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        ),
+                        label = stringResource(Res.string.team_label_confirm_password),
+                        placeholder = stringResource(Res.string.team_placeholder_confirm_password),
+                        isError = state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password,
+                        errorMessage = if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password) {
+                            stringResource(Res.string.error_passwords_mismatch)
+                        } else null,
+                        enabled = !state.isLoading,
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 focusManager.clearFocus()
                                 viewModel.sendIntent(CreateTeamMemberContract.Intent.CreateTeamMember)
                             }
-                        ),
-                        singleLine = true,
-                        enabled = !state.isLoading,
-                        isError = state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password,
-                        supportingText = {
-                            if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password) {
-                                Text(stringResource(Res.string.error_passwords_mismatch), color = MaterialTheme.colorScheme.error)
-                            }
-                        }
+                        )
                     )
                 }
             }
@@ -432,41 +353,12 @@ private fun SectionCard(
     subtitle: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                subtitle?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            content()
-        }
-    }
+    FleetTitledSectionCard(
+        title = title,
+        subtitle = subtitle,
+        modifier = Modifier.padding(horizontal = 16.dp),
+        content = content
+    )
 }
 
 /**

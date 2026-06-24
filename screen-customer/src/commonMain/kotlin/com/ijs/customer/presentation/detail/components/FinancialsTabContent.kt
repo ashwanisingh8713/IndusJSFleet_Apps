@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.LoadingContent
 import com.ijs.customer.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -21,6 +22,7 @@ import org.jetbrains.compose.resources.stringResource
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.ReportType
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
+import com.ijs.customer.presentation.localizedDisplayName
 
 /**
  * Financials Tab Content.
@@ -52,7 +54,7 @@ fun FinancialsTabContent(
             }
             state.financialsError != null -> {
                 ErrorContent(
-                    error = state.financialsError,
+                    error = state.financialsError.resolve(),
                     onRetry = { onIntent(Intent.RefreshFinancials) }
                 )
             }
@@ -144,7 +146,7 @@ private fun PeriodSelector(
                     FilterChip(
                         selected = selectedPeriod == period,
                         onClick = { onPeriodSelected(period) },
-                        label = { Text(period.displayName) },
+                        label = { Text(period.localizedDisplayName()) },
                         shape = RoundedCornerShape(20.dp)
                     )
                 }
@@ -224,6 +226,13 @@ private fun ProfitLossCard(report: CustomerFinancialReport) {
                     value = report.totalCostsDisplay,
                     color = MaterialTheme.colorScheme.error
                 )
+                // Additive: driver costs (net of deductions) are now part of the
+                // backend response and are subtracted to reach net profit.
+                FinancialMetric(
+                    label = stringResource(Res.string.reports_card_driver_costs),
+                    value = report.totalDriverCostsDisplay,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -260,19 +269,15 @@ private fun FinancialMetric(
     color: androidx.compose.ui.graphics.Color,
     isLarge: Boolean = false
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            style = if (isLarge) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    FleetMetricTile(
+        value = value,
+        label = label,
+        valueColor = color,
+        accent = color,
+        // Emphasised metrics (Net Profit / Margin) keep the tinted box for visual hierarchy.
+        showBackground = isLarge,
+        centered = true
+    )
 }
 
 @Composable

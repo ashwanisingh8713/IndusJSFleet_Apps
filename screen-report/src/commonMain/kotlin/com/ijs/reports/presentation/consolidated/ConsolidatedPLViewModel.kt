@@ -2,6 +2,8 @@ package com.ijs.reports.presentation.consolidated
 
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.convertToEpochMillis
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.reports.data.model.ConsolidatedPLRequest
 import com.ijs.reports.domain.usecase.GetConsolidatedPLUseCase
 import com.ijs.vehicle.domain.repository.VehicleRepository
@@ -10,6 +12,10 @@ import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.Effect
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.Intent
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.State
 import dev.zacsweers.metro.Inject
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_failed_generate
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_failed_load_vehicles
+import indusjsfleet.ijs_ui_components_lib.generated.resources.report_select_date_range
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -57,7 +63,7 @@ class ConsolidatedPLViewModel(
                 }
                 is Result.Error -> {
                     updateState { copy(isLoadingVehicles = false) }
-                    sendEffect(Effect.ShowSnackbar(result.message ?: "Failed to load vehicles"))
+                    sendEffect(Effect.ShowSnackbar(result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_load_vehicles)))
                 }
                 is Result.Loading -> { /* Already handled */ }
             }
@@ -90,7 +96,16 @@ class ConsolidatedPLViewModel(
         val currentState = state.value
 
         if (currentState.startDate.isBlank() || currentState.endDate.isBlank()) {
-            sendEffect(Effect.ShowSnackbar("Please select date range"))
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.report_select_date_range)))
+            return
+        }
+
+        // Picker state holds DD-MM-YYYY digits; convert to UTC epoch millis at the request boundary.
+        // Backend requires non-zero start_date/end_date, so bail out if conversion fails.
+        val startMillis = convertToEpochMillis(currentState.startDate)
+        val endMillis = convertToEpochMillis(currentState.endDate)
+        if (startMillis == null || endMillis == null) {
+            sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.report_select_date_range)))
             return
         }
 
@@ -100,9 +115,9 @@ class ConsolidatedPLViewModel(
 
         val request = ConsolidatedPLRequest(
             vehicleIds = vehicleIds.takeIf { it.isNotEmpty() },
-            costTypes = currentState.selectedCostTypes.toList().takeIf { it.isNotEmpty() },
-            startDate = currentState.startDate,
-            endDate = currentState.endDate,
+            costIds = currentState.selectedCostTypes.toList().takeIf { it.isNotEmpty() },
+            startDate = startMillis,
+            endDate = endMillis,
             groupBy = currentState.groupBy
         )
 
@@ -111,7 +126,7 @@ class ConsolidatedPLViewModel(
                 updateState { copy(isLoading = false, result = result.data) }
             }
             is Result.Error -> {
-                updateState { copy(isLoading = false, error = result.message ?: "Failed to generate report") }
+                updateState { copy(isLoading = false, error = result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_generate)) }
             }
             is Result.Loading -> { /* Already handled */ }
         }

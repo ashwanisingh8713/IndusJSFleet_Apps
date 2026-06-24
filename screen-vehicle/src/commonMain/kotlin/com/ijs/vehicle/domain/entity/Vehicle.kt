@@ -110,10 +110,10 @@ data class Location(
 data class VehicleTripAssignment(
     val tripId: String,
     val tripState: String,
-    val scheduledDate: String?,
-    val startTime: String?,
-    val plannedStart: String?,
-    val plannedEnd: String?,
+    val scheduledDate: Long?,
+    val startTime: Long?,
+    val plannedStart: Long?,
+    val plannedEnd: Long?,
     val startLocation: String?,
     val endLocation: String?,
     val customerName: String?

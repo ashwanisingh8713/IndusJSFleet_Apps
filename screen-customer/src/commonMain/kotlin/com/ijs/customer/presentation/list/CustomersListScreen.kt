@@ -19,10 +19,10 @@ import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.components.UiText
 import com.ijs.customer.domain.entity.Customer
 import com.ijs.customer.presentation.list.CustomersListContract.Effect
 import com.ijs.customer.presentation.list.CustomersListContract.Intent
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -42,14 +42,22 @@ fun CustomersListScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val pullRefreshState = rememberPullToRefreshState()
-    val scope = rememberCoroutineScope()
+    var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
+
+    pendingSnackbar?.let { uiText ->
+        val message = uiText.resolve()
+        LaunchedEffect(message) {
+            snackbarHostState.showSnackbar(message)
+            pendingSnackbar = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is Effect.NavigateToCustomerDetail -> onNavigateToCustomerDetail(effect.customerId)
                 is Effect.NavigateToCreateCustomer -> onNavigateToCreateCustomer()
-                is Effect.ShowSnackbar -> scope.launch { snackbarHostState.showSnackbar(effect.message) }
+                is Effect.ShowSnackbar -> pendingSnackbar = effect.message
             }
         }
     }
@@ -146,7 +154,7 @@ fun CustomersListScreen(
                     }
                     state.showError -> {
                         ErrorContent(
-                            error = state.error ?: stringResource(Res.string.customers_unable_to_load),
+                            error = state.error?.resolve() ?: stringResource(Res.string.customers_unable_to_load),
                             onRetry = { viewModel.sendIntent(Intent.RefreshCustomers) }
                         )
                     }
@@ -158,7 +166,7 @@ fun CustomersListScreen(
                             else
                                 stringResource(Res.string.customers_empty_title),
                             message = if (state.searchQuery.isNotBlank())
-                                stringResource(Res.string.no_data_for_filter)
+                                stringResource(Res.string.team_no_results_message)
                             else
                                 stringResource(Res.string.customers_empty_message),
                             actionLabel = stringResource(Res.string.customers_add),

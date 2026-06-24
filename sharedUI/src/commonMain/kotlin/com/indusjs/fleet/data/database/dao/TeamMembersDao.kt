@@ -50,7 +50,7 @@ class SettingsTeamMembersDao(
 
     override suspend fun getCaretakers(): List<TeamMemberEntity> {
         return getTeamMembers().filter { member ->
-            member.role.lowercase() in listOf("supervisor", "manager")
+            member.isCaretakerEligible
         }
     }
 
