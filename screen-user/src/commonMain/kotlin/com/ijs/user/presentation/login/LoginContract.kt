@@ -19,6 +19,8 @@ object LoginContract {
         val isLoading: Boolean = false,
         val isCheckingAuth: Boolean = true,
         val error: UiText? = null,
+        val identifierError: UiText? = null,
+        val passwordError: UiText? = null,
         val isPasswordVisible: Boolean = false
     ) : UiState
 

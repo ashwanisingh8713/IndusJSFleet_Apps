@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,18 +16,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
+import com.indusjs.uicomponents.components.ButtonSize
 import com.indusjs.uicomponents.components.CostTypeGroup
 import com.indusjs.uicomponents.components.CostTypeSelection
 import com.indusjs.uicomponents.components.CostTypeTwoLevelSelector
+import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetAvatar
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.components.FleetTopAppBar
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.fleet.data.model.driver.DriverCostDto
 import com.ijs.driver.domain.entity.Driver
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -109,18 +115,9 @@ fun DriverCostEntryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.drivers_cost)) },
-                navigationIcon = {
-                    IconButton(onClick = { viewModel.sendIntent(DriverCostEntryContract.Intent.NavigateBack) }) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = stringResource(Res.string.back),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
+            FleetTopAppBar(
+                title = stringResource(Res.string.drivers_cost),
+                onNavigateBack = { viewModel.sendIntent(DriverCostEntryContract.Intent.NavigateBack) },
                 actions = {
                     // Refresh cost types button
                     IconButton(
@@ -129,15 +126,15 @@ fun DriverCostEntryScreen(
                     ) {
                         if (state.isRefreshingCostTypes) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
+                                modifier = Modifier.size(FleetTokens.IconSize.M),
+                                strokeWidth = FleetTokens.Height.ProgressStroke
                             )
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
                                 contentDescription = stringResource(Res.string.driver_cost_refresh_cost_types),
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                     }
@@ -153,13 +150,10 @@ fun DriverCostEntryScreen(
                                 MaterialTheme.colorScheme.primary
                             else
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -172,121 +166,123 @@ fun DriverCostEntryScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Section 1: Driver Selection
-                item {
-                    DriverSelectionCard(
-                        state = state,
-                        onToggleDropdown = { viewModel.sendIntent(DriverCostEntryContract.Intent.ToggleDriverDropdown) },
-                        onSelectDriver = { viewModel.sendIntent(DriverCostEntryContract.Intent.SelectDriver(it)) }
-                    )
+                val bp = rememberFleetBreakpoint()
+                // Center the form with a content cap on wide screens.
+                val contentModifier = if (bp == FleetBreakpoint.Expanded) {
+                    Modifier
+                        .widthIn(max = FleetTokens.Width.MaxContent)
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter)
+                } else {
+                    Modifier.fillMaxWidth()
                 }
 
-                // Section 2: Driver Details (when driver selected)
-                if (state.selectedDriver != null) {
+                LazyColumn(
+                    modifier = contentModifier
+                        .fillMaxHeight()
+                        .padding(FleetTokens.Spacing.L),
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+                ) {
+                    // Section 1: Driver Selection
                     item {
-                        DriverDetailsCard(driver = state.selectedDriver!!)
-                    }
-                }
-
-                // Section 3: Cost Entries Header
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.driver_cost_entry_section),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                        DriverSelectionCard(
+                            state = state,
+                            onToggleDropdown = { viewModel.sendIntent(DriverCostEntryContract.Intent.ToggleDriverDropdown) },
+                            onSelectDriver = { viewModel.sendIntent(DriverCostEntryContract.Intent.SelectDriver(it)) }
                         )
-                        TextButton(
-                            onClick = { viewModel.sendIntent(DriverCostEntryContract.Intent.AddCostRow) }
-                        ) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_add),
-                                contentDescription = stringResource(Res.string.cd_add),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(Res.string.driver_cost_add_new_row))
+                    }
+
+                    // Section 2: Driver Details (when driver selected)
+                    if (state.selectedDriver != null) {
+                        item {
+                            DriverDetailsCard(driver = state.selectedDriver!!)
                         }
                     }
-                }
 
-                // Section 4: Cost Entry Rows (reversed so new items appear on top)
-                itemsIndexed(
-                    items = state.costEntries.reversed(),
-                    key = { _, item -> item.id }
-                ) { index, entry ->
-                    val actualIndex = state.costEntries.size - index
-                    // Calculate date constraints for driver cost
-                    val minDate = state.selectedDriver?.joiningDate?.let { joiningTimestamp ->
-                        com.indusjs.datetimeutils.FleetDateTime.timestampToDateString(joiningTimestamp)
-                    } ?: "01-01-2000"
-                    val maxDate = com.indusjs.datetimeutils.FleetDateTime.getTomorrowDate()
-
-                    DriverCostEntryRowCard(
-                        index = actualIndex,
-                        entry = entry,
-                        costTypeGroups = state.costTypeGroups,
-                        canDelete = state.costEntries.size > 1,
-                        minDate = minDate,  // Cost date must be >= Driver joining date
-                        maxDate = maxDate,  // Cost date must be <= Tomorrow
-                        onToggleExpanded = { viewModel.sendIntent(DriverCostEntryContract.Intent.ToggleRowExpanded(entry.id)) },
-                        onDelete = { viewModel.sendIntent(DriverCostEntryContract.Intent.RemoveCostRow(entry.id)) },
-                        onSelectCostType = { selection ->
-                            viewModel.sendIntent(DriverCostEntryContract.Intent.SelectCostType(entry.id, selection))
-                        },
-                        onCategoryChanged = { groupId, groupName ->
-                            viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateSelectedCategory(entry.id, groupId, groupName))
-                        },
-                        onDateChange = { viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateDate(entry.id, it)) },
-                        onTimeChange = { viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateTime(entry.id, it)) },
-                        onAmountChange = { viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateAmount(entry.id, it)) },
-                        onNotesChange = { viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateNotes(entry.id, it)) },
-                        onCustomCostTypeChange = {
-                            viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateCustomCostTypeName(entry.id, it))
-                        }
-                    )
-                }
-
-                // Submit Button
-                item {
-                    val validCount = state.costEntries.count { it.isValid }
-                    Button(
-                        onClick = { viewModel.sendIntent(DriverCostEntryContract.Intent.SaveCosts) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        enabled = state.canSave,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (state.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
+                    // Section 3: Cost Entries Header
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                stringResource(Res.string.driver_cost_save_button),
+                                text = stringResource(Res.string.driver_cost_entry_section),
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
+                            TextButton(
+                                onClick = { viewModel.sendIntent(DriverCostEntryContract.Intent.AddCostRow) }
+                            ) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_add),
+                                    contentDescription = stringResource(Res.string.cd_add),
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
+                                Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
+                                Text(stringResource(Res.string.driver_cost_add_new_row))
+                            }
                         }
                     }
-                }
 
-                // Bottom spacing
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    // Section 4: Cost Entry Rows (reversed so new items appear on top)
+                    itemsIndexed(
+                        items = state.costEntries.reversed(),
+                        key = { _, item -> item.id }
+                    ) { index, entry ->
+                        val actualIndex = state.costEntries.size - index
+                        // Calculate date constraints for driver cost
+                        val minDate = state.selectedDriver?.joiningDate?.let { joiningTimestamp ->
+                            com.indusjs.datetimeutils.FleetDateTime.timestampToDateString(joiningTimestamp)
+                        } ?: "01-01-2000"
+                        val maxDate = com.indusjs.datetimeutils.FleetDateTime.getTomorrowDate()
+
+                        DriverCostEntryRowCard(
+                            index = actualIndex,
+                            entry = entry,
+                            costTypeGroups = state.costTypeGroups,
+                            canDelete = state.costEntries.size > 1,
+                            minDate = minDate,  // Cost date must be >= Driver joining date
+                            maxDate = maxDate,  // Cost date must be <= Tomorrow
+                            onToggleExpanded = { viewModel.sendIntent(DriverCostEntryContract.Intent.ToggleRowExpanded(entry.id)) },
+                            onDelete = { viewModel.sendIntent(DriverCostEntryContract.Intent.RemoveCostRow(entry.id)) },
+                            onSelectCostType = { selection ->
+                                viewModel.sendIntent(DriverCostEntryContract.Intent.SelectCostType(entry.id, selection))
+                            },
+                            onCategoryChanged = { groupId, groupName ->
+                                viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateSelectedCategory(entry.id, groupId, groupName))
+                            },
+                            onDateChange = { viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateDate(entry.id, it)) },
+                            onTimeChange = { viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateTime(entry.id, it)) },
+                            onAmountChange = { viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateAmount(entry.id, it)) },
+                            onNotesChange = { viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateNotes(entry.id, it)) },
+                            onCustomCostTypeChange = {
+                                viewModel.sendIntent(DriverCostEntryContract.Intent.UpdateCustomCostTypeName(entry.id, it))
+                            }
+                        )
+                    }
+
+                    // Submit Button (gated on state.canSave; preserves bulk-create flow)
+                    item {
+                        FleetButton(
+                            text = stringResource(Res.string.driver_cost_save_button),
+                            onClick = { viewModel.sendIntent(DriverCostEntryContract.Intent.SaveCosts) },
+                            size = ButtonSize.LARGE,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = state.canSave,
+                            isLoading = state.isSaving
+                        )
+                    }
+
+                    // Bottom spacing
+                    item {
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+                    }
                 }
             }
         }
@@ -303,59 +299,63 @@ private fun DriverSelectionCard(
     FleetTitledSectionCard(
         title = stringResource(Res.string.driver_cost_select_driver_section)
     ) {
+        // Rich two-line driver options (name + mobile) require the Material 3
+        // ExposedDropdownMenuBox; FleetDropdown only renders single-label options.
         ExposedDropdownMenuBox(
             expanded = state.showDriverDropdown,
             onExpandedChange = { onToggleDropdown() }
         ) {
-                OutlinedTextField(
-                    value = state.selectedDriver?.let {
-                        "${it.firstName} ${it.lastName} - ${it.mobile}"
-                    } ?: "",
-                    onValueChange = {},
-                    label = { Text(stringResource(Res.string.driver_cost_label_driver)) },
-                    placeholder = { Text(stringResource(Res.string.driver_cost_placeholder_driver)) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor(),
-                    readOnly = true,
-                    isError = state.driverError != null,
-                    supportingText = state.driverError?.let { { Text(it.resolve()) } },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = state.showDriverDropdown) }
-                )
+            FleetInputField(
+                value = state.selectedDriver?.let {
+                    "${it.firstName} ${it.lastName} - ${it.mobile}"
+                } ?: "",
+                onValueChange = {},
+                label = stringResource(Res.string.driver_cost_label_driver),
+                placeholder = stringResource(Res.string.driver_cost_placeholder_driver),
+                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                readOnly = true,
+                isError = state.driverError != null,
+                errorMessage = state.driverError?.resolve(),
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = state.showDriverDropdown) }
+            )
 
-                ExposedDropdownMenu(
-                    expanded = state.showDriverDropdown,
-                    onDismissRequest = { onToggleDropdown() }
-                ) {
-                    state.drivers.forEach { driver ->
-                        DropdownMenuItem(
-                            text = {
-                                Column {
-                                    Text(
-                                        text = "${driver.firstName} ${driver.lastName}",
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = driver.mobile,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            },
-                            onClick = { onSelectDriver(driver) },
-                            leadingIcon = {
-                                Text("👤", style = MaterialTheme.typography.bodyMedium)
+            ExposedDropdownMenu(
+                expanded = state.showDriverDropdown,
+                onDismissRequest = { onToggleDropdown() }
+            ) {
+                state.drivers.forEach { driver ->
+                    DropdownMenuItem(
+                        text = {
+                            Column {
+                                Text(
+                                    text = "${driver.firstName} ${driver.lastName}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = driver.mobile,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
-                        )
-                    }
+                        },
+                        onClick = { onSelectDriver(driver) },
+                        leadingIcon = {
+                            FleetAvatar(name = "${driver.firstName} ${driver.lastName}")
+                        }
+                    )
                 }
             }
         }
     }
+}
 
 @Composable
 private fun DriverDetailsCard(driver: Driver) {
     FleetSectionCard(
-        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-        border = null
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        border = null,
+        elevation = FleetTokens.Elevation.None
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -363,35 +363,36 @@ private fun DriverDetailsCard(driver: Driver) {
             FleetAvatar(
                 name = "${driver.firstName} ${driver.lastName}",
                 background = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.primary,
-                border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                border = BorderStroke(FleetTokens.Height.Connector, MaterialTheme.colorScheme.onPrimaryContainer)
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.L))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${driver.firstName} ${driver.lastName}",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = driver.mobile,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 )
                 if (driver.licenseNumber.isNotBlank()) {
                     Text(
                         text = stringResource(Res.string.driver_cost_license_line, driver.licenseNumber),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                     )
                 }
             }
 
             // Status badge
             Surface(
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(FleetTokens.Radius.M),
                 color = if (driver.isActive)
                     MaterialTheme.colorScheme.primaryContainer
                 else
@@ -408,7 +409,7 @@ private fun DriverDetailsCard(driver: Driver) {
                         MaterialTheme.colorScheme.onPrimaryContainer
                     else
                         MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS)
                 )
             }
         }
@@ -434,207 +435,203 @@ private fun DriverCostEntryRowCard(
     onNotesChange: (String) -> Unit,
     onCustomCostTypeChange: (String) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column {
-            // Header Row (always visible)
+    // Card manages its own zero outer padding so the clickable header and the
+    // divider can run full-bleed; inner sections add their own FleetTokens padding.
+    FleetSectionCard(contentPadding = 0.dp) {
+        // Header Row (always visible)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onToggleExpanded() }
+                .padding(FleetTokens.Spacing.M),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onToggleExpanded() }
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
+                modifier = Modifier.weight(1f)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                // Entry number badge
+                Surface(
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    // Entry number badge
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = "#$index",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-
-                    // Cost type label or placeholder
                     Text(
-                        text = if (entry.costTypeLabel.isNotBlank()) {
-                            entry.costTypeLabel
-                        } else {
-                            stringResource(Res.string.driver_cost_new_entry)
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        text = "#$index",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS)
                     )
-
-                    // Deduction badge
-                    if (entry.isDeductionType) {
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.errorContainer
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.driver_cost_deduction),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    // Amount preview
-                    if (entry.amount.isNotBlank()) {
+                // Cost type label or placeholder
+                Text(
+                    text = if (entry.costTypeLabel.isNotBlank()) {
+                        entry.costTypeLabel
+                    } else {
+                        stringResource(Res.string.driver_cost_new_entry)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+
+                // Deduction badge
+                if (entry.isDeductionType) {
+                    Surface(
+                        shape = RoundedCornerShape(FleetTokens.Radius.S),
+                        color = MaterialTheme.colorScheme.errorContainer
+                    ) {
                         Text(
-                            text = "₹${entry.amount}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (entry.isDeductionType)
-                                MaterialTheme.colorScheme.error
-                            else
-                                MaterialTheme.colorScheme.primary
+                            text = stringResource(Res.string.driver_cost_deduction),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS, vertical = FleetTokens.Spacing.XXS)
                         )
-                    }
-
-                    // Expand/collapse icon
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_chevron_right),
-                        contentDescription = if (entry.isExpanded) {
-                            stringResource(Res.string.driver_cost_collapse)
-                        } else {
-                            stringResource(Res.string.driver_cost_expand)
-                        },
-                        modifier = Modifier
-                            .size(24.dp)
-                            .graphicsLayer {
-                                rotationZ = if (entry.isExpanded) 90f else 0f
-                            },
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    // Delete button
-                    if (canDelete) {
-                        IconButton(
-                            onClick = onDelete,
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_delete),
-                                contentDescription = stringResource(Res.string.delete),
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
                     }
                 }
             }
 
-            // Expandable Content
-            AnimatedVisibility(
-                visible = entry.isExpanded,
-                enter = expandVertically(),
-                exit = shrinkVertically()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
             ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                    // Cost Type Selector using Two-Level Selector
-                    CostTypeTwoLevelSelector(
-                        groups = costTypeGroups,
-                        selectedCostType = entry.costType,
-                        onCostTypeSelected = onSelectCostType,
-                        onCategoryChanged = onCategoryChanged,
-                        isError = entry.costTypeError != null,
-                        errorMessage = entry.costTypeError?.resolve()
-                    )
-
-                    // Custom cost type name (for "Other" type)
-                    if (entry.isOtherCostType) {
-                        OutlinedTextField(
-                            value = entry.customCostTypeName,
-                            onValueChange = onCustomCostTypeChange,
-                            label = { Text(stringResource(Res.string.driver_cost_label_custom_name)) },
-                            placeholder = { Text(stringResource(Res.string.driver_cost_placeholder_custom_name)) },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                    }
-
-                    // Date and Time using FleetDateTimePicker with date constraints
-                    FleetDateTimePicker(
-                        date = entry.date,
-                        time = entry.time,
-                        onDateTimeChange = { newDate, newTime ->
-                            onDateChange(newDate)
-                            onTimeChange(newTime)
-                        },
-                        label = stringResource(Res.string.driver_cost_label_date_time),
-                        isError = entry.dateError != null,
-                        errorMessage = entry.dateError?.resolve(),
-                        minDate = minDate,  // Cost date must be >= Driver joining date
-                        maxDate = maxDate   // Cost date must be <= Tomorrow
-                    )
-
-                    // Amount
-                    OutlinedTextField(
-                        value = entry.amount,
-                        onValueChange = { value ->
-                            // Allow only numeric input with decimal
-                            if (value.isEmpty() || value.matches(Regex("^\\d*\\.?\\d*$"))) {
-                                onAmountChange(value)
-                            }
-                        },
-                        label = { Text(stringResource(Res.string.driver_cost_label_amount)) },
-                        placeholder = { Text(stringResource(Res.string.driver_cost_placeholder_amount)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        isError = entry.amountError != null,
-                        supportingText = entry.amountError?.let { { Text(it.resolve()) } },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        leadingIcon = {
-                            Text(
-                                text = if (entry.isDeductionType) "-₹" else "₹",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = if (entry.isDeductionType)
-                                    MaterialTheme.colorScheme.error
-                                else
-                                    MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(start = 12.dp)
-                            )
-                        }
-                    )
-
-                    // Notes (optional)
-                    OutlinedTextField(
-                        value = entry.notes,
-                        onValueChange = onNotesChange,
-                        label = { Text(stringResource(Res.string.driver_cost_label_notes)) },
-                        placeholder = { Text(stringResource(Res.string.driver_cost_notes_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 2
+                // Amount preview
+                if (entry.amount.isNotBlank()) {
+                    Text(
+                        text = "₹${entry.amount}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (entry.isDeductionType)
+                            MaterialTheme.colorScheme.error
+                        else
+                            MaterialTheme.colorScheme.primary
                     )
                 }
+
+                // Expand/collapse icon
+                Icon(
+                    painter = painterResource(Res.drawable.ic_chevron_right),
+                    contentDescription = if (entry.isExpanded) {
+                        stringResource(Res.string.driver_cost_collapse)
+                    } else {
+                        stringResource(Res.string.driver_cost_expand)
+                    },
+                    modifier = Modifier
+                        .size(FleetTokens.IconSize.Default)
+                        .graphicsLayer {
+                            rotationZ = if (entry.isExpanded) 90f else 0f
+                        },
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Delete button
+                if (canDelete) {
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(FleetTokens.IconSize.L)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_delete),
+                            contentDescription = stringResource(Res.string.delete),
+                            modifier = Modifier.size(FleetTokens.IconSize.M),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+        }
+
+        // Expandable Content
+        AnimatedVisibility(
+            visible = entry.isExpanded,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.S),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+            ) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                // Cost Type Selector using Two-Level Selector
+                CostTypeTwoLevelSelector(
+                    groups = costTypeGroups,
+                    selectedCostType = entry.costType,
+                    onCostTypeSelected = onSelectCostType,
+                    onCategoryChanged = onCategoryChanged,
+                    isError = entry.costTypeError != null,
+                    errorMessage = entry.costTypeError?.resolve()
+                )
+
+                // Custom cost type name (for "Other" type)
+                if (entry.isOtherCostType) {
+                    FleetInputField(
+                        value = entry.customCostTypeName,
+                        onValueChange = onCustomCostTypeChange,
+                        fieldType = FieldType.DEFAULT,
+                        label = stringResource(Res.string.driver_cost_label_custom_name),
+                        placeholder = stringResource(Res.string.driver_cost_placeholder_custom_name),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // Date and Time using FleetDateTimePicker with date constraints
+                FleetDateTimePicker(
+                    date = entry.date,
+                    time = entry.time,
+                    onDateTimeChange = { newDate, newTime ->
+                        onDateChange(newDate)
+                        onTimeChange(newTime)
+                    },
+                    label = stringResource(Res.string.driver_cost_label_date_time),
+                    isError = entry.dateError != null,
+                    errorMessage = entry.dateError?.resolve(),
+                    minDate = minDate,  // Cost date must be >= Driver joining date
+                    maxDate = maxDate   // Cost date must be <= Tomorrow
+                )
+
+                // Amount
+                FleetInputField(
+                    value = entry.amount,
+                    onValueChange = { value ->
+                        // Allow only numeric input with decimal
+                        if (value.isEmpty() || value.matches(Regex("^\\d*\\.?\\d*$"))) {
+                            onAmountChange(value)
+                        }
+                    },
+                    fieldType = FieldType.DECIMAL,
+                    label = stringResource(Res.string.driver_cost_label_amount),
+                    placeholder = stringResource(Res.string.driver_cost_placeholder_amount),
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = entry.amountError != null,
+                    errorMessage = entry.amountError?.resolve(),
+                    leadingIcon = {
+                        Text(
+                            text = if (entry.isDeductionType) "-₹" else "₹",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = if (entry.isDeductionType)
+                                MaterialTheme.colorScheme.error
+                            else
+                                MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = FleetTokens.Spacing.M)
+                        )
+                    }
+                )
+
+                // Notes (optional)
+                FleetInputField(
+                    value = entry.notes,
+                    onValueChange = onNotesChange,
+                    fieldType = FieldType.NOTES,
+                    label = stringResource(Res.string.driver_cost_label_notes),
+                    placeholder = stringResource(Res.string.driver_cost_notes_placeholder),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
@@ -652,6 +649,7 @@ private fun CostHistoryDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(FleetTokens.Radius.XL),
         title = {
             Column {
                 Text(stringResource(Res.string.driver_cost_history_dialog_title))
@@ -668,7 +666,7 @@ private fun CostHistoryDialog(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 100.dp, max = 400.dp)
+                    .heightIn(min = FleetTokens.Height.ShimmerListItem, max = FleetTokens.Width.MaxContent)
             ) {
                 when {
                     isLoading -> {
@@ -685,7 +683,7 @@ private fun CostHistoryDialog(
                     }
                     else -> {
                         LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                         ) {
                             items(costs.size) { index ->
                                 val cost = costs[index]
@@ -708,39 +706,51 @@ private fun CostHistoryDialog(
 private fun CostHistoryItem(cost: DriverCostDto) {
     val isDeduction = cost.isDeductionCost
 
+    // Solid tonal fill + matching on-container content colours per state.
+    val containerColor = if (isDeduction)
+        MaterialTheme.colorScheme.errorContainer
+    else
+        MaterialTheme.colorScheme.surfaceVariant
+    val onContainerColor = if (isDeduction)
+        MaterialTheme.colorScheme.onErrorContainer
+    else
+        MaterialTheme.colorScheme.onSurfaceVariant
+    val titleColor = if (isDeduction)
+        MaterialTheme.colorScheme.onErrorContainer
+    else
+        MaterialTheme.colorScheme.onSurface
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = if (isDeduction)
-            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        else
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
+        color = containerColor
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(FleetTokens.Spacing.M),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = cost.costLabel,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = titleColor
                     )
                     if (isDeduction) {
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                            shape = RoundedCornerShape(FleetTokens.Radius.S),
+                            color = MaterialTheme.colorScheme.error
                         ) {
                             Text(
                                 text = stringResource(Res.string.driver_cost_deduction),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                color = MaterialTheme.colorScheme.onError,
+                                modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS, vertical = FleetTokens.Spacing.XXS)
                             )
                         }
                     }
@@ -749,14 +759,14 @@ private fun CostHistoryItem(cost: DriverCostDto) {
                     text = cost.date?.takeIf { it > 0L }
                         ?.let { com.indusjs.fleet.core.util.formatDateToHumanReadable(it) } ?: "",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = onContainerColor
                 )
                 val costNotes = cost.notes
                 if (!costNotes.isNullOrBlank()) {
                     Text(
                         text = costNotes,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = onContainerColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -767,11 +777,10 @@ private fun CostHistoryItem(cost: DriverCostDto) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (isDeduction)
-                    MaterialTheme.colorScheme.error
+                    MaterialTheme.colorScheme.onErrorContainer
                 else
                     MaterialTheme.colorScheme.primary
             )
         }
     }
 }
-

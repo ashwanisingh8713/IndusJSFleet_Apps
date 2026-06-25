@@ -4,21 +4,26 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.util.ValidationUtils
+import com.indusjs.uicomponents.components.ButtonSize
 import com.indusjs.uicomponents.components.DateVisualTransformation
+import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.filterDigitsOnly
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.COST_TYPES
 import com.ijs.reports.presentation.consolidated.ConsolidatedPLContract.Effect
@@ -60,6 +65,24 @@ fun ConsolidatedPLScreen(
         }
     }
 
+    // Inline date validation: empty is allowed (button gates on blank); a partial/invalid
+    // DD-MM-YYYY entry surfaces an inline error and an out-of-order range is flagged on "To".
+    val startDateError: String? = if (state.startDate.isNotBlank() && !ValidationUtils.isValidDate(state.startDate)) {
+        stringResource(Res.string.reports_date_invalid)
+    } else null
+    val endRangeInvalid = state.startDate.isNotBlank() && state.endDate.isNotBlank() &&
+        ValidationUtils.isValidDate(state.startDate) && ValidationUtils.isValidDate(state.endDate) &&
+        !isEndOnOrAfterStart(state.startDate, state.endDate)
+    val endDateError: String? = when {
+        state.endDate.isNotBlank() && !ValidationUtils.isValidDate(state.endDate) ->
+            stringResource(Res.string.reports_date_invalid)
+        endRangeInvalid -> stringResource(Res.string.reports_date_range_order_error)
+        else -> null
+    }
+    val datesValid = ValidationUtils.isValidDate(state.startDate) &&
+        ValidationUtils.isValidDate(state.endDate) && !endRangeInvalid
+    val canGenerate = datesValid && !state.isLoading
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -81,111 +104,143 @@ fun ConsolidatedPLScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        LazyColumn(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Filters Section
-            item {
-                FiltersCard(
-                    vehicles = state.vehicles,
-                    selectedVehicleIds = state.selectedVehicleIds,
-                    selectedCostTypes = state.selectedCostTypes,
-                    startDate = state.startDate,
-                    endDate = state.endDate,
-                    groupBy = state.groupBy,
-                    isLoadingVehicles = state.isLoadingVehicles,
-                    onToggleVehicle = { viewModel.sendIntent(Intent.ToggleVehicle(it)) },
-                    onSelectAllVehicles = { viewModel.sendIntent(Intent.SelectAllVehicles) },
-                    onClearVehicles = { viewModel.sendIntent(Intent.ClearVehicles) },
-                    onToggleCostType = { viewModel.sendIntent(Intent.ToggleCostType(it)) },
-                    onSelectAllCostTypes = { viewModel.sendIntent(Intent.SelectAllCostTypes) },
-                    onClearCostTypes = { viewModel.sendIntent(Intent.ClearCostTypes) },
-                    onStartDateChange = { viewModel.sendIntent(Intent.UpdateStartDate(it)) },
-                    onEndDateChange = { viewModel.sendIntent(Intent.UpdateEndDate(it)) },
-                    onGroupByChange = { viewModel.sendIntent(Intent.UpdateGroupBy(it)) }
-                )
+            val isExpanded = rememberFleetBreakpoint().isExpanded
+            val contentModifier = if (isExpanded) {
+                Modifier
+                    .widthIn(max = FleetTokens.Width.MaxContent)
+                    .align(Alignment.TopCenter)
+            } else {
+                Modifier.fillMaxWidth()
             }
 
-            // Generate Button
-            item {
-                Button(
-                    onClick = { viewModel.sendIntent(Intent.GenerateReport) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = state.startDate.isNotBlank() && state.endDate.isNotBlank() && !state.isLoading,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    if (state.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text(stringResource(Res.string.reports_generate_report))
-                }
-            }
-
-            // Results
-            state.result?.let { report ->
-                // Summary Card
+            LazyColumn(
+                modifier = contentModifier.fillMaxHeight(),
+                contentPadding = PaddingValues(FleetTokens.Spacing.L),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+            ) {
+                // Filters Section
                 item {
-                    ConsolidatedSummaryCard(report = report)
+                    FiltersCard(
+                        vehicles = state.vehicles,
+                        selectedVehicleIds = state.selectedVehicleIds,
+                        selectedCostTypes = state.selectedCostTypes,
+                        startDate = state.startDate,
+                        endDate = state.endDate,
+                        groupBy = state.groupBy,
+                        isLoadingVehicles = state.isLoadingVehicles,
+                        startDateError = startDateError,
+                        endDateError = endDateError,
+                        onToggleVehicle = { viewModel.sendIntent(Intent.ToggleVehicle(it)) },
+                        onSelectAllVehicles = { viewModel.sendIntent(Intent.SelectAllVehicles) },
+                        onClearVehicles = { viewModel.sendIntent(Intent.ClearVehicles) },
+                        onToggleCostType = { viewModel.sendIntent(Intent.ToggleCostType(it)) },
+                        onSelectAllCostTypes = { viewModel.sendIntent(Intent.SelectAllCostTypes) },
+                        onClearCostTypes = { viewModel.sendIntent(Intent.ClearCostTypes) },
+                        onStartDateChange = { viewModel.sendIntent(Intent.UpdateStartDate(it)) },
+                        onEndDateChange = { viewModel.sendIntent(Intent.UpdateEndDate(it)) },
+                        onGroupByChange = { viewModel.sendIntent(Intent.UpdateGroupBy(it)) }
+                    )
                 }
 
-                // Period Breakdown
-                if (report.periodBreakdown.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = stringResource(
-                                Res.string.reports_period_breakdown_header,
-                                state.groupBy.replaceFirstChar { it.uppercaseChar() } + "ly"
-                            ),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    items(report.periodBreakdown) { period ->
-                        PeriodBreakdownCard(period = period)
-                    }
-                }
-
-                // Vehicle Summary
-                if (report.vehicleSummary.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = stringResource(Res.string.reports_vehicle_performance),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    items(report.vehicleSummary) { vehicle ->
-                        VehicleSummaryCard(
-                            vehicleNumber = vehicle.vehicleNumber ?: "N/A",
-                            tripCount = vehicle.tripCount,
-                            revenue = vehicle.revenue,
-                            expenses = vehicle.expenses,
-                            profit = vehicle.profit,
-                            isProfitable = vehicle.isProfitable
-                        )
-                    }
-                }
-            }
-
-            // Error
-            state.error?.let { error ->
+                // Generate Button
                 item {
-                    FleetInlineErrorBanner(message = error.resolve())
+                    FleetButton(
+                        text = stringResource(Res.string.reports_generate_report),
+                        onClick = { viewModel.sendIntent(Intent.GenerateReport) },
+                        size = ButtonSize.LARGE,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = canGenerate,
+                        isLoading = state.isLoading
+                    )
+                }
+
+                // Results
+                state.result?.let { report ->
+                    // Summary Card
+                    item {
+                        ConsolidatedSummaryCard(report = report)
+                    }
+
+                    // Period Breakdown
+                    if (report.periodBreakdown.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = stringResource(
+                                    Res.string.reports_period_breakdown_header,
+                                    state.groupBy.replaceFirstChar { it.uppercaseChar() } + "ly"
+                                ),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        items(report.periodBreakdown) { period ->
+                            PeriodBreakdownCard(period = period)
+                        }
+                    }
+
+                    // Vehicle Summary
+                    if (report.vehicleSummary.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = stringResource(Res.string.reports_vehicle_performance),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        items(report.vehicleSummary) { vehicle ->
+                            VehicleSummaryCard(
+                                vehicleNumber = vehicle.vehicleNumber ?: "N/A",
+                                tripCount = vehicle.tripCount,
+                                revenue = vehicle.revenue,
+                                expenses = vehicle.expenses,
+                                profit = vehicle.profit,
+                                isProfitable = vehicle.isProfitable
+                            )
+                        }
+                    }
+                }
+
+                // Error
+                state.error?.let { error ->
+                    item {
+                        FleetInlineErrorBanner(message = error.resolve())
+                    }
+                }
+
+                // Empty / pre-generate hint
+                if (state.result == null && state.error == null && !state.isLoading) {
+                    item {
+                        EmptyContent(
+                            iconRes = Res.drawable.ic_dashboard,
+                            title = stringResource(Res.string.reports_consolidated_empty_title),
+                            message = stringResource(Res.string.reports_consolidated_empty_hint),
+                            fillMaxSize = false
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+/**
+ * Compares two valid DD-MM-YYYY date strings; returns true when [endDate] is on or
+ * after [startDate]. Assumes both inputs already passed [ValidationUtils.isValidDate].
+ */
+private fun isEndOnOrAfterStart(startDate: String, endDate: String): Boolean {
+    val s = startDate.split("-")
+    val e = endDate.split("-")
+    if (s.size != 3 || e.size != 3) return true
+    val sKey = (s[2].toIntOrNull() ?: 0) * 10000 + (s[1].toIntOrNull() ?: 0) * 100 + (s[0].toIntOrNull() ?: 0)
+    val eKey = (e[2].toIntOrNull() ?: 0) * 10000 + (e[1].toIntOrNull() ?: 0) * 100 + (e[0].toIntOrNull() ?: 0)
+    return eKey >= sKey
 }
 
 @Composable
@@ -197,6 +252,8 @@ private fun FiltersCard(
     endDate: String,
     groupBy: String,
     isLoadingVehicles: Boolean,
+    startDateError: String?,
+    endDateError: String?,
     onToggleVehicle: (String) -> Unit,
     onSelectAllVehicles: () -> Unit,
     onClearVehicles: () -> Unit,
@@ -210,17 +267,16 @@ private fun FiltersCard(
     FleetSectionCard {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
         ) {
             // Date Range
-            Text(
-                text = "📅 " + stringResource(Res.string.reports_filter_date_range_required),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+            FilterSectionHeader(
+                iconRes = Res.drawable.ic_calendar,
+                text = stringResource(Res.string.reports_filter_date_range_required)
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
                 val dateVisualTransformation = remember { DateVisualTransformation() }
                 FleetInputField(
@@ -230,6 +286,8 @@ private fun FiltersCard(
                     label = stringResource(Res.string.reports_label_from),
                     placeholder = "DD-MM-YYYY",
                     visualTransformation = dateVisualTransformation,
+                    isError = startDateError != null,
+                    errorMessage = startDateError,
                     modifier = Modifier.weight(1f)
                 )
                 FleetInputField(
@@ -239,6 +297,8 @@ private fun FiltersCard(
                     label = stringResource(Res.string.reports_label_to),
                     placeholder = "DD-MM-YYYY",
                     visualTransformation = dateVisualTransformation,
+                    isError = endDateError != null,
+                    errorMessage = endDateError,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -252,34 +312,33 @@ private fun FiltersCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "🚚 " + stringResource(
+                    FilterSectionHeader(
+                        iconRes = Res.drawable.ic_truck,
+                        text = stringResource(
                             Res.string.reports_filter_vehicles_count,
                             selectedVehicleIds.size,
                             vehicles.size
-                        ),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                        )
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        TextButton(onClick = onSelectAllVehicles, contentPadding = PaddingValues(4.dp)) {
-                            Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelSmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)) {
+                        TextButton(onClick = onSelectAllVehicles, contentPadding = PaddingValues(FleetTokens.Spacing.XS)) {
+                            Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelMedium)
                         }
-                        TextButton(onClick = onClearVehicles, contentPadding = PaddingValues(4.dp)) {
-                            Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelSmall)
+                        TextButton(onClick = onClearVehicles, contentPadding = PaddingValues(FleetTokens.Spacing.XS)) {
+                            Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }
 
                 if (isLoadingVehicles) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.M))
                 } else {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                         items(vehicles) { vehicle ->
                             FilterChip(
                                 selected = selectedVehicleIds.contains(vehicle.id),
                                 onClick = { onToggleVehicle(vehicle.id) },
-                                label = { Text(vehicle.registrationNumber, style = MaterialTheme.typography.labelSmall) }
+                                label = { Text(vehicle.registrationNumber, style = MaterialTheme.typography.labelMedium) }
                             )
                         }
                     }
@@ -295,31 +354,30 @@ private fun FiltersCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "💰 " + stringResource(
+                    FilterSectionHeader(
+                        iconRes = Res.drawable.ic_cost,
+                        text = stringResource(
                             Res.string.reports_filter_cost_types_count,
                             selectedCostTypes.size
-                        ),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                        )
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        TextButton(onClick = onSelectAllCostTypes, contentPadding = PaddingValues(4.dp)) {
-                            Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelSmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)) {
+                        TextButton(onClick = onSelectAllCostTypes, contentPadding = PaddingValues(FleetTokens.Spacing.XS)) {
+                            Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelMedium)
                         }
-                        TextButton(onClick = onClearCostTypes, contentPadding = PaddingValues(4.dp)) {
-                            Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelSmall)
+                        TextButton(onClick = onClearCostTypes, contentPadding = PaddingValues(FleetTokens.Spacing.XS)) {
+                            Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }
 
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                     items(COST_TYPES) { costType ->
                         val displayName = ConsolidatedPLContract.costIdLabel(costType)
                         FilterChip(
                             selected = selectedCostTypes.contains(costType),
                             onClick = { onToggleCostType(costType) },
-                            label = { Text(displayName, style = MaterialTheme.typography.labelSmall) }
+                            label = { Text(displayName, style = MaterialTheme.typography.labelMedium) }
                         )
                     }
                 }
@@ -333,12 +391,11 @@ private fun FiltersCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "📊 " + stringResource(Res.string.reports_filter_group_by),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                FilterSectionHeader(
+                    iconRes = Res.drawable.ic_dashboard,
+                    text = stringResource(Res.string.reports_filter_group_by)
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                     GROUP_BY_OPTIONS.forEach { option ->
                         FilterChip(
                             selected = groupBy == option,
@@ -352,3 +409,26 @@ private fun FiltersCard(
     }
 }
 
+/** Bold filter-section label preceded by a small leading vector icon. */
+@Composable
+private fun FilterSectionHeader(
+    iconRes: org.jetbrains.compose.resources.DrawableResource,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(FleetTokens.IconSize.S)
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}

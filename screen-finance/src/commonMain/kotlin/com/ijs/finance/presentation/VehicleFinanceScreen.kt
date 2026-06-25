@@ -16,20 +16,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.datetimeutils.FleetEpoch
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FinanceColors
 import com.indusjs.uicomponents.components.FinanceFilterChip
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.finance.domain.entity.*
 import com.ijs.finance.presentation.VehicleFinanceContract.Effect
@@ -118,7 +125,7 @@ fun VehicleFinanceScreen(
                         painter = painterResource(Res.drawable.ic_add),
                         contentDescription = null
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     Text(stringResource(Res.string.finance_add_purchase))
                 }
             }
@@ -165,106 +172,118 @@ private fun VehicleFinanceContent(
     modifier: Modifier = Modifier
 ) {
     val notAvailableLabel = stringResource(Res.string.not_applicable_short)
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Summary Card
-        item {
-            FinanceSummaryCard(
-                totalVehicles = state.totalVehicles,
-                financedVehicles = state.financedVehicles,
-                cashVehicles = state.cashVehicles,
-                pendingVehicles = state.pendingVehicles,
-                monthlyEmiTotal = state.monthlyEmiTotal,
-                totalPaid = state.totalPaid,
-                totalOutstanding = state.totalOutstanding
-            )
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val breakpoint = rememberFleetBreakpoint()
+        // Compact stays 1-up; Medium/Expanded show two cards per row. On Expanded
+        // the grid is capped to a readable width and centered instead of stretching.
+        val columns = if (breakpoint.isAtLeastMedium) 2 else 1
+        val contentWidthModifier = if (breakpoint.isExpanded) {
+            Modifier.fillMaxWidth().widthIn(max = FleetTokens.Width.MaxContent)
+        } else {
+            Modifier.fillMaxWidth()
         }
 
-        // Alerts Section
-        if (state.hasAlerts) {
+        LazyColumn(
+            modifier = contentWidthModifier.fillMaxHeight().align(Alignment.TopCenter),
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+        ) {
+            // Summary Card
             item {
-                EmiAlertsCard(
-                    upcomingAlerts = state.upcomingAlerts,
-                    overdueAlerts = state.overdueAlerts,
-                    onRecordClick = onRecordEmiClick
+                FinanceSummaryCard(
+                    totalVehicles = state.totalVehicles,
+                    financedVehicles = state.financedVehicles,
+                    cashVehicles = state.cashVehicles,
+                    pendingVehicles = state.pendingVehicles,
+                    monthlyEmiTotal = state.monthlyEmiTotal,
+                    totalPaid = state.totalPaid,
+                    totalOutstanding = state.totalOutstanding
                 )
             }
-        }
 
-        // Filter Chips with counts
-        item {
-            FilterChipsRow(
-                selectedFilter = state.selectedFilter,
-                financedCount = state.financedVehicles,
-                cashCount = state.cashVehicles,
-                pendingCount = state.pendingVehicles,
-                onFilterSelect = onFilterSelect
-            )
-        }
-
-        // Search
-        item {
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = onSearchChange,
-                placeholder = { Text(stringResource(Res.string.finance_search_vehicles_placeholder)) },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_search),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+            // Alerts Section
+            if (state.hasAlerts) {
+                item {
+                    EmiAlertsCard(
+                        upcomingAlerts = state.upcomingAlerts,
+                        overdueAlerts = state.overdueAlerts,
+                        onRecordClick = onRecordEmiClick
                     )
-                },
-                trailingIcon = {
-                    if (state.searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { onSearchChange("") }) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_close),
-                                contentDescription = stringResource(Res.string.action_clear),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            }
+
+            // Filter Chips with counts
+            item {
+                FilterChipsRow(
+                    selectedFilter = state.selectedFilter,
+                    financedCount = state.financedVehicles,
+                    cashCount = state.cashVehicles,
+                    pendingCount = state.pendingVehicles,
+                    onFilterSelect = onFilterSelect
+                )
+            }
+
+            // Search
+            item {
+                FleetSearchField(
+                    query = state.searchQuery,
+                    onQueryChange = onSearchChange,
+                    placeholder = stringResource(Res.string.finance_search_vehicles_placeholder)
+                )
+            }
+
+            // Vehicle List
+            if (state.filteredVehicles.isEmpty()) {
+                item {
+                    EmptyContent(
+                        title = stringResource(Res.string.finance_empty_no_vehicles),
+                        actionLabel = if (state.selectedFilter == FinanceFilter.PENDING) {
+                            stringResource(Res.string.finance_add_purchase)
+                        } else null,
+                        onAction = if (state.selectedFilter == FinanceFilter.PENDING) onAddPurchaseClick else null,
+                        fillMaxSize = false
+                    )
+                }
+            } else if (columns == 1) {
+                items(state.filteredVehicles) { item ->
+                    VehicleFinanceCard(
+                        item = item,
+                        notAvailableLabel = notAvailableLabel,
+                        onClick = { onVehicleClick(item.vehicle.id.toIntOrNull() ?: 0) },
+                        onRecordEmiClick = { onRecordEmiClick(item.vehicle.id.toIntOrNull() ?: 0) },
+                        onAddPurchaseClick = onAddPurchaseClick
+                    )
+                }
+            } else {
+                val rows = state.filteredVehicles.chunked(columns)
+                items(rows) { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+                    ) {
+                        row.forEach { item ->
+                            VehicleFinanceCard(
+                                item = item,
+                                notAvailableLabel = notAvailableLabel,
+                                onClick = { onVehicleClick(item.vehicle.id.toIntOrNull() ?: 0) },
+                                onRecordEmiClick = { onRecordEmiClick(item.vehicle.id.toIntOrNull() ?: 0) },
+                                onAddPurchaseClick = onAddPurchaseClick,
+                                modifier = Modifier.weight(1f)
                             )
                         }
+                        // Keep the last odd card aligned to a single column width.
+                        if (row.size < columns) {
+                            repeat(columns - row.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = LoanBlue,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                )
-            )
-        }
-
-        // Vehicle List
-        if (state.filteredVehicles.isEmpty()) {
-            item {
-                EmptyContent(
-                    title = stringResource(Res.string.finance_empty_no_vehicles),
-                    actionLabel = if (state.selectedFilter == FinanceFilter.PENDING) {
-                        stringResource(Res.string.finance_add_purchase)
-                    } else null,
-                    onAction = if (state.selectedFilter == FinanceFilter.PENDING) onAddPurchaseClick else null,
-                    fillMaxSize = false
-                )
+                }
             }
-        } else {
-            items(state.filteredVehicles) { item ->
-                VehicleFinanceCard(
-                    item = item,
-                    notAvailableLabel = notAvailableLabel,
-                    onClick = { onVehicleClick(item.vehicle.id.toIntOrNull() ?: 0) },
-                    onRecordEmiClick = { onRecordEmiClick(item.vehicle.id.toIntOrNull() ?: 0) },
-                    onAddPurchaseClick = onAddPurchaseClick
-                )
-            }
-        }
 
-        // Bottom spacing
-        item { Spacer(modifier = Modifier.height(80.dp)) }
+            // Bottom spacing
+            item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL + FleetTokens.Spacing.XXL)) }
+        }
     }
 }
 
@@ -283,16 +302,16 @@ private fun FinanceSummaryCard(
         subtitle = stringResource(Res.string.finance_vehicles_in_fleet, totalVehicles)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
         ) {
             // Monthly EMI Badge
             if (monthlyEmiTotal > 0) {
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = WarningOrange.copy(alpha = 0.12f)
                 ) {
                     Column(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.S),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -356,8 +375,8 @@ private fun FinanceSummaryCard(
 
                     Box(
                         modifier = Modifier
-                            .width(1.dp)
-                            .height(36.dp)
+                            .width(FleetTokens.Height.Divider)
+                            .height(FleetTokens.Height.ButtonSmall)
                             .background(MaterialTheme.colorScheme.outlineVariant)
                     )
 
@@ -411,7 +430,7 @@ private fun EmiAlertsCard(
         border = null
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             Text(
                 text = stringResource(Res.string.finance_emi_alerts_title),
@@ -449,20 +468,20 @@ private fun EmiAlertItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(FleetTokens.Radius.M))
             .background(
                 if (isOverdue) CriticalRed.copy(alpha = 0.1f)
                 else WarningOrange.copy(alpha = 0.1f)
             )
             .clickable(onClick = onRecordClick)
-            .padding(12.dp),
+            .padding(FleetTokens.Spacing.M),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = if (isOverdue) "🔴" else "⚠️",
             style = MaterialTheme.typography.titleMedium
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = alert.vehicle?.registrationNumber ?: stringResource(Res.string.finance_vehicle_fallback),
@@ -497,7 +516,7 @@ private fun FilterChipsRow(
     onFilterSelect: (FinanceFilter) -> Unit
 ) {
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
     ) {
         item {
             FinanceFilterChip(
@@ -544,16 +563,18 @@ private fun VehicleFinanceCard(
     notAvailableLabel: String,
     onClick: () -> Unit,
     onRecordEmiClick: () -> Unit,
-    onAddPurchaseClick: () -> Unit
+    onAddPurchaseClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     // Only make the card clickable if it's not a pending (not recorded) item
     val isClickable = item.status != FinanceStatus.PENDING
 
     FleetSectionCard(
+        modifier = modifier,
         onClick = if (isClickable) onClick else null
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             // Header with vehicle info and status - without icon
             Row(
@@ -609,12 +630,12 @@ private fun StatusChip(status: FinanceStatus) {
     }
 
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.XL),
         color = color.copy(alpha = 0.15f)
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS),
             style = MaterialTheme.typography.labelMedium,
             color = color,
             fontWeight = FontWeight.Medium
@@ -628,7 +649,7 @@ private fun LoanCardContent(
     onRecordEmiClick: () -> Unit,
     notAvailableLabel: String
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
         // Divider
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
@@ -665,14 +686,14 @@ private fun LoanCardContent(
         }
 
         // Progress section
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(Res.string.finance_percent_complete, purchase.loanProgressPercent.toInt()),
+                    text = stringResource(Res.string.finance_percent_complete, "${purchase.loanProgressPercent.toInt()}%"),
                     style = MaterialTheme.typography.labelMedium,
                     color = LoanBlue,
                     fontWeight = FontWeight.Medium
@@ -691,8 +712,8 @@ private fun LoanCardContent(
                 progress = { purchase.loanProgressPercent / 100f },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
+                    .height(FleetTokens.Height.ProgressBar)
+                    .clip(RoundedCornerShape(FleetTokens.Radius.S)),
                 color = LoanBlue,
                 trackColor = LoanBlue.copy(alpha = 0.15f)
             )
@@ -702,13 +723,13 @@ private fun LoanCardContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(FleetTokens.Radius.L))
                 .background(WarningOrange.copy(alpha = 0.08f))
-                .padding(12.dp),
+                .padding(FleetTokens.Spacing.M),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)) {
                 Text(
                     text = stringResource(
                         Res.string.finance_next_emi_line,
@@ -727,15 +748,13 @@ private fun LoanCardContent(
                 )
             }
 
-            FilledTonalButton(
-                onClick = onRecordEmiClick,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = LoanBlue.copy(alpha = 0.15f),
-                    contentColor = LoanBlue
+            Box {
+                FleetButton(
+                    text = stringResource(Res.string.finance_record_emi),
+                    onClick = onRecordEmiClick,
+                    variant = ButtonVariant.PRIMARY,
+                    size = ButtonSize.SMALL
                 )
-            ) {
-                Text(stringResource(Res.string.finance_record_emi), style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -743,19 +762,19 @@ private fun LoanCardContent(
 
 @Composable
 private fun CashCardContent(purchase: VehiclePurchase, notAvailableLabel: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(FleetTokens.Radius.L))
                 .background(CashGreen.copy(alpha = 0.08f))
-                .padding(12.dp),
+                .padding(FleetTokens.Spacing.M),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)) {
                 Text(
                     text = stringResource(Res.string.finance_purchase_price),
                     style = MaterialTheme.typography.labelSmall,
@@ -775,13 +794,13 @@ private fun CashCardContent(purchase: VehiclePurchase, notAvailableLabel: String
             }
 
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(FleetTokens.Radius.XXL),
                 color = CashGreen.copy(alpha = 0.15f)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.S),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
                     Text("✓", style = MaterialTheme.typography.labelMedium, color = CashGreen)
                     Text(
@@ -798,19 +817,19 @@ private fun CashCardContent(purchase: VehiclePurchase, notAvailableLabel: String
 
 @Composable
 private fun NoInfoCardContent(onAddClick: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(FleetTokens.Radius.L))
                 .background(NoInfoGray.copy(alpha = 0.08f))
-                .padding(12.dp),
+                .padding(FleetTokens.Spacing.M),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)) {
                 Text(
                     text = stringResource(Res.string.finance_no_purchase_card),
                     style = MaterialTheme.typography.bodyMedium,
@@ -823,11 +842,13 @@ private fun NoInfoCardContent(onAddClick: () -> Unit) {
                 )
             }
 
-            FilledTonalButton(
-                onClick = onAddClick,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Text(stringResource(Res.string.finance_add_info_short), style = MaterialTheme.typography.labelMedium)
+            Box {
+                FleetButton(
+                    text = stringResource(Res.string.finance_add_info_short),
+                    onClick = onAddClick,
+                    variant = ButtonVariant.SECONDARY,
+                    size = ButtonSize.SMALL
+                )
             }
         }
     }

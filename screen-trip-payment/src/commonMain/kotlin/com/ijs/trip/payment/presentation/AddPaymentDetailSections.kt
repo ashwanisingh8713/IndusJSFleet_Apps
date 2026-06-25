@@ -1,15 +1,15 @@
 package com.ijs.trip.payment.presentation
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.payment.domain.entity.PaymentMode
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -58,66 +58,65 @@ internal fun TransactionDetailsSection(
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
         when (paymentMode) {
             PaymentMode.UPI -> {
-                OutlinedTextField(
+                FleetInputField(
                     value = transactionId,
                     onValueChange = onTransactionIdChange,
-                    label = { Text(stringResource(Res.string.payment_label_upi_id)) },
-                    placeholder = { Text(stringResource(Res.string.payment_placeholder_upi_id)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    fieldType = FieldType.DEFAULT,
+                    label = stringResource(Res.string.payment_label_upi_id),
+                    placeholder = stringResource(Res.string.payment_placeholder_upi_id),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
             PaymentMode.BANK_TRANSFER -> {
-                OutlinedTextField(
+                FleetInputField(
                     value = bankName,
                     onValueChange = onBankNameChange,
-                    label = { Text(stringResource(Res.string.payment_label_bank_name)) },
-                    placeholder = { Text(stringResource(Res.string.payment_placeholder_bank_name)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    fieldType = FieldType.DEFAULT,
+                    label = stringResource(Res.string.payment_label_bank_name),
+                    placeholder = stringResource(Res.string.payment_placeholder_bank_name),
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+                FleetInputField(
                     value = paymentSource,
                     onValueChange = onPaymentSourceChange,
-                    label = { Text(stringResource(Res.string.payment_label_account_number)) },
-                    placeholder = { Text(stringResource(Res.string.payment_placeholder_account_number)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    fieldType = FieldType.NUMBER,
+                    label = stringResource(Res.string.payment_label_account_number),
+                    placeholder = stringResource(Res.string.payment_placeholder_account_number),
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+                FleetInputField(
                     value = transactionId,
                     onValueChange = onTransactionIdChange,
-                    label = { Text(stringResource(Res.string.payment_label_transaction_ref)) },
-                    placeholder = { Text(stringResource(Res.string.payment_placeholder_transaction_ref)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    fieldType = FieldType.DEFAULT,
+                    label = stringResource(Res.string.payment_label_transaction_ref),
+                    placeholder = stringResource(Res.string.payment_placeholder_transaction_ref),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
             PaymentMode.CARD -> {
-                OutlinedTextField(
+                FleetInputField(
                     value = transactionId,
                     onValueChange = onTransactionIdChange,
-                    label = { Text(stringResource(Res.string.payment_label_transaction_id)) },
-                    placeholder = { Text(stringResource(Res.string.payment_placeholder_card_txn)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    fieldType = FieldType.DEFAULT,
+                    label = stringResource(Res.string.payment_label_transaction_id),
+                    placeholder = stringResource(Res.string.payment_placeholder_card_txn),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
             else -> {
-                OutlinedTextField(
+                FleetInputField(
                     value = transactionId,
                     onValueChange = onTransactionIdChange,
-                    label = { Text(stringResource(Res.string.payment_label_reference)) },
-                    placeholder = { Text(stringResource(Res.string.payment_placeholder_reference)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    fieldType = FieldType.DEFAULT,
+                    label = stringResource(Res.string.payment_label_reference),
+                    placeholder = stringResource(Res.string.payment_placeholder_reference),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -142,37 +141,36 @@ internal fun AdditionalInfoSection(
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
-            OutlinedTextField(
+            FleetInputField(
                 value = receivedBy,
                 onValueChange = onReceivedByChange,
-                label = { Text(stringResource(Res.string.payment_label_received_by)) },
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                fieldType = FieldType.DEFAULT,
+                label = stringResource(Res.string.payment_label_received_by),
+                modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            FleetInputField(
                 value = receivedAtLocation,
                 onValueChange = onLocationChange,
-                label = { Text(stringResource(Res.string.payment_label_location)) },
-                modifier = Modifier.weight(1f),
-                singleLine = true
+                fieldType = FieldType.DEFAULT,
+                label = stringResource(Res.string.payment_label_location),
+                modifier = Modifier.weight(1f)
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
-        OutlinedTextField(
+        FleetInputField(
             value = notes,
             onValueChange = onNotesChange,
-            label = { Text(stringResource(Res.string.payment_label_notes)) },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 2,
-            maxLines = 4
+            fieldType = FieldType.NOTES,
+            label = stringResource(Res.string.payment_label_notes),
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }

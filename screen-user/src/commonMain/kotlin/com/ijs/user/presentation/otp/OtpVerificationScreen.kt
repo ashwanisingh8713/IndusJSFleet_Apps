@@ -10,14 +10,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import com.indusjs.uicomponents.components.FieldType
-import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetAccentIconChip
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetOtpInput
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTopAppBar
+import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
+
+/** Max width of the OTP form on Medium / Expanded so it doesn't stretch edge-to-edge. */
+private val FormMaxWidth: Dp = 480.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,95 +70,109 @@ fun OtpVerificationScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(paddingValues),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val subtitleRes = when {
-                state.needsEmailVerification && state.needsMobileVerification -> Res.string.otp_subtitle
-                state.needsEmailVerification -> Res.string.otp_subtitle_email_only
-                state.needsMobileVerification -> Res.string.otp_subtitle_mobile_only
-                else -> Res.string.otp_subtitle
-            }
-            Text(
-                text = stringResource(subtitleRes),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // ── Email OTP Section (only if email needs verification) ──
-            if (state.needsEmailVerification) {
-                OtpSection(
-                    title = stringResource(Res.string.otp_email_section_title),
-                    subtitle = state.email,
-                    otpValue = state.emailOtp,
-                    onOtpChange = { viewModel.sendIntent(OtpVerificationContract.Intent.UpdateEmailOtp(it)) },
-                    isVerified = state.isEmailVerified,
-                    isVerifying = state.isEmailVerifying,
-                    isResending = state.isResendingEmail,
-                    error = state.emailError?.resolve(),
-                    onVerify = { viewModel.sendIntent(OtpVerificationContract.Intent.VerifyEmail) },
-                    onResend = { viewModel.sendIntent(OtpVerificationContract.Intent.ResendEmailOtp) },
-                    verifyButtonText = stringResource(Res.string.otp_verify_email),
-                    resendButtonText = stringResource(Res.string.otp_resend_email),
-                    otpLength = 6,
-                    placeholder = stringResource(Res.string.otp_placeholder)
-                )
+            val widthModifier = if (rememberFleetBreakpoint().isAtLeastMedium) {
+                Modifier.widthIn(max = FormMaxWidth)
+            } else {
+                Modifier.fillMaxWidth()
             }
 
-            if (state.needsEmailVerification && state.needsMobileVerification) {
-                Spacer(modifier = Modifier.height(24.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+            Column(
+                modifier = Modifier
+                    .then(widthModifier)
+                    .fillMaxHeight()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = FleetTokens.Spacing.L),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
-            // ── Mobile OTP Section (only if mobile needs verification) ──
-            if (state.needsMobileVerification) {
-                OtpSection(
-                    title = stringResource(Res.string.otp_mobile_section_title),
-                    subtitle = state.mobile,
-                    otpValue = state.mobileOtp,
-                    onOtpChange = { viewModel.sendIntent(OtpVerificationContract.Intent.UpdateMobileOtp(it)) },
-                    isVerified = state.isMobileVerified,
-                    isVerifying = state.isMobileVerifying,
-                    isResending = state.isResendingMobile,
-                    error = state.mobileError?.resolve(),
-                    onVerify = { viewModel.sendIntent(OtpVerificationContract.Intent.VerifyMobile) },
-                    onResend = { viewModel.sendIntent(OtpVerificationContract.Intent.ResendMobileOtp) },
-                    verifyButtonText = stringResource(Res.string.otp_verify_mobile),
-                    resendButtonText = stringResource(Res.string.otp_resend_mobile),
-                    otpLength = 4,
-                    placeholder = stringResource(Res.string.otp_placeholder_mobile)
-                )
-            }
-
-            state.error?.let { error ->
-                Spacer(modifier = Modifier.height(16.dp))
+                val subtitleRes = when {
+                    state.needsEmailVerification && state.needsMobileVerification -> Res.string.otp_subtitle
+                    state.needsEmailVerification -> Res.string.otp_subtitle_email_only
+                    state.needsMobileVerification -> Res.string.otp_subtitle_mobile_only
+                    else -> Res.string.otp_subtitle
+                }
                 Text(
-                    text = error.resolve(),
-                    color = MaterialTheme.colorScheme.error,
+                    text = stringResource(subtitleRes),
                     style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
                 )
-            }
 
-            Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
+
+                // ── Email OTP Section (only if email needs verification) ──
+                if (state.needsEmailVerification) {
+                    OtpSection(
+                        iconRes = Res.drawable.ic_email,
+                        title = stringResource(Res.string.otp_email_section_title),
+                        subtitle = state.email,
+                        otpValue = state.emailOtp,
+                        onOtpChange = { viewModel.sendIntent(OtpVerificationContract.Intent.UpdateEmailOtp(it)) },
+                        isVerified = state.isEmailVerified,
+                        isVerifying = state.isEmailVerifying,
+                        isResending = state.isResendingEmail,
+                        error = state.emailError?.resolve(),
+                        onVerify = { viewModel.sendIntent(OtpVerificationContract.Intent.VerifyEmail) },
+                        onResend = { viewModel.sendIntent(OtpVerificationContract.Intent.ResendEmailOtp) },
+                        verifyButtonText = stringResource(Res.string.otp_verify_email),
+                        resendButtonText = stringResource(Res.string.otp_resend_email),
+                        verifiedLabel = stringResource(Res.string.otp_email_verified),
+                        otpLength = 6
+                    )
+                }
+
+                if (state.needsEmailVerification && state.needsMobileVerification) {
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
+                }
+
+                // ── Mobile OTP Section (only if mobile needs verification) ──
+                if (state.needsMobileVerification) {
+                    OtpSection(
+                        iconRes = Res.drawable.ic_phone,
+                        title = stringResource(Res.string.otp_mobile_section_title),
+                        subtitle = state.mobile,
+                        otpValue = state.mobileOtp,
+                        onOtpChange = { viewModel.sendIntent(OtpVerificationContract.Intent.UpdateMobileOtp(it)) },
+                        isVerified = state.isMobileVerified,
+                        isVerifying = state.isMobileVerifying,
+                        isResending = state.isResendingMobile,
+                        error = state.mobileError?.resolve(),
+                        onVerify = { viewModel.sendIntent(OtpVerificationContract.Intent.VerifyMobile) },
+                        onResend = { viewModel.sendIntent(OtpVerificationContract.Intent.ResendMobileOtp) },
+                        verifyButtonText = stringResource(Res.string.otp_verify_mobile),
+                        resendButtonText = stringResource(Res.string.otp_resend_mobile),
+                        verifiedLabel = stringResource(Res.string.otp_mobile_verified),
+                        otpLength = 4
+                    )
+                }
+
+                state.error?.let { error ->
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+                    Text(
+                        text = error.resolve(),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL))
+            }
         }
     }
 }
 
 @Composable
 private fun OtpSection(
+    iconRes: DrawableResource,
     title: String,
     subtitle: String,
     otpValue: String,
@@ -158,26 +185,22 @@ private fun OtpSection(
     onResend: () -> Unit,
     verifyButtonText: String,
     resendButtonText: String,
-    otpLength: Int = 6,
-    placeholder: String = ""
+    verifiedLabel: String,
+    otpLength: Int
 ) {
-    // Tinted card -> FleetSectionCard with the original conditional tint as containerColor,
-    // border = null. The bespoke header Row (title/subtitle + solid "Verified" pill) and the
-    // OTP input/buttons stay custom because FleetSectionHeader can't express the trailing pill.
-    com.indusjs.uicomponents.components.FleetSectionCard(
-        modifier = Modifier.fillMaxWidth(),
-        containerColor = if (isVerified)
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        else
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        border = null,
-        contentPadding = 20.dp
-    ) {
+    FleetSectionCard(modifier = Modifier.fillMaxWidth()) {
+        // Header: icon anchor + title/subtitle, with a "Verified" pill once done.
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
+            FleetAccentIconChip(
+                accent = MaterialTheme.colorScheme.primary,
+                chipSize = 40.dp,
+                iconSize = FleetTokens.IconSize.M,
+                iconRes = iconRes
+            )
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -194,74 +217,90 @@ private fun OtpSection(
                 }
             }
             if (isVerified) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text(
-                        text = stringResource(Res.string.otp_verified_badge),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                    )
-                }
+                VerifiedPill()
             }
         }
 
-        if (!isVerified) {
-            Spacer(modifier = Modifier.height(16.dp))
+        if (isVerified) {
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+            Text(
+                text = verifiedLabel,
+                style = MaterialTheme.typography.bodySmall,
+                color = FleetStatusColors.ProfitGreen
+            )
+        } else {
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
-            FleetInputField(
+            FleetOtpInput(
                 value = otpValue,
                 onValueChange = onOtpChange,
-                fieldType = FieldType.NUMBER,
-                modifier = Modifier.fillMaxWidth(),
-                label = stringResource(Res.string.otp_enter_code),
-                placeholder = placeholder,
-                isError = error != null,
-                errorMessage = error,
-                enabled = !isVerifying
+                length = otpLength,
+                enabled = !isVerifying,
+                isError = error != null
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (error != null) {
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
-                OutlinedButton(
+                FleetButton(
+                    text = resendButtonText,
                     onClick = onResend,
+                    variant = ButtonVariant.SECONDARY,
+                    isLoading = isResending,
                     enabled = !isResending && !isVerifying,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    if (isResending) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(text = resendButtonText, style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-
-                Button(
+                    modifier = Modifier.weight(1f)
+                )
+                FleetButton(
+                    text = verifyButtonText,
                     onClick = onVerify,
+                    variant = ButtonVariant.PRIMARY,
+                    isLoading = isVerifying,
                     enabled = otpValue.length == otpLength && !isVerifying,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    if (isVerifying) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(text = verifyButtonText, style = MaterialTheme.typography.labelMedium)
-                    }
-                }
+                    modifier = Modifier.weight(1f)
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun VerifiedPill() {
+    Surface(
+        color = FleetStatusColors.ProfitGreen.copy(alpha = 0.14f),
+        shape = RoundedCornerShape(FleetTokens.Radius.Pill)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(
+                horizontal = FleetTokens.Spacing.M,
+                vertical = FleetTokens.Spacing.XS
+            )
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_check_circle),
+                contentDescription = null,
+                tint = FleetStatusColors.ProfitGreen,
+                modifier = Modifier.size(FleetTokens.IconSize.S)
+            )
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.XXS))
+            Text(
+                text = stringResource(Res.string.otp_verified_badge),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                color = FleetStatusColors.ProfitGreen
+            )
         }
     }
 }

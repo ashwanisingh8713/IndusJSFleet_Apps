@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,15 +17,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -43,20 +39,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetInlineErrorBanner
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.subscription.domain.entity.BillingInterval
 import com.ijs.subscription.domain.entity.Plan
 import com.ijs.subscription.presentation.checkout.PaymentCheckoutContract.Effect
 import com.ijs.subscription.presentation.checkout.PaymentCheckoutContract.Intent
-import com.ijs.subscription.presentation.components.PriceDisplay
 import com.ijs.subscription.presentation.platform.RazorpayLauncher
 import com.ijs.subscription.presentation.platform.RazorpayResult
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
@@ -129,47 +128,59 @@ fun PaymentCheckoutScreen(
                 .padding(paddingValues)
         ) {
             // ── Main scrollable content ──────────────────────────
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val breakpoint = rememberFleetBreakpoint()
+                val contentWidthModifier = when (breakpoint) {
+                    FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
+                    else -> Modifier.widthIn(max = FleetTokens.Width.MaxContent)
+                }
 
-                // ── Hero plan banner ─────────────────────────────
-                PlanHeroBanner(
-                    plan = plan,
-                    billingInterval = billingInterval,
-                    onBack = { viewModel.sendIntent(Intent.ChangePlan) }
-                )
-
-                // ── Body content ─────────────────────────────────
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
-                    // Order summary
-                    OrderSummaryCard(plan = plan, billingInterval = billingInterval)
-
-                    // Error card
-                    state.error?.let { error ->
-                        ErrorCard(message = error.resolve())
-                    }
-
-                    // Legal text
-                    Text(
-                        text = "By proceeding you agree to our Terms of Service and Privacy Policy. You can cancel your subscription anytime.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                        lineHeight = 18.sp
+                    // ── Hero plan banner ─────────────────────────────
+                    PlanHeroBanner(
+                        plan = plan,
+                        billingInterval = billingInterval,
+                        onBack = { viewModel.sendIntent(Intent.ChangePlan) },
+                        contentWidthModifier = contentWidthModifier
                     )
 
-                    // Bottom spacer so content clears the sticky pay button
-                    Spacer(Modifier.height(80.dp))
+                    // ── Body content ─────────────────────────────────
+                    Column(
+                        modifier = contentWidthModifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = FleetTokens.Spacing.XL,
+                                vertical = FleetTokens.Spacing.XL
+                            ),
+                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+                    ) {
+
+                        // Order summary
+                        OrderSummaryCard(plan = plan, billingInterval = billingInterval)
+
+                        // Error card
+                        state.error?.let { error ->
+                            FleetInlineErrorBanner(message = error.resolve())
+                        }
+
+                        // Legal text
+                        Text(
+                            text = "By proceeding you agree to our Terms of Service and Privacy Policy. You can cancel your subscription anytime.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        // Bottom spacer so content clears the sticky pay button
+                        Spacer(Modifier.height(FleetTokens.Spacing.XXXL))
+                    }
                 }
             }
 
@@ -203,7 +214,8 @@ fun PaymentCheckoutScreen(
 private fun PlanHeroBanner(
     plan: Plan,
     billingInterval: BillingInterval,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    contentWidthModifier: Modifier
 ) {
     val scheme = MaterialTheme.colorScheme
     Box(
@@ -215,13 +227,17 @@ private fun PlanHeroBanner(
                 )
             )
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = contentWidthModifier.fillMaxWidth()) {
 
             // Back row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 4.dp, top = 8.dp, end = 16.dp),
+                    .padding(
+                        start = FleetTokens.Spacing.XS,
+                        top = FleetTokens.Spacing.S,
+                        end = FleetTokens.Spacing.L
+                    ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onBack) {
@@ -242,22 +258,15 @@ private fun PlanHeroBanner(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, bottom = 28.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                    .padding(
+                        start = FleetTokens.Spacing.XL,
+                        end = FleetTokens.Spacing.XL,
+                        bottom = FleetTokens.Spacing.XXL
+                    ),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 // Billing interval chip
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = scheme.onPrimary.copy(alpha = 0.18f)
-                ) {
-                    Text(
-                        text = if (billingInterval == BillingInterval.ANNUAL) "Annual Plan" else "Monthly Plan",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = scheme.onPrimary,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
-                }
+                HeroBadge(text = if (billingInterval == BillingInterval.ANNUAL) "Annual Plan" else "Monthly Plan")
 
                 // Plan name
                 Text(
@@ -270,7 +279,7 @@ private fun PlanHeroBanner(
                 // Price
                 Row(
                     verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
                     val price = if (billingInterval == BillingInterval.ANNUAL)
                         plan.formattedAnnualPrice()
@@ -288,43 +297,49 @@ private fun PlanHeroBanner(
                         text = period,
                         style = MaterialTheme.typography.bodyLarge,
                         color = scheme.onPrimary.copy(alpha = 0.75f),
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        modifier = Modifier.padding(bottom = FleetTokens.Spacing.S)
                     )
                 }
 
                 // Trial badge
                 if (plan.trialDays > 0) {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = scheme.onPrimary.copy(alpha = 0.18f)
-                    ) {
-                        Text(
-                            text = "🎁 ${plan.trialDays}-day free trial included",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = scheme.onPrimary,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                        )
-                    }
+                    HeroBadge(text = "🎁 ${plan.trialDays}-day free trial included")
                 }
 
                 // Annual savings badge
                 if (billingInterval == BillingInterval.ANNUAL && plan.annualSavings > 0) {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = scheme.tertiary.copy(alpha = 0.25f)
-                    ) {
-                        Text(
-                            text = "You save ${plan.formattedAnnualSavings()} annually",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = scheme.onPrimary,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                        )
-                    }
+                    HeroBadge(
+                        text = "You save ${plan.formattedAnnualSavings()} annually",
+                        containerColor = scheme.tertiaryContainer,
+                        contentColor = scheme.onTertiaryContainer
+                    )
                 }
             }
         }
+    }
+}
+
+/** Pill badge used on the hero banner (translucent fill over the gradient). */
+@Composable
+private fun HeroBadge(
+    text: String,
+    containerColor: Color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f),
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary
+) {
+    Surface(
+        shape = RoundedCornerShape(FleetTokens.Radius.Pill),
+        color = containerColor
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(
+                horizontal = FleetTokens.Spacing.M,
+                vertical = FleetTokens.Spacing.XS
+            )
+        )
     }
 }
 
@@ -334,79 +349,68 @@ private fun PlanHeroBanner(
 
 @Composable
 private fun OrderSummaryCard(plan: Plan, billingInterval: BillingInterval) {
-    Card(
-        shape = RoundedCornerShape(18.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        modifier = Modifier.fillMaxWidth()
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
+        Text(
+            text = "Order Summary",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(Modifier.height(FleetTokens.Spacing.L))
+
+        SummaryRow(
+            label = "Plan",
+            value = plan.name.replaceFirstChar { it.uppercaseChar() }
+        )
+        SummaryRow(
+            label = "Billing",
+            value = billingInterval.label
+        )
+
+        if (plan.trialDays > 0) {
+            SummaryRow(
+                label = "Free trial",
+                value = "${plan.trialDays} days",
+                valueColor = MaterialTheme.colorScheme.tertiary
+            )
+        }
+
+        Spacer(Modifier.height(FleetTokens.Spacing.XS))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        Spacer(Modifier.height(FleetTokens.Spacing.XS))
+
+        // Total amount — highlighted row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Order Summary",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                text = "Total",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-
-            Spacer(Modifier.height(16.dp))
-
-            SummaryRow(
-                label = "Plan",
-                value = plan.name.replaceFirstChar { it.uppercaseChar() }
-            )
-            SummaryRow(
-                label = "Billing",
-                value = billingInterval.label
-            )
-
-            if (plan.trialDays > 0) {
-                SummaryRow(
-                    label = "Free trial",
-                    value = "${plan.trialDays} days",
-                    valueColor = MaterialTheme.colorScheme.tertiary
-                )
-            }
-
-            Spacer(Modifier.height(4.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Spacer(Modifier.height(4.dp))
-
-            // Total amount — highlighted row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column(horizontalAlignment = Alignment.End) {
+                val amount = if (billingInterval == BillingInterval.ANNUAL)
+                    plan.formattedAnnualPrice() else plan.formattedMonthlyPrice()
+                val period = if (billingInterval == BillingInterval.ANNUAL) "/year" else "/month"
                 Text(
-                    text = "Total",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = "$amount$period",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
                 )
-                Column(horizontalAlignment = Alignment.End) {
-                    val amount = if (billingInterval == BillingInterval.ANNUAL)
-                        plan.formattedAnnualPrice() else plan.formattedMonthlyPrice()
-                    val period = if (billingInterval == BillingInterval.ANNUAL) "/year" else "/month"
+                if (billingInterval == BillingInterval.ANNUAL && plan.annualSavings > 0) {
                     Text(
-                        text = "$amount$period",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary
+                        text = "Save ${plan.formattedAnnualSavings()}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        fontWeight = FontWeight.Medium
                     )
-                    if (billingInterval == BillingInterval.ANNUAL && plan.annualSavings > 0) {
-                        Text(
-                            text = "Save ${plan.formattedAnnualSavings()}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
                 }
             }
         }
@@ -422,7 +426,7 @@ private fun SummaryRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp),
+            .padding(vertical = FleetTokens.Spacing.XS),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -441,39 +445,6 @@ private fun SummaryRow(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Error card
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun ErrorCard(message: String) {
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Text(
-                text = "⚠",
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                lineHeight = 18.sp
-            )
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Sticky pay button
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -488,56 +459,44 @@ private fun PayButton(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shadowElevation = 16.dp,
+        shadowElevation = FleetTokens.Elevation.Modal,
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp
+        tonalElevation = FleetTokens.Elevation.Raised
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(
+                    horizontal = FleetTokens.Spacing.XL,
+                    vertical = FleetTokens.Spacing.L
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button(
+            val amount = if (billingInterval == BillingInterval.ANNUAL)
+                plan.formattedAnnualPrice() else plan.formattedMonthlyPrice()
+            val buttonLabel = when {
+                isVerifying -> "Verifying payment…"
+                isBusy -> "Preparing order…"
+                else -> "Pay $amount Securely"
+            }
+            FleetButton(
+                text = buttonLabel,
                 onClick = onPay,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
+                variant = ButtonVariant.PRIMARY,
                 enabled = !isBusy,
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            ) {
-                if (isBusy) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        text = if (isVerifying) "Verifying payment…" else "Preparing order…",
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                } else {
-                    val amount = if (billingInterval == BillingInterval.ANNUAL)
-                        plan.formattedAnnualPrice() else plan.formattedMonthlyPrice()
+                isLoading = isBusy,
+                leadingIcon = {
                     Icon(
                         painter = painterResource(Res.drawable.ic_lock),
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Pay $amount Securely",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = FleetTokens.Width.MaxContent)
+            )
         }
     }
 }
@@ -554,26 +513,25 @@ private fun BusyOverlay(isVerifying: Boolean) {
             .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f)),
         contentAlignment = Alignment.Center
     ) {
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+        FleetSectionCard(
+            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XL),
+            border = null,
+            elevation = FleetTokens.Elevation.Dialog,
+            contentPadding = FleetTokens.Spacing.XXL
         ) {
             Column(
-                modifier = Modifier.padding(32.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
             ) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(44.dp),
-                    strokeWidth = 3.dp,
+                    modifier = Modifier.size(FleetTokens.IconSize.XL),
+                    strokeWidth = FleetTokens.Height.ProgressStroke,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
                     Text(
                         text = if (isVerifying) "Verifying Payment" else "Preparing Order",

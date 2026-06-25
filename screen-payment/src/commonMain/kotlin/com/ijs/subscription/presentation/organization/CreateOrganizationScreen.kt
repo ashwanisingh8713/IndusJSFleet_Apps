@@ -7,32 +7,22 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,12 +38,18 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetInlineErrorBanner
+import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetStepIndicator
 import com.indusjs.uicomponents.components.StepInfo
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.subscription.presentation.organization.CreateOrganizationContract.Effect
 import com.ijs.subscription.presentation.organization.CreateOrganizationContract.Intent
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
@@ -104,7 +100,7 @@ fun CreateOrganizationScreen(
         }
     }
 
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(
@@ -117,186 +113,181 @@ fun CreateOrganizationScreen(
                     endY = 500f
                 )
             )
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
-            .imePadding(),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(32.dp))
-
-        FleetStepIndicator(
-            steps = listOf(
-                StepInfo(stringResource(Res.string.step_payment)),
-                StepInfo(stringResource(Res.string.step_organization)),
-                StepInfo(stringResource(Res.string.step_dashboard))
-            ),
-            currentStep = 1,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(28.dp))
-
-        Box(
-            modifier = Modifier.size(96.dp).scale(iconScale.value),
-            contentAlignment = Alignment.Center
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = scheme.primary.copy(alpha = 0.1f),
-                modifier = Modifier.size(96.dp)
-            ) {}
-            Surface(
-                shape = CircleShape,
-                color = scheme.primary.copy(alpha = 0.2f),
-                modifier = Modifier.size(76.dp)
-            ) {}
-            Surface(
-                shape = CircleShape,
-                color = scheme.primary,
-                modifier = Modifier.size(58.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_fleet_logo),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(14.dp),
-                    tint = scheme.onPrimary
-                )
-            }
+        val bp = rememberFleetBreakpoint()
+        // Compact: full width. Medium/Expanded: center the form to a comfortable max width.
+        val contentWidthModifier = if (bp == FleetBreakpoint.Compact) {
+            Modifier.fillMaxWidth()
+        } else {
+            Modifier.widthIn(max = ContentMaxWidth)
         }
 
-        Spacer(Modifier.height(20.dp))
-
-        AnimatedVisibility(
-            visible = showContent,
-            enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 3 }
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = stringResource(Res.string.create_org_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = scheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                Text(
-                    text = stringResource(Res.string.create_org_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = scheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-
-                Spacer(Modifier.height(6.dp))
-
-                Text(
-                    text = stringResource(Res.string.create_org_cta_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = scheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        AnimatedVisibility(
-            visible = showForm,
-            enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 3 }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .imePadding(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = contentWidthModifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(horizontal = FleetTokens.Spacing.XL),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                OutlinedTextField(
-                    value = state.organizationName,
-                    onValueChange = { viewModel.sendIntent(Intent.UpdateOrganizationName(it)) },
-                    label = { Text(stringResource(Res.string.create_org_name_label)) },
-                    placeholder = { Text(stringResource(Res.string.create_org_name_placeholder)) },
-                    supportingText = {
-                        Text(
-                            stringResource(Res.string.create_org_name_supporting),
-                            color = scheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Words,
-                        imeAction = ImeAction.Done
+                Spacer(Modifier.size(FleetTokens.Spacing.XXL))
+
+                FleetStepIndicator(
+                    steps = listOf(
+                        StepInfo(stringResource(Res.string.step_payment)),
+                        StepInfo(stringResource(Res.string.step_organization)),
+                        StepInfo(stringResource(Res.string.step_dashboard))
                     ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                            viewModel.sendIntent(Intent.Submit)
-                        }
-                    )
+                    currentStep = 1,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                AnimatedVisibility(visible = state.error != null) {
-                    state.error?.let { error ->
-                        Card(
+                Spacer(Modifier.size(FleetTokens.Spacing.XL))
+
+                Box(
+                    modifier = Modifier.size(FleetTokens.IconSize.XXL).scale(iconScale.value),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = scheme.primary.copy(alpha = 0.1f),
+                        modifier = Modifier.size(FleetTokens.IconSize.XXL)
+                    ) {}
+                    Surface(
+                        shape = CircleShape,
+                        color = scheme.primary.copy(alpha = 0.2f),
+                        modifier = Modifier.size(76.dp)
+                    ) {}
+                    Surface(
+                        shape = CircleShape,
+                        color = scheme.primary,
+                        modifier = Modifier.size(58.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_fleet_logo),
+                            contentDescription = null,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = scheme.errorContainer.copy(alpha = 0.6f)
+                                .fillMaxSize()
+                                .padding(FleetTokens.Spacing.M),
+                            tint = scheme.onPrimary
+                        )
+                    }
+                }
+
+                Spacer(Modifier.size(FleetTokens.Spacing.L))
+
+                AnimatedVisibility(
+                    visible = showContent,
+                    enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 3 }
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = stringResource(Res.string.create_org_title),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = scheme.onSurface,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(Modifier.size(FleetTokens.Spacing.S))
+
+                        Text(
+                            text = stringResource(Res.string.create_org_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = scheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S)
+                        )
+
+                        Spacer(Modifier.size(FleetTokens.Spacing.XS))
+
+                        Text(
+                            text = stringResource(Res.string.create_org_cta_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = scheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                Spacer(Modifier.size(FleetTokens.Spacing.XL))
+
+                AnimatedVisibility(
+                    visible = showForm,
+                    enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 3 }
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        FleetInputField(
+                            value = state.organizationName,
+                            onValueChange = { viewModel.sendIntent(Intent.UpdateOrganizationName(it)) },
+                            fieldType = FieldType.DEFAULT,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = stringResource(Res.string.create_org_name_label),
+                            placeholder = stringResource(Res.string.create_org_name_placeholder),
+                            isError = state.organizationNameError != null,
+                            errorMessage = state.organizationNameError?.resolve(),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    focusManager.clearFocus()
+                                    viewModel.sendIntent(Intent.Submit)
+                                }
                             )
-                        ) {
+                        )
+
+                        // Field hint (only when there is no inline error to show).
+                        if (state.organizationNameError == null) {
+                            Spacer(Modifier.size(FleetTokens.Spacing.XS))
                             Text(
-                                text = error.resolve(),
-                                color = scheme.onErrorContainer,
+                                text = stringResource(Res.string.create_org_name_supporting),
                                 style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(12.dp)
+                                color = scheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
-                    }
-                }
 
-                Spacer(Modifier.height(28.dp))
+                        AnimatedVisibility(visible = state.error != null) {
+                            state.error?.let { error ->
+                                Column {
+                                    Spacer(Modifier.size(FleetTokens.Spacing.S))
+                                    FleetInlineErrorBanner(message = error.resolve())
+                                }
+                            }
+                        }
 
-                Button(
-                    onClick = { viewModel.sendIntent(Intent.Submit) },
-                    enabled = !state.isCreating && state.organizationName.isNotBlank(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 4.dp,
-                        pressedElevation = 1.dp
-                    )
-                ) {
-                    if (state.isCreating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(22.dp),
-                            strokeWidth = 2.dp,
-                            color = scheme.onPrimary
-                        )
-                    } else {
-                        Text(
+                        Spacer(Modifier.size(FleetTokens.Spacing.XL))
+
+                        FleetButton(
                             text = stringResource(Res.string.create_org_button),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
+                            onClick = { viewModel.sendIntent(Intent.Submit) },
+                            size = ButtonSize.LARGE,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = state.isValid,
+                            isLoading = state.isCreating,
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_chevron_right),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
+                            }
                         )
-                        Spacer(Modifier.width(8.dp))
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_chevron_right),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
+
+                        Spacer(Modifier.size(FleetTokens.Spacing.XXL))
                     }
                 }
-
-                Spacer(Modifier.height(32.dp))
             }
         }
     }
 }
+
+/** Max width for the centered form on Medium / Expanded breakpoints. */
+private val ContentMaxWidth = 480.dp
 

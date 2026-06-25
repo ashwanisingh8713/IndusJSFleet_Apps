@@ -2,15 +2,15 @@ package com.ijs.trip.payment.presentation
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.rememberPhoneDialer
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -49,7 +49,7 @@ internal fun CustomerDetailsCard(payment: TripPayment) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 3.dp)
+                        .padding(vertical = FleetTokens.Spacing.XS)
                         .then(
                             if (phoneDialer != null) {
                                 Modifier.clickable { phoneDialer() }
@@ -67,7 +67,7 @@ internal fun CustomerDetailsCard(payment: TripPayment) {
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                     ) {
                         Text(
                             text = contact,
@@ -101,16 +101,9 @@ internal fun FinancialInfoCard(payment: TripPayment) {
 
     if (!hasFinancialInfo) return
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
+    FleetSectionCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -122,7 +115,7 @@ internal fun FinancialInfoCard(payment: TripPayment) {
             )
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 payment.financialYear?.let {
@@ -193,7 +186,7 @@ internal fun CompactDetailRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 3.dp),
+            .padding(vertical = FleetTokens.Spacing.XS),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

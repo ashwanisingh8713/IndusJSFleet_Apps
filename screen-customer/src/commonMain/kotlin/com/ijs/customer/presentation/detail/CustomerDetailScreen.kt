@@ -5,8 +5,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.pdfreport.handler.CustomerPaymentsPdfHandler
 import com.indusjs.pdfreport.handler.CustomerTripsPdfHandler
@@ -15,6 +15,9 @@ import com.indusjs.pdfreport.model.CustomerPaymentsPdfData
 import com.indusjs.pdfreport.model.CustomerTripsPdfData
 import com.indusjs.pdfreport.model.CustomerFinancialsPdfData
 import com.indusjs.uicomponents.components.*
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.customer.presentation.localizedTitle
 import com.ijs.customer.presentation.detail.CustomerDetailContract.CustomerDetailTab
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Effect
@@ -183,7 +186,7 @@ fun CustomerDetailScreen(
                                 stringResource(Res.string.back)
                             },
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -194,7 +197,7 @@ fun CustomerDetailScreen(
                                 painter = painterResource(Res.drawable.ic_edit),
                                 contentDescription = stringResource(Res.string.edit),
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                     }
@@ -221,7 +224,7 @@ fun CustomerDetailScreen(
             )
             state.customer == null -> EmptyContent(
                 title = stringResource(Res.string.customer_not_found),
-                icon = "🏢"
+                iconRes = Res.drawable.ic_dashboard
             )
             state.isEditMode -> EditCustomerContent(
                 state = state,
@@ -260,47 +263,65 @@ private fun CustomerDetailTabbedContent(
         }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        FleetTabBar(
-            tabs = visibleTabs.mapIndexed { index, tab ->
-                FleetTab(
-                    id = index,
-                    label = "${tab.icon} ${tab.localizedTitle()}"
-                )
-            },
-            selectedTabId = pagerState.currentPage,
-            onTabSelected = { index ->
-                scope.launch { pagerState.animateScrollToPage(index) }
-            }
-        )
+    BoxWithConstraints(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        val breakpoint = rememberFleetBreakpoint()
+        // On wide screens cap the tabbed content and centre it so it doesn't
+        // stretch edge-to-edge on tablet / web; phones stay full-width.
+        val contentWidthModifier = when (breakpoint) {
+            FleetBreakpoint.Expanded -> Modifier.widthIn(max = FleetTokens.Width.MaxContent)
+            else -> Modifier.fillMaxWidth()
+        }
 
-        // Pager Content
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { page ->
-            val tab = visibleTabs.getOrNull(page) ?: CustomerDetailTab.OVERVIEW
-            when (tab) {
-                CustomerDetailTab.OVERVIEW -> OverviewTabContent(
-                    state = state,
-                    onIntent = onIntent
-                )
-                CustomerDetailTab.TRIPS -> TripsTabContent(
-                    state = state,
-                    onIntent = onIntent,
-                    onTripClick = onNavigateToTrip,
-                    onExportPdf = { onIntent(Intent.ExportPdf(ReportType.TRIPS)) }
-                )
-                CustomerDetailTab.PAYMENTS -> PaymentsTabContent(
-                    state = state,
-                    onIntent = onIntent,
-                    onExportPdf = { onIntent(Intent.ExportPdf(ReportType.PAYMENTS)) }
-                )
-                CustomerDetailTab.FINANCIALS -> FinancialsTabContent(
-                    state = state,
-                    onIntent = onIntent,
-                    onExportPdf = { onIntent(Intent.ExportPdf(ReportType.FINANCIALS)) }
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(contentWidthModifier),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            FleetTabBar(
+                tabs = visibleTabs.mapIndexed { index, tab ->
+                    FleetTab(
+                        id = index,
+                        label = tab.localizedTitle()
+                    )
+                },
+                selectedTabId = pagerState.currentPage,
+                onTabSelected = { index ->
+                    scope.launch { pagerState.animateScrollToPage(index) }
+                }
+            )
+
+            // Pager Content
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                val tab = visibleTabs.getOrNull(page) ?: CustomerDetailTab.OVERVIEW
+                when (tab) {
+                    CustomerDetailTab.OVERVIEW -> OverviewTabContent(
+                        state = state,
+                        onIntent = onIntent
+                    )
+                    CustomerDetailTab.TRIPS -> TripsTabContent(
+                        state = state,
+                        onIntent = onIntent,
+                        onTripClick = onNavigateToTrip,
+                        onExportPdf = { onIntent(Intent.ExportPdf(ReportType.TRIPS)) }
+                    )
+                    CustomerDetailTab.PAYMENTS -> PaymentsTabContent(
+                        state = state,
+                        onIntent = onIntent,
+                        onExportPdf = { onIntent(Intent.ExportPdf(ReportType.PAYMENTS)) }
+                    )
+                    CustomerDetailTab.FINANCIALS -> FinancialsTabContent(
+                        state = state,
+                        onIntent = onIntent,
+                        onExportPdf = { onIntent(Intent.ExportPdf(ReportType.FINANCIALS)) }
+                    )
+                }
             }
         }
     }

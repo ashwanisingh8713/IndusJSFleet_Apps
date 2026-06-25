@@ -15,8 +15,11 @@ object SignUpContract {
      */
     data class State(
         val firstName: String = "",
+        val firstNameError: UiText? = null,
         val lastName: String = "",
+        val lastNameError: UiText? = null,
         val email: String = "",
+        val emailError: UiText? = null,
         val mobile: String = "",
         val mobileError: UiText? = null,
         val password: String = "",
@@ -25,7 +28,25 @@ object SignUpContract {
         val isConfirmPasswordVisible: Boolean = false,
         val isLoading: Boolean = false,
         val error: UiText? = null
-    ) : UiState
+    ) : UiState {
+
+        /** Confirm-password mismatch is a UI-only check (password policy stays backend-only). */
+        val isConfirmPasswordMismatch: Boolean
+            get() = confirmPassword.isNotEmpty() && confirmPassword != password
+
+        /**
+         * Whether every field is filled and individually valid, so the submit
+         * action can be enabled. Mirrors the per-field validation in the ViewModel
+         * (name/email/mobile via ValidationUtils; passwords must be non-empty and match).
+         */
+        val isSubmitEnabled: Boolean
+            get() = firstNameError == null && firstName.isNotBlank() &&
+                lastNameError == null && lastName.isNotBlank() &&
+                emailError == null && email.isNotBlank() &&
+                mobileError == null && mobile.isNotBlank() &&
+                password.isNotEmpty() &&
+                confirmPassword.isNotEmpty() && !isConfirmPasswordMismatch
+    }
 
     /**
      * User intents for the Sign Up screen.

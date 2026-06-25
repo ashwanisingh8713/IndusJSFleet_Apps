@@ -14,11 +14,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetSectionHeader
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.ReportChartType
 import com.ijs.reports.presentation.localizedLabel
@@ -26,6 +28,13 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlin.math.abs
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+// Bespoke chart layout dimensions — not part of the FleetTokens spacing/icon scale,
+// so they live as named constants rather than raw literals at the call sites.
+private val ChartPlaceholderHeight: Dp = 200.dp
+private val BarChartLabelWidth: Dp = 80.dp
+private val BarChartValueWidth: Dp = 70.dp
+private val BarChartBarHeight: Dp = 20.dp
 
 @Composable
 internal fun FleetSummaryKPICard(
@@ -52,20 +61,20 @@ internal fun FleetSummaryKPICard(
                     title = stringResource(Res.string.reports_fleet_financial_summary),
                     modifier = Modifier.weight(1f)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
                     Text(
                         text = stringResource(Res.string.reports_vehicles_count_label, totalVehicles),
                         style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -92,9 +101,9 @@ internal fun FleetSummaryKPICard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -175,7 +184,7 @@ internal fun PerformersCard(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
     ) {
         topPerformer?.let {
             val vehicleFallback = stringResource(Res.string.reports_vehicle_id_fallback, it.vehicleId)
@@ -183,16 +192,16 @@ internal fun PerformersCard(
                 modifier = Modifier.weight(1f),
                 containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f),
                 border = null,
-                contentPadding = 12.dp
+                contentPadding = FleetTokens.Spacing.M
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_trophy),
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(FleetTokens.IconSize.M),
                         tint = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     Text(
                         text = stringResource(Res.string.reports_top_performer),
                         style = MaterialTheme.typography.labelMedium,
@@ -200,7 +209,7 @@ internal fun PerformersCard(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 Text(
                     text = it.vehicleNumber ?: vehicleFallback,
                     style = MaterialTheme.typography.titleSmall,
@@ -221,16 +230,16 @@ internal fun PerformersCard(
                 modifier = Modifier.weight(1f),
                 containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f),
                 border = null,
-                contentPadding = 12.dp
+                contentPadding = FleetTokens.Spacing.M
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_warning),
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(FleetTokens.IconSize.M),
                         tint = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     Text(
                         text = stringResource(Res.string.reports_needs_attention),
                         style = MaterialTheme.typography.labelMedium,
@@ -238,7 +247,7 @@ internal fun PerformersCard(
                         fontWeight = FontWeight.SemiBold
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 Text(
                     text = it.vehicleNumber ?: vehicleFallback,
                     style = MaterialTheme.typography.titleSmall,
@@ -278,8 +287,8 @@ internal fun ChartViewContent(
                     title = stringResource(Res.string.reports_pl_chart_top_10),
                     modifier = Modifier.weight(1f)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+                Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)) {
                     ReportChartType.entries.forEach { type ->
                         FilterChip(
                             selected = chartType == type,
@@ -290,13 +299,13 @@ internal fun ChartViewContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             if (results.isNotEmpty()) {
                 SimpleBarChart(results = results)
             } else {
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(200.dp),
+                    modifier = Modifier.fillMaxWidth().height(ChartPlaceholderHeight),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -325,7 +334,7 @@ internal fun SimpleBarChart(results: List<VehicleProfitLoss>) {
     val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
     val lossColor = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
         results.forEach { result ->
             val barWidth = (abs(result.netProfit) / maxProfit).toFloat()
             val isProfit = result.netProfit >= 0
@@ -337,7 +346,7 @@ internal fun SimpleBarChart(results: List<VehicleProfitLoss>) {
                 Text(
                     text = result.vehicleNumber?.take(10) ?: "#${result.vehicleId}",
                     style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.width(80.dp),
+                    modifier = Modifier.width(BarChartLabelWidth),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -345,8 +354,8 @@ internal fun SimpleBarChart(results: List<VehicleProfitLoss>) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(20.dp)
-                        .clip(RoundedCornerShape(4.dp))
+                        .height(BarChartBarHeight)
+                        .clip(RoundedCornerShape(FleetTokens.Radius.S))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Box(
@@ -357,14 +366,14 @@ internal fun SimpleBarChart(results: List<VehicleProfitLoss>) {
                     )
                 }
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
 
                 Text(
                     text = formatCurrency(result.netProfit),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (isProfit) profitColor else lossColor,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier.width(70.dp),
+                    modifier = Modifier.width(BarChartValueWidth),
                     textAlign = TextAlign.End
                 )
             }
@@ -375,8 +384,8 @@ internal fun SimpleBarChart(results: List<VehicleProfitLoss>) {
 @Composable
 internal fun SummaryGridContent(results: List<VehicleProfitLoss>) {
     FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
+        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
     ) {
         results.forEach { result ->
             VehiclePLSummaryChip(result = result)

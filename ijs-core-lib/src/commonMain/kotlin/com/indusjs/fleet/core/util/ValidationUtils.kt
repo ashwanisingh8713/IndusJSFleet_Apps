@@ -300,6 +300,34 @@ object ValidationUtils {
             else -> null
         }
     }
+
+    // ============ NAME VALIDATION ============
+
+    /**
+     * Canonical name rule for the app: 2–50 chars after trimming, made up of letters (any
+     * script — so Hindi/Latin names pass), spaces, and the joiners . ' - (e.g. "S. R. Kumar",
+     * "D'Souza", "Al-Hassan"). Digits and other symbols are rejected.
+     */
+    fun isValidName(name: String): Boolean {
+        val trimmed = name.trim()
+        if (trimmed.length < 2 || trimmed.length > 50) return false
+        return trimmed.all { it.isLetter() || it == ' ' || it == '.' || it == '\'' || it == '-' }
+    }
+
+    /**
+     * Returns an error message for an invalid name, or null if valid.
+     * [fieldName] is interpolated so callers can say "First name", "Customer name", etc.
+     */
+    fun getNameError(name: String, fieldName: String = "Name", required: Boolean = true): String? {
+        val trimmed = name.trim()
+        return when {
+            trimmed.isBlank() && required -> "$fieldName is required"
+            trimmed.isBlank() -> null
+            trimmed.length < 2 -> "$fieldName is too short"
+            !isValidName(trimmed) -> "Enter a valid $fieldName"
+            else -> null
+        }
+    }
 }
 
 /**

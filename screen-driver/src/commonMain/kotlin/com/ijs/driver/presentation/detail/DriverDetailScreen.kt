@@ -3,41 +3,29 @@ package com.ijs.driver.presentation.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.indusjs.datetimepicker.FleetDatePicker
-import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetConfirmationDialog
 import com.indusjs.uicomponents.components.FleetTab
 import com.indusjs.uicomponents.components.FleetTabBar
-import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.LoadingContent
-import com.indusjs.uicomponents.components.ClickablePhoneRow
-import com.indusjs.uicomponents.components.CaretakerInfoCard
-import com.indusjs.uicomponents.components.CaretakerSectionCard
 import com.indusjs.uicomponents.components.HistoryTabContent
 import com.indusjs.uicomponents.components.StateChangeDialog
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.driver.presentation.driverStatusLabel
 import com.ijs.driver.presentation.driverStatusLabelsByApi
 import com.ijs.driver.presentation.getDriverStateOptions
-import com.ijs.team.presentation.toCaretakerInfo
-import com.ijs.team.presentation.toCaretakerInfoList
-import com.indusjs.fleet.core.util.formatCostAmount
-import com.ijs.driver.domain.entity.Driver
-import com.ijs.driver.domain.entity.DriverStatus
-import com.ijs.driver.domain.entity.LicenseType
 import com.indusjs.pdfreport.handler.DriverCostsPdfHandler
 import com.indusjs.pdfreport.model.DriverCostsPdfData
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -142,39 +130,22 @@ fun DriverDetailScreen(
         }
     )
 
-    // Delete confirmation dialog
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text(stringResource(Res.string.driver_detail_delete)) },
-            text = {
-                Text(
-                    stringResource(
-                        Res.string.driver_delete_confirmation_named,
-                        state.driver?.fullName.orEmpty()
-                    )
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        viewModel.sendIntent(DriverDetailContract.Intent.ConfirmDelete)
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text(stringResource(Res.string.delete))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
-    }
+    // Delete confirmation dialog (standardized; named message + destructive action)
+    FleetConfirmationDialog(
+        showDialog = showDeleteDialog,
+        title = stringResource(Res.string.driver_detail_delete),
+        message = stringResource(
+            Res.string.driver_delete_confirmation_named,
+            state.driver?.fullName.orEmpty()
+        ),
+        confirmText = stringResource(Res.string.delete),
+        isDestructive = true,
+        onConfirm = {
+            showDeleteDialog = false
+            viewModel.sendIntent(DriverDetailContract.Intent.ConfirmDelete)
+        },
+        onDismiss = { showDeleteDialog = false }
+    )
 
     // Status change dialog - use new StateChangeDialog
     if (showStatusDialog && state.driver != null) {
@@ -221,7 +192,7 @@ fun DriverDetailScreen(
                                 stringResource(Res.string.back)
                             },
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -232,7 +203,7 @@ fun DriverDetailScreen(
                                 painter = painterResource(Res.drawable.ic_edit),
                                 contentDescription = stringResource(Res.string.edit),
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                     }
@@ -248,39 +219,30 @@ fun DriverDetailScreen(
             if (state.isEditMode) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shadowElevation = 8.dp
+                    shadowElevation = FleetTokens.Elevation.Dialog
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            .padding(FleetTokens.Spacing.L),
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                     ) {
-                        OutlinedButton(
+                        FleetButton(
+                            text = stringResource(Res.string.cancel),
                             onClick = { viewModel.sendIntent(DriverDetailContract.Intent.ExitEditMode) },
+                            variant = ButtonVariant.SECONDARY,
                             modifier = Modifier.weight(1f)
-                        ) {
-                            Text(stringResource(Res.string.cancel))
-                        }
+                        )
 
-                        Button(
+                        FleetButton(
+                            text = if (state.isSaving) stringResource(Res.string.action_saving)
+                            else stringResource(Res.string.driver_save_changes),
                             onClick = { viewModel.sendIntent(DriverDetailContract.Intent.SaveChanges) },
-                            modifier = Modifier.weight(1f),
-                            enabled = state.canSave
-                        ) {
-                            if (state.isSaving) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
-                            Text(
-                                if (state.isSaving) stringResource(Res.string.action_saving)
-                                else stringResource(Res.string.driver_save_changes)
-                            )
-                        }
+                            variant = ButtonVariant.PRIMARY,
+                            enabled = state.canSave,
+                            isLoading = state.isSaving,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
@@ -298,31 +260,44 @@ fun DriverDetailScreen(
                 )
             }
             state.driver != null -> {
-                Column(
+                BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
+                        .background(MaterialTheme.colorScheme.background)
                 ) {
+                    val isWide = rememberFleetBreakpoint() != FleetBreakpoint.Compact
+                    // On wide screens cap the content width and centre it; on
+                    // Compact fill the whole width.
+                    val cappedModifier = if (isWide) {
+                        Modifier
+                            .fillMaxHeight()
+                            .widthIn(max = FleetTokens.Width.MaxContent)
+                            .fillMaxWidth()
+                            .align(Alignment.TopCenter)
+                    } else {
+                        Modifier.fillMaxSize()
+                    }
                     if (state.isEditMode) {
-                        // Edit Mode - Full screen form
+                        // Edit Mode - centered, width-capped form on wide screens
                         LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            modifier = cappedModifier,
+                            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+                            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                         ) {
                             item { EditModeContent(state, viewModel) }
-                            item { Spacer(modifier = Modifier.height(80.dp)) }
+                            item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL)) }
                         }
                     } else {
-                        // View Mode with Tabs
-                        DriverDetailTabs(
-                            state = state,
-                            viewModel = viewModel,
-                            driverStatusLabels = driverStatusLabels,
-                            onStatusClick = { showStatusDialog = true }
-                        )
+                        // View Mode with Tabs - capped width on wide screens
+                        Column(modifier = cappedModifier) {
+                            DriverDetailTabs(
+                                state = state,
+                                viewModel = viewModel,
+                                driverStatusLabels = driverStatusLabels,
+                                onStatusClick = { showStatusDialog = true }
+                            )
+                        }
                     }
                 }
             }
@@ -338,14 +313,14 @@ fun DriverDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Card(
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(FleetTokens.Radius.XL)
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(FleetTokens.Spacing.XL),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
                         Text(stringResource(Res.string.action_saving))
                     }
                 }
@@ -362,14 +337,14 @@ fun DriverDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Card(
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(FleetTokens.Radius.XL)
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(FleetTokens.Spacing.XL),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
                         Text(stringResource(Res.string.action_exporting_pdf))
                     }
                 }
@@ -381,10 +356,10 @@ fun DriverDetailScreen(
 /**
  * Tab definitions for Driver Detail Screen
  */
-private enum class DriverDetailTab(val title: StringResource, val icon: String) {
-    OVERVIEW(Res.string.driver_tab_overview, "📋"),
-    COSTS(Res.string.driver_tab_costs, "💰"),
-    HISTORY(Res.string.driver_tab_history, "📜")
+private enum class DriverDetailTab(val title: StringResource) {
+    OVERVIEW(Res.string.driver_tab_overview),
+    COSTS(Res.string.driver_tab_costs),
+    HISTORY(Res.string.driver_tab_history)
 }
 
 /**
@@ -417,7 +392,7 @@ private fun DriverDetailTabs(
     }
 
     val fleetTabs = tabs.map { tab ->
-        FleetTab(id = tab.ordinal, label = "${tab.icon} ${stringResource(tab.title)}")
+        FleetTab(id = tab.ordinal, label = stringResource(tab.title))
     }
 
     Column(modifier = Modifier.fillMaxSize()) {

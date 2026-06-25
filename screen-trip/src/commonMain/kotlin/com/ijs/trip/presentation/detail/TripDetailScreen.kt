@@ -9,7 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -17,9 +16,15 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.pdfreport.handler.TripCostsPdfHandler
 import com.indusjs.pdfreport.model.TripCostsPdfData
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetConfirmationDialog
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.StateChangeDialog
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.trip.presentation.getTripStateOptions
 import com.ijs.customer.presentation.toSelectableCustomerList
 import com.indusjs.uicomponents.customer.CustomerSelectionBottomSheet
@@ -118,15 +123,19 @@ fun TripDetailScreen(
     }
 
     // Cancel confirmation dialog
-    if (showCancelDialog) {
-        CancelTripDialog(
-            onConfirm = {
-                showCancelDialog = false
-                viewModel.sendIntent(TripDetailContract.Intent.ConfirmCancel)
-            },
-            onDismiss = { showCancelDialog = false }
-        )
-    }
+    FleetConfirmationDialog(
+        showDialog = showCancelDialog,
+        title = stringResource(Res.string.trip_detail_cancel),
+        message = stringResource(Res.string.trip_detail_cancel_confirm),
+        confirmText = stringResource(Res.string.trip_detail_cancel),
+        dismissText = stringResource(Res.string.trip_detail_keep),
+        isDestructive = true,
+        onConfirm = {
+            showCancelDialog = false
+            viewModel.sendIntent(TripDetailContract.Intent.ConfirmCancel)
+        },
+        onDismiss = { showCancelDialog = false }
+    )
 
     // Status change dialog
     if (showStatusDialog && state.trip != null) {
@@ -268,7 +277,7 @@ private fun TripDetailTopBar(
                     contentDescription = if (isEditMode) stringResource(Res.string.cancel)
                     else stringResource(Res.string.back),
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(FleetTokens.IconSize.Default)
                 )
             }
         },
@@ -279,7 +288,7 @@ private fun TripDetailTopBar(
                         painter = painterResource(Res.drawable.ic_edit),
                         contentDescription = stringResource(Res.string.edit),
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(FleetTokens.IconSize.Default)
                     )
                 }
             }
@@ -300,76 +309,33 @@ private fun EditModeBottomBar(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shadowElevation = 8.dp,
+        shadowElevation = FleetTokens.Elevation.Dialog,
         color = MaterialTheme.colorScheme.surface
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(FleetTokens.Spacing.L),
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            OutlinedButton(
+            FleetButton(
+                text = stringResource(Res.string.cancel),
                 onClick = onCancel,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(text = stringResource(Res.string.cancel), fontWeight = FontWeight.SemiBold)
-            }
+                variant = ButtonVariant.SECONDARY,
+                modifier = Modifier.weight(1f)
+            )
 
-            Button(
+            FleetButton(
+                text = if (isSaving) stringResource(Res.string.action_saving)
+                else stringResource(Res.string.team_save_changes),
                 onClick = onSave,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
+                variant = ButtonVariant.PRIMARY,
                 enabled = canSave,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                if (isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Text(
-                    text = if (isSaving) stringResource(Res.string.action_saving)
-                    else stringResource(Res.string.team_save_changes),
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                isLoading = isSaving,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
-}
-
-@Composable
-private fun CancelTripDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.trip_detail_cancel)) },
-        text = { Text(stringResource(Res.string.trip_detail_cancel_confirm)) },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text(stringResource(Res.string.trip_detail_cancel))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.trip_detail_keep))
-            }
-        }
-    )
 }
 
 @Composable
@@ -379,14 +345,28 @@ private fun TripDetailContent(
     padding: PaddingValues,
     onShowStatusDialog: () -> Unit
 ) {
-    LazyColumn(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(padding),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(padding)
     ) {
+        val bp = rememberFleetBreakpoint()
+        // Detail/forms are centered and width-capped on wider screens.
+        val contentWidthModifier = if (bp == FleetBreakpoint.Compact) {
+            Modifier.fillMaxSize()
+        } else {
+            Modifier
+                .fillMaxSize()
+                .widthIn(max = FleetTokens.Width.MaxContent)
+                .align(Alignment.TopCenter)
+        }
+
+        LazyColumn(
+            modifier = contentWidthModifier,
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+        ) {
         if (state.isEditMode) {
             item { EditModeContent(state, viewModel) }
         } else {
@@ -445,39 +425,21 @@ private fun TripDetailContent(
             // Cancel button for planned trips
             if (state.trip?.status == TripStatus.PLANNED) {
                 item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+                    FleetButton(
+                        text = stringResource(Res.string.trip_detail_cancel),
                         onClick = { viewModel.sendIntent(TripDetailContract.Intent.CancelTrip) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Text("❌", style = MaterialTheme.typography.bodyLarge)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(Res.string.trip_detail_cancel),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
+                        variant = ButtonVariant.DESTRUCTIVE,
+                        leadingIcon = { Text("❌", style = MaterialTheme.typography.bodyLarge) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
 
         // Bottom spacing
-        item { Spacer(modifier = Modifier.height(80.dp)) }
+        item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL)) }
+        }
     }
 }
 
@@ -495,27 +457,27 @@ private fun ProgressOverlay(
         contentAlignment = Alignment.Center
     ) {
         Card(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(FleetTokens.Radius.XXL),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = FleetTokens.Elevation.Dialog)
         ) {
             Column(
-                modifier = Modifier.padding(32.dp),
+                modifier = Modifier.padding(FleetTokens.Spacing.XXL),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 CircularProgressIndicator(
-                    modifier = Modifier.size(48.dp),
-                    strokeWidth = 4.dp
+                    modifier = Modifier.size(FleetTokens.IconSize.XL),
+                    strokeWidth = FleetTokens.Spacing.XS
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,

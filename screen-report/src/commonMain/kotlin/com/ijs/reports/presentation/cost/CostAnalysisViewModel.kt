@@ -80,7 +80,7 @@ class CostAnalysisViewModel(
 
         when (val result = getMultiCostTypeAnalysisUseCase(request)) {
             is Result.Success -> {
-                updateState { copy(isLoading = false, results = result.data) }
+                updateState { copy(isLoading = false, results = result.data, hasGenerated = true) }
             }
             is Result.Error -> {
                 updateState { copy(isLoading = false, error = result.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.report_failed_generate)) }

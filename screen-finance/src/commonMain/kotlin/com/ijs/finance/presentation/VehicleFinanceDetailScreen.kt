@@ -12,18 +12,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.datetimeutils.FleetEpoch
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FinanceColors
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
@@ -31,6 +32,9 @@ import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.finance.domain.entity.*
 import com.ijs.vehicle.domain.entity.Vehicle
@@ -191,6 +195,7 @@ fun VehicleFinanceDetailScreen(
             amountError = state.paymentAmountError,
             dateError = state.paymentDateError,
             isSaving = state.isSaving,
+            canRecord = state.isPaymentFormValid,
             onAmountChange = { viewModel.sendIntent(Intent.UpdatePaymentAmount(it)) },
             onDateChange = { viewModel.sendIntent(Intent.UpdatePaymentDate(it)) },
             onModeChange = { viewModel.sendIntent(Intent.UpdatePaymentMode(it)) },
@@ -238,15 +243,29 @@ private fun FinanceDetailContent(
     onPaymentClick: (LoanPayment) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
+    BoxWithConstraints(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentAlignment = Alignment.TopCenter
     ) {
+        val breakpoint = rememberFleetBreakpoint()
+        // On wide screens cap the detail content and centre it so it doesn't
+        // stretch edge-to-edge on tablet / web; phones stay full-width.
+        val contentWidthModifier = when (breakpoint) {
+            FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
+            else -> Modifier.widthIn(max = FleetTokens.Width.MaxContent)
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(contentWidthModifier),
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+        ) {
         // Purchase Summary
         item {
             FleetTitledSectionCard(title = stringResource(Res.string.finance_purchase_summary_section)) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                     DetailRow(stringResource(Res.string.finance_row_purchase_date), formatDueDateDisplay(purchase.purchaseDate))
                     DetailRow(stringResource(Res.string.finance_purchase_price), formatCurrency(purchase.purchasePrice))
                     purchase.vendorName?.let { DetailRow(stringResource(Res.string.finance_label_vendor), it) }
@@ -269,7 +288,7 @@ private fun FinanceDetailContent(
         if (purchase.isFinanced) {
             item {
                 FleetTitledSectionCard(title = stringResource(Res.string.finance_section_loan)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                         DetailRow(
                             stringResource(Res.string.finance_row_financier),
                             purchase.financierName ?: notAvailableLabel
@@ -277,7 +296,7 @@ private fun FinanceDetailContent(
                         purchase.loanAccountNumber?.let {
                             DetailRow(stringResource(Res.string.finance_label_account_number), it)
                         }
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        HorizontalDivider(modifier = Modifier.padding(vertical = FleetTokens.Spacing.XS))
                         DetailRow(
                             stringResource(Res.string.finance_row_down_payment),
                             "${formatCurrency(purchase.downPayment)} (${purchase.downPaymentPercent}%)"
@@ -285,7 +304,7 @@ private fun FinanceDetailContent(
                         DetailRow(stringResource(Res.string.finance_row_loan_amount), formatCurrency(purchase.loanAmount))
                         DetailRow(
                             stringResource(Res.string.finance_row_interest_rate),
-                            stringResource(Res.string.finance_row_interest_rate_annum, purchase.interestRate.toString())
+                            stringResource(Res.string.finance_row_interest_rate_annum, "${purchase.interestRate}%")
                         )
                         DetailRow(
                             stringResource(Res.string.finance_row_tenure_plain),
@@ -296,7 +315,7 @@ private fun FinanceDetailContent(
                             formatCurrency(purchase.emiAmount),
                             valueColor = LoanBlue
                         )
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        HorizontalDivider(modifier = Modifier.padding(vertical = FleetTokens.Spacing.XS))
                         DetailRow(
                             stringResource(Res.string.finance_row_total_interest_plain),
                             formatCurrency(purchase.totalInterest),
@@ -314,7 +333,7 @@ private fun FinanceDetailContent(
             // Loan Progress
             item {
                 FleetTitledSectionCard(title = stringResource(Res.string.finance_loan_progress_section)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)) {
                         // Progress bar
                         Column {
                             Row(
@@ -324,7 +343,7 @@ private fun FinanceDetailContent(
                                 Text(
                                     text = stringResource(
                                         Res.string.finance_percent_complete,
-                                        purchase.loanProgressPercent.toInt()
+                                        "${purchase.loanProgressPercent.toInt()}%"
                                     ),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = LoanBlue
@@ -339,13 +358,13 @@ private fun FinanceDetailContent(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                             LinearProgressIndicator(
                                 progress = { purchase.loanProgressPercent / 100f },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(12.dp)
-                                    .clip(RoundedCornerShape(6.dp)),
+                                    .height(FleetTokens.Spacing.M)
+                                    .clip(RoundedCornerShape(FleetTokens.Radius.ML)),
                                 color = LoanBlue,
                                 trackColor = LoanBlue.copy(alpha = 0.2f)
                             )
@@ -401,7 +420,7 @@ private fun FinanceDetailContent(
                 item {
                     FleetSectionCard {
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                         ) {
                             // Single row with Next EMI, Due Date, Amount - equal spacing
                             Row(
@@ -460,13 +479,11 @@ private fun FinanceDetailContent(
                             }
 
                             // Record Payment button - full width
-                            Button(
+                            FleetButton(
+                                text = stringResource(Res.string.record_payment),
                                 onClick = onRecordPaymentClick,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(stringResource(Res.string.record_payment))
-                            }
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
                 }
@@ -490,7 +507,7 @@ private fun FinanceDetailContent(
                         )
                     } else {
                         // Show only first 3 payments in summary view
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                             paidPayments.take(3).forEach { payment ->
                                 PaymentHistoryItem(
                                     payment = payment,
@@ -507,7 +524,7 @@ private fun FinanceDetailContent(
         if (purchase.bankName != null || purchase.bankAccountNumber != null) {
             item {
                 FleetTitledSectionCard(title = stringResource(Res.string.finance_bank_details_section)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                         purchase.bankName?.let {
                             DetailRow(stringResource(Res.string.finance_label_bank_name), it)
                         }
@@ -543,16 +560,16 @@ private fun FinanceDetailContent(
 
         // Export Button
         item {
-            OutlinedButton(
+            FleetButton(
+                text = stringResource(Res.string.finance_export_pdf_report),
                 onClick = { /* TODO: Export PDF */ },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(stringResource(Res.string.finance_export_pdf_report))
-            }
+                variant = ButtonVariant.SECONDARY,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
-        item { Spacer(modifier = Modifier.height(32.dp)) }
+        item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXL)) }
+        }
     }
 }
 
@@ -606,10 +623,10 @@ private fun PaymentHistoryItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(FleetTokens.Radius.M))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             .clickable { onClick() }
-            .padding(12.dp),
+            .padding(FleetTokens.Spacing.M),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -649,6 +666,7 @@ private fun RecordPaymentBottomSheet(
     amountError: UiText?,
     dateError: UiText?,
     isSaving: Boolean,
+    canRecord: Boolean,
     onAmountChange: (String) -> Unit,
     onDateChange: (String) -> Unit,
     onModeChange: (PaymentMode?) -> Unit,
@@ -663,26 +681,35 @@ private fun RecordPaymentBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Text(
-                text = stringResource(Res.string.finance_record_emi_payment_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            val breakpoint = rememberFleetBreakpoint()
+            // Cap the form width and centre it on wide screens; phones stay full-width.
+            val formWidthModifier = when (breakpoint) {
+                FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
+                else -> Modifier.widthIn(max = FleetTokens.Width.MaxContent)
+            }
 
-            // Vehicle and EMI info
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(formWidthModifier)
+                    .padding(FleetTokens.Spacing.L),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = stringResource(Res.string.finance_record_emi_payment_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                // Vehicle and EMI info
+                FleetSectionCard(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    border = null
+                ) {
                     Text(
                         text = "🚛 ${purchase.vehicle?.registrationNumber ?: stringResource(Res.string.finance_vehicle_fallback)}",
                         style = MaterialTheme.typography.bodyMedium,
@@ -699,9 +726,8 @@ private fun RecordPaymentBottomSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
 
-            HorizontalDivider()
+                HorizontalDivider()
 
             // Amount
             FleetInputField(
@@ -766,55 +792,45 @@ private fun RecordPaymentBottomSheet(
                 leadingIcon = { Text("₹") }
             )
 
-            // Notes
-            OutlinedTextField(
-                value = notes,
-                onValueChange = onNotesChange,
-                label = { Text(stringResource(Res.string.finance_label_notes)) },
-                placeholder = { Text(stringResource(Res.string.finance_placeholder_additional_notes)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            )
+                // Notes
+                FleetInputField(
+                    value = notes,
+                    onValueChange = onNotesChange,
+                    fieldType = FieldType.NOTES,
+                    label = stringResource(Res.string.finance_label_notes),
+                    placeholder = stringResource(Res.string.finance_placeholder_additional_notes)
+                )
 
-            // Info text
-            Text(
-                text = stringResource(Res.string.finance_payment_recorded_bank_info),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                // Info text
+                Text(
+                    text = stringResource(Res.string.finance_payment_recorded_bank_info),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
-            // Buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+                // Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
-                    Text(stringResource(Res.string.cancel))
+                    FleetButton(
+                        text = stringResource(Res.string.cancel),
+                        onClick = onDismiss,
+                        variant = ButtonVariant.SECONDARY,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    FleetButton(
+                        text = stringResource(Res.string.record_payment),
+                        onClick = onRecord,
+                        enabled = canRecord,
+                        isLoading = isSaving,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
 
-                Button(
-                    onClick = onRecord,
-                    modifier = Modifier.weight(1f),
-                    enabled = !isSaving,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    if (isSaving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(stringResource(Res.string.record_payment))
-                    }
-                }
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -865,122 +881,128 @@ private fun PaymentDetailBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Text(
-                text = stringResource(Res.string.finance_sheet_payment_details),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            val breakpoint = rememberFleetBreakpoint()
+            // Cap the detail width and centre it on wide screens; phones stay full-width.
+            val sheetWidthModifier = when (breakpoint) {
+                FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
+                else -> Modifier.widthIn(max = FleetTokens.Width.MaxContent)
+            }
 
-            // Amount Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = CashGreen.copy(alpha = 0.1f)
-                ),
-                shape = RoundedCornerShape(12.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(sheetWidthModifier)
+                    .padding(FleetTokens.Spacing.L),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = formatCurrency(payment.amount),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = CashGreen
-                    )
-                    Text(
-                        text = payment.localizedEmiLabel(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            HorizontalDivider()
-
-            // Payment Details
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                DetailRow(
-                    stringResource(Res.string.finance_row_payment_date),
-                    formatDueDateDisplay(payment.paymentDate)
+                Text(
+                    text = stringResource(Res.string.finance_sheet_payment_details),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
                 )
-                payment.dueDate?.let {
-                    DetailRow(stringResource(Res.string.finance_row_due_date), formatDueDateDisplay(it))
-                }
-                payment.paymentMode?.let {
-                    DetailRow(stringResource(Res.string.finance_label_payment_mode), it.localizedLabel())
-                }
-                payment.transactionRef?.let {
-                    DetailRow(stringResource(Res.string.finance_label_transaction_ref), it)
-                }
-                payment.paymentSource?.let {
-                    DetailRow(stringResource(Res.string.finance_label_payment_source), it)
-                }
 
-                if (payment.lateFee > 0) {
-                    DetailRow(
-                        stringResource(Res.string.finance_label_late_fee),
-                        formatCurrency(payment.lateFee),
-                        valueColor = CriticalRed
-                    )
-                }
-
-                if (payment.principalAmount > 0 || payment.interestAmount > 0) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                    if (payment.principalAmount > 0) {
-                        DetailRow(
-                            stringResource(Res.string.finance_row_principal),
-                            formatCurrency(payment.principalAmount)
-                        )
-                    }
-                    if (payment.interestAmount > 0) {
-                        DetailRow(
-                            stringResource(Res.string.finance_row_interest),
-                            formatCurrency(payment.interestAmount)
-                        )
-                    }
-                }
-            }
-
-            // Notes
-            payment.notes?.let { notes ->
-                if (notes.isNotBlank()) {
-                    HorizontalDivider()
-                    Column {
+                // Amount Card
+                FleetSectionCard(
+                    containerColor = CashGreen.copy(alpha = 0.1f),
+                    border = null
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(
-                            text = stringResource(Res.string.finance_label_notes),
-                            style = MaterialTheme.typography.labelMedium,
+                            text = formatCurrency(payment.amount),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = CashGreen
+                        )
+                        Text(
+                            text = payment.localizedEmiLabel(),
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = notes,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
                     }
                 }
+
+                HorizontalDivider()
+
+                // Payment Details
+                Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
+                    DetailRow(
+                        stringResource(Res.string.finance_row_payment_date),
+                        formatDueDateDisplay(payment.paymentDate)
+                    )
+                    payment.dueDate?.let {
+                        DetailRow(stringResource(Res.string.finance_row_due_date), formatDueDateDisplay(it))
+                    }
+                    payment.paymentMode?.let {
+                        DetailRow(stringResource(Res.string.finance_label_payment_mode), it.localizedLabel())
+                    }
+                    payment.transactionRef?.let {
+                        DetailRow(stringResource(Res.string.finance_label_transaction_ref), it)
+                    }
+                    payment.paymentSource?.let {
+                        DetailRow(stringResource(Res.string.finance_label_payment_source), it)
+                    }
+
+                    if (payment.lateFee > 0) {
+                        DetailRow(
+                            stringResource(Res.string.finance_label_late_fee),
+                            formatCurrency(payment.lateFee),
+                            valueColor = CriticalRed
+                        )
+                    }
+
+                    if (payment.principalAmount > 0 || payment.interestAmount > 0) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = FleetTokens.Spacing.XS))
+                        if (payment.principalAmount > 0) {
+                            DetailRow(
+                                stringResource(Res.string.finance_row_principal),
+                                formatCurrency(payment.principalAmount)
+                            )
+                        }
+                        if (payment.interestAmount > 0) {
+                            DetailRow(
+                                stringResource(Res.string.finance_row_interest),
+                                formatCurrency(payment.interestAmount)
+                            )
+                        }
+                    }
+                }
+
+                // Notes
+                payment.notes?.let { notes ->
+                    if (notes.isNotBlank()) {
+                        HorizontalDivider()
+                        Column {
+                            Text(
+                                text = stringResource(Res.string.finance_label_notes),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
+                            Text(
+                                text = notes,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+
+                FleetButton(
+                    text = stringResource(Res.string.close),
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(stringResource(Res.string.close))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

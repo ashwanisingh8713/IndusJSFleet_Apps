@@ -10,9 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.EmptyContent
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -61,18 +63,17 @@ internal fun TripPaymentsSection(
                     paymentCount = payments.size
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
                 // Add Payment button
-                OutlinedButton(
+                FleetButton(
+                    text = stringResource(Res.string.trip_payment_record_plus),
                     onClick = onAddPayment,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(stringResource(Res.string.trip_payment_record_plus), fontWeight = FontWeight.SemiBold)
-                }
+                    variant = ButtonVariant.SECONDARY,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
                 // Payment History Header
                 Text(
@@ -80,7 +81,7 @@ internal fun TripPaymentsSection(
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 10.dp)
+                    modifier = Modifier.padding(bottom = FleetTokens.Spacing.S)
                 )
 
                 // Payment items
@@ -91,7 +92,7 @@ internal fun TripPaymentsSection(
                         paymentStateLabels = paymentStateLabels
                     )
                     if (index < payments.size - 1) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                     }
                 }
             }
@@ -111,10 +112,10 @@ private fun PaymentSummaryHeader(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
+        color = MaterialTheme.colorScheme.secondaryContainer
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(FleetTokens.Spacing.L)) {
             // Trip Price row
             if (tripPrice != null && tripPrice > 0) {
                 Row(
@@ -125,16 +126,16 @@ private fun PaymentSummaryHeader(
                     Text(
                         text = stringResource(Res.string.payment_add_trip_price),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
                     )
                     Text(
                         text = formatCurrency(tripPrice),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             }
 
             // Total Paid row
@@ -145,32 +146,32 @@ private fun PaymentSummaryHeader(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(FleetTokens.IconSize.Default),
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text("✅", style = MaterialTheme.typography.labelSmall)
                         }
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     Text(
                         text = stringResource(Res.string.trip_payment_received_count, paymentCount),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
                     )
                 }
                 Text(
                     text = formatCurrency(totalPaid),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
 
             // Pending row
             if (pendingAmount > 0) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -178,19 +179,19 @@ private fun PaymentSummaryHeader(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(FleetTokens.IconSize.Default),
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text("⏳", style = MaterialTheme.typography.labelSmall)
                             }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                         Text(
                             text = stringResource(Res.string.payment_status_pending),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
                         )
                     }
                     Text(
@@ -204,30 +205,30 @@ private fun PaymentSummaryHeader(
 
             // Progress bar
             if (tripPrice != null && tripPrice > 0) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 val progress = (totalPaid / tripPrice).toFloat().coerceIn(0f, 1f)
                 Column {
                     LinearProgressIndicator(
                         progress = { progress },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(6.dp),
+                            .height(FleetTokens.Height.ProgressBar),
                         color = if (progress >= 1f) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.tertiary
                         },
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        trackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f),
                         drawStopIndicator = {}
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                     Text(
                         text = stringResource(
                             Res.string.trip_payment_percent_collected,
-                            (progress * 100).toInt()
+                            "${(progress * 100).toInt()}%"
                         ),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
                     )
                 }
             }
@@ -248,13 +249,13 @@ private fun PaymentListItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(FleetTokens.Spacing.M),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -265,8 +266,8 @@ private fun PaymentListItem(
             ) {
                 // Payment mode icon
                 Surface(
-                    modifier = Modifier.size(40.dp),
-                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.size(FleetTokens.Height.FilterChipRow),
+                    shape = RoundedCornerShape(FleetTokens.Radius.ML),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -277,7 +278,7 @@ private fun PaymentListItem(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
 
                 Column(modifier = Modifier.weight(1f)) {
                     // Payment type + mode
@@ -290,7 +291,7 @@ private fun PaymentListItem(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
 
                     // Received by person name
                     println("TRIP_PAYMENTS_CONTENT - id: ${payment.id}, receivedBy: '${payment.receivedBy}', createdByName: '${payment.createdByName}'")
@@ -305,7 +306,7 @@ private fun PaymentListItem(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
 
                     // Date & Time on two lines
                     payment.paymentDate?.takeIf { it > 0L }?.let { date ->
@@ -334,7 +335,7 @@ private fun PaymentListItem(
 
                     // Location info
                     if (!payment.receivedAtLocation.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
                         Text(
                             text = "📍 ${stringResource(Res.string.payment_label_location)}: ${payment.receivedAtLocation}",
                             style = MaterialTheme.typography.labelMedium,
@@ -346,7 +347,7 @@ private fun PaymentListItem(
 
                     // Notes info
                     if (!payment.notes.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
                         Text(
                             text = "📝 ${stringResource(Res.string.payment_label_notes)}: ${payment.notes}",
                             style = MaterialTheme.typography.labelMedium,
@@ -358,7 +359,7 @@ private fun PaymentListItem(
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
 
             // Right: amount + status
             Column(horizontalAlignment = Alignment.End) {
@@ -402,12 +403,12 @@ private fun PaymentStatusBadge(
     }
 
     Surface(
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.S),
         color = bgColor
     ) {
         Text(
             text = "${status.icon} ${paymentStateLabels[status.apiValue] ?: status.displayName}",
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = textColor
@@ -438,9 +439,9 @@ private fun PaymentsLoadingContent() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(24.dp),
+            .padding(FleetTokens.Spacing.XL),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(modifier = Modifier.size(32.dp))
+        CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.L))
     }
 }

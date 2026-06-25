@@ -18,17 +18,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetInlineErrorBanner
+import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetSectionHeader
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.reports.domain.entity.TripProfitLoss
 import com.ijs.trip.domain.entity.Trip
 import com.ijs.trip.domain.entity.TripStatus
@@ -134,18 +142,20 @@ fun TripProfitLossScreen(
                         .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    Surface(
+                        shape = RoundedCornerShape(FleetTokens.Radius.XL),
+                        color = MaterialTheme.colorScheme.surface,
+                        shadowElevation = FleetTokens.Elevation.Dialog
                     ) {
                         Column(
-                            modifier = Modifier.padding(32.dp),
+                            modifier = Modifier.padding(FleetTokens.Spacing.XXL),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
                             Text(
                                 text = if (state.isLoadingTrips) stringResource(Res.string.reports_loading_trips) else stringResource(Res.string.reports_generating),
+                                style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -161,166 +171,226 @@ private fun TripPLContent(
     state: State,
     viewModel: TripPLViewModel
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    // Inline date validation. The picker enforces minDate, but we still guard
+    // format + range so the gate and inline errors stay correct.
+    val startError = dateFieldError(state.startDate)
+    val endError = dateFieldError(state.endDate)
+    val rangeError = if (startError == null && endError == null &&
+        state.startDate.isNotBlank() && state.endDate.isNotBlank()
     ) {
-        // Header Card
-        item {
-            HeaderCard()
+        val startMs = convertToEpochMillis(state.startDate)
+        val endMs = convertToEpochMillis(state.endDate)
+        if (startMs != null && endMs != null && endMs < startMs) {
+            stringResource(Res.string.reports_date_to_before_from)
+        } else null
+    } else null
+
+    val datesValid = startError == null && endError == null && rangeError == null
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val bp = rememberFleetBreakpoint()
+        // Center content with a width cap on wide screens.
+        val contentModifier = if (bp == FleetBreakpoint.Expanded) {
+            Modifier
+                .widthIn(max = FleetTokens.Width.MaxContent)
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+        } else {
+            Modifier.fillMaxWidth()
         }
 
-        // Step 1: Date Range Selection
-        item {
-            DateRangeCard(
-                startDate = state.startDate,
-                endDate = state.endDate,
-                onStartDateChange = { viewModel.sendIntent(Intent.UpdateStartDate(it)) },
-                onEndDateChange = { viewModel.sendIntent(Intent.UpdateEndDate(it)) }
-            )
-        }
-
-        // Load Trips Button
-        item {
-            OutlinedButton(
-                onClick = { viewModel.sendIntent(Intent.LoadTrips) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                enabled = state.canLoadTrips && !state.isLoadingTrips,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_search),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (state.tripsLoaded) stringResource(Res.string.reports_reload_trips) else stringResource(Res.string.reports_load_trips),
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-
-        // Step 2: Trip Selection (shown after loading)
-        if (state.tripsLoaded) {
+        LazyColumn(
+            modifier = contentModifier.fillMaxHeight(),
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+        ) {
+            // Header Card
             item {
-                TripSelectionCard(
-                    trips = state.filteredTrips,
-                    allTripsCount = state.trips.size,
-                    selectedTripIds = state.selectedTripIds,
-                    searchQuery = state.tripSearchQuery,
-                    onSearchChange = { viewModel.sendIntent(Intent.UpdateTripSearch(it)) },
-                    onToggleTrip = { viewModel.sendIntent(Intent.ToggleTrip(it)) },
-                    onSelectAll = { viewModel.sendIntent(Intent.SelectAllTrips) },
-                    onClearSelection = { viewModel.sendIntent(Intent.ClearSelection) }
+                HeaderCard()
+            }
+
+            // Step 1: Date Range Selection
+            item {
+                DateRangeCard(
+                    startDate = state.startDate,
+                    endDate = state.endDate,
+                    startError = startError,
+                    endError = endError ?: rangeError,
+                    onStartDateChange = { viewModel.sendIntent(Intent.UpdateStartDate(it)) },
+                    onEndDateChange = { viewModel.sendIntent(Intent.UpdateEndDate(it)) }
                 )
             }
 
-            // Generate Report Button
+            // Load Trips Button
             item {
-                Button(
-                    onClick = { viewModel.sendIntent(Intent.GenerateReport) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    enabled = state.canGenerateReport && !state.isLoading,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text("📊", style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(Res.string.reports_generate_pl_count, state.selectedCount),
-                        fontWeight = FontWeight.SemiBold,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-            }
-        }
-
-        // Error message
-        if (state.error != null && state.results.isEmpty()) {
-            item {
-                ErrorCard(error = state.error.resolve())
-            }
-        }
-
-        // Results
-        if (state.results.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "📈 " + stringResource(Res.string.reports_pl_results_count, state.results.size),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    // Summary
-                    val totalProfit = state.results.sumOf { it.netProfit }
-                    val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.profitLossColor(totalProfit)
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = profitColor.copy(alpha = 0.15f)
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.reports_total_profit, formatCurrency(totalProfit)),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = profitColor,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                FleetButton(
+                    text = if (state.tripsLoaded) {
+                        stringResource(Res.string.reports_reload_trips)
+                    } else {
+                        stringResource(Res.string.reports_load_trips)
+                    },
+                    onClick = { viewModel.sendIntent(Intent.LoadTrips) },
+                    variant = ButtonVariant.SECONDARY,
+                    size = ButtonSize.LARGE,
+                    enabled = state.canLoadTrips && datesValid,
+                    isLoading = state.isLoadingTrips,
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_search),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
                         )
                     }
+                )
+            }
+
+            // Step 2: Trip Selection (shown after loading)
+            if (state.tripsLoaded) {
+                item {
+                    TripSelectionCard(
+                        trips = state.filteredTrips,
+                        allTripsCount = state.trips.size,
+                        selectedTripIds = state.selectedTripIds,
+                        searchQuery = state.tripSearchQuery,
+                        onSearchChange = { viewModel.sendIntent(Intent.UpdateTripSearch(it)) },
+                        onToggleTrip = { viewModel.sendIntent(Intent.ToggleTrip(it)) },
+                        onSelectAll = { viewModel.sendIntent(Intent.SelectAllTrips) },
+                        onClearSelection = { viewModel.sendIntent(Intent.ClearSelection) }
+                    )
+                }
+
+                // Generate Report Button
+                item {
+                    FleetButton(
+                        text = stringResource(Res.string.reports_generate_pl_count, state.selectedCount),
+                        onClick = { viewModel.sendIntent(Intent.GenerateReport) },
+                        variant = ButtonVariant.PRIMARY,
+                        size = ButtonSize.LARGE,
+                        enabled = state.canGenerateReport,
+                        isLoading = state.isLoading,
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_trending_up),
+                                contentDescription = null,
+                                modifier = Modifier.size(FleetTokens.IconSize.M)
+                            )
+                        }
+                    )
                 }
             }
-            items(state.results) { result ->
-                TripPLResultCard(result)
-            }
-        }
 
-        // Bottom spacing
-        item { Spacer(modifier = Modifier.height(32.dp)) }
+            // Error message
+            if (state.error != null && state.results.isEmpty()) {
+                item {
+                    ErrorCard(error = state.error.resolve())
+                }
+            }
+
+            // Results
+            if (state.results.isNotEmpty()) {
+                item {
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_dashboard),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(FleetTokens.IconSize.M)
+                            )
+                            Text(
+                                text = stringResource(Res.string.reports_pl_results_count, state.results.size),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        // Summary
+                        val totalProfit = state.results.sumOf { it.netProfit }
+                        val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.profitLossColor(totalProfit)
+                        Surface(
+                            shape = RoundedCornerShape(FleetTokens.Radius.L),
+                            color = profitColor.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = stringResource(Res.string.reports_total_profit, formatCurrency(totalProfit)),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = profitColor,
+                                modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS)
+                            )
+                        }
+                    }
+                }
+                items(state.results) { result ->
+                    TripPLResultCard(result)
+                }
+            }
+
+            // Bottom spacing
+            item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXL)) }
+        }
+    }
+}
+
+/**
+ * Inline date error for the Trip P&L date-range fields. Blank is allowed (no
+ * error shown until the user picks a value); otherwise the value must be a
+ * valid DD-MM-YYYY date.
+ */
+@Composable
+private fun dateFieldError(date: String): String? {
+    if (date.isBlank()) return null
+    return if (com.indusjs.fleet.core.util.ValidationUtils.isValidDate(date)) {
+        null
+    } else {
+        stringResource(Res.string.reports_invalid_date)
     }
 }
 
 @Composable
 private fun HeaderCard() {
     FleetSectionCard(
-        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-        border = null
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        border = null,
+        elevation = FleetTokens.Elevation.None
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(FleetTokens.IconSize.XL),
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = MaterialTheme.colorScheme.primary
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text("🚀", style = MaterialTheme.typography.headlineSmall)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_trip),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
+                    )
                 }
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.L))
             Column {
                 Text(
                     text = stringResource(Res.string.reports_trip_analysis),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
                     text = stringResource(Res.string.reports_trip_analysis_hint),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 )
             }
         }
@@ -331,34 +401,56 @@ private fun HeaderCard() {
 private fun DateRangeCard(
     startDate: String,
     endDate: String,
+    startError: String?,
+    endError: String?,
     onStartDateChange: (String) -> Unit,
     onEndDateChange: (String) -> Unit
 ) {
     FleetTitledSectionCard(
         title = stringResource(Res.string.reports_step_select_date_range),
-        emoji = "📅"
+        iconRes = Res.drawable.ic_calendar
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            FleetDateTimePicker(
-                date = startDate,
-                time = "",
-                onDateTimeChange = { newDate, _ -> onStartDateChange(newDate) },
-                label = stringResource(Res.string.reports_label_from_date),
-                mode = PickerMode.DATE_ONLY,
-                modifier = Modifier.fillMaxWidth()
-            )
-            FleetDateTimePicker(
-                date = endDate,
-                time = "",
-                onDateTimeChange = { newDate, _ -> onEndDateChange(newDate) },
-                label = stringResource(Res.string.reports_label_to_date),
-                mode = PickerMode.DATE_ONLY,
-                minDate = startDate.ifBlank { null },
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column {
+                FleetDateTimePicker(
+                    date = startDate,
+                    time = "",
+                    onDateTimeChange = { newDate, _ -> onStartDateChange(newDate) },
+                    label = stringResource(Res.string.reports_label_from_date),
+                    mode = PickerMode.DATE_ONLY,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (startError != null) {
+                    Text(
+                        text = startError,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = FleetTokens.Spacing.XS, start = FleetTokens.Spacing.M)
+                    )
+                }
+            }
+            Column {
+                FleetDateTimePicker(
+                    date = endDate,
+                    time = "",
+                    onDateTimeChange = { newDate, _ -> onEndDateChange(newDate) },
+                    label = stringResource(Res.string.reports_label_to_date),
+                    mode = PickerMode.DATE_ONLY,
+                    minDate = startDate.ifBlank { null },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (endError != null) {
+                    Text(
+                        text = endError,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = FleetTokens.Spacing.XS, start = FleetTokens.Spacing.M)
+                    )
+                }
+            }
         }
     }
 }
@@ -382,10 +474,10 @@ private fun TripSelectionCard(
             ) {
                 FleetSectionHeader(
                     title = stringResource(Res.string.reports_step_select_trips),
-                    emoji = "🚀",
+                    iconRes = Res.drawable.ic_trip,
                     modifier = Modifier.weight(1f)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                 Text(
                     text = "${selectedTripIds.size}/$allTripsCount",
                     style = MaterialTheme.typography.labelMedium,
@@ -394,39 +486,51 @@ private fun TripSelectionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
-            // Search and bulk actions
+            // Search field
+            FleetInputField(
+                value = searchQuery,
+                onValueChange = onSearchChange,
+                fieldType = FieldType.SEARCH,
+                placeholder = stringResource(Res.string.reports_search_trips_placeholder),
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_search),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+
+            // Bulk actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = onSearchChange,
-                    placeholder = { Text(stringResource(Res.string.reports_search_trips_placeholder), style = MaterialTheme.typography.bodySmall) },
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_search),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(10.dp),
-                    textStyle = MaterialTheme.typography.bodySmall
-                )
-                TextButton(onClick = onSelectAll) {
-                    Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelMedium)
+                Box(modifier = Modifier.weight(1f)) {
+                    FleetButton(
+                        text = stringResource(Res.string.reports_action_all),
+                        onClick = onSelectAll,
+                        variant = ButtonVariant.GHOST,
+                        size = ButtonSize.SMALL
+                    )
                 }
-                TextButton(onClick = onClearSelection) {
-                    Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelMedium)
+                Box(modifier = Modifier.weight(1f)) {
+                    FleetButton(
+                        text = stringResource(Res.string.reports_action_clear),
+                        onClick = onClearSelection,
+                        variant = ButtonVariant.GHOST,
+                        size = ButtonSize.SMALL
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
             // Trip list
             if (trips.isEmpty()) {
@@ -434,11 +538,11 @@ private fun TripSelectionCard(
                     text = if (searchQuery.isNotBlank()) stringResource(Res.string.reports_no_trips_match, searchQuery) else stringResource(Res.string.reports_no_trips_found),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(FleetTokens.Spacing.L)
                 )
             } else {
                 Column(
-                    modifier = Modifier.heightIn(max = 300.dp).verticalScroll(rememberScrollState())
+                    modifier = Modifier.heightIn(max = FleetTokens.Width.DropdownMaxHeight + FleetTokens.Spacing.XXXL).verticalScroll(rememberScrollState())
                 ) {
                     trips.take(100).forEach { trip ->
                         val isSelected = selectedTripIds.contains(trip.id)
@@ -447,14 +551,14 @@ private fun TripSelectionCard(
                             isSelected = isSelected,
                             onToggle = { onToggleTrip(trip.id) }
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                     }
                     if (trips.size > 100) {
                         Text(
                             text = stringResource(Res.string.reports_trips_showing_cap, trips.size),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(8.dp)
+                            modifier = Modifier.padding(FleetTokens.Spacing.S)
                         )
                     }
                 }
@@ -472,18 +576,18 @@ private fun TripSelectionItem(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(FleetTokens.Radius.ML))
             .clickable { onToggle() },
         color = if (isSelected)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
         else
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        shape = RoundedCornerShape(10.dp)
+        shape = RoundedCornerShape(FleetTokens.Radius.ML)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(FleetTokens.Spacing.M),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
@@ -493,29 +597,30 @@ private fun TripSelectionItem(
                     checkedColor = MaterialTheme.colorScheme.primary
                 )
             )
-            Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+            Column(modifier = Modifier.weight(1f).padding(start = FleetTokens.Spacing.S)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(Res.string.reports_trip_number, trip.id),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     trip.vehicleNumber?.let {
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(FleetTokens.Radius.S),
                             color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                         ) {
                             Text(
                                 text = it,
                                 style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS + FleetTokens.Spacing.XXS, vertical = FleetTokens.Spacing.XXS)
                             )
                         }
                     }
                 }
+                val naLabel = stringResource(Res.string.label_not_applicable)
                 Text(
-                    text = "${trip.startLocation?.address ?: "N/A"} → ${trip.endLocation?.address ?: "N/A"}",
+                    text = "${trip.startLocation?.address ?: naLabel} → ${trip.endLocation?.address ?: naLabel}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -527,14 +632,14 @@ private fun TripSelectionItem(
             val colorScheme = TripStatus.getColorScheme(trip.status)
             val stateColor = com.indusjs.uicomponents.components.stateColorSchemeToColor(colorScheme)
             Surface(
-                shape = RoundedCornerShape(6.dp),
+                shape = RoundedCornerShape(FleetTokens.Radius.M),
                 color = stateColor.copy(alpha = 0.15f)
             ) {
                 Text(
                     text = statusStr,
                     style = MaterialTheme.typography.labelSmall,
                     color = stateColor,
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS + FleetTokens.Spacing.XXS, vertical = FleetTokens.Spacing.XXS)
                 )
             }
         }
@@ -575,15 +680,20 @@ private fun TripPLResultCard(result: TripProfitLoss) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier.size(FleetTokens.Height.ButtonSmall),
                         shape = CircleShape,
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text("🚀", style = MaterialTheme.typography.labelLarge)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_trip),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
                         }
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
                     Column {
                         Text(
                             text = stringResource(Res.string.reports_trip_number, result.tripId),
@@ -610,28 +720,46 @@ private fun TripPLResultCard(result: TripProfitLoss) {
                 }
                 // Profit/Loss Badge
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(FleetTokens.Radius.XL),
                     color = profitColor.copy(alpha = 0.15f)
                 ) {
+                    val badgeIcon = when (profitClass) {
+                        com.ijs.reports.domain.entity.PLProfitClass.PROFIT -> Res.drawable.ic_check_circle
+                        com.ijs.reports.domain.entity.PLProfitClass.LOSS -> Res.drawable.ic_warning
+                        com.ijs.reports.domain.entity.PLProfitClass.BREAK_EVEN -> null
+                    }
                     val badgeText = when (profitClass) {
                         com.ijs.reports.domain.entity.PLProfitClass.PROFIT ->
-                            "✅ " + stringResource(Res.string.reports_badge_profit)
+                            stringResource(Res.string.reports_badge_profit)
                         com.ijs.reports.domain.entity.PLProfitClass.LOSS ->
-                            "⚠️ " + stringResource(Res.string.reports_badge_loss)
+                            stringResource(Res.string.reports_badge_loss)
                         com.ijs.reports.domain.entity.PLProfitClass.BREAK_EVEN ->
-                            "➖ " + stringResource(Res.string.profit_status_break_even)
+                            stringResource(Res.string.profit_status_break_even)
                     }
-                    Text(
-                        text = badgeText,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = profitColor,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS),
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S + FleetTokens.Spacing.XXS, vertical = FleetTokens.Spacing.XS)
+                    ) {
+                        if (badgeIcon != null) {
+                            Icon(
+                                painter = painterResource(badgeIcon),
+                                contentDescription = null,
+                                tint = profitColor,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                        }
+                        Text(
+                            text = badgeText,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = profitColor
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             // Main KPIs
             Row(
@@ -657,16 +785,21 @@ private fun TripPLResultCard(result: TripProfitLoss) {
 
             // Route info
             if (result.startLocation != null && result.endLocation != null) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("📍", style = MaterialTheme.typography.labelMedium)
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_map),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     Text(
                         text = "${result.startLocation} → ${result.endLocation}",
                         style = MaterialTheme.typography.bodySmall,
@@ -679,22 +812,33 @@ private fun TripPLResultCard(result: TripProfitLoss) {
 
             // Cost Breakdown (if available)
             if (result.costBreakdown.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
-                Text(
-                    text = "💰 " + stringResource(Res.string.reports_cost_breakdown),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_cost),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                    Text(
+                        text = stringResource(Res.string.reports_cost_breakdown),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
                 result.costBreakdown.forEach { cost ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 2.dp),
+                            .padding(vertical = FleetTokens.Spacing.XXS),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(

@@ -307,8 +307,11 @@ class TripCostEntryViewModel(
 
     private fun updateAmount(rowId: String, value: String) {
         val filtered = value.filter { it.isDigit() || it == '.' }
-        val error = if (filtered.isNotEmpty() && filtered.toDoubleOrNull() == null) {
-            "Invalid amount"
+        // Inline amount validation via the centralized rule. Only surface an error
+        // once the user has typed something so an empty field isn't flagged on entry;
+        // the empty/zero case still gates submit through CostEntryRow.isValid.
+        val error = if (filtered.isNotBlank()) {
+            ValidationUtils.validateAmount(filtered).errorMessage
         } else null
 
         updateRowField(rowId) { it.copy(amount = filtered, amountError = error) }

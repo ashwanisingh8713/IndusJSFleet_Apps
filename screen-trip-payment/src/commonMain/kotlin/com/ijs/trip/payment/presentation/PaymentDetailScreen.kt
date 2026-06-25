@@ -6,15 +6,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.pdfreport.handler.PaymentReceiptPdfHandler
 import com.indusjs.pdfreport.model.PaymentReceiptPdfData
+import com.indusjs.uicomponents.components.DeleteConfirmationDialog
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -138,14 +142,14 @@ fun PaymentDetailScreen(
     }
 
     // Delete Confirmation Dialog
-    if (state.showDeleteConfirmation) {
-        DeletePaymentDialog(
-            amountDisplay = state.payment?.amountDisplay,
-            isDeleting = state.isDeleting,
-            onConfirm = { viewModel.sendIntent(PaymentDetailContract.Intent.ConfirmDelete) },
-            onDismiss = { viewModel.sendIntent(PaymentDetailContract.Intent.HideDeleteConfirmation) }
-        )
-    }
+    DeleteConfirmationDialog(
+        showDialog = state.showDeleteConfirmation,
+        entityName = stringResource(Res.string.payment_entity_singular),
+        entityDetail = state.payment?.amountDisplay,
+        isLoading = state.isDeleting,
+        onConfirmDelete = { viewModel.sendIntent(PaymentDetailContract.Intent.ConfirmDelete) },
+        onDismiss = { viewModel.sendIntent(PaymentDetailContract.Intent.HideDeleteConfirmation) }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -180,8 +184,8 @@ private fun PaymentDetailTopBar(
                 ) {
                     if (isExportingPdf) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
+                            modifier = Modifier.size(FleetTokens.IconSize.M),
+                            strokeWidth = FleetTokens.Height.ProgressStroke
                         )
                     } else {
                         Icon(
@@ -265,60 +269,37 @@ private fun PaymentDetailContent(
     scrollState: androidx.compose.foundation.ScrollState,
     paymentStateLabels: Map<String, String> = emptyMap()
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        HeroSection(payment = payment, paymentStateLabels = paymentStateLabels)
-        TripInfoCard(payment = payment)
-        PaymentDetailsCard(payment = payment)
-        CustomerDetailsCard(payment = payment)
-        FinancialInfoCard(payment = payment)
-        AdditionalInfoCard(payment = payment)
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-}
-
-@Composable
-private fun DeletePaymentDialog(
-    amountDisplay: String?,
-    isDeleting: Boolean,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.payment_delete_title)) },
-        text = {
-            Text(
-                stringResource(
-                    Res.string.payment_delete_message_irreversible,
-                    amountDisplay.orEmpty()
-                )
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                enabled = !isDeleting
-            ) {
-                if (isDeleting) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp))
-                } else {
-                    Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error)
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val bp = rememberFleetBreakpoint()
+        // Detail content is centered and width-capped on wider screens.
+        val contentWidthModifier = if (bp == FleetBreakpoint.Compact) {
+            Modifier.fillMaxSize()
+        } else {
+            Modifier
+                .fillMaxSize()
+                .widthIn(max = FleetTokens.Width.MaxContent)
+                .align(Alignment.TopCenter)
         }
-    )
+
+        Column(
+            modifier = contentWidthModifier
+                .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(scrollState)
+                .padding(
+                    horizontal = FleetTokens.Spacing.L,
+                    vertical = FleetTokens.Spacing.M
+                ),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+        ) {
+            HeroSection(payment = payment, paymentStateLabels = paymentStateLabels)
+            TripInfoCard(payment = payment)
+            PaymentDetailsCard(payment = payment)
+            CustomerDetailsCard(payment = payment)
+            FinancialInfoCard(payment = payment)
+            AdditionalInfoCard(payment = payment)
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+        }
+    }
 }
 
 /**

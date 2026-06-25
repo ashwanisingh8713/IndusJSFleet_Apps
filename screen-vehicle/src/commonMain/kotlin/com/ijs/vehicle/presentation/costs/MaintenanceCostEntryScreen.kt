@@ -8,23 +8,31 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.CostTypeGroup
 import com.indusjs.uicomponents.components.CostTypeSelection
 import com.indusjs.uicomponents.components.CostTypeTwoLevelSelector
 import com.indusjs.uicomponents.components.DropdownOption
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.components.FleetFormSection
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
+import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.fleet.data.model.costs.MaintenanceCostDto
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -111,7 +119,7 @@ fun MaintenanceCostEntryScreen(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -123,15 +131,15 @@ fun MaintenanceCostEntryScreen(
                     ) {
                         if (state.isRefreshingCostTypes) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
+                                modifier = Modifier.size(FleetTokens.IconSize.M),
+                                strokeWidth = FleetTokens.Height.ProgressStroke
                             )
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
                                 contentDescription = stringResource(Res.string.cd_refresh_cost_types),
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                     }
@@ -147,7 +155,7 @@ fun MaintenanceCostEntryScreen(
                                 MaterialTheme.colorScheme.primary
                             else
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -166,13 +174,27 @@ fun MaintenanceCostEntryScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                val bp = rememberFleetBreakpoint()
+                // Forms read best centered with a capped width on Medium/Expanded.
+                val contentWidthModifier = if (bp == FleetBreakpoint.Compact) {
+                    Modifier.fillMaxWidth()
+                } else {
+                    Modifier.widthIn(max = FleetTokens.Width.MaxContent)
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(contentWidthModifier)
+                        .align(Alignment.TopCenter)
+                        .padding(FleetTokens.Spacing.L),
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+                ) {
                 // Section 1: Vehicle Selection
                 item {
                     FleetFormSection(title = stringResource(Res.string.maint_section_select_vehicle)) {
@@ -207,20 +229,22 @@ fun MaintenanceCostEntryScreen(
                         Text(
                             text = stringResource(Res.string.vehicle_maint_costs_section),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
                         )
-                        FilledTonalButton(
+                        FleetButton(
+                            text = stringResource(Res.string.maint_btn_add_row),
                             onClick = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.AddCostRow) },
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_add),
-                                contentDescription = stringResource(Res.string.cd_add),
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(stringResource(Res.string.maint_btn_add_row))
-                        }
+                            variant = ButtonVariant.SECONDARY,
+                            size = ButtonSize.SMALL,
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_add),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
+                            }
+                        )
                     }
                 }
 
@@ -264,24 +288,21 @@ fun MaintenanceCostEntryScreen(
                             .filter { it.isValid }
                             .sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
 
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                            )
+                        FleetSectionCard(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            border = null,
+                            elevation = FleetTokens.Elevation.None,
+                            contentPadding = FleetTokens.Spacing.L
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column {
                                     Text(
                                         text = stringResource(Res.string.vehicle_maint_summary),
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                                     )
                                     Text(
                                         text = if (validCount == 1) {
@@ -290,20 +311,21 @@ fun MaintenanceCostEntryScreen(
                                             stringResource(Res.string.vehicle_maint_valid_entries_count, validCount)
                                         },
                                         style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text(
                                         text = stringResource(Res.string.vehicle_maint_total_amount),
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                                     )
                                     Text(
                                         text = "₹${totalAmount.toLong()}",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
                             }
@@ -313,29 +335,21 @@ fun MaintenanceCostEntryScreen(
 
                 // Submit Button
                 item {
-                    Button(
+                    FleetButton(
+                        text = stringResource(Res.string.vehicle_maint_save_button),
                         onClick = { viewModel.sendIntent(MaintenanceCostEntryContract.Intent.SaveCosts) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
+                        variant = ButtonVariant.PRIMARY,
+                        size = ButtonSize.LARGE,
+                        modifier = Modifier.fillMaxWidth(),
                         enabled = state.canSave,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (state.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(stringResource(Res.string.vehicle_maint_save_button), fontWeight = FontWeight.Bold)
-                        }
-                    }
+                        isLoading = state.isSaving
+                    )
                 }
 
-                // Bottom spacing
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    // Bottom spacing
+                    item {
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+                    }
                 }
             }
         }
@@ -369,15 +383,10 @@ private fun MaintenanceCostRowCard(
     onUpdateFuelRate: (String) -> Unit,
     onUpdateKmPerLiter: (String) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetSectionCard(
+        elevation = FleetTokens.Elevation.Raised,
+        contentPadding = FleetTokens.Spacing.M
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
             // Header row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -390,7 +399,7 @@ private fun MaintenanceCostRowCard(
                 ) {
                     // Row number badge
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(FleetTokens.Radius.S),
                         color = if (row.isValid)
                             MaterialTheme.colorScheme.primary
                         else
@@ -398,7 +407,7 @@ private fun MaintenanceCostRowCard(
                     ) {
                         Text(
                             text = "#$rowNumber",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS),
                             style = MaterialTheme.typography.labelMedium,
                             color = if (row.isValid)
                                 MaterialTheme.colorScheme.onPrimary
@@ -407,7 +416,7 @@ private fun MaintenanceCostRowCard(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     Text(
                         text = row.costTypeDisplayLabel.ifBlank { stringResource(Res.string.vehicle_maint_new_entry) },
                         style = MaterialTheme.typography.titleSmall,
@@ -416,7 +425,7 @@ private fun MaintenanceCostRowCard(
                         overflow = TextOverflow.Ellipsis
                     )
                     if (row.amount.isNotBlank()) {
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                         Text(
                             text = "₹${row.amount}",
                             style = MaterialTheme.typography.bodyMedium,
@@ -428,7 +437,7 @@ private fun MaintenanceCostRowCard(
 
                 Row {
                     // Expand/Collapse button
-                    IconButton(onClick = onToggleExpanded, modifier = Modifier.size(32.dp)) {
+                    IconButton(onClick = onToggleExpanded, modifier = Modifier.size(FleetTokens.IconSize.L)) {
                         Icon(
                             painter = painterResource(
                                 if (row.isExpanded) Res.drawable.ic_chevron_right
@@ -439,17 +448,17 @@ private fun MaintenanceCostRowCard(
                             } else {
                                 stringResource(Res.string.cd_expand)
                             },
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
                         )
                     }
                     // Delete button
                     if (canDelete) {
-                        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                        IconButton(onClick = onDelete, modifier = Modifier.size(FleetTokens.IconSize.L)) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_delete),
                                 contentDescription = stringResource(Res.string.delete),
                                 tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.M)
                             )
                         }
                     }
@@ -463,8 +472,8 @@ private fun MaintenanceCostRowCard(
                 exit = shrinkVertically()
             ) {
                 Column(
-                    modifier = Modifier.padding(top = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(top = FleetTokens.Spacing.M),
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
                     // Cost Type two-level selector (category dropdown + chip items)
                     CostTypeTwoLevelSelector(
@@ -486,74 +495,65 @@ private fun MaintenanceCostRowCard(
                         enter = expandVertically(),
                         exit = shrinkVertically()
                     ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                            )
+                        FleetSectionCard(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            border = null,
+                            elevation = FleetTokens.Elevation.None,
+                            contentPadding = FleetTokens.Spacing.M
                         ) {
                             Column(
-                                modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                             ) {
                                 Text(
                                     text = stringResource(Res.string.trip_cost_section_fuel),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
                                 // Fuel Type - read-only, auto-populated from selected Cost Type
-                                OutlinedTextField(
+                                FleetInputField(
                                     value = row.costTypeLabel.ifBlank { stringResource(Res.string.trip_cost_placeholder_fuel_type) },
                                     onValueChange = {},
-                                    label = { Text(stringResource(Res.string.trip_cost_label_fuel_type)) },
+                                    fieldType = FieldType.DEFAULT,
+                                    label = stringResource(Res.string.trip_cost_label_fuel_type),
                                     modifier = Modifier.fillMaxWidth(),
                                     readOnly = true,
-                                    enabled = false,
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                                        disabledBorderColor = MaterialTheme.colorScheme.outline,
-                                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    enabled = false
                                 )
 
                                 // Fuel Quantity & Rate in a row
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                                 ) {
-                                    OutlinedTextField(
+                                    FleetInputField(
                                         value = row.fuelQuantity,
                                         onValueChange = onUpdateFuelQuantity,
-                                        label = { Text(stringResource(Res.string.trip_cost_label_fuel_quantity)) },
-                                        placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_fuel_quantity)) },
-                                        modifier = Modifier.weight(1f),
-                                        singleLine = true,
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                        fieldType = FieldType.DECIMAL,
+                                        label = stringResource(Res.string.trip_cost_label_fuel_quantity),
+                                        placeholder = stringResource(Res.string.trip_cost_placeholder_fuel_quantity),
+                                        modifier = Modifier.weight(1f)
                                     )
 
-                                    OutlinedTextField(
+                                    FleetInputField(
                                         value = row.fuelRate,
                                         onValueChange = onUpdateFuelRate,
-                                        label = { Text(stringResource(Res.string.trip_cost_label_fuel_rate)) },
-                                        placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_fuel_rate)) },
-                                        modifier = Modifier.weight(1f),
-                                        singleLine = true,
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                        fieldType = FieldType.DECIMAL,
+                                        label = stringResource(Res.string.trip_cost_label_fuel_rate),
+                                        placeholder = stringResource(Res.string.trip_cost_placeholder_fuel_rate),
+                                        modifier = Modifier.weight(1f)
                                     )
                                 }
 
                                 // Km per Liter
-                                OutlinedTextField(
+                                FleetInputField(
                                     value = row.kmPerLiter,
                                     onValueChange = onUpdateKmPerLiter,
-                                    label = { Text(stringResource(Res.string.trip_cost_label_mileage)) },
-                                    placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_mileage)) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    singleLine = true,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                                    fieldType = FieldType.DECIMAL,
+                                    label = stringResource(Res.string.trip_cost_label_mileage),
+                                    placeholder = stringResource(Res.string.trip_cost_placeholder_mileage),
+                                    modifier = Modifier.fillMaxWidth()
                                 )
 
                                 // Calculated total
@@ -563,11 +563,11 @@ private fun MaintenanceCostRowCard(
                                     val calculatedTotal = quantity * rate
                                     Surface(
                                         modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(8.dp),
+                                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                                     ) {
                                         Row(
-                                            modifier = Modifier.padding(12.dp),
+                                            modifier = Modifier.padding(FleetTokens.Spacing.M),
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
                                             Text(stringResource(Res.string.trip_cost_calculated_total), fontWeight = FontWeight.Medium)
@@ -598,29 +598,32 @@ private fun MaintenanceCostRowCard(
                         maxDate = maxDate
                     )
 
-                    // Amount
-                    OutlinedTextField(
+                    // Amount — validated via ValidationUtils.validateAmount; inline error
+                    // surfaces the VM's amountError (format) or the local positive-amount rule.
+                    // Either error feeds row.isValid -> state.canSave, gating the submit button.
+                    val amountValidationError = ValidationUtils.validateAmount(row.amount).errorMessage
+                    val amountErrorText: String? = row.amountError?.resolve()
+                        ?: amountValidationError?.takeIf { row.amount.isNotBlank() }
+                    FleetInputField(
                         value = row.amount,
                         onValueChange = onUpdateAmount,
-                        label = { Text(stringResource(Res.string.trip_cost_label_amount)) },
-                        placeholder = { Text(stringResource(Res.string.trip_cost_placeholder_amount)) },
+                        fieldType = FieldType.DECIMAL,
+                        label = stringResource(Res.string.trip_cost_label_amount),
+                        placeholder = stringResource(Res.string.trip_cost_placeholder_amount),
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        isError = row.amountError != null,
-                        supportingText = row.amountError?.let { { Text(it.resolve(), color = MaterialTheme.colorScheme.error) } },
+                        isError = amountErrorText != null,
+                        errorMessage = amountErrorText,
                         leadingIcon = { Text("₹", style = MaterialTheme.typography.bodyLarge) }
                     )
 
                     // Description
-                    OutlinedTextField(
+                    FleetInputField(
                         value = row.description,
                         onValueChange = onUpdateDescription,
-                        label = { Text(stringResource(Res.string.label_description)) },
-                        placeholder = { Text(stringResource(Res.string.vehicle_maint_describe_work)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 2,
-                        maxLines = 3
+                        fieldType = FieldType.NOTES,
+                        label = stringResource(Res.string.label_description),
+                        placeholder = stringResource(Res.string.vehicle_maint_describe_work),
+                        modifier = Modifier.fillMaxWidth()
                     )
 
                     // Optional fields section
@@ -632,38 +635,37 @@ private fun MaintenanceCostRowCard(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                     ) {
-                        OutlinedTextField(
+                        FleetInputField(
                             value = row.vendorName,
                             onValueChange = onUpdateVendorName,
-                            label = { Text(stringResource(Res.string.vehicle_maint_vendor)) },
-                            placeholder = { Text(stringResource(Res.string.vehicle_maint_vendor_name_placeholder)) },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
+                            fieldType = FieldType.DEFAULT,
+                            label = stringResource(Res.string.vehicle_maint_vendor),
+                            placeholder = stringResource(Res.string.vehicle_maint_vendor_name_placeholder),
+                            modifier = Modifier.weight(1f)
                         )
 
-                        OutlinedTextField(
+                        FleetInputField(
                             value = row.invoiceNo,
                             onValueChange = onUpdateInvoiceNo,
-                            label = { Text(stringResource(Res.string.vehicle_maint_invoice)) },
-                            placeholder = { Text(stringResource(Res.string.vehicle_maint_invoice_placeholder)) },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
+                            fieldType = FieldType.DEFAULT,
+                            label = stringResource(Res.string.vehicle_maint_invoice),
+                            placeholder = stringResource(Res.string.vehicle_maint_invoice_placeholder),
+                            modifier = Modifier.weight(1f)
                         )
                     }
 
-                    OutlinedTextField(
+                    FleetInputField(
                         value = row.notes,
                         onValueChange = onUpdateNotes,
-                        label = { Text(stringResource(Res.string.label_notes)) },
-                        placeholder = { Text(stringResource(Res.string.vehicle_maint_notes_placeholder)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        fieldType = FieldType.NOTES,
+                        label = stringResource(Res.string.label_notes),
+                        placeholder = stringResource(Res.string.vehicle_maint_notes_placeholder),
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
-        }
     }
 }
 
@@ -677,6 +679,7 @@ private fun MaintenanceHistoryDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(FleetTokens.Radius.XL),
         title = {
             Column {
                 Text(stringResource(Res.string.vehicle_maint_history_title))
@@ -705,7 +708,7 @@ private fun MaintenanceHistoryDialog(
                     )
                 } else {
                     LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                     ) {
                         items(costs) { cost ->
                             MaintenanceHistoryItem(cost)
@@ -713,7 +716,7 @@ private fun MaintenanceHistoryDialog(
                         item {
                             HorizontalDivider()
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                modifier = Modifier.fillMaxWidth().padding(top = FleetTokens.Spacing.S),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(stringResource(Res.string.vehicle_maint_total_label), fontWeight = FontWeight.Bold)
@@ -740,11 +743,11 @@ private fun MaintenanceHistoryDialog(
 private fun MaintenanceHistoryItem(cost: MaintenanceCostDto) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(FleetTokens.Spacing.M),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

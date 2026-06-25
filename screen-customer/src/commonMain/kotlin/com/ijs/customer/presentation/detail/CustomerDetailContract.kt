@@ -15,11 +15,11 @@ import com.indusjs.pdfreport.model.CustomerFinancialsPdfData
  */
 object CustomerDetailContract {
 
-    enum class CustomerDetailTab(val title: String, val icon: String) {
-        OVERVIEW("Overview", "📋"),
-        TRIPS("Trips", "🚛"),
-        PAYMENTS("Payments", "💳"),
-        FINANCIALS("Financials", "📊")
+    enum class CustomerDetailTab(val title: String) {
+        OVERVIEW("Overview"),
+        TRIPS("Trips"),
+        PAYMENTS("Payments"),
+        FINANCIALS("Financials")
     }
 
     enum class TripStateFilter(val apiValue: String?, val displayName: String) {

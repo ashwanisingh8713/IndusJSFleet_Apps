@@ -3,15 +3,15 @@ package com.ijs.trip.presentation.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.domain.entity.Trip
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -27,28 +27,21 @@ internal fun TripHeader(
     onStatusClick: () -> Unit,
     stateLabels: Map<String, String> = emptyMap()
 ) {
-    Card(
+    FleetSectionCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        border = null,
+        elevation = FleetTokens.Elevation.None
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
             // Trip Title
             Text(
                 text = trip.tripNumber ?: stringResource(Res.string.payment_trip_id, trip.id),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
             // Row 1: Status
             Row(
@@ -59,7 +52,7 @@ internal fun TripHeader(
                 Text(
                     text = stringResource(Res.string.trip_detail_label_status),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 )
                 EnhancedStatusBadge(
                     status = trip.status,
@@ -70,7 +63,7 @@ internal fun TripHeader(
 
             // Row 2: Trip Price (for Owner/GM)
             if (canViewTripPrice) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -79,7 +72,7 @@ internal fun TripHeader(
                     Text(
                         text = stringResource(Res.string.payment_add_trip_price),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                     )
                     val price = trip.tripPrice
                     Text(
@@ -91,16 +84,16 @@ internal fun TripHeader(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (price != null && price > 0) {
-                            MaterialTheme.colorScheme.primary
+                            MaterialTheme.colorScheme.onPrimaryContainer
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                         }
                     )
                 }
             }
 
             // Row 3: Vehicle Number
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -109,18 +102,18 @@ internal fun TripHeader(
                 Text(
                     text = stringResource(Res.string.trip_detail_label_vehicle),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 )
                 Text(
                     text = trip.vehicleNumber ?: stringResource(Res.string.not_assigned),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
             // Row 4: Driver Name
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -129,20 +122,20 @@ internal fun TripHeader(
                 Text(
                     text = stringResource(Res.string.trip_detail_label_driver),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 )
                 Text(
                     text = trip.driverName ?: stringResource(Res.string.not_assigned),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
             // Divider
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
             // Stats Row: Distance | Duration | Priority
             Row(
@@ -152,12 +145,14 @@ internal fun TripHeader(
                 FleetMetricTile(
                     value = trip.displayInfo.distanceValue,
                     label = trip.displayInfo.distanceLabel,
+                    valueColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     showBackground = false,
                     centered = true
                 )
                 FleetMetricTile(
                     value = trip.displayInfo.durationValue,
                     label = trip.displayInfo.durationLabel,
+                    valueColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     showBackground = false,
                     centered = true
                 )
@@ -165,11 +160,11 @@ internal fun TripHeader(
                     value = trip.priority?.replaceFirstChar { it.uppercaseChar() }
                         ?: stringResource(Res.string.trip_detail_priority_normal),
                     label = stringResource(Res.string.trip_detail_label_priority),
+                    valueColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     showBackground = false,
                     centered = true
                 )
             }
-        }
     }
 }
 
@@ -193,7 +188,7 @@ internal fun RouteAndScheduleSection(trip: Trip) {
                 verticalAlignment = Alignment.Top
             ) {
                 Surface(
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(FleetTokens.IconSize.L),
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primary
                 ) {
@@ -206,7 +201,7 @@ internal fun RouteAndScheduleSection(trip: Trip) {
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(Res.string.trip_detail_departure),
@@ -214,7 +209,7 @@ internal fun RouteAndScheduleSection(trip: Trip) {
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                     Text(
                         text = trip.startLocation?.address ?: stringResource(Res.string.trip_detail_not_specified),
                         style = MaterialTheme.typography.bodyMedium,
@@ -240,26 +235,26 @@ internal fun RouteAndScheduleSection(trip: Trip) {
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
         // Connecting dots
-        Row(modifier = Modifier.padding(start = 12.dp)) {
+        Row(modifier = Modifier.padding(start = FleetTokens.Spacing.M)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 repeat(3) {
                     Box(
                         modifier = Modifier
-                            .size(4.dp)
+                            .size(FleetTokens.Spacing.XS)
                             .background(
                                 color = MaterialTheme.colorScheme.outlineVariant,
                                 shape = CircleShape
                             )
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
         // Arrival Section
         Row(
@@ -272,7 +267,7 @@ internal fun RouteAndScheduleSection(trip: Trip) {
                 verticalAlignment = Alignment.Top
             ) {
                 Surface(
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(FleetTokens.IconSize.L),
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.error
                 ) {
@@ -285,7 +280,7 @@ internal fun RouteAndScheduleSection(trip: Trip) {
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(Res.string.trip_detail_arrival),
@@ -293,7 +288,7 @@ internal fun RouteAndScheduleSection(trip: Trip) {
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.error
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                     Text(
                         text = trip.endLocation?.address ?: stringResource(Res.string.trip_detail_not_specified),
                         style = MaterialTheme.typography.bodyMedium,

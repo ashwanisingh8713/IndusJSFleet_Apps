@@ -1,6 +1,5 @@
 package com.ijs.dashboard.presentation.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,28 +8,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,6 +32,8 @@ import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -118,22 +112,22 @@ internal fun CostOverviewSection(
             // Header (financial-themed accent: green on profit, primary otherwise)
             DashboardSectionHeader(
                 title = stringResource(Res.string.dashboard_financial_overview),
-                emoji = "💰",
+                iconRes = Res.drawable.ic_cost,
                 accent = if (costOverview.isProfit) profitColor else MaterialTheme.colorScheme.primary
             )
 
             // Period Filter Tabs with date range (hide if no fleet)
             if (!hasNoFleet) {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(FleetTokens.Radius.L))
                             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            .padding(FleetTokens.Spacing.XS),
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                     ) {
                         CostOverviewFilter.entries.forEach { filter ->
                             val isSelected = selectedFilter == filter
@@ -145,13 +139,14 @@ internal fun CostOverviewSection(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .heightIn(min = FleetTokens.Height.MinTouchTarget)
+                                    .clip(RoundedCornerShape(FleetTokens.Radius.ML))
                                     .background(
                                         if (isSelected) MaterialTheme.colorScheme.primary
                                         else Color.Transparent
                                     )
                                     .clickable { onFilterChange(filter) }
-                                    .padding(vertical = 10.dp),
+                                    .padding(vertical = FleetTokens.Spacing.S),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -173,11 +168,13 @@ internal fun CostOverviewSection(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "📅",
-                            style = MaterialTheme.typography.labelSmall
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_calendar),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                         Text(
                             text = dateRangeText,
                             style = MaterialTheme.typography.labelSmall,
@@ -197,8 +194,8 @@ internal fun CostOverviewSection(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(32.dp),
-                        strokeWidth = 3.dp,
+                        modifier = Modifier.size(FleetTokens.IconSize.L),
+                        strokeWidth = FleetTokens.Height.ProgressStroke,
                         color = MaterialTheme.colorScheme.primary
                     )
                 } else if (hasNoFleet) {
@@ -206,16 +203,21 @@ internal fun CostOverviewSection(
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(FleetTokens.IconSize.XL)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primaryContainer),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "🚀", style = MaterialTheme.typography.headlineMedium)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_trip),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(FleetTokens.IconSize.M)
+                            )
                         }
                         Text(
                             text = stringResource(Res.string.dashboard_get_started),
@@ -233,15 +235,15 @@ internal fun CostOverviewSection(
                     // Financial Stats Content
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                         ) {
                             MetricTile(
                                 modifier = Modifier.weight(1f),
-                                emoji = "💸",
+                                iconRes = Res.drawable.ic_cost,
                                 label = stringResource(Res.string.dashboard_label_expenses),
                                 value = formatCurrency(costOverview.totalExpenses),
                                 accent = expenseColor,
@@ -249,7 +251,7 @@ internal fun CostOverviewSection(
                             )
                             MetricTile(
                                 modifier = Modifier.weight(1f),
-                                emoji = if (costOverview.isProfit) "📈" else "📉",
+                                iconRes = if (costOverview.isProfit) Res.drawable.ic_trending_up else Res.drawable.ic_trending_down,
                                 label = if (costOverview.isProfit) stringResource(Res.string.reports_profit) else stringResource(Res.string.reports_loss),
                                 value = formatCurrency(kotlin.math.abs(costOverview.profitLoss)),
                                 accent = if (costOverview.isProfit) profitColor else lossColor,
@@ -261,15 +263,20 @@ internal fun CostOverviewSection(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(FleetTokens.Radius.L))
                                 .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                                .padding(horizontal = FleetTokens.Spacing.L, vertical = FleetTokens.Spacing.M),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "🚛", style = MaterialTheme.typography.titleMedium)
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_truck),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
+                                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                                 Text(
                                     text = stringResource(Res.string.dashboard_completed_trips),
                                     style = MaterialTheme.typography.bodyMedium,
@@ -292,85 +299,37 @@ internal fun CostOverviewSection(
             if (!isLoading && hasNoFleet) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
-                    Button(
+                    FleetButton(
+                        text = stringResource(Res.string.action_add_vehicle),
                         onClick = onAddVehicleClick,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(Res.string.action_add_vehicle), fontWeight = FontWeight.SemiBold)
-                    }
+                        variant = ButtonVariant.PRIMARY,
+                        modifier = Modifier.weight(1f),
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_add),
+                                contentDescription = null,
+                                modifier = Modifier.size(FleetTokens.IconSize.M)
+                            )
+                        }
+                    )
 
-                    OutlinedButton(
+                    FleetButton(
+                        text = stringResource(Res.string.action_create_trip),
                         onClick = onCreateTripClick,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(Res.string.action_create_trip), fontWeight = FontWeight.SemiBold)
-                    }
+                        variant = ButtonVariant.SECONDARY,
+                        modifier = Modifier.weight(1f),
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_add),
+                                contentDescription = null,
+                                modifier = Modifier.size(FleetTokens.IconSize.M)
+                            )
+                        }
+                    )
                 }
             }
         }
-    }
-}
-
-/**
- * Financial stat card with icon, label and value.
- */
-@Composable
-private fun FinancialStatCard(
-    modifier: Modifier = Modifier,
-    icon: String,
-    label: String,
-    value: String,
-    backgroundColor: Color,
-    valueColor: Color
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(backgroundColor)
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(text = icon, style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Medium
-            )
-        }
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = valueColor
-        )
     }
 }

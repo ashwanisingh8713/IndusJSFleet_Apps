@@ -2,6 +2,7 @@ package com.ijs.vehicle.presentation
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.error.result.Result
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.data.model.TeamMemberDto
@@ -22,7 +23,9 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.document_removed
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_add_document
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_fill_required_fields
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_make_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_invalid_inline
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_model_required
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_owner_name_invalid
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_reg_number_format
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_reg_number_long
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_reg_number_required
@@ -73,8 +76,8 @@ class AddVehicleViewModel(
             is Intent.UpdateFuelType -> updateState { copy(fuelType = intent.value) }
             is Intent.UpdateColor -> updateState { copy(color = intent.value) }
             is Intent.UpdateSeatingCapacity -> updateState { copy(seatingCapacity = intent.value) }
-            is Intent.UpdateOwnerName -> updateState { copy(ownerName = intent.value) }
-            is Intent.UpdateOwnerContact -> updateState { copy(ownerContact = intent.value) }
+            is Intent.UpdateOwnerName -> updateOwnerName(intent.value)
+            is Intent.UpdateOwnerContact -> updateOwnerContact(intent.value)
 
             // Navigation
             is Intent.NextStep -> nextStep()
@@ -129,6 +132,26 @@ class AddVehicleViewModel(
             else -> null
         }
         updateState { copy(year = value, yearError = error) }
+    }
+
+    private fun updateOwnerName(value: String) {
+        // Owner name is optional; only flag a format error when something is entered.
+        val error: UiText? = if (value.isNotBlank() && !ValidationUtils.isValidName(value)) {
+            UiText.StringRes(Res.string.error_owner_name_invalid)
+        } else {
+            null
+        }
+        updateState { copy(ownerName = value, ownerNameError = error) }
+    }
+
+    private fun updateOwnerContact(value: String) {
+        // Owner contact is optional; only flag a format error when something is entered.
+        val error: UiText? = if (value.isNotBlank() && !ValidationUtils.isValidMobile(value)) {
+            UiText.StringRes(Res.string.error_mobile_invalid_inline)
+        } else {
+            null
+        }
+        updateState { copy(ownerContact = value, ownerContactError = error) }
     }
 
     private fun validateRegistrationNumber(value: String): UiText? {

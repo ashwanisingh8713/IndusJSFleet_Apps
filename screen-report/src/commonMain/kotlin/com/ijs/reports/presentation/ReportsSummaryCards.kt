@@ -10,14 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.reports.domain.entity.PLSummary
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -26,11 +27,24 @@ import kotlin.math.roundToInt
 // Financial Hero — compact profit/loss + revenue/expenses
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Maps a [ProfitStatus] to a semantic tint from the shared status palette
+ * ([ReportsColors] → [com.indusjs.uicomponents.theme.FleetStatusColors]),
+ * which is verified light/dark safe — instead of the enum's fixed Material hex.
+ */
+private fun ProfitStatus.statusColor(): Color = when (this) {
+    ProfitStatus.HIGHLY_PROFITABLE, ProfitStatus.PROFITABLE -> ReportsColors.ProfitGreen
+    ProfitStatus.BREAK_EVEN -> ReportsColors.WarningAmber
+    ProfitStatus.LOSS, ProfitStatus.SEVERE_LOSS -> ReportsColors.LossRed
+}
+
 @Composable
 internal fun FinancialHeroCard(summary: PLSummary) {
     val isProfit = summary.netProfit >= 0
     val profitStatus = ProfitStatus.fromMargin(summary.profitMarginPercentage)
-    val statusColor = Color(profitStatus.colorHex)
+    // Semantic status tint from the shared FleetStatusColors palette (light/dark safe)
+    // rather than the fixed enum hex, so the hero tile follows the design-system colors.
+    val statusColor = profitStatus.statusColor()
     // Expense ratio = expenses as a fraction of REVENUE (the conventional reading), not of
     // total cash flow (revenue+expenses). Capped at 1.0 so the bar/label stay ≤100% in a loss.
     val expenseRatio = if (summary.totalRevenue > 0)
@@ -40,13 +54,13 @@ internal fun FinancialHeroCard(summary: PLSummary) {
     FleetSectionCard {
         Column {
             // Row 1: Revenue vs Expenses side by side
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                 // Revenue
                 Box(
                     Modifier.weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.ML))
                         .background(ReportsColors.ProfitGreen.copy(alpha = 0.08f))
-                        .padding(10.dp)
+                        .padding(FleetTokens.Spacing.M)
                 ) {
                     Column {
                         Text(
@@ -65,9 +79,9 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                 // Expenses
                 Box(
                     Modifier.weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.ML))
                         .background(ReportsColors.LossRed.copy(alpha = 0.08f))
-                        .padding(10.dp)
+                        .padding(FleetTokens.Spacing.M)
                 ) {
                     Column {
                         Text(
@@ -85,7 +99,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                 }
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(FleetTokens.Spacing.M))
 
             // Row 2: Expense ratio bar
             Column(Modifier.fillMaxWidth()) {
@@ -106,16 +120,16 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(FleetTokens.Spacing.XS))
                 Box(
-                    Modifier.fillMaxWidth().height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                    Modifier.fillMaxWidth().height(FleetTokens.Height.ProgressBar)
+                        .clip(RoundedCornerShape(FleetTokens.Radius.S))
                         .background(ReportsColors.ProfitGreen.copy(alpha = 0.15f))
                 ) {
                     Box(
                         Modifier.fillMaxWidth(expenseRatio.coerceIn(0f, 1f))
                             .fillMaxHeight()
-                            .clip(RoundedCornerShape(3.dp))
+                            .clip(RoundedCornerShape(FleetTokens.Radius.S))
                             .background(
                                 if (expenseRatio > 0.85f) ReportsColors.LossRed.copy(alpha = 0.7f)
                                 else if (expenseRatio > 0.7f) ReportsColors.WarningAmber.copy(alpha = 0.7f)
@@ -125,14 +139,14 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                 }
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(FleetTokens.Spacing.M))
 
             // Row 3: Net profit/loss result
             Box(
                 Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(FleetTokens.Radius.ML))
                     .background(statusColor.copy(alpha = 0.08f))
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                    .padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.M)
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -141,9 +155,14 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                     ) {
-                        Text(profitStatus.icon, fontSize = 20.sp)
+                        Icon(
+                            painter = painterResource(profitStatus.icon),
+                            contentDescription = null,
+                            tint = statusColor,
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
+                        )
                         Column {
                             Text(
                                 if (isProfit) {
@@ -192,7 +211,7 @@ internal fun FleetSnapshotCard(summary: PLSummary) {
             // Key metrics row — 3 compact items
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 SnapshotMetric(
                     Modifier.weight(1f), "${summary.completedTrips}",
@@ -210,26 +229,26 @@ internal fun FleetSnapshotCard(summary: PLSummary) {
                 )
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(FleetTokens.Spacing.M))
             HorizontalDivider(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(FleetTokens.Spacing.M))
 
             // Fleet performance row
             PerformanceRow(
-                icon = "🚛",
+                iconRes = Res.drawable.ic_truck,
                 title = stringResource(Res.string.reports_perf_row_fleet),
                 total = summary.totalVehicles,
                 profitable = summary.profitableVehicles,
                 loss = summary.lossMakingVehicles
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(FleetTokens.Spacing.S))
 
             // Trip performance row
             PerformanceRow(
-                icon = "🛣️",
+                iconRes = Res.drawable.ic_trip,
                 title = stringResource(Res.string.reports_perf_row_trips),
                 total = summary.totalTrips,
                 profitable = summary.profitableTrips,
@@ -253,26 +272,36 @@ private fun SnapshotMetric(modifier: Modifier, value: String, label: String, col
 
 @Composable
 private fun PerformanceRow(
-    icon: String,
+    iconRes: DrawableResource,
     title: String,
     total: Int,
     profitable: Int,
     loss: Int
 ) {
-    val healthPct = if (total > 0) (profitable * 100 / total) else 0
+    // Denominator must reflect the counts actually shown: if `total` is stale/0 (e.g. a
+    // Trips total that didn't populate) fall back to profitable+loss, so the bar can't
+    // read 0% while the label says "1 profit, 0 loss". Use the larger of the two so a real
+    // total (which may exceed profitable+loss when some entities are break-even) still wins.
+    val denom = maxOf(total, profitable + loss)
+    val healthPct = if (denom > 0) (profitable * 100 / denom) else 0
     val healthColor = when {
         healthPct >= 70 -> ReportsColors.ProfitGreen
         healthPct >= 40 -> ReportsColors.WarningAmber
         else -> ReportsColors.LossRed
     }
-    val barFraction = if (total > 0) profitable.toFloat() / total else 0f
+    val barFraction = if (denom > 0) profitable.toFloat() / denom else 0f
 
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
     ) {
-        Text(icon, fontSize = 16.sp)
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(FleetTokens.IconSize.S)
+        )
         Column(Modifier.weight(1f)) {
             Row(
                 Modifier.fillMaxWidth(),
@@ -289,23 +318,23 @@ private fun PerformanceRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(FleetTokens.Spacing.XS))
             Box(
-                Modifier.fillMaxWidth().height(6.dp)
-                    .clip(RoundedCornerShape(3.dp))
+                Modifier.fillMaxWidth().height(FleetTokens.Height.ProgressBar)
+                    .clip(RoundedCornerShape(FleetTokens.Radius.S))
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             ) {
                 Box(
                     Modifier.fillMaxWidth(barFraction.coerceIn(0f, 1f))
                         .fillMaxHeight()
-                        .clip(RoundedCornerShape(3.dp))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.S))
                         .background(healthColor)
                 )
             }
         }
         // Health badge
         Surface(
-            shape = RoundedCornerShape(6.dp),
+            shape = RoundedCornerShape(FleetTokens.Radius.M),
             color = healthColor.copy(alpha = 0.12f)
         ) {
             Text(
@@ -313,7 +342,7 @@ private fun PerformanceRow(
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = healthColor,
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
             )
         }
     }

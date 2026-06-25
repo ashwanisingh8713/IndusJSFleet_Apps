@@ -2,19 +2,25 @@ package com.ijs.customer.presentation.detail.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.filterDigitsOnly
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -30,29 +36,44 @@ fun EditCustomerContent(
     onIntent: (Intent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Error message
-        state.error?.let { ErrorCard(it.resolve()) }
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val breakpoint = rememberFleetBreakpoint()
+        // Compact = full-width phone form; Medium/Expanded = centered, constrained
+        // column so the form doesn't stretch edge-to-edge on tablet / web.
+        val formWidthModifier = when (breakpoint) {
+            FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
+            else -> Modifier.widthIn(max = FleetTokens.Width.MaxContent)
+        }
 
-        // Company Details Section
-        CompanyDetailsSection(state, onIntent)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(FleetTokens.Spacing.M),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Column(
+                modifier = formWidthModifier,
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+            ) {
+                // Error message
+                state.error?.let { ErrorCard(it.resolve()) }
 
-        // Contact Section
-        ContactDetailsSection(state, onIntent)
+                // Company Details Section
+                CompanyDetailsSection(state, onIntent)
 
-        // Business Details Section
-        BusinessDetailsSection(state, onIntent)
+                // Contact Section
+                ContactDetailsSection(state, onIntent)
 
-        // Status Toggle
-        StatusToggleSection(state, onIntent)
+                // Business Details Section
+                BusinessDetailsSection(state, onIntent)
 
-        Spacer(modifier = Modifier.height(80.dp))
+                // Status Toggle
+                StatusToggleSection(state, onIntent)
+
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL))
+            }
+        }
     }
 }
 
@@ -65,44 +86,32 @@ fun EditModeBottomBar(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shadowElevation = 8.dp
+        shadowElevation = FleetTokens.Elevation.Dialog
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(FleetTokens.Spacing.L),
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            OutlinedButton(
+            FleetButton(
+                text = stringResource(Res.string.cancel),
                 onClick = onCancel,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(stringResource(Res.string.cancel), fontWeight = FontWeight.SemiBold)
-            }
+                variant = ButtonVariant.SECONDARY,
+                modifier = Modifier.weight(1f)
+            )
 
-            Button(
-                onClick = onSave,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp),
-                enabled = canSave,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                if (isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.action_updating))
+            FleetButton(
+                text = if (isSaving) {
+                    stringResource(Res.string.action_updating)
                 } else {
-                    Text(stringResource(Res.string.customer_update), fontWeight = FontWeight.SemiBold)
-                }
-            }
+                    stringResource(Res.string.customer_update)
+                },
+                onClick = onSave,
+                enabled = canSave,
+                isLoading = isSaving,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -113,28 +122,24 @@ private fun CompanyDetailsSection(state: State, onIntent: (Intent) -> Unit) {
         title = stringResource(Res.string.customer_section_company_card)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            OutlinedTextField(
+            // Company / org name: required non-blank (NOT name-rule — company names
+            // legitimately contain digits/&). Validated in the ViewModel.
+            FleetInputField(
                 value = state.companyName,
                 onValueChange = { onIntent(Intent.UpdateCompanyName(it)) },
-                label = { Text(stringResource(Res.string.customer_label_company_name)) },
+                label = stringResource(Res.string.customer_label_company_name),
                 isError = state.companyNameError != null,
-                supportingText = state.companyNameError?.let { error -> { Text(error.resolve()) } },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                errorMessage = state.companyNameError?.resolve()
             )
 
-            OutlinedTextField(
+            FleetInputField(
                 value = state.personName,
                 onValueChange = { onIntent(Intent.UpdatePersonName(it)) },
-                label = { Text(stringResource(Res.string.customer_label_contact_person)) },
+                label = stringResource(Res.string.customer_label_contact_person),
                 isError = state.personNameError != null,
-                supportingText = state.personNameError?.let { error -> { Text(error.resolve()) } },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                errorMessage = state.personNameError?.resolve()
             )
         }
     }
@@ -146,7 +151,7 @@ private fun ContactDetailsSection(state: State, onIntent: (Intent) -> Unit) {
         title = stringResource(Res.string.customer_section_contact_details)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             FleetInputField(
                 value = state.primaryContact,
@@ -184,38 +189,29 @@ private fun BusinessDetailsSection(state: State, onIntent: (Intent) -> Unit) {
         title = stringResource(Res.string.customer_section_business)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            OutlinedTextField(
+            FleetInputField(
                 value = state.gstNumber,
                 onValueChange = { onIntent(Intent.UpdateGstNumber(it)) },
-                label = { Text(stringResource(Res.string.customer_label_gst)) },
-                placeholder = { Text(stringResource(Res.string.customer_placeholder_gst)) },
+                label = stringResource(Res.string.customer_label_gst),
+                placeholder = stringResource(Res.string.customer_placeholder_gst),
                 isError = state.gstNumberError != null,
-                supportingText = state.gstNumberError?.let { error -> { Text(error.resolve()) } },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                errorMessage = state.gstNumberError?.resolve()
             )
 
-            OutlinedTextField(
+            FleetInputField(
                 value = state.companyAddress,
                 onValueChange = { onIntent(Intent.UpdateCompanyAddress(it)) },
-                label = { Text(stringResource(Res.string.customer_label_address)) },
-                minLines = 2,
-                maxLines = 3,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                fieldType = FieldType.ADDRESS,
+                label = stringResource(Res.string.customer_label_address)
             )
 
-            OutlinedTextField(
+            FleetInputField(
                 value = state.notes,
                 onValueChange = { onIntent(Intent.UpdateNotes(it)) },
-                label = { Text(stringResource(Res.string.customer_label_notes)) },
-                minLines = 2,
-                maxLines = 3,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(10.dp)
+                fieldType = FieldType.NOTES,
+                label = stringResource(Res.string.customer_label_notes)
             )
         }
     }
@@ -252,4 +248,3 @@ private fun StatusToggleSection(state: State, onIntent: (Intent) -> Unit) {
         }
     }
 }
-

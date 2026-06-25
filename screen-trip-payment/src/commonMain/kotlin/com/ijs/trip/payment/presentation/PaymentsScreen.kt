@@ -11,15 +11,19 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.pdfreport.handler.PaymentsListPdfHandler
 import com.indusjs.pdfreport.model.PaymentsListPdfData
 import com.indusjs.pdfreport.model.PaymentListItem
+import com.indusjs.uicomponents.components.DeleteConfirmationDialog
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.trip.payment.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -173,7 +177,7 @@ fun PaymentsScreen(
                             } else {
                                 stringResource(Res.string.payment_cd_switch_grouped)
                             },
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
                         )
                     }
 
@@ -183,7 +187,7 @@ fun PaymentsScreen(
                             Icon(
                                 painter = painterResource(Res.drawable.ic_more_vert),
                                 contentDescription = stringResource(Res.string.payment_more_options),
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                         DropdownMenu(
@@ -197,7 +201,7 @@ fun PaymentsScreen(
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_download),
                                         contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(FleetTokens.IconSize.M)
                                     )
                                 },
                                 onClick = {
@@ -246,13 +250,13 @@ fun PaymentsScreen(
                                 text = {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                                     ) {
                                         Text(stringResource(Res.string.payment_menu_filter))
                                         if (state.hasFilters) {
                                             Badge(
                                                 containerColor = MaterialTheme.colorScheme.error,
-                                                modifier = Modifier.size(8.dp)
+                                                modifier = Modifier.size(FleetTokens.Spacing.S)
                                             )
                                         }
                                     }
@@ -261,7 +265,7 @@ fun PaymentsScreen(
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_filter),
                                         contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(FleetTokens.IconSize.M)
                                     )
                                 },
                                 onClick = {
@@ -277,7 +281,7 @@ fun PaymentsScreen(
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_refresh),
                                         contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(FleetTokens.IconSize.M)
                                     )
                                 },
                                 onClick = {
@@ -377,100 +381,173 @@ fun PaymentsScreen(
                     )
                 }
                 else -> {
-                    LazyColumn(
-                        state = listState,
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            end = 16.dp,
-                            top = 16.dp,
-                            bottom = 88.dp  // Extra padding to prevent FAB overlap
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Summary Card with trip count for grouped view
-                        item {
-                            PaymentSummaryCard(
-                                totalReceived = state.totalReceived,
-                                totalPending = state.totalPending,
-                                thisMonth = state.thisMonth,
-                                paymentCount = state.payments.size,
-                                tripCount = if (isGroupedView) groupedPayments.size else 0,
-                                isGroupedView = isGroupedView
-                            )
-                        }
-
-                        // Filter indicator
-                        if (state.hasFilters) {
-                            item {
-                                FilterChipRow(
-                                    filter = state.filter,
-                                    onClear = { viewModel.sendIntent(PaymentsContract.Intent.ResetFilter) },
-                                    customerName = state.selectedCustomerName,
-                                    paymentStateLabels = state.paymentStateLabels
-                                )
-                            }
-                        }
-
-                        // Payment items - grouped or flat view
-                        if (isGroupedView) {
-                            // Grouped by Trip with collapsible sections
-                            items(
-                                items = groupedPayments,
-                                key = { it.tripId }
-                            ) { group ->
-                                CollapsibleTripGroupCard(
-                                    group = group,
-                                    isExpanded = expandedTrips.contains(group.tripId),
-                                    onToggleExpand = {
-                                        expandedTrips = if (expandedTrips.contains(group.tripId)) {
-                                            expandedTrips - group.tripId
-                                        } else {
-                                            expandedTrips + group.tripId
-                                        }
-                                    },
-                                    onPaymentClick = { paymentId ->
-                                        viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(paymentId))
-                                    },
-                                    paymentStateLabels = state.paymentStateLabels
-                                )
-                            }
+                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                        val breakpoint = rememberFleetBreakpoint()
+                        // Compact stays 1-up; Medium/Expanded show two cards per row. On
+                        // Expanded the list is capped to a readable width and centered.
+                        val columns = if (breakpoint.isAtLeastMedium) 2 else 1
+                        val contentWidthModifier = if (breakpoint.isExpanded) {
+                            Modifier.fillMaxWidth().widthIn(max = FleetTokens.Width.MaxContent)
                         } else {
-                            // Flat list view
-                            items(
-                                items = state.payments,
-                                key = { it.id }
-                            ) { payment ->
-                                PaymentCard(
-                                    payment = payment,
-                                    onClick = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(payment.id)) },
-                                    onLongClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowDeleteConfirmation(payment)) },
-                                    paymentStateLabels = state.paymentStateLabels
-                                )
-                            }
+                            Modifier.fillMaxWidth()
                         }
 
-                        // Loading more indicator
-                        if (state.isLoadingMore) {
+                        LazyColumn(
+                            state = listState,
+                            modifier = contentWidthModifier.fillMaxHeight().align(Alignment.TopCenter),
+                            contentPadding = PaddingValues(
+                                start = FleetTokens.Spacing.L,
+                                end = FleetTokens.Spacing.L,
+                                top = FleetTokens.Spacing.L,
+                                // Extra bottom padding to prevent FAB overlap.
+                                bottom = FleetTokens.Spacing.XXXL + FleetTokens.Spacing.XXL
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                        ) {
+                            // Summary Card with trip count for grouped view
                             item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                PaymentSummaryCard(
+                                    totalReceived = state.totalReceived,
+                                    totalPending = state.totalPending,
+                                    thisMonth = state.thisMonth,
+                                    paymentCount = state.payments.size,
+                                    tripCount = if (isGroupedView) groupedPayments.size else 0,
+                                    isGroupedView = isGroupedView
+                                )
+                            }
+
+                            // Filter indicator
+                            if (state.hasFilters) {
+                                item {
+                                    FilterChipRow(
+                                        filter = state.filter,
+                                        onClear = { viewModel.sendIntent(PaymentsContract.Intent.ResetFilter) },
+                                        customerName = state.selectedCustomerName,
+                                        paymentStateLabels = state.paymentStateLabels
+                                    )
+                                }
+                            }
+
+                            // Payment items - grouped or flat view
+                            if (isGroupedView) {
+                                // Grouped by Trip with collapsible sections
+                                if (columns == 1) {
+                                    items(
+                                        items = groupedPayments,
+                                        key = { it.tripId }
+                                    ) { group ->
+                                        CollapsibleTripGroupCard(
+                                            group = group,
+                                            isExpanded = expandedTrips.contains(group.tripId),
+                                            onToggleExpand = {
+                                                expandedTrips = if (expandedTrips.contains(group.tripId)) {
+                                                    expandedTrips - group.tripId
+                                                } else {
+                                                    expandedTrips + group.tripId
+                                                }
+                                            },
+                                            onPaymentClick = { paymentId ->
+                                                viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(paymentId))
+                                            },
+                                            paymentStateLabels = state.paymentStateLabels
+                                        )
+                                    }
+                                } else {
+                                    val rows = groupedPayments.chunked(columns)
+                                    items(rows, key = { row -> row.first().tripId }) { row ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                                        ) {
+                                            row.forEach { group ->
+                                                CollapsibleTripGroupCard(
+                                                    group = group,
+                                                    isExpanded = expandedTrips.contains(group.tripId),
+                                                    onToggleExpand = {
+                                                        expandedTrips = if (expandedTrips.contains(group.tripId)) {
+                                                            expandedTrips - group.tripId
+                                                        } else {
+                                                            expandedTrips + group.tripId
+                                                        }
+                                                    },
+                                                    onPaymentClick = { paymentId ->
+                                                        viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(paymentId))
+                                                    },
+                                                    paymentStateLabels = state.paymentStateLabels,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                            if (row.size < columns) {
+                                                repeat(columns - row.size) {
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Flat list view
+                                if (columns == 1) {
+                                    items(
+                                        items = state.payments,
+                                        key = { it.id }
+                                    ) { payment ->
+                                        PaymentCard(
+                                            payment = payment,
+                                            onClick = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(payment.id)) },
+                                            onLongClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowDeleteConfirmation(payment)) },
+                                            paymentStateLabels = state.paymentStateLabels
+                                        )
+                                    }
+                                } else {
+                                    val rows = state.payments.chunked(columns)
+                                    items(rows, key = { row -> row.first().id }) { row ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                                        ) {
+                                            row.forEach { payment ->
+                                                PaymentCard(
+                                                    payment = payment,
+                                                    onClick = { viewModel.sendIntent(PaymentsContract.Intent.NavigateToPaymentDetail(payment.id)) },
+                                                    onLongClick = { viewModel.sendIntent(PaymentsContract.Intent.ShowDeleteConfirmation(payment)) },
+                                                    paymentStateLabels = state.paymentStateLabels,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                            if (row.size < columns) {
+                                                repeat(columns - row.size) {
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Loading more indicator
+                            if (state.isLoadingMore) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(FleetTokens.Spacing.L),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.Default))
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    // Pull to refresh indicator
-                    if (state.isRefreshing) {
-                        LinearProgressIndicator(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.TopCenter)
-                        )
+                        // Pull to refresh indicator
+                        if (state.isRefreshing) {
+                            LinearProgressIndicator(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.TopCenter)
+                            )
+                        }
                     }
                 }
             }
@@ -497,36 +574,13 @@ fun PaymentsScreen(
     }
 
     // Delete Confirmation Dialog
-    if (state.showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { viewModel.sendIntent(PaymentsContract.Intent.HideDeleteConfirmation) },
-            title = { Text(stringResource(Res.string.payment_delete_title)) },
-            text = {
-                Text(
-                    stringResource(
-                        Res.string.payment_delete_message,
-                        state.paymentToDelete?.amountDisplay.orEmpty()
-                    )
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.sendIntent(PaymentsContract.Intent.ConfirmDelete) },
-                    enabled = !state.isDeleting
-                ) {
-                    if (state.isDeleting) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp))
-                    } else {
-                        Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.sendIntent(PaymentsContract.Intent.HideDeleteConfirmation) }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
-    }
+    DeleteConfirmationDialog(
+        showDialog = state.showDeleteConfirmation,
+        entityName = stringResource(Res.string.payment_entity_singular),
+        entityDetail = state.paymentToDelete?.amountDisplay,
+        isLoading = state.isDeleting,
+        onConfirmDelete = { viewModel.sendIntent(PaymentsContract.Intent.ConfirmDelete) },
+        onDismiss = { viewModel.sendIntent(PaymentsContract.Intent.HideDeleteConfirmation) }
+    )
 }
 

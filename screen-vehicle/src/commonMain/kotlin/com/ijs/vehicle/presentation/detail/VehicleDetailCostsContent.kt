@@ -25,10 +25,12 @@ import com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData
 import com.indusjs.uicomponents.components.DateVisualTransformation
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetConfirmationDialog
 import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.components.formatToDdMmYyyy
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
@@ -167,7 +169,13 @@ internal fun CostsTabContent(
                                         },
                                         label = { Text(item.label) },
                                         leadingIcon = if (tempSelectedFilters.contains(item.id)) {
-                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                            {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.ic_check),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                                )
+                                            }
                                         } else null
                                     )
                                 }
@@ -201,7 +209,13 @@ internal fun CostsTabContent(
                                         },
                                         label = { Text(item.label) },
                                         leadingIcon = if (tempSelectedFilters.contains(item.id)) {
-                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                            {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.ic_check),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                                )
+                                            }
                                         } else null
                                     )
                                 }
@@ -240,7 +254,13 @@ internal fun CostsTabContent(
                                         },
                                         label = { Text(item.label) },
                                         leadingIcon = if (tempSelectedFilters.contains(item.id)) {
-                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                            {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.ic_check),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                                )
+                                            }
                                         } else null
                                     )
                                 }
@@ -274,7 +294,13 @@ internal fun CostsTabContent(
                                         },
                                         label = { Text(item.label) },
                                         leadingIcon = if (tempSelectedFilters.contains(item.id)) {
-                                            { Text("✓", style = MaterialTheme.typography.labelSmall) }
+                                            {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.ic_check),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                                )
+                                            }
                                         } else null
                                     )
                                 }
@@ -329,7 +355,7 @@ internal fun CostsTabContent(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Row(
@@ -365,7 +391,11 @@ internal fun CostsTabContent(
                             FilledTonalIconButton(
                                 onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ExportMaintenanceCostsPdf) }
                             ) {
-                                Text("📄", style = MaterialTheme.typography.titleMedium)
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_download),
+                                    contentDescription = stringResource(Res.string.cd_export_pdf),
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
                             }
                         }
 
@@ -388,7 +418,11 @@ internal fun CostsTabContent(
                             FilledTonalIconButton(
                                 onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ShowCostsFilterSheet) }
                             ) {
-                                Text("🔍", style = MaterialTheme.typography.titleMedium)
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_filter),
+                                    contentDescription = stringResource(Res.string.vehicle_costs_filters),
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
                             }
                         }
                     }
@@ -408,7 +442,13 @@ internal fun CostsTabContent(
                             selected = true,
                             onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ToggleCostTypeFilter(filter)) },
                             label = { Text(getCostTypeLabel(filter), style = MaterialTheme.typography.labelSmall) },
-                            trailingIcon = { Text("✕", style = MaterialTheme.typography.labelSmall) }
+                            trailingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_close),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
+                            }
                         )
                     }
                     if (state.costsStartDate.isNotBlank() || state.costsEndDate.isNotBlank()) {
@@ -421,7 +461,13 @@ internal fun CostsTabContent(
                                     style = MaterialTheme.typography.labelSmall
                                 )
                             },
-                            trailingIcon = { Text("✕", style = MaterialTheme.typography.labelSmall) }
+                            trailingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_close),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
+                            }
                         )
                     }
                 }
@@ -452,7 +498,7 @@ internal fun CostsTabContent(
         if (allCosts.isEmpty() && !state.isLoadingCosts && state.costsError == null) {
             item(key = "empty") {
                 EmptyContent(
-                    icon = "🔧",
+                    iconRes = Res.drawable.ic_settings,
                     title = stringResource(Res.string.vehicle_costs_no_maintenance),
                     message = stringResource(Res.string.vehicle_costs_maint_hint),
                     actionLabel = stringResource(Res.string.vehicle_costs_add_maint),
@@ -473,7 +519,12 @@ internal fun CostsTabContent(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(shape = RoundedCornerShape(4.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
-                            Text("📅", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_calendar),
+                                contentDescription = null,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp).size(FleetTokens.IconSize.S),
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
                         }
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(dateLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -501,14 +552,14 @@ internal fun CostsTabContent(
     }
 
     // Delete Dialog
-    if (state.showDeleteCostDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.sendIntent(VehicleDetailContract.Intent.DismissDeleteCostDialog) },
-            title = { Text(stringResource(Res.string.vehicle_costs_delete_title)) },
-            text = { Text(stringResource(Res.string.vehicle_costs_delete_message)) },
-            confirmButton = { TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ConfirmDeleteCost) }) { Text(stringResource(Res.string.delete), color = MaterialTheme.colorScheme.error) } },
-            dismissButton = { TextButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.DismissDeleteCostDialog) }) { Text(stringResource(Res.string.cancel)) } }
-        )
-    }
+    FleetConfirmationDialog(
+        showDialog = state.showDeleteCostDialog,
+        title = stringResource(Res.string.vehicle_costs_delete_title),
+        message = stringResource(Res.string.vehicle_costs_delete_message),
+        confirmText = stringResource(Res.string.delete),
+        isDestructive = true,
+        onConfirm = { viewModel.sendIntent(VehicleDetailContract.Intent.ConfirmDeleteCost) },
+        onDismiss = { viewModel.sendIntent(VehicleDetailContract.Intent.DismissDeleteCostDialog) }
+    )
 }
 

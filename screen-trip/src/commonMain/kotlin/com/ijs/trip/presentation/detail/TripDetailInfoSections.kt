@@ -8,11 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.fleet.core.util.formatDateTimeForDisplay
 import com.indusjs.uicomponents.components.PhoneChip
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.domain.entity.Trip
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -36,7 +36,7 @@ internal fun ActualTimesSection(trip: Trip) {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
-                            modifier = Modifier.size(32.dp),
+                            modifier = Modifier.size(FleetTokens.IconSize.L),
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                         ) {
@@ -44,7 +44,7 @@ internal fun ActualTimesSection(trip: Trip) {
                                 Text(text = "▶️", style = MaterialTheme.typography.labelMedium)
                             }
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
                         Column {
                             Text(
                                 text = stringResource(Res.string.trip_detail_started),
@@ -64,9 +64,9 @@ internal fun ActualTimesSection(trip: Trip) {
 
             // Separator if both times exist
             if ((trip.actualStartTime ?: 0L) > 0L && (trip.actualEndTime ?: 0L) > 0L) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
             }
 
             // Actual End Time
@@ -78,7 +78,7 @@ internal fun ActualTimesSection(trip: Trip) {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
-                            modifier = Modifier.size(32.dp),
+                            modifier = Modifier.size(FleetTokens.IconSize.L),
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
                         ) {
@@ -86,7 +86,7 @@ internal fun ActualTimesSection(trip: Trip) {
                                 Text(text = "⏹️", style = MaterialTheme.typography.labelMedium)
                             }
                         }
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
                         Column {
                             Text(
                                 text = stringResource(Res.string.trip_state_completed),
@@ -106,9 +106,9 @@ internal fun ActualTimesSection(trip: Trip) {
 
             // Duration if available
             if (trip.displayInfo.durationValue != "NA" && (trip.actualStartTime ?: 0L) > 0L) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -120,7 +120,7 @@ internal fun ActualTimesSection(trip: Trip) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = MaterialTheme.colorScheme.secondaryContainer
                     ) {
                         Text(
@@ -128,7 +128,7 @@ internal fun ActualTimesSection(trip: Trip) {
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS)
                         )
                     }
                 }
@@ -207,7 +207,7 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 10.dp),
+                            .padding(vertical = FleetTokens.Spacing.S),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -216,7 +216,7 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
                             modifier = Modifier.weight(0.4f)
                         ) {
                             Text("📞", style = MaterialTheme.typography.bodyMedium)
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                             Text(
                                 text = stringResource(Res.string.trip_detail_contact),
                                 style = MaterialTheme.typography.bodyMedium,
@@ -230,7 +230,7 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
                     }
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        thickness = 0.5.dp
+                        thickness = FleetTokens.Height.Divider
                     )
                 }
             }

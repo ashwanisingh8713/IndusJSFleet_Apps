@@ -263,5 +263,11 @@ object PieChartColors {
             else -> Other
         }
     }
+
+    /** Distinct palette for index-based slice colouring when category types aren't
+     *  recognised (e.g. backend returns opaque cost codes) — avoids all-grey donuts. */
+    val palette: List<Color> = listOf(Fuel, Toll, Maintenance, DriverAllowance, Parking, Loading, Color(0xFFF59E0B), Color(0xFFEF4444))
+
+    fun colorAt(index: Int): Color = palette[index % palette.size]
 }
 

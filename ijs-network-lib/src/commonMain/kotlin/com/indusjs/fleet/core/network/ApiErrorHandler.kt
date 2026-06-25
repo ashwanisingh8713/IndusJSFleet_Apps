@@ -107,6 +107,17 @@ object ApiErrorHandler {
                 return ACTIVE_TRIP_DELETE_GUARD_MESSAGE
             }
 
+            // Duplicate-account conflict (e.g. signup with an already-used mobile or
+            // email). The IAM/Fleet envelope carries the i18n key in `errorMessage`;
+            // some keys (notably `mobile_already_exists`) have no backend translation
+            // and arrive as the raw underscored key, which the generic handling below
+            // skips — leaving the unhelpful "This record already exists" fallback.
+            // Map the known duplicate keys (and their translated sentences) here.
+            val duplicateMessage = matchDuplicateConflict(errorMessageKey)
+            if (duplicateMessage != null) {
+                return duplicateMessage
+            }
+
             // Try 'developerMessage' which carries the actual IAM/backend error detail
             val developerMessage = jsonObject["developerMessage"]?.jsonPrimitive?.contentOrNull
             if (!developerMessage.isNullOrBlank() && developerMessage != "null") {
@@ -135,6 +146,27 @@ object ApiErrorHandler {
             null
         } catch (e: Exception) {
             null
+        }
+    }
+
+    /**
+     * Recognizes a duplicate-account conflict from an IAM/Fleet `errorMessage`
+     * value — either the raw i18n key (e.g. `mobile_already_exists`,
+     * `user_already_exists`) or its translated sentence ("user with this email
+     * already exists"). Returns a clear, user-facing message, or null when the
+     * value is not a duplicate-account conflict.
+     */
+    private fun matchDuplicateConflict(value: String?): String? {
+        if (value.isNullOrBlank() || value == "null") return null
+        val v = value.lowercase()
+        val isDuplicate = v.contains("exist") || v.contains("already") || v.contains("registered")
+        if (!isDuplicate) return null
+        return when {
+            v.contains("mobile") || v.contains("phone") ->
+                "This mobile number is already registered. Please log in or use a different number."
+            v.contains("email") || v.contains("user") ->
+                "This email is already registered. Please log in or use a different email."
+            else -> null
         }
     }
 

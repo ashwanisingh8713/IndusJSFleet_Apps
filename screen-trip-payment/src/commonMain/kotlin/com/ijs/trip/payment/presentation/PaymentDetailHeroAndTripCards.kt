@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.theme.FleetTokens
@@ -55,7 +54,7 @@ internal fun HeroSection(
                 DetailPaymentStatusBadge(status = payment.paymentStatus, paymentStateLabels = paymentStateLabels)
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
             // Middle row: Receipt + Date + Mode
             Row(
@@ -66,12 +65,15 @@ internal fun HeroSection(
                 // Receipt number
                 payment.receiptNumber?.let { receipt ->
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(FleetTokens.Radius.S),
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                     ) {
                         Text(
                             text = receipt,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(
+                                horizontal = FleetTokens.Spacing.S,
+                                vertical = FleetTokens.Spacing.XS
+                            ),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -82,7 +84,7 @@ internal fun HeroSection(
                 // Payment Mode with icon
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
                     Text(
                         text = payment.modeIcon,
@@ -106,7 +108,7 @@ internal fun HeroSection(
             }
 
             // Payment type
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Text(
                 text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()} " + stringResource(Res.string.payment_type_suffix_proper),
                 style = MaterialTheme.typography.labelMedium,
@@ -166,8 +168,8 @@ internal fun TripInfoCard(payment: TripPayment) {
 
             // Route - compact format
             if (tripInfo.startLocation != null || tripInfo.endLocation != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+                HorizontalDivider(modifier = Modifier.padding(vertical = FleetTokens.Spacing.XS))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -197,7 +199,7 @@ internal fun TripInfoCard(payment: TripPayment) {
             // Trip state (from backend trip_state, now carried on the payment detail response)
             tripInfo.tripState?.let { tripState ->
                 if (tripState.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                     CompactDetailRow(
                         label = stringResource(Res.string.payment_filter_status),
                         value = tripState
@@ -224,7 +226,7 @@ internal fun TripInfoCard(payment: TripPayment) {
             // Trip price
             tripInfo.tripPrice?.let { price ->
                 if (price > 0) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -270,7 +272,7 @@ internal fun PaymentDetailsCard(payment: TripPayment) {
                 isHighlighted = true
             )
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = FleetTokens.Spacing.XS))
 
             CompactDetailRow(
                 label = stringResource(Res.string.payment_detail_type),
@@ -309,12 +311,15 @@ internal fun DetailPaymentStatusBadge(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.S),
         color = backgroundColor
     ) {
         Text(
             text = paymentStateLabels[status.apiValue] ?: status.localizedDisplayName(),
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            modifier = Modifier.padding(
+                horizontal = FleetTokens.Spacing.S,
+                vertical = FleetTokens.Spacing.XXS
+            ),
             style = MaterialTheme.typography.labelSmall,
             color = textColor
         )

@@ -11,9 +11,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.uicomponents.components.DeleteConfirmationDialog
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FilterDefinition
@@ -25,6 +25,10 @@ import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.driver.domain.entity.Driver
 import com.ijs.driver.domain.entity.DriverStatus
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -87,7 +91,7 @@ fun DriversScreen(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -97,7 +101,7 @@ fun DriversScreen(
                             painter = painterResource(Res.drawable.ic_refresh),
                             contentDescription = stringResource(Res.string.refresh),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -116,7 +120,7 @@ fun DriversScreen(
                     Icon(
                         painter = painterResource(Res.drawable.ic_add),
                         contentDescription = stringResource(Res.string.drivers_add),
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(FleetTokens.IconSize.Default)
                     )
                 }
             }
@@ -140,7 +144,10 @@ fun DriversScreen(
                 query = state.searchQuery,
                 onQueryChange = { viewModel.sendIntent(DriversContract.Intent.SearchDrivers(it)) },
                 placeholder = stringResource(Res.string.drivers_search_placeholder),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(
+                    horizontal = FleetTokens.Spacing.ScreenHorizontal,
+                    vertical = FleetTokens.Spacing.S
+                )
             )
 
             val driverStatusFilters = DriverStatus.entries.map { status ->
@@ -163,7 +170,7 @@ fun DriversScreen(
                 },
                 allLabel = stringResource(Res.string.all_filter),
                 allCount = state.drivers.size,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = FleetTokens.Spacing.S)
             )
 
             when {
@@ -211,25 +218,14 @@ fun DriversScreen(
         }
     }
 
-    // Delete confirmation dialog
-    if (state.showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { viewModel.sendIntent(DriversContract.Intent.DismissDelete) },
-            title = { Text(stringResource(Res.string.delete_confirmation_title)) },
-            text = { Text(stringResource(Res.string.driver_delete_confirmation_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.sendIntent(DriversContract.Intent.ConfirmDelete) },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) { Text(stringResource(Res.string.delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.sendIntent(DriversContract.Intent.DismissDelete) }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
-    }
+    // Delete confirmation dialog (standardized)
+    DeleteConfirmationDialog(
+        showDialog = state.showDeleteConfirmation,
+        entityName = stringResource(Res.string.driver_entity),
+        isLoading = state.isDeleting,
+        onConfirmDelete = { viewModel.sendIntent(DriversContract.Intent.ConfirmDelete) },
+        onDismiss = { viewModel.sendIntent(DriversContract.Intent.DismissDelete) }
+    )
 }
 
 @Composable
@@ -239,18 +235,56 @@ private fun DriverList(
     onDriverClick: (String) -> Unit,
     onDeleteClick: (String) -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(drivers, key = { it.id }) { driver ->
-            DriverCard(
-                driver = driver,
-                driverStatusLabels = driverStatusLabels,
-                onClick = { onDriverClick(driver.id) },
-                onDeleteClick = { onDeleteClick(driver.id) }
-            )
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val breakpoint = rememberFleetBreakpoint()
+        // Compact stays 1-up; Medium/Expanded show two cards per row. On Expanded
+        // the grid is capped to a readable width and centered instead of stretching.
+        val columns = if (breakpoint.isAtLeastMedium) 2 else 1
+        val contentWidthModifier = if (breakpoint.isExpanded) {
+            Modifier.fillMaxWidth().widthIn(max = FleetTokens.Width.MaxContent)
+        } else {
+            Modifier.fillMaxWidth()
+        }
+
+        LazyColumn(
+            modifier = contentWidthModifier.fillMaxHeight().align(Alignment.TopCenter),
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+        ) {
+            if (columns == 1) {
+                items(drivers, key = { it.id }) { driver ->
+                    DriverCard(
+                        driver = driver,
+                        driverStatusLabels = driverStatusLabels,
+                        onClick = { onDriverClick(driver.id) },
+                        onDeleteClick = { onDeleteClick(driver.id) }
+                    )
+                }
+            } else {
+                val rows = drivers.chunked(columns)
+                items(rows, key = { row -> row.first().id }) { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                    ) {
+                        row.forEach { driver ->
+                            DriverCard(
+                                driver = driver,
+                                driverStatusLabels = driverStatusLabels,
+                                onClick = { onDriverClick(driver.id) },
+                                onDeleteClick = { onDeleteClick(driver.id) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        // Keep the last odd card aligned to a single column width.
+                        if (row.size < columns) {
+                            repeat(columns - row.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -260,10 +294,11 @@ private fun DriverCard(
     driver: Driver,
     driverStatusLabels: Map<String, String>,
     onClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     FleetSectionCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         onClick = onClick
     ) {
         Column {
@@ -280,7 +315,7 @@ private fun DriverCard(
                     // Avatar
                     FleetAvatar(name = driver.fullName)
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
 
                     Column {
                         Text(
@@ -289,13 +324,15 @@ private fun DriverCard(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "📱",
-                                style = MaterialTheme.typography.labelSmall
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_phone),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                             Text(
                                 text = driver.phone,
                                 style = MaterialTheme.typography.bodySmall,
@@ -308,12 +345,11 @@ private fun DriverCard(
                 StatusBadge(status = driver.status, driverStatusLabels = driverStatusLabels)
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                thickness = 0.5.dp
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
             // Info Row - Stats displayed inline without cards
             Row(
@@ -322,29 +358,29 @@ private fun DriverCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 DriverInfoItem(
-                    icon = "⭐",
-                    value = "${driver.rating}",
+                    iconRes = Res.drawable.ic_star,
+                    value = if (driver.rating > 0.0) "${driver.rating}" else "—",
                     label = stringResource(Res.string.driver_overview_rating)
                 )
 
                 VerticalDivider(
-                    modifier = Modifier.height(32.dp),
+                    modifier = Modifier.height(FleetTokens.Spacing.XXL),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
 
                 DriverInfoItem(
-                    icon = "🛣️",
+                    iconRes = Res.drawable.ic_trip,
                     value = "${driver.totalTrips}",
                     label = stringResource(Res.string.driver_overview_trips)
                 )
 
                 VerticalDivider(
-                    modifier = Modifier.height(32.dp),
+                    modifier = Modifier.height(FleetTokens.Spacing.XXL),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
 
                 DriverInfoItem(
-                    icon = "🪪",
+                    iconRes = Res.drawable.ic_profile,
                     value = driver.licenseNumber.take(10),
                     label = stringResource(Res.string.drivers_license)
                 )
@@ -352,21 +388,22 @@ private fun DriverCard(
 
             // Location if available
             driver.currentLocation?.let { location ->
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    thickness = 0.5.dp
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "📍",
-                        style = MaterialTheme.typography.bodySmall
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_map),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                     Text(
                         text = location.address ?: stringResource(Res.string.driver_unknown_location),
                         style = MaterialTheme.typography.bodySmall,
@@ -381,7 +418,7 @@ private fun DriverCard(
 
 @Composable
 private fun DriverInfoItem(
-    icon: String,
+    iconRes: org.jetbrains.compose.resources.DrawableResource,
     value: String,
     label: String,
     modifier: Modifier = Modifier
@@ -389,10 +426,10 @@ private fun DriverInfoItem(
     FleetMetricTile(
         value = value,
         label = label,
-        emoji = icon,
+        iconRes = iconRes,
         showBackground = false,
         centered = true,
-        modifier = modifier.padding(horizontal = 8.dp)
+        modifier = modifier.padding(horizontal = FleetTokens.Spacing.S)
     )
 }
 

@@ -10,7 +10,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
@@ -67,8 +66,8 @@ fun TripsTabContent(
         else -> {
             LazyColumn(
                 modifier = modifier.fillMaxSize(),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(FleetTokens.Spacing.M),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 // Summary Header with Export
                 item {
@@ -97,7 +96,7 @@ fun TripsTabContent(
                         EmptyContent(
                             title = stringResource(Res.string.report_no_trips_found),
                             message = stringResource(Res.string.customer_no_trips),
-                            icon = "🚛"
+                            iconRes = Res.drawable.ic_truck
                         )
                     }
                 } else {
@@ -112,11 +111,11 @@ fun TripsTabContent(
                     if (state.hasMoreTrips) {
                         item {
                             Box(
-                                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                                modifier = Modifier.fillMaxWidth().padding(FleetTokens.Spacing.S),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (state.isLoadingTrips) {
-                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                    CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.Default))
                                 } else {
                                     TextButton(onClick = { onIntent(Intent.LoadMoreTrips) }) {
                                         Text(stringResource(Res.string.action_load_more))
@@ -127,7 +126,7 @@ fun TripsTabContent(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.L)) }
             }
         }
     }
@@ -162,54 +161,54 @@ private fun TripsSummaryCard(
                 IconButton(
                     onClick = onExportPdf,
                     enabled = !isExporting,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(FleetTokens.Height.StepCircle)
                 ) {
                     if (isExporting) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.S), strokeWidth = FleetTokens.Height.ProgressStroke)
                     } else {
                         Icon(
                             painter = painterResource(Res.drawable.ic_download),
                             contentDescription = stringResource(Res.string.cd_export_pdf),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
             // Stats Grid 2x2
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 SummaryStatBox(
-                    icon = "🚛",
+                    iconRes = Res.drawable.ic_truck,
                     value = totalTrips.toString(),
                     label = stringResource(Res.string.customer_total_trips_label),
                     modifier = Modifier.weight(1f)
                 )
                 SummaryStatBox(
-                    icon = "✅",
+                    iconRes = Res.drawable.ic_check_circle,
                     value = completedTrips.toString(),
                     label = stringResource(Res.string.trip_state_completed),
                     modifier = Modifier.weight(1f)
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 SummaryStatBox(
-                    icon = "💰",
+                    iconRes = Res.drawable.ic_cost,
                     value = totalRevenue,
                     label = stringResource(Res.string.reports_revenue),
                     isPrimary = true,
                     modifier = Modifier.weight(1f)
                 )
                 SummaryStatBox(
-                    icon = "⏳",
+                    iconRes = Res.drawable.ic_time,
                     value = totalPending,
                     label = stringResource(Res.string.customer_trip_due_label),
                     isError = true,
@@ -222,43 +221,49 @@ private fun TripsSummaryCard(
 
 @Composable
 private fun SummaryStatBox(
-    icon: String,
+    iconRes: org.jetbrains.compose.resources.DrawableResource,
     value: String,
     label: String,
     isPrimary: Boolean = false,
     isError: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val onContainer = when {
+        isError -> MaterialTheme.colorScheme.onErrorContainer
+        isPrimary -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
     Surface(
         modifier = modifier,
         color = when {
-            isError -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-            isPrimary -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            isError -> MaterialTheme.colorScheme.errorContainer
+            isPrimary -> MaterialTheme.colorScheme.primaryContainer
+            else -> MaterialTheme.colorScheme.surfaceVariant
         },
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(FleetTokens.Radius.M)
     ) {
         Row(
-            modifier = Modifier.padding(10.dp),
+            modifier = Modifier.padding(FleetTokens.Spacing.M),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
-            Text(icon, style = MaterialTheme.typography.titleMedium)
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(FleetTokens.IconSize.M),
+                tint = onContainer
+            )
             Column {
                 Text(
                     text = value,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = when {
-                        isError -> MaterialTheme.colorScheme.error
-                        isPrimary -> MaterialTheme.colorScheme.primary
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
+                    color = onContainer
                 )
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = onContainer.copy(alpha = 0.85f)
                 )
             }
         }
@@ -270,14 +275,14 @@ private fun TripFilterChips(
     selectedFilter: TripStateFilter,
     onFilterSelected: (TripStateFilter) -> Unit
 ) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
         items(TripStateFilter.entries) { filter ->
             FilterChip(
                 selected = selectedFilter == filter,
                 onClick = { onFilterSelected(filter) },
                 label = { Text(filter.localizedDisplayName(), style = MaterialTheme.typography.labelMedium) },
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.height(32.dp)
+                shape = RoundedCornerShape(FleetTokens.Radius.L),
+                modifier = Modifier.height(FleetTokens.Height.StepCircle)
             )
         }
     }

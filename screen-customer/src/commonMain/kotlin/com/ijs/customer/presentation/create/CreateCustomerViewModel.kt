@@ -19,6 +19,7 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_10_di
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_invalid
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_required
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_mobile_start_digit
+import indusjsfleet.ijs_ui_components_lib.generated.resources.error_validation
 import indusjsfleet.ijs_ui_components_lib.generated.resources.success_customer_created
 
 /**
@@ -50,8 +51,22 @@ class CreateCustomerViewModel(
     }
 
     private fun updatePersonName(value: String) {
-        val error = if (value.isBlank()) UiText.StringRes(Res.string.error_contact_person_required) else null
-        updateState { copy(personName = value, personNameError = error) }
+        updateState { copy(personName = value, personNameError = personNameError(value)) }
+    }
+
+    /**
+     * Person/contact name validation. Uses [ValidationUtils.getNameError] (letters, spaces and
+     * . ' - joiners; 2–50 chars) — NOT used for the company name, which may legitimately contain
+     * digits/&. Blank maps to the dedicated "contact person required" message; any other rule
+     * failure maps to the shared validation message until a dedicated string exists.
+     */
+    private fun personNameError(value: String): UiText? {
+        if (value.isBlank()) return UiText.StringRes(Res.string.error_contact_person_required)
+        return if (ValidationUtils.getNameError(name = value, fieldName = "Contact person") == null) {
+            null
+        } else {
+            UiText.StringRes(Res.string.error_validation)
+        }
     }
 
     private fun updatePrimaryContact(value: String) {
@@ -127,7 +142,7 @@ class CreateCustomerViewModel(
 
     private fun validateFields(): Boolean {
         val companyNameError = if (state.value.companyName.isBlank()) UiText.StringRes(Res.string.error_company_name_required) else null
-        val personNameError = if (state.value.personName.isBlank()) UiText.StringRes(Res.string.error_contact_person_required) else null
+        val personNameError = personNameError(state.value.personName)
 
         val primaryContactError = state.value.primaryContact.let { contact ->
             when {

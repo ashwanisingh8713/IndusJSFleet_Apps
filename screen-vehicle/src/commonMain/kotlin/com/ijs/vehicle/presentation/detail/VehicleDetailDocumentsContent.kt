@@ -1,8 +1,6 @@
 package com.ijs.vehicle.presentation.detail
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -11,17 +9,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.vehicle.domain.entity.DocumentTypeDetail
 import com.ijs.vehicle.domain.entity.VehicleDocumentsData
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -57,38 +57,35 @@ internal fun DocumentsTabContent(
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(FleetTokens.Spacing.L),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
                 // Documents Summary
                 if (summary != null) {
                     item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                            )
+                        FleetSectionCard(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            border = null,
+                            elevation = FleetTokens.Elevation.None
                         ) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
                                 DocumentStatItem(
                                     count = summary.uploaded.toString(),
                                     label = stringResource(Res.string.vehicle_docs_stat_uploaded),
-                                    icon = "📄"
+                                    iconRes = Res.drawable.ic_folder
                                 )
                                 DocumentStatItem(
                                     count = summary.notUploaded.toString(),
                                     label = stringResource(Res.string.vehicle_docs_stat_missing),
-                                    icon = "⚠️"
+                                    iconRes = Res.drawable.ic_warning
                                 )
                                 DocumentStatItem(
                                     count = summary.expiringSoon.toString(),
                                     label = stringResource(Res.string.vehicle_docs_stat_expiring),
-                                    icon = "⏰"
+                                    iconRes = Res.drawable.ic_time
                                 )
                             }
                         }
@@ -98,27 +95,33 @@ internal fun DocumentsTabContent(
                 // Alert Documents
                 if (alertDocs.isNotEmpty()) {
                     item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                            )
+                        FleetSectionCard(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            border = null,
+                            elevation = FleetTokens.Elevation.None
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_warning),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S),
+                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                                Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                                 Text(
-                                    text = "⚠️ ${stringResource(Res.string.vehicle_docs_attention)}",
+                                    text = stringResource(Res.string.vehicle_docs_attention),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.error
+                                    color = MaterialTheme.colorScheme.onErrorContainer
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                alertDocs.forEach { alert ->
-                                    Text(
-                                        text = "• ${alert.typeName} - ${alert.message}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onErrorContainer
-                                    )
-                                }
+                            }
+                            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+                            alertDocs.forEach { alert ->
+                                Text(
+                                    text = "• ${alert.typeName} - ${alert.message}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
                             }
                         }
                     }
@@ -167,20 +170,27 @@ internal fun DocumentsTabContent(
                             text = stringResource(Res.string.vehicle_docs_no_docs),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(FleetTokens.Spacing.L)
                         )
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+                item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL)) }
             }
         }
     }
 }
 
 @Composable
-internal fun DocumentStatItem(count: String, label: String, icon: String) {
-    FleetMetricTile(value = count, label = label, emoji = icon, showBackground = false, centered = true)
+internal fun DocumentStatItem(count: String, label: String, iconRes: org.jetbrains.compose.resources.DrawableResource) {
+    FleetMetricTile(
+        value = count,
+        label = label,
+        iconRes = iconRes,
+        valueColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        showBackground = false,
+        centered = true
+    )
 }
 
 @Composable
@@ -203,26 +213,33 @@ internal fun DocumentTypeCard(
     if (showUploadConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showUploadConfirmDialog = false },
-            icon = { Text("📤", style = MaterialTheme.typography.headlineMedium) },
+            shape = RoundedCornerShape(FleetTokens.Radius.XL),
+            icon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_folder),
+                    contentDescription = null,
+                    modifier = Modifier.size(FleetTokens.IconSize.L)
+                )
+            },
             title = { Text(stringResource(Res.string.vehicle_docs_upload_title, doc.typeName)) },
             text = {
                 Column {
                     Text(stringResource(Res.string.vehicle_docs_upload_message))
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                     Text(
                         text = doc.typeName,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     if (doc.isRequired) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                         Text(
                             text = stringResource(Res.string.vehicle_docs_required),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                     Text(
                         text = stringResource(Res.string.vehicle_docs_ensure_readable),
                         style = MaterialTheme.typography.bodySmall,
@@ -231,7 +248,7 @@ internal fun DocumentTypeCard(
                 }
             },
             confirmButton = {
-                Button(onClick = {
+                TextButton(onClick = {
                     showUploadConfirmDialog = false
                     onUploadClick()
                 }) {
@@ -250,7 +267,7 @@ internal fun DocumentTypeCard(
         // ==================== UPLOADED DOCUMENT CARD ====================
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(FleetTokens.Radius.XL),
             colors = CardDefaults.cardColors(
                 containerColor = when {
                     isExpired -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
@@ -258,14 +275,14 @@ internal fun DocumentTypeCard(
                     else -> MaterialTheme.colorScheme.surface
                 }
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = FleetTokens.Elevation.Raised)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 // Header with gradient accent
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(4.dp)
+                        .height(FleetTokens.Spacing.XS)
                         .background(
                             when {
                                 isExpired -> MaterialTheme.colorScheme.error
@@ -279,20 +296,20 @@ internal fun DocumentTypeCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(FleetTokens.Spacing.L),
                     verticalAlignment = Alignment.Top
                 ) {
                     // Document icon with check badge
-                    Box(modifier = Modifier.padding(top = 4.dp)) {
+                    Box(modifier = Modifier.padding(top = FleetTokens.Spacing.XS)) {
                         Surface(
                             modifier = Modifier.size(56.dp),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RoundedCornerShape(FleetTokens.Radius.XL),
                             color = when {
                                 isExpired -> MaterialTheme.colorScheme.errorContainer
                                 isExpiringSoon -> MaterialTheme.colorScheme.tertiaryContainer
                                 else -> MaterialTheme.colorScheme.primaryContainer
                             },
-                            tonalElevation = 2.dp
+                            tonalElevation = FleetTokens.Elevation.Raised
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
@@ -313,30 +330,33 @@ internal fun DocumentTypeCard(
                             modifier = Modifier
                                 .size(22.dp)
                                 .align(Alignment.BottomEnd)
-                                .offset(x = 4.dp, y = 4.dp),
+                                .offset(x = FleetTokens.Spacing.XS, y = FleetTokens.Spacing.XS),
                             shape = CircleShape,
                             color = when {
                                 isExpired -> MaterialTheme.colorScheme.error
                                 isExpiringSoon -> MaterialTheme.colorScheme.tertiary
                                 else -> MaterialTheme.colorScheme.primary
                             },
-                            shadowElevation = 2.dp
+                            shadowElevation = FleetTokens.Elevation.Raised
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = when {
-                                        isExpired -> "!"
-                                        isExpiringSoon -> "⏰"
-                                        else -> "✓"
-                                    },
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimary
+                                Icon(
+                                    painter = painterResource(
+                                        when {
+                                            isExpired -> Res.drawable.ic_warning
+                                            isExpiringSoon -> Res.drawable.ic_time
+                                            else -> Res.drawable.ic_check
+                                        }
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.L))
 
                     // Document details
                     Column(modifier = Modifier.weight(1f)) {
@@ -347,46 +367,66 @@ internal fun DocumentTypeCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
 
                         // Status row with icon
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
-                                shape = RoundedCornerShape(6.dp),
+                                shape = RoundedCornerShape(FleetTokens.Radius.M),
                                 color = when {
                                     isExpired -> MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
                                     isExpiringSoon -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
                                     else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                                 }
                             ) {
-                                Text(
-                                    text = when {
-                                        isExpired -> "⚠️ ${stringResource(Res.string.vehicle_docs_expired)}"
-                                        isExpiringSoon -> "⏰ ${stringResource(Res.string.vehicle_docs_expires_in, daysLeft)}"
-                                        docInfo?.expiryDate != null -> "✓ ${stringResource(Res.string.vehicle_docs_valid_till, formatIsoDateToDisplay(docInfo.expiryDate))}"
-                                        else -> "✓ ${docInfo?.statusLabel ?: stringResource(Res.string.vehicle_docs_uploaded)}"
-                                    },
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = when {
-                                        isExpired -> MaterialTheme.colorScheme.error
-                                        isExpiringSoon -> MaterialTheme.colorScheme.tertiary
-                                        else -> MaterialTheme.colorScheme.primary
-                                    },
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                )
+                                val statusContentColor = when {
+                                    isExpired -> MaterialTheme.colorScheme.error
+                                    isExpiringSoon -> MaterialTheme.colorScheme.tertiary
+                                    else -> MaterialTheme.colorScheme.primary
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(
+                                            when {
+                                                isExpired -> Res.drawable.ic_warning
+                                                isExpiringSoon -> Res.drawable.ic_time
+                                                else -> Res.drawable.ic_check
+                                            }
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FleetTokens.IconSize.S),
+                                        tint = statusContentColor
+                                    )
+                                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
+                                    Text(
+                                        text = when {
+                                            isExpired -> stringResource(Res.string.vehicle_docs_expired)
+                                            isExpiringSoon -> stringResource(Res.string.vehicle_docs_expires_in, daysLeft)
+                                            docInfo?.expiryDate != null -> stringResource(Res.string.vehicle_docs_valid_till, formatIsoDateToDisplay(docInfo.expiryDate))
+                                            else -> docInfo?.statusLabel ?: stringResource(Res.string.vehicle_docs_uploaded)
+                                        },
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = statusContentColor
+                                    )
+                                }
                             }
                         }
 
                         // Document number if available
                         if (!doc.document?.documentNumber.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "🔢",
-                                    style = MaterialTheme.typography.bodySmall
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_folder),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                                 Text(
                                     text = stringResource(Res.string.vehicle_docs_doc_number, doc.document?.documentNumber.orEmpty()),
                                     style = MaterialTheme.typography.bodySmall,
@@ -397,13 +437,15 @@ internal fun DocumentTypeCard(
 
                         // Upload date if available
                         doc.document?.uploadedAt?.takeIf { it > 0L }?.let { uploadedAt ->
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "📅",
-                                    style = MaterialTheme.typography.bodySmall
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_calendar),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                                 Text(
                                     text = stringResource(
                                         Res.string.vehicle_docs_uploaded_at,
@@ -433,7 +475,12 @@ internal fun DocumentTypeCard(
                             DropdownMenuItem(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text("👁️", modifier = Modifier.padding(end = 8.dp))
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_visibility),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(FleetTokens.IconSize.S).padding(end = FleetTokens.Spacing.XS),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                         Text(stringResource(Res.string.vehicle_docs_preview))
                                     }
                                 },
@@ -445,7 +492,12 @@ internal fun DocumentTypeCard(
                             DropdownMenuItem(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text("⬇️", modifier = Modifier.padding(end = 8.dp))
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_download),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(FleetTokens.IconSize.S).padding(end = FleetTokens.Spacing.XS),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                         Text(stringResource(Res.string.vehicle_docs_download))
                                     }
                                 },
@@ -458,7 +510,12 @@ internal fun DocumentTypeCard(
                             DropdownMenuItem(
                                 text = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text("🔄", modifier = Modifier.padding(end = 8.dp))
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_refresh),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(FleetTokens.IconSize.S).padding(end = FleetTokens.Spacing.XS),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                         Text(stringResource(Res.string.vehicle_docs_replace))
                                     }
                                 },
@@ -473,79 +530,88 @@ internal fun DocumentTypeCard(
 
                 // Action buttons row
                 HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.L),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                 )
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
+                        .padding(FleetTokens.Spacing.S),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     FilledTonalButton(
                         onClick = onPreviewClick,
-                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = FleetTokens.Spacing.XS)
+                            .heightIn(min = FleetTokens.Height.MinTouchTarget),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
                         ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.S)
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_search),
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            modifier = Modifier.size(FleetTokens.IconSize.S),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                         Text(
                             stringResource(Res.string.vehicle_docs_preview),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
 
                     FilledTonalButton(
                         onClick = onDownloadClick,
-                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = FleetTokens.Spacing.XS)
+                            .heightIn(min = FleetTokens.Height.MinTouchTarget),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
                         ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.S)
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp).rotate(270f),
-                            tint = MaterialTheme.colorScheme.secondary
+                            modifier = Modifier.size(FleetTokens.IconSize.S).rotate(270f),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                         Text(
                             stringResource(Res.string.vehicle_docs_download),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.secondary
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
 
                     FilledTonalButton(
                         onClick = onReplaceClick,
-                        modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = FleetTokens.Spacing.XS)
+                            .heightIn(min = FleetTokens.Height.MinTouchTarget),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
                         ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.S)
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.tertiary
+                            modifier = Modifier.size(FleetTokens.IconSize.S),
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                         Text(
                             stringResource(Res.string.vehicle_docs_replace),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.tertiary
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     }
                 }
@@ -555,36 +621,38 @@ internal fun DocumentTypeCard(
         // ==================== NOT UPLOADED DOCUMENT CARD ====================
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(FleetTokens.Radius.XL),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             ),
             border = androidx.compose.foundation.BorderStroke(
-                width = 1.dp,
+                width = FleetTokens.Height.Divider,
                 color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
             )
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(FleetTokens.Spacing.L),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Document icon
                 Surface(
-                    modifier = Modifier.size(48.dp),
-                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.size(FleetTokens.IconSize.XL),
+                    shape = RoundedCornerShape(FleetTokens.Radius.ML),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "📁",
-                            style = MaterialTheme.typography.titleLarge
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_folder),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.M),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.width(14.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
 
                 // Document info
                 Column(modifier = Modifier.weight(1f)) {
@@ -595,7 +663,7 @@ internal fun DocumentTypeCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
 
                     Text(
                         text = stringResource(Res.string.vehicle_docs_not_uploaded),
@@ -604,24 +672,16 @@ internal fun DocumentTypeCard(
                     )
                 }
 
-                // Upload button - streamlined without icon
-                Button(
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+
+                // Upload button
+                FleetButton(
+                    text = stringResource(Res.string.vehicle_docs_upload),
                     onClick = { showUploadConfirmDialog = true },
-                    modifier = Modifier
-                        .height(38.dp)
-                        .widthIn(min = 80.dp),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text(
-                        stringResource(Res.string.vehicle_docs_upload),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                    variant = ButtonVariant.PRIMARY,
+                    size = ButtonSize.SMALL,
+                    modifier = Modifier.widthIn(min = 80.dp)
+                )
             }
         }
     }

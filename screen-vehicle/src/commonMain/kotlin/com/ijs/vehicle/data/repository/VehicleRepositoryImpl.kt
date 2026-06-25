@@ -24,6 +24,7 @@ import com.ijs.vehicle.domain.entity.VehicleTripsData
 import com.ijs.vehicle.domain.repository.VehicleRepository
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 
 /**
@@ -37,20 +38,25 @@ class VehicleRepositoryImpl(
     private val mapper: VehicleMapper
 ) : VehicleRepository {
 
+    // NOTE: emit the terminal result from the flow builder body and handle failures
+    // with the .catch OPERATOR — never a try/catch that emits from its catch block.
+    // A short-circuit collector (e.g. MapVehicleProviderAdapter's .first { }) aborts
+    // collection via AbortFlowException at the emit site; an in-builder catch would
+    // swallow that and re-emit, throwing "Flow exception transparency is violated …
+    // emissions from 'catch' blocks are prohibited" (the Live Map crash). Flow.catch
+    // is transparency-safe and rethrows the abort correctly.
     override fun getVehicles(): Flow<Result<List<Vehicle>>> = flow {
         emit(Result.Loading)
-        try {
-            val token = requireAuthToken()
-            val response = remoteDataSource.getVehicles(token)
+        val token = requireAuthToken()
+        val response = remoteDataSource.getVehicles(token)
 
-            if (response.success && response.data != null) {
-                emit(Result.Success(mapper.mapToDomainList(response.data)))
-            } else {
-                emit(Result.Error(ApiException(response.message ?: "Failed to get vehicles"), response.message))
-            }
-        } catch (e: Exception) {
-            emit(Result.Error(e, ApiErrorHandler.extractErrorMessage(e)))
+        if (response.success && response.data != null) {
+            emit(Result.Success(mapper.mapToDomainList(response.data)))
+        } else {
+            emit(Result.Error(ApiException(response.message ?: "Failed to get vehicles"), response.message))
         }
+    }.catch { e ->
+        emit(Result.Error(e, (e as? Exception)?.let { ApiErrorHandler.extractErrorMessage(it) } ?: e.message))
     }
 
     override fun getAvailableVehicles(): Flow<Result<List<Vehicle>>> = flow {

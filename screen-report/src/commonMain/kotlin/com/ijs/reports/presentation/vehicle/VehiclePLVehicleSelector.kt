@@ -17,14 +17,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.vehicle.domain.entity.VehicleStatus
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+/**
+ * Fixed height for the inline "no vehicles" empty-state box inside the selector list.
+ * Bespoke layout dimension, not part of the [FleetTokens] scale.
+ */
+private val EmptyStateBoxHeight: Dp = 80.dp
 
 @Composable
 internal fun VehicleFilterSheetContent(
@@ -42,8 +52,8 @@ internal fun VehicleFilterSheetContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 24.dp)
+            .padding(horizontal = FleetTokens.Spacing.L)
+            .padding(bottom = FleetTokens.Spacing.XL)
     ) {
         // Header
         Row(
@@ -63,7 +73,7 @@ internal fun VehicleFilterSheetContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
         // Search
         FleetSearchField(
@@ -73,32 +83,36 @@ internal fun VehicleFilterSheetContent(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
         // Select All / Clear All
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onSelectAll) {
-                Text(stringResource(Res.string.reports_select_all_count, vehicles.size))
-            }
-            TextButton(onClick = onClearAll) {
-                Text(stringResource(Res.string.reports_clear_all))
-            }
+        Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
+            FleetButton(
+                text = stringResource(Res.string.reports_select_all_count, vehicles.size),
+                onClick = onSelectAll,
+                variant = ButtonVariant.GHOST
+            )
+            FleetButton(
+                text = stringResource(Res.string.reports_clear_all),
+                onClick = onClearAll,
+                variant = ButtonVariant.GHOST
+            )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
         // Vehicle list
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
         ) {
             items(vehicles, key = { it.id }) { vehicle ->
                 val isSelected = selectedIds.contains(vehicle.id)
                 Surface(
                     onClick = { onToggleVehicle(vehicle.id) },
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = if (isSelected)
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                     else
@@ -107,14 +121,14 @@ internal fun VehicleFilterSheetContent(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
+                            .padding(FleetTokens.Spacing.M),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(
                             checked = isSelected,
                             onCheckedChange = { onToggleVehicle(vehicle.id) }
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = vehicle.registrationNumber,
@@ -133,28 +147,26 @@ internal fun VehicleFilterSheetContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
         // Action buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            OutlinedButton(
+            FleetButton(
+                text = stringResource(Res.string.cancel),
                 onClick = onDismiss,
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(stringResource(Res.string.cancel))
-            }
-            Button(
+                variant = ButtonVariant.SECONDARY,
+                modifier = Modifier.weight(1f)
+            )
+            FleetButton(
+                text = stringResource(Res.string.reports_apply_filter),
                 onClick = onApply,
+                variant = ButtonVariant.PRIMARY,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(10.dp),
                 enabled = selectedIds.isNotEmpty()
-            ) {
-                Text(stringResource(Res.string.reports_apply_filter))
-            }
+            )
         }
     }
 }
@@ -185,13 +197,13 @@ internal fun VehicleSelectorContent(
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight(0.85f)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = FleetTokens.Spacing.L)
     ) {
         // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
+                .padding(bottom = FleetTokens.Spacing.M),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -201,7 +213,7 @@ internal fun VehicleSelectorContent(
                 fontWeight = FontWeight.Bold
             )
             Surface(
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(FleetTokens.Radius.XL),
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
@@ -209,7 +221,7 @@ internal fun VehicleSelectorContent(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS)
                 )
             }
         }
@@ -231,11 +243,11 @@ internal fun VehicleSelectorContent(
                 ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = 6.dp, start = 4.dp)
+                modifier = Modifier.padding(top = FleetTokens.Spacing.S, start = FleetTokens.Spacing.XS)
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
         if (isLoading) {
             Box(
@@ -251,7 +263,7 @@ internal fun VehicleSelectorContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
             ) {
                 if (recentVehicles.isNotEmpty() && searchQuery.isBlank()) {
                     item {
@@ -260,24 +272,24 @@ internal fun VehicleSelectorContent(
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            modifier = Modifier.padding(vertical = FleetTokens.Spacing.XS)
                         )
                     }
                     item {
                         LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
+                            modifier = Modifier.padding(bottom = FleetTokens.Spacing.S)
                         ) {
                             items(recentVehicles, key = { "recent_${it.id}" }) { vehicle ->
                                 Surface(
                                     modifier = Modifier.clickable { onVehicleSelected(vehicle.id) },
-                                    shape = RoundedCornerShape(8.dp),
+                                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                                     color = if (vehicle.id == selectedVehicleId)
                                         MaterialTheme.colorScheme.primaryContainer
                                     else MaterialTheme.colorScheme.surfaceContainerHigh
                                 ) {
                                     Column(
-                                        modifier = Modifier.padding(10.dp),
+                                        modifier = Modifier.padding(FleetTokens.Spacing.M),
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Text(
@@ -297,7 +309,7 @@ internal fun VehicleSelectorContent(
                     }
                     item {
                         HorizontalDivider(
-                            modifier = Modifier.padding(vertical = 6.dp),
+                            modifier = Modifier.padding(vertical = FleetTokens.Spacing.S),
                             color = MaterialTheme.colorScheme.outlineVariant
                         )
                     }
@@ -309,7 +321,7 @@ internal fun VehicleSelectorContent(
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        modifier = Modifier.padding(vertical = FleetTokens.Spacing.XS)
                     )
                 }
 
@@ -318,7 +330,7 @@ internal fun VehicleSelectorContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(80.dp),
+                                .height(EmptyStateBoxHeight),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -335,13 +347,13 @@ internal fun VehicleSelectorContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onVehicleSelected(vehicle.id) },
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(FleetTokens.Radius.M),
                             color = if (vehicle.id == selectedVehicleId)
                                 MaterialTheme.colorScheme.primaryContainer
                             else Color.Transparent
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                                modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.M),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
@@ -350,7 +362,7 @@ internal fun VehicleSelectorContent(
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                                         Text(
                                             text = "${vehicle.make ?: ""} ${vehicle.model ?: ""}".trim().ifEmpty { "-" },
                                             style = MaterialTheme.typography.bodySmall,
@@ -382,17 +394,17 @@ internal fun VehicleSelectorContent(
                                 }
                                 Box(
                                     modifier = Modifier
-                                        .size(8.dp)
+                                        .size(FleetTokens.Spacing.S)
                                         .background(statusColor, CircleShape)
                                 )
 
                                 if (vehicle.id == selectedVehicleId) {
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                                     Icon(
                                         painter = painterResource(Res.drawable.ic_check),
                                         contentDescription = stringResource(Res.string.reports_cd_selected),
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(FleetTokens.IconSize.M)
                                     )
                                 }
                             }
@@ -400,7 +412,7 @@ internal fun VehicleSelectorContent(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.L)) }
             }
         }
     }

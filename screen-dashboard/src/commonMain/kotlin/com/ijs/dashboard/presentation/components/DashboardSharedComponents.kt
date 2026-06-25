@@ -20,9 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import com.indusjs.uicomponents.theme.FleetStatusColors
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -44,13 +44,13 @@ internal fun SectionEmptyState(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = FleetTokens.Spacing.S),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
     ) {
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(FleetTokens.IconSize.XL)
                 .clip(CircleShape)
                 .background(
                     if (successStyle) FleetStatusColors.FleetOnRoute.copy(alpha = 0.1f)
@@ -61,7 +61,7 @@ internal fun SectionEmptyState(
             Icon(
                 painter = painterResource(iconRes),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(FleetTokens.IconSize.Default),
                 tint = if (successStyle) FleetStatusColors.FleetOnRoute
                        else MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -89,14 +89,14 @@ internal fun SectionEmptyState(
         if (actionLabel != null && onAction != null) {
             FilledTonalButton(
                 onClick = onAction,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                contentPadding = PaddingValues(horizontal = FleetTokens.Spacing.L, vertical = FleetTokens.Spacing.S)
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_add),
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(FleetTokens.IconSize.S)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                 Text(
                     text = actionLabel,
                     style = MaterialTheme.typography.labelMedium

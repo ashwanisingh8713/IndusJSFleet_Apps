@@ -1,6 +1,5 @@
 package com.ijs.trip.payment.presentation
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -8,20 +7,18 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.payment.domain.entity.PaymentType
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -39,15 +36,15 @@ internal fun EmptyFilteredContent(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 32.dp)
+            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XXL)
         ) {
             Icon(
                 painter = painterResource(Res.drawable.ic_search),
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(FleetTokens.IconSize.XL),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
             Text(
                 text = stringResource(Res.string.payment_no_results),
                 style = MaterialTheme.typography.titleLarge,
@@ -55,14 +52,14 @@ internal fun EmptyFilteredContent(
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Text(
                 text = stringResource(Res.string.payment_no_results_message),
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
             OutlinedButton(onClick = onClearFilters) {
                 Text(stringResource(Res.string.payment_clear_filters))
             }
@@ -111,146 +108,142 @@ internal fun CollapsibleTripGroupCard(
         animationSpec = tween(durationMillis = 300)
     )
 
-    Card(
+    FleetSectionCard(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = FleetTokens.Elevation.Raised,
+        contentPadding = FleetTokens.Spacing.None
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            // Trip Header - Always visible, clickable to expand/collapse
-            Surface(
+        // Trip Header - Always visible, clickable to expand/collapse
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggleExpand),
+            color = if (isExpanded)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            else
+                MaterialTheme.colorScheme.surface
+        ) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onToggleExpand),
-                color = if (isExpanded)
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                else
-                    MaterialTheme.colorScheme.surface
+                    .padding(FleetTokens.Spacing.M),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Left side: Trip info
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                // Left side: Trip info
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
+                    ) {
+                        // Trip ID badge
+                        Surface(
+                            shape = RoundedCornerShape(FleetTokens.Radius.S),
+                            color = MaterialTheme.colorScheme.primaryContainer
                         ) {
-                            // Trip ID badge
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.payment_trip_id, group.tripId),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-
-                            // Vehicle badge
-                            group.tripInfo?.vehicleRegistration?.let { vehicle ->
-                                Surface(
-                                    shape = RoundedCornerShape(4.dp),
-                                    color = MaterialTheme.colorScheme.secondaryContainer
-                                ) {
-                                    Text(
-                                        text = vehicle,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                }
-                            }
-
-                            // Payment count badge
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.tertiaryContainer
-                            ) {
-                                Text(
-                                    text = stringResource(Res.string.payment_count_label, group.paymentCount, if (group.paymentCount > 1) "s" else ""),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Route
-                        group.tripInfo?.let { tripInfo ->
-                            val unknownLabel = stringResource(Res.string.payment_unknown)
                             Text(
-                                text = "${tripInfo.startLocation ?: unknownLabel} → ${tripInfo.endLocation ?: unknownLabel}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                text = stringResource(Res.string.payment_trip_id, group.tripId),
+                                modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
 
-                        // Customer
-                        group.customerName?.let { customer ->
+                        // Vehicle badge
+                        group.tripInfo?.vehicleRegistration?.let { vehicle ->
+                            Surface(
+                                shape = RoundedCornerShape(FleetTokens.Radius.S),
+                                color = MaterialTheme.colorScheme.secondaryContainer
+                            ) {
+                                Text(
+                                    text = vehicle,
+                                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS, vertical = FleetTokens.Spacing.XS),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                        }
+
+                        // Payment count badge
+                        Surface(
+                            shape = RoundedCornerShape(FleetTokens.Radius.L),
+                            color = MaterialTheme.colorScheme.tertiaryContainer
+                        ) {
                             Text(
-                                text = customer,
+                                text = stringResource(Res.string.payment_count_label, group.paymentCount, if (group.paymentCount > 1) "s" else ""),
+                                modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
                         }
                     }
 
-                    // Right side: Total amount + expand icon
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "₹${formatGroupAmount(group.totalAmount)}",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
-                        )
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
 
-                        // Arrow indicator using text
+                    // Route
+                    group.tripInfo?.let { tripInfo ->
+                        val unknownLabel = stringResource(Res.string.payment_unknown)
                         Text(
-                            text = if (isExpanded) "▲" else "▼",
-                            style = MaterialTheme.typography.titleMedium,
+                            text = "${tripInfo.startLocation ?: unknownLabel} → ${tripInfo.endLocation ?: unknownLabel}",
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp)
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // Customer
+                    group.customerName?.let { customer ->
+                        Text(
+                            text = customer,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
-            }
 
-            // Expanded content - Payment list
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = expandVertically(animationSpec = tween(300)),
-                exit = shrinkVertically(animationSpec = tween(300))
+                // Right side: Total amount + expand icon
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "₹${formatGroupAmount(group.totalAmount)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
+                    )
+
+                    // Arrow indicator using text
+                    Text(
+                        text = if (isExpanded) "▲" else "▼",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = FleetTokens.Spacing.XS)
+                    )
+                }
+            }
+        }
+
+        // Expanded content - Payment list
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically(animationSpec = tween(300)),
+            exit = shrinkVertically(animationSpec = tween(300))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.S),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    group.payments.forEach { payment ->
-                        CompactPaymentItem(
-                            payment = payment,
-                            onClick = { onPaymentClick(payment.id) },
-                            paymentStateLabels = paymentStateLabels
-                        )
-                    }
+                group.payments.forEach { payment ->
+                    CompactPaymentItem(
+                        payment = payment,
+                        onClick = { onPaymentClick(payment.id) },
+                        paymentStateLabels = paymentStateLabels
+                    )
                 }
             }
         }
@@ -272,13 +265,13 @@ internal fun CompactPaymentItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(FleetTokens.Spacing.S),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -286,16 +279,16 @@ internal fun CompactPaymentItem(
             Column {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
                     // Payment Type badge
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(FleetTokens.Radius.S),
                         color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
                     ) {
                         Text(
                             text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()}",
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS, vertical = FleetTokens.Spacing.XXS),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = getPaymentTypeColor(payment.paymentType)
@@ -309,7 +302,7 @@ internal fun CompactPaymentItem(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
 
                 // Payment date
                 payment.paymentDate?.let { date ->
@@ -341,22 +334,31 @@ internal fun CompactPaymentItem(
  * Format large amounts for group display.
  */
 
+// Mirrors PaymentsContract.formatAmount so the grouped cards and the summary cards
+// render the SAME value identically (Cr / L abbreviations above a lakh; full Indian-comma
+// rupees below it — no "K" abbreviation, which previously made one screen show both
+// "₹55,000.00" and "₹55.0 K").
 internal fun formatGroupAmount(amount: Double): String {
     return when {
-        amount >= 10000000 -> {
-            val cr = amount / 10000000
-            "${formatDecimal(cr, 2)} Cr"
+        amount <= 0 -> "0.00"
+        amount >= 10000000 -> "${formatDecimal(amount / 10000000, 2)}Cr"
+        amount >= 100000 -> "${formatDecimal(amount / 100000, 2)}L"
+        else -> {
+            val intPart = amount.toLong()
+            val decPart = ((amount - intPart) * 100).toLong()
+            "${formatIndianCommas(intPart)}.${decPart.toString().padStart(2, '0')}"
         }
-        amount >= 100000 -> {
-            val lakh = amount / 100000
-            "${formatDecimal(lakh, 2)} L"
-        }
-        amount >= 1000 -> {
-            val k = amount / 1000
-            "${formatDecimal(k, 1)} K"
-        }
-        else -> formatDecimal(amount, 0)
     }
+}
+
+/** Indian digit grouping: last 3 digits, then groups of 2 (e.g. 5500000 -> 55,00,000). */
+internal fun formatIndianCommas(value: Long): String {
+    val s = value.toString()
+    if (s.length <= 3) return s
+    val last3 = s.takeLast(3)
+    val rest = s.dropLast(3)
+    val grouped = rest.reversed().chunked(2).joinToString(",").reversed()
+    return "$grouped,$last3"
 }
 
 /**

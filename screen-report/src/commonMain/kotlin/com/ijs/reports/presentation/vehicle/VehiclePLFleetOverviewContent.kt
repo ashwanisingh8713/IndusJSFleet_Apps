@@ -14,8 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.ReportChartType
@@ -45,10 +50,21 @@ internal fun FleetOverviewContent(
     val hasData = state.multiResults.isNotEmpty()
     val hasError = state.error != null && !hasData
 
-    LazyColumn(
+    BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentAlignment = Alignment.TopCenter
+    ) {
+        val isWide = rememberFleetBreakpoint().isExpanded
+        val listModifier = if (isWide) {
+            Modifier.fillMaxSize().widthIn(max = FleetTokens.Width.MaxContent)
+        } else {
+            Modifier.fillMaxSize()
+        }
+
+    LazyColumn(
+        modifier = listModifier,
+        contentPadding = PaddingValues(FleetTokens.Spacing.L),
+        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
     ) {
         // Period Selection - always show
         item {
@@ -140,22 +156,36 @@ internal fun FleetOverviewContent(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
-                    OutlinedButton(
+                    FleetButton(
+                        text = stringResource(Res.string.reports_single_vehicle),
                         onClick = onSelectSingleVehicle,
+                        variant = ButtonVariant.SECONDARY,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text("🚛 " + stringResource(Res.string.reports_single_vehicle))
-                    }
-                    Button(
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_truck),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                        }
+                    )
+                    FleetButton(
+                        text = stringResource(Res.string.reports_export_report_btn),
                         onClick = onExport,
+                        variant = ButtonVariant.PRIMARY,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text("📄 " + stringResource(Res.string.reports_export_report_btn))
-                    }
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_download),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                        }
+                    )
                 }
             }
         } else {
@@ -169,7 +199,8 @@ internal fun FleetOverviewContent(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.L)) }
+    }
     }
 }
 
@@ -184,27 +215,28 @@ internal fun EmptyPLDataContent(
     period: String,
     onSelectSingleVehicle: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = null,
+        contentPadding = FleetTokens.Spacing.XXL
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("📊", style = MaterialTheme.typography.displayMedium)
-            Spacer(modifier = Modifier.height(16.dp))
+            Icon(
+                painter = painterResource(Res.drawable.ic_dashboard),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(FleetTokens.IconSize.XL)
+            )
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
             Text(
                 text = stringResource(Res.string.vehicle_pl_no_data_available),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Text(
                 text = if (period.isNotBlank())
                     stringResource(Res.string.reports_fleet_no_data_period, period)
@@ -214,7 +246,7 @@ internal fun EmptyPLDataContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Text(
                 text = stringResource(
                     Res.string.vehicle_pl_fleet_count,
@@ -224,10 +256,10 @@ internal fun EmptyPLDataContent(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
 
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -243,14 +275,21 @@ internal fun EmptyPLDataContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
 
-            OutlinedButton(
+            FleetButton(
+                text = stringResource(Res.string.reports_view_single_vehicle),
                 onClick = onSelectSingleVehicle,
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text("🚛 " + stringResource(Res.string.reports_view_single_vehicle))
-            }
+                variant = ButtonVariant.SECONDARY,
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_truck),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                }
+            )
         }
     }
 }
@@ -267,35 +306,37 @@ internal fun FleetErrorCard(
     onRetry: () -> Unit,
     onSelectSingleVehicle: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        )
+    FleetSectionCard(
+        containerColor = MaterialTheme.colorScheme.errorContainer,
+        border = null,
+        elevation = FleetTokens.Elevation.None,
+        contentPadding = FleetTokens.Spacing.XL
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("⚠️", style = MaterialTheme.typography.displayMedium)
-            Spacer(modifier = Modifier.height(16.dp))
+            Icon(
+                painter = painterResource(Res.drawable.ic_warning),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.size(FleetTokens.IconSize.XL)
+            )
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
             Text(
                 text = stringResource(Res.string.vehicle_pl_error_loading),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Text(
                 text = error,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f),
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Text(
                 text = stringResource(
                     Res.string.vehicle_pl_fleet_count,
@@ -303,25 +344,39 @@ internal fun FleetErrorCard(
                     if (vehicleCount != 1) "s" else ""
                 ),
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f)
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
-                OutlinedButton(
+                FleetButton(
+                    text = stringResource(Res.string.reports_single_vehicle),
                     onClick = onSelectSingleVehicle,
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("🚛 " + stringResource(Res.string.reports_single_vehicle))
-                }
-                Button(
+                    variant = ButtonVariant.SECONDARY,
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_truck),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                    }
+                )
+                FleetButton(
+                    text = stringResource(Res.string.retry),
                     onClick = onRetry,
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("🔄 " + stringResource(Res.string.retry))
-                }
+                    variant = ButtonVariant.PRIMARY,
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_refresh),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                    }
+                )
             }
         }
     }
@@ -345,8 +400,8 @@ internal fun PeriodSelectionRow(
 ) {
     Column {
         FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
             VehiclePLContract.PERIOD_OPTIONS.forEach { (value, label) ->
                 FilterChip(
@@ -363,18 +418,29 @@ internal fun PeriodSelectionRow(
 
         // Show selected custom date range label if applicable
         if (useCustomDateRange && startDate.isNotBlank() && endDate.isNotBlank()) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Surface(
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(FleetTokens.Radius.M),
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             ) {
-                Text(
-                    text = "📅 $startDate — $endDate",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS),
+                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.S)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_calendar),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                    Text(
+                        text = "$startDate — $endDate",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         }
     }
@@ -405,15 +471,19 @@ internal fun ViewModeAndFilterSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                 ReportViewMode.entries.forEach { mode ->
                     FilterChip(
                         selected = viewMode == mode,
                         onClick = { onViewModeChange(mode) },
                         label = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(mode.icon)
-                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    painter = painterResource(mode.icon),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
+                                Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                                 Text(mode.localizedLabel(), style = MaterialTheme.typography.labelSmall)
                             }
                         }
@@ -423,11 +493,15 @@ internal fun ViewModeAndFilterSection(
 
             // Vehicle filter button
             FilledTonalIconButton(onClick = onShowVehicleFilter) {
-                Text("🚛", style = MaterialTheme.typography.titleSmall)
+                Icon(
+                    painter = painterResource(Res.drawable.ic_truck),
+                    contentDescription = null,
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
         // P&L Status filter & Sort
         Row(
@@ -436,7 +510,7 @@ internal fun ViewModeAndFilterSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Status filter chips
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                 PLStatusFilter.entries.forEach { filter ->
                     FilterChip(
                         selected = plStatusFilter == filter,

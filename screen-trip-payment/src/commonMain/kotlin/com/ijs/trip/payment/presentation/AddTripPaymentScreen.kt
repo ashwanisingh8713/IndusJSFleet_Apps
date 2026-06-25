@@ -7,11 +7,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
@@ -87,8 +90,8 @@ fun CreateTripPaymentScreen(
                     ) {
                         if (state.isSaving) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
+                                modifier = Modifier.size(FleetTokens.IconSize.Default),
+                                strokeWidth = FleetTokens.Height.ProgressStroke
                             )
                         } else {
                             Icon(
@@ -136,13 +139,26 @@ fun CreateTripPaymentScreen(
                 if (date != null && time != null) "$date $time" else date ?: notApplicableLabel
             } ?: notApplicableLabel
 
-            Column(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+            ) {
+                val bp = rememberFleetBreakpoint()
+                val formModifier = if (bp == FleetBreakpoint.Compact) {
+                    Modifier.fillMaxWidth()
+                } else {
+                    Modifier
+                        .widthIn(max = FleetTokens.Width.MaxContent)
+                        .align(Alignment.TopCenter)
+                }
+
+            Column(
+                modifier = formModifier
+                    .fillMaxHeight()
                     .verticalScroll(scrollState)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(FleetTokens.Spacing.L),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
             ) {
                 // Trip Selection Section
                 TripSelectionSection(
@@ -256,24 +272,21 @@ fun CreateTripPaymentScreen(
                     )
                 }
 
-                // Save Button
-                Button(
+                // Save Button — gated by state.canSave; spinner via FleetButton.isLoading
+                FleetButton(
+                    text = if (state.isEditMode) {
+                        stringResource(Res.string.payment_action_update)
+                    } else {
+                        stringResource(Res.string.payment_action_record)
+                    },
                     onClick = { viewModel.sendIntent(AddPaymentContract.Intent.Save) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = state.canSave
-                ) {
-                    if (state.isSaving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text(if (state.isEditMode) stringResource(Res.string.payment_action_update) else stringResource(Res.string.payment_action_record))
-                }
+                    enabled = state.canSave,
+                    isLoading = state.isSaving
+                )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXL))
+            }
             }
         }
     }

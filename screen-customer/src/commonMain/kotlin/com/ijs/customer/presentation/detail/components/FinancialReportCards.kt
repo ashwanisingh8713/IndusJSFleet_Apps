@@ -10,9 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -27,7 +27,7 @@ internal fun TripSummaryCard(summary: FinancialTripSummary) {
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -85,7 +85,7 @@ internal fun PaymentStatusCard(received: Double, pending: Double) {
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -132,7 +132,7 @@ internal fun PeriodBreakdownCard(breakdown: List<PeriodBreakdown>) {
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             breakdown.forEach { period ->
                 Row(
@@ -179,7 +179,7 @@ internal fun TopVehiclesCard(vehicles: List<TopVehicle>) {
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             vehicles.forEachIndexed { index, vehicle ->
                 Row(
@@ -189,12 +189,12 @@ internal fun TopVehiclesCard(vehicles: List<TopVehicle>) {
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(24.dp)
-                                .clip(RoundedCornerShape(6.dp))
+                                .size(FleetTokens.IconSize.Default)
+                                .clip(RoundedCornerShape(FleetTokens.Radius.S))
                                 .background(
                                     when (index) {
                                         0 -> MaterialTheme.colorScheme.primaryContainer

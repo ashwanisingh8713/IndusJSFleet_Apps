@@ -15,16 +15,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.PieChart
 import com.indusjs.uicomponents.components.PieChartColors
 import com.indusjs.uicomponents.components.PieChartData
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.reports.domain.entity.ExpenseBreakdownItem
 import com.ijs.reports.domain.entity.VehiclePerformer
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -44,25 +46,32 @@ internal fun ExpenseBreakdownSection(breakdown: List<ExpenseBreakdownItem>) {
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(FleetTokens.Spacing.M))
+            // Stable colour per category: keep semantic colours for recognised types,
+            // else assign a distinct palette colour by index so slices + legend dots are
+            // distinguishable (not all grey) when the backend returns opaque cost codes.
+            val colorByType: Map<String, Color> = breakdown.mapIndexed { i, b ->
+                val named = PieChartColors.getCostTypeColor(b.type)
+                b.type to (if (named != PieChartColors.Other) named else PieChartColors.colorAt(i))
+            }.toMap()
             PieChart(
                 data = breakdown.map {
                     PieChartData(
                         formatCostType(it.type), it.amount,
-                        PieChartColors.getCostTypeColor(it.type)
+                        colorByType[it.type] ?: PieChartColors.getCostTypeColor(it.type)
                     )
                 },
                 chartSize = 130.dp, strokeWidth = 18.dp, showLegend = false
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(FleetTokens.Spacing.M))
             (if (expanded) breakdown else breakdown.take(4))
                 .sortedByDescending { it.amount }.forEach { item ->
                     ExpenseItemRow(
                         formatCostType(item.type), item.amount,
-                        item.percentage, PieChartColors.getCostTypeColor(item.type),
+                        item.percentage, colorByType[item.type] ?: PieChartColors.getCostTypeColor(item.type),
                         totalExpenses
                     )
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(FleetTokens.Spacing.S))
                 }
             if (breakdown.size > 4) {
                 TextButton(
@@ -92,8 +101,9 @@ private fun ExpenseItemRow(
         Row(
             Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
+            // Legend dot: bespoke 10dp glyph, not on the spacing scale.
             Box(Modifier.size(10.dp).clip(CircleShape).background(color))
             Text(
                 type,
@@ -104,11 +114,12 @@ private fun ExpenseItemRow(
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
+            // Inline mini bar + fixed numeric columns: bespoke widths, no matching token.
             Box(
-                Modifier.width(40.dp).height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
+                Modifier.width(40.dp).height(FleetTokens.Spacing.XS)
+                    .clip(RoundedCornerShape(FleetTokens.Radius.XS))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Box(
@@ -120,7 +131,7 @@ private fun ExpenseItemRow(
                 "${percentage.roundToInt()}%",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(32.dp)
+                modifier = Modifier.width(FleetTokens.Height.StepCircle)
             )
             Text(
                 formatCurrency(amount),
@@ -143,13 +154,13 @@ internal fun VehicleInsightsSection(
     lossMakingVehicles: List<VehiclePerformer>,
     onViewDetails: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
         topPerformer?.let {
             Box(
                 Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(FleetTokens.Radius.L))
                     .background(ReportsColors.ProfitGreen.copy(alpha = 0.08f))
-                    .padding(12.dp)
+                    .padding(FleetTokens.Spacing.M)
             ) {
                 Row(
                     Modifier.fillMaxWidth(),
@@ -158,9 +169,14 @@ internal fun VehicleInsightsSection(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                     ) {
-                        Text("🏆", fontSize = 22.sp)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_trophy),
+                            contentDescription = null,
+                            tint = ReportsColors.ProfitGreen,
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
+                        )
                         Column {
                             Text(
                                 stringResource(Res.string.reports_top_performer),
@@ -186,16 +202,21 @@ internal fun VehicleInsightsSection(
         if (lossMakingVehicles.isNotEmpty()) {
             Box(
                 Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(FleetTokens.Radius.L))
                     .background(ReportsColors.LossRed.copy(alpha = 0.06f))
-                    .padding(12.dp)
+                    .padding(FleetTokens.Spacing.M)
             ) {
                 Column {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                     ) {
-                        Text("⚠️", fontSize = 16.sp)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_warning),
+                            contentDescription = null,
+                            tint = ReportsColors.LossRed,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
                         Text(
                             stringResource(Res.string.reports_vehicles_need_attention, lossMakingVehicles.size),
                             style = MaterialTheme.typography.titleSmall,
@@ -203,10 +224,10 @@ internal fun VehicleInsightsSection(
                             color = ReportsColors.LossRed
                         )
                     }
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(FleetTokens.Spacing.S))
                     lossMakingVehicles.take(3).forEach { vehicle ->
                         Row(
-                            Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                            Modifier.fillMaxWidth().padding(vertical = FleetTokens.Spacing.XS),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
@@ -222,7 +243,7 @@ internal fun VehicleInsightsSection(
                         }
                     }
                     if (lossMakingVehicles.size > 3) {
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(FleetTokens.Spacing.XS))
                         TextButton(
                             onClick = onViewDetails,
                             Modifier.align(Alignment.CenterHorizontally)
@@ -240,20 +261,25 @@ internal fun VehicleInsightsSection(
 internal fun DocumentCostsNotice() {
     Box(
         Modifier.fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(FleetTokens.Radius.M))
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .border(
-                1.dp,
+                FleetTokens.Height.Divider,
                 MaterialTheme.colorScheme.outlineVariant,
-                RoundedCornerShape(8.dp)
+                RoundedCornerShape(FleetTokens.Radius.M)
             )
-            .padding(10.dp)
+            .padding(FleetTokens.Spacing.M)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
-            Text("ℹ️", fontSize = 14.sp)
+            Icon(
+                painter = painterResource(Res.drawable.ic_info),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(FleetTokens.IconSize.S)
+            )
             Text(
                 stringResource(Res.string.reports_pl_note_documents),
                 style = MaterialTheme.typography.labelSmall,
@@ -279,25 +305,25 @@ internal fun DetailedReportsSection(
     onDriverCostClick: () -> Unit,
     onCostAnalysisClick: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
         Text(
             stringResource(Res.string.reports_section_pl_reports),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReportCard(Modifier.weight(1f), "🚛", stringResource(Res.string.reports_card_vehicle_pl), stringResource(Res.string.reports_card_subtitle_by_vehicle), ReportsColors.InfoBlue, onVehiclePLClick)
-            ReportCard(Modifier.weight(1f), "🛣️", stringResource(Res.string.reports_card_trip_pl), stringResource(Res.string.reports_card_subtitle_by_trip), ReportsColors.ProfitGreen, onTripPLClick)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+            ReportCard(Modifier.weight(1f), Res.drawable.ic_truck, stringResource(Res.string.reports_card_vehicle_pl), stringResource(Res.string.reports_card_subtitle_by_vehicle), ReportsColors.InfoBlue, onVehiclePLClick)
+            ReportCard(Modifier.weight(1f), Res.drawable.ic_trip, stringResource(Res.string.reports_card_trip_pl), stringResource(Res.string.reports_card_subtitle_by_trip), ReportsColors.ProfitGreen, onTripPLClick)
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReportCard(Modifier.weight(1f), "📈", stringResource(Res.string.reports_card_fleet_pl), stringResource(Res.string.reports_card_subtitle_consolidated), ReportsColors.Purple, onConsolidatedClick)
-            ReportCard(Modifier.weight(1f), "🔀", stringResource(Res.string.reports_card_combined), stringResource(Res.string.reports_card_subtitle_combined), ReportsColors.Cyan, onCombinedReportClick)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+            ReportCard(Modifier.weight(1f), Res.drawable.ic_dashboard, stringResource(Res.string.reports_card_fleet_pl), stringResource(Res.string.reports_card_subtitle_consolidated), ReportsColors.Purple, onConsolidatedClick)
+            ReportCard(Modifier.weight(1f), Res.drawable.ic_refresh, stringResource(Res.string.reports_card_combined), stringResource(Res.string.reports_card_subtitle_combined), ReportsColors.Cyan, onCombinedReportClick)
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
             ReportCard(
                 Modifier.weight(1f),
-                "👥",
+                Res.drawable.ic_team,
                 stringResource(Res.string.customer_pl_card_title),
                 stringResource(Res.string.customer_pl_card_desc),
                 ReportsColors.Teal,
@@ -305,27 +331,27 @@ internal fun DetailedReportsSection(
             )
             Spacer(Modifier.weight(1f))
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(FleetTokens.Spacing.XS))
         Text(
             stringResource(Res.string.reports_cost_analysis),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReportCard(Modifier.weight(1f), "🔧", stringResource(Res.string.reports_card_maintenance), stringResource(Res.string.reports_card_maintenance_sub), ReportsColors.WarningAmber, onMaintenanceCostClick)
-            ReportCard(Modifier.weight(1f), "⛽", stringResource(Res.string.reports_card_trip_costs), stringResource(Res.string.reports_card_trip_costs_sub), ReportsColors.Pink, onTripCostClick)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+            ReportCard(Modifier.weight(1f), Res.drawable.ic_settings, stringResource(Res.string.reports_card_maintenance), stringResource(Res.string.reports_card_maintenance_sub), ReportsColors.WarningAmber, onMaintenanceCostClick)
+            ReportCard(Modifier.weight(1f), Res.drawable.ic_fuel, stringResource(Res.string.reports_card_trip_costs), stringResource(Res.string.reports_card_trip_costs_sub), ReportsColors.Pink, onTripCostClick)
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ReportCard(Modifier.weight(1f), "👨‍✈️", stringResource(Res.string.reports_card_driver_costs), stringResource(Res.string.reports_card_driver_costs_sub), ReportsColors.Teal, onDriverCostClick)
-            ReportCard(Modifier.weight(1f), "💰", stringResource(Res.string.reports_card_all_costs), stringResource(Res.string.reports_card_all_costs_sub), ReportsColors.WarningAmber, onCostAnalysisClick)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+            ReportCard(Modifier.weight(1f), Res.drawable.ic_profile, stringResource(Res.string.reports_card_driver_costs), stringResource(Res.string.reports_card_driver_costs_sub), ReportsColors.Teal, onDriverCostClick)
+            ReportCard(Modifier.weight(1f), Res.drawable.ic_cost, stringResource(Res.string.reports_card_all_costs), stringResource(Res.string.reports_card_all_costs_sub), ReportsColors.WarningAmber, onCostAnalysisClick)
         }
     }
 }
 
 @Composable
 private fun ReportCard(
-    modifier: Modifier, icon: String, title: String,
+    modifier: Modifier, iconRes: DrawableResource, title: String,
     description: String, color: Color, onClick: () -> Unit
 ) {
     FleetSectionCard(
@@ -333,18 +359,26 @@ private fun ReportCard(
         onClick = onClick,
         containerColor = color.copy(alpha = 0.06f),
         border = null,
-        elevation = 0.dp,
-        contentPadding = 12.dp
+        elevation = FleetTokens.Elevation.None,
+        contentPadding = FleetTokens.Spacing.M
     ) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
+            // Circular icon badge: bespoke 36dp chip, no dedicated chip-size token.
             Box(
                 Modifier.size(36.dp).clip(CircleShape).background(color.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
-            ) { Text(icon, fontSize = 16.sp) }
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                )
+            }
             Column {
                 Text(
                     title,

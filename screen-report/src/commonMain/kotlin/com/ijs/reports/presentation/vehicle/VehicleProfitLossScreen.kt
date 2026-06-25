@@ -32,14 +32,17 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetDateRangePickerDialog
 import com.indusjs.uicomponents.components.FleetSearchField
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
 import com.ijs.reports.domain.entity.CostBreakdownItem
@@ -141,7 +144,7 @@ fun VehicleProfitLossScreen(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -159,7 +162,7 @@ fun VehicleProfitLossScreen(
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_filter),
                                     contentDescription = stringResource(Res.string.reports_cd_filter),
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(FleetTokens.IconSize.Default)
                                 )
                             }
                         }
@@ -170,7 +173,7 @@ fun VehicleProfitLossScreen(
                             Icon(
                                 painter = painterResource(Res.drawable.ic_download),
                                 contentDescription = stringResource(Res.string.reports_cd_export),
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                     }
@@ -179,7 +182,7 @@ fun VehicleProfitLossScreen(
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
                             contentDescription = stringResource(Res.string.refresh),
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -261,13 +264,17 @@ fun VehicleProfitLossScreen(
                         .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Card(shape = RoundedCornerShape(16.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(FleetTokens.Radius.XL),
+                        color = MaterialTheme.colorScheme.surface,
+                        shadowElevation = FleetTokens.Elevation.Dialog
+                    ) {
                         Column(
-                            modifier = Modifier.padding(32.dp),
+                            modifier = Modifier.padding(FleetTokens.Spacing.XXL),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
                             Text(stringResource(Res.string.reports_updating), fontWeight = FontWeight.Medium)
                         }
                     }
@@ -286,13 +293,17 @@ fun VehicleProfitLossScreen(
                         .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Card(shape = RoundedCornerShape(16.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(FleetTokens.Radius.XL),
+                        color = MaterialTheme.colorScheme.surface,
+                        shadowElevation = FleetTokens.Elevation.Dialog
+                    ) {
                         Column(
-                            modifier = Modifier.padding(32.dp),
+                            modifier = Modifier.padding(FleetTokens.Spacing.XXL),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
                             Text(stringResource(Res.string.reports_generating), fontWeight = FontWeight.Medium)
                         }
                     }
@@ -353,14 +364,20 @@ fun VehicleProfitLossScreen(
 
 @Composable
 private fun NoVehiclesContent(onRefresh: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+    FleetSectionCard(
+        modifier = Modifier.padding(FleetTokens.Spacing.L),
+        contentPadding = FleetTokens.Spacing.XL
+    ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(stringResource(Res.string.reports_no_vehicles_available), style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(onClick = onRefresh) { Text(stringResource(Res.string.refresh)) }
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
+            FleetButton(
+                text = stringResource(Res.string.refresh),
+                onClick = onRefresh
+            )
         }
     }
 }
@@ -372,17 +389,33 @@ private fun ExportOptionsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.reports_export_dialog_title)) },
+        shape = RoundedCornerShape(FleetTokens.Radius.XL),
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = {
+            Text(
+                text = stringResource(Res.string.reports_export_dialog_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                 ExportFormat.entries.forEach { format ->
-                    Button(onClick = { onExport(format) }, modifier = Modifier.fillMaxWidth()) {
-                        Text(format.localizedLabel())
-                    }
+                    FleetButton(
+                        text = format.localizedLabel(),
+                        onClick = { onExport(format) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) } }
+        dismissButton = {
+            FleetButton(
+                text = stringResource(Res.string.close),
+                onClick = onDismiss,
+                variant = ButtonVariant.GHOST
+            )
+        }
     )
 }

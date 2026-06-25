@@ -18,9 +18,30 @@ class CreateOrganizationViewModel(
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
-            is Intent.UpdateOrganizationName -> updateState { copy(organizationName = intent.name) }
+            is Intent.UpdateOrganizationName -> updateOrganizationName(intent.name)
             is Intent.Submit -> submit()
             is Intent.DismissError -> updateState { copy(error = null) }
+        }
+    }
+
+    private fun updateOrganizationName(value: String) {
+        updateState {
+            copy(
+                organizationName = value,
+                organizationNameError = validateName(value)
+            )
+        }
+    }
+
+    /** Inline field-error rule for the org name (non-blank, >=2 chars, >=2 alphanumeric). */
+    private fun validateName(name: String): UiText? {
+        val trimmed = name.trim()
+        return when {
+            trimmed.isBlank() -> null // empty is gated by isValid, not shown as an error while typing
+            trimmed.length < 2 -> UiText.Raw("Organization name must be at least 2 characters.")
+            deriveSlug(trimmed).length < 2 ->
+                UiText.Raw("Organization name must contain at least 2 alphanumeric characters.")
+            else -> null
         }
     }
 
@@ -33,16 +54,17 @@ class CreateOrganizationViewModel(
     private suspend fun submit() {
         val name = currentState.organizationName.trim()
 
-        if (name.length < 2) {
-            updateState { copy(error = UiText.Raw("Organization name must be at least 2 characters.")) }
+        val nameError = if (name.isBlank()) {
+            UiText.Raw("Organization name is required.")
+        } else {
+            validateName(name)
+        }
+        if (nameError != null) {
+            updateState { copy(organizationNameError = nameError) }
             return
         }
 
         val slug = deriveSlug(name)
-        if (slug.length < 2) {
-            updateState { copy(error = UiText.Raw("Organization name must contain at least 2 alphanumeric characters.")) }
-            return
-        }
 
         updateState { copy(isCreating = true, error = null) }
 

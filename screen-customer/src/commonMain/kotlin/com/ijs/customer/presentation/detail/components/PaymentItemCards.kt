@@ -10,12 +10,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.fleet.core.util.formatDateTimeForDisplay
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.domain.entity.CustomerPayment
 import com.ijs.customer.presentation.localizedModeDisplay
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -26,18 +28,12 @@ fun EnhancedPaymentItem(
     payment: CustomerPayment,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(1.dp),
-        shape = RoundedCornerShape(10.dp)
+    FleetSectionCard(
+        modifier = modifier,
+        contentPadding = FleetTokens.Spacing.M
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             // Row 1: Mode, Trip ID, Amount
             Row(
@@ -47,19 +43,21 @@ fun EnhancedPaymentItem(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                 ) {
                     // Mode Icon Badge
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .size(FleetTokens.Height.StepCircle)
+                            .clip(RoundedCornerShape(FleetTokens.Radius.M))
                             .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = payment.modeIcon,
-                            style = MaterialTheme.typography.bodyMedium
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_cost),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.M),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                     Column {
@@ -84,7 +82,7 @@ fun EnhancedPaymentItem(
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
             // Row 2: Date/Time, Payment Type
             Row(
@@ -95,11 +93,13 @@ fun EnhancedPaymentItem(
                 // Date with proper format: DD-MMM-YYYY hh:mm AM/PM
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
-                    Text(
-                        text = "📅",
-                        style = MaterialTheme.typography.labelSmall
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_calendar),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.S),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = payment.date?.let { formatDateTimeForDisplay(it) } ?: "-",
@@ -117,10 +117,10 @@ fun EnhancedPaymentItem(
             val hasReference = !payment.referenceNumber.isNullOrBlank()
 
             if (hasReceipt || hasReference) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
                     payment.receiptNumber?.takeIf { it.isNotBlank() }?.let { receipt ->
                         Text(
@@ -188,9 +188,9 @@ internal fun PaymentTypeBadge(type: String) {
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(FleetTokens.Radius.S))
             .background(bgColor)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
     ) {
         Text(
             text = displayText,

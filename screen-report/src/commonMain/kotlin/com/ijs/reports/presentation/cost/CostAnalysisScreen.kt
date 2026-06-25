@@ -17,18 +17,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.DateVisualTransformation
+import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetSectionHeader
 import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.filterDigitsOnly
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
+import com.indusjs.fleet.core.util.ValidationUtils
+import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
 import com.ijs.reports.domain.entity.CostTypeAnalysis
@@ -90,102 +96,152 @@ fun CostAnalysisScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        LazyColumn(
+        // Inline date validation (ValidationUtils): only flag once the user has typed
+        // a full DD-MM-YYYY value, plus an end-before-start range check.
+        val startDateError = if (state.startDate.length == 8 || state.startDate.contains('-')) {
+            ValidationUtils.getDateError(formatDateInput(state.startDate))
+        } else null
+        val rangeError = run {
+            if (startDateError != null) return@run null
+            if (state.startDate.length != 8 && !state.startDate.contains('-')) return@run null
+            if (state.endDate.length != 8 && !state.endDate.contains('-')) return@run null
+            if (ValidationUtils.getDateError(formatDateInput(state.endDate)) != null) return@run null
+            val startMillis = convertToEpochMillis(state.startDate)
+            val endMillis = convertToEpochMillis(state.endDate)
+            if (startMillis != null && endMillis != null && endMillis < startMillis) {
+                stringResource(Res.string.reports_cost_end_before_start)
+            } else null
+        }
+        val endDateError = when {
+            rangeError != null -> rangeError
+            state.endDate.length == 8 || state.endDate.contains('-') ->
+                ValidationUtils.getDateError(formatDateInput(state.endDate))
+            else -> null
+        }
+        val datesComplete = startDateError == null && endDateError == null &&
+            state.startDate.isNotBlank() && state.endDate.isNotBlank()
+        val canGenerate = state.selectedCostTypes.isNotEmpty() && datesComplete
+
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Date Range Section
-            item {
-                DateRangeSection(
-                    startDate = state.startDate,
-                    endDate = state.endDate,
-                    onStartDateChange = { viewModel.sendIntent(Intent.UpdateStartDate(it)) },
-                    onEndDateChange = { viewModel.sendIntent(Intent.UpdateEndDate(it)) }
-                )
+            val breakpoint = rememberFleetBreakpoint()
+            val contentModifier = if (breakpoint == FleetBreakpoint.Expanded) {
+                Modifier
+                    .widthIn(max = FleetTokens.Width.MaxContent)
+                    .align(Alignment.TopCenter)
+            } else {
+                Modifier
             }
 
-            // Cost Type Selection
-            item {
-                CostTypeSelectionSection(
-                    selectedTypes = state.selectedCostTypes,
-                    onToggle = { viewModel.sendIntent(Intent.ToggleCostType(it)) },
-                    onSelectAll = { viewModel.sendIntent(Intent.SelectAllCostTypes) },
-                    onClearAll = { viewModel.sendIntent(Intent.ClearCostTypes) }
-                )
-            }
+            LazyColumn(
+                modifier = contentModifier
+                    .fillMaxSize()
+                    .padding(FleetTokens.Spacing.L),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+            ) {
+                // Date Range Section
+                item {
+                    DateRangeSection(
+                        startDate = state.startDate,
+                        endDate = state.endDate,
+                        startDateError = startDateError,
+                        endDateError = endDateError,
+                        onStartDateChange = { viewModel.sendIntent(Intent.UpdateStartDate(it)) },
+                        onEndDateChange = { viewModel.sendIntent(Intent.UpdateEndDate(it)) }
+                    )
+                }
 
-            // Generate Report Button
-            item {
-                Button(
-                    onClick = { viewModel.sendIntent(Intent.GenerateReport) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = state.selectedCostTypes.isNotEmpty() && !state.isLoading,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    if (state.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
+                // Cost Type Selection
+                item {
+                    CostTypeSelectionSection(
+                        selectedTypes = state.selectedCostTypes,
+                        onToggle = { viewModel.sendIntent(Intent.ToggleCostType(it)) },
+                        onSelectAll = { viewModel.sendIntent(Intent.SelectAllCostTypes) },
+                        onClearAll = { viewModel.sendIntent(Intent.ClearCostTypes) }
+                    )
+                }
+
+                // Generate Report Button
+                item {
+                    FleetButton(
+                        text = stringResource(Res.string.reports_analyze_costs),
+                        onClick = { viewModel.sendIntent(Intent.GenerateReport) },
+                        variant = ButtonVariant.PRIMARY,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = canGenerate,
+                        isLoading = state.isLoading
+                    )
+                }
+
+                // Results
+                if (state.hasResults) {
+                    // Summary Card
+                    item {
+                        TotalCostCard(
+                            totalAmount = state.totalAmount,
+                            totalCount = state.totalCount
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
                     }
-                    Text(stringResource(Res.string.reports_analyze_costs))
-                }
-            }
 
-            // Results
-            if (state.hasResults) {
-                // Summary Card
-                item {
-                    TotalCostCard(
-                        totalAmount = state.totalAmount,
-                        totalCount = state.totalCount
-                    )
+                    // Cost Breakdown Header
+                    item {
+                        Text(
+                            text = stringResource(Res.string.reports_cost_breakdown),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Cost Type Cards
+                    items(state.results) { analysis ->
+                        CostTypeCard(
+                            analysis = analysis,
+                            totalAmount = state.totalAmount
+                        )
+                    }
+                } else if (state.hasGenerated && !state.isLoading && state.error == null) {
+                    // Empty State - report ran but returned no rows
+                    item {
+                        EmptyContent(
+                            iconRes = Res.drawable.ic_cost,
+                            title = stringResource(Res.string.reports_cost_empty_title),
+                            message = stringResource(Res.string.reports_cost_empty_message),
+                            fillMaxSize = false
+                        )
+                    }
                 }
 
-                // Cost Breakdown Header
-                item {
-                    Text(
-                        text = stringResource(Res.string.reports_cost_breakdown),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                // Cost Type Cards
-                items(state.results) { analysis ->
-                    CostTypeCard(
-                        analysis = analysis,
-                        totalAmount = state.totalAmount
-                    )
-                }
-            }
-
-            // Error State
-            state.error?.let { error ->
-                item {
-                    FleetInlineErrorBanner(message = error.resolve())
+                // Error State
+                state.error?.let { error ->
+                    item {
+                        FleetInlineErrorBanner(message = error.resolve())
+                    }
                 }
             }
         }
     }
 }
 
+/** Normalises raw digit input ("25122024") to DD-MM-YYYY for ValidationUtils. */
+private fun formatDateInput(raw: String): String =
+    if (raw.contains('-')) raw else ValidationUtils.formatDateFromDigits(raw)
+
 @Composable
 private fun DateRangeSection(
     startDate: String,
     endDate: String,
+    startDateError: String?,
+    endDateError: String?,
     onStartDateChange: (String) -> Unit,
     onEndDateChange: (String) -> Unit
 ) {
     val dateVisualTransformation = remember { DateVisualTransformation() }
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
     ) {
         FleetInputField(
             value = startDate,
@@ -194,6 +250,8 @@ private fun DateRangeSection(
             label = stringResource(Res.string.reports_label_from),
             placeholder = "DD-MM-YYYY",
             visualTransformation = dateVisualTransformation,
+            isError = startDateError != null,
+            errorMessage = startDateError,
             modifier = Modifier.weight(1f)
         )
         FleetInputField(
@@ -203,6 +261,8 @@ private fun DateRangeSection(
             label = stringResource(Res.string.reports_label_to),
             placeholder = "DD-MM-YYYY",
             visualTransformation = dateVisualTransformation,
+            isError = endDateError != null,
+            errorMessage = endDateError,
             modifier = Modifier.weight(1f)
         )
     }
@@ -226,20 +286,20 @@ private fun CostTypeSelectionSection(
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                 TextButton(onClick = onSelectAll) {
-                    Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(Res.string.reports_action_all), style = MaterialTheme.typography.labelMedium)
                 }
                 TextButton(onClick = onClearAll) {
-                    Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(Res.string.reports_action_clear), style = MaterialTheme.typography.labelMedium)
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
             items(COST_TYPES) { (costType, displayName) ->
                 CostTypeChip(
@@ -261,19 +321,7 @@ private fun CostTypeChip(
     onClick: () -> Unit
 ) {
 
-    val icon = when (costType) {
-        "fuel" -> "⛽"
-        "toll" -> "🛣️"
-        "driver_allowance" -> "👤"
-        "parking" -> "🅿️"
-        "loading_charges" -> "📦"
-        "unloading_charges" -> "📤"
-        "maintenance" -> "🔧"
-        "insurance" -> "🛡️"
-        "permit" -> "📄"
-        "chalan" -> "📋"
-        else -> "💰"
-    }
+    val icon = costTypeIcon(costType)
 
     val backgroundColor = if (isSelected)
         MaterialTheme.colorScheme.primary
@@ -286,28 +334,38 @@ private fun CostTypeChip(
         MaterialTheme.colorScheme.onSurfaceVariant
 
     Surface(
-        modifier = Modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier
+            .heightIn(min = FleetTokens.Height.MinTouchTarget)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(FleetTokens.Radius.XXL),
         color = backgroundColor
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(
+                horizontal = FleetTokens.Spacing.M,
+                vertical = FleetTokens.Spacing.S
+            ),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = icon, style = MaterialTheme.typography.bodySmall)
-            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                modifier = Modifier.size(FleetTokens.IconSize.S),
+                tint = contentColor
+            )
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
             Text(
                 text = displayName,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = contentColor
             )
             if (isSelected) {
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                 Icon(
                     painter = painterResource(Res.drawable.ic_check),
                     contentDescription = null,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(FleetTokens.IconSize.S),
                     tint = contentColor
                 )
             }
@@ -333,7 +391,7 @@ private fun TotalCostCard(
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
             Text(
                 text = formatCurrency(totalAmount),
                 style = MaterialTheme.typography.headlineMedium,
@@ -342,7 +400,7 @@ private fun TotalCostCard(
             )
             Text(
                 text = stringResource(Res.string.reports_entries_count, totalCount),
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
             )
         }
@@ -357,19 +415,7 @@ private fun CostTypeCard(
     val percentage = if (totalAmount > 0) (analysis.totalAmount / totalAmount) * 100 else 0.0
     val progressFraction = (percentage / 100).toFloat().coerceIn(0f, 1f)
 
-    val icon = when (analysis.costType) {
-        "fuel" -> "⛽"
-        "toll" -> "🛣️"
-        "driver_allowance" -> "👤"
-        "parking" -> "🅿️"
-        "loading_charges" -> "📦"
-        "unloading_charges" -> "📤"
-        "maintenance" -> "🔧"
-        "insurance" -> "🛡️"
-        "permit" -> "📄"
-        "chalan" -> "📋"
-        else -> "💰"
-    }
+    val icon = costTypeIcon(analysis.costType)
 
     FleetSectionCard {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -380,10 +426,10 @@ private fun CostTypeCard(
             ) {
                 FleetSectionHeader(
                     title = analysis.displayName,
-                    emoji = icon,
+                    iconRes = icon,
                     modifier = Modifier.weight(1f)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                 Text(
                     text = formatCurrency(analysis.totalAmount),
                     style = MaterialTheme.typography.titleMedium,
@@ -391,26 +437,26 @@ private fun CostTypeCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
             // Progress bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .height(FleetTokens.Height.ProgressBar)
+                    .clip(RoundedCornerShape(FleetTokens.Radius.S))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(progressFraction)
                         .fillMaxHeight()
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.S))
                         .background(MaterialTheme.colorScheme.primary)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -418,12 +464,12 @@ private fun CostTypeCard(
             ) {
                 Text(
                     text = stringResource(Res.string.reports_entries_count, analysis.totalCount),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = formatPercentage(percentage),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -432,12 +478,26 @@ private fun CostTypeCard(
             if (analysis.averagePerEntry > 0) {
                 Text(
                     text = stringResource(Res.string.reports_cost_avg_per_entry, formatCurrency(analysis.averagePerEntry)),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
 }
+
+/** Maps a cost-type code to its vector icon, mirroring the app-wide cost-type icon convention. */
+private fun costTypeIcon(costType: String): org.jetbrains.compose.resources.DrawableResource =
+    when (costType.lowercase()) {
+        "fuel" -> Res.drawable.ic_fuel
+        "toll" -> Res.drawable.ic_trip
+        "driver_allowance" -> Res.drawable.ic_profile
+        "parking" -> Res.drawable.ic_map
+        "loading_charges" -> Res.drawable.ic_package
+        "unloading_charges" -> Res.drawable.ic_package
+        "maintenance" -> Res.drawable.ic_settings
+        "chalan" -> Res.drawable.ic_warning
+        else -> Res.drawable.ic_cost
+    }
 
 

@@ -1,7 +1,6 @@
 package com.ijs.vehicle.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,18 +13,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.uicomponents.components.DeleteConfirmationDialog
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FilterDefinition
 import com.indusjs.uicomponents.components.FleetFilterBar
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSearchField
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.vehicle.domain.entity.VehicleStatus
 import com.ijs.vehicle.domain.entity.VehicleType
@@ -81,7 +85,7 @@ fun VehiclesScreen(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -91,7 +95,7 @@ fun VehiclesScreen(
                             painter = painterResource(Res.drawable.ic_refresh),
                             contentDescription = stringResource(Res.string.refresh),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -110,7 +114,7 @@ fun VehiclesScreen(
                     Icon(
                         painter = painterResource(Res.drawable.ic_add),
                         contentDescription = stringResource(Res.string.vehicles_add),
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(FleetTokens.IconSize.Default)
                     )
                 }
             }
@@ -134,7 +138,10 @@ fun VehiclesScreen(
                 query = state.searchQuery,
                 onQueryChange = { viewModel.sendIntent(VehiclesContract.Intent.SearchVehicles(it)) },
                 placeholder = stringResource(Res.string.vehicles_search_placeholder),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(
+                    horizontal = FleetTokens.Spacing.ScreenHorizontal,
+                    vertical = FleetTokens.Spacing.S
+                )
             )
 
             val statusCountByStatus = remember(state.vehicles) {
@@ -162,7 +169,10 @@ fun VehiclesScreen(
                     }
                 },
                 allCount = state.vehicles.size.takeIf { it > 0 },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(
+                    horizontal = FleetTokens.Spacing.ScreenHorizontal,
+                    vertical = FleetTokens.Spacing.S
+                )
             )
 
             when {
@@ -211,24 +221,12 @@ fun VehiclesScreen(
     }
 
     // Delete confirmation dialog
-    if (state.showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { viewModel.sendIntent(VehiclesContract.Intent.DismissDelete) },
-            title = { Text(stringResource(Res.string.delete_confirmation_title)) },
-            text = { Text(stringResource(Res.string.vehicle_delete_confirmation_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.sendIntent(VehiclesContract.Intent.ConfirmDelete) },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) { Text(stringResource(Res.string.delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.sendIntent(VehiclesContract.Intent.DismissDelete) }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
-    }
+    DeleteConfirmationDialog(
+        showDialog = state.showDeleteConfirmation,
+        entityName = stringResource(Res.string.vehicle_entity_singular),
+        onConfirmDelete = { viewModel.sendIntent(VehiclesContract.Intent.ConfirmDelete) },
+        onDismiss = { viewModel.sendIntent(VehiclesContract.Intent.DismissDelete) }
+    )
 }
 
 @Composable
@@ -238,18 +236,56 @@ private fun VehicleList(
     onDeleteClick: (String) -> Unit,
     stateLabels: Map<String, String> = emptyMap()
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(vehicles, key = { it.id }) { vehicle ->
-            VehicleCard(
-                vehicle = vehicle,
-                onClick = { onVehicleClick(vehicle.id) },
-                onDeleteClick = { onDeleteClick(vehicle.id) },
-                stateLabels = stateLabels
-            )
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val breakpoint = rememberFleetBreakpoint()
+        // Compact stays 1-up; Medium/Expanded show two cards per row. On Expanded
+        // the grid is capped to a readable width and centered instead of stretching.
+        val columns = if (breakpoint.isAtLeastMedium) 2 else 1
+        val contentWidthModifier = if (breakpoint.isExpanded) {
+            Modifier.fillMaxWidth().widthIn(max = FleetTokens.Width.MaxContent)
+        } else {
+            Modifier.fillMaxWidth()
+        }
+
+        LazyColumn(
+            modifier = contentWidthModifier.fillMaxHeight().align(Alignment.TopCenter),
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+        ) {
+            if (columns == 1) {
+                items(vehicles, key = { it.id }) { vehicle ->
+                    VehicleCard(
+                        vehicle = vehicle,
+                        onClick = { onVehicleClick(vehicle.id) },
+                        onDeleteClick = { onDeleteClick(vehicle.id) },
+                        stateLabels = stateLabels
+                    )
+                }
+            } else {
+                val rows = vehicles.chunked(columns)
+                items(rows, key = { row -> row.first().id }) { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                    ) {
+                        row.forEach { vehicle ->
+                            VehicleCard(
+                                vehicle = vehicle,
+                                onClick = { onVehicleClick(vehicle.id) },
+                                onDeleteClick = { onDeleteClick(vehicle.id) },
+                                stateLabels = stateLabels,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        // Keep the last odd card aligned to a single column width.
+                        if (row.size < columns) {
+                            repeat(columns - row.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -259,21 +295,14 @@ private fun VehicleCard(
     vehicle: Vehicle,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    stateLabels: Map<String, String> = emptyMap()
+    stateLabels: Map<String, String> = emptyMap(),
+    modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetSectionCard(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column {
             // Header Row - Vehicle Icon, Registration, Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -286,17 +315,17 @@ private fun VehicleCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .size(FleetTokens.IconSize.XL)
+                            .clip(RoundedCornerShape(FleetTokens.Radius.L))
                             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)),
                         contentAlignment = Alignment.Center
                     ) {
                         VehicleTypeIcon(
                             type = vehicle.type,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
                     Column {
                         Text(
                             text = vehicle.registrationNumber,
@@ -304,7 +333,7 @@ private fun VehicleCard(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
                         Text(
                             text = "${vehicle.make} ${vehicle.model} (${vehicle.year})",
                             style = MaterialTheme.typography.bodySmall,
@@ -316,12 +345,11 @@ private fun VehicleCard(
                 StatusBadge(status = vehicle.status, stateLabels = stateLabels)
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                thickness = 0.5.dp
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
             // Info Row - Stats displayed inline without backgrounds
             Row(
@@ -330,29 +358,29 @@ private fun VehicleCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 VehicleInfoItem(
-                    icon = "⛽",
+                    iconRes = Res.drawable.ic_fuel,
                     value = "${vehicle.fuelLevel}%",
                     label = stringResource(Res.string.vehicle_list_label_fuel)
                 )
 
                 VerticalDivider(
-                    modifier = Modifier.height(32.dp),
+                    modifier = Modifier.height(FleetTokens.Spacing.XXL),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
 
                 VehicleInfoItem(
-                    icon = "📏",
+                    iconRes = Res.drawable.ic_speed,
                     value = stringResource(Res.string.vehicle_trips_km, vehicle.mileage.toInt()),
                     label = stringResource(Res.string.vehicle_list_label_mileage)
                 )
 
                 VerticalDivider(
-                    modifier = Modifier.height(32.dp),
+                    modifier = Modifier.height(FleetTokens.Spacing.XXL),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
 
                 VehicleInfoItem(
-                    icon = "👤",
+                    iconRes = Res.drawable.ic_profile,
                     value = vehicle.assignedDriver?.fullName()?.take(12)
                         ?: vehicle.assignedDriverName?.take(12)
                         ?: stringResource(Res.string.label_not_applicable),
@@ -362,21 +390,22 @@ private fun VehicleCard(
 
             // Location if available
             vehicle.lastLocation?.let { location ->
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    thickness = 0.5.dp
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "📍",
-                        style = MaterialTheme.typography.bodySmall
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_map),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.S),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                     Text(
                         text = location.address ?: stringResource(Res.string.vehicle_list_unknown_location),
                         style = MaterialTheme.typography.bodySmall,
@@ -391,21 +420,21 @@ private fun VehicleCard(
 
 @Composable
 private fun VehicleInfoItem(
-    icon: String,
+    iconRes: org.jetbrains.compose.resources.DrawableResource,
     value: String,
     label: String,
     modifier: Modifier = Modifier
 ) {
     // Transparent, centered stat (no tinted box) — preserve original look via
-    // showBackground = false + centered = true; emoji passes through, valueColor = onSurface.
+    // showBackground = false + centered = true; vector icon chip, valueColor = onSurface.
     FleetMetricTile(
         value = value,
         label = label,
-        emoji = icon,
+        iconRes = iconRes,
         valueColor = MaterialTheme.colorScheme.onSurface,
         showBackground = false,
         centered = true,
-        modifier = modifier.padding(horizontal = 8.dp)
+        modifier = modifier.padding(horizontal = FleetTokens.Spacing.S)
     )
 }
 

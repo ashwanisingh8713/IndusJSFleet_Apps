@@ -4,21 +4,21 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimepicker.PickerMode
 import com.indusjs.fleet.core.util.formatDateTimeForDisplay
 import com.indusjs.fleet.data.datasource.location.PlacePrediction
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -43,7 +43,7 @@ internal fun EditModeContent(
     state: TripDetailContract.State,
     viewModel: TripDetailViewModel
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)) {
         // Loading indicator for vehicles/drivers
         if (state.isLoadingVehiclesDrivers) {
             EditLoadingCard()
@@ -68,18 +68,14 @@ internal fun EditModeContent(
 
 @Composable
 private fun EditLoadingCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
+    FleetSectionCard {
         Box(
-            modifier = Modifier.fillMaxWidth().padding(32.dp),
+            modifier = Modifier.fillMaxWidth().padding(FleetTokens.Spacing.L),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CircularProgressIndicator(modifier = Modifier.size(32.dp))
-                Spacer(modifier = Modifier.height(8.dp))
+                CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.L))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 Text(stringResource(Res.string.trip_detail_loading_vehicles_drivers), style = MaterialTheme.typography.bodyMedium)
             }
         }
@@ -118,7 +114,7 @@ private fun EditVehicleDriverSection(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             // Driver Dropdown
             EditDropdownField(
@@ -158,11 +154,11 @@ private fun <T> SelectionDropdownList(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = FleetTokens.Elevation.Dropdown)
     ) {
-        Column(modifier = Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState())) {
+        Column(modifier = Modifier.heightIn(max = FleetTokens.Width.DropdownMaxHeight).verticalScroll(rememberScrollState())) {
             items.forEach { item ->
                 val isOccupied = getIsOccupied(item)
                 Surface(
@@ -170,10 +166,10 @@ private fun <T> SelectionDropdownList(
                         onSelect(item)
                     },
                     color = if (isOccupied) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                    else Color.Transparent
+                    else MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Row(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(FleetTokens.Spacing.M),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
@@ -211,22 +207,23 @@ private fun EditRouteSection(
 ) {
     FleetTitledSectionCard(title = stringResource(Res.string.trip_edit_section_route), emoji = "📍") {
             // Start Location with Search
-            OutlinedTextField(
+            FleetInputField(
                 value = state.startLocationAddress,
                 onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.SearchStartLocation(it)) },
-                label = { Text(stringResource(Res.string.trip_edit_start_location)) },
-                leadingIcon = { Text("🟢", modifier = Modifier.padding(start = 8.dp)) },
+                fieldType = FieldType.ADDRESS,
+                label = stringResource(Res.string.trip_edit_start_location),
+                leadingIcon = { Text("🟢", modifier = Modifier.padding(start = FleetTokens.Spacing.S)) },
                 trailingIcon = {
                     if (state.isSearchingStartLocation) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(FleetTokens.IconSize.M),
+                            strokeWidth = FleetTokens.Height.ProgressStroke
+                        )
                     }
                 },
                 isError = state.startLocationError != null,
-                supportingText = state.startLocationError?.let { { Text(it) } },
-                singleLine = false,
-                maxLines = 2,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                errorMessage = state.startLocationError,
+                modifier = Modifier.fillMaxWidth()
             )
 
             // Start Location Predictions
@@ -236,25 +233,26 @@ private fun EditRouteSection(
                 onSelect = { viewModel.sendIntent(TripDetailContract.Intent.SelectStartLocationPrediction(it)) }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             // End Location with Search
-            OutlinedTextField(
+            FleetInputField(
                 value = state.endLocationAddress,
                 onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.SearchEndLocation(it)) },
-                label = { Text(stringResource(Res.string.trip_edit_end_location)) },
-                leadingIcon = { Text("🔴", modifier = Modifier.padding(start = 8.dp)) },
+                fieldType = FieldType.ADDRESS,
+                label = stringResource(Res.string.trip_edit_end_location),
+                leadingIcon = { Text("🔴", modifier = Modifier.padding(start = FleetTokens.Spacing.S)) },
                 trailingIcon = {
                     if (state.isSearchingEndLocation) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(FleetTokens.IconSize.M),
+                            strokeWidth = FleetTokens.Height.ProgressStroke
+                        )
                     }
                 },
                 isError = state.endLocationError != null,
-                supportingText = state.endLocationError?.let { { Text(it) } },
-                singleLine = false,
-                maxLines = 2,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                errorMessage = state.endLocationError,
+                modifier = Modifier.fillMaxWidth()
             )
 
             // End Location Predictions
@@ -264,38 +262,38 @@ private fun EditRouteSection(
                 onSelect = { viewModel.sendIntent(TripDetailContract.Intent.SelectEndLocationPrediction(it)) }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             // Distance & Duration Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
-                OutlinedTextField(
+                FleetInputField(
                     value = state.estimatedDistance,
                     onValueChange = { viewModel.sendIntent(TripDetailContract.Intent.UpdateEstimatedDistance(it)) },
-                    label = { Text(stringResource(Res.string.trip_edit_distance)) },
-                    leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 8.dp)) },
+                    fieldType = FieldType.DECIMAL,
+                    label = stringResource(Res.string.trip_edit_distance),
+                    leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = FleetTokens.Spacing.S)) },
                     trailingIcon = {
                         if (state.isCalculatingDistance) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(FleetTokens.IconSize.M),
+                                strokeWidth = FleetTokens.Height.ProgressStroke
+                            )
                         }
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+                    modifier = Modifier.weight(1f)
                 )
 
-                OutlinedTextField(
+                FleetInputField(
                     value = state.estimatedDuration.ifBlank { "—" },
                     onValueChange = { },
-                    label = { Text(stringResource(Res.string.trip_edit_est_duration)) },
-                    leadingIcon = { Text("⏱️", modifier = Modifier.padding(start = 8.dp)) },
+                    fieldType = FieldType.DEFAULT,
+                    label = stringResource(Res.string.trip_edit_est_duration),
+                    leadingIcon = { Text("⏱️", modifier = Modifier.padding(start = FleetTokens.Spacing.S)) },
                     enabled = false,
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+                    modifier = Modifier.weight(1f)
                 )
             }
     }
@@ -313,18 +311,18 @@ private fun LocationPredictionsDropdown(
     if (show && predictions.isNotEmpty()) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(FleetTokens.Radius.M),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
-            Column(modifier = Modifier.heightIn(max = 200.dp)) {
+            Column(modifier = Modifier.heightIn(max = FleetTokens.Width.DropdownMaxHeight)) {
                 predictions.forEach { prediction ->
                     Surface(
                         modifier = Modifier.fillMaxWidth().clickable { onSelect(prediction) },
-                        color = Color.Transparent
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Text(
                             text = prediction.description,
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(FleetTokens.Spacing.M),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -356,7 +354,7 @@ private fun EditScheduleSection(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             FleetDateTimePicker(
                 date = state.arrivalDate,

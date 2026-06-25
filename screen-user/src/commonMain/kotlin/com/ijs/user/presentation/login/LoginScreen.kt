@@ -2,7 +2,6 @@ package com.ijs.user.presentation.login
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -13,6 +12,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.FieldType
@@ -22,11 +22,16 @@ import com.indusjs.uicomponents.components.FleetPasswordField
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.isAppInDarkTheme
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.uicomponents.theme.rememberThemeToggle
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+/** Max width for the centered login form on Medium/Expanded screens (tablet/web). */
+private val FORM_MAX_WIDTH = 480.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,15 +93,24 @@ fun LoginScreen(
                 )
             }
 
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
+                val breakpoint = rememberFleetBreakpoint()
+                // Compact: full-width. Medium/Expanded: centered, constrained column.
+                val formWidthModifier = if (breakpoint.isAtLeastMedium) {
+                    Modifier.widthIn(max = FORM_MAX_WIDTH)
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+
                 if (state.isCheckingAuth) {
                     SplashContent()
                 } else {
                     LoginFormContent(
                         state = state,
+                        widthModifier = formWidthModifier,
                         onIdentifierChange = { viewModel.sendIntent(LoginContract.Intent.UpdateIdentifier(it)) },
                         onPasswordChange = { viewModel.sendIntent(LoginContract.Intent.UpdatePassword(it)) },
                         onSwitchMode = { viewModel.sendIntent(LoginContract.Intent.SwitchLoginMode(it)) },
@@ -146,6 +160,7 @@ private fun SplashContent() {
 @Composable
 private fun LoginFormContent(
     state: LoginContract.State,
+    widthModifier: Modifier,
     onIdentifierChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onSwitchMode: (LoginContract.LoginMode) -> Unit,
@@ -156,7 +171,7 @@ private fun LoginFormContent(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .then(widthModifier)
             .verticalScroll(rememberScrollState())
             .padding(FleetTokens.Spacing.XXL),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -201,6 +216,7 @@ private fun LoginFormContent(
 
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
+        val identifierErrorText = state.identifierError?.resolve()
         if (state.loginMode == LoginContract.LoginMode.EMAIL) {
             FleetInputField(
                 value = state.identifier,
@@ -209,6 +225,8 @@ private fun LoginFormContent(
                 label = stringResource(Res.string.label_email),
                 placeholder = stringResource(Res.string.placeholder_email),
                 enabled = !state.isLoading,
+                isError = identifierErrorText != null,
+                errorMessage = identifierErrorText,
                 keyboardActions = KeyboardActions(
                     onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 )
@@ -221,18 +239,23 @@ private fun LoginFormContent(
                 label = stringResource(Res.string.login_mobile_label),
                 placeholder = stringResource(Res.string.login_mobile_placeholder),
                 enabled = !state.isLoading,
+                isError = identifierErrorText != null,
+                errorMessage = identifierErrorText,
                 keyboardActions = KeyboardActions(
                     onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 )
             )
         }
 
+        val passwordErrorText = state.passwordError?.resolve()
         FleetPasswordField(
             value = state.password,
             onValueChange = onPasswordChange,
             label = stringResource(Res.string.label_password),
             placeholder = stringResource(Res.string.placeholder_password),
             enabled = !state.isLoading,
+            isError = passwordErrorText != null,
+            errorMessage = passwordErrorText,
             keyboardActions = KeyboardActions(
                 onDone = {
                     focusManager.clearFocus()

@@ -5,6 +5,7 @@ import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.error.handler.ErrorClassifier
 import com.indusjs.error.handler.ErrorType
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.user.presentation.login.LoginContract.Effect
@@ -29,12 +30,18 @@ class LoginViewModel(
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
-            is Intent.UpdateIdentifier -> updateState { copy(identifier = intent.value) }
-            is Intent.UpdatePassword -> updateState { copy(password = intent.password) }
-            is Intent.SwitchLoginMode -> updateState { copy(loginMode = intent.mode, identifier = "", error = null) }
+            is Intent.UpdateIdentifier -> updateState {
+                copy(identifier = intent.value, identifierError = null, error = null)
+            }
+            is Intent.UpdatePassword -> updateState {
+                copy(password = intent.password, passwordError = null, error = null)
+            }
+            is Intent.SwitchLoginMode -> updateState {
+                copy(loginMode = intent.mode, identifier = "", identifierError = null, error = null)
+            }
             is Intent.TogglePasswordVisibility -> updateState { copy(isPasswordVisible = !isPasswordVisible) }
             is Intent.Login -> login()
-            is Intent.ClearError -> updateState { copy(error = null) }
+            is Intent.ClearError -> updateState { copy(error = null, identifierError = null, passwordError = null) }
             is Intent.CheckAuthStatus -> checkAuthStatus()
         }
     }
@@ -56,21 +63,36 @@ class LoginViewModel(
     private suspend fun login() {
         val identifier = currentState.identifier.trim()
         val password = currentState.password
+        val isEmailMode = currentState.loginMode == LoginContract.LoginMode.EMAIL
 
-        if (identifier.isEmpty()) {
-            val errorRes = if (currentState.loginMode == LoginContract.LoginMode.EMAIL)
-                Res.string.login_error_email_required
-            else
-                Res.string.login_error_mobile_required
-            updateState { copy(error = UiText.StringRes(errorRes)) }
+        // Inline identifier validation, per selected mode.
+        val identifierError: UiText? = when {
+            identifier.isEmpty() -> UiText.StringRes(
+                if (isEmailMode) Res.string.login_error_email_required
+                else Res.string.login_error_mobile_required
+            )
+            isEmailMode && !ValidationUtils.isValidEmail(identifier) ->
+                UiText.StringRes(Res.string.error_email_invalid)
+            !isEmailMode && !ValidationUtils.isValidIndianMobile(identifier) ->
+                UiText.StringRes(Res.string.error_mobile_invalid)
+            else -> null
+        }
+
+        // Inline password validation (presence only; policy stays backend-only).
+        val passwordError: UiText? = if (password.isEmpty())
+            UiText.StringRes(Res.string.login_error_password_required)
+        else null
+
+        if (identifierError != null || passwordError != null) {
+            updateState {
+                copy(identifierError = identifierError, passwordError = passwordError, error = null)
+            }
             return
         }
-        if (password.isEmpty()) {
-            updateState { copy(error = UiText.StringRes(Res.string.login_error_password_required)) }
-            return
-        }
 
-        updateState { copy(isLoading = true, error = null) }
+        updateState {
+            copy(isLoading = true, error = null, identifierError = null, passwordError = null)
+        }
 
         withContext(dispatcherProvider.io) {
             try {

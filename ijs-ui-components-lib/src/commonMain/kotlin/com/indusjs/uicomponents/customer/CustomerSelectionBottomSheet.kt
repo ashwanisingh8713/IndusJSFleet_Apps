@@ -12,6 +12,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.model.shared.SelectableCustomer
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetAccentIconChip
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -102,17 +106,22 @@ fun CustomerSelectionBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Add New Customer button
-            OutlinedButton(
+            FleetButton(
+                text = stringResource(Res.string.customer_add_new_button),
                 onClick = {
                     onDismiss()
                     onAddNewCustomer()
                 },
+                variant = ButtonVariant.SECONDARY,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("➕", modifier = Modifier.padding(end = 8.dp))
-                Text(stringResource(Res.string.customer_add_new_button), fontWeight = FontWeight.Medium)
-            }
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
+                    )
+                }
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -145,7 +154,12 @@ fun CustomerSelectionBottomSheet(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(text = "👤", style = MaterialTheme.typography.displayMedium)
+                            FleetAccentIconChip(
+                                accent = MaterialTheme.colorScheme.primary,
+                                chipSize = FleetTokens.IconSize.XL,
+                                iconSize = FleetTokens.IconSize.Default,
+                                iconRes = Res.drawable.ic_profile
+                            )
                             Text(
                                 text = stringResource(if (searchQuery.isNotBlank()) Res.string.customers_no_search_match else Res.string.customer_no_customers),
                                 style = MaterialTheme.typography.bodyLarge,
@@ -154,9 +168,17 @@ fun CustomerSelectionBottomSheet(
                             )
                             if (searchQuery.isBlank()) {
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Button(onClick = { onDismiss(); onAddNewCustomer() }) {
-                                    Text("➕ ${stringResource(Res.string.customer_add_new_button)}")
-                                }
+                                FleetButton(
+                                    text = stringResource(Res.string.customer_add_new_button),
+                                    onClick = { onDismiss(); onAddNewCustomer() },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_add),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(FleetTokens.IconSize.M)
+                                        )
+                                    }
+                                )
                             }
                         }
                     }

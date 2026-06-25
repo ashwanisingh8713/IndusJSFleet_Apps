@@ -3,7 +3,6 @@ package com.ijs.vehicle.presentation.detail
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -13,12 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.CaretakerSectionCard
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetDisplayField
+import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
 import com.ijs.vehicle.domain.entity.Vehicle
@@ -34,94 +33,69 @@ internal fun EditModeContent(
     state: VehicleDetailContract.State,
     viewModel: VehicleDetailViewModel
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)) {
         // ==================== Vehicle Information Section ====================
         FleetTitledSectionCard(
             title = stringResource(Res.string.vehicle_edit_info),
-            emoji = "🚗",
+            iconRes = Res.drawable.ic_truck,
             accent = MaterialTheme.colorScheme.primary
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Registration (read-only)
-                OutlinedTextField(
-                    value = state.registrationNumber,
-                    onValueChange = { },
-                    label = { Text(stringResource(Res.string.vehicles_registration)) },
-                    enabled = false,
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+                // Registration (read-only display, not an input)
+                FleetDisplayField(
+                    label = stringResource(Res.string.vehicles_registration),
+                    value = state.registrationNumber
                 )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
-                    OutlinedTextField(
+                    FleetInputField(
                         value = state.make,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateMake(it)) },
-                        label = { Text(stringResource(Res.string.vehicle_label_make)) },
-                        placeholder = { Text(stringResource(Res.string.vehicle_edit_placeholder_make)) },
+                        fieldType = FieldType.DEFAULT,
+                        label = stringResource(Res.string.vehicle_label_make),
+                        placeholder = stringResource(Res.string.vehicle_edit_placeholder_make),
                         isError = state.makeError != null,
-                        supportingText = state.makeError?.let { { Text(it.resolve()) } },
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Words,
-                            imeAction = ImeAction.Next
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        errorMessage = state.makeError?.resolve(),
+                        modifier = Modifier.weight(1f)
                     )
 
-                    OutlinedTextField(
+                    FleetInputField(
                         value = state.model,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateModel(it)) },
-                        label = { Text(stringResource(Res.string.vehicle_label_model)) },
-                        placeholder = { Text(stringResource(Res.string.vehicle_edit_placeholder_model)) },
+                        fieldType = FieldType.DEFAULT,
+                        label = stringResource(Res.string.vehicle_label_model),
+                        placeholder = stringResource(Res.string.vehicle_edit_placeholder_model),
                         isError = state.modelError != null,
-                        supportingText = state.modelError?.let { { Text(it.resolve()) } },
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Words,
-                            imeAction = ImeAction.Next
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        errorMessage = state.modelError?.resolve(),
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
-                    OutlinedTextField(
+                    FleetInputField(
                         value = state.year,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateYear(it)) },
-                        label = { Text(stringResource(Res.string.vehicle_label_year)) },
-                        placeholder = { Text(stringResource(Res.string.vehicle_edit_placeholder_year)) },
+                        fieldType = FieldType.NUMBER,
+                        label = stringResource(Res.string.vehicle_label_year),
+                        placeholder = stringResource(Res.string.vehicle_edit_placeholder_year),
                         isError = state.yearError != null,
-                        supportingText = state.yearError?.let { { Text(it.resolve()) } },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Next
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        errorMessage = state.yearError?.resolve(),
+                        modifier = Modifier.weight(1f)
                     )
 
-                    OutlinedTextField(
+                    FleetInputField(
                         value = state.mileage,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateMileage(it)) },
-                        label = { Text(stringResource(Res.string.vehicle_edit_mileage)) },
-                        placeholder = { Text(stringResource(Res.string.vehicle_edit_mileage_placeholder)) },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal,
-                            imeAction = ImeAction.Next
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        fieldType = FieldType.DECIMAL,
+                        label = stringResource(Res.string.vehicle_edit_mileage),
+                        placeholder = stringResource(Res.string.vehicle_edit_mileage_placeholder),
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
@@ -132,11 +106,11 @@ internal fun EditModeContent(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
+                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                     ) {
                         VehicleType.entries.forEach { type ->
                             FilterChip(
@@ -144,7 +118,13 @@ internal fun EditModeContent(
                                 onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateVehicleType(type)) },
                                 label = { Text(getVehicleTypeLabel(type)) },
                                 leadingIcon = if (state.vehicleType == type) {
-                                    { Text("✓") }
+                                    {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_check),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                                        )
+                                    }
                                 } else null
                             )
                         }
@@ -156,10 +136,10 @@ internal fun EditModeContent(
         // ==================== Specifications Section ====================
         FleetTitledSectionCard(
             title = stringResource(Res.string.vehicle_edit_specs),
-            emoji = "⚙️",
+            iconRes = Res.drawable.ic_settings,
             accent = MaterialTheme.colorScheme.primary
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
                 // Fuel Type selector
                 Column {
                     Text(
@@ -167,11 +147,11 @@ internal fun EditModeContent(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
+                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                     ) {
                         state.fuelTypeOptions.forEach { fuel ->
                             FilterChip(
@@ -185,36 +165,32 @@ internal fun EditModeContent(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
-                    OutlinedTextField(
+                    FleetInputField(
                         value = state.color,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateColor(it)) },
-                        label = { Text(stringResource(Res.string.vehicle_edit_color)) },
-                        placeholder = { Text(stringResource(Res.string.vehicle_edit_color_placeholder)) },
-                        leadingIcon = { Text("🎨", modifier = Modifier.padding(start = 8.dp)) },
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Words,
-                            imeAction = ImeAction.Next
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        fieldType = FieldType.DEFAULT,
+                        label = stringResource(Res.string.vehicle_edit_color),
+                        placeholder = stringResource(Res.string.vehicle_edit_color_placeholder),
+                        modifier = Modifier.weight(1f)
                     )
 
-                    OutlinedTextField(
+                    FleetInputField(
                         value = state.capacity,
                         onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateCapacity(it)) },
-                        label = { Text(stringResource(Res.string.vehicle_edit_capacity)) },
-                        placeholder = { Text(stringResource(Res.string.vehicle_edit_capacity_placeholder)) },
-                        leadingIcon = { Text("👥", modifier = Modifier.padding(start = 8.dp)) },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        fieldType = FieldType.NUMBER,
+                        label = stringResource(Res.string.vehicle_edit_capacity),
+                        placeholder = stringResource(Res.string.vehicle_edit_capacity_placeholder),
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_team),
+                                contentDescription = null,
+                                modifier = Modifier.size(FleetTokens.IconSize.S),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
@@ -223,26 +199,28 @@ internal fun EditModeContent(
         // ==================== Driver Assignment Section ====================
         FleetTitledSectionCard(
             title = stringResource(Res.string.vehicle_edit_assigned_driver),
-            emoji = "👤",
+            iconRes = Res.drawable.ic_profile,
             accent = MaterialTheme.colorScheme.primary
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
                 // Driver Dropdown
                 Column {
                     Surface(
                         onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ToggleDriverDropdown) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = FleetTokens.Height.MinTouchTarget),
+                        shape = RoundedCornerShape(FleetTokens.Radius.L),
+                        border = BorderStroke(FleetTokens.Height.Divider, MaterialTheme.colorScheme.outline),
                         color = MaterialTheme.colorScheme.surface
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(FleetTokens.Spacing.L),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             if (state.isLoadingDrivers) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                                Spacer(modifier = Modifier.width(12.dp))
+                                CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.M), strokeWidth = FleetTokens.Height.ProgressStroke)
+                                Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
                                 Text(stringResource(Res.string.vehicle_edit_loading_drivers), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             } else {
                                 Text(
@@ -262,12 +240,12 @@ internal fun EditModeContent(
                     // Driver Dropdown List
                     if (state.showDriverDropdown && state.drivers.isNotEmpty()) {
                         Card(
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = FleetTokens.Spacing.XS),
+                            shape = RoundedCornerShape(FleetTokens.Radius.L),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = FleetTokens.Elevation.Dropdown)
                         ) {
-                            Column(modifier = Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState())) {
+                            Column(modifier = Modifier.heightIn(max = FleetTokens.Width.DropdownMaxHeight).verticalScroll(rememberScrollState())) {
                                 // Option to remove driver
                                 Surface(
                                     modifier = Modifier.fillMaxWidth().clickable {
@@ -276,7 +254,7 @@ internal fun EditModeContent(
                                     color = Color.Transparent
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(12.dp),
+                                        modifier = Modifier.padding(FleetTokens.Spacing.M),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
@@ -299,7 +277,7 @@ internal fun EditModeContent(
                                         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
                                     ) {
                                         Row(
-                                            modifier = Modifier.padding(12.dp),
+                                            modifier = Modifier.padding(FleetTokens.Spacing.M),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Column(modifier = Modifier.weight(1f)) {
@@ -317,7 +295,12 @@ internal fun EditModeContent(
                                                 }
                                             }
                                             if (isSelected) {
-                                                Text("✓", color = MaterialTheme.colorScheme.primary)
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.ic_check),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(FleetTokens.IconSize.S),
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
                                             }
                                         }
                                     }

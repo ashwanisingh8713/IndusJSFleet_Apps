@@ -10,11 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetMetricTile
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
@@ -62,13 +64,13 @@ fun FinancialsTabContent(
                 EmptyContent(
                     title = stringResource(Res.string.customer_financials_empty_title),
                     message = stringResource(Res.string.customer_financials_empty_message_period),
-                    icon = "📊"
+                    iconRes = Res.drawable.ic_dashboard
                 )
             }
             else -> {
                 LazyColumn(
-                    contentPadding = PaddingValues(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(FleetTokens.Spacing.M),
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
                     // Main P&L Card
                     item {
@@ -112,7 +114,7 @@ fun FinancialsTabContent(
                         )
                     }
 
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.L)) }
                 }
             }
         }
@@ -130,8 +132,8 @@ private fun PeriodSelector(
     isExporting: Boolean
 ) {
     Column(
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.S),
+        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -139,7 +141,7 @@ private fun PeriodSelector(
             verticalAlignment = Alignment.CenterVertically
         ) {
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
                 modifier = Modifier.weight(1f)
             ) {
                 items(FinancialPeriod.entries.filter { it != FinancialPeriod.CUSTOM }) { period ->
@@ -147,7 +149,7 @@ private fun PeriodSelector(
                         selected = selectedPeriod == period,
                         onClick = { onPeriodSelected(period) },
                         label = { Text(period.localizedDisplayName()) },
-                        shape = RoundedCornerShape(20.dp)
+                        shape = RoundedCornerShape(FleetTokens.Radius.XXL)
                     )
                 }
                 item {
@@ -155,25 +157,25 @@ private fun PeriodSelector(
                         selected = selectedPeriod == FinancialPeriod.CUSTOM,
                         onClick = onCustomDateClick,
                         label = { Text(stringResource(Res.string.period_custom)) },
-                        shape = RoundedCornerShape(20.dp)
+                        shape = RoundedCornerShape(FleetTokens.Radius.XXL)
                     )
                 }
             }
             IconButton(
                 onClick = onExportPdf,
                 enabled = !isExporting,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(FleetTokens.Height.FilterChipRow)
             ) {
                 if (isExporting) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp
+                        modifier = Modifier.size(FleetTokens.IconSize.M),
+                        strokeWidth = FleetTokens.Height.ProgressStroke
                     )
                 } else {
                     Icon(
                         painter = painterResource(Res.drawable.ic_download),
                         contentDescription = stringResource(Res.string.cd_export_pdf),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
                     )
                 }
             }
@@ -191,25 +193,30 @@ private fun PeriodSelector(
 
 @Composable
 private fun ProfitLossCard(report: CustomerFinancialReport) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (report.isProfitable) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            } else {
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-            }
-        ),
-        shape = RoundedCornerShape(16.dp)
+    // Solid tonal card: fill is the full role colour, and inner text/icons use the
+    // matching on-container role so they stay legible in light and dark.
+    val onContainer = if (report.isProfitable) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onErrorContainer
+    }
+    FleetSectionCard(
+        containerColor = if (report.isProfitable) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.errorContainer
+        },
+        border = null,
+        elevation = FleetTokens.Elevation.None
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
         ) {
             Text(
                 text = stringResource(Res.string.dashboard_financial_overview),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = onContainer
             )
 
             Row(
@@ -219,23 +226,23 @@ private fun ProfitLossCard(report: CustomerFinancialReport) {
                 FinancialMetric(
                     label = stringResource(Res.string.reports_revenue),
                     value = report.totalRevenueDisplay,
-                    color = MaterialTheme.colorScheme.primary
+                    color = onContainer
                 )
                 FinancialMetric(
                     label = stringResource(Res.string.reports_expenses),
                     value = report.totalCostsDisplay,
-                    color = MaterialTheme.colorScheme.error
+                    color = onContainer
                 )
                 // Additive: driver costs (net of deductions) are now part of the
                 // backend response and are subtracted to reach net profit.
                 FinancialMetric(
                     label = stringResource(Res.string.reports_card_driver_costs),
                     value = report.totalDriverCostsDisplay,
-                    color = MaterialTheme.colorScheme.error
+                    color = onContainer
                 )
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(color = onContainer.copy(alpha = 0.2f))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -244,17 +251,13 @@ private fun ProfitLossCard(report: CustomerFinancialReport) {
                 FinancialMetric(
                     label = stringResource(Res.string.reports_net_profit_label),
                     value = report.netProfitDisplay,
-                    color = if (report.isProfitable) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
+                    color = onContainer,
                     isLarge = true
                 )
                 FinancialMetric(
                     label = stringResource(Res.string.reports_margin),
                     value = report.profitMarginDisplay,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = onContainer,
                     isLarge = true
                 )
             }
@@ -285,25 +288,16 @@ private fun ExportButton(
     isExporting: Boolean,
     onClick: () -> Unit
 ) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        enabled = !isExporting,
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        if (isExporting) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = MaterialTheme.colorScheme.onPrimary,
-                strokeWidth = 2.dp
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(Res.string.action_exporting))
+    FleetButton(
+        text = if (isExporting) {
+            stringResource(Res.string.action_exporting)
         } else {
-            Text(stringResource(Res.string.action_export_report_pdf), fontWeight = FontWeight.SemiBold)
-        }
-    }
+            stringResource(Res.string.action_export_report_pdf)
+        },
+        onClick = onClick,
+        enabled = !isExporting,
+        isLoading = isExporting,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 

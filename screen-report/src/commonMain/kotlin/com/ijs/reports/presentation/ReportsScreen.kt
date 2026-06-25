@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.uicomponents.components.FleetDateRangePickerDialog
@@ -19,6 +18,9 @@ import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetSectionHeader
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.pdfreport.handler.FleetProfitLossPdfHandler
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -145,19 +147,25 @@ fun ReportsScreen(
                         FilledTonalButton(
                             onClick = { viewModel.sendIntent(Intent.ExportToPdf) },
                             enabled = !state.isExporting,
-                            modifier = Modifier.height(32.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                            shape = RoundedCornerShape(8.dp)
+                            modifier = Modifier.height(FleetTokens.Height.ButtonSmall),
+                            contentPadding = PaddingValues(
+                                horizontal = FleetTokens.Spacing.M,
+                                vertical = FleetTokens.Spacing.None
+                            ),
+                            shape = RoundedCornerShape(FleetTokens.Radius.M)
                         ) {
                             if (state.isExporting) {
-                                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                                CircularProgressIndicator(
+                                    Modifier.size(FleetTokens.IconSize.S),
+                                    strokeWidth = FleetTokens.Height.ProgressStroke
+                                )
                             } else {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_download),
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
                                 )
-                                Spacer(Modifier.width(4.dp))
+                                Spacer(Modifier.width(FleetTokens.Spacing.XS))
                                 Text(
                                     stringResource(Res.string.export_format_pdf),
                                     style = MaterialTheme.typography.labelSmall,
@@ -165,7 +173,7 @@ fun ReportsScreen(
                                 )
                             }
                         }
-                        Spacer(Modifier.width(4.dp))
+                        Spacer(Modifier.width(FleetTokens.Spacing.XS))
                     }
                     IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
                         Icon(painter = painterResource(Res.drawable.ic_refresh), contentDescription = stringResource(Res.string.refresh))
@@ -205,26 +213,42 @@ private fun ReportsDashboardContent(
     onTripCostClick: () -> Unit, onDriverCostClick: () -> Unit, onCostAnalysisClick: () -> Unit,
     onRetry: () -> Unit, modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { PeriodFilterGrid(state.selectedPeriod, onPeriodSelect) }
-        if (state.isLoading && state.hasSummary) item { LinearProgressIndicator(Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))) }
-        state.error?.let { item { ErrorBanner(it.resolve(), onRetry) } }
-        state.summary?.let { summary ->
-            item { FinancialHeroCard(summary) }
-            item { FleetSnapshotCard(summary) }
-            if (summary.expenseBreakdown.isNotEmpty()) {
-                item { SectionLabel(stringResource(Res.string.reports_section_expense_breakdown)) }
-                item { ExpenseBreakdownSection(summary.expenseBreakdown) }
-            }
-            if (summary.topPerformingVehicle != null || summary.lossMakingVehiclesList.isNotEmpty()) {
-                item { SectionLabel(stringResource(Res.string.reports_section_vehicle_insights)) }
-                item { VehicleInsightsSection(summary.topPerformingVehicle, summary.lossMakingVehiclesList, onVehiclePLClick) }
-            }
-            item { DocumentCostsNotice() }
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val breakpoint = rememberFleetBreakpoint()
+        // On Expanded the dashboard is capped to a readable width and centered
+        // instead of stretching edge-to-edge; Compact/Medium fill the width.
+        val contentWidthModifier = if (breakpoint.isExpanded) {
+            Modifier.fillMaxWidth().widthIn(max = FleetTokens.Width.MaxContent)
+        } else {
+            Modifier.fillMaxWidth()
         }
-        item { SectionLabel(stringResource(Res.string.reports_section_detailed_reports)) }
-        item { DetailedReportsSection(onVehiclePLClick, onTripPLClick, onConsolidatedClick, onCustomerPLClick, onCombinedReportClick, onMaintenanceCostClick, onTripCostClick, onDriverCostClick, onCostAnalysisClick) }
-        item { Spacer(Modifier.height(24.dp)) }
+        LazyColumn(
+            modifier = contentWidthModifier.fillMaxHeight().align(Alignment.TopCenter),
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+        ) {
+            item { PeriodFilterGrid(state.selectedPeriod, onPeriodSelect) }
+            if (state.isLoading && state.hasSummary) item {
+                LinearProgressIndicator(Modifier.fillMaxWidth().clip(RoundedCornerShape(FleetTokens.Radius.S)))
+            }
+            state.error?.let { item { ErrorBanner(it.resolve(), onRetry) } }
+            state.summary?.let { summary ->
+                item { FinancialHeroCard(summary) }
+                item { FleetSnapshotCard(summary) }
+                if (summary.expenseBreakdown.isNotEmpty()) {
+                    item { SectionLabel(stringResource(Res.string.reports_section_expense_breakdown)) }
+                    item { ExpenseBreakdownSection(summary.expenseBreakdown) }
+                }
+                if (summary.topPerformingVehicle != null || summary.lossMakingVehiclesList.isNotEmpty()) {
+                    item { SectionLabel(stringResource(Res.string.reports_section_vehicle_insights)) }
+                    item { VehicleInsightsSection(summary.topPerformingVehicle, summary.lossMakingVehiclesList, onVehiclePLClick) }
+                }
+                item { DocumentCostsNotice() }
+            }
+            item { SectionLabel(stringResource(Res.string.reports_section_detailed_reports)) }
+            item { DetailedReportsSection(onVehiclePLClick, onTripPLClick, onConsolidatedClick, onCustomerPLClick, onCombinedReportClick, onMaintenanceCostClick, onTripCostClick, onDriverCostClick, onCostAnalysisClick) }
+            item { Spacer(Modifier.height(FleetTokens.Spacing.XL)) }
+        }
     }
 }
 
@@ -233,13 +257,13 @@ private fun PeriodFilterGrid(selectedPeriod: ReportPeriod, onPeriodSelect: (Repo
     val periods = ReportPeriod.entries
     val firstRow = periods.take(4)
     val secondRow = periods.drop(4)
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
             firstRow.forEach { period ->
                 PeriodChip(Modifier.weight(1f), period.localizedLabel(), selectedPeriod == period) { onPeriodSelect(period) }
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
             secondRow.forEach { period ->
                 PeriodChip(Modifier.weight(1f), period.localizedLabel(), selectedPeriod == period) { onPeriodSelect(period) }
             }
@@ -254,17 +278,19 @@ private fun PeriodChip(modifier: Modifier, label: String, selected: Boolean, onC
     val textColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
     val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
     Surface(
-        modifier = modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.clip(RoundedCornerShape(FleetTokens.Radius.L)).clickable(onClick = onClick),
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
         color = bgColor,
-        shadowElevation = if (selected) 4.dp else 0.dp,
+        shadowElevation = if (selected) FleetTokens.Elevation.Dropdown else FleetTokens.Elevation.None,
         border = BorderStroke(
-            width = if (selected) 1.5.dp else 1.dp,
+            width = FleetTokens.Height.Divider,
             color = borderColor
         )
     ) {
         Box(
-            Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+            Modifier
+                .defaultMinSize(minHeight = FleetTokens.Height.MinTouchTarget)
+                .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.M),
             contentAlignment = Alignment.Center
         ) {
             Text(

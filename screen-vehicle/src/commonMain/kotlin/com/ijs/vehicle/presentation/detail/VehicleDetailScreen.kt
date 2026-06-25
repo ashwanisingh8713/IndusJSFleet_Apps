@@ -28,7 +28,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.DeleteConfirmationDialog
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetTab
 import com.indusjs.uicomponents.components.FleetTabBar
 import com.indusjs.uicomponents.components.LoadingContent
@@ -38,6 +41,9 @@ import com.indusjs.uicomponents.components.CaretakerSectionCard
 import com.indusjs.uicomponents.components.HistoryTabContent
 import com.indusjs.uicomponents.components.StateChangeDialog
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.vehicle.presentation.getVehicleStateOptions
 import com.ijs.team.presentation.toCaretakerInfo
 import com.ijs.team.presentation.toCaretakerInfoList
@@ -61,13 +67,13 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * Tab definitions for Vehicle Detail Screen
  */
-private enum class VehicleDetailTab(val icon: String) {
-    OVERVIEW("📊"),
-    TRIPS("🚀"),
-    COSTS("💰"),
-    ROUTE("📍"),
-    DOCUMENTS("📄"),
-    HISTORY("📋")
+private enum class VehicleDetailTab {
+    OVERVIEW,
+    TRIPS,
+    COSTS,
+    ROUTE,
+    DOCUMENTS,
+    HISTORY
 }
 
 @Composable
@@ -257,39 +263,16 @@ fun VehicleDetailScreen(
     )
 
     // Delete confirmation dialog
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text(stringResource(Res.string.vehicle_detail_delete)) },
-            text = {
-                Text(
-                    stringResource(
-                        Res.string.delete_entity_confirmation_message,
-                        stringResource(Res.string.vehicle_entity_singular),
-                        state.vehicle?.registrationNumber.orEmpty()
-                    )
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        viewModel.sendIntent(VehicleDetailContract.Intent.ConfirmDelete)
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text(stringResource(Res.string.delete))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
-    }
+    DeleteConfirmationDialog(
+        showDialog = showDeleteDialog,
+        entityName = stringResource(Res.string.vehicle_entity_singular),
+        entityDetail = state.vehicle?.registrationNumber?.takeIf { it.isNotBlank() },
+        onConfirmDelete = {
+            showDeleteDialog = false
+            viewModel.sendIntent(VehicleDetailContract.Intent.ConfirmDelete)
+        },
+        onDismiss = { showDeleteDialog = false }
+    )
 
     // State Change Dialog
     if (state.showStateChangeDialog && state.vehicle != null) {
@@ -350,7 +333,7 @@ fun VehicleDetailScreen(
                                 stringResource(Res.string.back)
                             },
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -364,14 +347,14 @@ fun VehicleDetailScreen(
                         ) {
                             StatusChip(status = vehicle.status, stateLabels = state.stateLabels)
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                         // Edit Button
                         IconButton(onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.EnterEditMode) }) {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_edit),
                                 contentDescription = stringResource(Res.string.edit),
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                     }
@@ -387,42 +370,33 @@ fun VehicleDetailScreen(
             if (state.isEditMode) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shadowElevation = 8.dp
+                    shadowElevation = FleetTokens.Elevation.Dialog
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            .padding(FleetTokens.Spacing.L),
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                     ) {
-                        OutlinedButton(
+                        FleetButton(
+                            text = stringResource(Res.string.cancel),
                             onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.ExitEditMode) },
+                            variant = ButtonVariant.SECONDARY,
                             modifier = Modifier.weight(1f)
-                        ) {
-                            Text(stringResource(Res.string.cancel))
-                        }
+                        )
 
-                        Button(
+                        FleetButton(
+                            text = if (state.isSaving) {
+                                stringResource(Res.string.action_saving)
+                            } else {
+                                stringResource(Res.string.vehicle_detail_save_changes)
+                            },
                             onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.SaveChanges) },
-                            modifier = Modifier.weight(1f),
-                            enabled = state.canSave
-                        ) {
-                            if (state.isSaving) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
-                            Text(
-                                if (state.isSaving) {
-                                    stringResource(Res.string.action_saving)
-                                } else {
-                                    stringResource(Res.string.vehicle_detail_save_changes)
-                                }
-                            )
-                        }
+                            variant = ButtonVariant.PRIMARY,
+                            enabled = state.canSave,
+                            isLoading = state.isSaving,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
@@ -441,17 +415,30 @@ fun VehicleDetailScreen(
             }
             state.vehicle != null -> {
                 if (state.isEditMode) {
-                    // Edit Mode - Show edit form without tabs
-                    LazyColumn(
+                    // Edit Mode - Show edit form without tabs.
+                    // On wide screens, cap + centre the form so it doesn't stretch edge-to-edge.
+                    BoxWithConstraints(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.background)
-                            .padding(padding),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                            .padding(padding)
                     ) {
-                        item { EditModeContent(state, viewModel) }
-                        item { Spacer(modifier = Modifier.height(80.dp)) }
+                        val bp = rememberFleetBreakpoint()
+                        val formWidthModifier = when (bp) {
+                            FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
+                            else -> Modifier.widthIn(max = FleetTokens.Width.MaxContent)
+                        }
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .then(formWidthModifier)
+                                .align(Alignment.TopCenter),
+                            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+                            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                        ) {
+                            item { EditModeContent(state, viewModel) }
+                            item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL)) }
+                        }
                     }
                 } else {
                     // View Mode with Tabs
@@ -474,14 +461,14 @@ fun VehicleDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Card(
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(FleetTokens.Radius.XL)
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(FleetTokens.Spacing.XL),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
                         Text(stringResource(Res.string.action_saving))
                     }
                 }
@@ -499,14 +486,14 @@ fun VehicleDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Card(
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(FleetTokens.Radius.XL)
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(FleetTokens.Spacing.XL),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
                         Text(stringResource(Res.string.vehicle_detail_uploading, uploadingDocName))
                     }
                 }
@@ -529,7 +516,7 @@ private fun VehicleDetailTabbedContent(
     val fleetTabs = tabs.map { tab ->
         FleetTab(
             id = tab,
-            label = "${tab.icon} ${tab.titleText()}"
+            label = tab.titleText()
         )
     }
     val pagerState = rememberPagerState(initialPage = 0) { tabs.size }

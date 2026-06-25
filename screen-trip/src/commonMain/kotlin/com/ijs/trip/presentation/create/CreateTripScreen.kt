@@ -17,8 +17,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimepicker.FleetDateTimePicker
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.util.formatDateTimeForDisplay
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetAccentIconChip
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
@@ -33,6 +36,7 @@ import com.indusjs.fleet.data.datasource.location.PlacePrediction
 import com.ijs.customer.domain.entity.Customer
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -151,10 +155,10 @@ fun CreateTripScreen(
                                     errorCount
                                 ),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f))
+                                    .background(MaterialTheme.colorScheme.errorContainer)
                                     .padding(horizontal = 16.dp, vertical = 4.dp)
                             )
                         }
@@ -166,31 +170,22 @@ fun CreateTripScreen(
                             .padding(16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        OutlinedButton(
+                        FleetButton(
+                            text = stringResource(Res.string.cancel),
                             onClick = { viewModel.sendIntent(CreateTripContract.Intent.NavigateBack) },
+                            variant = ButtonVariant.SECONDARY,
                             modifier = Modifier.weight(1f)
-                        ) {
-                            Text(stringResource(Res.string.cancel))
-                        }
+                        )
 
-                        Button(
+                        FleetButton(
+                            text = if (state.isSaving) stringResource(Res.string.action_creating)
+                            else stringResource(Res.string.trip_create_title),
                             onClick = { viewModel.sendIntent(CreateTripContract.Intent.CreateTrip) },
+                            variant = ButtonVariant.PRIMARY,
                             modifier = Modifier.weight(1f),
-                            enabled = state.canSave
-                        ) {
-                            if (state.isSaving) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
-                            Text(
-                                if (state.isSaving) stringResource(Res.string.action_creating)
-                                else stringResource(Res.string.trip_create_title)
-                            )
-                        }
+                            enabled = state.canSave,
+                            isLoading = state.isSaving
+                        )
                     }
                 }
             }
@@ -213,7 +208,7 @@ fun CreateTripScreen(
                 item {
                     SectionCard(
                         title = stringResource(Res.string.trip_create_section_schedule),
-                        leadingEmoji = "🗓️"
+                        iconRes = Res.drawable.ic_calendar
                     ) {
                         ScheduleSection(state = state, viewModel = viewModel)
                     }
@@ -223,7 +218,7 @@ fun CreateTripScreen(
                 item {
                     SectionCard(
                         title = stringResource(Res.string.trip_create_section_vehicle_driver),
-                        leadingEmoji = "🚚"
+                        iconRes = Res.drawable.ic_truck
                     ) {
                         VehicleDriverSelectionSection(
                             state = state,
@@ -236,7 +231,7 @@ fun CreateTripScreen(
                 item {
                     SectionCard(
                         title = stringResource(Res.string.trip_create_section_route),
-                        leadingEmoji = "📍"
+                        iconRes = Res.drawable.ic_map
                     ) {
                         RouteSection(state = state, viewModel = viewModel)
                     }
@@ -247,7 +242,7 @@ fun CreateTripScreen(
                 item {
                     SectionCard(
                         title = stringResource(Res.string.trip_create_section_cargo),
-                        leadingEmoji = "📦"
+                        iconRes = Res.drawable.ic_package
                     ) {
                         CargoSection(state = state, viewModel = viewModel)
                     }
@@ -274,7 +269,7 @@ fun CreateTripScreen(
                 item {
                     SectionCard(
                         title = stringResource(Res.string.trip_create_section_delivery),
-                        leadingEmoji = "🚛"
+                        iconRes = Res.drawable.ic_truck
                     ) {
                         DeliverySection(state = state, viewModel = viewModel)
                     }
@@ -291,7 +286,7 @@ fun CreateTripScreen(
                 item {
                     SectionCard(
                         title = stringResource(Res.string.trip_create_section_notes),
-                        leadingEmoji = "📝"
+                        iconRes = Res.drawable.ic_edit
                     ) {
                         FleetInputField(
                             value = state.notes,
@@ -350,15 +345,13 @@ fun CreateTripScreen(
 }
 
 /**
- * Local section card. [leadingEmoji] renders an optional leading icon (emoji — the established
- * section-header pattern in this app) before the title. Note: the section title strings already
- * embed a leading emoji of their own; when a [leadingEmoji] is supplied we strip a leading emoji
- * token from [title] so the header shows exactly one icon.
+ * Local section card. [iconRes] renders an optional leading vector icon (inside a
+ * [FleetAccentIconChip]) before the title — the design-system section-header anchor pattern.
  */
 @Composable
 private fun SectionCard(
     title: String,
-    leadingEmoji: String? = null,
+    iconRes: DrawableResource? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     FleetSectionCard(
@@ -367,26 +360,22 @@ private fun SectionCard(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (leadingEmoji != null) {
-                    Text(
-                        text = leadingEmoji,
-                        style = MaterialTheme.typography.titleMedium
+                if (iconRes != null) {
+                    FleetAccentIconChip(
+                        accent = MaterialTheme.colorScheme.primary,
+                        chipSize = 32.dp,
+                        iconSize = 18.dp,
+                        iconRes = iconRes
                     )
-                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
                 }
                 Text(
-                    // Section strings carry their own leading emoji; drop it when we render an
-                    // explicit leading icon so the header never shows two icons.
-                    text = if (leadingEmoji != null) title.stripLeadingEmoji() else title,
+                    text = title.stripLeadingEmoji(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                thickness = 1.dp
-            )
             content()
         }
     }
@@ -394,8 +383,8 @@ private fun SectionCard(
 
 /**
  * Strips a leading emoji + whitespace from a section title. The title strings (e.g. "📅 Schedule")
- * embed an icon; when the card renders its own leading icon we remove that prefix so only the words
- * remain ("Schedule"). Conservative: only trims a leading run of non-letter/non-digit symbols.
+ * embed an icon; the card renders its own leading icon chip, so we remove that prefix and keep only
+ * the words ("Schedule"). Conservative: only trims a leading run of non-letter/non-digit symbols.
  */
 private fun String.stripLeadingEmoji(): String {
     val firstWord = indexOfFirst { it.isLetterOrDigit() }
@@ -643,7 +632,7 @@ private fun RouteSection(
                 onValueChange = { viewModel.sendIntent(CreateTripContract.Intent.UpdateEstimatedDistance(it)) },
                 label = { Text(stringResource(Res.string.trip_create_distance_label)) },
                 placeholder = { Text(stringResource(Res.string.trip_create_distance_placeholder)) },
-                leadingIcon = { Text("🛣️", modifier = Modifier.padding(start = 12.dp)) },
+                leadingIcon = { Icon(painter = painterResource(Res.drawable.ic_map), contentDescription = null, modifier = Modifier.size(FleetTokens.IconSize.M)) },
                 trailingIcon = {
                     if (state.isCalculatingDistance) {
                         CircularProgressIndicator(
@@ -766,7 +755,12 @@ private fun LocationSearchField(
                         }
                     },
                     leadingIcon = {
-                        Text("📍", style = MaterialTheme.typography.bodyMedium)
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_map),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
+                        )
                     },
                     onClick = { onPredictionSelected(prediction) },
                     modifier = Modifier.fillMaxWidth()
@@ -914,7 +908,7 @@ private fun CargoSection(
             selectedOptionId = state.priority.takeIf { it.isNotBlank() },
             onOptionSelected = { viewModel.sendIntent(CreateTripContract.Intent.UpdatePriority(it)) },
             modifier = Modifier.fillMaxWidth(),
-            leadingIcon = { Text("🚩", modifier = Modifier.padding(start = FleetTokens.Spacing.M)) }
+            leadingIcon = { Icon(painter = painterResource(Res.drawable.ic_info), contentDescription = null, modifier = Modifier.size(FleetTokens.IconSize.M)) }
         )
     }
 }
@@ -988,7 +982,7 @@ private fun PricingSection(
 ) {
     FleetTitledSectionCard(
         title = stringResource(Res.string.trip_create_pricing_title),
-        emoji = "💰",
+        iconRes = Res.drawable.ic_cost,
         accent = MaterialTheme.colorScheme.primary
     ) {
             // Subtitle pill
@@ -1106,7 +1100,7 @@ private fun PricingSection(
             // Info banner - below Total Amount
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f),
+                color = MaterialTheme.colorScheme.secondaryContainer,
                 shape = RoundedCornerShape(FleetTokens.Radius.M)
             ) {
                 Row(
@@ -1124,7 +1118,7 @@ private fun PricingSection(
                     Text(
                         text = stringResource(Res.string.trip_create_pricing_banner),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
             }

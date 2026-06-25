@@ -17,6 +17,7 @@ object FleetTokens {
     // =============================================
 
     object Spacing {
+        val None: Dp = 0.dp
         val XXS: Dp = 2.dp
         val XS: Dp = 4.dp
         val S: Dp = 8.dp
@@ -62,6 +63,21 @@ object FleetTokens {
         val Dropdown: Dp = 4.dp
         val Dialog: Dp = 8.dp
         val Modal: Dp = 16.dp
+    }
+
+    // =============================================
+    // Border / Stroke Widths
+    // =============================================
+
+    object Border {
+        /** Hairline divider / resting field border. */
+        val Hairline: Dp = 1.dp
+
+        /** Default control border (inputs, OTP boxes at rest). */
+        val Default: Dp = 1.5.dp
+
+        /** Emphasis border for focused / active / error states. */
+        val Emphasis: Dp = 2.dp
     }
 
     // =============================================

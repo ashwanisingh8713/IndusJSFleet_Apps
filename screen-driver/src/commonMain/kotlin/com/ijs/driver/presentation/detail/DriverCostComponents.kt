@@ -16,15 +16,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCostAmount
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun DriverCostGroupSection(
     groupId: String,
     groupName: String,
-    groupIcon: String,
+    groupIcon: DrawableResource,
     costs: List<com.indusjs.fleet.data.model.driver.DriverCostDto>,
     totalAmount: Double,
     isExpanded: Boolean,
@@ -69,7 +72,12 @@ internal fun DriverCostGroupSection(
                             modifier = Modifier.size(40.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                Text(groupIcon, style = MaterialTheme.typography.titleMedium)
+                                Icon(
+                                    painter = painterResource(groupIcon),
+                                    contentDescription = null,
+                                    tint = groupColor,
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
                             }
                         }
 
@@ -193,11 +201,22 @@ internal fun EnhancedDriverCostItem(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "📅 ${formatDateToHumanReadable(cost.date)}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_calendar),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                            Text(
+                                text = formatDateToHumanReadable(cost.date),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
 
                         // Trip link (if available)
                         cost.tripId?.let { tripId ->

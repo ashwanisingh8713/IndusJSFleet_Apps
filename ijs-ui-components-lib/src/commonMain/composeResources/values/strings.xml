@@ -784,6 +784,9 @@
 
     <!-- ==================== Error Fallbacks ==================== -->
     <string name="error_signup_failed">Sign up failed</string>
+    <string name="error_signup_mobile_exists">This mobile number is already registered. Please log in or use a different number.</string>
+    <string name="error_signup_email_exists">This email is already registered. Please log in or use a different email.</string>
+    <string name="error_account_exists_generic">An account with these details already exists. Please log in.</string>
     <string name="error_load_profile">Failed to load profile</string>
     <string name="error_update_profile">Failed to update profile</string>
     <string name="error_change_password_failed">Failed to change password</string>
@@ -1271,7 +1274,7 @@
     <string name="trip_payment_record_plus">+ Record Payment</string>
     <string name="trip_payment_history">Payment History</string>
     <string name="trip_payment_received_count">Received (%1$d)</string>
-    <string name="trip_payment_percent_collected">%1$d%% collected</string>
+    <string name="trip_payment_percent_collected">%1$s collected</string>
     <string name="trip_payments_empty_title">No payments recorded</string>
     <string name="trip_payments_empty_message">Payments for this trip will appear here</string>
 
@@ -1283,7 +1286,7 @@
     <string name="trip_create_section_schedule">📅 Schedule</string>
     <string name="trip_create_section_vehicle_driver">🚚 Vehicle &amp; Driver</string>
     <string name="trip_create_section_route">📍 Route</string>
-    <string name="trip_create_section_cargo">📦 Cargo Details</string>
+    <string name="trip_create_section_cargo">📦 Cargo &amp; Priority</string>
     <string name="trip_create_section_priority">🎯 Priority</string>
     <string name="trip_create_section_notes">📝 Notes</string>
     <string name="trip_edit_section_vehicle_driver">Vehicle &amp; Driver</string>
@@ -1927,7 +1930,7 @@
     <string name="finance_due_in_days">Due in %1$d days</string>
     <string name="finance_record_emi">Record EMI</string>
     <string name="finance_lender">Lender</string>
-    <string name="finance_percent_complete">%1$d%% Complete</string>
+    <string name="finance_percent_complete">%1$s Complete</string>
     <string name="finance_emis_paid_progress">%1$d/%2$d EMIs paid</string>
     <string name="finance_next_emi_line">Next EMI: %1$s</string>
     <string name="finance_outstanding_line">Outstanding: %1$s</string>
@@ -1988,7 +1991,7 @@
     <string name="finance_row_down_payment">Down Payment</string>
     <string name="finance_row_loan_amount">Loan Amount</string>
     <string name="finance_row_interest_rate">Interest Rate</string>
-    <string name="finance_row_interest_rate_annum">%1$s%% per annum</string>
+    <string name="finance_row_interest_rate_annum">%1$s per annum</string>
     <string name="finance_row_tenure_months">%1$d months</string>
     <string name="finance_row_payment_date">Payment Date</string>
     <string name="finance_row_due_date">Due Date</string>
@@ -2207,4 +2210,54 @@
     <string name="trip_create_delivery_contact_required">Delivery Contact Number *</string>
     <string name="trip_create_delivery_contact_placeholder">10-digit mobile number</string>
     <string name="trip_create_select_material_first">Select material first</string>
+    <string name="error_first_name_invalid">Enter a valid first name</string>
+    <string name="error_last_name_invalid">Enter a valid last name</string>
+    <string name="forgot_password_identifier_invalid">Enter a valid email or mobile number</string>
+    <string name="error_org_name_required">Organization name is required.</string>
+    <string name="error_org_name_too_short">Organization name must be at least 2 characters.</string>
+    <string name="error_org_name_alphanumeric">Organization name must contain at least 2 alphanumeric characters.</string>
+    <string name="error_name_too_short">%1$s is too short</string>
+    <string name="error_name_invalid">Enter a valid %1$s</string>
+    <string name="error_email_invalid_inline">Invalid email address</string>
+    <string name="error_mobile_invalid_inline">Invalid mobile number</string>
+    <string name="error_owner_name_invalid">Enter a valid owner name</string>
+    <string name="reports_date_invalid">Enter a valid date (DD-MM-YYYY)</string>
+    <string name="reports_date_range_order_error">End date must be on or after start date</string>
+    <string name="reports_consolidated_empty_title">No report yet</string>
+    <string name="reports_consolidated_empty_hint">Pick a date range and tap Generate Report to view your consolidated P&amp;L.</string>
+    <string name="reports_cost_empty_title">No costs found</string>
+    <string name="reports_cost_empty_message">No cost entries match the selected date range and cost types. Try a wider range or different cost types.</string>
+    <string name="reports_cost_end_before_start">End date must be on or after the start date</string>
+    <string name="reports_invalid_date">Enter a valid date</string>
+    <string name="reports_date_to_before_from">To date must be on or after the from date</string>
+    <string name="finance_label_vehicle">Vehicle</string>
+    <string name="maps_live_connected">Live</string>
+    <string name="maps_live_connecting">Connecting…</string>
+    <string name="maps_live_disconnected">Offline</string>
+    <string name="maps_live_idle">Live off</string>
+    <string name="checkout_change_plan">Change plan</string>
+    <string name="checkout_back_to_plans">Back to plans</string>
+    <string name="checkout_plan_annual">Annual Plan</string>
+    <string name="checkout_plan_monthly">Monthly Plan</string>
+    <string name="checkout_per_year">/year</string>
+    <string name="checkout_per_month">/month</string>
+    <string name="checkout_trial_badge">🎁 %1$d-day free trial included</string>
+    <string name="checkout_annual_savings_badge">You save %1$s annually</string>
+    <string name="checkout_order_summary">Order Summary</string>
+    <string name="checkout_label_plan">Plan</string>
+    <string name="checkout_label_billing">Billing</string>
+    <string name="checkout_label_free_trial">Free trial</string>
+    <string name="checkout_trial_days">%1$d days</string>
+    <string name="checkout_label_total">Total</string>
+    <string name="checkout_save_amount">Save %1$s</string>
+    <string name="checkout_legal_text">By proceeding you agree to our Terms of Service and Privacy Policy. You can cancel your subscription anytime.</string>
+    <string name="checkout_pay_securely">Pay %1$s Securely</string>
+    <string name="checkout_verifying_payment">Verifying payment…</string>
+    <string name="checkout_preparing_order">Preparing order…</string>
+    <string name="checkout_verifying_payment_title">Verifying Payment</string>
+    <string name="checkout_preparing_order_title">Preparing Order</string>
+    <string name="checkout_verifying_payment_subtitle">Confirming your payment with Razorpay…</string>
+    <string name="checkout_preparing_order_subtitle">Setting up your secure checkout…</string>
+    <string name="driver_entity">driver</string>
+    <string name="payment_entity_singular">payment</string>
 </resources>

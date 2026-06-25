@@ -12,12 +12,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.RecentReport
@@ -47,11 +52,23 @@ internal fun VehiclePLContent(
         else -> 1
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
     ) {
+        val isWide = rememberFleetBreakpoint().isExpanded
+        val contentModifier = if (isWide) {
+            Modifier
+                .fillMaxSize()
+                .widthIn(max = FleetTokens.Width.MaxContent)
+        } else {
+            Modifier.fillMaxSize()
+        }
+
+        Column(
+            modifier = contentModifier
+                .padding(FleetTokens.Spacing.L)
+        ) {
         // Step Indicator - only show when not viewing results
         if (state.result == null) {
             WizardStepIndicator(
@@ -62,7 +79,7 @@ internal fun VehiclePLContent(
                     stringResource(Res.string.reports_wizard_step_view)
                 )
             )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
         }
 
         when {
@@ -76,11 +93,11 @@ internal fun VehiclePLContent(
                     onNewReport = onShowVehicleSelector
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
                 LazyColumn(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
                     item { PLResultKPICard(result = state.result!!) }
 
@@ -91,26 +108,40 @@ internal fun VehiclePLContent(
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                         ) {
-                            OutlinedButton(
+                            FleetButton(
+                                text = stringResource(Res.string.reports_new_report),
                                 onClick = onShowVehicleSelector,
+                                variant = ButtonVariant.SECONDARY,
                                 modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text("🔄 " + stringResource(Res.string.reports_new_report))
-                            }
-                            Button(
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_refresh),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                                    )
+                                }
+                            )
+                            FleetButton(
+                                text = stringResource(Res.string.reports_export_pdf),
                                 onClick = { /* TODO: Export */ },
+                                variant = ButtonVariant.PRIMARY,
                                 modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text("📄 " + stringResource(Res.string.reports_export_pdf))
-                            }
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_download),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                                    )
+                                }
+                            )
                         }
                     }
 
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.L)) }
                 }
             }
 
@@ -122,16 +153,16 @@ internal fun VehiclePLContent(
                     onChangeVehicle = onShowVehicleSelector
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
 
                 // Period selection title
-                    Text(
-                        text = stringResource(Res.string.vehicle_pl_select_report_period),
+                Text(
+                    text = stringResource(Res.string.vehicle_pl_select_report_period),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
                 // Period selection card
                 PeriodSelectionChipsCard(
@@ -148,107 +179,97 @@ internal fun VehiclePLContent(
 
                 // Error message
                 if (state.error != null) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        ),
-                        shape = RoundedCornerShape(8.dp)
+                    FleetSectionCard(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        border = null,
+                        contentPadding = FleetTokens.Spacing.M
                     ) {
                         Text(
                             text = state.error?.resolve() ?: stringResource(Res.string.reports_error_generic),
-                            modifier = Modifier.padding(12.dp),
                             color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 }
 
-                // Generate Report Button
-                Button(
+                // Generate Report Button (gated on required vehicle + period selection)
+                FleetButton(
+                    text = stringResource(Res.string.reports_generate_report),
                     onClick = onGenerateReport,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    enabled = state.canGenerateReport,
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(
-                        text = stringResource(Res.string.reports_generate_report),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                    variant = ButtonVariant.PRIMARY,
+                    size = ButtonSize.LARGE,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = state.canGenerateReport
+                )
             }
 
             // ========== STEP 1: Vehicle Selection ==========
             else -> {
                 // Welcome Card
                 FleetSectionCard(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
                     border = null,
-                    contentPadding = 20.dp
+                    elevation = FleetTokens.Elevation.None,
+                    contentPadding = FleetTokens.Spacing.XL
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = "📊", style = MaterialTheme.typography.displaySmall)
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_dashboard),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(FleetTokens.IconSize.XL)
+                        )
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                         Text(
                             text = stringResource(Res.string.reports_vehicle_pl_header),
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                         Text(
                             text = stringResource(Res.string.vehicle_pl_analyze_performance),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                         )
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
 
-                        Button(
-                            onClick = onShowVehicleSelector,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text("🚛")
-                                Text(
-                                    text = stringResource(Res.string.vehicle_pl_select_vehicle),
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                if (state.vehicles.isNotEmpty()) {
-                                    Surface(
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f)
-                                    ) {
-                                        Text(
-                                            text = "${state.vehicles.size}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                }
-                            }
+                        val selectVehicleLabel = stringResource(Res.string.vehicle_pl_select_vehicle)
+                        val buttonLabel = if (state.vehicles.isNotEmpty()) {
+                            "$selectVehicleLabel (${state.vehicles.size})"
+                        } else {
+                            selectVehicleLabel
                         }
+                        FleetButton(
+                            text = buttonLabel,
+                            onClick = onShowVehicleSelector,
+                            variant = ButtonVariant.PRIMARY,
+                            modifier = Modifier.fillMaxWidth(),
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_truck),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
+                            }
+                        )
                     }
                 }
 
                 // Recent Reports
                 if (state.recentReports.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
                     Text(
                         text = stringResource(Res.string.reports_recent_reports),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                         items(state.recentReports) { report ->
                             RecentReportCard(report = report, onClick = { onQuickReport(report) })
                         }
@@ -264,7 +285,7 @@ internal fun VehiclePLContent(
         if (state.multiResults.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
                 item {
                     MultiVehicleSummaryCard(
@@ -289,6 +310,7 @@ internal fun VehiclePLContent(
                     VehiclePLResultCard(result)
                 }
             }
+        }
         }
     }
 }
@@ -319,21 +341,21 @@ internal fun WizardStepIndicator(
             ) {
                 // Step circle
                 Surface(
-                    modifier = Modifier.size(28.dp),
+                    modifier = Modifier.size(FleetTokens.Height.StepCircle),
                     shape = CircleShape,
                     color = when {
-                        isCompleted -> com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+                        isCompleted -> FleetStatusColors.ProfitGreen
                         isCurrent -> MaterialTheme.colorScheme.primary
                         else -> MaterialTheme.colorScheme.surfaceVariant
                     }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         if (isCompleted) {
-                            Text(
-                                text = "✓",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_check),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
                             )
                         } else {
                             Text(
@@ -347,7 +369,7 @@ internal fun WizardStepIndicator(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
 
                 // Step label (only show for current on small screens)
                 if (isCurrent) {
@@ -367,10 +389,10 @@ internal fun WizardStepIndicator(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(2.dp)
-                            .padding(horizontal = 4.dp)
+                            .height(FleetTokens.Height.Connector)
+                            .padding(horizontal = FleetTokens.Spacing.XS)
                             .background(
-                                if (isCompleted) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+                                if (isCompleted) FleetStatusColors.ProfitGreen
                                 else MaterialTheme.colorScheme.surfaceVariant
                             )
                     )
@@ -392,7 +414,7 @@ internal fun SelectedVehicleDisplayCard(
 ) {
     val vehicleFallback = stringResource(Res.string.vehicle_pl_vehicle_fallback)
     FleetSectionCard(
-        containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f),
+        containerColor = FleetStatusColors.ProfitGreen.copy(alpha = 0.1f),
         border = null
     ) {
         Row(
@@ -401,16 +423,21 @@ internal fun SelectedVehicleDisplayCard(
         ) {
             // Checkmark
             Surface(
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(FleetTokens.IconSize.XL),
                 shape = CircleShape,
-                color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+                color = FleetStatusColors.ProfitGreen
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text("✓", color = Color.White, fontWeight = FontWeight.Bold)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_check),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
 
             // Vehicle Info
             Column(modifier = Modifier.weight(1f)) {
@@ -428,19 +455,12 @@ internal fun SelectedVehicleDisplayCard(
             }
 
             // Change Vehicle Button
-            OutlinedButton(
+            FleetButton(
+                text = stringResource(Res.string.change),
                 onClick = onChangeVehicle,
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text(
-                    text = stringResource(Res.string.change),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+                variant = ButtonVariant.SECONDARY,
+                size = ButtonSize.SMALL
+            )
         }
     }
 }
@@ -466,12 +486,12 @@ internal fun PeriodSelectionChipsCard(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             // Period chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
             ) {
                 listOf(
                     "weekly" to stringResource(Res.string.reports_period_chip_week),
@@ -502,16 +522,27 @@ internal fun PeriodSelectionChipsCard(
             // Show selected custom date range label if applicable
             if (useCustomDateRange && startDate.isNotBlank() && endDate.isNotBlank()) {
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
-                    Text(
-                        text = "📅 $startDate — $endDate",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS),
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.S)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_calendar),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                        Text(
+                            text = "$startDate — $endDate",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
         }

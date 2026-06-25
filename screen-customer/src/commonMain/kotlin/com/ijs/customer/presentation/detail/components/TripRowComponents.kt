@@ -1,7 +1,6 @@
 package com.ijs.customer.presentation.detail.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,9 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.domain.entity.CustomerTrip
 import com.ijs.customer.presentation.localizedStateDisplay
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -37,13 +37,11 @@ internal fun EnhancedTripRow(
     val hasPending = dueAmount > 0
     val isPaid = trip.paymentStatus?.lowercase() == "paid"
 
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(1.dp),
-        shape = RoundedCornerShape(10.dp)
+    FleetSectionCard(
+        onClick = onClick,
+        contentPadding = FleetTokens.Spacing.M
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column {
             // Row 1: Trip ID, State, Vehicle Reg
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -51,7 +49,7 @@ internal fun EnhancedTripRow(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(trip.stateIcon, style = MaterialTheme.typography.labelLarge)
@@ -72,7 +70,7 @@ internal fun EnhancedTripRow(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
 
             // Row 2: Route
             Text(
@@ -83,12 +81,12 @@ internal fun EnhancedTripRow(
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
             // Row 3: Start & End Dates
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 DateLabel(
@@ -108,9 +106,9 @@ internal fun EnhancedTripRow(
 
             // Row 4: Payment Info (if financials visible)
             if (showFinancials) {
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 4.dp),
+                    modifier = Modifier.padding(vertical = FleetTokens.Spacing.XS),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
 
@@ -179,7 +177,7 @@ internal fun EnhancedTripRow(
 internal fun DateLabel(label: String, date: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
     ) {
         Text(
             text = "$label:",
@@ -228,9 +226,9 @@ internal fun PaymentStatusBadge(
 ) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(FleetTokens.Radius.M))
             .background(containerColor)
-            .padding(horizontal = 8.dp, vertical = 3.dp)
+            .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
     ) {
         Text(
             text = text,
@@ -253,9 +251,9 @@ internal fun TripStateChip(label: String, state: String?) {
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(FleetTokens.Radius.ML))
             .background(bgColor)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
     ) {
         Text(
             text = label,

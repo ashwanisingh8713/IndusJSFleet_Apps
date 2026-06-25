@@ -18,9 +18,11 @@ import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.vehicle.domain.entity.TripsSummary
 import com.ijs.vehicle.domain.entity.VehicleTripItem
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -47,7 +49,7 @@ internal fun TripsTabContent(
         tripsList.isEmpty() -> {
             // Empty state
             EmptyContent(
-                icon = "🚀",
+                iconRes = Res.drawable.ic_trip,
                 title = stringResource(Res.string.vehicle_trips_no_trips),
                 message = stringResource(Res.string.vehicle_trips_no_trips_message)
             )
@@ -63,8 +65,9 @@ internal fun TripsTabContent(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                        )
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Row(
                             modifier = Modifier
@@ -172,7 +175,12 @@ internal fun TripItemCard(trip: VehicleTripItem) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("📍", style = MaterialTheme.typography.bodyMedium)
+                Icon(
+                    painter = painterResource(Res.drawable.ic_map),
+                    contentDescription = null,
+                    modifier = Modifier.size(FleetTokens.IconSize.S),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = trip.origin,
@@ -213,11 +221,20 @@ internal fun TripItemCard(trip: VehicleTripItem) {
             // Driver info if available
             trip.driverName?.let { driverName ->
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "👤 $driverName",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_profile),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.S),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = driverName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

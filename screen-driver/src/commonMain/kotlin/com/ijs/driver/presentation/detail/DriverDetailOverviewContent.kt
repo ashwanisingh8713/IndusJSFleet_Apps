@@ -23,7 +23,10 @@ import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -129,9 +132,11 @@ internal fun DriverHeader(
 
             // Mobile
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "📱",
-                    style = MaterialTheme.typography.bodyMedium
+                Icon(
+                    painter = painterResource(Res.drawable.ic_phone),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(FleetTokens.IconSize.S)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
@@ -182,8 +187,8 @@ internal fun DriverHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 QuickStatItem(
-                    icon = "⭐",
-                    value = "${driver.rating}",
+                    iconRes = Res.drawable.ic_star,
+                    value = if (driver.rating > 0.0) "${driver.rating}" else "—",
                     label = stringResource(Res.string.driver_overview_rating)
                 )
 
@@ -193,7 +198,7 @@ internal fun DriverHeader(
                 )
 
                 QuickStatItem(
-                    icon = "🛣️",
+                    iconRes = Res.drawable.ic_trip,
                     value = "${driver.totalTrips}",
                     label = stringResource(Res.string.driver_overview_trips)
                 )
@@ -204,7 +209,7 @@ internal fun DriverHeader(
                 )
 
                 QuickStatItem(
-                    icon = "🪪",
+                    iconRes = Res.drawable.ic_profile,
                     value = driverLicenseTypeShort(driver.licenseType),
                     label = stringResource(Res.string.driver_overview_license)
                 )
@@ -216,14 +221,14 @@ internal fun DriverHeader(
 
 @Composable
 internal fun QuickStatItem(
-    icon: String,
+    iconRes: DrawableResource,
     value: String,
     label: String
 ) {
     FleetMetricTile(
         value = value,
         label = label,
-        emoji = icon,
+        iconRes = iconRes,
         showBackground = false,
         centered = true,
         modifier = Modifier.padding(horizontal = 8.dp)
@@ -237,8 +242,7 @@ internal fun ContactSection(driver: Driver) {
         // Mobile with call icon
         ClickablePhoneRow(
             phoneNumber = driver.mobile,
-            label = stringResource(Res.string.driver_label_mobile),
-            icon = "📱"
+            label = stringResource(Res.string.driver_label_mobile)
         )
         if (driver.email.isNotBlank()) {
             InfoRow(label = stringResource(Res.string.driver_overview_email), value = driver.email)
@@ -247,8 +251,7 @@ internal fun ContactSection(driver: Driver) {
         driver.emergencyContact?.let {
             ClickablePhoneRow(
                 phoneNumber = it,
-                label = stringResource(Res.string.driver_overview_emergency_contact),
-                icon = "🆘"
+                label = stringResource(Res.string.driver_overview_emergency_contact)
             )
         }
         driver.address?.let { InfoRow(label = stringResource(Res.string.driver_overview_address), value = it) }

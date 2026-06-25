@@ -2,6 +2,7 @@ package com.ijs.user.presentation.profile
 
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
+import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.uicomponents.components.UiText
 import dev.zacsweers.metro.Inject
@@ -28,10 +29,18 @@ class ProfileViewModel(
             is ProfileContract.Intent.RefreshProfile -> loadProfile(isRefresh = true)
             is ProfileContract.Intent.StartEditing -> startEditing()
             is ProfileContract.Intent.CancelEditing -> cancelEditing()
-            is ProfileContract.Intent.UpdateFirstName -> updateState { copy(editFirstName = intent.firstName) }
-            is ProfileContract.Intent.UpdateLastName -> updateState { copy(editLastName = intent.lastName) }
-            is ProfileContract.Intent.UpdateEmail -> updateState { copy(editEmail = intent.email) }
-            is ProfileContract.Intent.UpdateMobile -> updateState { copy(editMobile = intent.mobile) }
+            is ProfileContract.Intent.UpdateFirstName -> updateState {
+                copy(editFirstName = intent.firstName, editFirstNameError = firstNameError(intent.firstName))
+            }
+            is ProfileContract.Intent.UpdateLastName -> updateState {
+                copy(editLastName = intent.lastName, editLastNameError = lastNameError(intent.lastName))
+            }
+            is ProfileContract.Intent.UpdateEmail -> updateState {
+                copy(editEmail = intent.email, editEmailError = emailError(intent.email))
+            }
+            is ProfileContract.Intent.UpdateMobile -> updateState {
+                copy(editMobile = intent.mobile, editMobileError = mobileError(intent.mobile))
+            }
             is ProfileContract.Intent.SaveProfile -> saveProfile()
             is ProfileContract.Intent.ClearError -> updateState { copy(error = null, updateError = null) }
             is ProfileContract.Intent.NavigateToChangePassword -> sendEffect(ProfileContract.Effect.NavigateToChangePassword)
@@ -85,7 +94,12 @@ class ProfileViewModel(
                     editFirstName = user.firstName,
                     editLastName = user.lastName,
                     editEmail = user.email,
-                    editMobile = user.mobile
+                    editMobile = user.mobile,
+                    editFirstNameError = null,
+                    editLastNameError = null,
+                    editEmailError = null,
+                    editMobileError = null,
+                    updateError = null
                 )
             }
         }
@@ -99,6 +113,10 @@ class ProfileViewModel(
                 editLastName = "",
                 editEmail = "",
                 editMobile = "",
+                editFirstNameError = null,
+                editLastNameError = null,
+                editEmailError = null,
+                editMobileError = null,
                 updateError = null
             )
         }
@@ -110,17 +128,22 @@ class ProfileViewModel(
         val email = currentState.editEmail.trim()
         val mobile = currentState.editMobile.trim()
 
-        // Validation
-        if (firstName.isEmpty()) {
-            updateState { copy(updateError = UiText.StringRes(Res.string.error_first_name_required)) }
-            return
-        }
-        if (lastName.isEmpty()) {
-            updateState { copy(updateError = UiText.StringRes(Res.string.error_last_name_required)) }
-            return
-        }
-        if (email.isEmpty()) {
-            updateState { copy(updateError = UiText.StringRes(Res.string.error_email_required)) }
+        // Recompute all inline field errors and gate submit on them so the
+        // backend never sees a payload the client already knows is invalid.
+        val firstNameErr = firstNameError(firstName)
+        val lastNameErr = lastNameError(lastName)
+        val emailErr = emailError(email)
+        val mobileErr = mobileError(mobile)
+
+        if (firstNameErr != null || lastNameErr != null || emailErr != null || mobileErr != null) {
+            updateState {
+                copy(
+                    editFirstNameError = firstNameErr,
+                    editLastNameError = lastNameErr,
+                    editEmailError = emailErr,
+                    editMobileError = mobileErr
+                )
+            }
             return
         }
 
@@ -164,6 +187,33 @@ class ProfileViewModel(
                 }
             }
         }
+    }
+
+    // ---- Inline field validation (canonical rules via ValidationUtils) ----
+
+    private fun firstNameError(value: String): UiText? = when {
+        value.trim().isEmpty() -> UiText.StringRes(Res.string.error_first_name_required)
+        !ValidationUtils.isValidName(value) -> UiText.StringRes(Res.string.error_first_name_invalid)
+        else -> null
+    }
+
+    private fun lastNameError(value: String): UiText? = when {
+        value.trim().isEmpty() -> UiText.StringRes(Res.string.error_last_name_required)
+        !ValidationUtils.isValidName(value) -> UiText.StringRes(Res.string.error_last_name_invalid)
+        else -> null
+    }
+
+    private fun emailError(value: String): UiText? = when {
+        value.trim().isEmpty() -> UiText.StringRes(Res.string.error_email_required)
+        !ValidationUtils.isValidEmail(value.trim()) -> UiText.StringRes(Res.string.error_email_invalid)
+        else -> null
+    }
+
+    // Mobile is optional on the profile; only validate format when present.
+    private fun mobileError(value: String): UiText? = when {
+        value.trim().isEmpty() -> null
+        !ValidationUtils.isValidIndianMobile(value) -> UiText.StringRes(Res.string.error_mobile_invalid)
+        else -> null
     }
 
     private suspend fun logout() {

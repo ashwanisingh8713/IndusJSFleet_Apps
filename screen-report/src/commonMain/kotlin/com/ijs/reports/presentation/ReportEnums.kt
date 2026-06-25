@@ -1,5 +1,12 @@
 package com.ijs.reports.presentation
 
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_dashboard
+import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_menu
+import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_trending_down
+import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_trending_up
+import org.jetbrains.compose.resources.DrawableResource
+
 /**
  * Shared enums and data classes used across multiple report screens.
  * Extracted from individual contracts to avoid duplication and keep
@@ -35,13 +42,13 @@ enum class ReportPeriod(val value: String, val label: String) {
 enum class ProfitStatus(
     val label: String,
     val colorHex: Long,
-    val icon: String
+    val icon: DrawableResource
 ) {
-    HIGHLY_PROFITABLE("Highly Profitable", 0xFF2E7D32, "📈"),
-    PROFITABLE("Profitable", 0xFF4CAF50, "📈"),
-    BREAK_EVEN("Break-even", 0xFFFFC107, "📊"),
-    LOSS("Loss", 0xFFF44336, "📉"),
-    SEVERE_LOSS("Severe Loss", 0xFFB71C1C, "📉");
+    HIGHLY_PROFITABLE("Highly Profitable", 0xFF2E7D32, Res.drawable.ic_trending_up),
+    PROFITABLE("Profitable", 0xFF4CAF50, Res.drawable.ic_trending_up),
+    BREAK_EVEN("Break-even", 0xFFFFC107, Res.drawable.ic_dashboard),
+    LOSS("Loss", 0xFFF44336, Res.drawable.ic_trending_down),
+    SEVERE_LOSS("Severe Loss", 0xFFB71C1C, Res.drawable.ic_trending_down);
 
     companion object {
         fun fromMargin(margin: Double): ProfitStatus = when {
@@ -57,10 +64,10 @@ enum class ProfitStatus(
 /**
  * View mode for displaying P&L results (used in Vehicle P&L).
  */
-enum class ReportViewMode(val label: String, val icon: String) {
-    SUMMARY("Summary", "📊"),
-    LIST("List", "📋"),
-    CHART("Chart", "📈")
+enum class ReportViewMode(val label: String, val icon: DrawableResource) {
+    SUMMARY("Summary", Res.drawable.ic_dashboard),
+    LIST("List", Res.drawable.ic_menu),
+    CHART("Chart", Res.drawable.ic_trending_up)
 }
 
 /**

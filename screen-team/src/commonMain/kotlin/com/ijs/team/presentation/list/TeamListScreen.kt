@@ -1,10 +1,8 @@
 package com.ijs.team.presentation.list
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -12,21 +10,26 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
+import com.indusjs.uicomponents.components.DeleteConfirmationDialog
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FleetAvatar
 import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.StatusToggleConfirmationDialog
+import com.indusjs.uicomponents.components.FleetStatusBadge
 import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.FleetPasswordField
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.team.domain.entity.TeamMember
 import com.ijs.team.domain.entity.TeamMemberRole
 import com.ijs.team.presentation.localizedDisplayName
@@ -106,7 +109,7 @@ fun TeamListScreen(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -120,7 +123,7 @@ fun TeamListScreen(
                                 painter = painterResource(Res.drawable.ic_add),
                                 contentDescription = stringResource(Res.string.team_add_member),
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                     }
@@ -130,15 +133,15 @@ fun TeamListScreen(
                     ) {
                         if (state.isRefreshing) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
+                                modifier = Modifier.size(FleetTokens.IconSize.M),
+                                strokeWidth = FleetTokens.Height.ProgressStroke
                             )
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
                                 contentDescription = stringResource(Res.string.refresh),
                                 tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                     }
@@ -165,7 +168,10 @@ fun TeamListScreen(
                 EnhancedFilterTabs(
                     selectedFilter = state.selectedFilter,
                     onFilterSelected = { viewModel.sendIntent(TeamListContract.Intent.SelectFilter(it)) },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                    modifier = Modifier.padding(
+                        horizontal = FleetTokens.Spacing.ScreenHorizontal,
+                        vertical = FleetTokens.Spacing.M
+                    )
                 )
 
                 // Search Field
@@ -173,7 +179,10 @@ fun TeamListScreen(
                     query = state.searchQuery,
                     onQueryChange = { viewModel.sendIntent(TeamListContract.Intent.UpdateSearchQuery(it)) },
                     placeholder = stringResource(Res.string.team_search_placeholder),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(
+                        horizontal = FleetTokens.Spacing.ScreenHorizontal,
+                        vertical = FleetTokens.Spacing.S
+                    )
                 )
 
                 // Content
@@ -198,31 +207,18 @@ fun TeamListScreen(
                     }
 
                     else -> {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(state.filteredMembers, key = { it.id }) { member ->
-                                EnhancedTeamMemberCard(
-                                    member = member,
-                                    canEdit = state.canEdit(member),
-                                    canToggleActive = state.canToggleActive(member),
-                                    canResetPassword = state.canResetPassword(member),
-                                    canDelete = state.canDelete(member),
-                                    isTogglingActive = state.isTogglingActive == member.id,
-                                    onClick = { viewModel.sendIntent(TeamListContract.Intent.NavigateToMemberDetail(member.id)) },
-                                    onToggleActive = { viewModel.sendIntent(TeamListContract.Intent.ToggleTeamMemberActive(member.id)) },
-                                    onResetPassword = { viewModel.sendIntent(TeamListContract.Intent.ShowResetPasswordDialog(member.id)) },
-                                    onDelete = { viewModel.sendIntent(TeamListContract.Intent.DeleteTeamMember(member.id)) }
-                                )
-                            }
-
-                            // Bottom spacing
-                            item {
-                                Spacer(modifier = Modifier.height(24.dp))
-                            }
-                        }
+                        TeamMemberList(
+                            members = state.filteredMembers,
+                            canEdit = { state.canEdit(it) },
+                            canToggleActive = { state.canToggleActive(it) },
+                            canResetPassword = { state.canResetPassword(it) },
+                            canDelete = { state.canDelete(it) },
+                            isTogglingActive = { state.isTogglingActive == it.id },
+                            onClick = { viewModel.sendIntent(TeamListContract.Intent.NavigateToMemberDetail(it.id)) },
+                            onToggleActive = { viewModel.sendIntent(TeamListContract.Intent.ToggleTeamMemberActive(it.id)) },
+                            onResetPassword = { viewModel.sendIntent(TeamListContract.Intent.ShowResetPasswordDialog(it.id)) },
+                            onDelete = { viewModel.sendIntent(TeamListContract.Intent.DeleteTeamMember(it.id)) }
+                        )
                     }
                 }
             }
@@ -256,7 +252,7 @@ private fun EnhancedFilterTabs(
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
     ) {
         TeamListContract.FilterType.entries.forEach { filter ->
             val isSelected = selectedFilter == filter
@@ -274,13 +270,16 @@ private fun EnhancedFilterTabs(
                     )
                 },
                 leadingIcon = {
-                    Text(
-                        text = when (filter) {
-                            TeamListContract.FilterType.ALL -> "👥"
-                            TeamListContract.FilterType.ADMINS -> "🛡️"
-                            TeamListContract.FilterType.USERS -> "👤"
-                        },
-                        style = MaterialTheme.typography.bodySmall
+                    Icon(
+                        painter = painterResource(
+                            when (filter) {
+                                TeamListContract.FilterType.ALL -> Res.drawable.ic_team
+                                TeamListContract.FilterType.ADMINS -> Res.drawable.ic_visibility
+                                TeamListContract.FilterType.USERS -> Res.drawable.ic_profile
+                            }
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
                     )
                 },
                 colors = FilterChipDefaults.filterChipColors(
@@ -288,6 +287,95 @@ private fun EnhancedFilterTabs(
                     selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
+        }
+    }
+}
+
+/**
+ * Responsive team member list.
+ *
+ * Compact stays 1-up; Medium/Expanded show two cards per row. On Expanded the
+ * grid is capped to a readable width and centered instead of stretching.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TeamMemberList(
+    members: List<TeamMember>,
+    canEdit: (TeamMember) -> Boolean,
+    canToggleActive: (TeamMember) -> Boolean,
+    canResetPassword: (TeamMember) -> Boolean,
+    canDelete: (TeamMember) -> Boolean,
+    isTogglingActive: (TeamMember) -> Boolean,
+    onClick: (TeamMember) -> Unit,
+    onToggleActive: (TeamMember) -> Unit,
+    onResetPassword: (TeamMember) -> Unit,
+    onDelete: (TeamMember) -> Unit
+) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val breakpoint = rememberFleetBreakpoint()
+        val columns = if (breakpoint.isAtLeastMedium) 2 else 1
+        val contentWidthModifier = if (breakpoint.isExpanded) {
+            Modifier.fillMaxWidth().widthIn(max = FleetTokens.Width.MaxContent)
+        } else {
+            Modifier.fillMaxWidth()
+        }
+
+        LazyColumn(
+            modifier = contentWidthModifier.fillMaxHeight().align(Alignment.TopCenter),
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+        ) {
+            if (columns == 1) {
+                items(members, key = { it.id }) { member ->
+                    EnhancedTeamMemberCard(
+                        member = member,
+                        canEdit = canEdit(member),
+                        canToggleActive = canToggleActive(member),
+                        canResetPassword = canResetPassword(member),
+                        canDelete = canDelete(member),
+                        isTogglingActive = isTogglingActive(member),
+                        onClick = { onClick(member) },
+                        onToggleActive = { onToggleActive(member) },
+                        onResetPassword = { onResetPassword(member) },
+                        onDelete = { onDelete(member) }
+                    )
+                }
+            } else {
+                val rows = members.chunked(columns)
+                items(rows, key = { row -> row.first().id }) { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                    ) {
+                        row.forEach { member ->
+                            EnhancedTeamMemberCard(
+                                member = member,
+                                canEdit = canEdit(member),
+                                canToggleActive = canToggleActive(member),
+                                canResetPassword = canResetPassword(member),
+                                canDelete = canDelete(member),
+                                isTogglingActive = isTogglingActive(member),
+                                onClick = { onClick(member) },
+                                onToggleActive = { onToggleActive(member) },
+                                onResetPassword = { onResetPassword(member) },
+                                onDelete = { onDelete(member) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        // Keep the last odd card aligned to a single column width.
+                        if (row.size < columns) {
+                            repeat(columns - row.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Bottom spacing
+            item {
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
+            }
         }
     }
 }
@@ -302,7 +390,7 @@ private fun EmptyTeamContent(
 ) {
     val isSearching = searchQuery.isNotEmpty()
     EmptyContent(
-        icon = if (isSearching) "🔍" else "👥",
+        iconRes = if (isSearching) Res.drawable.ic_search else Res.drawable.ic_team,
         title = if (isSearching) {
             stringResource(Res.string.team_no_results)
         } else {
@@ -324,33 +412,14 @@ private fun EmptyTeamContent(
 @Composable
 private fun MemberStatusBadge(isActive: Boolean) {
     val color = if (isActive) FleetStatusColors.FleetOnRoute else MaterialTheme.colorScheme.error
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = color.copy(alpha = 0.15f)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(color)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = if (isActive) {
-                    stringResource(Res.string.team_status_active)
-                } else {
-                    stringResource(Res.string.team_status_inactive)
-                },
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Medium,
-                color = color
-            )
-        }
-    }
+    FleetStatusBadge(
+        status = if (isActive) {
+            stringResource(Res.string.team_status_active)
+        } else {
+            stringResource(Res.string.team_status_inactive)
+        },
+        color = color
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -365,14 +434,15 @@ private fun EnhancedTeamMemberCard(
     onClick: () -> Unit,
     onToggleActive: () -> Unit = {},
     onResetPassword: () -> Unit = {},
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showDisableDialog by remember { mutableStateOf(false) }
     var showActionsMenu by remember { mutableStateOf(false) }
 
     FleetSectionCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         onClick = onClick
     ) {
         Row(
@@ -392,70 +462,62 @@ private fun EnhancedTeamMemberCard(
             }
             FleetAvatar(
                 name = member.fullName,
-                size = 56.dp,
+                size = FleetTokens.IconSize.XL,
                 background = roleColor,
                 contentColor = onRoleColor,
                 textStyle = MaterialTheme.typography.titleLarge
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.L))
 
             // Member Details
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Name and Role Badge Row
+                // Name on its own line so it is never truncated by the pills.
+                Text(
+                    text = member.fullName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
+
+                // Role + status pills reflow to a second row beneath the name.
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = member.fullName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
+                    // Role Badge
+                    val roleBadgeColor = when (member.role) {
+                        TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
+                        TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
+                        TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
+                    }
+                    FleetStatusBadge(
+                        status = member.role.localizedDisplayName(),
+                        color = roleBadgeColor
                     )
 
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // Role Badge
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = when (member.role) {
-                            TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
-                            TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                            TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
-                        }
-                    ) {
-                        Text(
-                            text = member.role.localizedDisplayName(),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Medium,
-                            color = when (member.role) {
-                                TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
-                                TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
-                                TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
-                            },
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
 
                     MemberStatusBadge(isActive = member.isActive)
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
 
                 // Email
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "✉️",
-                        style = MaterialTheme.typography.bodySmall
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_email),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                     Text(
                         text = member.email,
                         style = MaterialTheme.typography.bodyMedium,
@@ -465,15 +527,17 @@ private fun EnhancedTeamMemberCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
 
                 // Mobile
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "📱",
-                        style = MaterialTheme.typography.bodySmall
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_phone),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                     Text(
                         text = member.mobile,
                         style = MaterialTheme.typography.bodyMedium,
@@ -487,19 +551,19 @@ private fun EnhancedTeamMemberCard(
             Box {
                 IconButton(
                     onClick = { showActionsMenu = true },
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(FleetTokens.Height.FilterChipRow)
                 ) {
                     if (isTogglingActive) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
+                            modifier = Modifier.size(FleetTokens.IconSize.M),
+                            strokeWidth = FleetTokens.Height.ProgressStroke
                         )
                     } else {
                         Icon(
                             painter = painterResource(Res.drawable.ic_more_vert),
                             contentDescription = stringResource(Res.string.team_action_actions),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
                         )
                     }
                 }
@@ -525,7 +589,19 @@ private fun EnhancedTeamMemberCard(
                                 }
                             },
                             leadingIcon = {
-                                Text(if (member.isActive) "🚫" else "✅")
+                                Icon(
+                                    painter = painterResource(
+                                        if (member.isActive) Res.drawable.ic_visibility_off
+                                        else Res.drawable.ic_check_circle
+                                    ),
+                                    contentDescription = null,
+                                    tint = if (member.isActive) {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    } else {
+                                        FleetStatusColors.FleetOnRoute
+                                    },
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
                             }
                         )
                     }
@@ -538,7 +614,14 @@ private fun EnhancedTeamMemberCard(
                                 showActionsMenu = false
                                 onResetPassword()
                             },
-                            leadingIcon = { Text("🔑") }
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_lock),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
+                            }
                         )
                     }
 
@@ -561,7 +644,7 @@ private fun EnhancedTeamMemberCard(
                                     painter = painterResource(Res.drawable.ic_delete),
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
                                 )
                             }
                         )
@@ -572,91 +655,28 @@ private fun EnhancedTeamMemberCard(
     }
 
     // Delete Confirmation Dialog
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            icon = {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_delete),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(32.dp)
-                )
-            },
-            title = {
-                Text(
-                    stringResource(Res.string.team_delete_title),
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    stringResource(Res.string.team_delete_message, member.fullName),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDelete()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text(stringResource(Res.string.delete))
-                }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { showDeleteDialog = false }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            },
-            shape = RoundedCornerShape(16.dp)
-        )
-    }
+    DeleteConfirmationDialog(
+        showDialog = showDeleteDialog,
+        entityName = member.fullName,
+        onConfirmDelete = {
+            showDeleteDialog = false
+            onDelete()
+        },
+        onDismiss = { showDeleteDialog = false }
+    )
 
     // Disable Access Confirmation Dialog
-    if (showDisableDialog) {
-        AlertDialog(
-            onDismissRequest = { showDisableDialog = false },
-            icon = {
-                Text("🚫", style = MaterialTheme.typography.headlineSmall)
-            },
-            title = {
-                Text(
-                    stringResource(Res.string.team_disable_title),
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    stringResource(Res.string.team_disable_message, member.fullName),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showDisableDialog = false
-                        onToggleActive()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text(stringResource(Res.string.team_action_disable))
-                }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { showDisableDialog = false }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            },
-            shape = RoundedCornerShape(16.dp)
-        )
-    }
+    // Only shown when disabling (member currently active) — see the toggle menu item.
+    StatusToggleConfirmationDialog(
+        showDialog = showDisableDialog,
+        entityName = member.fullName,
+        currentlyActive = true,
+        onConfirm = {
+            showDisableDialog = false
+            onToggleActive()
+        },
+        onDismiss = { showDisableDialog = false }
+    )
 }
 
 /**
@@ -689,7 +709,7 @@ private fun ResetPasswordDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
                 FleetPasswordField(
                     value = password,
@@ -704,7 +724,7 @@ private fun ResetPasswordDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
                 FleetPasswordField(
                     value = confirmPassword,
@@ -720,7 +740,7 @@ private fun ResetPasswordDialog(
                 )
 
                 passwordError?.let { err ->
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                     Text(
                         text = err.resolve(),
                         color = MaterialTheme.colorScheme.error,
@@ -744,8 +764,8 @@ private fun ResetPasswordDialog(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(FleetTokens.IconSize.M),
+                        strokeWidth = FleetTokens.Height.ProgressStroke,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
@@ -761,6 +781,6 @@ private fun ResetPasswordDialog(
                 Text(stringResource(Res.string.cancel))
             }
         },
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(FleetTokens.Radius.XL)
     )
 }

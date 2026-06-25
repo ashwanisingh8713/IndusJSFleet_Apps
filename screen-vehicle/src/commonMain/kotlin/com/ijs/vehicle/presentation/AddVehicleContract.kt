@@ -43,6 +43,8 @@ object AddVehicleContract {
         val makeError: UiText? = null,
         val modelError: UiText? = null,
         val yearError: UiText? = null,
+        val ownerNameError: UiText? = null,
+        val ownerContactError: UiText? = null,
 
         // Form state
         val isLoading: Boolean = false,
@@ -70,7 +72,9 @@ object AddVehicleContract {
                     registrationNumberError == null &&
                     makeError == null &&
                     modelError == null &&
-                    yearError == null
+                    yearError == null &&
+                    ownerNameError == null &&
+                    ownerContactError == null
 
 
         val canSubmit: Boolean

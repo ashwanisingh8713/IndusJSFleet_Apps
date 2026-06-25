@@ -5,27 +5,30 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.fleet.core.util.ValidationUtils
+import com.indusjs.uicomponents.components.ButtonSize
 import com.indusjs.uicomponents.components.FieldType
-import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetPasswordField
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.filterDigitsOnly
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.team.domain.entity.AssignableTeamRole
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -46,7 +49,6 @@ fun CreateTeamMemberScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
     var pendingSnackbar by remember { mutableStateOf<UiText?>(null) }
 
@@ -82,6 +84,28 @@ fun CreateTeamMemberScreen(
         }
     }
 
+    // ---- Inline field validation (single source of truth: ValidationUtils) ----
+    // Errors surface only after the user has typed something; "required" gating is
+    // handled by [allValid] below so the submit button stays disabled until clean.
+    val firstNameError = state.firstName.takeIf { it.isNotEmpty() }
+        ?.let { ValidationUtils.getNameError(it, "First name", required = false) }
+    val lastNameError = state.lastName.takeIf { it.isNotEmpty() }
+        ?.let { ValidationUtils.getNameError(it, "Last name", required = false) }
+    val emailError = state.email.takeIf { it.isNotEmpty() }
+        ?.let { ValidationUtils.getEmailError(it, required = false) }
+    val mobileError = state.mobile.takeIf { it.isNotEmpty() }
+        ?.let { ValidationUtils.getMobileError(it, required = false) }
+    val confirmMismatch = state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password
+
+    val allValid = ValidationUtils.isValidName(state.firstName) &&
+        ValidationUtils.isValidName(state.lastName) &&
+        ValidationUtils.isValidEmail(state.email.trim()) &&
+        ValidationUtils.isValidIndianMobile(state.mobile) &&
+        state.password.isNotEmpty() &&
+        state.confirmPassword.isNotEmpty() &&
+        state.password == state.confirmPassword &&
+        state.selectedIamRoleName.isNotBlank()
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -93,7 +117,7 @@ fun CreateTeamMemberScreen(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -104,211 +128,210 @@ fun CreateTeamMemberScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
+            val breakpoint = rememberFleetBreakpoint()
+            // Compact = full-width phone form; Medium/Expanded = centered, constrained
+            // column so the form doesn't stretch edge-to-edge on tablet / web.
+            val formWidthModifier = when (breakpoint) {
+                FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
+                else -> Modifier.widthIn(max = FleetTokens.Width.MaxContent)
+            }
 
-            // Role Selection — IAM roles from API (admin, user)
-            SectionCard(
-                title = stringResource(Res.string.team_select_role_title),
-                subtitle = stringResource(Res.string.team_select_role_subtitle)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = FleetTokens.Spacing.ScreenHorizontal),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (state.rolesLoading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 24.dp),
-                        contentAlignment = Alignment.Center
+                Column(
+                    modifier = formWidthModifier,
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+                ) {
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
+
+                    // Role Selection — IAM roles from API (admin, user)
+                    SectionCard(
+                        title = stringResource(Res.string.team_select_role_title),
+                        subtitle = stringResource(Res.string.team_select_role_subtitle)
                     ) {
-                        CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                        if (state.rolesLoading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = FleetTokens.Spacing.XL),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.L))
+                            }
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
+                                state.availableIamRoles.forEach { role ->
+                                    val (title, iconRes, description) = iamRoleCardContent(role)
+                                    RoleSelectionCard(
+                                        title = title,
+                                        iconRes = iconRes,
+                                        description = description,
+                                        isSelected = state.selectedIamRoleName == role.name,
+                                        onClick = {
+                                            viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectIamRole(role.name))
+                                        },
+                                        enabled = !state.isLoading
+                                    )
+                                }
+                            }
+                        }
                     }
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        state.availableIamRoles.forEach { role ->
-                            val (title, emoji, description) = iamRoleCardContent(role)
-                            RoleSelectionCard(
-                                title = title,
-                                emoji = emoji,
-                                description = description,
-                                isSelected = state.selectedIamRoleName == role.name,
-                                onClick = {
-                                    viewModel.sendIntent(CreateTeamMemberContract.Intent.SelectIamRole(role.name))
+
+                    // Personal Information Section
+                    SectionCard(
+                        title = stringResource(Res.string.team_section_personal),
+                        subtitle = stringResource(Res.string.team_section_member_details_subtitle)
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                        ) {
+                            // First Name and Last Name Row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                            ) {
+                                FleetInputField(
+                                    value = state.firstName,
+                                    onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateFirstName(it)) },
+                                    fieldType = FieldType.DEFAULT,
+                                    modifier = Modifier.weight(1f),
+                                    label = stringResource(Res.string.team_label_first_name),
+                                    placeholder = stringResource(Res.string.team_placeholder_first_name),
+                                    isError = firstNameError != null,
+                                    errorMessage = firstNameError,
+                                    enabled = !state.isLoading
+                                )
+
+                                FleetInputField(
+                                    value = state.lastName,
+                                    onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateLastName(it)) },
+                                    fieldType = FieldType.DEFAULT,
+                                    modifier = Modifier.weight(1f),
+                                    label = stringResource(Res.string.team_label_last_name),
+                                    placeholder = stringResource(Res.string.team_placeholder_last_name),
+                                    isError = lastNameError != null,
+                                    errorMessage = lastNameError,
+                                    enabled = !state.isLoading
+                                )
+                            }
+
+                            // Email Field
+                            FleetInputField(
+                                value = state.email,
+                                onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateEmail(it)) },
+                                fieldType = FieldType.EMAIL,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = stringResource(Res.string.team_label_email),
+                                placeholder = stringResource(Res.string.team_placeholder_email),
+                                isError = emailError != null,
+                                errorMessage = emailError,
+                                enabled = !state.isLoading
+                            )
+
+                            // Mobile Field
+                            FleetInputField(
+                                value = state.mobile,
+                                onValueChange = {
+                                    viewModel.sendIntent(
+                                        CreateTeamMemberContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
+                                    )
                                 },
+                                fieldType = FieldType.PHONE,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = stringResource(Res.string.team_label_mobile),
+                                placeholder = stringResource(Res.string.team_placeholder_mobile),
+                                isError = mobileError != null,
+                                errorMessage = mobileError,
                                 enabled = !state.isLoading
                             )
                         }
                     }
-                }
-            }
 
-            // Personal Information Section
-            SectionCard(
-                title = stringResource(Res.string.team_section_personal),
-                subtitle = stringResource(Res.string.team_section_member_details_subtitle)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // First Name and Last Name Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    // Password Section
+                    SectionCard(
+                        title = stringResource(Res.string.team_section_password),
+                        subtitle = stringResource(Res.string.team_section_password_hint)
                     ) {
-                        OutlinedTextField(
-                            value = state.firstName,
-                            onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateFirstName(it)) },
-                            modifier = Modifier.weight(1f),
-                            label = { Text(stringResource(Res.string.team_label_first_name)) },
-                            placeholder = { Text(stringResource(Res.string.team_placeholder_first_name)) },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onNext = { focusManager.moveFocus(FocusDirection.Right) }
-                            ),
-                            singleLine = true,
-                            enabled = !state.isLoading
-                        )
-
-                        OutlinedTextField(
-                            value = state.lastName,
-                            onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateLastName(it)) },
-                            modifier = Modifier.weight(1f),
-                            label = { Text(stringResource(Res.string.team_label_last_name)) },
-                            placeholder = { Text(stringResource(Res.string.team_placeholder_last_name)) },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                            ),
-                            singleLine = true,
-                            enabled = !state.isLoading
-                        )
-                    }
-
-                    // Email Field
-                    FleetInputField(
-                        value = state.email,
-                        onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateEmail(it)) },
-                        fieldType = FieldType.EMAIL,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = stringResource(Res.string.team_label_email),
-                        placeholder = stringResource(Res.string.team_placeholder_email),
-                        enabled = !state.isLoading
-                    )
-
-                    // Mobile Field
-                    FleetInputField(
-                        value = state.mobile,
-                        onValueChange = {
-                            viewModel.sendIntent(
-                                CreateTeamMemberContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                        ) {
+                            // Password Field (policy enforced by the backend; no client min-length hint)
+                            FleetPasswordField(
+                                value = state.password,
+                                onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdatePassword(it)) },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = stringResource(Res.string.team_label_password),
+                                placeholder = stringResource(Res.string.team_placeholder_password),
+                                enabled = !state.isLoading
                             )
-                        },
-                        fieldType = FieldType.PHONE,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = stringResource(Res.string.team_label_mobile),
-                        placeholder = stringResource(Res.string.team_placeholder_mobile),
-                        enabled = !state.isLoading
-                    )
-                }
-            }
 
-            // Password Section
-            SectionCard(
-                title = stringResource(Res.string.team_section_password),
-                subtitle = stringResource(Res.string.team_section_password_hint)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Password Field (policy enforced by the backend; no client min-length hint)
-                    FleetPasswordField(
-                        value = state.password,
-                        onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdatePassword(it)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = stringResource(Res.string.team_label_password),
-                        placeholder = stringResource(Res.string.team_placeholder_password),
-                        enabled = !state.isLoading
-                    )
-
-                    // Confirm Password Field (UI-only match check)
-                    FleetPasswordField(
-                        value = state.confirmPassword,
-                        onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateConfirmPassword(it)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = stringResource(Res.string.team_label_confirm_password),
-                        placeholder = stringResource(Res.string.team_placeholder_confirm_password),
-                        isError = state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password,
-                        errorMessage = if (state.confirmPassword.isNotEmpty() && state.confirmPassword != state.password) {
-                            stringResource(Res.string.error_passwords_mismatch)
-                        } else null,
-                        enabled = !state.isLoading,
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                focusManager.clearFocus()
-                                viewModel.sendIntent(CreateTeamMemberContract.Intent.CreateTeamMember)
-                            }
-                        )
-                    )
-                }
-            }
-
-            // Error Message
-            state.error?.let { error ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text("⚠️")
-                        Text(
-                            text = error.resolve(),
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                            // Confirm Password Field (UI-only match check)
+                            FleetPasswordField(
+                                value = state.confirmPassword,
+                                onValueChange = { viewModel.sendIntent(CreateTeamMemberContract.Intent.UpdateConfirmPassword(it)) },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = stringResource(Res.string.team_label_confirm_password),
+                                placeholder = stringResource(Res.string.team_placeholder_confirm_password),
+                                isError = confirmMismatch,
+                                errorMessage = if (confirmMismatch) {
+                                    stringResource(Res.string.error_passwords_mismatch)
+                                } else null,
+                                enabled = !state.isLoading,
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
+                                        if (allValid && !state.isLoading) {
+                                            viewModel.sendIntent(CreateTeamMemberContract.Intent.CreateTeamMember)
+                                        }
+                                    }
+                                )
+                            )
+                        }
                     }
-                }
-            }
 
-            // Create Button
-            Button(
-                onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.CreateTeamMember) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(52.dp),
-                enabled = !state.isLoading,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
+                    // Error Message
+                    state.error?.let { error ->
+                        FleetSectionCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            border = null
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
+                            ) {
+                                Text(
+                                    text = error.resolve(),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+
+                    // Create Button
                     val roleTitle = iamRoleTitle(state.selectedIamRoleName)
-                    Text(stringResource(Res.string.team_create_button, roleTitle), fontWeight = FontWeight.SemiBold)
+                    FleetButton(
+                        text = stringResource(Res.string.team_create_button, roleTitle),
+                        onClick = { viewModel.sendIntent(CreateTeamMemberContract.Intent.CreateTeamMember) },
+                        size = ButtonSize.LARGE,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = allValid && !state.isLoading,
+                        isLoading = state.isLoading
+                    )
+
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -330,17 +353,16 @@ private fun iamRoleDescription(roleName: String, apiDescription: String): String
         }
     }
 
-@Composable
-private fun iamRoleEmoji(roleName: String): String = when (roleName.lowercase()) {
-    "admin" -> "🛡️"
-    "user" -> "👤"
-    else -> "👤"
+private fun iamRoleIcon(roleName: String): DrawableResource = when (roleName.lowercase()) {
+    "admin" -> Res.drawable.ic_visibility
+    "user" -> Res.drawable.ic_profile
+    else -> Res.drawable.ic_profile
 }
 
 @Composable
-private fun iamRoleCardContent(role: AssignableTeamRole): Triple<String, String, String> = Triple(
+private fun iamRoleCardContent(role: AssignableTeamRole): Triple<String, DrawableResource, String> = Triple(
     iamRoleTitle(role.name),
-    iamRoleEmoji(role.name),
+    iamRoleIcon(role.name),
     iamRoleDescription(role.name, role.description)
 )
 
@@ -356,7 +378,6 @@ private fun SectionCard(
     FleetTitledSectionCard(
         title = title,
         subtitle = subtitle,
-        modifier = Modifier.padding(horizontal = 16.dp),
         content = content
     )
 }
@@ -368,7 +389,7 @@ private fun SectionCard(
 @Composable
 private fun RoleSelectionCard(
     title: String,
-    emoji: String,
+    iconRes: DrawableResource,
     description: String,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -379,7 +400,7 @@ private fun RoleSelectionCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.ML),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -388,22 +409,22 @@ private fun RoleSelectionCard(
             }
         ),
         border = if (isSelected) {
-            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+            BorderStroke(FleetTokens.Height.Connector, MaterialTheme.colorScheme.primary)
         } else {
-            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            BorderStroke(FleetTokens.Height.Divider, MaterialTheme.colorScheme.outlineVariant)
         }
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(FleetTokens.Spacing.M),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             // Icon on left
             Surface(
-                modifier = Modifier.size(44.dp),
-                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.size(FleetTokens.IconSize.XL),
+                shape = RoundedCornerShape(FleetTokens.Radius.ML),
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                 } else {
@@ -414,9 +435,15 @@ private fun RoleSelectionCard(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(
-                        text = emoji,
-                        style = MaterialTheme.typography.titleLarge
+                    Icon(
+                        painter = painterResource(iconRes),
+                        contentDescription = null,
+                        tint = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
                     )
                 }
             }
@@ -424,7 +451,7 @@ private fun RoleSelectionCard(
             // Title and description on right
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)
             ) {
                 Text(
                     text = title,
@@ -451,18 +478,19 @@ private fun RoleSelectionCard(
             // Selection indicator
             if (isSelected) {
                 Surface(
-                    modifier = Modifier.size(24.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.size(FleetTokens.IconSize.Default),
+                    shape = RoundedCornerShape(FleetTokens.Radius.L),
                     color = MaterialTheme.colorScheme.primary
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        Text(
-                            text = "✓",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimary
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_check),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
                         )
                     }
                 }

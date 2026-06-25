@@ -86,6 +86,9 @@ fun FleetDateTimePicker(
                 { Text(errorMessage, color = MaterialTheme.colorScheme.error) }
             } else null,
             singleLine = true,
+            // Match the app's standard field rounding (FleetTokens.Radius.L = 12dp) so date/time
+            // fields aren't visually flatter than the FleetInputField/FleetDropdown fields.
+            shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 disabledTextColor = MaterialTheme.colorScheme.onSurface,
                 disabledBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,

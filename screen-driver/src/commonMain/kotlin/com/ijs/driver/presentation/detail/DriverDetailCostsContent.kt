@@ -1,30 +1,43 @@
 package com.ijs.driver.presentation.detail
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.error.FleetErrorContext
-import com.indusjs.pdfreport.handler.DriverCostsPdfHandler
-import com.indusjs.pdfreport.model.DriverCostsPdfData
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetInputField
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import com.indusjs.datetimepicker.FleetDatePicker
@@ -52,7 +65,7 @@ internal fun DriverCostsTabContent(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
                     ) {
                         CircularProgressIndicator()
                         Text(
@@ -76,7 +89,7 @@ internal fun DriverCostsTabContent(
             // Empty state
             state.costs.isEmpty() -> {
                 EmptyContent(
-                    icon = "💰",
+                    iconRes = Res.drawable.ic_cost,
                     title = stringResource(Res.string.driver_costs_no_costs),
                     message = stringResource(Res.string.driver_costs_hint),
                     actionLabel = stringResource(Res.string.driver_costs_add),
@@ -88,8 +101,8 @@ internal fun DriverCostsTabContent(
             else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(FleetTokens.Spacing.L),
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
                     // Enhanced Hero Card
                     item {
@@ -117,7 +130,7 @@ internal fun DriverCostsTabContent(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                             ) {
                                 // Expand/Collapse All
                                 if (state.costsByGroup.size > 1) {
@@ -130,7 +143,10 @@ internal fun DriverCostsTabContent(
                                                 viewModel.sendIntent(DriverDetailContract.Intent.ExpandAllCostGroups)
                                             }
                                         },
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                        contentPadding = PaddingValues(
+                                            horizontal = FleetTokens.Spacing.S,
+                                            vertical = FleetTokens.Spacing.XS
+                                        )
                                     ) {
                                         Text(
                                             text = if (allExpanded) {
@@ -144,7 +160,10 @@ internal fun DriverCostsTabContent(
                                 }
                                 OutlinedButton(
                                     onClick = { viewModel.sendIntent(DriverDetailContract.Intent.ShowCostsFilterSheet) },
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                    contentPadding = PaddingValues(
+                                        horizontal = FleetTokens.Spacing.M,
+                                        vertical = FleetTokens.Spacing.S
+                                    )
                                 ) {
                                     Text(stringResource(Res.string.driver_detail_filter))
                                 }
@@ -167,10 +186,10 @@ internal fun DriverCostsTabContent(
                     // Cost Groups (Collapsible Sections)
                     val groupOrder = listOf("DC-G-001", "DC-G-002", "DC-G-003", "DC-G-004")
                     val groupIcons = mapOf(
-                        "DC-G-001" to "💼",
-                        "DC-G-002" to "🏆",
-                        "DC-G-003" to "📉",
-                        "DC-G-004" to "📋"
+                        "DC-G-001" to Res.drawable.ic_team,
+                        "DC-G-002" to Res.drawable.ic_trophy,
+                        "DC-G-003" to Res.drawable.ic_trending_down,
+                        "DC-G-004" to Res.drawable.ic_cost
                     )
 
                     groupOrder.forEach { groupId ->
@@ -181,7 +200,7 @@ internal fun DriverCostsTabContent(
                                     groupId = groupId,
                                     groupName = costGroupNames[groupId]
                                         ?: stringResource(Res.string.driver_costs_group_other),
-                                    groupIcon = groupIcons[groupId] ?: "📋",
+                                    groupIcon = groupIcons[groupId] ?: Res.drawable.ic_cost,
                                     costs = groupCosts,
                                     totalAmount = state.groupTotals[groupId] ?: 0.0,
                                     isExpanded = state.expandedGroups.contains(groupId),
@@ -199,16 +218,16 @@ internal fun DriverCostsTabContent(
                     if (state.isLoadingCosts && state.costs.isNotEmpty()) {
                         item {
                             Box(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                modifier = Modifier.fillMaxWidth().padding(FleetTokens.Spacing.L),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.Default))
                             }
                         }
                     }
 
                     // Bottom spacing
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                    item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL)) }
                 }
             }
         }
@@ -232,14 +251,14 @@ internal fun DriverCostsTabContent(
                 onClick = { viewModel.sendIntent(DriverDetailContract.Intent.NavigateToAddDriverCost) },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(16.dp),
+                    .padding(FleetTokens.Spacing.L),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_add),
                     contentDescription = stringResource(Res.string.driver_costs_add),
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(FleetTokens.IconSize.Default)
                 )
             }
         }
@@ -259,17 +278,11 @@ internal fun DriverCostsHeroCard(
     categoryCount: Int,
     onExportPdf: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetSectionCard(
+        elevation = FleetTokens.Elevation.Raised
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             // Header Row with Title and Export Button
             Row(
@@ -279,7 +292,7 @@ internal fun DriverCostsHeroCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                 ) {
                     Text(
                         text = stringResource(Res.string.driver_costs_summary),
@@ -289,7 +302,7 @@ internal fun DriverCostsHeroCard(
                     )
                     // Entry count badge
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         val entryText = if (entryCount == 1) {
@@ -302,17 +315,27 @@ internal fun DriverCostsHeroCard(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS)
                         )
                     }
                 }
                 // Export button
                 TextButton(
                     onClick = onExportPdf,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    contentPadding = PaddingValues(
+                        horizontal = FleetTokens.Spacing.S,
+                        vertical = FleetTokens.Spacing.XS
+                    )
                 ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_download),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                    Spacer(modifier = Modifier.size(FleetTokens.Spacing.XS))
                     Text(
-                        text = "📄 " + stringResource(Res.string.driver_costs_export),
+                        text = stringResource(Res.string.driver_costs_export),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -322,28 +345,28 @@ internal fun DriverCostsHeroCard(
             // Summary Row - Earnings, Deductions, Net Amount
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 // Earnings Card
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    shape = RoundedCornerShape(FleetTokens.Radius.L),
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(FleetTokens.Spacing.M),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
                             text = stringResource(Res.string.driver_costs_earnings),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                         )
                         Text(
                             text = "₹${formatCostAmount(earnings)}",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
@@ -351,23 +374,23 @@ internal fun DriverCostsHeroCard(
                 // Deductions Card
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+                    shape = RoundedCornerShape(FleetTokens.Radius.L),
+                    color = MaterialTheme.colorScheme.errorContainer
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(FleetTokens.Spacing.M),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
                             text = stringResource(Res.string.driver_costs_deductions),
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f)
                         )
                         Text(
                             text = "- ₹${formatCostAmount(deductions)}",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.colorScheme.onErrorContainer
                         )
                     }
                 }
@@ -375,11 +398,11 @@ internal fun DriverCostsHeroCard(
                 // Net Amount Card (highlighted)
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(FleetTokens.Radius.L),
                     color = MaterialTheme.colorScheme.primary
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(FleetTokens.Spacing.M),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -401,7 +424,7 @@ internal fun DriverCostsHeroCard(
 }
 
 /**
- * Collapsible cost group section.
+ * Active filters summary banner.
  */
 @Composable
 internal fun ActiveFiltersRow(
@@ -411,24 +434,24 @@ internal fun ActiveFiltersRow(
     onClear: () -> Unit
 ) {
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = MaterialTheme.colorScheme.secondaryContainer,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(FleetTokens.Spacing.M),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_filter),
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(FleetTokens.IconSize.S)
                 )
                 Text(
                     text = when {
@@ -479,8 +502,8 @@ internal fun CostsFilterSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(FleetTokens.Spacing.XL),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
         ) {
             Text(
                 text = stringResource(Res.string.driver_costs_filter_title),
@@ -489,7 +512,7 @@ internal fun CostsFilterSheet(
             )
 
             // Month Filter
-            OutlinedTextField(
+            FleetInputField(
                 value = localMonth,
                 onValueChange = {
                     localMonth = it
@@ -499,10 +522,9 @@ internal fun CostsFilterSheet(
                         localEndDate = ""
                     }
                 },
-                label = { Text(stringResource(Res.string.driver_costs_month_label)) },
-                placeholder = { Text(stringResource(Res.string.driver_costs_month_placeholder)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                fieldType = FieldType.DEFAULT,
+                label = stringResource(Res.string.driver_costs_month_label),
+                placeholder = stringResource(Res.string.driver_costs_month_placeholder)
             )
 
             Text(
@@ -535,36 +557,33 @@ internal fun CostsFilterSheet(
                 maxDate = today  // Can't select future dates
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
-                OutlinedButton(
+                FleetButton(
+                    text = stringResource(Res.string.action_clear_all),
                     onClick = {
                         localStartDate = ""
                         localEndDate = ""
                         localMonth = ""
                         onApply("", "", "")
                     },
+                    variant = ButtonVariant.SECONDARY,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(Res.string.action_clear_all))
-                }
+                )
 
-                Button(
+                FleetButton(
+                    text = stringResource(Res.string.action_apply),
                     onClick = { onApply(localStartDate, localEndDate, localMonth) },
+                    variant = ButtonVariant.PRIMARY,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Text(stringResource(Res.string.action_apply))
-                }
+                )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))
         }
     }
 }
-
-
-

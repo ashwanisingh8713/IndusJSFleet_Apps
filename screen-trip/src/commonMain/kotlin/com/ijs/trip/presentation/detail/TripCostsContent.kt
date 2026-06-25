@@ -1,17 +1,18 @@
 package com.ijs.trip.presentation.detail
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.fleet.data.model.costs.TripCostDto
+import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -62,32 +63,30 @@ internal fun TripCostsSection(
                 )
 
                 // Action buttons row
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                 ) {
                     if (onAddTripCost != null) {
-                        OutlinedButton(
+                        FleetButton(
+                            text = "+ " + stringResource(Res.string.action_add_cost),
                             onClick = onAddTripCost,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text("+ " + stringResource(Res.string.action_add_cost), fontWeight = FontWeight.SemiBold)
-                        }
+                            variant = ButtonVariant.SECONDARY,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                     if (onExportPdf != null && costs.isNotEmpty()) {
-                        OutlinedButton(
+                        FleetButton(
+                            text = "📄 " + stringResource(Res.string.action_export_pdf),
                             onClick = onExportPdf,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text("📄 " + stringResource(Res.string.action_export_pdf), fontWeight = FontWeight.SemiBold)
-                        }
+                            variant = ButtonVariant.SECONDARY,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
                 // Cost Breakdown Header
                 Text(
@@ -95,7 +94,7 @@ internal fun TripCostsSection(
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 10.dp)
+                    modifier = Modifier.padding(bottom = FleetTokens.Spacing.S)
                 )
 
                 // Flat list of all costs
@@ -106,7 +105,7 @@ internal fun TripCostsSection(
                         onClick = { selectedCost = cost }
                     )
                     if (index < costs.size - 1) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                     }
                 }
             }
@@ -157,10 +156,10 @@ private fun TripCostsErrorContent(message: String, onRetry: (() -> Unit)?) {
 @Composable
 internal fun TripCostsLoadingContent() {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(24.dp),
+        modifier = Modifier.fillMaxWidth().padding(FleetTokens.Spacing.XL),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(modifier = Modifier.size(32.dp))
+        CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.L))
     }
 }
 

@@ -17,7 +17,11 @@ import com.indusjs.fleet.domain.entity.user.OrganizationStats
 import com.indusjs.fleet.domain.entity.user.OwnerInfo
 import com.indusjs.fleet.domain.entity.user.User
 import com.indusjs.fleet.domain.entity.user.UserRole
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.isAppInDarkTheme
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.uicomponents.theme.rememberThemeToggle
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
@@ -142,12 +146,7 @@ fun ProfileScreen(
                 state.profile != null -> {
                     if (state.isEditing) {
                         EditProfileContent(
-                            firstName = state.editFirstName,
-                            lastName = state.editLastName,
-                            email = state.editEmail,
-                            mobile = state.editMobile,
-                            isUpdating = state.isUpdating,
-                            error = state.updateError,
+                            state = state,
                             onFirstNameChange = { viewModel.sendIntent(ProfileContract.Intent.UpdateFirstName(it)) },
                             onLastNameChange = { viewModel.sendIntent(ProfileContract.Intent.UpdateLastName(it)) },
                             onEmailChange = { viewModel.sendIntent(ProfileContract.Intent.UpdateEmail(it)) },
@@ -170,27 +169,14 @@ fun ProfileScreen(
     }
 
     // Logout confirmation dialog
-    if (showLogoutConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showLogoutConfirmation = false },
-            title = { Text(stringResource(Res.string.logout_confirmation_title)) },
-            text = { Text(stringResource(Res.string.logout_confirmation_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutConfirmation = false
-                        viewModel.sendIntent(ProfileContract.Intent.Logout)
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) { Text(stringResource(Res.string.confirm)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutConfirmation = false }) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            }
-        )
-    }
+    com.indusjs.uicomponents.components.LogoutConfirmationDialog(
+        showDialog = showLogoutConfirmation,
+        onConfirmLogout = {
+            showLogoutConfirmation = false
+            viewModel.sendIntent(ProfileContract.Intent.Logout)
+        },
+        onDismiss = { showLogoutConfirmation = false }
+    )
 }
 
 @Composable
@@ -293,18 +279,20 @@ private fun ProfileHeader(user: User) {
 
 @Composable
 private fun AccountStatusBadge(isActive: Boolean) {
+    // "Active" is a healthy/positive state -> use a positive teal (FleetAvailable),
+    // never the error/warning tint. Only the genuine "Inactive" state stays in error.
     val (containerColor, contentColor, icon, labelRes) = if (isActive) {
         AccountStatusBadgeData(
-            containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
-            contentColor = MaterialTheme.colorScheme.tertiary,
-            icon = "✅",
+            containerColor = FleetStatusColors.FleetAvailable.copy(alpha = 0.15f),
+            contentColor = FleetStatusColors.FleetAvailable,
+            icon = Res.drawable.ic_check_circle,
             labelRes = Res.string.profile_status_active
         )
     } else {
         AccountStatusBadgeData(
             containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.15f),
             contentColor = MaterialTheme.colorScheme.error,
-            icon = "⛔",
+            icon = Res.drawable.ic_warning,
             labelRes = Res.string.profile_status_inactive
         )
     }
@@ -316,7 +304,12 @@ private fun AccountStatusBadge(isActive: Boolean) {
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = icon, style = MaterialTheme.typography.labelLarge)
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(FleetTokens.IconSize.S)
+            )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = stringResource(labelRes),
@@ -331,7 +324,7 @@ private fun AccountStatusBadge(isActive: Boolean) {
 private data class AccountStatusBadgeData(
     val containerColor: androidx.compose.ui.graphics.Color,
     val contentColor: androidx.compose.ui.graphics.Color,
-    val icon: String,
+    val icon: org.jetbrains.compose.resources.DrawableResource,
     val labelRes: org.jetbrains.compose.resources.StringResource
 )
 
@@ -341,22 +334,22 @@ private fun RoleBadge(role: UserRole) {
         UserRole.OWNER -> Triple(
             MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
             MaterialTheme.colorScheme.primary,
-            "👑"
+            Res.drawable.ic_profile
         )
         UserRole.GENERAL_MANAGER -> Triple(
             MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
             MaterialTheme.colorScheme.tertiary,
-            "👨‍💼"
+            Res.drawable.ic_team
         )
         UserRole.MANAGER -> Triple(
             MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
             MaterialTheme.colorScheme.secondary,
-            "💼"
+            Res.drawable.ic_team
         )
         UserRole.SUPERVISOR -> Triple(
             MaterialTheme.colorScheme.surfaceVariant,
             MaterialTheme.colorScheme.onSurfaceVariant,
-            "👁️"
+            Res.drawable.ic_visibility
         )
     }
 
@@ -368,7 +361,12 @@ private fun RoleBadge(role: UserRole) {
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = icon, style = MaterialTheme.typography.labelLarge)
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(FleetTokens.IconSize.S)
+            )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = stringResource(
@@ -392,30 +390,30 @@ private fun RoleBadge(role: UserRole) {
 private fun ProfileDetailsCard(user: User) {
     EnhancedProfileCard(
         title = stringResource(Res.string.profile_contact_info),
-        icon = "📋"
+        icon = Res.drawable.ic_edit
     ) {
         EnhancedProfileRow(
-            icon = "📧",
+            icon = Res.drawable.ic_email,
             label = stringResource(Res.string.profile_email),
             value = user.email.ifBlank { "—" }
         )
         EnhancedProfileRow(
-            icon = "📱",
+            icon = Res.drawable.ic_phone,
             label = stringResource(Res.string.profile_mobile),
             value = formatMobile(user.mobile)
         )
         EnhancedProfileRow(
-            icon = "🆔",
+            icon = Res.drawable.ic_profile,
             label = stringResource(Res.string.profile_user_id),
             value = user.id.ifBlank { "—" }
         )
         EnhancedProfileRow(
-            icon = "📅",
+            icon = Res.drawable.ic_calendar,
             label = stringResource(Res.string.profile_member_since),
             value = formatDate(user.createdAt)
         )
         EnhancedProfileRow(
-            icon = "🔄",
+            icon = Res.drawable.ic_refresh,
             label = stringResource(Res.string.profile_last_updated),
             value = formatDate(user.updatedAt),
             isLast = true
@@ -426,20 +424,20 @@ private fun ProfileDetailsCard(user: User) {
 @Composable
 private fun EnhancedProfileCard(
     title: String,
-    icon: String,
+    icon: org.jetbrains.compose.resources.DrawableResource,
     content: @Composable ColumnScope.() -> Unit
 ) {
     // Delegates to the shared section card (promoted to ijs-ui-components-lib).
     com.indusjs.uicomponents.components.FleetTitledSectionCard(
         title = title,
-        emoji = icon,
+        iconRes = icon,
         content = content
     )
 }
 
 @Composable
 private fun EnhancedProfileRow(
-    icon: String,
+    icon: org.jetbrains.compose.resources.DrawableResource,
     label: String,
     value: String,
     isLast: Boolean = false
@@ -455,9 +453,11 @@ private fun EnhancedProfileRow(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(0.45f)
         ) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.bodyMedium
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(FleetTokens.IconSize.M)
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
@@ -472,6 +472,8 @@ private fun EnhancedProfileRow(
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.End,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(0.55f)
         )
     }
@@ -488,12 +490,12 @@ private fun EnhancedProfileRow(
 private fun OrganizationStatsCard(stats: OrganizationStats) {
     EnhancedProfileCard(
         title = stringResource(Res.string.profile_organization_overview),
-        icon = "📊"
+        icon = Res.drawable.ic_dashboard
     ) {
         // Team section header
         SectionLabel(
             text = stringResource(Res.string.profile_org_team),
-            icon = "👥"
+            icon = Res.drawable.ic_team
         )
         Spacer(modifier = Modifier.height(12.dp))
         Row(
@@ -501,19 +503,21 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             EnhancedStatItem(
-                icon = "💼",
+                icon = Res.drawable.ic_team,
                 value = stats.totalManagers.toString(),
                 label = stringResource(Res.string.profile_stats_managers),
                 color = MaterialTheme.colorScheme.secondary
             )
             EnhancedStatItem(
-                icon = "👁️",
+                icon = Res.drawable.ic_visibility,
                 value = stats.totalSupervisors.toString(),
                 label = stringResource(Res.string.profile_stats_supervisors),
-                color = MaterialTheme.colorScheme.tertiary
+                // Neutral count — use a calm accent (purple), not the theme's orange
+                // tertiary which reads as a warning for a plain "0".
+                color = FleetStatusColors.AccentPurple
             )
             EnhancedStatItem(
-                icon = "👨‍✈️",
+                icon = Res.drawable.ic_profile,
                 value = stats.totalTeamMembers.toString(),
                 label = stringResource(Res.string.profile_stats_team_members),
                 color = MaterialTheme.colorScheme.primary
@@ -530,7 +534,7 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
         // Fleet section header
         SectionLabel(
             text = stringResource(Res.string.profile_org_fleet),
-            icon = "🚚"
+            icon = Res.drawable.ic_truck
         )
         Spacer(modifier = Modifier.height(12.dp))
         Row(
@@ -543,11 +547,12 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
                 label = stringResource(Res.string.profile_stats_total_vehicles),
                 color = MaterialTheme.colorScheme.primary
             )
+            // "Active Vehicles" is a healthy/positive metric -> positive teal, not amber/error.
             EnhancedStatItem(
-                icon = "🟢",
+                icon = Res.drawable.ic_check_circle,
                 value = stats.activeVehicles.toString(),
                 label = stringResource(Res.string.profile_stats_active_vehicles),
-                color = MaterialTheme.colorScheme.tertiary
+                color = FleetStatusColors.FleetAvailable
             )
         }
 
@@ -564,19 +569,20 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             EnhancedStatItem(
-                icon = "🧭",
+                icon = Res.drawable.ic_trip,
                 value = stats.totalTrips.toString(),
                 label = stringResource(Res.string.profile_stats_total_trips),
                 color = MaterialTheme.colorScheme.primary
             )
+            // "Active Trips" is a healthy/positive metric -> positive green, not amber/error.
             EnhancedStatItem(
-                icon = "🚀",
+                icon = Res.drawable.ic_trip,
                 value = stats.activeTrips.toString(),
                 label = stringResource(Res.string.profile_stats_active_trips),
-                color = MaterialTheme.colorScheme.tertiary
+                color = FleetStatusColors.FleetOnRoute
             )
             EnhancedStatItem(
-                icon = "✅",
+                icon = Res.drawable.ic_check_circle,
                 value = stats.completedTrips.toString(),
                 label = stringResource(Res.string.profile_stats_completed_trips),
                 color = MaterialTheme.colorScheme.secondary
@@ -586,17 +592,17 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
 }
 
 @Composable
-private fun SectionLabel(text: String, icon: String) {
+private fun SectionLabel(text: String, icon: org.jetbrains.compose.resources.DrawableResource) {
     // Delegates to the shared section header (promoted to ijs-ui-components-lib).
     com.indusjs.uicomponents.components.FleetSectionHeader(
         title = text,
-        emoji = icon
+        iconRes = icon
     )
 }
 
 @Composable
 private fun EnhancedStatItem(
-    icon: String,
+    icon: org.jetbrains.compose.resources.DrawableResource,
     value: String,
     label: String,
     color: androidx.compose.ui.graphics.Color
@@ -605,7 +611,7 @@ private fun EnhancedStatItem(
     com.indusjs.uicomponents.components.FleetMetricTile(
         value = value,
         label = label,
-        emoji = icon,
+        iconRes = icon,
         accent = color,
         valueColor = color,
         showBackground = false,
@@ -638,11 +644,11 @@ private fun EnhancedStatItemWithIcon(
 private fun OwnerInfoCard(ownerInfo: OwnerInfo) {
     EnhancedProfileCard(
         title = stringResource(Res.string.profile_org_owner),
-        icon = "👑"
+        icon = Res.drawable.ic_profile
     ) {
-        EnhancedProfileRow(icon = "👤", label = stringResource(Res.string.profile_owner_name), value = ownerInfo.ownerName)
+        EnhancedProfileRow(icon = Res.drawable.ic_profile, label = stringResource(Res.string.profile_owner_name), value = ownerInfo.ownerName)
         EnhancedProfileRow(
-            icon = "📧",
+            icon = Res.drawable.ic_email,
             label = stringResource(Res.string.profile_owner_email),
             value = ownerInfo.ownerEmail,
             isLast = true
@@ -658,269 +664,259 @@ private fun ActionButtonsCard(
 ) {
     EnhancedProfileCard(
         title = stringResource(Res.string.profile_account_actions),
-        icon = "⚙️"
+        icon = Res.drawable.ic_settings
     ) {
         // Edit Profile Button
-        Button(
+        com.indusjs.uicomponents.components.FleetButton(
+            text = stringResource(Res.string.profile_edit),
             onClick = onEditProfile,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(text = "✏️", style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.profile_edit),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
+            variant = com.indusjs.uicomponents.components.ButtonVariant.PRIMARY,
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_edit),
+                    contentDescription = null,
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
                 )
             }
-        }
+        )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
         // Change Password Button
-        OutlinedButton(
+        com.indusjs.uicomponents.components.FleetButton(
+            text = stringResource(Res.string.profile_change_password),
             onClick = onChangePassword,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(text = "🔑", style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.profile_change_password),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
+            variant = com.indusjs.uicomponents.components.ButtonVariant.SECONDARY,
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_lock),
+                    contentDescription = null,
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
                 )
             }
-        }
+        )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-            thickness = 0.5.dp
+            thickness = FleetTokens.Height.Divider
         )
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
-        // Logout Button
-        OutlinedButton(
+        // Logout Button (destructive)
+        com.indusjs.uicomponents.components.FleetButton(
+            text = stringResource(Res.string.profile_logout),
             onClick = onLogout,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.error
-            ),
-            border = androidx.compose.foundation.BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
-            )
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(text = "🚪", style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(Res.string.profile_logout),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
+            variant = com.indusjs.uicomponents.components.ButtonVariant.DESTRUCTIVE,
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_logout),
+                    contentDescription = null,
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
                 )
             }
-        }
+        )
     }
 }
 
 @Composable
 private fun EditProfileContent(
-    firstName: String,
-    lastName: String,
-    email: String,
-    mobile: String,
-    isUpdating: Boolean,
-    error: com.indusjs.uicomponents.components.UiText?,
+    state: ProfileContract.State,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onMobileChange: (String) -> Unit,
     onSave: () -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Header
-        item {
-            // Tinted hero card -> FleetSectionCard with containerColor = the original
-            // primaryContainer .3 tint, border = null. The centered hero layout (64dp chip
-            // above a centered title/subtitle) can't be expressed by FleetSectionHeader's
-            // left-aligned row, so the inner centered content stays bespoke.
-            com.indusjs.uicomponents.components.FleetSectionCard(
-                modifier = Modifier.fillMaxWidth(),
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                border = null,
-                elevation = 0.dp,
-                contentPadding = 20.dp
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Surface(
-                        modifier = Modifier.size(64.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = "✏️",
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = stringResource(Res.string.profile_edit_heading),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(Res.string.profile_edit_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+    val isUpdating = state.isUpdating
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val bp = rememberFleetBreakpoint()
+        // Compact = full-width; Medium/Expanded = centered, capped column so the
+        // form doesn't stretch edge-to-edge on tablet / web.
+        val formWidthModifier = if (bp == FleetBreakpoint.Compact) {
+            Modifier.fillMaxWidth()
+        } else {
+            Modifier.widthIn(max = FORM_MAX_WIDTH)
         }
 
-        // Form Card
-        item {
-            com.indusjs.uicomponents.components.FleetTitledSectionCard(
-                title = stringResource(Res.string.profile_personal_details),
-                emoji = "📋",
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+        ) {
+            // Header
+            item {
+                // Solid tonal hero card: full primaryContainer fill (flat, borderless),
+                // inner text uses onPrimaryContainer for contrast. The centered hero layout
+                // (chip above a centered title/subtitle) can't be expressed by
+                // FleetSectionHeader's left-aligned row, so the inner centered content stays
+                // bespoke.
+                com.indusjs.uicomponents.components.FleetSectionCard(
+                    modifier = formWidthModifier,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    border = null,
+                    elevation = FleetTokens.Elevation.None,
+                    contentPadding = FleetTokens.Spacing.XL
                 ) {
-                    OutlinedTextField(
-                        value = firstName,
-                        onValueChange = onFirstNameChange,
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.profile_first_name)) },
-                        leadingIcon = { Text("👤") },
-                        singleLine = true,
-                        enabled = !isUpdating,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = lastName,
-                        onValueChange = onLastNameChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.profile_last_name)) },
-                        leadingIcon = { Text("👤") },
-                        singleLine = true,
-                        enabled = !isUpdating,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = onEmailChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.profile_email)) },
-                        leadingIcon = { Text("📧") },
-                        singleLine = true,
-                        enabled = !isUpdating,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = mobile,
-                        onValueChange = onMobileChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(Res.string.profile_mobile)) },
-                        leadingIcon = { Text("📱") },
-                        singleLine = true,
-                        enabled = !isUpdating,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    error?.let {
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                            modifier = Modifier.size(FleetTokens.IconSize.XL + FleetTokens.IconSize.S),
+                            shape = RoundedCornerShape(FleetTokens.Radius.XL),
+                            color = MaterialTheme.colorScheme.primary
                         ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("⚠️", style = MaterialTheme.typography.bodyMedium)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = it.resolve(),
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_edit),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(FleetTokens.IconSize.Default)
                                 )
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        // Save Button
-        item {
-            Button(
-                onClick = onSave,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                enabled = !isUpdating,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                if (isUpdating) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text("💾", style = MaterialTheme.typography.bodyLarge)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
                         Text(
-                            text = stringResource(Res.string.profile_save),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
+                            text = stringResource(Res.string.profile_edit_heading),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
+                        Text(
+                            text = stringResource(Res.string.profile_edit_subtitle),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                         )
                     }
                 }
             }
+
+            // Form Card
+            item {
+                com.indusjs.uicomponents.components.FleetTitledSectionCard(
+                    title = stringResource(Res.string.profile_personal_details),
+                    iconRes = Res.drawable.ic_edit,
+                    modifier = formWidthModifier
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+                    ) {
+                        com.indusjs.uicomponents.components.FleetInputField(
+                            value = state.editFirstName,
+                            onValueChange = onFirstNameChange,
+                            fieldType = com.indusjs.uicomponents.components.FieldType.DEFAULT,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = stringResource(Res.string.profile_first_name),
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_profile),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
+                            },
+                            isError = state.editFirstNameError != null,
+                            errorMessage = state.editFirstNameError?.resolve(),
+                            enabled = !isUpdating
+                        )
+
+                        com.indusjs.uicomponents.components.FleetInputField(
+                            value = state.editLastName,
+                            onValueChange = onLastNameChange,
+                            fieldType = com.indusjs.uicomponents.components.FieldType.DEFAULT,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = stringResource(Res.string.profile_last_name),
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_profile),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
+                            },
+                            isError = state.editLastNameError != null,
+                            errorMessage = state.editLastNameError?.resolve(),
+                            enabled = !isUpdating
+                        )
+
+                        com.indusjs.uicomponents.components.FleetInputField(
+                            value = state.editEmail,
+                            onValueChange = onEmailChange,
+                            fieldType = com.indusjs.uicomponents.components.FieldType.EMAIL,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = stringResource(Res.string.profile_email),
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_email),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
+                            },
+                            isError = state.editEmailError != null,
+                            errorMessage = state.editEmailError?.resolve(),
+                            enabled = !isUpdating
+                        )
+
+                        com.indusjs.uicomponents.components.FleetInputField(
+                            value = state.editMobile,
+                            onValueChange = { onMobileChange(com.indusjs.uicomponents.components.filterDigitsOnly(it, 10)) },
+                            fieldType = com.indusjs.uicomponents.components.FieldType.PHONE,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = stringResource(Res.string.profile_mobile),
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_phone),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
+                            },
+                            isError = state.editMobileError != null,
+                            errorMessage = state.editMobileError?.resolve(),
+                            enabled = !isUpdating
+                        )
+
+                        state.updateError?.let {
+                            com.indusjs.uicomponents.components.FleetInlineErrorBanner(
+                                message = it.resolve()
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Save Button
+            item {
+                com.indusjs.uicomponents.components.FleetButton(
+                    text = stringResource(Res.string.profile_save),
+                    onClick = onSave,
+                    variant = com.indusjs.uicomponents.components.ButtonVariant.PRIMARY,
+                    size = com.indusjs.uicomponents.components.ButtonSize.LARGE,
+                    modifier = formWidthModifier,
+                    enabled = state.isEditFormValid,
+                    isLoading = isUpdating,
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_check_circle),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
+                        )
+                    }
+                )
+            }
         }
     }
 }
+
+/** Centered form cap on Medium/Expanded so the edit form never stretches edge-to-edge. */
+private val FORM_MAX_WIDTH = 480.dp
 
 private fun formatDate(isoDate: String): String {
     if (isoDate.isBlank()) return "—"

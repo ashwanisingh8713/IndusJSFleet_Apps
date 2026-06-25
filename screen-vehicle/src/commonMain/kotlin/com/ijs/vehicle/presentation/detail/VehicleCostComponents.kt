@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -32,7 +33,12 @@ internal fun CompactCostCard(cost: CostDisplayItem, onDelete: () -> Unit) {
                 color = if (cost.category == "trip") MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 else MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
             ) {
-                Text(cost.icon, modifier = Modifier.padding(6.dp), style = MaterialTheme.typography.titleSmall)
+                Icon(
+                    painter = painterResource(cost.icon),
+                    contentDescription = null,
+                    modifier = Modifier.padding(6.dp).size(FleetTokens.IconSize.S),
+                    tint = if (cost.category == "trip") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+                )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -59,7 +65,12 @@ internal fun CompactCostCard(cost: CostDisplayItem, onDelete: () -> Unit) {
             Column(horizontalAlignment = Alignment.End) {
                 Text("₹${formatAmount(cost.amount)}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 IconButton(onClick = onDelete, modifier = Modifier.size(20.dp)) {
-                    Text("🗑️", style = MaterialTheme.typography.labelSmall)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_delete),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.S),
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
@@ -76,7 +87,7 @@ internal data class CostDisplayItem(
     val dateLabel: String,
     val description: String?,
     val vendorName: String?,
-    val icon: String,
+    val icon: org.jetbrains.compose.resources.DrawableResource,
     val typeLabel: String
 ) {
     companion object {
@@ -140,30 +151,30 @@ internal fun formatAmount(amount: Double): String {
     }
 }
 
-internal fun getCostTypeIcon(type: String): String = when (type.lowercase()) {
-    "fuel" -> "⛽"
-    "toll" -> "🛣️"
-    "tyre" -> "🛞"
-    "battery" -> "🔋"
-    "oil_change" -> "🛢️"
-    "brake", "brake_service" -> "🛑"
-    "engine", "engine_repair" -> "🔧"
-    "driver_allowance" -> "👤"
-    "loading" -> "📦"
-    "unloading" -> "📤"
-    "parking" -> "🅿️"
-    "cleaning" -> "🧹"
-    "servicing" -> "🔩"
-    "electrical" -> "⚡"
-    "body_work" -> "🚗"
-    "rto" -> "📋"
-    "police" -> "🚔"
-    "food" -> "🍽️"
-    "halt" -> "⏸️"
-    "commission" -> "💵"
-    "weighing" -> "⚖️"
-    "detention" -> "⏰"
-    else -> "💰"
+internal fun getCostTypeIcon(type: String): org.jetbrains.compose.resources.DrawableResource = when (type.lowercase()) {
+    "fuel" -> Res.drawable.ic_fuel
+    "toll" -> Res.drawable.ic_trip
+    "tyre" -> Res.drawable.ic_settings
+    "battery" -> Res.drawable.ic_settings
+    "oil_change" -> Res.drawable.ic_settings
+    "brake", "brake_service" -> Res.drawable.ic_settings
+    "engine", "engine_repair" -> Res.drawable.ic_settings
+    "driver_allowance" -> Res.drawable.ic_profile
+    "loading" -> Res.drawable.ic_package
+    "unloading" -> Res.drawable.ic_package
+    "parking" -> Res.drawable.ic_map
+    "cleaning" -> Res.drawable.ic_settings
+    "servicing" -> Res.drawable.ic_settings
+    "electrical" -> Res.drawable.ic_settings
+    "body_work" -> Res.drawable.ic_truck
+    "rto" -> Res.drawable.ic_edit
+    "police" -> Res.drawable.ic_warning
+    "food" -> Res.drawable.ic_cost
+    "halt" -> Res.drawable.ic_time
+    "commission" -> Res.drawable.ic_cost
+    "weighing" -> Res.drawable.ic_settings
+    "detention" -> Res.drawable.ic_time
+    else -> Res.drawable.ic_cost
 }
 
 internal fun getCostTypeLabel(type: String): String = when (type.lowercase()) {

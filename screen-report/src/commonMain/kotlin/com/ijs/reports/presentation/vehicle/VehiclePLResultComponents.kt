@@ -15,17 +15,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetSectionHeader
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.reports.domain.entity.CostBreakdownItem
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.RecentReport
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+/**
+ * Fixed width for the horizontally-scrolling recent-report cards. Not part of the
+ * [FleetTokens] spacing/icon scale (it is a bespoke card dimension), so it is kept
+ * as a single named constant rather than a raw literal at the call site.
+ */
+private val RecentReportCardWidth: Dp = 140.dp
 
 @Composable
 internal fun ResultHeaderCard(
@@ -35,8 +47,9 @@ internal fun ResultHeaderCard(
     onNewReport: () -> Unit
 ) {
     FleetSectionCard(
-        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-        border = null
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        border = null,
+        elevation = FleetTokens.Elevation.None
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -45,35 +58,35 @@ internal fun ResultHeaderCard(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_truck),
                     contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.size(FleetTokens.IconSize.Default),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Column {
                     Text(
                         text = vehicleNumber,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
                         text = "$vehicleMakeModel • ${period.replaceFirstChar { it.uppercase() }}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                     )
                 }
             }
 
-            TextButton(onClick = onNewReport) {
-                Text(
-                    text = stringResource(Res.string.reports_new_report),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            FleetButton(
+                text = stringResource(Res.string.reports_new_report),
+                onClick = onNewReport,
+                variant = ButtonVariant.GHOST,
+                size = ButtonSize.SMALL
+            )
         }
     }
 }
@@ -90,12 +103,12 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
     val lossColor = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
     val expenseColor = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
         FleetSectionCard(
             containerColor = if (isProfit) profitColor.copy(alpha = 0.1f)
                             else lossColor.copy(alpha = 0.1f),
             border = null,
-            contentPadding = 20.dp
+            contentPadding = FleetTokens.Spacing.XL
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -103,7 +116,7 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                 ) {
                     Text(
                         text = if (isProfit) stringResource(Res.string.reports_net_profit_label) else stringResource(Res.string.reports_net_loss_label),
@@ -111,7 +124,7 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(FleetTokens.Radius.S),
                         color = if (isProfit) profitColor.copy(alpha = 0.2f)
                                 else lossColor.copy(alpha = 0.2f)
                     ) {
@@ -119,18 +132,18 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                             text = stringResource(Res.string.reports_trips_count, result.totalTrips),
                             style = MaterialTheme.typography.labelSmall,
                             color = if (isProfit) profitColor else lossColor,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 Text(
                     text = formatCurrency(kotlin.math.abs(result.netProfit)),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (isProfit) profitColor else lossColor
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                 Text(
                     text = stringResource(Res.string.reports_margin_value, formatPercentage(result.profitMargin)),
                     style = MaterialTheme.typography.bodyMedium,
@@ -141,7 +154,7 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             FleetMetricTile(
                 value = formatCurrency(result.totalRevenue),
@@ -188,8 +201,8 @@ internal fun PLCostBreakdownCard(costs: List<CostBreakdownItem>) {
 
             AnimatedVisibility(visible = expanded) {
                 Column(
-                    modifier = Modifier.padding(top = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(top = FleetTokens.Spacing.M),
+                    verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                 ) {
                     costs.forEach { item ->
                         Row(
@@ -201,7 +214,7 @@ internal fun PLCostBreakdownCard(costs: List<CostBreakdownItem>) {
                                     .replaceFirstChar { it.uppercase() },
                                 style = MaterialTheme.typography.bodyMedium
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                                 if (item.percentage > 0) {
                                     Text(
                                         text = "${item.percentage.toInt()}%",
@@ -233,20 +246,18 @@ internal fun RecentReportCard(
     report: RecentReport,
     onClick: () -> Unit
 ) {
-    Card(
+    Surface(
         modifier = Modifier
-            .width(140.dp)
+            .width(RecentReportCardWidth)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (report.isProfit)
-                com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
-            else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f)
-        )
+        shape = RoundedCornerShape(FleetTokens.Radius.ML),
+        color = if (report.isProfit)
+            com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
+        else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.padding(FleetTokens.Spacing.M),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
         ) {
             Text(
                 text = report.vehicleNumber,
@@ -262,7 +273,7 @@ internal fun RecentReportCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
             Text(
                 text = formatCurrency(kotlin.math.abs(report.profitLoss)),
                 style = MaterialTheme.typography.titleMedium,

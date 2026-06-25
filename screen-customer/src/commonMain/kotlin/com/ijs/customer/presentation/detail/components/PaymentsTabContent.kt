@@ -8,7 +8,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.datetimeutils.FleetEpoch
 import com.indusjs.fleet.core.util.formatCurrency
@@ -16,9 +15,11 @@ import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -107,13 +108,13 @@ fun PaymentsTabContent(
                     EmptyContent(
                         title = stringResource(Res.string.payment_no_results),
                         message = stringResource(Res.string.customer_payment_search_empty_hint),
-                        icon = "🔍"
+                        iconRes = Res.drawable.ic_search
                     )
                 } else {
                     EmptyContent(
                         title = stringResource(Res.string.customer_no_payments_title),
                         message = stringResource(Res.string.customer_no_payments_message),
-                        icon = "💳"
+                        iconRes = Res.drawable.ic_cost
                     )
                 }
             }
@@ -137,8 +138,8 @@ private fun PaymentsList(
     onLoadMore: () -> Unit
 ) {
     LazyColumn(
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PaddingValues(FleetTokens.Spacing.M),
+        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
     ) {
         // Grouped by month
         groupedPayments.forEach { (month, payments) ->
@@ -162,11 +163,11 @@ private fun PaymentsList(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(FleetTokens.Spacing.L),
                     contentAlignment = Alignment.Center
                 ) {
                     if (isLoadingPayments) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.Default))
                     } else {
                         TextButton(onClick = onLoadMore) {
                             Text(stringResource(Res.string.action_load_more))
@@ -187,17 +188,19 @@ private fun MonthHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = FleetTokens.Spacing.S),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
-            Text(
-                text = "📅",
-                style = MaterialTheme.typography.bodyMedium
+            Icon(
+                painter = painterResource(Res.drawable.ic_calendar),
+                contentDescription = null,
+                modifier = Modifier.size(FleetTokens.IconSize.S),
+                tint = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = month,

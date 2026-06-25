@@ -9,7 +9,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,13 +20,26 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+/**
+ * Max width for the centered onboarding content on Medium/Expanded screens
+ * (tablet/web). Matches the auth-flow form width used by LoginScreen so the
+ * intro carousel stays visually consistent with sign-in.
+ */
+private val CONTENT_MAX_WIDTH = 480.dp
 
 /**
  * Data class representing a single onboarding page.
@@ -31,7 +47,7 @@ import org.jetbrains.compose.resources.stringResource
 private data class OnboardingPage(
     val titleRes: StringResource,
     val descriptionRes: StringResource,
-    val iconRes: Any // Res.drawable reference
+    val iconRes: DrawableResource
 )
 
 /**
@@ -101,35 +117,50 @@ fun OnboardingScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
         ) {
-            // Top bar with Skip button
-            OnboardingTopBar(
-                isLastPage = state.isLastPage,
-                onSkip = { viewModel.sendIntent(OnboardingContract.Intent.Skip) }
-            )
-
-            // Pager content
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f)
-            ) { pageIndex ->
-                OnboardingPageContent(
-                    page = pages[pageIndex],
-                    modifier = Modifier.fillMaxSize()
-                )
+            val breakpoint = rememberFleetBreakpoint()
+            // Compact: full-width. Medium/Expanded: centered, constrained column.
+            val contentWidthModifier = if (breakpoint.isAtLeastMedium) {
+                Modifier.widthIn(max = CONTENT_MAX_WIDTH)
+            } else {
+                Modifier.fillMaxWidth()
             }
 
-            // Bottom section with dots and buttons
-            OnboardingBottomSection(
-                currentPage = state.currentPage,
-                totalPages = state.totalPages,
-                isLastPage = state.isLastPage,
-                onNext = { viewModel.sendIntent(OnboardingContract.Intent.NextPage) },
-                onGetStarted = { viewModel.sendIntent(OnboardingContract.Intent.GetStarted) },
-                modifier = Modifier.padding(24.dp)
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(contentWidthModifier)
+            ) {
+                // Top bar with Skip button
+                OnboardingTopBar(
+                    isLastPage = state.isLastPage,
+                    onSkip = { viewModel.sendIntent(OnboardingContract.Intent.Skip) }
+                )
+
+                // Pager content
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.weight(1f)
+                ) { pageIndex ->
+                    OnboardingPageContent(
+                        page = pages[pageIndex],
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                // Bottom section with dots and buttons
+                OnboardingBottomSection(
+                    currentPage = state.currentPage,
+                    totalPages = state.totalPages,
+                    isLastPage = state.isLastPage,
+                    onNext = { viewModel.sendIntent(OnboardingContract.Intent.NextPage) },
+                    onGetStarted = { viewModel.sendIntent(OnboardingContract.Intent.GetStarted) },
+                    modifier = Modifier.padding(FleetTokens.Spacing.XL)
+                )
+            }
         }
     }
 }
@@ -145,15 +176,20 @@ private fun OnboardingTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(
+                horizontal = FleetTokens.Spacing.L,
+                vertical = FleetTokens.Spacing.M
+            ),
         horizontalArrangement = Arrangement.End
     ) {
         if (!isLastPage) {
-            TextButton(onClick = onSkip) {
-                Text(
+            // Wrap so the ghost button measures its content width instead of
+            // stretching full-width on Compact breakpoints.
+            Box(modifier = Modifier.wrapContentWidth()) {
+                FleetButton(
                     text = stringResource(Res.string.skip),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    onClick = onSkip,
+                    variant = ButtonVariant.GHOST
                 )
             }
         }
@@ -169,28 +205,28 @@ private fun OnboardingPageContent(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(horizontal = 32.dp),
+        modifier = modifier.padding(horizontal = FleetTokens.Spacing.XXL),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Icon with colored background circle
+        // Illustration: icon inside a colored circle. Sizes come from
+        // FleetTokens.IconSize so the illustration scales with the design system.
         Box(
             modifier = Modifier
-                .size(160.dp)
+                .size(FleetTokens.IconSize.XXL)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            @Suppress("UNCHECKED_CAST")
             Icon(
-                painter = painterResource(page.iconRes as org.jetbrains.compose.resources.DrawableResource),
+                painter = painterResource(page.iconRes),
                 contentDescription = stringResource(page.titleRes),
-                modifier = Modifier.size(80.dp),
+                modifier = Modifier.size(FleetTokens.IconSize.XL),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL))
 
         // Title
         Text(
@@ -201,15 +237,14 @@ private fun OnboardingPageContent(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
         // Description
         Text(
             text = stringResource(page.descriptionRes),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            lineHeight = 24.sp
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -234,26 +269,21 @@ private fun OnboardingBottomSection(
         PageIndicator(
             currentPage = currentPage,
             totalPages = totalPages,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = FleetTokens.Spacing.XXL)
         )
 
-        // Action button
-        Button(
+        // Action button (Next on intermediate pages, Get Started on last page)
+        FleetButton(
+            text = if (isLastPage) {
+                stringResource(Res.string.onboarding_get_started)
+            } else {
+                stringResource(Res.string.next)
+            },
             onClick = if (isLastPage) onGetStarted else onNext,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text(
-                text = if (isLastPage) stringResource(Res.string.onboarding_get_started) else stringResource(Res.string.next),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+            variant = ButtonVariant.PRIMARY,
+            size = ButtonSize.LARGE,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -268,13 +298,13 @@ private fun PageIndicator(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(totalPages) { index ->
             val isSelected = index == currentPage
             val width by animateDpAsState(
-                targetValue = if (isSelected) 24.dp else 8.dp,
+                targetValue = if (isSelected) FleetTokens.Spacing.XL else FleetTokens.Spacing.S,
                 animationSpec = tween(300)
             )
             val color by animateColorAsState(
@@ -289,11 +319,10 @@ private fun PageIndicator(
             Box(
                 modifier = Modifier
                     .width(width)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .height(FleetTokens.Spacing.S)
+                    .clip(RoundedCornerShape(FleetTokens.Radius.S))
                     .background(color)
             )
         }
     }
 }
-

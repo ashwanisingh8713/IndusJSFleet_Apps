@@ -6,12 +6,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.fleet.core.util.formatPercentage
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.reports.domain.entity.ConsolidatedPL
 import com.ijs.reports.domain.entity.PeriodBreakdown
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
@@ -40,7 +40,7 @@ internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -54,9 +54,9 @@ internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
             HorizontalDivider()
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -89,7 +89,7 @@ internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -208,7 +208,7 @@ internal fun VehicleSummaryCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

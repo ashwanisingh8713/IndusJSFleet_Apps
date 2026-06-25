@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,7 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.PaymentType
 import com.ijs.trip.payment.domain.entity.TripPayment
@@ -34,20 +34,20 @@ internal fun FilterChipRow(
 ) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
+        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
     ) {
         Icon(
             painter = painterResource(Res.drawable.ic_filter),
             contentDescription = null,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(FleetTokens.IconSize.S),
             tint = MaterialTheme.colorScheme.primary
         )
         Text(
             text = stringResource(Res.string.payment_filters_label),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(end = 4.dp)
+            modifier = Modifier.padding(end = FleetTokens.Spacing.XS)
         )
 
         // Customer chip (resolved display name passed in from state)
@@ -118,98 +118,88 @@ internal fun PaymentSummaryCard(
     isGroupedView: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    FleetSectionCard(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = FleetTokens.Elevation.Raised
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+        // Header with payment count
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Header with payment count
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(Res.string.payment_summary),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (paymentCount > 0) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.payment_count, paymentCount),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
+            Text(
+                text = stringResource(Res.string.payment_summary),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (paymentCount > 0) {
+                Surface(
+                    shape = RoundedCornerShape(FleetTokens.Radius.L),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = stringResource(Res.string.payment_count, paymentCount),
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                // Received Card
-                SummaryItemCard(
-                    value = totalReceived,
-                    label = stringResource(Res.string.payment_filter_received),
-                    valueColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived,
-                    backgroundColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived.copy(alpha = 0.1f),
-                    modifier = Modifier.weight(1f)
-                )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            // Received Card
+            SummaryItemCard(
+                value = totalReceived,
+                label = stringResource(Res.string.payment_filter_received),
+                valueColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived,
+                backgroundColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived.copy(alpha = 0.1f),
+                modifier = Modifier.weight(1f)
+            )
 
-                Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
 
-                // Pending Card
-                SummaryItemCard(
-                    value = totalPending,
-                    label = stringResource(Res.string.payment_filter_pending),
-                    valueColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending,
-                    backgroundColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending.copy(alpha = 0.1f),
-                    modifier = Modifier.weight(1f)
-                )
+            // Pending Card
+            SummaryItemCard(
+                value = totalPending,
+                label = stringResource(Res.string.payment_filter_pending),
+                valueColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending,
+                backgroundColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending.copy(alpha = 0.1f),
+                modifier = Modifier.weight(1f)
+            )
 
-                Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
 
-                // This Month Card
-                SummaryItemCard(
-                    value = thisMonth,
-                    label = stringResource(Res.string.payment_this_month),
-                    valueColor = MaterialTheme.colorScheme.primary,
-                    backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            // This Month Card
+            SummaryItemCard(
+                value = thisMonth,
+                label = stringResource(Res.string.payment_this_month),
+                valueColor = MaterialTheme.colorScheme.primary,
+                backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                modifier = Modifier.weight(1f)
+            )
+        }
 
-            // Trip count section - only in grouped view
-            if (isGroupedView) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(Res.string.payment_grouped_by_trip, tripCount),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
+        // Trip count section - only in grouped view
+        if (isGroupedView) {
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+            Text(
+                text = stringResource(Res.string.payment_grouped_by_trip, tripCount),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(vertical = FleetTokens.Spacing.S)
+            )
         }
     }
 }
@@ -229,9 +219,9 @@ internal fun SummaryItemCard(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(FleetTokens.Radius.M))
             .background(backgroundColor)
-            .padding(vertical = 12.dp, horizontal = 8.dp)
+            .padding(vertical = FleetTokens.Spacing.M, horizontal = FleetTokens.Spacing.S)
     ) {
         Text(
             text = value,
@@ -242,7 +232,7 @@ internal fun SummaryItemCard(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
@@ -266,186 +256,178 @@ internal fun PaymentCard(
     paymentStateLabels: Map<String, String> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
-    Card(
+    FleetSectionCard(
         modifier = modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = { onLongClick?.invoke() }
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = FleetTokens.Elevation.Raised,
+        contentPadding = FleetTokens.Spacing.M
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
+        // Row 1: Trip ID + Payment Type | Amount + Status
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Row 1: Trip ID + Payment Type | Amount + Status
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                // Trip ID badge
+                Surface(
+                    shape = RoundedCornerShape(FleetTokens.Radius.S),
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    // Trip ID badge
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.payment_trip_id, payment.tripId),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                    // Payment Type badge
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
-                    ) {
-                        Text(
-                            text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()}",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = getPaymentTypeColor(payment.paymentType)
-                        )
-                    }
-                }
-
-                // Amount + Status
-                Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = payment.amountDisplay,
-                        style = MaterialTheme.typography.titleMedium,
+                        text = stringResource(Res.string.payment_trip_id, payment.tripId),
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS),
+                        style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (payment.isReceived) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
-                        else if (payment.isPending) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
-                        else MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                    PaymentStatusBadge(status = payment.paymentStatus, paymentStateLabels = paymentStateLabels)
+                }
+                // Payment Type badge
+                Surface(
+                    shape = RoundedCornerShape(FleetTokens.Radius.S),
+                    color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()}",
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = getPaymentTypeColor(payment.paymentType)
+                    )
                 }
             }
 
-            // Trip Info Section - grouped in a subtle background
-            payment.tripInfo?.let { tripInfo ->
-                Spacer(modifier = Modifier.height(10.dp))
+            // Amount + Status
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = payment.amountDisplay,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (payment.isReceived) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
+                    else if (payment.isPending) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
+                    else MaterialTheme.colorScheme.onSurface
+                )
+                PaymentStatusBadge(status = payment.paymentStatus, paymentStateLabels = paymentStateLabels)
+            }
+        }
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                        .padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+        // Trip Info Section - grouped in a subtle background
+        payment.tripInfo?.let { tripInfo ->
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(FleetTokens.Radius.M))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .padding(FleetTokens.Spacing.S),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+            ) {
+                // Vehicle + Route
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Vehicle + Route
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        tripInfo.vehicleRegistration?.let { vehicle ->
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = MaterialTheme.colorScheme.secondaryContainer
-                            ) {
-                                Text(
-                                    text = vehicle,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        // Route with better visibility
-                        val unknownLabel = stringResource(Res.string.payment_unknown)
-                        Text(
-                            text = "${tripInfo.startLocation ?: unknownLabel} → ${tripInfo.endLocation ?: unknownLabel}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    // Trip Dates (only show if valid)
-                    val hasValidDates = tripInfo.tripStartDate != null || tripInfo.tripEndDate != null
-                    if (hasValidDates) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                    tripInfo.vehicleRegistration?.let { vehicle ->
+                        Surface(
+                            shape = RoundedCornerShape(FleetTokens.Radius.S),
+                            color = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             Text(
-                                text = stringResource(Res.string.payment_depart, tripInfo.startDateTimeDisplay),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = stringResource(Res.string.payment_arrive, tripInfo.endDateTimeDisplay),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.tertiary
+                                text = vehicle,
+                                modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS, vertical = FleetTokens.Spacing.XXS),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+                    }
+                    // Route with better visibility
+                    val unknownLabel = stringResource(Res.string.payment_unknown)
+                    Text(
+                        text = "${tripInfo.startLocation ?: unknownLabel} → ${tripInfo.endLocation ?: unknownLabel}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // Trip Dates (only show if valid)
+                val hasValidDates = tripInfo.tripStartDate != null || tripInfo.tripEndDate != null
+                if (hasValidDates) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.payment_depart, tripInfo.startDateTimeDisplay),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = stringResource(Res.string.payment_arrive, tripInfo.endDateTimeDisplay),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
-            // Row: Customer + Payment Date
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Customer name - prioritize customerName, fallback to customerCompany
-                val noCustomerLabel = stringResource(Res.string.payment_no_customer)
-                val resolvedCustomerName = payment.customerName?.takeIf { it.isNotBlank() }
-                    ?: payment.customerCompany?.takeIf { it.isNotBlank() }
-                val customerDisplayName = resolvedCustomerName ?: noCustomerLabel
-                Text(
-                    text = resolvedCustomerName?.let { "👤 $it" } ?: customerDisplayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (customerDisplayName != noCustomerLabel)
-                        MaterialTheme.colorScheme.onSurface
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
+        // Row: Customer + Payment Date
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Customer name - prioritize customerName, fallback to customerCompany
+            val noCustomerLabel = stringResource(Res.string.payment_no_customer)
+            val resolvedCustomerName = payment.customerName?.takeIf { it.isNotBlank() }
+                ?: payment.customerCompany?.takeIf { it.isNotBlank() }
+            val customerDisplayName = resolvedCustomerName ?: noCustomerLabel
+            Text(
+                text = resolvedCustomerName?.let { "👤 $it" } ?: customerDisplayName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = if (customerDisplayName != noCustomerLabel)
+                    MaterialTheme.colorScheme.onSurface
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
 
-                // Payment received date with label
-                payment.paymentDate?.let { date ->
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.payment_paid_date, formatPaymentDate(date)),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    }
+            // Payment received date with label
+            payment.paymentDate?.let { date ->
+                Surface(
+                    shape = RoundedCornerShape(FleetTokens.Radius.S),
+                    color = MaterialTheme.colorScheme.tertiaryContainer
+                ) {
+                    Text(
+                        text = stringResource(Res.string.payment_paid_date, formatPaymentDate(date)),
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
                 }
             }
         }
@@ -481,12 +463,12 @@ internal fun PaymentStatusBadge(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.S),
         color = backgroundColor
     ) {
         Text(
             text = paymentStateLabels[status.apiValue] ?: status.localizedDisplayName(),
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS),
             style = MaterialTheme.typography.labelSmall,
             color = textColor
         )

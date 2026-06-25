@@ -4,13 +4,16 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.EmptyContent
@@ -40,6 +42,8 @@ import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.reports.domain.entity.CustomerPLItem
 import com.ijs.reports.domain.entity.CustomerPLSummary
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -64,7 +68,7 @@ fun CustomerPLScreen(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -74,7 +78,7 @@ fun CustomerPLScreen(
                             painter = painterResource(Res.drawable.ic_refresh),
                             contentDescription = stringResource(Res.string.refresh),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -85,28 +89,39 @@ fun CustomerPLScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
+        BoxWithConstraints(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(FleetTokens.Spacing.L),
-            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+            contentAlignment = Alignment.TopCenter
         ) {
-            item { PeriodRow(state.selectedPeriod) { viewModel.sendIntent(CustomerPLContract.Intent.SelectPeriod(it)) } }
+            val isWide = rememberFleetBreakpoint().isExpanded
+            val contentModifier = if (isWide) {
+                Modifier.fillMaxSize().widthIn(max = FleetTokens.Width.MaxContent)
+            } else {
+                Modifier.fillMaxSize()
+            }
+            LazyColumn(
+                modifier = contentModifier,
+                contentPadding = PaddingValues(FleetTokens.Spacing.L),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+            ) {
+                item { PeriodRow(state.selectedPeriod) { viewModel.sendIntent(CustomerPLContract.Intent.SelectPeriod(it)) } }
 
-            when {
-                state.isLoading && state.report == null -> item {
-                    Box(Modifier.fillMaxWidth().padding(FleetTokens.Spacing.XXL), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                when {
+                    state.isLoading && state.report == null -> item {
+                        Box(Modifier.fillMaxWidth().padding(FleetTokens.Spacing.XXL), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
                     }
-                }
-                state.error != null && state.report == null -> item {
-                    ErrorRetry(state.error!!.resolve()) { viewModel.sendIntent(CustomerPLContract.Intent.Refresh) }
-                }
-                else -> {
-                    state.report?.summary?.let { item { SummaryCard(it) } }
-                    if (state.hasData) {
-                        items(state.report!!.customers, key = { it.customerId }) { c -> CustomerRow(c) }
-                    } else {
-                        item { EmptyState() }
+                    state.error != null && state.report == null -> item {
+                        ErrorRetry(state.error!!.resolve()) { viewModel.sendIntent(CustomerPLContract.Intent.Refresh) }
+                    }
+                    else -> {
+                        state.report?.summary?.let { item { SummaryCard(it) } }
+                        if (state.hasData) {
+                            items(state.report!!.customers, key = { it.customerId }) { c -> CustomerRow(c) }
+                        } else {
+                            item { EmptyState() }
+                        }
                     }
                 }
             }
@@ -120,12 +135,19 @@ private fun PeriodRow(selected: String, onSelect: (String) -> Unit) {
         CustomerPLContract.PERIODS.forEach { period ->
             val isSelected = period == selected
             Surface(
-                modifier = Modifier.weight(1f).clip(RoundedCornerShape(FleetTokens.Radius.L)).clickable { onSelect(period) },
+                modifier = Modifier
+                    .weight(1f)
+                    .defaultMinSize(minHeight = FleetTokens.Spacing.XXXL)
+                    .clip(RoundedCornerShape(FleetTokens.Radius.L))
+                    .clickable { onSelect(period) },
                 shape = RoundedCornerShape(FleetTokens.Radius.L),
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = if (isSelected) 1f else 0.3f))
+                border = BorderStroke(
+                    FleetTokens.Height.Divider,
+                    MaterialTheme.colorScheme.primary.copy(alpha = if (isSelected) 1f else 0.3f)
+                )
             ) {
-                Box(Modifier.padding(vertical = FleetTokens.Spacing.S), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().padding(vertical = FleetTokens.Spacing.S), contentAlignment = Alignment.Center) {
                     Text(
                         text = periodLabel(period),
                         style = MaterialTheme.typography.labelSmall,
@@ -218,7 +240,7 @@ private fun MiniStat(modifier: Modifier, label: String, value: String) {
 @Composable
 private fun EmptyState() {
     EmptyContent(
-        icon = "📊",
+        iconRes = Res.drawable.ic_dashboard,
         title = stringResource(Res.string.customer_pl_empty),
         fillMaxSize = false
     )

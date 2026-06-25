@@ -18,9 +18,11 @@ import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.vehicle.domain.entity.RouteInfo
 import com.ijs.vehicle.domain.entity.RouteStop
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -56,8 +58,9 @@ internal fun RouteTabContent(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
-                            )
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = FleetTokens.Elevation.None)
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(
@@ -69,7 +72,7 @@ internal fun RouteTabContent(
                                         text = stringResource(Res.string.vehicle_route_active_trip_title),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.tertiary
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer
                                     )
                                     Text(
                                         text = routeInfo.tripNumber ?: stringResource(
@@ -77,7 +80,8 @@ internal fun RouteTabContent(
                                             routeInfo.tripId.orEmpty()
                                         ),
                                         style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer
                                     )
                                 }
 
@@ -87,11 +91,17 @@ internal fun RouteTabContent(
                                     val originFallback = stringResource(Res.string.vehicle_route_origin)
                                     val destinationFallback = stringResource(Res.string.vehicle_route_destination)
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text("📍", style = MaterialTheme.typography.bodyMedium)
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_map),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(FleetTokens.IconSize.S),
+                                            tint = MaterialTheme.colorScheme.onTertiaryContainer
+                                        )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text(
                                             text = "${routeInfo.origin ?: originFallback} → ${routeInfo.destination ?: destinationFallback}",
-                                            style = MaterialTheme.typography.bodyMedium
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onTertiaryContainer
                                         )
                                     }
                                 }
@@ -99,11 +109,20 @@ internal fun RouteTabContent(
                                 // Driver info
                                 routeInfo.driverName?.let { driverName ->
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "👤 $driverName",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_profile),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(FleetTokens.IconSize.S),
+                                            tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = driverName,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
+                                        )
+                                    }
                                 }
 
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -119,13 +138,13 @@ internal fun RouteTabContent(
                                             Text(
                                                 text = stringResource(Res.string.vehicle_route_progress),
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
                                             )
                                             Text(
                                                 text = "${progress.percentage}%",
                                                 style = MaterialTheme.typography.bodySmall,
                                                 fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.tertiary
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer
                                             )
                                         }
                                         Spacer(modifier = Modifier.height(4.dp))
@@ -135,8 +154,8 @@ internal fun RouteTabContent(
                                                 .fillMaxWidth()
                                                 .height(8.dp)
                                                 .clip(RoundedCornerShape(4.dp)),
-                                            color = MaterialTheme.colorScheme.tertiary,
-                                            trackColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            trackColor = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.2f)
                                         )
                                     }
 
@@ -150,19 +169,20 @@ internal fun RouteTabContent(
                                             Text(
                                                 text = stringResource(Res.string.vehicle_route_eta),
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
                                             )
                                             Text(
                                                 text = progress.eta ?: stringResource(Res.string.vehicle_route_na),
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.SemiBold
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer
                                             )
                                         }
                                         Column(horizontalAlignment = Alignment.End) {
                                             Text(
                                                 text = stringResource(Res.string.vehicle_route_distance_left),
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
                                             )
                                             Text(
                                                 text = stringResource(
@@ -170,7 +190,8 @@ internal fun RouteTabContent(
                                                     progress.distanceRemaining.toInt().toString()
                                                 ),
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.SemiBold
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.onTertiaryContainer
                                             )
                                         }
                                     }
@@ -203,7 +224,7 @@ internal fun RouteTabContent(
                     // No Active Trip
                     item {
                         EmptyContent(
-                            icon = "🛣️",
+                            iconRes = Res.drawable.ic_trip,
                             title = stringResource(Res.string.vehicle_route_no_trip),
                             message = stringResource(Res.string.vehicle_route_no_trip_message),
                             fillMaxSize = false
@@ -325,9 +346,9 @@ internal fun StopStatusBadge(status: String) {
     val now = stringResource(Res.string.vehicle_route_now)
     val pending = stringResource(Res.string.vehicle_route_pending)
     val (text, color) = when (status) {
-        "Completed" -> "✓ $done" to MaterialTheme.colorScheme.primary
-        "Current" -> "● $now" to MaterialTheme.colorScheme.tertiary
-        else -> "○ $pending" to MaterialTheme.colorScheme.outline
+        "Completed" -> done to MaterialTheme.colorScheme.primary
+        "Current" -> now to MaterialTheme.colorScheme.tertiary
+        else -> pending to MaterialTheme.colorScheme.outline
     }
 
     Text(

@@ -21,6 +21,8 @@ object CostAnalysisContract {
         val startDate: String = "",
         val endDate: String = "",
         val results: List<CostTypeAnalysis> = emptyList(),
+        // True once a report has completed at least once (drives the empty state).
+        val hasGenerated: Boolean = false,
         // Dynamic cost types from database
         val tripCostTypeGroups: List<CostTypeGroup> = emptyList(),
         val maintenanceCostTypeGroups: List<CostTypeGroup> = emptyList(),

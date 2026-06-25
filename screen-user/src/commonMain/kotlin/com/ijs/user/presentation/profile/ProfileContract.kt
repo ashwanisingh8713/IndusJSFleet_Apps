@@ -23,9 +23,20 @@ object ProfileContract {
         val editLastName: String = "",
         val editEmail: String = "",
         val editMobile: String = "",
+        val editFirstNameError: UiText? = null,
+        val editLastNameError: UiText? = null,
+        val editEmailError: UiText? = null,
+        val editMobileError: UiText? = null,
         val isUpdating: Boolean = false,
         val updateError: UiText? = null
-    ) : UiState
+    ) : UiState {
+        /** True when all edit fields are individually valid (gates the Save button). */
+        val isEditFormValid: Boolean
+            get() = editFirstNameError == null &&
+                editLastNameError == null &&
+                editEmailError == null &&
+                editMobileError == null
+    }
 
     /**
      * User intents for the Profile screen.

@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
 import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
@@ -31,6 +30,7 @@ import com.indusjs.fleet.domain.entity.dashboard.DocumentStats
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -54,7 +54,7 @@ internal fun AlertsSection(
             val alertCount = if (alertsSummary.totalAlerts > 0) alertsSummary.totalAlerts else alerts.size
             DashboardSectionHeader(
                 title = stringResource(Res.string.dashboard_alerts) + if (alertCount > 0) " ($alertCount)" else "",
-                emoji = "⚠️",
+                iconRes = Res.drawable.ic_warning,
                 accent = MaterialTheme.colorScheme.error,
                 actionLabel = stringResource(Res.string.action_view_all),
                 onActionClick = onViewAllClick
@@ -64,7 +64,7 @@ internal fun AlertsSection(
             if (alertsSummary.totalAlerts > 0) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
                     if (alertsSummary.criticalAlerts > 0) {
                         AlertCountBadge(
@@ -94,11 +94,11 @@ internal fun AlertsSection(
                     alertsSummary.licenseExpired > 0 || alertsSummary.licenseExpiring7Days > 0) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
                     ) {
                         if (alertsSummary.documentExpired > 0) {
                             ExpiryInfoChip(
-                                icon = "📄",
+                                iconRes = Res.drawable.ic_edit,
                                 count = alertsSummary.documentExpired,
                                 label = stringResource(Res.string.dashboard_label_docs_expired),
                                 color = MaterialTheme.colorScheme.error
@@ -106,7 +106,7 @@ internal fun AlertsSection(
                         }
                         if (alertsSummary.documentExpiring7Days > 0) {
                             ExpiryInfoChip(
-                                icon = "📄",
+                                iconRes = Res.drawable.ic_edit,
                                 count = alertsSummary.documentExpiring7Days,
                                 label = stringResource(Res.string.dashboard_label_docs_7d),
                                 color = MaterialTheme.colorScheme.tertiary
@@ -114,7 +114,7 @@ internal fun AlertsSection(
                         }
                         if (alertsSummary.licenseExpired > 0) {
                             ExpiryInfoChip(
-                                icon = "📋",
+                                iconRes = Res.drawable.ic_edit,
                                 count = alertsSummary.licenseExpired,
                                 label = stringResource(Res.string.dashboard_label_license_expired),
                                 color = MaterialTheme.colorScheme.error
@@ -122,7 +122,7 @@ internal fun AlertsSection(
                         }
                         if (alertsSummary.licenseExpiring7Days > 0) {
                             ExpiryInfoChip(
-                                icon = "📋",
+                                iconRes = Res.drawable.ic_edit,
                                 count = alertsSummary.licenseExpiring7Days,
                                 label = stringResource(Res.string.dashboard_label_license_7d),
                                 color = MaterialTheme.colorScheme.tertiary
@@ -134,12 +134,17 @@ internal fun AlertsSection(
                 // Fallback to document stats
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
                 ) {
                     if (documentStats.expiredDocuments > 0) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "📄", style = MaterialTheme.typography.labelMedium)
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_edit),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                            Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                             Text(
                                 text = stringResource(Res.string.alerts_count_expired, documentStats.expiredDocuments),
                                 style = MaterialTheme.typography.labelMedium,
@@ -150,8 +155,13 @@ internal fun AlertsSection(
                     }
                     if (documentStats.expiringDocuments > 0) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "⏰", style = MaterialTheme.typography.labelMedium)
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_time),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                            Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                             Text(
                                 text = stringResource(Res.string.alerts_count_expiring_soon, documentStats.expiringDocuments),
                                 style = MaterialTheme.typography.labelMedium,
@@ -196,13 +206,13 @@ internal fun AlertsSection(
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        modifier = Modifier.padding(bottom = FleetTokens.Spacing.S)
                     )
                 }
                 // Show missing documents warning
                 if (hasMissingDocuments) {
                     AlertWarningBanner(
-                        icon = "📄",
+                        iconRes = Res.drawable.ic_edit,
                         title = stringResource(Res.string.alerts_missing_documents),
                         message = if (vehiclesWithoutDocs > 0)
                             stringResource(Res.string.alerts_vehicles_need_docs, vehiclesWithoutDocs)
@@ -215,7 +225,7 @@ internal fun AlertsSection(
                 // Show expired/expiring documents warning
                 if (!hasMissingDocuments && hasDocumentIssues) {
                     AlertWarningBanner(
-                        icon = if (expiredDocs > 0) "⚠️" else "⏰",
+                        iconRes = if (expiredDocs > 0) Res.drawable.ic_warning else Res.drawable.ic_time,
                         title = if (expiredDocs > 0) stringResource(Res.string.alerts_documents_expired) else stringResource(Res.string.alerts_documents_expiring),
                         message = buildString {
                             if (expiredDocs > 0) append(stringResource(Res.string.alerts_expired_count, expiredDocs))
@@ -248,25 +258,30 @@ internal fun AlertsSection(
  */
 @Composable
 private fun AlertWarningBanner(
-    icon: String,
+    iconRes: DrawableResource,
     title: String,
     message: String,
     isError: Boolean
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = if (isError)
             MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
         else
             MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(FleetTokens.Spacing.M),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            Text(text = icon, style = MaterialTheme.typography.titleMedium)
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(FleetTokens.IconSize.M)
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -307,29 +322,32 @@ private fun CleanAlertItem(
     }
 
     val alertIcon = when (alert.type) {
-        AlertType.DOCUMENT_EXPIRY -> "📄"
-        AlertType.LICENSE_EXPIRY -> "📋"
-        AlertType.MAINTENANCE -> "🔧"
-        AlertType.FUEL_LOW -> "⛽"
-        else -> "⚠️"
+        AlertType.DOCUMENT_EXPIRY -> Res.drawable.ic_edit
+        AlertType.LICENSE_EXPIRY -> Res.drawable.ic_edit
+        AlertType.MAINTENANCE -> Res.drawable.ic_settings
+        AlertType.FUEL_LOW -> Res.drawable.ic_fuel
+        else -> Res.drawable.ic_warning
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = FleetTokens.Spacing.XS),
         verticalAlignment = Alignment.Top
     ) {
-        Text(
-            text = alertIcon,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(top = 2.dp)
+        Icon(
+            painter = painterResource(alertIcon),
+            contentDescription = null,
+            tint = alertColor,
+            modifier = Modifier
+                .padding(top = FleetTokens.Spacing.XXS)
+                .size(FleetTokens.IconSize.S)
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 Text(
                     text = alert.title,
@@ -349,7 +367,7 @@ private fun CleanAlertItem(
                         else -> stringResource(Res.string.alerts_days_left, days)
                     }
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(FleetTokens.Radius.S),
                         color = badgeColor.copy(alpha = 0.15f)
                     ) {
                         Text(
@@ -357,28 +375,50 @@ private fun CleanAlertItem(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             color = badgeColor,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
                         )
                     }
                 }
             }
 
             if (alert.type == AlertType.DOCUMENT_EXPIRY && alert.vehicleRegistrationNumber != null) {
-                Text(
-                    text = "🚛 ${alert.vehicleRegistrationNumber}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_truck),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                    Text(
+                        text = alert.vehicleRegistrationNumber ?: "",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
 
             if (alert.type == AlertType.LICENSE_EXPIRY && alert.driverName != null) {
-                Text(
-                    text = "👤 ${alert.driverName}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_profile),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                    Text(
+                        text = alert.driverName ?: "",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
 
             Text(
@@ -389,13 +429,13 @@ private fun CleanAlertItem(
         }
         IconButton(
             onClick = onDismiss,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(FleetTokens.IconSize.Default)
         ) {
             Icon(
                 painter = painterResource(Res.drawable.ic_close),
                 contentDescription = stringResource(Res.string.cd_dismiss),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(FleetTokens.IconSize.S)
             )
         }
     }
@@ -411,13 +451,13 @@ private fun AlertCountBadge(
     color: Color
 ) {
     Surface(
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.S),
         color = color.copy(alpha = 0.12f)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
         ) {
             Text(
                 text = "$count",
@@ -439,16 +479,21 @@ private fun AlertCountBadge(
  */
 @Composable
 private fun ExpiryInfoChip(
-    icon: String,
+    iconRes: DrawableResource,
     count: Int,
     label: String,
     color: Color
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
     ) {
-        Text(text = icon, style = MaterialTheme.typography.labelSmall)
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(FleetTokens.IconSize.S)
+        )
         Text(
             text = "$count $label",
             style = MaterialTheme.typography.labelSmall,

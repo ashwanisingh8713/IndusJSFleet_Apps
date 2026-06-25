@@ -3,9 +3,13 @@ package com.ijs.subscription.presentation.plans
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +20,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -23,9 +28,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -48,12 +50,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.indusjs.uicomponents.components.ButtonSize
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.components.UiText
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.subscription.domain.entity.BillingInterval
 import com.ijs.subscription.domain.entity.Plan
 import com.ijs.subscription.presentation.components.BillingToggle
@@ -125,6 +130,9 @@ fun PlansScreen(
     }
 }
 
+/** Max width the centered plan-card grid is constrained to on wide screens. */
+private val CONTENT_MAX_WIDTH = 720.dp
+
 @Composable
 private fun PlansContent(
     state: PlansContract.State,
@@ -132,6 +140,96 @@ private fun PlansContent(
     onToggleBilling: (BillingInterval) -> Unit,
     onConfirm: () -> Unit,
     onLogout: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        // ── Scrollable body ──────────────────────────────────────
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val breakpoint = rememberFleetBreakpoint()
+            val isWide = breakpoint.isAtLeastMedium
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+
+                // ── Hero header ──────────────────────────────────
+                HeroHeader(
+                    pageMode = state.pageMode,
+                    onLogout = onLogout
+                )
+
+                Spacer(Modifier.height(FleetTokens.Spacing.XL))
+
+                // ── Billing toggle ───────────────────────────────
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    BillingToggle(
+                        selected = state.billingInterval,
+                        onToggle = onToggleBilling
+                    )
+                }
+
+                Spacer(Modifier.height(FleetTokens.Spacing.XL))
+
+                // ── Plan cards ───────────────────────────────────
+                // Compact: single-focus horizontal carousel with peek + dots.
+                // Medium/Expanded: centered 2-up grid (no carousel).
+                if (isWide) {
+                    PlanCardGrid(
+                        state = state,
+                        onSelectPlan = onSelectPlan,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = CONTENT_MAX_WIDTH)
+                            .align(Alignment.CenterHorizontally)
+                            .padding(horizontal = FleetTokens.Spacing.ScreenHorizontal)
+                    )
+                } else {
+                    PlanCardCarousel(
+                        state = state,
+                        onSelectPlan = onSelectPlan
+                    )
+                }
+
+                Spacer(Modifier.height(FleetTokens.Spacing.XL))
+
+                // ── Trust badges ─────────────────────────────────
+                TrustStrip(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = CONTENT_MAX_WIDTH)
+                        .align(Alignment.CenterHorizontally)
+                        .padding(horizontal = FleetTokens.Spacing.ScreenHorizontal)
+                )
+
+                // Bottom space so content clears the sticky CTA
+                Spacer(Modifier.height(FleetTokens.Spacing.XXXL * 2))
+            }
+        }
+
+        // ── Sticky bottom CTA ────────────────────────────────────
+        BottomCtaBar(
+            selectedPlan = state.selectedPlan,
+            billingInterval = state.billingInterval,
+            isConfirming = state.isConfirming,
+            onConfirm = onConfirm,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plan cards — compact carousel
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun PlanCardCarousel(
+    state: PlansContract.State,
+    onSelectPlan: (Plan) -> Unit
 ) {
     val listState = rememberLazyListState()
 
@@ -158,85 +256,64 @@ private fun PlansContent(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-
-        // ── Scrollable body ──────────────────────────────────────
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+    Column(modifier = Modifier.fillMaxWidth()) {
+        LazyRow(
+            state = listState,
+            contentPadding = PaddingValues(horizontal = FleetTokens.Spacing.XL),
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M),
+            modifier = Modifier.fillMaxWidth()
         ) {
-
-            // ── Hero header ──────────────────────────────────────
-            HeroHeader(
-                pageMode = state.pageMode,
-                onLogout = onLogout
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            // ── Billing toggle ───────────────────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                BillingToggle(
-                    selected = state.billingInterval,
-                    onToggle = onToggleBilling
+            itemsIndexed(state.plans, key = { _, plan -> plan.id }) { index, plan ->
+                PlanCard(
+                    plan = plan,
+                    isSelected = state.selectedPlan?.id == plan.id,
+                    billingInterval = state.billingInterval,
+                    cardIndex = index,
+                    onSelect = { onSelectPlan(plan) }
                 )
             }
-
-            Spacer(Modifier.height(24.dp))
-
-            // ── Horizontal plan cards ────────────────────────────
-            LazyRow(
-                state = listState,
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                itemsIndexed(state.plans, key = { _, plan -> plan.id }) { index, plan ->
-                    PlanCard(
-                        plan = plan,
-                        isSelected = state.selectedPlan?.id == plan.id,
-                        billingInterval = state.billingInterval,
-                        cardIndex = index,
-                        onSelect = { onSelectPlan(plan) }
-                    )
-                }
-            }
-
-            // ── Page dots ────────────────────────────────────────
-            if (state.plans.size > 1) {
-                Spacer(Modifier.height(16.dp))
-                PageDots(
-                    count = state.plans.size,
-                    current = centredIndex,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // ── Trust badges ─────────────────────────────────────
-            TrustStrip(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-            )
-
-            // Bottom space so content clears the sticky CTA
-            Spacer(Modifier.height(100.dp))
         }
 
-        // ── Sticky bottom CTA ────────────────────────────────────
-        BottomCtaBar(
-            selectedPlan = state.selectedPlan,
-            billingInterval = state.billingInterval,
-            isConfirming = state.isConfirming,
-            onConfirm = onConfirm,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+        if (state.plans.size > 1) {
+            Spacer(Modifier.height(FleetTokens.Spacing.L))
+            PageDots(
+                count = state.plans.size,
+                current = centredIndex,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plan cards — wide 2-up grid
+// ─────────────────────────────────────────────────────────────────────────────
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PlanCardGrid(
+    state: PlansContract.State,
+    onSelectPlan: (Plan) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(
+            FleetTokens.Spacing.L,
+            Alignment.CenterHorizontally
+        ),
+        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L),
+        maxItemsInEachRow = 2
+    ) {
+        state.plans.forEachIndexed { index, plan ->
+            PlanCard(
+                plan = plan,
+                isSelected = state.selectedPlan?.id == plan.id,
+                billingInterval = state.billingInterval,
+                cardIndex = index,
+                onSelect = { onSelectPlan(plan) }
+            )
+        }
     }
 }
 
@@ -262,14 +339,14 @@ private fun HeroHeader(pageMode: PlanPageMode, onLogout: () -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.S),
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onLogout) {
                     Text(
                         text = "Log out",
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
-                        fontSize = 13.sp
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
                     )
                 }
             }
@@ -285,7 +362,11 @@ private fun HeroHeader(pageMode: PlanPageMode, onLogout: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, bottom = 32.dp),
+                    .padding(
+                        start = FleetTokens.Spacing.XL,
+                        end = FleetTokens.Spacing.XL,
+                        bottom = FleetTokens.Spacing.XXL
+                    ),
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
@@ -294,12 +375,11 @@ private fun HeroHeader(pageMode: PlanPageMode, onLogout: () -> Unit) {
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(FleetTokens.Spacing.S))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.80f),
-                    lineHeight = 22.sp
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.80f)
                 )
             }
         }
@@ -326,14 +406,14 @@ private fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
                 label = "dot_color_$idx"
             )
             val dotWidth by androidx.compose.animation.core.animateDpAsState(
-                targetValue = if (isActive) 20.dp else 6.dp,
+                targetValue = if (isActive) FleetTokens.Spacing.XL else FleetTokens.Spacing.S,
                 animationSpec = tween(200),
                 label = "dot_width_$idx"
             )
             Box(
                 modifier = Modifier
-                    .padding(horizontal = 3.dp)
-                    .height(6.dp)
+                    .padding(horizontal = FleetTokens.Spacing.XXS)
+                    .height(FleetTokens.Spacing.S)
                     .width(dotWidth)
                     .clip(CircleShape)
                     .background(dotColor)
@@ -350,14 +430,14 @@ private fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
 private fun TrustStrip(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = 0.dp
+        tonalElevation = FleetTokens.Elevation.None
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = FleetTokens.Spacing.L, vertical = FleetTokens.Spacing.M),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -374,17 +454,17 @@ private fun TrustStrip(modifier: Modifier = Modifier) {
 private fun TrustItem(label: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
     ) {
         Icon(
             painter = painterResource(Res.drawable.ic_check),
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(13.dp)
+            modifier = Modifier.size(FleetTokens.IconSize.XS)
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
@@ -395,8 +475,8 @@ private fun TrustItem(label: String) {
 private fun TrustDivider() {
     HorizontalDivider(
         modifier = Modifier
-            .height(14.dp)
-            .width(1.dp),
+            .height(FleetTokens.Spacing.L)
+            .width(FleetTokens.Height.Divider),
         color = MaterialTheme.colorScheme.outlineVariant
     )
 }
@@ -415,16 +495,18 @@ private fun BottomCtaBar(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shadowElevation = 16.dp,
+        shadowElevation = FleetTokens.Elevation.Modal,
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp
+        tonalElevation = FleetTokens.Elevation.Raised
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .widthIn(max = CONTENT_MAX_WIDTH)
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(horizontal = FleetTokens.Spacing.XL, vertical = FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (selectedPlan != null) {
                 val price = when {
@@ -442,45 +524,22 @@ private fun BottomCtaBar(
                     textAlign = TextAlign.Center
                 )
             }
-            Button(
-                onClick = onConfirm,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                enabled = selectedPlan != null && !isConfirming,
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            ) {
-                if (isConfirming) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text("Please wait…", style = MaterialTheme.typography.labelLarge)
-                } else if (selectedPlan == null) {
-                    Text(
-                        "Select a plan to continue",
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                } else if (selectedPlan.isFree) {
-                    Text(
-                        "Activate Free Plan",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                } else {
-                    Text(
-                        "Continue with ${selectedPlan.name.replaceFirstChar { it.uppercaseChar() }}",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+
+            val ctaLabel = when {
+                isConfirming -> "Please wait…"
+                selectedPlan == null -> "Select a plan to continue"
+                selectedPlan.isFree -> "Activate Free Plan"
+                else -> "Continue with ${selectedPlan.name.replaceFirstChar { it.uppercaseChar() }}"
             }
+
+            FleetButton(
+                text = ctaLabel,
+                onClick = onConfirm,
+                size = ButtonSize.LARGE,
+                enabled = selectedPlan != null,
+                isLoading = isConfirming,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

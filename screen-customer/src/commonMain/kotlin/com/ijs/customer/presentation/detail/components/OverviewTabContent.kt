@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.ClickablePhoneRow
 import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetSectionCard
@@ -21,6 +20,7 @@ import com.ijs.customer.domain.entity.Customer
 import com.ijs.customer.presentation.detail.CustomerDetailContract.Intent
 import com.ijs.customer.presentation.detail.CustomerDetailContract.State
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -36,8 +36,8 @@ fun OverviewTabContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(FleetTokens.Spacing.M),
+        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
     ) {
         state.error?.let { error ->
             ErrorCard(error.resolve())
@@ -60,12 +60,12 @@ private fun CustomerHeroCard(
     isSaving: Boolean
 ) {
     FleetSectionCard(
-        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
         border = null,
         elevation = FleetTokens.Elevation.None
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -76,17 +76,23 @@ private fun CustomerHeroCard(
                     text = customer.companyName,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.weight(1f)
                 )
                 CustomerStatusChip(customer.isActive, isSaving)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("👤", style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    painter = painterResource(Res.drawable.ic_profile),
+                    contentDescription = null,
+                    modifier = Modifier.size(FleetTokens.IconSize.S),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                )
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                 Text(
                     text = customer.personName,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 )
             }
         }
@@ -111,12 +117,12 @@ internal fun CustomerStatusChip(
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(FleetTokens.Radius.L))
             .background(bgColor)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS)
     ) {
         if (isSaving) {
-            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+            CircularProgressIndicator(modifier = Modifier.size(FleetTokens.IconSize.S), strokeWidth = FleetTokens.Height.ProgressStroke)
         } else {
             Text(
                 text = if (isActive) {
@@ -138,7 +144,7 @@ private fun CustomerContactCard(customer: Customer) {
         title = stringResource(Res.string.customer_section_contact_details)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             ClickablePhoneRow(
                 label = stringResource(Res.string.customer_phone_label_primary),
@@ -154,8 +160,13 @@ private fun CustomerContactCard(customer: Customer) {
 
             customer.email?.takeIf { it.isNotBlank() }?.let { email ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("📧", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_email),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.S),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     Text(
                         text = email,
                         style = MaterialTheme.typography.bodyMedium
@@ -172,7 +183,7 @@ private fun CustomerBusinessCard(customer: Customer) {
         title = stringResource(Res.string.customer_section_business)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             customer.gstNumber?.takeIf { it.isNotBlank() }?.let { gst ->
                 DetailRow(stringResource(Res.string.customer_label_gst), gst)

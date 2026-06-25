@@ -1,6 +1,5 @@
 package com.ijs.finance.presentation
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.uicomponents.components.EmptyContent
@@ -22,6 +20,9 @@ import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.fleet.core.util.formatCurrency
 import com.ijs.finance.domain.entity.*
 import com.ijs.finance.presentation.VehicleFinanceContract.Intent
@@ -110,102 +111,107 @@ private fun EmiPaymentHistoryContent(
     notAvailableLabel: String,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Summary Card - Use purchase values from API for accuracy
-        item {
-            PaymentSummaryCard(
-                purchase = purchase,
-                paidCount = purchase.emisPaid,  // Use API value instead of list size
-                totalPaid = purchase.totalPaid,   // Use API value for total paid
-                notAvailableLabel = notAvailableLabel
-            )
-        }
-        // Paid Payments Section
-        item {
-            Text(
-                text = stringResource(Res.string.finance_paid_emis_header, purchase.emisPaid),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = CashGreen
-            )
-        }
-        if (paidPayments.isEmpty()) {
-            item {
-                FleetSectionCard(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    border = null
-                ) {
-                    EmptyContent(
-                        title = stringResource(Res.string.finance_no_payments_yet),
-                        message = stringResource(Res.string.finance_record_first_emi_hint),
-                        fillMaxSize = false
-                    )
-                }
-            }
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val breakpoint = rememberFleetBreakpoint()
+        // On Expanded the timeline is capped to a readable width and centered
+        // instead of stretching edge-to-edge; Compact/Medium fill the width.
+        val contentWidthModifier = if (breakpoint.isExpanded) {
+            Modifier.fillMaxWidth().widthIn(max = FleetTokens.Width.MaxContent)
         } else {
-            items(paidPayments) { payment ->
-                PaymentHistoryCard(payment = payment)
-            }
+            Modifier.fillMaxWidth()
         }
-        // Pending/Upcoming Section - Only show genuinely upcoming EMIs
-        // Filter out EMIs that might be marked as pending/overdue but user has already paid
-        // Use purchase.emisPaid to determine how many EMIs have actually been paid
-        val genuinelyUpcoming = pendingPayments.filter { payment ->
-            // Only show EMIs with number greater than paid count
-            val emiNum = payment.emiNumber ?: 0
-            emiNum > purchase.emisPaid
-        }.sortedBy { it.emiNumber }
-
-        if (genuinelyUpcoming.isNotEmpty()) {
+        LazyColumn(
+            modifier = contentWidthModifier.fillMaxHeight().align(Alignment.TopCenter),
+            contentPadding = PaddingValues(FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+        ) {
+            // Summary Card - Use purchase values from API for accuracy
             item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(Res.string.finance_upcoming_emis_header, purchase.emisRemaining),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = WarningOrange
+                PaymentSummaryCard(
+                    purchase = purchase,
+                    paidCount = purchase.emisPaid,  // Use API value instead of list size
+                    totalPaid = purchase.totalPaid,   // Use API value for total paid
+                    notAvailableLabel = notAvailableLabel
                 )
             }
-
-            // Show next 3 upcoming EMIs
-            items(genuinelyUpcoming.take(3)) { payment ->
-                PendingPaymentCard(payment = payment)
+            // Paid Payments Section
+            item {
+                Text(
+                    text = stringResource(Res.string.finance_paid_emis_header, purchase.emisPaid),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = CashGreen
+                )
             }
-
-            if (genuinelyUpcoming.size > 3) {
+            if (paidPayments.isEmpty()) {
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.background
-                        )
+                    FleetSectionCard(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        border = null
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            horizontalArrangement = Arrangement.Center
+                        EmptyContent(
+                            title = stringResource(Res.string.finance_no_payments_yet),
+                            message = stringResource(Res.string.finance_record_first_emi_hint),
+                            fillMaxSize = false
+                        )
+                    }
+                }
+            } else {
+                items(paidPayments) { payment ->
+                    PaymentHistoryCard(payment = payment)
+                }
+            }
+            // Pending/Upcoming Section - Only show genuinely upcoming EMIs
+            // Filter out EMIs that might be marked as pending/overdue but user has already paid
+            // Use purchase.emisPaid to determine how many EMIs have actually been paid
+            val genuinelyUpcoming = pendingPayments.filter { payment ->
+                // Only show EMIs with number greater than paid count
+                val emiNum = payment.emiNumber ?: 0
+                emiNum > purchase.emisPaid
+            }.sortedBy { it.emiNumber }
+
+            if (genuinelyUpcoming.isNotEmpty()) {
+                item {
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+                    Text(
+                        text = stringResource(Res.string.finance_upcoming_emis_header, purchase.emisRemaining),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = WarningOrange
+                    )
+                }
+
+                // Show next 3 upcoming EMIs
+                items(genuinelyUpcoming.take(3)) { payment ->
+                    PendingPaymentCard(payment = payment)
+                }
+
+                if (genuinelyUpcoming.size > 3) {
+                    item {
+                        FleetSectionCard(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            border = null
                         ) {
-                            Text(
-                                text = stringResource(
-                                    Res.string.finance_more_emis_scheduled,
-                                    genuinelyUpcoming.size - 3
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = WarningOrange
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = stringResource(
+                                        Res.string.finance_more_emis_scheduled,
+                                        genuinelyUpcoming.size - 3
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = WarningOrange
+                                )
+                            }
                         }
                     }
                 }
             }
+            item { Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXL)) }
         }
-        item { Spacer(modifier = Modifier.height(32.dp)) }
     }
 }
 @Composable
@@ -220,7 +226,7 @@ private fun PaymentSummaryCard(
         accent = LoanBlue
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
         ) {
             // Loan Progress Bar
             Column {
@@ -229,7 +235,7 @@ private fun PaymentSummaryCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = stringResource(Res.string.finance_percent_complete, purchase.loanProgressPercent.toInt()),
+                        text = stringResource(Res.string.finance_percent_complete, "${purchase.loanProgressPercent.toInt()}%"),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = LoanBlue
@@ -241,13 +247,13 @@ private fun PaymentSummaryCard(
                         color = LoanBlueDark
                     )
                 }
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
                 LinearProgressIndicator(
                     progress = { purchase.loanProgressPercent / 100f },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(12.dp)
-                        .clip(RoundedCornerShape(6.dp)),
+                        .height(FleetTokens.Spacing.M)
+                        .clip(RoundedCornerShape(FleetTokens.Radius.Pill)),
                     color = LoanBlue,
                     trackColor = LoanBlue.copy(alpha = 0.2f)
                 )
@@ -391,7 +397,7 @@ private fun PaymentHistoryCard(
                     fontWeight = FontWeight.SemiBold,
                     color = CashGreen
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
                 Text(
                     text = stringResource(
                         Res.string.finance_paid_on,
@@ -417,7 +423,7 @@ private fun PaymentHistoryCard(
                     color = CashGreen
                 )
                 if (payment.lateFee > 0) {
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
                     Text(
                         text = stringResource(
                             Res.string.finance_late_fee_plus,
@@ -444,7 +450,7 @@ private fun PendingPaymentCard(payment: LoanPayment) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                 ) {
                     Text(
                         text = payment.localizedEmiLabel(),
@@ -454,12 +460,15 @@ private fun PendingPaymentCard(payment: LoanPayment) {
                     )
                     if (payment.isOverdue) {
                         Surface(
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(FleetTokens.Radius.S),
                             color = CriticalRed.copy(alpha = 0.15f)
                         ) {
                             Text(
                                 text = stringResource(Res.string.finance_emi_overdue_badge),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = FleetTokens.Spacing.XS + FleetTokens.Spacing.XXS,
+                                    vertical = FleetTokens.Spacing.XXS
+                                ),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = CriticalRed
@@ -467,7 +476,7 @@ private fun PendingPaymentCard(payment: LoanPayment) {
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
                 Text(
                     text = stringResource(
                         Res.string.finance_due_colon,

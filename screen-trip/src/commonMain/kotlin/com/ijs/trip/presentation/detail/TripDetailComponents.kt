@@ -8,9 +8,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.domain.entity.TripStatus
 
 /**
@@ -38,7 +38,7 @@ internal fun EnhancedInfoRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp),
+            .padding(vertical = FleetTokens.Spacing.S),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -50,7 +50,7 @@ internal fun EnhancedInfoRow(
                 text = icon,
                 style = MaterialTheme.typography.bodyMedium
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
@@ -68,7 +68,7 @@ internal fun EnhancedInfoRow(
     if (!isLast) {
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-            thickness = 0.5.dp
+            thickness = FleetTokens.Height.Divider
         )
     }
 }
@@ -91,15 +91,15 @@ internal fun EnhancedStatusBadge(
 
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.XXL),
         color = containerColor
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = FleetTokens.Spacing.L, vertical = FleetTokens.Spacing.S),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = iconText, style = MaterialTheme.typography.labelLarge)
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
@@ -107,7 +107,7 @@ internal fun EnhancedStatusBadge(
                 color = baseColor
             )
             if (status == TripStatus.PLANNED) {
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
                 Text(
                     text = "▼",
                     style = MaterialTheme.typography.labelSmall,
@@ -133,19 +133,19 @@ internal fun EditDropdownField(
 ) {
     Column {
         Text(text = label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
         Surface(
             modifier = Modifier.fillMaxWidth().clickable { onToggle() },
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(FleetTokens.Radius.L),
             color = if (error != null) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
                     else MaterialTheme.colorScheme.surfaceVariant
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(FleetTokens.Spacing.L),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(icon, style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
                 Text(
                     text = selectedText,
                     style = MaterialTheme.typography.bodyLarge,
@@ -159,7 +159,7 @@ internal fun EditDropdownField(
                 text = error,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                modifier = Modifier.padding(start = FleetTokens.Spacing.L, top = FleetTokens.Spacing.XS)
             )
         }
     }

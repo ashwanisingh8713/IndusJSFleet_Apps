@@ -1,39 +1,31 @@
 package com.ijs.dashboard.presentation.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import com.indusjs.uicomponents.theme.FleetTokens
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.domain.entity.dashboard.OngoingTrip
 import com.indusjs.fleet.domain.entity.dashboard.TripSummary
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -117,32 +109,34 @@ internal fun TripsStatusSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
-                OutlinedButton(
+                FleetButton(
+                    text = stringResource(Res.string.action_create_trip),
                     onClick = onCreateTripClick,
+                    variant = ButtonVariant.SECONDARY,
+                    size = ButtonSize.SMALL,
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(Res.string.action_create_trip), style = MaterialTheme.typography.labelSmall)
-                }
-                OutlinedButton(
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                    }
+                )
+                FleetButton(
+                    text = stringResource(Res.string.action_add_cost),
                     onClick = onAddTripCostClick,
+                    variant = ButtonVariant.SECONDARY,
+                    size = ButtonSize.SMALL,
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
-                }
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                    }
+                )
             }
         }
     }
@@ -155,11 +149,11 @@ internal fun TripsStatusSection(
 private fun OngoingTripItem(trip: OngoingTrip) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(FleetTokens.Spacing.M),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Route info
@@ -181,7 +175,7 @@ private fun OngoingTripItem(trip: OngoingTrip) {
             }
             // Status badge
             Surface(
-                shape = RoundedCornerShape(4.dp),
+                shape = RoundedCornerShape(FleetTokens.Radius.S),
                 color = FleetStatusColors.FleetOnRoute.copy(alpha = 0.15f)
             ) {
                 Text(
@@ -189,7 +183,7 @@ private fun OngoingTripItem(trip: OngoingTrip) {
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
                     color = FleetStatusColors.FleetOnRoute,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS)
                 )
             }
         }

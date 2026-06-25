@@ -18,6 +18,7 @@ import com.ijs.map.presentation.MapsContract.LiveConnectionStatus
 import com.ijs.map.presentation.MapsContract.State
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
@@ -109,6 +110,16 @@ class MapsViewModel(
     private fun startLiveFeed() {
         stopLiveFeed()
         liveJob = viewModelScope.launch {
+            // The socket can open but receive no frames (e.g. no GPS broker in this env).
+            // Don't hang on "Connecting…" forever — settle to CONNECTED after a short grace
+            // period if the stream hasn't errored. A real error/close still flips it to
+            // DISCONNECTED via .catch/.onCompletion below. Child coroutine → cancelled with the job.
+            launch {
+                delay(CONNECT_SETTLE_MS)
+                if (currentState.liveConnectionStatus == LiveConnectionStatus.CONNECTING) {
+                    updateState { copy(liveConnectionStatus = LiveConnectionStatus.CONNECTED) }
+                }
+            }
             liveLocationSocket.connect()
                 .onStart { updateState { copy(liveConnectionStatus = LiveConnectionStatus.CONNECTING) } }
                 .catch { e ->
@@ -224,5 +235,8 @@ class MapsViewModel(
     private companion object {
         /** km/h above which a vehicle is considered MOVING rather than IDLE. */
         const val MOVING_SPEED_THRESHOLD = 1.0
+
+        /** Grace period before a still-"Connecting" socket (no frames yet) settles to CONNECTED. */
+        const val CONNECT_SETTLE_MS = 6000L
     }
 }

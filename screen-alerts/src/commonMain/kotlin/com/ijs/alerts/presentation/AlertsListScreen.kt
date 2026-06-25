@@ -12,15 +12,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.fleet.core.error.FleetErrorContext
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FilterDefinition
 import com.indusjs.uicomponents.components.FleetFilterBar
+import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.isExpanded
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.fleet.domain.entity.dashboard.Alert
 import com.indusjs.fleet.domain.entity.dashboard.AlertPriority
 import com.indusjs.fleet.domain.entity.dashboard.AlertType
@@ -67,7 +71,7 @@ fun AlertsListScreen(
                             painter = painterResource(Res.drawable.ic_arrow_back),
                             contentDescription = stringResource(Res.string.back),
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 },
@@ -78,15 +82,15 @@ fun AlertsListScreen(
                     ) {
                         if (state.isRefreshing) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
+                                modifier = Modifier.size(FleetTokens.IconSize.M),
+                                strokeWidth = FleetTokens.Height.ProgressStroke
                             )
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_refresh),
                                 contentDescription = stringResource(Res.string.refresh),
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.Default)
                             )
                         }
                     }
@@ -118,7 +122,7 @@ fun AlertsListScreen(
                     // Summary Card
                     AlertsSummaryCard(
                         summary = state.alertsSummary,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(FleetTokens.Spacing.L)
                     )
 
                     val alertFilters = buildList {
@@ -172,10 +176,10 @@ fun AlertsListScreen(
                             state.alertsSummary.totalAlerts
                         ),
                         allCount = null,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.L)
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
                     // Alerts List
                     if (state.filteredAlerts.isEmpty()) {
@@ -192,23 +196,59 @@ fun AlertsListScreen(
                             icon = "✅"
                         )
                     } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(
-                                items = state.filteredAlerts,
-                                key = { it.id }
-                            ) { alert ->
-                                AlertItemCard(
-                                    alert = alert,
-                                    onDismiss = { viewModel.sendIntent(AlertsListContract.Intent.DismissAlert(alert.id)) }
-                                )
+                        // Responsive list: 1-up on compact, 2-up on medium/expanded.
+                        // On expanded the grid is capped to a readable width and centered.
+                        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                            val breakpoint = rememberFleetBreakpoint()
+                            val columns = if (breakpoint.isAtLeastMedium) 2 else 1
+                            val contentWidthModifier = if (breakpoint.isExpanded) {
+                                Modifier.fillMaxWidth().widthIn(max = FleetTokens.Width.MaxContent)
+                            } else {
+                                Modifier.fillMaxWidth()
                             }
 
-                            item {
-                                Spacer(modifier = Modifier.height(16.dp))
+                            LazyColumn(
+                                modifier = contentWidthModifier.fillMaxHeight().align(Alignment.TopCenter),
+                                contentPadding = PaddingValues(FleetTokens.Spacing.L),
+                                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                            ) {
+                                if (columns == 1) {
+                                    items(
+                                        items = state.filteredAlerts,
+                                        key = { it.id }
+                                    ) { alert ->
+                                        AlertItemCard(
+                                            alert = alert,
+                                            onDismiss = { viewModel.sendIntent(AlertsListContract.Intent.DismissAlert(alert.id)) }
+                                        )
+                                    }
+                                } else {
+                                    val rows = state.filteredAlerts.chunked(columns)
+                                    items(rows, key = { row -> row.first().id }) { row ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                                        ) {
+                                            row.forEach { alert ->
+                                                AlertItemCard(
+                                                    alert = alert,
+                                                    onDismiss = { viewModel.sendIntent(AlertsListContract.Intent.DismissAlert(alert.id)) },
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                            // Keep the last odd card aligned to a single column width.
+                                            if (row.size < columns) {
+                                                repeat(columns - row.size) {
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                item {
+                                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+                                }
                             }
                         }
                     }
@@ -223,15 +263,12 @@ private fun AlertsSummaryCard(
     summary: AlertsSummary,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    FleetSectionCard(
+        modifier = modifier,
+        elevation = FleetTokens.Elevation.Raised
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -244,7 +281,7 @@ private fun AlertsSummaryCard(
                     fontWeight = FontWeight.Bold
                 )
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
@@ -252,7 +289,7 @@ private fun AlertsSummaryCard(
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS)
                     )
                 }
             }
@@ -260,7 +297,7 @@ private fun AlertsSummaryCard(
             // Priority breakdown
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
             ) {
                 if (summary.criticalAlerts > 0) {
                     SummaryChip(
@@ -294,7 +331,7 @@ private fun AlertsSummaryCard(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -353,11 +390,11 @@ private fun SummaryChip(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = color.copy(alpha = 0.1f)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(FleetTokens.Spacing.M),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -378,7 +415,8 @@ private fun SummaryChip(
 @Composable
 private fun AlertItemCard(
     alert: Alert,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val alertColor = when (alert.type) {
         AlertType.MAINTENANCE -> MaterialTheme.colorScheme.tertiary
@@ -405,17 +443,14 @@ private fun AlertItemCard(
         AlertPriority.INFO -> MaterialTheme.colorScheme.primary
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = alertColor.copy(alpha = 0.08f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    FleetSectionCard(
+        modifier = modifier,
+        containerColor = alertColor.copy(alpha = 0.08f),
+        border = null,
+        elevation = FleetTokens.Elevation.None
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -424,14 +459,14 @@ private fun AlertItemCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M),
                     modifier = Modifier.weight(1f)
                 ) {
                     // Alert icon in colored box
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .size(FleetTokens.Height.ButtonMedium)
+                            .clip(RoundedCornerShape(FleetTokens.Radius.ML))
                             .background(alertColor.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
@@ -445,7 +480,7 @@ private fun AlertItemCard(
                         // Title with priority badge
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                         ) {
                             Text(
                                 text = alert.title,
@@ -455,7 +490,7 @@ private fun AlertItemCard(
                             )
                             // Priority badge
                             Surface(
-                                shape = RoundedCornerShape(4.dp),
+                                shape = RoundedCornerShape(FleetTokens.Radius.S),
                                 color = priorityColor.copy(alpha = 0.15f)
                             ) {
                                 Text(
@@ -463,7 +498,7 @@ private fun AlertItemCard(
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Medium,
                                     color = priorityColor,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS, vertical = FleetTokens.Spacing.XXS)
                                 )
                             }
                         }
@@ -494,13 +529,13 @@ private fun AlertItemCard(
                 // Dismiss button
                 IconButton(
                     onClick = onDismiss,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(FleetTokens.Height.MinTouchTarget)
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_close),
                         contentDescription = stringResource(Res.string.alerts_dismiss),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
                     )
                 }
             }
@@ -510,7 +545,7 @@ private fun AlertItemCard(
             if (alert.type == AlertType.DOCUMENT_EXPIRY && vehicleRegNumber != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
                     Text(text = "🚛", style = MaterialTheme.typography.labelMedium)
                     Text(
@@ -526,7 +561,7 @@ private fun AlertItemCard(
             if (alert.type == AlertType.LICENSE_EXPIRY && driverNameValue != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
                     Text(text = "👤", style = MaterialTheme.typography.labelMedium)
                     Text(

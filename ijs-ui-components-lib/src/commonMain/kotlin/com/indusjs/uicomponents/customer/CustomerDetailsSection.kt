@@ -10,6 +10,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.model.shared.SelectableCustomer
+import com.indusjs.uicomponents.components.FleetAccentIconChip
+import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -129,10 +132,22 @@ private fun CustomerDetailsSectionContent(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 TextButton(onClick = onSelectClick) {
-                    Text("🔄 ${stringResource(Res.string.customer_change)}", maxLines = 1)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_refresh),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                    Spacer(Modifier.width(FleetTokens.Spacing.XS))
+                    Text(stringResource(Res.string.customer_change), maxLines = 1)
                 }
                 TextButton(onClick = onAddNewClick) {
-                    Text("+ ${stringResource(Res.string.customer_add_new)}", maxLines = 1)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                    Spacer(Modifier.width(FleetTokens.Spacing.XS))
+                    Text(stringResource(Res.string.customer_add_new), maxLines = 1)
                 }
             }
         }
@@ -141,9 +156,14 @@ private fun CustomerDetailsSectionContent(
             OutlinedButton(
                 onClick = onSelectClick,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(FleetTokens.Radius.L)
             ) {
-                Text("👤", modifier = Modifier.padding(end = 8.dp))
+                Icon(
+                    painter = painterResource(Res.drawable.ic_profile),
+                    contentDescription = null,
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                )
+                Spacer(Modifier.width(FleetTokens.Spacing.S))
                 Text(text = stringResource(Res.string.customer_select), fontWeight = FontWeight.Medium)
             }
 
@@ -161,7 +181,13 @@ private fun CustomerDetailsSectionContent(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onAddNewClick) {
-                    Text("+ ${stringResource(Res.string.customer_add_new)}", maxLines = 1)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_add),
+                        contentDescription = null,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
+                    Spacer(Modifier.width(FleetTokens.Spacing.XS))
+                    Text(stringResource(Res.string.customer_add_new), maxLines = 1)
                 }
             }
         }
@@ -177,7 +203,12 @@ private fun EmptyCustomerState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(text = "👤", style = MaterialTheme.typography.displaySmall)
+        FleetAccentIconChip(
+            accent = MaterialTheme.colorScheme.primary,
+            chipSize = FleetTokens.IconSize.XL,
+            iconSize = FleetTokens.IconSize.Default,
+            iconRes = Res.drawable.ic_profile
+        )
         Text(
             text = stringResource(Res.string.customer_no_customers),
             style = MaterialTheme.typography.bodyLarge,
@@ -191,12 +222,18 @@ private fun EmptyCustomerState(
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Button(
+        FleetButton(
+            text = stringResource(Res.string.customer_add_new_button),
             onClick = onAddNewClick,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-        ) {
-            Text("➕ ${stringResource(Res.string.customer_add_new_button)}")
-        }
+            modifier = Modifier.widthIn(min = 220.dp),
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_add),
+                    contentDescription = null,
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                )
+            }
+        )
     }
 }
 

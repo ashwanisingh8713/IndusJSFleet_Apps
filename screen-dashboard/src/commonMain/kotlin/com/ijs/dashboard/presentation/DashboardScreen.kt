@@ -5,13 +5,16 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -44,6 +47,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ijs.dashboard.presentation.components.AlertsSection
@@ -65,6 +69,9 @@ import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.LoadingContent
+import com.indusjs.uicomponents.theme.FleetBreakpoint
+import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -241,7 +248,7 @@ private fun DashboardTopBar(
         navigationIcon = {
             val menuDesc = stringResource(Res.string.cd_open_navigation_menu)
             IconButton(onClick = onMenuClick, modifier = Modifier.semantics { contentDescription = menuDesc }) {
-                Icon(painter = painterResource(Res.drawable.ic_menu), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                Icon(painter = painterResource(Res.drawable.ic_menu), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(FleetTokens.IconSize.Default))
             }
         },
         actions = {
@@ -254,14 +261,14 @@ private fun DashboardTopBar(
                 IconButton(onClick = onNotificationsClick, modifier = Modifier.semantics {
                     contentDescription = notifDesc
                 }) {
-                    Icon(painter = painterResource(Res.drawable.ic_notifications), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                    Icon(painter = painterResource(Res.drawable.ic_notifications), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(FleetTokens.IconSize.Default))
                 }
             }
             var isRefreshPressed by remember { mutableStateOf(false) }
             val rotationAngle by animateFloatAsState(targetValue = if (isRefreshing) 360f else 0f, animationSpec = tween(durationMillis = 1000), finishedListener = { isRefreshPressed = false })
             val refreshDesc = stringResource(Res.string.cd_refresh_dashboard)
             IconButton(onClick = { isRefreshPressed = true; onRefreshClick() }, modifier = Modifier.semantics { contentDescription = refreshDesc }) {
-                Icon(painter = painterResource(Res.drawable.ic_refresh), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp).rotate(if (isRefreshing) rotationAngle else 0f))
+                Icon(painter = painterResource(Res.drawable.ic_refresh), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(FleetTokens.IconSize.Default).rotate(if (isRefreshing) rotationAngle else 0f))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.onSurface)
@@ -279,15 +286,33 @@ private fun DashboardContent(
     onAddVehicleClick: () -> Unit, onAddDriverClick: () -> Unit, onCreateTripClick: () -> Unit,
     onAddDriverCostClick: () -> Unit, onAlertsListClick: () -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
+        val breakpoint = rememberFleetBreakpoint()
+        // On wide screens, keep cards readable: cap content width and add wider gutters
+        // instead of letting every card stretch edge-to-edge.
+        val horizontalGutter = when (breakpoint) {
+            FleetBreakpoint.Compact -> FleetTokens.Spacing.L
+            FleetBreakpoint.Medium -> FleetTokens.Spacing.XL
+            FleetBreakpoint.Expanded -> FleetTokens.Spacing.XXL
+        }
+        val contentWidthModifier = if (breakpoint == FleetBreakpoint.Expanded) {
+            Modifier.fillMaxWidth().widthIn(max = FleetTokens.Width.MaxContent)
+        } else {
+            Modifier.fillMaxWidth()
+        }
+        LazyColumn(
+            modifier = Modifier.fillMaxHeight().then(contentWidthModifier).align(Alignment.TopCenter),
+            contentPadding = PaddingValues(horizontal = horizontalGutter, vertical = FleetTokens.Spacing.L),
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+        ) {
         item { FleetOverviewHeroCard(vehicleStatus = vehicleStatus, driverStatus = driverStatus, tripSummary = tripSummary, onVehiclesClick = onVehiclesClick, onDriversClick = onDriversClick, onTripsClick = onTripsClick) }
         if (hasFinancialAccess) { item { CostOverviewSection(costOverview = costOverview, selectedFilter = selectedCostFilter, isLoading = isLoadingCostOverview, onFilterChange = onCostFilterChange, onAddTripCostClick = onAddTripCostClick, onAddVehicleCostClick = onAddVehicleCostClick, vehicleStatus = vehicleStatus, tripSummary = tripSummary, onAddVehicleClick = onAddVehicleClick, onCreateTripClick = onCreateTripClick) } }
         item { TripsStatusSection(tripSummary = tripSummary, ongoingTrips = stats.liveStatus.ongoingTrips, onClick = onTripsClick, onCreateTripClick = onCreateTripClick, onAddTripCostClick = onAddTripCostClick) }
         item { AlertsSection(alerts = stats.alerts, documentStats = stats.documentStats, alertsSummary = alertsSummary, vehicleStatus = vehicleStatus, onAlertDismiss = onAlertDismiss, onViewAllClick = onAlertsListClick) }
         item { VehicleStatusSection(vehicleStatus = vehicleStatus, onClick = onVehiclesClick, onAddVehicleClick = onAddVehicleClick, onAddMaintenanceCostClick = onAddVehicleCostClick) }
         item { DriversStatusSection(driverStatus = driverStatus, onClick = onDriversClick, onAddDriverClick = onAddDriverClick, onAddDriverCostClick = onAddDriverCostClick) }
+        }
     }
 }

@@ -1,11 +1,9 @@
 package com.ijs.dashboard.presentation.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,28 +11,25 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import com.indusjs.uicomponents.theme.FleetTokens
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.domain.entity.dashboard.DriverStatusSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
+import com.indusjs.uicomponents.components.ButtonSize
+import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.theme.FleetStatusColors
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -52,29 +47,31 @@ internal fun OfflineBanner(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.errorContainer,
-        tonalElevation = 2.dp
+        tonalElevation = FleetTokens.Elevation.Raised
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = FleetTokens.Spacing.L, vertical = FleetTokens.Spacing.S),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(FleetTokens.IconSize.L)
                     .background(
                         color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(FleetTokens.Radius.M)
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "📡",
-                    style = MaterialTheme.typography.labelLarge
+                Icon(
+                    painter = painterResource(Res.drawable.ic_warning),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
                 )
             }
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(Res.string.dashboard_offline_mode),
@@ -101,51 +98,15 @@ internal fun OfflineBanner(
             }
             IconButton(
                 onClick = onDismiss,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(FleetTokens.IconSize.L)
             ) {
                 Icon(
                     painter = painterResource(Res.drawable.ic_close),
                     contentDescription = stringResource(Res.string.cd_dismiss),
                     tint = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
                 )
             }
-        }
-    }
-}
-
-/**
- * Enhanced Status Chip with better visual design.
- * Used by VehicleStatusSection, DriversStatusSection, TripsStatusSection.
- */
-@Composable
-internal fun EnhancedStatusChip(
-    label: String,
-    count: Int,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
-        color = color.copy(alpha = 0.1f)
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = count.toString(),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1
-            )
         }
     }
 }
@@ -199,7 +160,7 @@ internal fun VehicleStatusSection(
                 MetricTile(
                     value = vehicleStatus.available.toString(),
                     label = stringResource(Res.string.dashboard_label_available),
-                    accent = MaterialTheme.colorScheme.tertiary,
+                    accent = FleetStatusColors.FleetAvailable,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -210,32 +171,34 @@ internal fun VehicleStatusSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
-                OutlinedButton(
+                FleetButton(
+                    text = stringResource(Res.string.action_add_vehicle),
                     onClick = onAddVehicleClick,
+                    variant = ButtonVariant.SECONDARY,
+                    size = ButtonSize.SMALL,
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(Res.string.action_add_vehicle), style = MaterialTheme.typography.labelSmall)
-                }
-                OutlinedButton(
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                    }
+                )
+                FleetButton(
+                    text = stringResource(Res.string.action_add_cost),
                     onClick = onAddMaintenanceCostClick,
+                    variant = ButtonVariant.SECONDARY,
+                    size = ButtonSize.SMALL,
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
-                }
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                    }
+                )
             }
         }
     }
@@ -290,7 +253,7 @@ internal fun DriversStatusSection(
                 MetricTile(
                     value = driverStatus.available.toString(),
                     label = stringResource(Res.string.dashboard_label_available),
-                    accent = MaterialTheme.colorScheme.tertiary,
+                    accent = FleetStatusColors.FleetAvailable,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -301,32 +264,34 @@ internal fun DriversStatusSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
-                OutlinedButton(
+                FleetButton(
+                    text = stringResource(Res.string.action_add_driver),
                     onClick = onAddDriverClick,
+                    variant = ButtonVariant.SECONDARY,
+                    size = ButtonSize.SMALL,
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(Res.string.action_add_driver), style = MaterialTheme.typography.labelSmall)
-                }
-                OutlinedButton(
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                    }
+                )
+                FleetButton(
+                    text = stringResource(Res.string.action_add_cost),
                     onClick = onAddDriverCostClick,
+                    variant = ButtonVariant.SECONDARY,
+                    size = ButtonSize.SMALL,
                     modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(Res.string.action_add_cost), style = MaterialTheme.typography.labelSmall)
-                }
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                    }
+                )
             }
         }
     }

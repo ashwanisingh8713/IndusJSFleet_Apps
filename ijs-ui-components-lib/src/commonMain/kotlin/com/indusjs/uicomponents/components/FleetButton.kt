@@ -62,9 +62,14 @@ enum class ButtonSize {
  * Heights come from [FleetTokens.Height], not inline values.
  *
  * ### Adaptive width
- * On Compact breakpoints, buttons fill maximum width by default.
- * On Medium / Expanded they wrap their content.
- * Callers can override with an explicit [modifier].
+ * The breakpoint is measured per button from its own available width (via
+ * [BoxWithConstraints]): on Compact the button fills its slot, on Medium / Expanded
+ * it wraps its content. The caller [modifier] — including a
+ * [androidx.compose.foundation.layout.RowScope.weight] for side-by-side buttons —
+ * is applied to the [BoxWithConstraints] root, i.e. the Row's direct child, so the
+ * weight is honoured. (Applying the caller modifier to the inner button instead
+ * would swallow a RowScope.weight and collapse the second of two side-by-side
+ * buttons to zero width — e.g. the OTP screen's Resend / Verify row.)
  *
  * ### Loading state
  * When [isLoading] is true, a spinner replaces the label and leading icon.
@@ -109,41 +114,44 @@ fun FleetButton(
         Modifier
     }
 
-    BoxWithConstraints {
-        val bp = rememberFleetBreakpoint()
-        val widthModifier = when (bp) {
+    val effectiveEnabled = enabled && !isLoading
+
+    val content: @Composable () -> Unit = {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(FleetTokens.IconSize.Default),
+                strokeWidth = FleetTokens.Height.ProgressStroke,
+                color = when (variant) {
+                    ButtonVariant.PRIMARY -> MaterialTheme.colorScheme.onPrimary
+                    ButtonVariant.DESTRUCTIVE -> MaterialTheme.colorScheme.onError
+                    ButtonVariant.SECONDARY -> MaterialTheme.colorScheme.primary
+                    ButtonVariant.GHOST -> MaterialTheme.colorScheme.primary
+                }
+            )
+        } else {
+            if (leadingIcon != null) {
+                leadingIcon()
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+            }
+            Text(text = text, fontWeight = FontWeight.Medium)
+        }
+    }
+
+    // The caller [modifier] (which may carry a RowScope.weight) goes on the
+    // BoxWithConstraints root — the Row's direct child — so weight / size are
+    // honoured. The breakpoint is then measured from this (possibly weighted) slot:
+    // a narrow slot is Compact and the inner button fills it; a wide standalone slot
+    // is Medium / Expanded and the button wraps its content.
+    BoxWithConstraints(modifier = modifier) {
+        val widthModifier = when (rememberFleetBreakpoint()) {
             FleetBreakpoint.Compact -> Modifier.fillMaxWidth()
             else -> Modifier
         }
 
-        val baseModifier = modifier
-            .then(widthModifier)
+        val baseModifier = widthModifier
             .height(heightDp)
             .defaultMinSize(minHeight = FleetTokens.Height.MinTouchTarget)
             .then(semanticsModifier)
-
-        val effectiveEnabled = enabled && !isLoading
-
-        val content: @Composable () -> Unit = {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(FleetTokens.IconSize.Default),
-                    strokeWidth = FleetTokens.Height.ProgressStroke,
-                    color = when (variant) {
-                        ButtonVariant.PRIMARY -> MaterialTheme.colorScheme.onPrimary
-                        ButtonVariant.DESTRUCTIVE -> MaterialTheme.colorScheme.onError
-                        ButtonVariant.SECONDARY -> MaterialTheme.colorScheme.primary
-                        ButtonVariant.GHOST -> MaterialTheme.colorScheme.primary
-                    }
-                )
-            } else {
-                if (leadingIcon != null) {
-                    leadingIcon()
-                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
-                }
-                Text(text = text, fontWeight = FontWeight.Medium)
-            }
-        }
 
         when (variant) {
             ButtonVariant.PRIMARY -> {

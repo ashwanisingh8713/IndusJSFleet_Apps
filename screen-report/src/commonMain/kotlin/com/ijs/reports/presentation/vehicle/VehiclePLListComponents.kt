@@ -12,9 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.reports.domain.entity.VehicleProfitLoss
 import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.VehiclePLSortOption
@@ -41,7 +41,7 @@ fun MultiVehicleSummaryCard(
         border = null
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -54,7 +54,7 @@ fun MultiVehicleSummaryCard(
                     fontWeight = FontWeight.Bold
                 )
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = if (isOverallProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.2f)
                     else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.2f)
                 ) {
@@ -63,7 +63,7 @@ fun MultiVehicleSummaryCard(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = if (isOverallProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS)
                     )
                 }
             }
@@ -76,7 +76,7 @@ fun MultiVehicleSummaryCard(
                     Icon(
                         painter = painterResource(Res.drawable.ic_truck),
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(FleetTokens.IconSize.M),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
@@ -95,7 +95,7 @@ fun MultiVehicleSummaryCard(
                     Icon(
                         painter = painterResource(Res.drawable.ic_check_circle),
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(FleetTokens.IconSize.M),
                         tint = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
                     )
                     Text(
@@ -114,7 +114,7 @@ fun MultiVehicleSummaryCard(
                     Icon(
                         painter = painterResource(Res.drawable.ic_warning),
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(FleetTokens.IconSize.M),
                         tint = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                     )
                     Text(
@@ -200,7 +200,7 @@ fun SortingFilterSection(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -221,7 +221,7 @@ fun SortingFilterSection(
 
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 PLStatusFilter.entries.forEach { filter ->
                     FilterChip(
@@ -257,7 +257,7 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
     FleetSectionCard {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -266,12 +266,12 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_truck),
                         contentDescription = null,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(FleetTokens.IconSize.Default),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Column {
@@ -289,7 +289,7 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
                 }
 
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = if (isProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.15f)
                     else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.15f)
                 ) {
@@ -298,7 +298,7 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (isProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.S)
                     )
                 }
             }

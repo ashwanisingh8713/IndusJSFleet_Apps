@@ -11,8 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.domain.entity.CustomerPaymentSummary
 import com.ijs.customer.domain.entity.PaymentByMode
 import com.ijs.customer.domain.entity.PaymentMode
@@ -36,13 +36,13 @@ internal fun PaymentModeFilterChips(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+            .padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         LazyRow(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
             // All filter
             item {
@@ -50,7 +50,7 @@ internal fun PaymentModeFilterChips(
                     selected = selectedMode == null,
                     onClick = { onModeSelected(null) },
                     label = { Text(stringResource(Res.string.filter_all)) },
-                    shape = RoundedCornerShape(20.dp)
+                    shape = RoundedCornerShape(FleetTokens.Radius.XXL)
                 )
             }
 
@@ -59,8 +59,15 @@ internal fun PaymentModeFilterChips(
                 FilterChip(
                     selected = selectedMode == mode,
                     onClick = { onModeSelected(mode) },
-                    label = { Text("${mode.icon} ${mode.localizedDisplayName()}") },
-                    shape = RoundedCornerShape(20.dp)
+                    label = { Text(mode.localizedDisplayName()) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_cost),
+                            contentDescription = null,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                    },
+                    shape = RoundedCornerShape(FleetTokens.Radius.XXL)
                 )
             }
         }
@@ -70,7 +77,7 @@ internal fun PaymentModeFilterChips(
             Icon(
                 painter = painterResource(Res.drawable.ic_search),
                 contentDescription = stringResource(Res.string.customer_cd_search),
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(FleetTokens.IconSize.M),
                 tint = if (isSearchActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -87,12 +94,13 @@ internal fun PaymentSummaryCard(
     isExporting: Boolean
 ) {
     FleetSectionCard(
-        modifier = Modifier.padding(horizontal = 12.dp),
-        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-        border = null
+        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M),
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        border = null,
+        elevation = FleetTokens.Elevation.None
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
             // Total Header
             Row(
@@ -103,33 +111,36 @@ internal fun PaymentSummaryCard(
                 Text(
                     text = stringResource(Res.string.customer_total_received_title),
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = summary.totalAmountDisplay,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     IconButton(
                         onClick = onExportPdf,
                         enabled = !isExporting,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(FleetTokens.Height.StepCircle)
                     ) {
                         if (isExporting) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp
+                                modifier = Modifier.size(FleetTokens.IconSize.S),
+                                strokeWidth = FleetTokens.Height.ProgressStroke,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         } else {
                             Icon(
                                 painter = painterResource(Res.drawable.ic_download),
                                 contentDescription = stringResource(Res.string.cd_export_pdf),
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(FleetTokens.IconSize.M),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
@@ -137,16 +148,17 @@ internal fun PaymentSummaryCard(
             }
 
             if (summary.byMode.isNotEmpty()) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
 
                 // Payment Mode Breakdown
                 Text(
                     text = stringResource(Res.string.customer_payment_breakdown),
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 )
 
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                     summary.byMode.forEach { modeData ->
                         PaymentModeRow(modeData)
                     }
@@ -165,33 +177,40 @@ private fun PaymentModeRow(data: PaymentByMode) {
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
-            Text(data.modeIcon, style = MaterialTheme.typography.bodyMedium)
+            Icon(
+                painter = painterResource(Res.drawable.ic_cost),
+                contentDescription = null,
+                modifier = Modifier.size(FleetTokens.IconSize.S),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
             Text(
                 text = data.localizedModeDisplay(),
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
             Text(
                 text = data.amountDisplay,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .clip(RoundedCornerShape(FleetTokens.Radius.M))
+                    .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f))
+                    .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
             ) {
                 Text(
                     text = data.percentageDisplay,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                 )
             }
         }
