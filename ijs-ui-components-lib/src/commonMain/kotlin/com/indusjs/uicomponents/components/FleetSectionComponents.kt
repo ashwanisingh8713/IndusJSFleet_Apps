@@ -171,6 +171,9 @@ fun FleetMetricTile(
     iconRes: DrawableResource? = null,
     subLabel: String? = null,
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    // Opt-in override for the value text style. Defaults to headlineSmall (number-forward tiles);
+    // pass a smaller style (e.g. titleMedium) for tiles whose value is long text like a license no.
+    valueStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.headlineSmall,
     showBackground: Boolean = true,
     centered: Boolean = false,
     onClick: (() -> Unit)? = null
@@ -193,7 +196,7 @@ fun FleetMetricTile(
         }
         Text(
             text = value,
-            style = MaterialTheme.typography.headlineSmall,
+            style = valueStyle,
             fontWeight = FontWeight.Bold,
             color = valueColor,
             textAlign = textAlign,

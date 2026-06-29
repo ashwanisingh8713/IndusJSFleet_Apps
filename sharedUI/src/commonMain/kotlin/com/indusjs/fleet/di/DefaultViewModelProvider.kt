@@ -187,6 +187,14 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         )
     }
     private val settings: Settings by lazy { Settings() }
+
+    /**
+     * App-language persistence, backed by the SAME shared [settings] instance used for auth /
+     * onboarding (so the choice survives restarts consistently). Read by [App] at startup.
+     */
+    val languageManager: com.indusjs.fleet.core.i18n.LanguageManager by lazy {
+        com.indusjs.fleet.core.i18n.LanguageManager(settings)
+    }
     // Use the canonical JSON config (HttpClientProvider is the single source of truth).
     // Critically this enables coerceInputValues=true + explicitNulls=false, so a DTO field
     // that is non-nullable with a default (e.g. customer statistics monthly_revenue) is
@@ -525,6 +533,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
         costsRepository,
         costTypesRepository,
         getTripCostTypesUseCase,
+        getVehicleByIdUseCase,
         fleetLogger
     )
 
@@ -578,7 +587,7 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     // Payment ViewModels
     override fun paymentsViewModel() = PaymentsViewModel(tripPaymentRepository, fleetLogger, statesRepository, customerRepository)
 
-    override fun addPaymentViewModel() = AddTripPaymentViewModel(tripPaymentRepository, tripProviderAdapter, fleetLogger, userLocalDataSource, statesRepository)
+    override fun addPaymentViewModel() = AddTripPaymentViewModel(tripPaymentRepository, tripProviderAdapter, fleetLogger, statesRepository)
 
     override fun paymentDetailViewModel() = PaymentDetailViewModel(tripPaymentRepository, userRepository, fleetLogger, statesRepository)
 

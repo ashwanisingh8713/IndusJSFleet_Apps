@@ -27,21 +27,48 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.indusjs.fleet.core.constants.StatusConstants.StateColorScheme
+import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
  * Data class representing a state option for display.
+ *
+ * [iconRes] is a design-system vector icon (resolved via [stateIconRes] from the state value) —
+ * NOT an emoji. Feature builders set it with `iconRes = stateIconRes(value)`.
  */
 data class StateOption(
     val value: String,
     val label: String,
-    val icon: String,
+    val iconRes: DrawableResource,
     val colorScheme: StateColorScheme,
     val isCurrentState: Boolean = false,
     val isValidTransition: Boolean = true
 )
+
+/**
+ * Maps a backend state VALUE (driver / vehicle / trip) to a design-system vector icon.
+ * Centralized so all three status dialogs render consistent, emoji-free iconography.
+ * Unknown values fall back to a neutral info icon.
+ */
+fun stateIconRes(value: String): DrawableResource = when (value.lowercase()) {
+    "active" -> Res.drawable.ic_check_circle
+    "inactive" -> Res.drawable.ic_power
+    "on_trip", "on_route", "in_progress", "assigned" -> Res.drawable.ic_car
+    "on_leave" -> Res.drawable.ic_time
+    "suspended" -> Res.drawable.ic_pause
+    "maintenance", "in_maintenance" -> Res.drawable.ic_wrench
+    "damaged" -> Res.drawable.ic_warning
+    "decommissioned", "out_of_service", "retired" -> Res.drawable.ic_block
+    "planned" -> Res.drawable.ic_trip
+    "completed" -> Res.drawable.ic_check_circle
+    "cancelled" -> Res.drawable.ic_close
+    "failed" -> Res.drawable.ic_warning
+    "delayed" -> Res.drawable.ic_time
+    else -> Res.drawable.ic_info
+}
 
 // ==================== State Change Dialog ====================
 
@@ -87,11 +114,11 @@ fun StateChangeDialog(
                     StateDialogHeader(title = title)
 
                     // ── Current State Banner ──
+                    val currentOption = stateOptions.firstOrNull { it.isCurrentState }
                     CurrentStateBanner(
                         label = currentStateLabel,
-                        colorScheme = stateOptions
-                            .firstOrNull { it.isCurrentState }?.colorScheme
-                            ?: StateColorScheme.NEUTRAL
+                        colorScheme = currentOption?.colorScheme ?: StateColorScheme.NEUTRAL,
+                        iconRes = currentOption?.iconRes
                     )
 
                     // ── Section label ──
@@ -190,7 +217,8 @@ private fun StateDialogHeader(title: String) {
 @Composable
 private fun CurrentStateBanner(
     label: String,
-    colorScheme: StateColorScheme
+    colorScheme: StateColorScheme,
+    iconRes: DrawableResource? = null
 ) {
     val accentColor = getColorForScheme(colorScheme)
 
@@ -205,11 +233,28 @@ private fun CurrentStateBanner(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .background(accentColor, CircleShape)
-            )
+            // State icon in a tinted circle (falls back to a plain dot if no icon).
+            if (iconRes != null) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(accentColor.copy(alpha = 0.15f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(iconRes),
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
+                    )
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(accentColor, CircleShape)
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -274,19 +319,10 @@ private fun StateOptionRow(
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // ── Radio indicator ──
-            RadioIndicator(
-                stateColor = stateColor,
-                isCurrentState = option.isCurrentState,
-                isDisabled = isDisabled
-            )
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            // ── Emoji icon in tinted circle ──
+            // ── Leading: single state icon in a tinted circle (vector, no emoji, no double-circle) ──
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(40.dp)
                     .background(
                         color = if (isDisabled)
                             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
@@ -296,14 +332,18 @@ private fun StateOptionRow(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = option.icon,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
+                Icon(
+                    painter = painterResource(option.iconRes),
+                    contentDescription = null,
+                    tint = if (isDisabled)
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    else
+                        stateColor,
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
 
             // ── Label + subtitle ──
             Column(modifier = Modifier.weight(1f)) {
@@ -337,6 +377,14 @@ private fun StateOptionRow(
                     )
                 }
             }
+
+            // ── Trailing: selection indicator (filled = current, ring = selectable) ──
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+            RadioIndicator(
+                stateColor = stateColor,
+                isCurrentState = option.isCurrentState,
+                isDisabled = isDisabled
+            )
         }
     }
 }

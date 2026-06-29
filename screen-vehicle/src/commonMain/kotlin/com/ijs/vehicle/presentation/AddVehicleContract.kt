@@ -6,8 +6,10 @@ import com.indusjs.fleet.core.mvi.UiState
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.data.model.TeamMemberDto
 import com.ijs.vehicle.domain.entity.DocumentType
+import com.ijs.vehicle.domain.entity.FuelTypeLabel
 import com.ijs.vehicle.domain.entity.VehicleDocument
 import com.ijs.vehicle.domain.entity.VehicleType
+import com.ijs.vehicle.domain.entity.VehicleTypeOption
 
 /**
  * MVI Contract for the Add/Register Vehicle screen.
@@ -23,12 +25,11 @@ object AddVehicleContract {
         val make: String = "",
         val model: String = "",
         val year: String = "",
-        val vehicleType: VehicleType = VehicleType.CAR,
+        val vehicleType: VehicleType = VehicleType.TRUCK,
         val chassisNumber: String = "",
         val engineNumber: String = "",
         val fuelType: String = "Diesel",
         val color: String = "",
-        val seatingCapacity: String = "",
         val ownerName: String = "",
         val ownerContact: String = "",
 
@@ -54,7 +55,16 @@ object AddVehicleContract {
 
         // Available options
         val vehicleTypes: List<VehicleType> = VehicleType.entries,
-        val fuelTypes: List<String> = listOf("Diesel", "Petrol", "CNG", "Electric", "Hybrid"),
+        // Config-driven Vehicle Type → Fuel Type map, loaded from the bundled `vehicle_types.json`
+        // asset (mirrors the cargo-material config). Empty until loaded; the UI falls back to the
+        // VehicleType enum / full fuel list so the form always works.
+        val vehicleTypeOptions: List<VehicleTypeOption> = emptyList(),
+        // Display labels (incl. Hindi) for every fuel value; used to localize the fuel chips.
+        val fuelTypeLabels: List<FuelTypeLabel> = emptyList(),
+        // Fuel options shown for the CURRENTLY-selected vehicle type. Derived from the config on
+        // every Vehicle Type change. Defaults to the default type's (TRUCK) single fuel so the
+        // dropdown is already correct on first render, before the config asset loads.
+        val fuelTypes: List<String> = listOf("Diesel"),
         val documentTypes: List<DocumentType> = DocumentType.entries,
 
         // Caretaker assignment (optional)
@@ -79,6 +89,28 @@ object AddVehicleContract {
 
         val canSubmit: Boolean
             get() = isBasicInfoValid && !isSaving
+
+        /**
+         * Resolve a [VehicleType]'s display label. Picks the Hindi label when [hindi] is set (and
+         * present), else the English label from the config, falling back to the capitalized enum
+         * name when the config isn't loaded yet.
+         */
+        fun vehicleTypeLabelFor(type: VehicleType, hindi: Boolean = false): String {
+            val option = vehicleTypeOptions.firstOrNull { it.id == type.name.lowercase() }
+            val name = if (hindi) option?.labelHi?.takeIf { it.isNotBlank() } ?: option?.label
+                       else option?.label
+            return name ?: type.name.lowercase().replaceFirstChar { it.uppercaseChar() }
+        }
+
+        /**
+         * Resolve a fuel VALUE to its display label. Picks the Hindi label when [hindi] is set
+         * (falling back to the English label when blank), else the English label. Falls back to the
+         * raw [value] when no label entry exists. Never changes the value itself.
+         */
+        fun fuelLabelFor(value: String, hindi: Boolean = false): String =
+            fuelTypeLabels.firstOrNull { it.value == value }?.let {
+                if (hindi) it.labelHi.ifBlank { it.label } else it.label
+            } ?: value
     }
 
     /**
@@ -95,7 +127,6 @@ object AddVehicleContract {
         data class UpdateEngineNumber(val value: String) : Intent
         data class UpdateFuelType(val value: String) : Intent
         data class UpdateColor(val value: String) : Intent
-        data class UpdateSeatingCapacity(val value: String) : Intent
         data class UpdateOwnerName(val value: String) : Intent
         data class UpdateOwnerContact(val value: String) : Intent
 

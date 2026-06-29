@@ -2,6 +2,7 @@ package com.ijs.trip.presentation
 
 import com.indusjs.fleet.core.constants.StatusConstants
 import com.indusjs.uicomponents.components.StateOption
+import com.indusjs.uicomponents.components.stateIconRes
 import com.ijs.trip.domain.entity.TripStatus
 
 /**
@@ -22,7 +23,7 @@ fun getTripStateOptions(
         StateOption(
             value = stateValue,
             label = stateLabels[stateValue] ?: StatusConstants.TripState.getDisplayLabel(stateValue),
-            icon = StatusConstants.TripState.getIcon(stateValue),
+            iconRes = stateIconRes(stateValue),
             colorScheme = StatusConstants.TripState.getColorScheme(stateValue),
             isCurrentState = stateValue == currentApiValue,
             isValidTransition = stateValue in validTransitions || stateValue == currentApiValue

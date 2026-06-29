@@ -232,7 +232,6 @@ internal fun SpecificationsSection(vehicle: Vehicle) {
     ) {
         EnhancedInfoRow(iconRes = Res.drawable.ic_fuel, label = stringResource(Res.string.vehicle_edit_fuel_type), value = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() })
         EnhancedInfoRow(iconRes = Res.drawable.ic_info, label = stringResource(Res.string.vehicle_edit_color), value = vehicle.color.replaceFirstChar { it.uppercaseChar() })
-        EnhancedInfoRow(iconRes = Res.drawable.ic_team, label = stringResource(Res.string.vehicle_edit_capacity), value = stringResource(Res.string.vehicle_overview_capacity_seats, vehicle.capacity))
         EnhancedInfoRow(iconRes = Res.drawable.ic_speed, label = stringResource(Res.string.vehicle_list_label_mileage), value = stringResource(Res.string.vehicle_trips_km, vehicle.mileage.toInt()))
         EnhancedInfoRow(iconRes = Res.drawable.ic_fuel, label = stringResource(Res.string.vehicle_overview_fuel_level), value = "${vehicle.fuelLevel}%", isLast = true)
     }

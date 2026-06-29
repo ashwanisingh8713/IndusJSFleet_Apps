@@ -12,13 +12,16 @@ import androidx.compose.ui.Alignment
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
 import com.indusjs.datetimepicker.FleetDatePicker
 import com.indusjs.datetimepicker.DateTimeUtils
 import com.indusjs.uicomponents.components.ButtonSize
 import com.indusjs.uicomponents.components.ButtonVariant
+import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetAccentIconChip
 import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetStepIndicator
@@ -302,17 +305,9 @@ private fun BasicInfoStep(
             }
 
             item {
-                VehicleTypeSelector(
-                    selectedType = state.vehicleType,
+                VehicleTypeFuelRow(
+                    state = state,
                     onTypeSelected = { onIntent(AddVehicleContract.Intent.UpdateVehicleType(it)) },
-                    modifier = formWidthModifier
-                )
-            }
-
-            item {
-                FuelTypeSelector(
-                    selectedFuel = state.fuelType,
-                    fuelTypes = state.fuelTypes,
                     onFuelSelected = { onIntent(AddVehicleContract.Intent.UpdateFuelType(it)) },
                     modifier = formWidthModifier
                 )
@@ -510,7 +505,14 @@ private fun DocumentUploadCard(
         contentPadding = FleetTokens.Spacing.M
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                // The whole row is the upload affordance while empty (the subtitle reads
+                // "Tap to upload"); disabled once a file is attached or mid-upload.
+                .clickable(
+                    enabled = uploadedDocument == null && !isUploading,
+                    onClick = onUploadClick
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Document icon (design-system accent chip)
@@ -557,7 +559,10 @@ private fun DocumentUploadCard(
                 }
             }
 
-            // Compact action button
+            // Compact, FIXED-size trailing action (44dp). A labelled FleetButton here would, as an
+            // unweighted Row child, be measured against the full remaining width → Compact →
+            // fillMaxWidth → it eats the row and starves the weighted name column. An icon button is
+            // fixed-size and locale-proof, and mirrors the remove button below.
             if (uploadedDocument != null) {
                 IconButton(
                     onClick = onRemoveClick,
@@ -571,13 +576,17 @@ private fun DocumentUploadCard(
                     )
                 }
             } else if (!isUploading) {
-                FleetButton(
-                    text = stringResource(Res.string.vehicle_docs_upload),
+                IconButton(
                     onClick = onUploadClick,
-                    variant = ButtonVariant.SECONDARY,
-                    size = ButtonSize.SMALL,
-                    modifier = Modifier.widthIn(min = FleetTokens.Height.MinTouchTarget)
-                )
+                    modifier = Modifier.size(FleetTokens.Height.MinTouchTarget)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_upload),
+                        contentDescription = stringResource(Res.string.vehicle_docs_upload),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
+                    )
+                }
             }
         }
 
@@ -594,66 +603,51 @@ private fun DocumentUploadCard(
     }
 }
 
+/**
+ * Vehicle Type + Fuel Type — two side-by-side [FleetDropdown]s ("dual part"), mirroring the
+ * Make / Model row.
+ *
+ * - **Vehicle Type** options are the full [VehicleType] enum (always 6), labelled via the config
+ *   (localized, Hindi-aware) with a capitalized-name fallback so it renders even before the config
+ *   asset loads.
+ * - **Fuel Type** options come from [AddVehicleContract.State.fuelTypes], which the ViewModel keeps
+ *   filtered to the selected vehicle type (e.g. Truck ⇒ only Diesel). Labels localized via
+ *   `fuelLabelFor`; the value passed back is always the stable fuel string.
+ *
+ * Both honor `RowScope.weight` (the caller modifier sits on FleetDropdown's `BoxWithConstraints`
+ * root), so they split the row evenly and each fills its half-width slot.
+ */
 @Composable
-private fun VehicleTypeSelector(
-    selectedType: VehicleType,
+private fun VehicleTypeFuelRow(
+    state: AddVehicleContract.State,
     onTypeSelected: (VehicleType) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(Res.string.vehicle_type_required_label),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
-        ) {
-            VehicleType.entries.forEach { type ->
-                FilterChip(
-                    selected = selectedType == type,
-                    onClick = { onTypeSelected(type) },
-                    label = { Text(type.name.lowercase().replaceFirstChar { it.uppercase() }) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FuelTypeSelector(
-    selectedFuel: String,
-    fuelTypes: List<String>,
     onFuelSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = stringResource(Res.string.vehicle_edit_fuel_type),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+    val isHindi = Locale.current.language == "hi"
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+    ) {
+        FleetDropdown(
+            label = stringResource(Res.string.vehicle_type_required_label),
+            options = VehicleType.entries.map { type ->
+                DropdownOption(id = type, label = state.vehicleTypeLabelFor(type, isHindi))
+            },
+            selectedOptionId = state.vehicleType,
+            onOptionSelected = onTypeSelected,
+            modifier = Modifier.weight(1f)
         )
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
-        ) {
-            fuelTypes.forEach { fuel ->
-                FilterChip(
-                    selected = selectedFuel == fuel,
-                    onClick = { onFuelSelected(fuel) },
-                    label = { Text(fuel) }
-                )
-            }
-        }
+        FleetDropdown(
+            label = stringResource(Res.string.vehicle_edit_fuel_type),
+            options = state.fuelTypes.map { fuel ->
+                DropdownOption(id = fuel, label = state.fuelLabelFor(fuel, isHindi))
+            },
+            selectedOptionId = state.fuelType.takeIf { it.isNotBlank() },
+            onOptionSelected = onFuelSelected,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 

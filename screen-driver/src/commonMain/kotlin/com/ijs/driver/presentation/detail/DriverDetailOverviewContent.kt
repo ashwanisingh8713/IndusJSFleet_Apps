@@ -231,6 +231,8 @@ internal fun QuickStatItem(
         iconRes = iconRes,
         showBackground = false,
         centered = true,
+        // Compact value style — matches the Drivers/Vehicles list stat rows (no oversized headline).
+        valueStyle = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(horizontal = 8.dp)
     )
 }

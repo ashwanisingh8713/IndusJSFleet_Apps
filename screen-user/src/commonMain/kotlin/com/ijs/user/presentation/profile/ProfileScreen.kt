@@ -19,7 +19,12 @@ import com.indusjs.fleet.domain.entity.user.User
 import com.indusjs.fleet.domain.entity.user.UserRole
 import com.indusjs.uicomponents.theme.FleetBreakpoint
 import com.indusjs.uicomponents.theme.FleetStatusColors
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.i18n.AppLanguage
+import com.indusjs.uicomponents.i18n.LocalAppLanguage
+import com.indusjs.uicomponents.i18n.LocalAppLanguageController
 import com.indusjs.uicomponents.theme.isAppInDarkTheme
 import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.uicomponents.theme.rememberThemeToggle
@@ -217,6 +222,11 @@ private fun ProfileContent(
             }
         }
 
+        // Language preference
+        item {
+            LanguageCard()
+        }
+
         // Action Buttons
         item {
             ActionButtonsCard(
@@ -226,6 +236,128 @@ private fun ProfileContent(
             )
         }
     }
+}
+
+/**
+ * Profile "Language" card — shows the current in-app language and opens a chooser dialog. Reads /
+ * writes the language via [LocalAppLanguage] / [LocalAppLanguageController] provided at the App root,
+ * so confirming a change persists it and re-localizes the whole app immediately.
+ */
+@Composable
+private fun LanguageCard() {
+    val current = LocalAppLanguage.current
+    val setLanguage = LocalAppLanguageController.current
+    var showDialog by remember { mutableStateOf(false) }
+
+    EnhancedProfileCard(
+        title = stringResource(Res.string.language),
+        icon = Res.drawable.ic_language
+    ) {
+        Surface(
+            onClick = { showDialog = true },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(FleetTokens.Radius.L),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ) {
+            Row(
+                modifier = Modifier.padding(FleetTokens.Spacing.L),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = current.displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = stringResource(Res.string.language_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    painter = painterResource(Res.drawable.ic_edit),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                )
+            }
+        }
+    }
+
+    if (showDialog) {
+        LanguageDialog(
+            current = current,
+            onDismiss = { showDialog = false },
+            onConfirm = { selected ->
+                showDialog = false
+                if (selected != current) setLanguage(selected)
+            }
+        )
+    }
+}
+
+/**
+ * Language chooser dialog: radio list of [AppLanguage]s (each shown in its own script). "Yes, switch"
+ * applies the selection (enabled only when it differs from the current language).
+ */
+@Composable
+private fun LanguageDialog(
+    current: AppLanguage,
+    onDismiss: () -> Unit,
+    onConfirm: (AppLanguage) -> Unit
+) {
+    var selected by remember { mutableStateOf(current) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(FleetTokens.Radius.XL),
+        title = {
+            Text(
+                text = stringResource(Res.string.language_change_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                AppLanguage.entries.forEach { lang ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(FleetTokens.Radius.M))
+                            .clickable { selected = lang }
+                            .padding(vertical = FleetTokens.Spacing.S),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selected == lang,
+                            onClick = { selected = lang }
+                        )
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+                        Text(
+                            text = lang.displayName,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            com.indusjs.uicomponents.components.FleetButton(
+                text = stringResource(Res.string.language_change_confirm),
+                onClick = { onConfirm(selected) },
+                enabled = selected != current
+            )
+        },
+        dismissButton = {
+            com.indusjs.uicomponents.components.FleetButton(
+                text = stringResource(Res.string.cancel),
+                onClick = onDismiss,
+                variant = com.indusjs.uicomponents.components.ButtonVariant.GHOST
+            )
+        }
+    )
 }
 
 @Composable
@@ -497,18 +629,20 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             text = stringResource(Res.string.profile_org_team),
             icon = Res.drawable.ic_team
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
             EnhancedStatItem(
+                modifier = Modifier.weight(1f),
                 icon = Res.drawable.ic_team,
                 value = stats.totalManagers.toString(),
                 label = stringResource(Res.string.profile_stats_managers),
                 color = MaterialTheme.colorScheme.secondary
             )
             EnhancedStatItem(
+                modifier = Modifier.weight(1f),
                 icon = Res.drawable.ic_visibility,
                 value = stats.totalSupervisors.toString(),
                 label = stringResource(Res.string.profile_stats_supervisors),
@@ -517,6 +651,7 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
                 color = FleetStatusColors.AccentPurple
             )
             EnhancedStatItem(
+                modifier = Modifier.weight(1f),
                 icon = Res.drawable.ic_profile,
                 value = stats.totalTeamMembers.toString(),
                 label = stringResource(Res.string.profile_stats_team_members),
@@ -524,51 +659,46 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-            thickness = 0.5.dp
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        OrgSectionDivider()
 
         // Fleet section header
         SectionLabel(
             text = stringResource(Res.string.profile_org_fleet),
             icon = Res.drawable.ic_truck
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
-            EnhancedStatItemWithIcon(
-                iconRes = Res.drawable.ic_truck,
+            EnhancedStatItem(
+                modifier = Modifier.weight(1f),
+                icon = Res.drawable.ic_truck,
                 value = stats.totalVehicles.toString(),
                 label = stringResource(Res.string.profile_stats_total_vehicles),
                 color = MaterialTheme.colorScheme.primary
             )
             // "Active Vehicles" is a healthy/positive metric -> positive teal, not amber/error.
             EnhancedStatItem(
+                modifier = Modifier.weight(1f),
                 icon = Res.drawable.ic_check_circle,
                 value = stats.activeVehicles.toString(),
                 label = stringResource(Res.string.profile_stats_active_vehicles),
                 color = FleetStatusColors.FleetAvailable
             )
+            // Empty third slot so the 2 fleet tiles align under columns 1 & 2 of the 3-up grid.
+            Spacer(modifier = Modifier.weight(1f))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-            thickness = 0.5.dp
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        OrgSectionDivider()
 
         // Trips row
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
             EnhancedStatItem(
+                modifier = Modifier.weight(1f),
                 icon = Res.drawable.ic_trip,
                 value = stats.totalTrips.toString(),
                 label = stringResource(Res.string.profile_stats_total_trips),
@@ -576,12 +706,14 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             )
             // "Active Trips" is a healthy/positive metric -> positive green, not amber/error.
             EnhancedStatItem(
+                modifier = Modifier.weight(1f),
                 icon = Res.drawable.ic_trip,
                 value = stats.activeTrips.toString(),
                 label = stringResource(Res.string.profile_stats_active_trips),
                 color = FleetStatusColors.FleetOnRoute
             )
             EnhancedStatItem(
+                modifier = Modifier.weight(1f),
                 icon = Res.drawable.ic_check_circle,
                 value = stats.completedTrips.toString(),
                 label = stringResource(Res.string.profile_stats_completed_trips),
@@ -589,6 +721,17 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             )
         }
     }
+}
+
+/** Compact divider between the Team / Fleet / Trips stat groups (tighter than the old 32dp block). */
+@Composable
+private fun OrgSectionDivider() {
+    Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
+    HorizontalDivider(
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        thickness = 0.5.dp
+    )
+    Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
 }
 
 @Composable
@@ -605,9 +748,11 @@ private fun EnhancedStatItem(
     icon: org.jetbrains.compose.resources.DrawableResource,
     value: String,
     label: String,
-    color: androidx.compose.ui.graphics.Color
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
 ) {
     // Transparent, centered stat tile (no tinted box) -> showBackground=false, centered=true.
+    // Caller passes Modifier.weight(1f) so the trio forms an evenly-aligned grid.
     com.indusjs.uicomponents.components.FleetMetricTile(
         value = value,
         label = label,
@@ -616,27 +761,7 @@ private fun EnhancedStatItem(
         valueColor = color,
         showBackground = false,
         centered = true,
-        modifier = Modifier.padding(horizontal = 8.dp)
-    )
-}
-
-@Composable
-private fun EnhancedStatItemWithIcon(
-    iconRes: org.jetbrains.compose.resources.DrawableResource,
-    value: String,
-    label: String,
-    color: androidx.compose.ui.graphics.Color
-) {
-    // Transparent, centered stat tile (no tinted box) -> showBackground=false, centered=true.
-    com.indusjs.uicomponents.components.FleetMetricTile(
-        value = value,
-        label = label,
-        iconRes = iconRes,
-        accent = color,
-        valueColor = color,
-        showBackground = false,
-        centered = true,
-        modifier = Modifier.padding(horizontal = 8.dp)
+        modifier = modifier
     )
 }
 

@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import com.indusjs.uicomponents.theme.FleetBreakpoint
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
@@ -174,8 +175,14 @@ fun FleetInputField(
                 .then(widthModifier)
                 .then(semanticsModifier)
                 .imePadding(),
-            label = label?.let { { Text(it) } },
-            placeholder = placeholder?.let { { Text(it) } },
+            // Keep the floating label to ONE line so a long label in a narrow / 2-column
+            // field can't wrap and double the field's height — every field stays the
+            // standard ~56dp tall. Long labels ellipsize rather than grow the box.
+            label = label?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
+            // Cap the placeholder to ONE line too — a long hint (e.g. "Who receives the goods") in a
+            // narrow / 2-column slot would otherwise wrap and double the field height. It ellipsizes
+            // instead, keeping every field the standard ~56dp tall.
+            placeholder = placeholder?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
             leadingIcon = leadingIcon,
             trailingIcon = effectiveTrailingIcon,
             isError = isError,

@@ -94,8 +94,52 @@ object TripCostEntryContract {
         // Available options
         val costTypeOptions: List<Pair<String, String>> = TripCostTypes.types,
         val costTypeGroups: List<CostTypeGroup> = TripCostTypes.groups,
-        val fuelTypeOptions: List<Pair<String, String>> = FuelTypes.types
+        val fuelTypeOptions: List<Pair<String, String>> = FuelTypes.types,
+
+        // The selected trip's VEHICLE fuel type (e.g. "diesel"), fetched on trip selection. Drives
+        // which Fuel & Energy cost types are shown (the vehicle's fuel + EV/AdBlue) and which is
+        // pre-selected. Null = unknown → show all fuels (graceful fallback).
+        val vehicleFuelType: String? = null
     ) : UiState {
+
+        /**
+         * Maps the vehicle's fuel type to the matching Fuel & Energy cost-type id, or null when
+         * unknown. Hybrid pre-selects Petrol (its primary fuel).
+         */
+        fun fuelCostTypeIdFor(fuel: String? = vehicleFuelType): String? =
+            when (fuel?.trim()?.lowercase()) {
+                "diesel" -> "TC-001-002"
+                "petrol" -> "TC-001-001"
+                "cng", "lpg", "cng/lpg" -> "TC-001-003"
+                "electric", "ev" -> "TC-001-004"
+                "hybrid" -> "TC-001-001"
+                else -> null
+            }
+
+        /**
+         * The Fuel & Energy cost-type ids to SHOW for the current vehicle: the vehicle's matching
+         * fuel plus the non-fuel-specific extras (EV Charging, AdBlue/DEF). Null when the vehicle
+         * fuel is unknown → show every fuel type.
+         */
+        fun visibleFuelCostTypeIds(): Set<String>? {
+            val matched = fuelCostTypeIdFor() ?: return null
+            return setOf(matched, "TC-001-004", "TC-001-005")
+        }
+
+        /**
+         * [costTypeGroups] with the Fuel & Energy group's items filtered to [visibleFuelCostTypeIds]
+         * when the vehicle's fuel is known; all other groups are untouched.
+         */
+        fun costTypeGroupsForVehicle(): List<CostTypeGroup> {
+            val keep = visibleFuelCostTypeIds() ?: return costTypeGroups
+            return costTypeGroups.map { group ->
+                if (group.groupId == CostTypeSelection.FUEL_ENERGY_GROUP_ID) {
+                    group.copy(items = group.items.filter { it.id in keep })
+                } else {
+                    group
+                }
+            }
+        }
 
         val hasValidEntries: Boolean
             get() = costEntries.any { it.isValid }

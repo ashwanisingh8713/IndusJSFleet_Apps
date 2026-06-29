@@ -40,7 +40,10 @@ internal val ErrorContainerLight = Color(0xFFFFCDD2)
 internal val OnErrorContainerLight = Color(0xFFB71C1C)
 
 // Backgrounds & Surfaces - Light (Clean with subtle warmth)
-internal val BackgroundLight = Color(0xFFF8F9FA)  // Clean light gray
+// Cool light gray — deliberately a few shades below the white card surface so cards
+// (SurfaceLight = #FFFFFF) read as distinct, elevated panels in day mode. The previous
+// #F8F9FA sat ~3% off white and made section cards blend into the page background.
+internal val BackgroundLight = Color(0xFFECF0F5)  // Clean light gray
 internal val OnBackgroundLight = Color(0xFF1A1A1A)  // Near black for max contrast
 internal val SurfaceLight = Color(0xFFFFFFFF)  // Pure white
 internal val OnSurfaceLight = Color(0xFF1A1A1A)  // Near black

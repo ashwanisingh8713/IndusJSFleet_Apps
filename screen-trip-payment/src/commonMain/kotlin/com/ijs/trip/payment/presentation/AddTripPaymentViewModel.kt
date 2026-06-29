@@ -8,7 +8,6 @@ import com.indusjs.fleet.core.util.convertToEpochMillis
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.domain.repository.states.StatesRepository
-import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 import com.ijs.trip.payment.domain.repository.TripPaymentRepository
@@ -27,7 +26,6 @@ class AddTripPaymentViewModel(
     private val paymentRepository: TripPaymentRepository,
     private val tripProvider: TripProviderForPayment,
     private val logger: FleetLogger,
-    private val userLocalDataSource: UserLocalDataSource,
     private val statesRepository: StatesRepository? = null
 ) : MviViewModel<AddPaymentContract.State, AddPaymentContract.Intent, AddPaymentContract.Effect>(AddPaymentContract.State()) {
 
@@ -124,11 +122,8 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
         if (paymentId != null) {
             loadPaymentForEdit(paymentId)
         } else {
-            // Pre-fill "Received by" with the current user's NAME only. Never fall back to a role
-            // (e.g. "owner") or a placeholder — those aren't valid receiver names; leave it blank
-            // so the user can enter the actual receiver. receivedBy is optional on submit.
-            val defaultReceiver = userLocalDataSource.getUserName()?.trim().orEmpty()
-            updateState { copy(receivedBy = defaultReceiver) }
+            // "Received by" starts BLANK by design — the user types who actually received the
+            // payment; we no longer pre-fill it with the current user's name. (Optional on submit.)
             loadTrips()
             if (tripId != null) {
                 loadTripAndSelect(tripId)

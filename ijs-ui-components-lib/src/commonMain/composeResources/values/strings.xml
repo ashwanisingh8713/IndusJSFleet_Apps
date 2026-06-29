@@ -340,12 +340,11 @@
     <string name="vehicle_overview_from">From</string>
     <string name="vehicle_overview_to">To</string>
     <string name="vehicle_overview_customer">Customer</string>
-    <string name="vehicle_overview_capacity_seats">%1$d seats</string>
     <string name="vehicle_register_title">Register Vehicle</string>
     <string name="vehicle_register_step_basic">Basic Info</string>
     <string name="vehicle_register_step_documents">Documents</string>
     <string name="vehicle_register_button">Register Vehicle</string>
-    <string name="vehicle_documents_section_optional">📄 Documents (Optional)</string>
+    <string name="vehicle_documents_section_optional">Documents (Optional)</string>
     <string name="vehicle_documents_upload_hint">You can upload vehicle documents now or add them later:</string>
     <string name="vehicle_documents_ready">Documents ready</string>
     <string name="vehicle_documents_none_uploaded">No documents uploaded</string>
@@ -873,7 +872,7 @@
     <string name="currency_format">₹%1$s</string>
 
     <!-- ==================== Vehicle - Add Vehicle Screen ==================== -->
-    <string name="vehicle_section_info">🚗 Vehicle Information</string>
+    <string name="vehicle_section_info">Vehicle Information</string>
     <string name="vehicle_label_registration">Registration Number *</string>
     <string name="vehicle_placeholder_registration">e.g., MH12AB1234</string>
     <string name="vehicle_label_make">Make *</string>
@@ -884,7 +883,7 @@
     <string name="vehicle_placeholder_year">e.g., 2023</string>
     <string name="vehicle_label_color">Color</string>
     <string name="vehicle_placeholder_color">e.g., White</string>
-    <string name="vehicle_section_owner">👤 Owner Information</string>
+    <string name="vehicle_section_owner">Owner Information</string>
     <string name="vehicle_label_owner_name">Owner Name</string>
     <string name="vehicle_label_owner_contact">Owner Contact</string>
     <string name="vehicle_placeholder_owner_contact">Enter 10-digit mobile</string>
@@ -1742,8 +1741,6 @@
     <string name="vehicle_edit_fuel_type">Fuel Type</string>
     <string name="vehicle_edit_color">Color</string>
     <string name="vehicle_edit_color_placeholder">e.g., Silver</string>
-    <string name="vehicle_edit_capacity">Capacity</string>
-    <string name="vehicle_edit_capacity_placeholder">e.g., 7</string>
     <string name="vehicle_edit_assigned_driver">Assigned Driver</string>
     <string name="vehicle_edit_loading_drivers">Loading drivers…</string>
     <string name="vehicle_edit_no_driver">No driver (Unassign)</string>
@@ -2260,4 +2257,10 @@
     <string name="checkout_preparing_order_subtitle">Setting up your secure checkout…</string>
     <string name="driver_entity">driver</string>
     <string name="payment_entity_singular">payment</string>
+    <!-- Language switcher -->
+    <string name="language">Language</string>
+    <string name="language_subtitle">Choose your preferred language</string>
+    <string name="language_change_title">Change language?</string>
+    <string name="language_change_message">Switch the app to %1$s? The app will update right away.</string>
+    <string name="language_change_confirm">Yes, switch</string>
 </resources>

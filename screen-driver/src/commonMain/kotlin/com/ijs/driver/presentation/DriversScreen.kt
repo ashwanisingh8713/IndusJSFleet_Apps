@@ -381,7 +381,7 @@ private fun DriverCard(
 
                 DriverInfoItem(
                     iconRes = Res.drawable.ic_profile,
-                    value = driver.licenseNumber.take(10),
+                    value = driver.licenseNumber.take(14),
                     label = stringResource(Res.string.drivers_license)
                 )
             }
@@ -429,6 +429,9 @@ private fun DriverInfoItem(
         iconRes = iconRes,
         showBackground = false,
         centered = true,
+        // Compact value style — these 3-up stat tiles (incl. the long license number) must stay on
+        // one line; headlineSmall was oversized and clipped the license.
+        valueStyle = MaterialTheme.typography.titleMedium,
         modifier = modifier.padding(horizontal = FleetTokens.Spacing.S)
     )
 }

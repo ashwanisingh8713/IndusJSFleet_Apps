@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import com.indusjs.uicomponents.theme.FleetBreakpoint
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
@@ -103,9 +104,18 @@ fun FleetButton(
         ButtonSize.LARGE -> FleetTokens.Height.ButtonLarge
     }
 
+    // Vertical content padding scales with size. The button height is FIXED (.height below), so a
+    // large constant vertical padding (e.g. 12dp on both sides of a 36dp SMALL button) over-constrains
+    // the content area and CLIPS the label. Scaling it keeps ~consistent content room per size and
+    // never lets the text get cut off. (Outer height is unchanged — this only affects inner room.)
+    val verticalPadding = when (size) {
+        ButtonSize.SMALL -> FleetTokens.Spacing.XS
+        ButtonSize.MEDIUM -> FleetTokens.Spacing.S
+        ButtonSize.LARGE -> FleetTokens.Spacing.M
+    }
     val padding = PaddingValues(
         horizontal = FleetTokens.Spacing.XL,
-        vertical = FleetTokens.Spacing.M
+        vertical = verticalPadding
     )
 
     val semanticsModifier = if (accessibilityLabel != null) {
@@ -133,7 +143,13 @@ fun FleetButton(
                 leadingIcon()
                 Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
             }
-            Text(text = text, fontWeight = FontWeight.Medium)
+            Text(
+                text = text,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 

@@ -20,6 +20,8 @@ import com.ijs.vehicle.domain.entity.VehicleStatus
 import com.ijs.vehicle.domain.entity.VehicleTripItem
 import com.ijs.vehicle.domain.entity.VehicleTripsData
 import com.ijs.vehicle.domain.entity.VehicleType
+import com.ijs.vehicle.domain.entity.VehicleTypeOption
+import com.ijs.vehicle.domain.entity.FuelTypeLabel
 
 import com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData
 
@@ -52,7 +54,6 @@ object VehicleDetailContract {
         val vehicleType: VehicleType = VehicleType.CAR,
         val fuelType: String = "Diesel",
         val color: String = "",
-        val capacity: String = "",
         val mileage: String = "",
 
         // Driver assignment
@@ -79,7 +80,12 @@ object VehicleDetailContract {
 
         // Available options
         val vehicleTypes: List<VehicleType> = VehicleType.entries,
+        // Fuel options for the CURRENTLY-selected vehicle type — config-driven (filtered), mirrors
+        // the Register screen. Defaults to the full list as a pre-config fallback.
         val fuelTypeOptions: List<String> = fuelTypes,
+        // Config-driven Vehicle Type → Fuel Type map (from vehicle_types.json) + fuel display labels.
+        val vehicleTypeOptions: List<VehicleTypeOption> = emptyList(),
+        val fuelTypeLabels: List<FuelTypeLabel> = emptyList(),
         val statusOptions: List<VehicleStatus> = VehicleStatus.entries,
 
         // ==================== Tab Data ====================
@@ -171,6 +177,26 @@ object VehicleDetailContract {
 
         val canSave: Boolean
             get() = isFormValid && !isSaving && isEditMode
+
+        /**
+         * Resolve a [VehicleType]'s display label (Hindi-aware) from the config, falling back to the
+         * capitalized enum name when the config isn't loaded. Mirrors the Register screen.
+         */
+        fun vehicleTypeLabelFor(type: VehicleType, hindi: Boolean = false): String {
+            val option = vehicleTypeOptions.firstOrNull { it.id == type.name.lowercase() }
+            val name = if (hindi) option?.labelHi?.takeIf { it.isNotBlank() } ?: option?.label
+                       else option?.label
+            return name ?: type.name.lowercase().replaceFirstChar { it.uppercaseChar() }
+        }
+
+        /**
+         * Resolve a fuel VALUE to its display label (Hindi-aware), falling back to the raw value.
+         * Never changes the value itself.
+         */
+        fun fuelLabelFor(value: String, hindi: Boolean = false): String =
+            fuelTypeLabels.firstOrNull { it.value.equals(value, ignoreCase = true) }?.let {
+                if (hindi) it.labelHi.ifBlank { it.label } else it.label
+            } ?: value
     }
 
     /**
@@ -191,7 +217,6 @@ object VehicleDetailContract {
         data class UpdateVehicleType(val type: VehicleType) : Intent
         data class UpdateFuelType(val value: String) : Intent
         data class UpdateColor(val value: String) : Intent
-        data class UpdateCapacity(val value: String) : Intent
         data class UpdateMileage(val value: String) : Intent
 
         // Driver assignment

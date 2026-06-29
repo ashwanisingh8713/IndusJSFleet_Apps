@@ -246,7 +246,8 @@ fun TripCostEntryScreen(
                         CostEntryRowCard(
                             index = actualIndex,
                             entry = entry,
-                            costTypeGroups = state.costTypeGroups,
+                            // Fuel & Energy cost types filtered to the trip's vehicle fuel (+ EV/AdBlue).
+                            costTypeGroups = state.costTypeGroupsForVehicle(),
                             fuelTypeOptions = state.fuelTypeOptions,
                             canDelete = state.costEntries.size > 1,
                             tripStartDate = tripStartDate,  // Cost date must be >= Trip start date

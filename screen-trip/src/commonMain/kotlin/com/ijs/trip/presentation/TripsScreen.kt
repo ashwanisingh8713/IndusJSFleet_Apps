@@ -32,6 +32,7 @@ import com.ijs.trip.domain.entity.Trip
 import com.ijs.trip.domain.entity.TripStatus
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -393,34 +394,34 @@ private fun TripCard(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
 
-                // Third item: Cost if available, otherwise Cargo Type
-                if (trip.displayInfo.hasCosts) {
-                    TripInfoItem(
-                        value = trip.displayInfo.totalCostLabel,
-                        label = stringResource(Res.string.trips_cost)
-                    )
-                } else {
-                    val cargoLabel = trip.displayInfo.cargoTypeLabel
-                    if (!cargoLabel.isNullOrBlank()) {
-                        TripInfoItem(
-                            value = cargoLabel.take(10),
-                            label = stringResource(Res.string.trips_cargo)
+                // Third item: Cost (shows "NA" when none yet — consistent with the Duration NA
+                // pattern). Cargo moved to its own full-width row below so its name shows in full.
+                TripInfoItem(
+                    value = trip.displayInfo.totalCostLabel,
+                    label = stringResource(Res.string.trips_cost),
+                    isNA = !trip.displayInfo.hasCosts
+                )
+            }
+
+            // Customer + Cargo — full-width rows so the names are never truncated.
+            val cargoFull = trip.displayInfo.cargoTypeLabel?.takeIf { it.isNotBlank() }
+                ?: trip.cargoType?.takeIf { it.isNotBlank() }
+            if (!trip.customerName.isNullOrBlank() || cargoFull != null) {
+                Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
+                Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
+                    if (!trip.customerName.isNullOrBlank()) {
+                        TripMetaRow(
+                            iconRes = Res.drawable.ic_profile,
+                            label = stringResource(Res.string.trip_detail_customer),
+                            value = trip.customerName!!
                         )
-                    } else {
-                        // Fallback: Show estimated distance for Planned state
-                        if (trip.status == TripStatus.PLANNED) {
-                            TripInfoItem(
-                                value = trip.displayInfo.estimatedDistance?.let { "${it.toInt()} km" }
-                                    ?: stringResource(Res.string.vehicle_route_na),
-                                label = stringResource(Res.string.trip_list_est_total),
-                                isNA = trip.displayInfo.estimatedDistance == null
-                            )
-                        } else {
-                            TripInfoItem(
-                                value = getStatusDisplayName(trip.status, stateLabels).take(10),
-                                label = stringResource(Res.string.trip_list_status)
-                            )
-                        }
+                    }
+                    if (cargoFull != null) {
+                        TripMetaRow(
+                            iconRes = Res.drawable.ic_package,
+                            label = stringResource(Res.string.trips_cargo),
+                            value = cargoFull
+                        )
                     }
                 }
             }
@@ -584,6 +585,45 @@ private fun RouteSection(trip: Trip) {
     }
 }
 
+/**
+ * Full-width labelled row for textual trip details (Customer, Cargo) that shouldn't be squeezed into
+ * the 3-up numeric stat row — the value gets the full card width so the name shows in full.
+ */
+@Composable
+private fun TripMetaRow(
+    iconRes: DrawableResource,
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(FleetTokens.IconSize.S),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
 @Composable
 private fun TripInfoItem(
     value: String,
@@ -600,7 +640,9 @@ private fun TripInfoItem(
         valueColor = if (isNA) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         else MaterialTheme.colorScheme.onSurface,
         showBackground = false,
-        centered = true
+        centered = true,
+        // Compact value style — matches the Drivers/Vehicles list stat rows (no oversized headline).
+        valueStyle = MaterialTheme.typography.titleMedium
     )
 }
 

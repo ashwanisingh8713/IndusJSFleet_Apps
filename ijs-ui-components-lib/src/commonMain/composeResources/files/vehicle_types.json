@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "vehicleTypes": [
+    { "id": "truck",      "label": "Truck",      "label_hi": "ट्रक",       "fuelTypes": ["Diesel"],                                     "defaultFuel": "Diesel" },
+    { "id": "van",        "label": "Van",        "label_hi": "वैन",        "fuelTypes": ["Diesel", "Petrol", "CNG", "Electric"],         "defaultFuel": "Diesel" },
+    { "id": "car",        "label": "Car",        "label_hi": "कार",        "fuelTypes": ["Diesel", "Petrol", "CNG", "Electric", "Hybrid"], "defaultFuel": "Petrol" },
+    { "id": "bus",        "label": "Bus",        "label_hi": "बस",         "fuelTypes": ["Diesel"],                                     "defaultFuel": "Diesel" },
+    { "id": "motorcycle", "label": "Motorcycle", "label_hi": "मोटरसाइकिल", "fuelTypes": ["Petrol", "Electric"],                          "defaultFuel": "Petrol" },
+    { "id": "trailer",    "label": "Trailer",    "label_hi": "ट्रेलर",      "fuelTypes": ["Diesel"],                                     "defaultFuel": "Diesel" }
+  ],
+  "allFuelTypes": [
+    { "value": "Diesel",   "label": "Diesel",   "label_hi": "डीज़ल" },
+    { "value": "Petrol",   "label": "Petrol",   "label_hi": "पेट्रोल" },
+    { "value": "CNG",      "label": "CNG",      "label_hi": "सीएनजी" },
+    { "value": "Electric", "label": "Electric", "label_hi": "इलेक्ट्रिक" },
+    { "value": "Hybrid",   "label": "Hybrid",   "label_hi": "हाइब्रिड" }
+  ]
+}

@@ -15,7 +15,9 @@ object CreateDriverContract {
     /**
      * Blood group options.
      */
-    val bloodGroups = listOf("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
+    // "N/A" is a selectable option for drivers who don't provide a blood group; the ViewModel maps
+    // it back to null on submit so the wire isn't polluted with the literal "N/A".
+    val bloodGroups = listOf("N/A", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
 
     /**
      * UI State for the Create Driver screen.

@@ -22,6 +22,8 @@ import com.indusjs.fleet.navigation.navigateAndClear
 import com.ijs.subscription.presentation.platform.RazorpayLauncher
 import com.ijs.subscription.presentation.platform.RazorpayResult
 import com.indusjs.uicomponents.theme.AppTheme
+import com.indusjs.uicomponents.i18n.LocalAppLanguageController
+import com.indusjs.fleet.core.i18n.ProvideAppLanguage
 import com.indusjs.fleet.core.logger.initPlatformLogger
 
 /**
@@ -61,6 +63,10 @@ fun App(
     // Use singleton instance to ensure Settings persistence across app lifecycle
     val viewModelProvider = remember { DefaultViewModelProvider.getInstance() }
     val fleetLogger: FleetLogger = remember { viewModelProvider.fleetLogger }
+
+    // In-app language: seed from the persisted choice; changing it persists + re-localizes the app.
+    val languageManager = remember { viewModelProvider.languageManager }
+    var appLanguage by remember { mutableStateOf(languageManager.saved()) }
 
     // Check if user is already logged in to determine initial route
     var isCheckingAuth by remember { mutableStateOf(true) }
@@ -157,6 +163,16 @@ fun App(
         }
     }
 
+    // Apply + provide the language at the UI root. ProvideAppLanguage keys the subtree on the
+    // language so changing it recomposes everything and re-resolves every stringResource; the
+    // outer `backStack`/state remembers sit above this, so the user stays on the same screen.
+    ProvideAppLanguage(appLanguage) {
+    CompositionLocalProvider(
+        LocalAppLanguageController provides { selected ->
+            languageManager.persist(selected)
+            appLanguage = selected
+        }
+    ) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -195,4 +211,6 @@ fun App(
             }
         }
     }
+    } // CompositionLocalProvider(LocalAppLanguageController)
+    } // ProvideAppLanguage
 }

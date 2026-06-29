@@ -179,7 +179,7 @@ internal fun SelectedTripInfoCard(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "🚀 ${stringResource(Res.string.payment_trip_start_label)}",
+                        text = stringResource(Res.string.payment_trip_start_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -191,7 +191,7 @@ internal fun SelectedTripInfoCard(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "🏁 ${stringResource(Res.string.payment_trip_end_label)}",
+                        text = stringResource(Res.string.payment_trip_end_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.tertiary
                     )
@@ -299,80 +299,51 @@ internal fun AmountSection(
 }
 
 /**
- * Payment type dropdown (advance, partial, final, refund).
+ * Payment Type + Payment Mode as two side-by-side dropdowns ("dual"), followed by a one-line
+ * description of the selected type. Both are canonical [FleetDropdown]s with clean text labels
+ * (no emoji) for a consistent, polished look.
  */
 @Composable
-internal fun PaymentTypeDropdown(
+internal fun PaymentTypeAndModeSection(
     selectedType: PaymentType,
-    onTypeSelected: (PaymentType) -> Unit
+    selectedMode: PaymentMode,
+    onTypeSelected: (PaymentType) -> Unit,
+    onModeSelected: (PaymentMode) -> Unit
 ) {
     Column {
-        Text(
-            text = stringResource(Res.string.payment_section_type),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
-
         // localizedDisplayName() is @Composable; List.map is inline so its lambda runs in
-        // composable scope, making this call legal.
-        val options = PaymentType.entries.map { type ->
-            DropdownOption(
-                id = type,
-                label = "${type.icon} ${type.localizedDisplayName()}"
+        // composable scope, making these calls legal.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+        ) {
+            FleetDropdown(
+                label = stringResource(Res.string.payment_section_type),
+                options = PaymentType.entries.map { type ->
+                    DropdownOption(id = type, label = type.localizedDisplayName())
+                },
+                selectedOptionId = selectedType,
+                onOptionSelected = onTypeSelected,
+                modifier = Modifier.weight(1f)
+            )
+            FleetDropdown(
+                label = stringResource(Res.string.payment_add_payment_mode),
+                options = PaymentMode.entries.map { mode ->
+                    DropdownOption(id = mode, label = mode.localizedDisplayName())
+                },
+                selectedOptionId = selectedMode,
+                onOptionSelected = onModeSelected,
+                modifier = Modifier.weight(1f)
             )
         }
-
-        FleetDropdown(
-            label = stringResource(Res.string.payment_section_type),
-            options = options,
-            selectedOptionId = selectedType,
-            onOptionSelected = onTypeSelected,
-            modifier = Modifier.fillMaxWidth()
-        )
 
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
         Text(
             text = selectedType.localizedDescription(),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = FleetTokens.Spacing.L)
+            modifier = Modifier.padding(start = FleetTokens.Spacing.S)
         )
-    }
-}
-
-/**
- * Payment mode selection chips (cash, UPI, bank transfer, card, credit).
- */
-@Composable
-internal fun PaymentModeChips(
-    selectedMode: PaymentMode,
-    onModeSelected: (PaymentMode) -> Unit
-) {
-    Column {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
-        ) {
-            PaymentMode.entries.take(3).forEach { mode ->
-                FilterChip(
-                    selected = selectedMode == mode,
-                    onClick = { onModeSelected(mode) },
-                    label = { Text("${mode.icon} ${mode.localizedDisplayName()}") }
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
-        ) {
-            PaymentMode.entries.drop(3).forEach { mode ->
-                FilterChip(
-                    selected = selectedMode == mode,
-                    onClick = { onModeSelected(mode) },
-                    label = { Text("${mode.icon} ${mode.localizedDisplayName()}") }
-                )
-            }
-        }
     }
 }
 

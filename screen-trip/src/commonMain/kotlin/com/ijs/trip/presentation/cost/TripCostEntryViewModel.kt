@@ -20,6 +20,7 @@ import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.ijs.trip.domain.repository.TripRepository
 import com.indusjs.fleet.domain.usecase.costs.GetTripCostTypesUseCase
+import com.ijs.vehicle.domain.usecase.GetVehicleByIdUseCase
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,6 +35,7 @@ class TripCostEntryViewModel(
     private val costsRepository: CostsRepository,
     private val costTypesRepository: CostTypesRepository,
     private val getTripCostTypesUseCase: GetTripCostTypesUseCase? = null,
+    private val getVehicleByIdUseCase: GetVehicleByIdUseCase,
     private val logger: FleetLogger
 ) : MviViewModel<TripCostEntryContract.State, TripCostEntryContract.Intent, TripCostEntryContract.Effect>(
     TripCostEntryContract.State()
@@ -210,6 +212,52 @@ class TripCostEntryViewModel(
                 showTripDropdown = false,
                 tripError = null
             )
+        }
+        loadVehicleFuelType(trip)
+    }
+
+    /**
+     * Fetch the trip's vehicle and apply its fuel type to the Fuel & Energy cost types: filters the
+     * fuel chips to the vehicle's fuel (+ EV Charging / AdBlue per the chosen behavior) and
+     * pre-selects the matching chip on the default fuel entry. Non-fatal — on failure / unknown fuel
+     * the cost types stay unfiltered (all fuels shown, nothing pre-selected).
+     */
+    private fun loadVehicleFuelType(trip: Trip) {
+        viewModelScope.launch(dispatcherProvider.io) {
+            val fuel = when (val result = getVehicleByIdUseCase(trip.vehicleId)) {
+                is Result.Success -> result.data.fuelType
+                else -> null
+            }
+            if (fuel.isNullOrBlank()) return@launch
+            updateState {
+                val matchedId = fuelCostTypeIdFor(fuel)
+                val fuelGroup = costTypeGroups.firstOrNull {
+                    it.groupId == CostTypeSelection.FUEL_ENERGY_GROUP_ID
+                }
+                val matchedLabel = fuelGroup?.items?.firstOrNull { it.id == matchedId }?.label.orEmpty()
+                val groupName = fuelGroup?.groupName ?: "Fuel & Energy"
+                copy(
+                    vehicleFuelType = fuel,
+                    // Pre-select the matched fuel only on entries the user hasn't set yet whose
+                    // category is (or defaults to) Fuel & Energy.
+                    costEntries = costEntries.map { row ->
+                        if (matchedId != null && row.costType.isBlank() &&
+                            (row.selectedGroupId.isBlank() ||
+                                row.selectedGroupId == CostTypeSelection.FUEL_ENERGY_GROUP_ID)
+                        ) {
+                            row.copy(
+                                costType = matchedId,
+                                costTypeLabel = matchedLabel,
+                                selectedGroupId = CostTypeSelection.FUEL_ENERGY_GROUP_ID,
+                                selectedGroupName = groupName,
+                                fuelType = matchedId
+                            )
+                        } else {
+                            row
+                        }
+                    }
+                )
+            }
         }
     }
 

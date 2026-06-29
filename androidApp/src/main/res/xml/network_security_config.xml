@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Allow cleartext only for the local API host -->
+    <!-- Allow cleartext for the local API host (dev machine LAN IP — keep in sync with
+         ApiConfig.BASE_URL). -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.1.13</domain>
+        <domain includeSubdomains="true">192.168.1.8</domain>
     </domain-config>
 
     <!-- Disallow cleartext by default for other hosts -->

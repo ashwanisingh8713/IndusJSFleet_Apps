@@ -434,6 +434,9 @@ private fun VehicleInfoItem(
         valueColor = MaterialTheme.colorScheme.onSurface,
         showBackground = false,
         centered = true,
+        // Compact value style — the 3-up Fuel/Mileage/Driver stats don't need headline size
+        // (matches the Drivers list); keeps "0 km" / "N/A" from looking oversized.
+        valueStyle = MaterialTheme.typography.titleMedium,
         modifier = modifier.padding(horizontal = FleetTokens.Spacing.S)
     )
 }

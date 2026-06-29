@@ -192,10 +192,12 @@ fun CreateTripPaymentScreen(
 
                 HorizontalDivider()
 
-                // Payment Type Section (Dropdown)
-                PaymentTypeDropdown(
+                // Payment Type + Payment Mode (dual dropdowns)
+                PaymentTypeAndModeSection(
                     selectedType = state.paymentType,
-                    onTypeSelected = { viewModel.sendIntent(AddPaymentContract.Intent.UpdatePaymentType(it)) }
+                    selectedMode = state.paymentMode,
+                    onTypeSelected = { viewModel.sendIntent(AddPaymentContract.Intent.UpdatePaymentType(it)) },
+                    onModeSelected = { viewModel.sendIntent(AddPaymentContract.Intent.UpdatePaymentMode(it)) }
                 )
 
                 // Due Date (for Advance/Partial payments)
@@ -212,17 +214,6 @@ fun CreateTripPaymentScreen(
                         minDate = minPaymentDate
                     )
                 }
-
-                // Payment Mode Section
-                Text(
-                    text = stringResource(Res.string.payment_add_payment_mode),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                PaymentModeChips(
-                    selectedMode = state.paymentMode,
-                    onModeSelected = { viewModel.sendIntent(AddPaymentContract.Intent.UpdatePaymentMode(it)) }
-                )
 
                 HorizontalDivider()
 

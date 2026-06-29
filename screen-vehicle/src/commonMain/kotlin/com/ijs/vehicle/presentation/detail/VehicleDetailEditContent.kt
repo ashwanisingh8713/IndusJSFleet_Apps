@@ -12,9 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
 import com.indusjs.uicomponents.components.CaretakerSectionCard
+import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetDisplayField
+import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.theme.FleetTokens
@@ -99,100 +102,43 @@ internal fun EditModeContent(
                     )
                 }
 
-                // Vehicle Type selector
-                Column {
-                    Text(
-                        text = stringResource(Res.string.vehicle_edit_vehicle_type),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
-                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
-                    ) {
-                        VehicleType.entries.forEach { type ->
-                            FilterChip(
-                                selected = state.vehicleType == type,
-                                onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateVehicleType(type)) },
-                                label = { Text(getVehicleTypeLabel(type)) },
-                                leadingIcon = if (state.vehicleType == type) {
-                                    {
-                                        Icon(
-                                            painter = painterResource(Res.drawable.ic_check),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(FleetTokens.IconSize.S)
-                                        )
-                                    }
-                                } else null
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // ==================== Specifications Section ====================
-        FleetTitledSectionCard(
-            title = stringResource(Res.string.vehicle_edit_specs),
-            iconRes = Res.drawable.ic_settings,
-            accent = MaterialTheme.colorScheme.primary
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
-                // Fuel Type selector
-                Column {
-                    Text(
-                        text = stringResource(Res.string.vehicle_edit_fuel_type),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
-                        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
-                    ) {
-                        state.fuelTypeOptions.forEach { fuel ->
-                            FilterChip(
-                                selected = state.fuelType.equals(fuel, ignoreCase = true),
-                                onClick = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateFuelType(fuel)) },
-                                label = { Text(fuel) }
-                            )
-                        }
-                    }
-                }
-
+                // Vehicle Type + Fuel Type — config-driven dual dropdowns (mirrors the Register
+                // screen). Fuel options are filtered to the selected vehicle type.
+                val isHindi = Locale.current.language == "hi"
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                 ) {
-                    FleetInputField(
-                        value = state.color,
-                        onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateColor(it)) },
-                        fieldType = FieldType.DEFAULT,
-                        label = stringResource(Res.string.vehicle_edit_color),
-                        placeholder = stringResource(Res.string.vehicle_edit_color_placeholder),
+                    FleetDropdown(
+                        label = stringResource(Res.string.vehicle_edit_vehicle_type),
+                        options = VehicleType.entries.map { type ->
+                            DropdownOption(id = type, label = state.vehicleTypeLabelFor(type, isHindi))
+                        },
+                        selectedOptionId = state.vehicleType,
+                        onOptionSelected = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateVehicleType(it)) },
                         modifier = Modifier.weight(1f)
                     )
 
-                    FleetInputField(
-                        value = state.capacity,
-                        onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateCapacity(it)) },
-                        fieldType = FieldType.NUMBER,
-                        label = stringResource(Res.string.vehicle_edit_capacity),
-                        placeholder = stringResource(Res.string.vehicle_edit_capacity_placeholder),
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_team),
-                                contentDescription = null,
-                                modifier = Modifier.size(FleetTokens.IconSize.S),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    FleetDropdown(
+                        label = stringResource(Res.string.vehicle_edit_fuel_type),
+                        options = state.fuelTypeOptions.map { fuel ->
+                            DropdownOption(id = fuel, label = state.fuelLabelFor(fuel, isHindi))
                         },
+                        selectedOptionId = state.fuelType.takeIf { it.isNotBlank() },
+                        onOptionSelected = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateFuelType(it)) },
                         modifier = Modifier.weight(1f)
                     )
                 }
+
+                // Color
+                FleetInputField(
+                    value = state.color,
+                    onValueChange = { viewModel.sendIntent(VehicleDetailContract.Intent.UpdateColor(it)) },
+                    fieldType = FieldType.DEFAULT,
+                    label = stringResource(Res.string.vehicle_edit_color),
+                    placeholder = stringResource(Res.string.vehicle_edit_color_placeholder),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 

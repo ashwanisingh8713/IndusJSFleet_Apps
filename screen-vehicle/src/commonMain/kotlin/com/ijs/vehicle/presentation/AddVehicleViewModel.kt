@@ -1,16 +1,20 @@
 package com.ijs.vehicle.presentation
 
+import androidx.lifecycle.viewModelScope
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.util.ValidationUtils
 import com.indusjs.error.result.Result
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.data.model.TeamMemberDto
+import com.ijs.vehicle.data.VehicleTypeConfigProvider
 import com.ijs.vehicle.domain.entity.DocumentStatus
 import com.ijs.vehicle.domain.entity.DocumentType
 import com.ijs.vehicle.domain.entity.Vehicle
 import com.ijs.vehicle.domain.entity.VehicleDocument
 import com.ijs.vehicle.domain.entity.VehicleStatus
+import com.ijs.vehicle.domain.entity.VehicleType
+import com.ijs.vehicle.domain.entity.VehicleTypeOption
 import com.ijs.team.domain.repository.TeamRepository
 import com.ijs.vehicle.domain.usecase.CreateVehicleWithDocumentsUseCase
 import com.ijs.vehicle.presentation.AddVehicleContract.Effect
@@ -37,6 +41,7 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.error_year_min_199
 import indusjsfleet.ijs_ui_components_lib.generated.resources.error_year_required
 import indusjsfleet.ijs_ui_components_lib.generated.resources.success_vehicle_registered
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -61,7 +66,39 @@ class AddVehicleViewModel(
     init {
         // Load caretakers (supervisors + managers) on init
         sendIntent(Intent.LoadCaretakers)
+
+        // Load the Vehicle Type → Fuel Type config from the bundled asset in the background.
+        // Non-fatal: the provider falls back to hardcoded defaults if the asset is missing/corrupt,
+        // so the form never breaks. Once loaded we seed the fuel options for the currently-selected
+        // vehicle type (default CAR) so the Fuel Type chips already match on first render.
+        viewModelScope.launch {
+            val cfg = VehicleTypeConfigProvider.load(dispatcherProvider)
+            updateState {
+                val option = cfg.vehicleTypes.firstOrNull { it.id == vehicleType.name.lowercase() }
+                copy(
+                    vehicleTypeOptions = cfg.vehicleTypes,
+                    fuelTypeLabels = cfg.allFuelTypes,
+                    fuelTypes = option?.fuelTypes ?: fuelTypes,
+                    // Snap the current fuel selection into the allowed set for this type.
+                    fuelType = option?.let { resolveFuel(it, fuelType) } ?: fuelType
+                )
+            }
+        }
     }
+
+    /**
+     * The config entry for [type], or null if the config isn't loaded / has no such id.
+     * The id is the [VehicleType] enum name lowercased (e.g. `truck`).
+     */
+    private fun optionFor(type: VehicleType): VehicleTypeOption? =
+        currentState.vehicleTypeOptions.firstOrNull { it.id == type.name.lowercase() }
+
+    /**
+     * Keep [current] selected if it's still valid for [option]; otherwise drop to the type's
+     * default fuel. Guarantees the selected fuel is always one of the shown options.
+     */
+    private fun resolveFuel(option: VehicleTypeOption, current: String): String =
+        if (current in option.fuelTypes) current else option.defaultFuel
 
     override suspend fun handleIntent(intent: Intent) {
         when (intent) {
@@ -70,12 +107,11 @@ class AddVehicleViewModel(
             is Intent.UpdateMake -> updateMake(intent.value)
             is Intent.UpdateModel -> updateModel(intent.value)
             is Intent.UpdateYear -> updateYear(intent.value)
-            is Intent.UpdateVehicleType -> updateState { copy(vehicleType = intent.type) }
+            is Intent.UpdateVehicleType -> updateVehicleType(intent.type)
             is Intent.UpdateChassisNumber -> updateState { copy(chassisNumber = intent.value) }
             is Intent.UpdateEngineNumber -> updateState { copy(engineNumber = intent.value) }
             is Intent.UpdateFuelType -> updateState { copy(fuelType = intent.value) }
             is Intent.UpdateColor -> updateState { copy(color = intent.value) }
-            is Intent.UpdateSeatingCapacity -> updateState { copy(seatingCapacity = intent.value) }
             is Intent.UpdateOwnerName -> updateOwnerName(intent.value)
             is Intent.UpdateOwnerContact -> updateOwnerContact(intent.value)
 
@@ -103,6 +139,23 @@ class AddVehicleViewModel(
             is Intent.SubmitVehicle -> submitVehicle()
             is Intent.Cancel -> sendEffect(Effect.NavigateBack)
             is Intent.ClearError -> updateState { copy(error = null) }
+        }
+    }
+
+    /**
+     * Select a vehicle type and re-derive the Fuel Type options for it from the config.
+     * If the previously-selected fuel isn't valid for the new type, snap to that type's default
+     * (e.g. switching to Truck forces Diesel). Falls back to keeping the current fuel list when the
+     * config has no entry for [type] (config not loaded), so the form still works.
+     */
+    private fun updateVehicleType(type: VehicleType) {
+        val option = optionFor(type)
+        updateState {
+            copy(
+                vehicleType = type,
+                fuelTypes = option?.fuelTypes ?: fuelTypes,
+                fuelType = option?.let { resolveFuel(it, fuelType) } ?: fuelType
+            )
         }
     }
 
@@ -343,7 +396,8 @@ class AddVehicleViewModel(
                     status = VehicleStatus.ACTIVE,
                     fuelType = currentState.fuelType,
                     color = currentState.color.ifBlank { "white" },
-                    capacity = currentState.seatingCapacity.toIntOrNull() ?: 4,
+                    // Capacity is no longer collected in the UI; send the entity default.
+                    capacity = 4,
                     fuelLevel = 0,
                     mileage = 0.0
                 )

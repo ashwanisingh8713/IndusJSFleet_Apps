@@ -9,11 +9,16 @@ package com.indusjs.fleet.core.network
 object ApiConfig {
 
 
-    /** Cloud Run deployment (production / staging). */
-    // const val BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
-
-    /** Local development server (Android emulator uses 10.0.2.2 to reach host machine's localhost). */
-    const val BASE_URL = "http://10.0.2.2:8081/api/v1"
+    // ── Active base URL ───────────────────────────────────────────────
+    // A REAL device cannot reach 10.0.2.2 — that address is only the Android *emulator's* alias for
+    // the host machine's localhost, so on a physical phone every request times out. Point at the dev
+    // machine's LAN IP instead, so a phone on the SAME Wi-Fi reaches the local backend (which binds
+    // to *:8081). Update this IP when your machine's network changes (`ipconfig getifaddr en0`).
+    //
+    // Alternatives (swap the active line below):
+    //   • Emulator-only host loopback: "http://10.0.2.2:8081/api/v1"
+    //   • Cloud Run (deployed):        "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
+    const val BASE_URL = "http://192.168.1.8:8081/api/v1"
 
     /**
      * Server origin without the "/api/v1" suffix.

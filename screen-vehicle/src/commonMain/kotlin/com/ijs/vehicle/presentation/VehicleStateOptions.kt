@@ -2,6 +2,7 @@ package com.ijs.vehicle.presentation
 
 import com.indusjs.fleet.core.constants.StatusConstants
 import com.indusjs.uicomponents.components.StateOption
+import com.indusjs.uicomponents.components.stateIconRes
 import com.ijs.vehicle.domain.entity.VehicleStatus
 
 /**
@@ -22,7 +23,7 @@ fun getVehicleStateOptions(
         StateOption(
             value = stateValue,
             label = stateLabels[stateValue] ?: StatusConstants.VehicleState.getDisplayLabel(stateValue),
-            icon = StatusConstants.VehicleState.getIcon(stateValue),
+            iconRes = stateIconRes(stateValue),
             colorScheme = StatusConstants.VehicleState.getColorScheme(stateValue),
             isCurrentState = stateValue == currentApiValue,
             isValidTransition = stateValue in validTransitions || stateValue == currentApiValue

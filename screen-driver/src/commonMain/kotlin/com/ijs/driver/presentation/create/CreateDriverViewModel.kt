@@ -180,7 +180,7 @@ class CreateDriverViewModel(
                     dateOfBirth = currentState.dateOfBirth.takeIf { it.isNotBlank() }?.let { parseDateToTimestamp(it) },
                     address = currentState.address.takeIf { it.isNotBlank() },
                     emergencyContact = currentState.emergencyContact.takeIf { it.isNotBlank() },
-                    bloodGroup = currentState.bloodGroup.takeIf { it.isNotBlank() },
+                    bloodGroup = currentState.bloodGroup.takeIf { it.isNotBlank() && it != "N/A" },
                     joiningDate = currentState.joiningDate.takeIf { it.isNotBlank() }?.let { parseDateToTimestamp(it) },
                     status = DriverStatus.ACTIVE,
                     isActive = true

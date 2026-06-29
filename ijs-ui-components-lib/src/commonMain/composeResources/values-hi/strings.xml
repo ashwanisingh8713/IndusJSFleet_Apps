@@ -336,12 +336,11 @@
     <string name="vehicle_overview_from">से</string>
     <string name="vehicle_overview_to">तक</string>
     <string name="vehicle_overview_customer">ग्राहक</string>
-    <string name="vehicle_overview_capacity_seats">%1$d सीटें</string>
     <string name="vehicle_register_title">वाहन पंजीकरण</string>
     <string name="vehicle_register_step_basic">मूल जानकारी</string>
     <string name="vehicle_register_step_documents">दस्तावेज़</string>
     <string name="vehicle_register_button">वाहन पंजीकृत करें</string>
-    <string name="vehicle_documents_section_optional">📄 दस्तावेज़ (वैकल्पिक)</string>
+    <string name="vehicle_documents_section_optional">दस्तावेज़ (वैकल्पिक)</string>
     <string name="vehicle_documents_upload_hint">आप अभी वाहन दस्तावेज़ अपलोड कर सकते हैं या बाद में जोड़ सकते हैं:</string>
     <string name="vehicle_documents_ready">दस्तावेज़ तैयार</string>
     <string name="vehicle_documents_none_uploaded">कोई दस्तावेज़ अपलोड नहीं किया</string>
@@ -827,7 +826,7 @@
     <string name="currency_format">₹%1$s</string>
 
     <!-- ==================== Vehicle - Add Vehicle Screen ==================== -->
-    <string name="vehicle_section_info">🚗 वाहन जानकारी</string>
+    <string name="vehicle_section_info">वाहन जानकारी</string>
     <string name="vehicle_label_registration">पंजीकरण नंबर *</string>
     <string name="vehicle_placeholder_registration">जैसे, MH12AB1234</string>
     <string name="vehicle_label_make">निर्माता *</string>
@@ -838,7 +837,7 @@
     <string name="vehicle_placeholder_year">जैसे, 2023</string>
     <string name="vehicle_label_color">रंग</string>
     <string name="vehicle_placeholder_color">जैसे, सफेद</string>
-    <string name="vehicle_section_owner">👤 मालिक जानकारी</string>
+    <string name="vehicle_section_owner">मालिक जानकारी</string>
     <string name="vehicle_label_owner_name">मालिक का नाम</string>
     <string name="vehicle_label_owner_contact">मालिक का संपर्क</string>
     <string name="vehicle_placeholder_owner_contact">10 अंकों का मोबाइल दर्ज करें</string>
@@ -1578,8 +1577,6 @@
     <string name="vehicle_edit_fuel_type">ईंधन प्रकार</string>
     <string name="vehicle_edit_color">रंग</string>
     <string name="vehicle_edit_color_placeholder">जैसे, सिल्वर</string>
-    <string name="vehicle_edit_capacity">क्षमता</string>
-    <string name="vehicle_edit_capacity_placeholder">जैसे, 7</string>
     <string name="vehicle_edit_assigned_driver">नियुक्त ड्राइवर</string>
     <string name="vehicle_edit_loading_drivers">ड्राइवर लोड हो रहे हैं…</string>
     <string name="vehicle_edit_no_driver">कोई ड्राइवर नहीं (हटाएं)</string>
@@ -2256,4 +2253,10 @@
     <string name="reset_token_placeholder">अपने ईमेल/SMS से टोकन दर्ज करें</string>
     <string name="reset_token_hint">रीसेट टोकन के लिए अपना ईमेल या SMS जांचें</string>
     <string name="error_reset_token_required">कृपया अपने ईमेल या SMS से रीसेट टोकन दर्ज करें</string>
+    <!-- Language switcher -->
+    <string name="language">भाषा</string>
+    <string name="language_subtitle">अपनी पसंदीदा भाषा चुनें</string>
+    <string name="language_change_title">भाषा बदलें?</string>
+    <string name="language_change_message">ऐप को %1$s में बदलें? ऐप तुरंत अपडेट हो जाएगा।</string>
+    <string name="language_change_confirm">हाँ, बदलें</string>
 </resources>

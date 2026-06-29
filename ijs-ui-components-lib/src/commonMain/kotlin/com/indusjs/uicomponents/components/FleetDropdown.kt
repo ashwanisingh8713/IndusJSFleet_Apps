@@ -116,8 +116,10 @@ fun <T> FleetDropdown(
             OutlinedTextField(
                 value = selectedLabel,
                 onValueChange = {},
-                label = { Text(label) },
-                placeholder = { Text(resolvedPlaceholder) },
+                // Keep the floating label to ONE line so a long label in a narrow / 2-column slot
+                // can't wrap and double the field height — every dropdown stays the standard ~56dp.
+                label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                placeholder = { Text(resolvedPlaceholder, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 modifier = Modifier
                     .then(widthModifier)
                     .menuAnchor(),

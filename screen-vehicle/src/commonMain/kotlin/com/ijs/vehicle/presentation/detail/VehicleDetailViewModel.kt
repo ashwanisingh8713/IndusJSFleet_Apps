@@ -6,7 +6,9 @@ import com.indusjs.error.result.Result
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.team.data.model.TeamMemberDto
 import com.ijs.driver.domain.entity.Driver
+import com.ijs.vehicle.data.VehicleTypeConfigProvider
 import com.ijs.vehicle.domain.entity.VehicleType
+import com.ijs.vehicle.domain.entity.VehicleTypeOption
 import com.indusjs.fleet.domain.repository.costs.CostsRepository
 import com.indusjs.fleet.domain.repository.costs.CostTypesRepository
 import com.indusjs.fleet.domain.repository.states.StatesRepository
@@ -79,6 +81,53 @@ class VehicleDetailViewModel(
 
     init {
         loadStateLabels()
+        loadVehicleTypeConfig()
+    }
+
+    /**
+     * Load the Vehicle Type → Fuel Type config (same asset the Register screen uses) so the edit
+     * form's Fuel dropdown can be filtered by the selected vehicle type. Non-fatal: falls back to
+     * the full fuel list if the asset is missing. If a vehicle is already loaded, re-seed its fuel
+     * options once the config arrives.
+     */
+    private fun loadVehicleTypeConfig() {
+        viewModelScope.launch {
+            val cfg = VehicleTypeConfigProvider.load(dispatcherProvider)
+            updateState {
+                copy(
+                    vehicleTypeOptions = cfg.vehicleTypes,
+                    fuelTypeLabels = cfg.allFuelTypes,
+                    fuelTypeOptions = fuelOptionsFor(vehicleType, fuelType, cfg.vehicleTypes)
+                )
+            }
+        }
+    }
+
+    /**
+     * The config entry for [type] within [options] (defaults to current state's options).
+     * id = the [VehicleType] enum name lowercased (e.g. `truck`).
+     */
+    private fun optionFor(
+        type: VehicleType,
+        options: List<VehicleTypeOption> = currentState.vehicleTypeOptions
+    ): VehicleTypeOption? = options.firstOrNull { it.id == type.name.lowercase() }
+
+    /**
+     * Fuel options to SHOW for [type], guaranteeing [currentFuel] stays visible. Used when loading a
+     * saved vehicle whose fuel might predate the current config (e.g. an old Truck+Petrol record) —
+     * we keep the saved value selectable rather than blanking/snapping it.
+     */
+    private fun fuelOptionsFor(
+        type: VehicleType,
+        currentFuel: String,
+        options: List<VehicleTypeOption> = currentState.vehicleTypeOptions
+    ): List<String> {
+        val configFuels = optionFor(type, options)?.fuelTypes ?: currentState.fuelTypeOptions
+        return if (currentFuel.isNotBlank() && configFuels.none { it.equals(currentFuel, ignoreCase = true) }) {
+            configFuels + currentFuel
+        } else {
+            configFuels
+        }
     }
 
     private fun loadStateLabels() {
@@ -103,10 +152,9 @@ class VehicleDetailViewModel(
             is Intent.UpdateMake -> updateMake(intent.value)
             is Intent.UpdateModel -> updateModel(intent.value)
             is Intent.UpdateYear -> updateYear(intent.value)
-            is Intent.UpdateVehicleType -> updateState { copy(vehicleType = intent.type) }
+            is Intent.UpdateVehicleType -> updateVehicleType(intent.type)
             is Intent.UpdateFuelType -> updateState { copy(fuelType = intent.value) }
             is Intent.UpdateColor -> updateState { copy(color = intent.value) }
-            is Intent.UpdateCapacity -> updateState { copy(capacity = intent.value) }
             is Intent.UpdateMileage -> updateState { copy(mileage = intent.value) }
 
             // Driver assignment
@@ -195,8 +243,13 @@ class VehicleDetailViewModel(
                             year = vehicle.year.toString(),
                             vehicleType = vehicle.type,
                             fuelType = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() },
+                            // Seed the filtered fuel options for the saved type, keeping the saved
+                            // fuel selectable even if it predates the current config.
+                            fuelTypeOptions = fuelOptionsFor(
+                                vehicle.type,
+                                vehicle.fuelType.replaceFirstChar { it.uppercaseChar() }
+                            ),
                             color = vehicle.color.replaceFirstChar { it.uppercaseChar() },
-                            capacity = vehicle.capacity.toString(),
                             mileage = if (vehicle.mileage > 0) vehicle.mileage.toString() else ""
                         )
                     }
@@ -258,6 +311,25 @@ class VehicleDetailViewModel(
         updateState { copy(selectedDriver = driver, showDriverDropdown = false) }
     }
 
+    /**
+     * Select a vehicle type and re-derive the Fuel Type options from the config. This is a
+     * deliberate user change, so if the current fuel isn't valid for the new type we snap to that
+     * type's default (e.g. switching to Truck forces Diesel). Falls back to keeping the current fuel
+     * list when the config has no entry for [type].
+     */
+    private fun updateVehicleType(type: VehicleType) {
+        val option = optionFor(type)
+        updateState {
+            val newFuels = option?.fuelTypes ?: fuelTypeOptions
+            val newFuel = when {
+                option == null -> fuelType
+                newFuels.any { it.equals(fuelType, ignoreCase = true) } -> fuelType
+                else -> option.defaultFuel
+            }
+            copy(vehicleType = type, fuelTypeOptions = newFuels, fuelType = newFuel)
+        }
+    }
+
     private fun exitEditMode() {
         // Reset to original values
         val vehicle = currentState.vehicle
@@ -270,8 +342,11 @@ class VehicleDetailViewModel(
                     year = vehicle.year.toString(),
                     vehicleType = vehicle.type,
                     fuelType = vehicle.fuelType.replaceFirstChar { it.uppercaseChar() },
+                    fuelTypeOptions = fuelOptionsFor(
+                        vehicle.type,
+                        vehicle.fuelType.replaceFirstChar { it.uppercaseChar() }
+                    ),
                     color = vehicle.color.replaceFirstChar { it.uppercaseChar() },
-                    capacity = vehicle.capacity.toString(),
                     mileage = if (vehicle.mileage > 0) vehicle.mileage.toString() else "",
                     // Reset driver selection
                     selectedDriver = null,
@@ -326,7 +401,8 @@ class VehicleDetailViewModel(
                 type = currentState.vehicleType,
                 fuelType = currentState.fuelType.lowercase(),
                 color = currentState.color.lowercase(),
-                capacity = currentState.capacity.toIntOrNull() ?: currentVehicle.capacity,
+                // Capacity is no longer edited in the UI — preserve the existing value.
+                capacity = currentVehicle.capacity,
                 mileage = currentState.mileage.toDoubleOrNull() ?: currentVehicle.mileage,
                 assignedDriverId = currentState.selectedDriver?.id
             )
@@ -343,8 +419,7 @@ class VehicleDetailViewModel(
                             year = result.data.year.toString(),
                             vehicleType = result.data.type,
                             fuelType = result.data.fuelType.replaceFirstChar { it.uppercaseChar() },
-                            color = result.data.color.replaceFirstChar { it.uppercaseChar() },
-                            capacity = result.data.capacity.toString()
+                            color = result.data.color.replaceFirstChar { it.uppercaseChar() }
                         )
                     }
                     sendEffect(Effect.ShowSnackbar(UiText.StringRes(Res.string.success_vehicle_updated)))

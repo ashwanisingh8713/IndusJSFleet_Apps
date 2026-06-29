@@ -13,11 +13,13 @@ import com.indusjs.datetimepicker.FleetDatePicker
 import com.indusjs.datetimepicker.DateTimeUtils
 import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.CaretakerSectionCard
+import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetPasswordField
-import com.indusjs.uicomponents.components.FleetSectionHeader
+import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.theme.FleetBreakpoint
@@ -149,166 +151,181 @@ fun CreateDriverScreen(
                     modifier = formWidthModifier,
                     verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
                 ) {
-                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
 
-                    // Required Fields Section
-                    SectionHeader(
+                    // ===== Basic Information =====
+                    FleetTitledSectionCard(
                         title = stringResource(Res.string.driver_edit_basic_info),
                         subtitle = stringResource(Res.string.driver_create_section_basic_subtitle),
                         iconRes = Res.drawable.ic_profile
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                     ) {
-                        FleetInputField(
-                            value = state.firstName,
-                            onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateFirstName(it)) },
-                            fieldType = FieldType.DEFAULT,
-                            modifier = Modifier.weight(1f),
-                            label = stringResource(Res.string.driver_create_first_name),
-                            placeholder = stringResource(Res.string.driver_create_first_name_placeholder),
-                            isError = state.firstNameError != null,
-                            errorMessage = state.firstNameError?.resolve()
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                            ) {
+                                FleetInputField(
+                                    value = state.firstName,
+                                    onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateFirstName(it)) },
+                                    fieldType = FieldType.DEFAULT,
+                                    modifier = Modifier.weight(1f),
+                                    label = stringResource(Res.string.driver_create_first_name),
+                                    placeholder = stringResource(Res.string.driver_create_first_name_placeholder),
+                                    isError = state.firstNameError != null,
+                                    errorMessage = state.firstNameError?.resolve()
+                                )
 
-                        FleetInputField(
-                            value = state.lastName,
-                            onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLastName(it)) },
-                            fieldType = FieldType.DEFAULT,
-                            modifier = Modifier.weight(1f),
-                            label = stringResource(Res.string.driver_create_last_name),
-                            placeholder = stringResource(Res.string.driver_create_last_name_placeholder),
-                            isError = state.lastNameError != null,
-                            errorMessage = state.lastNameError?.resolve()
-                        )
+                                FleetInputField(
+                                    value = state.lastName,
+                                    onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLastName(it)) },
+                                    fieldType = FieldType.DEFAULT,
+                                    modifier = Modifier.weight(1f),
+                                    label = stringResource(Res.string.driver_create_last_name),
+                                    placeholder = stringResource(Res.string.driver_create_last_name_placeholder),
+                                    isError = state.lastNameError != null,
+                                    errorMessage = state.lastNameError?.resolve()
+                                )
+                            }
+
+                            FleetInputField(
+                                value = state.mobile,
+                                onValueChange = {
+                                    viewModel.sendIntent(
+                                        CreateDriverContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
+                                    )
+                                },
+                                fieldType = FieldType.PHONE,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = stringResource(Res.string.driver_label_mobile_required),
+                                placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
+                                isError = state.mobileError != null,
+                                errorMessage = state.mobileError?.resolve()
+                            )
+
+                            FleetPasswordField(
+                                value = state.password,
+                                onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdatePassword(it)) },
+                                label = stringResource(Res.string.driver_create_password_label),
+                                placeholder = stringResource(Res.string.driver_create_password_placeholder),
+                                isError = state.passwordError != null,
+                                errorMessage = state.passwordError?.resolve(),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            FleetInputField(
+                                value = state.email,
+                                onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateEmail(it)) },
+                                fieldType = FieldType.EMAIL,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = stringResource(Res.string.driver_label_email_required),
+                                placeholder = stringResource(Res.string.driver_placeholder_email_example),
+                                isError = state.emailError != null,
+                                errorMessage = state.emailError?.resolve()
+                            )
+                        }
                     }
 
-                    FleetInputField(
-                        value = state.mobile,
-                        onValueChange = {
-                            viewModel.sendIntent(
-                                CreateDriverContract.Intent.UpdateMobile(filterDigitsOnly(it, 10))
-                            )
-                        },
-                        fieldType = FieldType.PHONE,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = stringResource(Res.string.driver_label_mobile_required),
-                        placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
-                        isError = state.mobileError != null,
-                        errorMessage = state.mobileError?.resolve()
-                    )
-
-                    FleetPasswordField(
-                        value = state.password,
-                        onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdatePassword(it)) },
-                        label = stringResource(Res.string.driver_create_password_label),
-                        placeholder = stringResource(Res.string.driver_create_password_placeholder),
-                        isError = state.passwordError != null,
-                        errorMessage = state.passwordError?.resolve(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    FleetInputField(
-                        value = state.email,
-                        onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateEmail(it)) },
-                        fieldType = FieldType.EMAIL,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = stringResource(Res.string.driver_label_email_required),
-                        placeholder = stringResource(Res.string.driver_placeholder_email_example),
-                        isError = state.emailError != null,
-                        errorMessage = state.emailError?.resolve()
-                    )
-
-                    // License Section
-                    SectionHeader(
+                    // ===== License Details =====
+                    FleetTitledSectionCard(
                         title = stringResource(Res.string.driver_edit_license_details),
                         subtitle = stringResource(Res.string.driver_create_license_section_subtitle),
                         iconRes = Res.drawable.ic_profile
-                    )
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+                            FleetInputField(
+                                value = state.licenseNumber,
+                                onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseNumber(it)) },
+                                fieldType = FieldType.DEFAULT,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = stringResource(Res.string.driver_create_license),
+                                placeholder = stringResource(Res.string.driver_create_license_placeholder),
+                                leadingIcon = { CreateFieldLeadingIcon(Res.drawable.ic_profile) },
+                                isError = state.licenseNumberError != null,
+                                errorMessage = state.licenseNumberError?.resolve()
+                            )
 
-                    FleetInputField(
-                        value = state.licenseNumber,
-                        onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseNumber(it)) },
-                        fieldType = FieldType.DEFAULT,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = stringResource(Res.string.driver_create_license),
-                        placeholder = stringResource(Res.string.driver_create_license_placeholder),
-                        leadingIcon = { CreateFieldLeadingIcon(Res.drawable.ic_profile) },
-                        isError = state.licenseNumberError != null,
-                        errorMessage = state.licenseNumberError?.resolve()
-                    )
+                            LicenseTypeSelector(
+                                selectedType = state.licenseType,
+                                onTypeSelected = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseType(it)) }
+                            )
 
-                    LicenseTypeSelector(
-                        selectedType = state.licenseType,
-                        onTypeSelected = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseType(it)) }
-                    )
+                            FleetDatePicker(
+                                date = state.licenseExpiry,
+                                onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseExpiry(it)) },
+                                label = stringResource(Res.string.driver_label_license_expiry_required),
+                                minDate = DateTimeUtils.getCurrentDate(),  // License expiry must be in future
+                                isError = state.licenseExpiryError != null,
+                                errorMessage = state.licenseExpiryError?.resolve()
+                            )
+                        }
+                    }
 
-                    FleetDatePicker(
-                        date = state.licenseExpiry,
-                        onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateLicenseExpiry(it)) },
-                        label = stringResource(Res.string.driver_label_license_expiry_required),
-                        minDate = DateTimeUtils.getCurrentDate(),  // License expiry must be in future
-                        isError = state.licenseExpiryError != null,
-                        errorMessage = state.licenseExpiryError?.resolve()
-                    )
-
-                    // Personal Details Section
-                    SectionHeader(
-                        title = stringResource(Res.string.driver_edit_personal_details),
-                        subtitle = stringResource(Res.string.driver_create_personal_section_subtitle),
-                        iconRes = Res.drawable.ic_edit
-                    )
-
+                    // ===== Personal Details =====
                     // Calculate max DOB date (18 years ago) for age validation
                     val maxDobDate = remember { DateTimeUtils.getDateFromToday(-18 * 365) }
 
-                    FleetDatePicker(
-                        date = state.dateOfBirth,
-                        onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateDateOfBirth(it)) },
-                        label = stringResource(Res.string.driver_overview_dob),
-                        maxDate = maxDobDate,  // Driver must be at least 18 years old
-                        initialDisplayDate = maxDobDate  // Show 18 years ago when picker opens
-                    )
+                    FleetTitledSectionCard(
+                        title = stringResource(Res.string.driver_edit_personal_details),
+                        subtitle = stringResource(Res.string.driver_create_personal_section_subtitle),
+                        iconRes = Res.drawable.ic_edit
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+                            // Date of Birth + Blood Group, side by side (dual).
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
+                            ) {
+                                FleetDatePicker(
+                                    date = state.dateOfBirth,
+                                    onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateDateOfBirth(it)) },
+                                    label = stringResource(Res.string.driver_overview_dob),
+                                    maxDate = maxDobDate,  // Driver must be at least 18 years old
+                                    initialDisplayDate = maxDobDate,  // Show 18 years ago when picker opens
+                                    modifier = Modifier.weight(1f)
+                                )
 
-                    BloodGroupSelector(
-                        selectedBloodGroup = state.bloodGroup,
-                        bloodGroups = state.bloodGroupOptions,
-                        onBloodGroupSelected = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateBloodGroup(it)) }
-                    )
+                                FleetDropdown(
+                                    label = stringResource(Res.string.driver_edit_blood_group),
+                                    options = state.bloodGroupOptions.map { DropdownOption(id = it, label = it) },
+                                    selectedOptionId = state.bloodGroup.takeIf { it.isNotBlank() },
+                                    onOptionSelected = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateBloodGroup(it)) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
 
-                    FleetInputField(
-                        value = state.address,
-                        onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateAddress(it)) },
-                        fieldType = FieldType.ADDRESS,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = stringResource(Res.string.driver_create_address),
-                        placeholder = stringResource(Res.string.driver_create_address_placeholder),
-                        leadingIcon = { CreateFieldLeadingIcon(Res.drawable.ic_map) }
-                    )
-
-                    FleetInputField(
-                        value = state.emergencyContact,
-                        onValueChange = {
-                            viewModel.sendIntent(
-                                CreateDriverContract.Intent.UpdateEmergencyContact(filterDigitsOnly(it, 10))
+                            FleetInputField(
+                                value = state.address,
+                                onValueChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateAddress(it)) },
+                                fieldType = FieldType.ADDRESS,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = stringResource(Res.string.driver_create_address),
+                                placeholder = stringResource(Res.string.driver_create_address_placeholder),
+                                leadingIcon = { CreateFieldLeadingIcon(Res.drawable.ic_map) }
                             )
-                        },
-                        fieldType = FieldType.PHONE,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = stringResource(Res.string.driver_overview_emergency_contact),
-                        placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
-                        leadingIcon = { CreateFieldLeadingIcon(Res.drawable.ic_phone) }
-                    )
 
-                    FleetDatePicker(
-                        date = state.joiningDate,
-                        onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateJoiningDate(it)) },
-                        label = stringResource(Res.string.driver_overview_joining_date)
-                    )
+                            FleetInputField(
+                                value = state.emergencyContact,
+                                onValueChange = {
+                                    viewModel.sendIntent(
+                                        CreateDriverContract.Intent.UpdateEmergencyContact(filterDigitsOnly(it, 10))
+                                    )
+                                },
+                                fieldType = FieldType.PHONE,
+                                modifier = Modifier.fillMaxWidth(),
+                                label = stringResource(Res.string.driver_overview_emergency_contact),
+                                placeholder = stringResource(Res.string.driver_placeholder_mobile_10),
+                                leadingIcon = { CreateFieldLeadingIcon(Res.drawable.ic_phone) }
+                            )
 
-                    // Caretaker Assignment Section
+                            FleetDatePicker(
+                                date = state.joiningDate,
+                                onDateChange = { viewModel.sendIntent(CreateDriverContract.Intent.UpdateJoiningDate(it)) },
+                                label = stringResource(Res.string.driver_overview_joining_date)
+                            )
+                        }
+                    }
+
+                    // ===== Caretaker Assignment (already a card) =====
                     CaretakerSectionCard(
                         selectedCaretaker = state.selectedCaretaker?.toCaretakerInfo(),
                         caretakers = state.caretakers.toCaretakerInfoList(),
@@ -320,7 +337,7 @@ fun CreateDriverScreen(
                         isLoading = state.isLoadingCaretakers
                     )
 
-                    // Bottom spacing so the last field clears the bottom action bar.
+                    // Bottom spacing so the last card clears the bottom action bar.
                     Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXXL))
                 }
             }
@@ -361,24 +378,6 @@ private fun CreateFieldLeadingIcon(iconRes: DrawableResource) {
     )
 }
 
-@Composable
-private fun SectionHeader(
-    title: String,
-    subtitle: String? = null,
-    iconRes: DrawableResource? = null
-) {
-    FleetSectionHeader(title = title, iconRes = iconRes)
-    subtitle?.let {
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
-        Text(
-            text = it,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-    Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LicenseTypeSelector(
@@ -417,34 +416,3 @@ private fun LicenseTypeSelector(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun BloodGroupSelector(
-    selectedBloodGroup: String,
-    bloodGroups: List<String>,
-    onBloodGroupSelected: (String) -> Unit
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(Res.string.driver_edit_blood_group),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
-            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
-        ) {
-            bloodGroups.forEach { group ->
-                FilterChip(
-                    selected = selectedBloodGroup == group,
-                    onClick = {
-                        onBloodGroupSelected(if (selectedBloodGroup == group) "" else group)
-                    },
-                    label = { Text(group) }
-                )
-            }
-        }
-    }
-}
