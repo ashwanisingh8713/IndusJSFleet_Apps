@@ -89,26 +89,15 @@ fun VehicleFinanceScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                // No back arrow: top-level destination reached via the bottom bar / More sheet (Material:
+                // top-level bottom-nav destinations show no up-button — the bar + system back handle it).
                 title = { Text(stringResource(Res.string.finance_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = stringResource(Res.string.back)
-                        )
-                    }
-                },
                 actions = {
+                    // Add moved to a FAB (consistent with Drivers/Vehicles/etc.); keep only Refresh here.
                     IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_refresh),
                             contentDescription = stringResource(Res.string.refresh)
-                        )
-                    }
-                    IconButton(onClick = { viewModel.sendIntent(Intent.NavigateToAddPurchase) }) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_add),
-                            contentDescription = stringResource(Res.string.add)
                         )
                     }
                 }
@@ -116,17 +105,17 @@ fun VehicleFinanceScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            if (state.vehiclesWithoutPurchase.isNotEmpty()) {
-                ExtendedFloatingActionButton(
-                    onClick = { viewModel.sendIntent(Intent.NavigateToAddPurchase) },
-                    containerColor = MaterialTheme.colorScheme.primary
+            // Show whenever there are vehicles (the add-purchase flow is always available) — matches the
+            // plain "+" FAB pattern used by Drivers/Vehicles/etc.
+            if (state.vehicles.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = { viewModel.sendIntent(Intent.NavigateToAddPurchase) }
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_add),
-                        contentDescription = null
+                        contentDescription = stringResource(Res.string.finance_add_purchase),
+                        modifier = Modifier.size(FleetTokens.IconSize.Default)
                     )
-                    Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
-                    Text(stringResource(Res.string.finance_add_purchase))
                 }
             }
         }
@@ -302,28 +291,29 @@ private fun FinanceSummaryCard(
         subtitle = stringResource(Res.string.finance_vehicles_in_fleet, totalVehicles)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
-            // Monthly EMI Badge
+            // Monthly EMI Badge — inline pill (single line) so it doesn't waste a whole row.
             if (monthlyEmiTotal > 0) {
                 Surface(
-                    shape = RoundedCornerShape(FleetTokens.Radius.M),
+                    shape = RoundedCornerShape(FleetTokens.Radius.Pill),
                     color = WarningOrange.copy(alpha = 0.12f)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.S),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Row(
+                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                     ) {
                         Text(
-                            text = formatCurrency(monthlyEmiTotal),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = WarningOrange
+                            text = stringResource(Res.string.finance_monthly_emi_badge),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = WarningOrange.copy(alpha = 0.85f)
                         )
                         Text(
-                            text = stringResource(Res.string.finance_monthly_emi_badge),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = WarningOrange.copy(alpha = 0.8f)
+                            text = formatCurrency(monthlyEmiTotal),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = WarningOrange
                         )
                     }
                 }
@@ -726,10 +716,13 @@ private fun LoanCardContent(
                 .clip(RoundedCornerShape(FleetTokens.Radius.L))
                 .background(WarningOrange.copy(alpha = 0.08f))
                 .padding(FleetTokens.Spacing.M),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)
+            ) {
                 Text(
                     text = stringResource(
                         Res.string.finance_next_emi_line,
@@ -748,13 +741,10 @@ private fun LoanCardContent(
                 )
             }
 
-            Box {
-                FleetButton(
-                    text = stringResource(Res.string.finance_record_emi),
-                    onClick = onRecordEmiClick,
-                    variant = ButtonVariant.PRIMARY,
-                    size = ButtonSize.SMALL
-                )
+            // Plain Material Button (wraps content) — FleetButton auto-fills width on Compact and would
+            // squeeze/truncate the EMI text beside it.
+            Button(onClick = onRecordEmiClick) {
+                Text(text = stringResource(Res.string.finance_record_emi), maxLines = 1)
             }
         }
     }
@@ -826,10 +816,13 @@ private fun NoInfoCardContent(onAddClick: () -> Unit) {
                 .clip(RoundedCornerShape(FleetTokens.Radius.L))
                 .background(NoInfoGray.copy(alpha = 0.08f))
                 .padding(FleetTokens.Spacing.M),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)
+            ) {
                 Text(
                     text = stringResource(Res.string.finance_no_purchase_card),
                     style = MaterialTheme.typography.bodyMedium,
@@ -842,12 +835,13 @@ private fun NoInfoCardContent(onAddClick: () -> Unit) {
                 )
             }
 
-            Box {
-                FleetButton(
+            // Plain OutlinedButton (wraps content) — FleetButton auto-fills width on Compact and would
+            // squeeze the weighted text column to one char per line next to it.
+            OutlinedButton(onClick = onAddClick) {
+                Text(
                     text = stringResource(Res.string.finance_add_info_short),
-                    onClick = onAddClick,
-                    variant = ButtonVariant.SECONDARY,
-                    size = ButtonSize.SMALL
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1
                 )
             }
         }

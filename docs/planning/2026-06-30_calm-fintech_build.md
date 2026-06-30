@@ -55,6 +55,18 @@
      `customers:view`/`payments:view` = admin/owner; Home = `dashboard:supervisor_view`. Keep interim
      heuristic until PO sends slug-migration go + A confirms server-side enforcement live. ACK in iam.inbox.
 6. Status-colour refactor — FleetStatusColors → themed semantic chips; grep audit for stray raw swatches.
+   - **✅ COLOUR RETUNE DONE + device-verified.** `FleetStatusColors` retuned to the Calm Fintech / C1 semantic
+     palette (off-palette Material sky-blue/violet → indigo/teal; financial trio deepened for light contrast;
+     container `*Bg` → C1 hexes). All names preserved → ZERO call-site churn. Chosen as balanced mid-tones that
+     clear the §4 LARGE-UI/chip ≥3:1 floor in both modes (these colour large KPI numerals + chips/dots, not body
+     text; financial labels stay neutral). Verified on Payments (green Received / amber Pending / chips on-palette).
+   - **✅ AUDIT clean** — only stray hex app-wide is `ReportsColors` Cyan/Teal/Pink, an intentional centralized
+     categorical chart palette (donut slices); the rest delegate to FleetStatusColors. Left as-is (legit).
+   - **Tracked follow-ups:** (a) full per-mode theme-awareness (LocalFleetStatus migration, ~31 sites) — deferred
+     (mid-tones meet the 3:1 floor). (b) **§H card-tint rainbow** — financial tiles (Dashboard Financial Overview,
+     Payments summary, Reports/Vehicle P&L hero) still use full-card status TINTS; §1 says status colour = chips/
+     dots/accent, never card tint. DDD call on exact treatment (neutralize tints only vs tints + numerals) →
+     flagged to design.inbox. (c) leftover EMOJI in the payment-status chip ("Partial 💵") — emoji-sweep gap.
 7. Acceptance pass — §9 across light/dark · EN/HI · Compact/Medium/Expanded · sunlight/crushed-black.
 
 ## Net deltas applied (DDD §F)

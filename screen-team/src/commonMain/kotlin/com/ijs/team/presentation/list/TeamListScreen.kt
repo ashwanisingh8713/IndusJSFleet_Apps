@@ -104,16 +104,6 @@ fun TeamListScreen(
                         }
                     }
                 },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = stringResource(Res.string.back),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(FleetTokens.IconSize.Default)
-                        )
-                    }
-                },
                 actions = {
                     if (state.canCreateTeamMember) {
                         IconButton(

@@ -1,6 +1,7 @@
 package com.ijs.reports.presentation
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.uicomponents.components.FleetDateRangePickerDialog
@@ -130,53 +134,48 @@ fun ReportsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(stringResource(Res.string.reports_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        state.summary?.let {
-                            Text(text = formatPeriodLabel(state.startDate, state.endDate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(painter = painterResource(Res.drawable.ic_arrow_back), contentDescription = stringResource(Res.string.back))
-                    }
+                    Text(
+                        stringResource(Res.string.reports_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 },
                 actions = {
+                    // Period filter sits in the action row (left of the icons), never under the title.
+                    PeriodSelector(
+                        selectedPeriod = state.selectedPeriod,
+                        startDate = state.startDate,
+                        endDate = state.endDate,
+                        onPeriodSelect = { viewModel.sendIntent(Intent.SelectPeriod(it)) }
+                    )
+                    Spacer(Modifier.width(FleetTokens.Spacing.XS))
+                    // Export = a clean icon-only download action (matches Refresh), not a heavy grey tonal pill.
                     if (state.hasSummary) {
-                        FilledTonalButton(
+                        IconButton(
                             onClick = { viewModel.sendIntent(Intent.ExportToPdf) },
-                            enabled = !state.isExporting,
-                            modifier = Modifier.height(FleetTokens.Height.ButtonSmall),
-                            contentPadding = PaddingValues(
-                                horizontal = FleetTokens.Spacing.M,
-                                vertical = FleetTokens.Spacing.None
-                            ),
-                            shape = RoundedCornerShape(FleetTokens.Radius.M)
+                            enabled = !state.isExporting
                         ) {
                             if (state.isExporting) {
                                 CircularProgressIndicator(
                                     Modifier.size(FleetTokens.IconSize.S),
-                                    strokeWidth = FleetTokens.Height.ProgressStroke
+                                    strokeWidth = FleetTokens.Height.ProgressStroke,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             } else {
                                 Icon(
                                     painter = painterResource(Res.drawable.ic_download),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(FleetTokens.IconSize.S)
-                                )
-                                Spacer(Modifier.width(FleetTokens.Spacing.XS))
-                                Text(
-                                    stringResource(Res.string.export_format_pdf),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold
+                                    contentDescription = stringResource(Res.string.export_format_pdf),
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
-                        Spacer(Modifier.width(FleetTokens.Spacing.XS))
                     }
                     IconButton(onClick = { viewModel.sendIntent(Intent.Refresh) }) {
-                        Icon(painter = painterResource(Res.drawable.ic_refresh), contentDescription = stringResource(Res.string.refresh))
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_refresh),
+                            contentDescription = stringResource(Res.string.refresh),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             )
@@ -189,7 +188,6 @@ fun ReportsScreen(
             )
             else -> ReportsDashboardContent(
                 state = state,
-                onPeriodSelect = { viewModel.sendIntent(Intent.SelectPeriod(it)) },
                 onVehiclePLClick = { viewModel.sendIntent(Intent.NavigateToVehiclePL) },
                 onTripPLClick = { viewModel.sendIntent(Intent.NavigateToTripPL) },
                 onConsolidatedClick = { viewModel.sendIntent(Intent.NavigateToConsolidatedPL) },
@@ -208,7 +206,7 @@ fun ReportsScreen(
 
 @Composable
 private fun ReportsDashboardContent(
-    state: State, onPeriodSelect: (ReportPeriod) -> Unit, onVehiclePLClick: () -> Unit, onTripPLClick: () -> Unit,
+    state: State, onVehiclePLClick: () -> Unit, onTripPLClick: () -> Unit,
     onConsolidatedClick: () -> Unit, onCustomerPLClick: () -> Unit, onCombinedReportClick: () -> Unit, onMaintenanceCostClick: () -> Unit,
     onTripCostClick: () -> Unit, onDriverCostClick: () -> Unit, onCostAnalysisClick: () -> Unit,
     onRetry: () -> Unit, modifier: Modifier = Modifier
@@ -227,7 +225,6 @@ private fun ReportsDashboardContent(
             contentPadding = PaddingValues(FleetTokens.Spacing.L),
             verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
         ) {
-            item { PeriodFilterGrid(state.selectedPeriod, onPeriodSelect) }
             if (state.isLoading && state.hasSummary) item {
                 LinearProgressIndicator(Modifier.fillMaxWidth().clip(RoundedCornerShape(FleetTokens.Radius.M)))
             }
@@ -252,54 +249,108 @@ private fun ReportsDashboardContent(
     }
 }
 
+// Period selector — a compact tappable pill in the top-bar action row (left of the icons, never
+// under the title). Opens a menu listing all 8 periods. Every period shows its name + the resolved
+// date window in one consistent layout, so the chip looks the same regardless of which is active.
 @Composable
-private fun PeriodFilterGrid(selectedPeriod: ReportPeriod, onPeriodSelect: (ReportPeriod) -> Unit) {
-    val periods = ReportPeriod.entries
-    val firstRow = periods.take(4)
-    val secondRow = periods.drop(4)
-    Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
-            firstRow.forEach { period ->
-                PeriodChip(Modifier.weight(1f), period.localizedLabel(), selectedPeriod == period) { onPeriodSelect(period) }
-            }
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
-            secondRow.forEach { period ->
-                PeriodChip(Modifier.weight(1f), period.localizedLabel(), selectedPeriod == period) { onPeriodSelect(period) }
-            }
-            repeat(4 - secondRow.size) { Spacer(Modifier.weight(1f)) }
-        }
-    }
-}
-
-@Composable
-private fun PeriodChip(modifier: Modifier, label: String, selected: Boolean, onClick: () -> Unit) {
-    val bgColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-    val textColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-    Surface(
-        modifier = modifier.clip(RoundedCornerShape(FleetTokens.Radius.L)).clickable(onClick = onClick),
-        shape = RoundedCornerShape(FleetTokens.Radius.L),
-        color = bgColor,
-        shadowElevation = if (selected) FleetTokens.Elevation.Dropdown else FleetTokens.Elevation.None,
-        border = BorderStroke(
-            width = FleetTokens.Height.Divider,
-            color = borderColor
-        )
-    ) {
-        Box(
-            Modifier
-                .defaultMinSize(minHeight = FleetTokens.Height.MinTouchTarget)
-                .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.M),
-            contentAlignment = Alignment.Center
+private fun PeriodSelector(
+    selectedPeriod: ReportPeriod,
+    startDate: String,
+    endDate: String,
+    onPeriodSelect: (ReportPeriod) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val chevronRotation by animateFloatAsState(if (expanded) 180f else 0f, label = "periodChevron")
+    // Whole Row is the click target: carry the a11y label here (chevron stays decorative).
+    val selectPeriodLabel = stringResource(Res.string.reports_select_period)
+    // Total uniformity: every period shows its name + the resolved window (a single date when
+    // start == end), all using one consistent name+range layout. Name-only is the pre-load fallback.
+    val showRange = startDate.isNotBlank() && endDate.isNotBlank()
+    Box {
+        Row(
+            modifier = Modifier
+                .heightIn(min = FleetTokens.Height.MinTouchTarget)
+                .clip(RoundedCornerShape(FleetTokens.Radius.Pill))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                .clickable(onClickLabel = selectPeriodLabel, role = Role.Button) { expanded = true }
+                .padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-                color = textColor,
-                maxLines = 1
+            Icon(
+                painter = painterResource(Res.drawable.ic_calendar),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(FleetTokens.IconSize.S)
             )
+            if (showRange) {
+                // Name on top, resolved window beneath — identical layout for fiscal spans and custom.
+                Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XXS)) {
+                    Text(
+                        text = selectedPeriod.localizedLabel(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = formatPeriodLabel(startDate, endDate),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            } else {
+                Text(
+                    text = selectedPeriod.localizedLabel(),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Icon(
+                painter = painterResource(Res.drawable.ic_chevron_down),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(FleetTokens.IconSize.S).rotate(chevronRotation)
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.heightIn(max = FleetTokens.Width.DropdownMaxHeight)
+        ) {
+            ReportPeriod.entries.forEach { period ->
+                val isSelected = period == selectedPeriod
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = period.localizedLabel(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onPeriodSelect(period)
+                    },
+                    trailingIcon = if (isSelected) {
+                        {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_check),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                        }
+                    } else null
+                )
+            }
         }
     }
 }

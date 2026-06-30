@@ -820,6 +820,7 @@
     <string name="report_period_half_year">Half Year</string>
     <string name="report_period_this_year">This Year</string>
     <string name="report_period_custom">Custom</string>
+    <string name="reports_select_period">Select period</string>
     <string name="profit_status_highly_profitable">Highly Profitable</string>
     <string name="profit_status_profitable">Profitable</string>
     <string name="profit_status_break_even">Break-even</string>
@@ -1187,6 +1188,8 @@
     <string name="nav_vehicles">Vehicles</string>
     <string name="nav_drivers">Drivers</string>
     <string name="nav_trips">Trips</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_more">More</string>
     <string name="nav_customers">Customers</string>
     <string name="nav_payments">Payments</string>
     <string name="nav_live_map">Live Map</string>

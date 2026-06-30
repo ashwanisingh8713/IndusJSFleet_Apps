@@ -156,14 +156,6 @@ fun PaymentsScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.payments_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = stringResource(Res.string.back)
-                        )
-                    }
-                },
                 actions = {
                     // View toggle button - switch between grouped and flat view
                     IconButton(onClick = { isGroupedView = !isGroupedView }) {

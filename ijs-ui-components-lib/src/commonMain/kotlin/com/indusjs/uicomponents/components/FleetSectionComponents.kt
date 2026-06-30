@@ -60,19 +60,22 @@ fun FleetSectionCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val shape = RoundedCornerShape(FleetTokens.Radius.XL)
-    // Calm Fintech depth: light = soft shadow + hairline; dark = 1px top-highlight (shadows vanish on near-black).
+    // Calm Fintech depth: a plain surface card gets a soft shadow (light) / 1px top-highlight (dark).
+    // A TINTED highlight/alert card (containerColor != surface) is a FLAT tonal fill — no shadow, border,
+    // or highlight — so the tint alone groups it and it doesn't read as a heavy framed box.
     val isDark = isAppInDarkTheme()
+    val isTinted = containerColor != MaterialTheme.colorScheme.surface
     val base = modifier
         .fillMaxWidth()
         .clip(shape)
-        .fleetElevatedSurface(shape)
+        .then(if (isTinted) Modifier else Modifier.fleetElevatedSurface(shape))
         .let { if (onClick != null) it.clickable(onClick = onClick) else it }
     Surface(
         modifier = base,
         shape = shape,
         color = containerColor,
-        shadowElevation = if (isDark) FleetTokens.Elevation.None else elevation,
-        border = if (isDark) null else border
+        shadowElevation = if (isTinted || isDark) FleetTokens.Elevation.None else elevation,
+        border = if (isTinted || isDark) null else border
     ) {
         Column(modifier = Modifier.padding(contentPadding), content = content)
     }

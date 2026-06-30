@@ -15,6 +15,7 @@ import com.indusjs.fleet.di.DefaultViewModelProvider
 import com.indusjs.fleet.di.ProvideViewModels
 import com.indusjs.fleet.di.SubscriptionGateResult
 import com.ijs.vehicle.domain.entity.DocumentType
+import com.indusjs.fleet.navigation.FleetNavScaffold
 import com.indusjs.fleet.navigation.FleetRoute
 import com.indusjs.fleet.navigation.LocalRazorpayLauncher
 import com.indusjs.fleet.navigation.fleetEntryProvider
@@ -188,24 +189,25 @@ fun App(
                 CircularProgressIndicator()
             }
         } else {
-            Scaffold(
-                snackbarHost = { SnackbarHost(snackbarHostState) }
-            ) { paddingValues ->
-                Box(modifier = Modifier.padding(paddingValues)) {
-                    ProvideViewModels(viewModelProvider) {
-                        CompositionLocalProvider(LocalRazorpayLauncher provides razorpayLauncher) {
-                            NavDisplay(
+            ProvideViewModels(viewModelProvider) {
+                CompositionLocalProvider(LocalRazorpayLauncher provides razorpayLauncher) {
+                    // Calm Fintech step 5: persistent bottom bar / rail + More sheet (gated), replacing
+                    // the old dashboard hamburger drawer. Hosts the snackbar + nav chrome.
+                    FleetNavScaffold(
+                        backStack = backStack,
+                        snackbarHostState = snackbarHostState
+                    ) {
+                        NavDisplay(
+                            backStack = backStack,
+                            entryProvider = fleetEntryProvider(
                                 backStack = backStack,
-                                entryProvider = fleetEntryProvider(
-                                    backStack = backStack,
-                                    onPickFile = onPickFile,
-                                    onOpenDocument = onOpenDocument,
-                                    onDownloadDocument = onDownloadDocument,
-                                    onSaveDocument = onSaveDocument
-                                ),
-                                onBack = { backStack.removeLastOrNull() }
-                            )
-                        }
+                                onPickFile = onPickFile,
+                                onOpenDocument = onOpenDocument,
+                                onDownloadDocument = onDownloadDocument,
+                                onSaveDocument = onSaveDocument
+                            ),
+                            onBack = { backStack.removeLastOrNull() }
+                        )
                     }
                 }
             }

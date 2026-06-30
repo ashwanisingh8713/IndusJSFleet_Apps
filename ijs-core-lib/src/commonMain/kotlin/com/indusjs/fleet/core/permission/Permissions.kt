@@ -58,6 +58,14 @@ object Permissions {
     const val DASHBOARD_MANAGER_VIEW = "dashboard:manager_view"
     const val DASHBOARD_SUPERVISOR_VIEW = "dashboard:supervisor_view"
 
+    // ── List / view access (nav-destination gating; backend grants these per role) ────
+    const val TRIPS_VIEW = "trips:view"
+    const val VEHICLES_VIEW = "vehicles:view"
+    const val DRIVERS_VIEW = "drivers:view"
+    const val LIVE_MAP_VIEW = "live-map:view"   // NOTE: hyphen (matches IAM catalog), not underscore
+    const val CUSTOMERS_VIEW = "customers:view"
+    const val PAYMENTS_VIEW = "payments:view"
+
     // ── Roles & effective permission sets ─────────────────────────────────────
 
     /** Backend Tier-1 role name that maps to full [OWNER] access. */
@@ -88,7 +96,9 @@ object Permissions {
         DOCUMENTS_UPDATE, DOCUMENTS_DELETE,
         USERS_READ, USERS_CREATE, USERS_INVITE, USERS_UPDATE, USERS_DELETE,
         USERS_TOGGLE_ACTIVE, USERS_CHANGE_ROLE, USERS_RESET_PASSWORD,
-        DASHBOARD_OWNER_VIEW
+        DASHBOARD_OWNER_VIEW,
+        // view/list access — so a freshly-onboarded owner sees every nav destination
+        TRIPS_VIEW, VEHICLES_VIEW, DRIVERS_VIEW, LIVE_MAP_VIEW, CUSTOMERS_VIEW, PAYMENTS_VIEW
     )
 
     /**

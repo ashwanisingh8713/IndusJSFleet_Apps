@@ -145,40 +145,19 @@ fun DashboardScreen(
         }
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(modifier = Modifier.width(280.dp)) {
-                NavigationDrawerContent(
-                    userName = state.userName.ifEmpty { stringResource(Res.string.dashboard_default_user) },
-                    userRole = state.userRole,
-                    hasFinancialAccess = state.hasFinancialAccess,
-                    onNavigateToVehicles = { scope.launch { drawerState.close() }; onNavigateToVehicles() },
-                    onNavigateToDrivers = { scope.launch { drawerState.close() }; onNavigateToDrivers() },
-                    onNavigateToTrips = { scope.launch { drawerState.close() }; onNavigateToTrips() },
-                    onNavigateToMaps = { scope.launch { drawerState.close() }; onNavigateToMaps() },
-                    onNavigateToTeam = { scope.launch { drawerState.close() }; onNavigateToTeam() },
-                    onNavigateToReports = { scope.launch { drawerState.close() }; onNavigateToReports() },
-                    onNavigateToProfile = { scope.launch { drawerState.close() }; onNavigateToProfile() },
-                    onNavigateToCustomers = { scope.launch { drawerState.close() }; onNavigateToCustomers() },
-                    onNavigateToPayments = { scope.launch { drawerState.close() }; onNavigateToPayments() },
-                    onNavigateToVehicleFinance = { scope.launch { drawerState.close() }; onNavigateToVehicleFinance() }
-                )
-            }
+    // Nav drawer removed in step 5 — the app-root FleetNavScaffold (bottom bar / rail + More sheet) owns
+    // navigation now. The dashboard keeps only its own top bar (notifications + refresh).
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            DashboardTopBar(
+                userName = state.userName, lastUpdated = state.lastUpdated,
+                notificationCount = state.notificationCount, isRefreshing = state.isRefreshing,
+                onNotificationsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToNotifications) },
+                onRefreshClick = { viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard) }
+            )
         }
-    ) {
-        Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            topBar = {
-                DashboardTopBar(
-                    userName = state.userName, lastUpdated = state.lastUpdated,
-                    notificationCount = state.notificationCount, isRefreshing = state.isRefreshing,
-                    onMenuClick = { scope.launch { drawerState.open() } },
-                    onNotificationsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToNotifications) },
-                    onRefreshClick = { viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard) }
-                )
-            }
-        ) { paddingValues ->
+    ) { paddingValues ->
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 when {
                     state.isLoading && !state.hasCachedData -> LoadingContent(message = stringResource(Res.string.loading))
@@ -217,14 +196,13 @@ fun DashboardScreen(
                 }
             }
         }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DashboardTopBar(
     userName: String, lastUpdated: String?, notificationCount: Int, isRefreshing: Boolean,
-    onMenuClick: () -> Unit, onNotificationsClick: () -> Unit, onRefreshClick: () -> Unit
+    onNotificationsClick: () -> Unit, onRefreshClick: () -> Unit
 ) {
     val greetingIndex = remember { getTimeBasedGreetingIndex() }
     val greeting = when (greetingIndex) {
@@ -243,12 +221,6 @@ private fun DashboardTopBar(
                 if (lastUpdated != null) {
                     Text(text = stringResource(Res.string.dashboard_updated, formatLastUpdated(lastUpdated)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                 }
-            }
-        },
-        navigationIcon = {
-            val menuDesc = stringResource(Res.string.cd_open_navigation_menu)
-            IconButton(onClick = onMenuClick, modifier = Modifier.semantics { contentDescription = menuDesc }) {
-                Icon(painter = painterResource(Res.drawable.ic_menu), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(FleetTokens.IconSize.Default))
             }
         },
         actions = {

@@ -3,120 +3,121 @@ package com.indusjs.uicomponents.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * Centralized semantic status colors for the Fleet Management app.
+ * Centralized semantic status colors for the Fleet Management app (Calm Fintech, step-6 retune).
  *
- * Use these constants instead of hardcoding `Color(0xFF...)` values
- * throughout screens. This ensures visual consistency and makes
- * future theme changes a single-file edit.
+ * These map status meaning to the Calm Fintech semantic palette (DDD C1) — replacing the old off-palette
+ * Tailwind/Material swatches that clashed with the indigo refresh. Values are balanced mid-tones chosen to
+ * clear the §4 LARGE-UI / chip contrast floor (≥3:1) in BOTH light and dark, since these colours appear on
+ * large KPI numerals, status chips and dots — never on body text (financial *labels* stay neutral
+ * `onSurfaceVariant`; see the financial-terminology rule). The `*Dark` / container (`*Bg`) variants use the
+ * C1 emphasis / container hexes for light-mode fills.
  *
- * Categories:
- * - **Financial** — profit/loss/expense indicators
- * - **Payment Status** — received/pending/cancelled
- * - **Entity Status** — completed/on-route/planned/failed trip colors
- * - **Semantic** — general success/warning/error/info/neutral
+ * Use these instead of hardcoding `Color(0xFF...)`. Full per-mode (light/dark) theme-awareness — resolving
+ * each role from the colorScheme via a CompositionLocal — is a tracked follow-up; the current values are a
+ * single mid-tone per role.
  */
 object FleetStatusColors {
 
     // ==================== Financial KPI Colors ====================
 
-    /** Profit / Revenue green (Tailwind Emerald-500) */
-    val ProfitGreen = Color(0xFF10B981)
+    /** Profit / positive — balanced emerald (success), legible on light + dark large text. */
+    val ProfitGreen = Color(0xFF1E9E57)
 
-    /** Darker profit green for gradients (Tailwind Emerald-600) */
-    val ProfitGreenDark = Color(0xFF059669)
+    /** Deep success green (C1) — light-mode emphasis / fills. */
+    val ProfitGreenDark = Color(0xFF15683A)
 
-    /** Loss / Deficit red (Tailwind Red-500) */
-    val LossRed = Color(0xFFEF4444)
+    /** Loss / negative — balanced red (error). */
+    val LossRed = Color(0xFFD64541)
 
-    /** Darker loss red for emphasis (Tailwind Red-600) */
-    val LossRedDark = Color(0xFFDC2626)
+    /** Deep error red (C1). */
+    val LossRedDark = Color(0xFFB0302A)
 
-    /** Expense / Warning amber (Tailwind Amber-500) */
-    val ExpenseAmber = Color(0xFFF59E0B)
+    /** Expense / warning — deep amber (light-readable, unlike the old bright amber). */
+    val ExpenseAmber = Color(0xFFC77A00)
 
-    /** Darker expense amber for gradients (Tailwind Amber-600) */
-    val ExpenseAmberDark = Color(0xFFD97706)
+    /** Deep warning amber (C1). */
+    val ExpenseAmberDark = Color(0xFF855900)
 
-    /** Info / Neutral blue (Tailwind Blue-500) */
-    val InfoBlue = Color(0xFF3B82F6)
+    /** Info — teal (C1), on-palette (replaces the old Material sky-blue). */
+    val InfoBlue = Color(0xFF1C8A93)
 
-    /** Darker info blue (Tailwind Blue-700) */
-    val InfoBlueDark = Color(0xFF1D4ED8)
+    /** Deep info teal (C1). */
+    val InfoBlueDark = Color(0xFF0B6A73)
 
-    /** Accent purple (Tailwind Violet-500) */
-    val AccentPurple = Color(0xFF8B5CF6)
+    /** Accent — indigo family (replaces the old violet). */
+    val AccentPurple = Color(0xFF6E72E8)
 
-    /** Success green variant (Tailwind Green-500) */
-    val SuccessGreen = Color(0xFF22C55E)
+    /** Success green (alias of profit emerald). */
+    val SuccessGreen = Color(0xFF1E9E57)
 
-    /** Neutral gray (Tailwind Gray-400) */
-    val NeutralGray = Color(0xFF9CA3AF)
+    /** Neutral slate (better contrast than the old gray-400). */
+    val NeutralGray = Color(0xFF6B7280)
 
     // ==================== Payment Status Colors ====================
 
-    /** Payment received / completed (Material Green-800) */
-    val PaymentReceived = Color(0xFF2E7D32)
+    /** Payment received / completed — success. */
+    val PaymentReceived = Color(0xFF15683A)
 
-    /** Payment received background */
-    val PaymentReceivedBg = Color(0xFFE8F5E9)
+    /** Payment received background (C1 success container). */
+    val PaymentReceivedBg = Color(0xFFDCEDE3)
 
-    /** Payment pending / partial (Material Orange-900) */
-    val PaymentPending = Color(0xFFE65100)
+    /** Payment pending — warning. */
+    val PaymentPending = Color(0xFF855900)
 
-    /** Payment pending background */
-    val PaymentPendingBg = Color(0xFFFFF3E0)
+    /** Payment pending background (C1 warning container). */
+    val PaymentPendingBg = Color(0xFFF5E7CB)
 
-    /** Partial payment amber (Material Amber-700) */
-    val PaymentPartial = Color(0xFFFFA000)
+    /** Partial payment — amber. */
+    val PaymentPartial = Color(0xFFC77A00)
 
-    /** Payment cancelled (Material Red-800) */
-    val PaymentCancelled = Color(0xFFC62828)
+    /** Payment cancelled — error. */
+    val PaymentCancelled = Color(0xFFB0302A)
 
-    /** Payment cancelled background */
-    val PaymentCancelledBg = Color(0xFFFFEBEE)
+    /** Payment cancelled background (C1 error container). */
+    val PaymentCancelledBg = Color(0xFFF7DEDC)
 
     // ==================== Trip Status Colors ====================
 
-    /** On-route blue (Material Blue-700) */
-    val TripOnRoute = Color(0xFF1976D2)
+    /** On-route — info teal (was Material sky-blue). */
+    val TripOnRoute = Color(0xFF1C8A93)
 
-    /** Planned purple (Material Purple-700) */
-    val TripPlanned = Color(0xFF7B1FA2)
+    /** Planned — indigo accent (was Material purple). */
+    val TripPlanned = Color(0xFF6E72E8)
 
-    /** Trip failed / cancelled red (Material Red-700) */
-    val TripFailed = Color(0xFFD32F2F)
+    /** Trip failed / cancelled — error. */
+    val TripFailed = Color(0xFFB0302A)
 
     // ==================== Vehicle Fleet Status Colors ====================
 
-    /** On-route green for fleet bar chart (Material Green-500) */
-    val FleetOnRoute = Color(0xFF4CAF50)
+    /** On-route — success green. */
+    val FleetOnRoute = Color(0xFF1E9E57)
 
-    /** Planned blue (Material Blue-500) */
-    val FleetPlanned = Color(0xFF2196F3)
+    /** Planned — indigo (distinct chart hue; was Material sky-blue). */
+    val FleetPlanned = Color(0xFF4F57D4)
 
-    /** Available teal (Material Teal-500) */
-    val FleetAvailable = Color(0xFF009688)
+    /** Available — positive green (healthy state). */
+    val FleetAvailable = Color(0xFF1E9E57)
 
-    /** Maintenance orange (Material Orange-500) */
-    val FleetMaintenance = Color(0xFFFF9800)
+    /** Maintenance — warning amber. */
+    val FleetMaintenance = Color(0xFFC77A00)
 
-    /** Inactive gray (Material Gray-500) */
-    val FleetInactive = Color(0xFF9E9E9E)
+    /** Inactive — neutral slate. */
+    val FleetInactive = Color(0xFF6B7280)
 
-    /** Health excellent green — same as FleetOnRoute */
+    /** Health excellent — same as [FleetOnRoute]. */
     val HealthGood = FleetOnRoute
 
-    /** Health warning orange — same as FleetMaintenance */
+    /** Health warning — same as [FleetMaintenance]. */
     val HealthWarning = FleetMaintenance
 
-    /** Health critical red (Material Red-400) */
-    val HealthCritical = Color(0xFFEF5350)
+    /** Health critical — error. */
+    val HealthCritical = Color(0xFFB0302A)
 
-    /** Advance payment blue (Material Blue-700) */
-    val PaymentAdvance = Color(0xFF1976D2)
+    /** Advance payment — info teal. */
+    val PaymentAdvance = Color(0xFF1C8A93)
 
-    /** Refund payment red (Material Red-700) */
-    val PaymentRefund = Color(0xFFD32F2F)
+    /** Refund payment — error. */
+    val PaymentRefund = Color(0xFFB0302A)
 
     // ==================== Utility ====================
 
@@ -127,4 +128,3 @@ object FleetStatusColors {
     fun profitLossColor(value: Double): Color =
         if (value >= 0) ProfitGreen else LossRed
 }
-

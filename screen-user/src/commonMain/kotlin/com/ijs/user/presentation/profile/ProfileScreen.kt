@@ -83,16 +83,6 @@ fun ProfileScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.profile_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = stringResource(Res.string.back),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
                 actions = {
                     // Theme toggle
                     val isDarkTheme = isAppInDarkTheme()

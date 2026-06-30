@@ -33,3 +33,18 @@ fun <T : NavKey> NavBackStack<T>.popAndNavigate(route: T) {
     removeLastOrNull()
     add(route)
 }
+
+/**
+ * Switch to a top-level (bottom-nav / rail) destination: pop back to the Dashboard root, then push
+ * [route] (or just land on Dashboard if [route] is Dashboard). Keeps the stack rooted at Dashboard so
+ * tab switches don't grow the stack and system-back from any tab returns Home.
+ */
+fun NavBackStack<FleetRoute>.navigateTopLevel(route: FleetRoute) {
+    val dashIndex = indexOfFirst { it is FleetRoute.Dashboard }
+    if (dashIndex >= 0) {
+        while (size > dashIndex + 1) removeAt(size - 1)
+    } else {
+        add(FleetRoute.Dashboard)
+    }
+    if (route !is FleetRoute.Dashboard) add(route)
+}

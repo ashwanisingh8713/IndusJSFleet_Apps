@@ -217,8 +217,6 @@ init {
         logger.d(TAG_REPORTS_VM, "loadSummary called: startDateOverride=$startDateOverride, endDateOverride=$endDateOverride")
         logger.d(TAG_REPORTS_VM, "Current state: selectedPeriod=${currentState.selectedPeriod.label}, startDate=${currentState.startDate}, endDate=${currentState.endDate}")
 
-        updateState { copy(isLoading = true, error = null) }
-
         // Use overrides if provided, otherwise calculate from current period
         val (startDate, endDate) = if (!startDateOverride.isNullOrBlank() && !endDateOverride.isNullOrBlank()) {
             logger.d(TAG_REPORTS_VM, "Using override dates: $startDateOverride to $endDateOverride")
@@ -231,6 +229,10 @@ init {
             // Calculate based on current period
             calculateDateRangeForPeriod(currentState.selectedPeriod)
         }
+
+        // Persist the resolved window so the UI (period chip, header) always reflects exactly what was
+        // queried — including the initial default (This Month) load, where state dates start blank.
+        updateState { copy(isLoading = true, error = null, startDate = startDate, endDate = endDate) }
 
         logger.d(TAG_REPORTS_VM, "=== CALLING API ===")
         logger.d(TAG_REPORTS_VM, "API Request: startDate=$startDate, endDate=$endDate")

@@ -85,16 +85,6 @@ fun DriversScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.drivers_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = stringResource(Res.string.back),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(FleetTokens.IconSize.Default)
-                        )
-                    }
-                },
                 actions = {
                     IconButton(onClick = { viewModel.sendIntent(DriversContract.Intent.RefreshDrivers) }) {
                         Icon(

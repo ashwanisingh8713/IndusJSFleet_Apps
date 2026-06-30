@@ -81,16 +81,6 @@ fun CustomersListScreen(
                         }
                     }
                 },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = stringResource(Res.string.back),
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(FleetTokens.IconSize.Default)
-                        )
-                    }
-                },
                 actions = {
                     // Show loading indicator or refresh button
                     if (state.isRefreshing) {

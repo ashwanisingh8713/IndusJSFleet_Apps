@@ -774,6 +774,7 @@
     <string name="report_period_half_year">छमाही</string>
     <string name="report_period_this_year">इस वर्ष</string>
     <string name="report_period_custom">कस्टम</string>
+    <string name="reports_select_period">अवधि चुनें</string>
     <string name="profit_status_highly_profitable">अत्यधिक लाभदायक</string>
     <string name="profit_status_profitable">लाभदायक</string>
     <string name="profit_status_break_even">सम-विच्छेद</string>
@@ -1141,6 +1142,8 @@
     <string name="nav_vehicles">वाहन</string>
     <string name="nav_drivers">ड्राइवर</string>
     <string name="nav_trips">ट्रिप</string>
+    <string name="nav_home">होम</string>
+    <string name="nav_more">अधिक</string>
     <string name="nav_customers">ग्राहक</string>
     <string name="nav_payments">भुगतान</string>
     <string name="nav_live_map">लाइव मैप</string>

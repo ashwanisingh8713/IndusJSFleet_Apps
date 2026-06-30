@@ -70,16 +70,6 @@ fun MapsScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.maps_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_arrow_back),
-                            contentDescription = stringResource(Res.string.back),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(FleetTokens.IconSize.Default)
-                        )
-                    }
-                },
                 actions = {
                     IconButton(
                         onClick = { viewModel.sendIntent(MapsContract.Intent.ToggleLiveTracking) }
