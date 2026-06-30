@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
 import com.indusjs.uicomponents.theme.FleetTokens
@@ -277,11 +278,10 @@ private fun TripFilterChips(
 ) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
         items(TripStateFilter.entries) { filter ->
-            FilterChip(
+            FleetFilterChip(
                 selected = selectedFilter == filter,
                 onClick = { onFilterSelected(filter) },
-                label = { Text(filter.localizedDisplayName(), style = MaterialTheme.typography.labelMedium) },
-                shape = RoundedCornerShape(FleetTokens.Radius.L),
+                label = filter.localizedDisplayName(),
                 modifier = Modifier.height(FleetTokens.Height.StepCircle)
             )
         }

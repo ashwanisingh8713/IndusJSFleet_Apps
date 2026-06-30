@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
@@ -145,19 +146,17 @@ private fun PeriodSelector(
                 modifier = Modifier.weight(1f)
             ) {
                 items(FinancialPeriod.entries.filter { it != FinancialPeriod.CUSTOM }) { period ->
-                    FilterChip(
+                    FleetFilterChip(
                         selected = selectedPeriod == period,
                         onClick = { onPeriodSelected(period) },
-                        label = { Text(period.localizedDisplayName()) },
-                        shape = RoundedCornerShape(FleetTokens.Radius.XXL)
+                        label = period.localizedDisplayName()
                     )
                 }
                 item {
-                    FilterChip(
+                    FleetFilterChip(
                         selected = selectedPeriod == FinancialPeriod.CUSTOM,
                         onClick = onCustomDateClick,
-                        label = { Text(stringResource(Res.string.period_custom)) },
-                        shape = RoundedCornerShape(FleetTokens.Radius.XXL)
+                        label = stringResource(Res.string.period_custom)
                     )
                 }
             }

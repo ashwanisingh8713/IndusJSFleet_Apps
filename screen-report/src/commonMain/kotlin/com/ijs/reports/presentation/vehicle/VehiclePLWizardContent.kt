@@ -18,6 +18,7 @@ import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.ButtonSize
 import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.uicomponents.theme.FleetTokens
@@ -499,22 +500,11 @@ internal fun PeriodSelectionChipsCard(
                     "yearly" to stringResource(Res.string.reports_period_chip_year),
                     "custom" to stringResource(Res.string.reports_period_chip_custom)
                 ).forEach { (key, label) ->
-                    val isSelected = selectedPeriod == key
-                    FilterChip(
-                        selected = isSelected,
+                    FleetFilterChip(
+                        selected = selectedPeriod == key,
                         onClick = { onPeriodChange(key) },
-                        label = {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                        label = label,
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }

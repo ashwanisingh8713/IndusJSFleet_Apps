@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.payment.domain.entity.PaymentStatus
@@ -52,43 +53,38 @@ internal fun FilterChipRow(
 
         // Customer chip (resolved display name passed in from state)
         if (filter.customerId != null && !customerName.isNullOrBlank()) {
-            FilterChip(
+            FleetFilterChip(
                 selected = true,
                 onClick = { },
-                label = { Text(customerName, style = MaterialTheme.typography.labelSmall) }
+                label = customerName
             )
         }
 
         filter.paymentType?.let { type ->
-            FilterChip(
+            FleetFilterChip(
                 selected = true,
                 onClick = { },
-                label = { Text(type.localizedDisplayName(), style = MaterialTheme.typography.labelSmall) }
+                label = type.localizedDisplayName()
             )
         }
 
         filter.paymentStatus?.let { status ->
-            FilterChip(
+            FleetFilterChip(
                 selected = true,
                 onClick = { },
-                label = { Text(paymentStateLabels[status.apiValue] ?: status.localizedDisplayName(), style = MaterialTheme.typography.labelSmall) }
+                label = paymentStateLabels[status.apiValue] ?: status.localizedDisplayName()
             )
         }
 
         // Show date range if applied
         if (filter.startDate != null || filter.endDate != null) {
-            FilterChip(
+            FleetFilterChip(
                 selected = true,
                 onClick = { },
-                label = {
-                    Text(
-                        text = buildString {
-                            filter.startDate?.let { append(it) }
-                            append(" - ")
-                            filter.endDate?.let { append(it) }
-                        },
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                label = buildString {
+                    filter.startDate?.let { append(it) }
+                    append(" - ")
+                    filter.endDate?.let { append(it) }
                 }
             )
         }

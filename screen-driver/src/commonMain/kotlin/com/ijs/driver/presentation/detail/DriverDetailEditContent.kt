@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,6 +23,7 @@ import org.jetbrains.compose.resources.stringResource
 import com.indusjs.uicomponents.components.CaretakerSectionCard
 import com.indusjs.uicomponents.components.DateVisualTransformation
 import com.indusjs.uicomponents.components.FieldType
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetSectionHeader
@@ -129,10 +129,10 @@ internal fun EditModeContent(
                 verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 LicenseType.entries.forEach { type ->
-                    FilterChip(
+                    FleetFilterChip(
                         selected = state.licenseType == type,
-                        onClick = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateLicenseType(type)) },
-                        label = { Text(driverLicenseTypeShort(type)) }
+                        label = driverLicenseTypeShort(type),
+                        onClick = { viewModel.sendIntent(DriverDetailContract.Intent.UpdateLicenseType(type)) }
                     )
                 }
             }
@@ -188,14 +188,14 @@ internal fun EditModeContent(
                 verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 state.bloodGroupOptions.forEach { group ->
-                    FilterChip(
+                    FleetFilterChip(
                         selected = state.bloodGroup == group,
+                        label = group,
                         onClick = {
                             viewModel.sendIntent(DriverDetailContract.Intent.UpdateBloodGroup(
                                 if (state.bloodGroup == group) "" else group
                             ))
-                        },
-                        label = { Text(group) }
+                        }
                     )
                 }
             }

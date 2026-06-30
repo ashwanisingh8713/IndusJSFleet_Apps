@@ -18,6 +18,7 @@ import com.indusjs.datetimeutils.FleetDateTime
 import com.indusjs.fleet.core.model.shared.SelectableCustomer
 import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.FleetDropdown
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.PaymentType
 import com.ijs.trip.payment.domain.entity.TripPaymentFilter
@@ -113,16 +114,16 @@ internal fun PaymentFilterBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                FilterChip(
+                FleetFilterChip(
                     selected = filter.paymentType == null,
                     onClick = { onUpdateType(null) },
-                    label = { Text(stringResource(Res.string.action_select_all), style = MaterialTheme.typography.bodySmall) }
+                    label = stringResource(Res.string.action_select_all)
                 )
                 PaymentType.entries.forEach { type ->
-                    FilterChip(
+                    FleetFilterChip(
                         selected = filter.paymentType == type,
                         onClick = { onUpdateType(type) },
-                        label = { Text(type.localizedDisplayName(), style = MaterialTheme.typography.bodySmall) }
+                        label = type.localizedDisplayName()
                     )
                 }
             }
@@ -142,16 +143,16 @@ internal fun PaymentFilterBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                FilterChip(
+                FleetFilterChip(
                     selected = filter.paymentStatus == null,
                     onClick = { onUpdateStatus(null) },
-                    label = { Text(stringResource(Res.string.action_select_all), style = MaterialTheme.typography.bodySmall) }
+                    label = stringResource(Res.string.action_select_all)
                 )
                 PaymentStatus.entries.forEach { status ->
-                    FilterChip(
+                    FleetFilterChip(
                         selected = filter.paymentStatus == status,
                         onClick = { onUpdateStatus(status) },
-                        label = { Text("${status.icon} ${paymentStateLabels[status.apiValue] ?: status.localizedDisplayName()}", style = MaterialTheme.typography.bodySmall) }
+                        label = "${status.icon} ${paymentStateLabels[status.apiValue] ?: status.localizedDisplayName()}"
                     )
                 }
             }

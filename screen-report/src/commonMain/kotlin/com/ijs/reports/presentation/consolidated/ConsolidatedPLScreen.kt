@@ -16,9 +16,12 @@ import com.indusjs.uicomponents.components.DateVisualTransformation
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetInlineErrorBanner
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTab
+import com.indusjs.uicomponents.components.FleetTabBar
 import com.indusjs.uicomponents.components.UiText
 import com.indusjs.uicomponents.components.filterDigitsOnly
 import com.indusjs.uicomponents.theme.FleetTokens
@@ -335,10 +338,10 @@ private fun FiltersCard(
                 } else {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                         items(vehicles) { vehicle ->
-                            FilterChip(
+                            FleetFilterChip(
                                 selected = selectedVehicleIds.contains(vehicle.id),
                                 onClick = { onToggleVehicle(vehicle.id) },
-                                label = { Text(vehicle.registrationNumber, style = MaterialTheme.typography.labelMedium) }
+                                label = vehicle.registrationNumber
                             )
                         }
                     }
@@ -374,10 +377,10 @@ private fun FiltersCard(
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                     items(COST_TYPES) { costType ->
                         val displayName = ConsolidatedPLContract.costIdLabel(costType)
-                        FilterChip(
+                        FleetFilterChip(
                             selected = selectedCostTypes.contains(costType),
                             onClick = { onToggleCostType(costType) },
-                            label = { Text(displayName, style = MaterialTheme.typography.labelMedium) }
+                            label = displayName
                         )
                     }
                 }
@@ -385,25 +388,22 @@ private fun FiltersCard(
 
             HorizontalDivider()
 
-            // Group By
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            // Group By — Calm Fintech segmented pill (shared FleetTabBar) under its header label.
+            Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                 FilterSectionHeader(
                     iconRes = Res.drawable.ic_dashboard,
                     text = stringResource(Res.string.reports_filter_group_by)
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
-                    GROUP_BY_OPTIONS.forEach { option ->
-                        FilterChip(
-                            selected = groupBy == option,
-                            onClick = { onGroupByChange(option) },
-                            label = { Text(option.replaceFirstChar { it.uppercaseChar() }) }
-                        )
-                    }
+                val groupByTabs = GROUP_BY_OPTIONS.map { option ->
+                    FleetTab(option, option.replaceFirstChar { it.uppercaseChar() })
                 }
+                FleetTabBar(
+                    tabs = groupByTabs,
+                    selectedTabId = groupBy,
+                    onTabSelected = onGroupByChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    scrollable = false,
+                )
             }
         }
     }

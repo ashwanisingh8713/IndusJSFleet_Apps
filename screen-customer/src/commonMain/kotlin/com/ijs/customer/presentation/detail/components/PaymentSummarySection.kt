@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.customer.domain.entity.CustomerPaymentSummary
@@ -46,28 +47,20 @@ internal fun PaymentModeFilterChips(
         ) {
             // All filter
             item {
-                FilterChip(
+                FleetFilterChip(
                     selected = selectedMode == null,
                     onClick = { onModeSelected(null) },
-                    label = { Text(stringResource(Res.string.filter_all)) },
-                    shape = RoundedCornerShape(FleetTokens.Radius.XXL)
+                    label = stringResource(Res.string.filter_all)
                 )
             }
 
             // Mode filters
             items(PaymentMode.entries) { mode ->
-                FilterChip(
+                FleetFilterChip(
                     selected = selectedMode == mode,
                     onClick = { onModeSelected(mode) },
-                    label = { Text(mode.localizedDisplayName()) },
-                    leadingIcon = {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_cost),
-                            contentDescription = null,
-                            modifier = Modifier.size(FleetTokens.IconSize.S)
-                        )
-                    },
-                    shape = RoundedCornerShape(FleetTokens.Radius.XXL)
+                    label = mode.localizedDisplayName(),
+                    leadingIcon = Res.drawable.ic_cost
                 )
             }
         }

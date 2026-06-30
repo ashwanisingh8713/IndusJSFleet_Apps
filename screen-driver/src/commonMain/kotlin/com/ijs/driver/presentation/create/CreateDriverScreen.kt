@@ -13,6 +13,7 @@ import com.indusjs.datetimepicker.FleetDatePicker
 import com.indusjs.datetimepicker.DateTimeUtils
 import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.CaretakerSectionCard
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.DropdownOption
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetButton
@@ -397,19 +398,10 @@ private fun LicenseTypeSelector(
             verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
         ) {
             LicenseType.entries.forEach { type ->
-                FilterChip(
+                FleetFilterChip(
                     selected = selectedType == type,
-                    onClick = { onTypeSelected(type) },
-                    label = { Text(driverLicenseTypeLong(type)) },
-                    leadingIcon = if (selectedType == type) {
-                        {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_check),
-                                contentDescription = null,
-                                modifier = Modifier.size(FleetTokens.IconSize.S)
-                            )
-                        }
-                    } else null
+                    label = driverLicenseTypeLong(type),
+                    onClick = { onTypeSelected(type) }
                 )
             }
         }

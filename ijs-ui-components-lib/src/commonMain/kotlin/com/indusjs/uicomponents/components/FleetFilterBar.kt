@@ -5,10 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,9 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -97,18 +90,18 @@ fun <T> FleetFilterBar(
         horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        FleetFilterChipItem(
+        FleetFilterChip(
+            selected = selectedFilterId == null,
             label = resolvedAllLabel,
             count = allCount,
-            isSelected = selectedFilterId == null,
             onClick = { onFilterSelected(null) }
         )
 
         filters.forEach { filter ->
-            FleetFilterChipItem(
+            FleetFilterChip(
+                selected = filter.id == selectedFilterId,
                 label = filter.label,
                 count = filter.count,
-                isSelected = filter.id == selectedFilterId,
                 onClick = {
                     if (filter.isDateRangeTrigger) {
                         showDatePicker = true
@@ -134,45 +127,4 @@ fun <T> FleetFilterBar(
             onDismiss = { showDatePicker = false }
         )
     }
-}
-
-@Composable
-private fun FleetFilterChipItem(
-    label: String,
-    count: Int?,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    FilterChip(
-        selected = isSelected,
-        onClick = onClick,
-        modifier = Modifier.semantics { contentDescription = label },
-        label = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
-            ) {
-                Text(
-                    text = label,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    style = MaterialTheme.typography.labelLarge
-                )
-                if (count != null && count > 0) {
-                    Text(
-                        text = "($count)",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.onSecondaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-            }
-        },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-    )
 }

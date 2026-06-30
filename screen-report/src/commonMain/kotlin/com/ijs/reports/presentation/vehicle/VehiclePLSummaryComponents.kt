@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetSectionHeader
@@ -290,10 +291,10 @@ internal fun ChartViewContent(
                 Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                 Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)) {
                     ReportChartType.entries.forEach { type ->
-                        FilterChip(
+                        FleetFilterChip(
                             selected = chartType == type,
                             onClick = { onChartTypeChange(type) },
-                            label = { Text(type.localizedLabel(), style = MaterialTheme.typography.labelSmall) }
+                            label = type.localizedLabel()
                         )
                     }
                 }

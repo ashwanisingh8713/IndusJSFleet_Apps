@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.isAppInDarkTheme
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_chevron_right
 import org.jetbrains.compose.resources.DrawableResource
@@ -59,16 +60,19 @@ fun FleetSectionCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val shape = RoundedCornerShape(FleetTokens.Radius.XL)
+    // Calm Fintech depth: light = soft shadow + hairline; dark = 1px top-highlight (shadows vanish on near-black).
+    val isDark = isAppInDarkTheme()
     val base = modifier
         .fillMaxWidth()
         .clip(shape)
+        .fleetElevatedSurface(shape)
         .let { if (onClick != null) it.clickable(onClick = onClick) else it }
     Surface(
         modifier = base,
         shape = shape,
         color = containerColor,
-        shadowElevation = elevation,
-        border = border
+        shadowElevation = if (isDark) FleetTokens.Elevation.None else elevation,
+        border = if (isDark) null else border
     ) {
         Column(modifier = Modifier.padding(contentPadding), content = content)
     }

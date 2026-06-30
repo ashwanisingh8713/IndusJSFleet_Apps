@@ -40,6 +40,8 @@ import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTab
+import com.indusjs.uicomponents.components.FleetTabBar
 import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.isExpanded
@@ -131,44 +133,21 @@ fun CustomerPLScreen(
 
 @Composable
 private fun PeriodRow(selected: String, onSelect: (String) -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
-        CustomerPLContract.PERIODS.forEach { period ->
-            val isSelected = period == selected
-            Surface(
-                modifier = Modifier
-                    .weight(1f)
-                    .defaultMinSize(minHeight = FleetTokens.Spacing.XXXL)
-                    .clip(RoundedCornerShape(FleetTokens.Radius.L))
-                    .clickable { onSelect(period) },
-                shape = RoundedCornerShape(FleetTokens.Radius.L),
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                border = BorderStroke(
-                    FleetTokens.Height.Divider,
-                    MaterialTheme.colorScheme.primary.copy(alpha = if (isSelected) 1f else 0.3f)
-                )
-            ) {
-                Box(Modifier.fillMaxSize().padding(vertical = FleetTokens.Spacing.S), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = periodLabel(period),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
-                        maxLines = 1
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun periodLabel(period: String): String = when (period) {
-    "daily" -> stringResource(Res.string.customer_pl_period_daily)
-    "weekly" -> stringResource(Res.string.customer_pl_period_weekly)
-    "monthly" -> stringResource(Res.string.customer_pl_period_monthly)
-    "quarterly" -> stringResource(Res.string.customer_pl_period_quarterly)
-    "yearly" -> stringResource(Res.string.customer_pl_period_yearly)
-    else -> period
+    // Calm Fintech segmented pill (shared FleetTabBar) — replaces the old filled-indigo bordered pills.
+    // Scrollable so the long "Quarterly" label stays single-line (matches the Vehicle-detail tab pattern).
+    val periodTabs = listOf(
+        FleetTab("daily", stringResource(Res.string.customer_pl_period_daily)),
+        FleetTab("weekly", stringResource(Res.string.customer_pl_period_weekly)),
+        FleetTab("monthly", stringResource(Res.string.customer_pl_period_monthly)),
+        FleetTab("quarterly", stringResource(Res.string.customer_pl_period_quarterly)),
+        FleetTab("yearly", stringResource(Res.string.customer_pl_period_yearly)),
+    )
+    FleetTabBar(
+        tabs = periodTabs,
+        selectedTabId = selected,
+        onTabSelected = onSelect,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable

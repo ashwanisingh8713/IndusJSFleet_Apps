@@ -34,6 +34,8 @@ import com.indusjs.fleet.domain.entity.dashboard.TripSummary
 import com.indusjs.fleet.domain.entity.dashboard.VehicleStatusSummary
 import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetTab
+import com.indusjs.uicomponents.components.FleetTabBar
 import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
@@ -121,46 +123,19 @@ internal fun CostOverviewSection(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(FleetTokens.Radius.L))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                            .padding(FleetTokens.Spacing.XS),
-                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
-                    ) {
-                        CostOverviewFilter.entries.forEach { filter ->
-                            val isSelected = selectedFilter == filter
-                            val label = when (filter) {
-                                CostOverviewFilter.TODAY -> stringResource(Res.string.dashboard_filter_today)
-                                CostOverviewFilter.WEEKLY -> stringResource(Res.string.dashboard_filter_this_week)
-                                CostOverviewFilter.MONTHLY -> stringResource(Res.string.dashboard_filter_this_month)
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .heightIn(min = FleetTokens.Height.MinTouchTarget)
-                                    .clip(RoundedCornerShape(FleetTokens.Radius.L))
-                                    .background(
-                                        if (isSelected) MaterialTheme.colorScheme.primary
-                                        else Color.Transparent
-                                    )
-                                    .clickable { onFilterChange(filter) }
-                                    .padding(vertical = FleetTokens.Spacing.S),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected)
-                                        MaterialTheme.colorScheme.onPrimary
-                                    else
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
+                    // Calm Fintech segmented pill (shared FleetTabBar) — replaces the old filled-indigo pills.
+                    val periodTabs = listOf(
+                        FleetTab(CostOverviewFilter.TODAY, stringResource(Res.string.dashboard_filter_today)),
+                        FleetTab(CostOverviewFilter.WEEKLY, stringResource(Res.string.dashboard_filter_this_week)),
+                        FleetTab(CostOverviewFilter.MONTHLY, stringResource(Res.string.dashboard_filter_this_month)),
+                    )
+                    FleetTabBar(
+                        tabs = periodTabs,
+                        selectedTabId = selectedFilter,
+                        onTabSelected = onFilterChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        scrollable = false,
+                    )
 
                     // Date range indicator
                     Row(

@@ -18,6 +18,7 @@ import com.indusjs.uicomponents.components.DeleteConfirmationDialog
 import com.indusjs.uicomponents.components.EmptyContent
 import com.indusjs.uicomponents.components.ErrorContent
 import com.indusjs.uicomponents.components.FleetAvatar
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.StatusToggleConfirmationDialog
 import com.indusjs.uicomponents.components.FleetStatusBadge
@@ -256,36 +257,19 @@ private fun EnhancedFilterTabs(
     ) {
         TeamListContract.FilterType.entries.forEach { filter ->
             val isSelected = selectedFilter == filter
-            FilterChip(
+            FleetFilterChip(
                 selected = isSelected,
+                label = when (filter) {
+                    TeamListContract.FilterType.ALL -> stringResource(Res.string.team_filter_all)
+                    TeamListContract.FilterType.ADMINS -> stringResource(Res.string.team_filter_admins)
+                    TeamListContract.FilterType.USERS -> stringResource(Res.string.team_filter_users)
+                },
                 onClick = { onFilterSelected(filter) },
-                label = {
-                    Text(
-                        text = when (filter) {
-                            TeamListContract.FilterType.ALL -> stringResource(Res.string.team_filter_all)
-                            TeamListContract.FilterType.ADMINS -> stringResource(Res.string.team_filter_admins)
-                            TeamListContract.FilterType.USERS -> stringResource(Res.string.team_filter_users)
-                        },
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(
-                            when (filter) {
-                                TeamListContract.FilterType.ALL -> Res.drawable.ic_team
-                                TeamListContract.FilterType.ADMINS -> Res.drawable.ic_visibility
-                                TeamListContract.FilterType.USERS -> Res.drawable.ic_profile
-                            }
-                        ),
-                        contentDescription = null,
-                        modifier = Modifier.size(FleetTokens.IconSize.S)
-                    )
-                },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                leadingIcon = when (filter) {
+                    TeamListContract.FilterType.ALL -> Res.drawable.ic_team
+                    TeamListContract.FilterType.ADMINS -> Res.drawable.ic_visibility
+                    TeamListContract.FilterType.USERS -> Res.drawable.ic_profile
+                }
             )
         }
     }

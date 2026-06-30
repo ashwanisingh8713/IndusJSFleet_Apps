@@ -24,6 +24,7 @@ import com.indusjs.pdfreport.handler.VehicleMaintenanceCostsPdfHandler
 import com.indusjs.pdfreport.model.VehicleMaintenanceCostsPdfData
 import com.indusjs.uicomponents.components.DateVisualTransformation
 import com.indusjs.uicomponents.components.EmptyContent
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetConfirmationDialog
 import com.indusjs.uicomponents.components.FleetInlineErrorBanner
@@ -158,25 +159,16 @@ internal fun CostsTabContent(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 group.items.forEach { item ->
-                                    FilterChip(
+                                    FleetFilterChip(
                                         selected = tempSelectedFilters.contains(item.id),
+                                        label = item.label,
                                         onClick = {
                                             tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
                                                 tempSelectedFilters - item.id
                                             } else {
                                                 tempSelectedFilters + item.id
                                             }
-                                        },
-                                        label = { Text(item.label) },
-                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
-                                            {
-                                                Icon(
-                                                    painter = painterResource(Res.drawable.ic_check),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(FleetTokens.IconSize.S)
-                                                )
-                                            }
-                                        } else null
+                                        }
                                     )
                                 }
                             }
@@ -198,25 +190,16 @@ internal fun CostsTabContent(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 group.items.forEach { item ->
-                                    FilterChip(
+                                    FleetFilterChip(
                                         selected = tempSelectedFilters.contains(item.id),
+                                        label = item.label,
                                         onClick = {
                                             tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
                                                 tempSelectedFilters - item.id
                                             } else {
                                                 tempSelectedFilters + item.id
                                             }
-                                        },
-                                        label = { Text(item.label) },
-                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
-                                            {
-                                                Icon(
-                                                    painter = painterResource(Res.drawable.ic_check),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(FleetTokens.IconSize.S)
-                                                )
-                                            }
-                                        } else null
+                                        }
                                     )
                                 }
                             }
@@ -243,25 +226,16 @@ internal fun CostsTabContent(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 group.items.forEach { item ->
-                                    FilterChip(
+                                    FleetFilterChip(
                                         selected = tempSelectedFilters.contains(item.id),
+                                        label = item.label,
                                         onClick = {
                                             tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
                                                 tempSelectedFilters - item.id
                                             } else {
                                                 tempSelectedFilters + item.id
                                             }
-                                        },
-                                        label = { Text(item.label) },
-                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
-                                            {
-                                                Icon(
-                                                    painter = painterResource(Res.drawable.ic_check),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(FleetTokens.IconSize.S)
-                                                )
-                                            }
-                                        } else null
+                                        }
                                     )
                                 }
                             }
@@ -283,25 +257,16 @@ internal fun CostsTabContent(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 group.items.forEach { item ->
-                                    FilterChip(
+                                    FleetFilterChip(
                                         selected = tempSelectedFilters.contains(item.id),
+                                        label = item.label,
                                         onClick = {
                                             tempSelectedFilters = if (tempSelectedFilters.contains(item.id)) {
                                                 tempSelectedFilters - item.id
                                             } else {
                                                 tempSelectedFilters + item.id
                                             }
-                                        },
-                                        label = { Text(item.label) },
-                                        leadingIcon = if (tempSelectedFilters.contains(item.id)) {
-                                            {
-                                                Icon(
-                                                    painter = painterResource(Res.drawable.ic_check),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(FleetTokens.IconSize.S)
-                                                )
-                                            }
-                                        } else null
+                                        }
                                     )
                                 }
                             }

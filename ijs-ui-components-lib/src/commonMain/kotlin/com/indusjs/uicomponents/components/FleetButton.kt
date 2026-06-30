@@ -2,6 +2,7 @@ package com.indusjs.uicomponents.components
 
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -169,12 +170,16 @@ fun FleetButton(
             .defaultMinSize(minHeight = FleetTokens.Height.MinTouchTarget)
             .then(semanticsModifier)
 
+        // Calm Fintech: buttons use Shape.Button (8dp), not the Material default pill.
+        val buttonShape = RoundedCornerShape(FleetTokens.Shape.Button)
+
         when (variant) {
             ButtonVariant.PRIMARY -> {
                 Button(
                     onClick = onClick,
                     modifier = baseModifier,
                     enabled = effectiveEnabled,
+                    shape = buttonShape,
                     contentPadding = padding,
                     content = { content() }
                 )
@@ -185,6 +190,7 @@ fun FleetButton(
                     onClick = onClick,
                     modifier = baseModifier,
                     enabled = effectiveEnabled,
+                    shape = buttonShape,
                     contentPadding = padding,
                     content = { content() }
                 )
@@ -195,6 +201,7 @@ fun FleetButton(
                     onClick = onClick,
                     modifier = baseModifier,
                     enabled = effectiveEnabled,
+                    shape = buttonShape,
                     contentPadding = padding,
                     content = { content() }
                 )
@@ -205,6 +212,7 @@ fun FleetButton(
                     onClick = onClick,
                     modifier = baseModifier,
                     enabled = effectiveEnabled,
+                    shape = buttonShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError

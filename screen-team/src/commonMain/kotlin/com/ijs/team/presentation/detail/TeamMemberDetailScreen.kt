@@ -19,6 +19,7 @@ import com.indusjs.fleet.core.util.formatDateToHumanReadable
 import com.indusjs.uicomponents.components.ButtonSize
 import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.ErrorContent
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetAvatar
 import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
@@ -608,19 +609,13 @@ private fun RoleFilterChip(
         TeamMemberRole.SUPERVISOR -> Res.drawable.ic_visibility
     }
     val label = role.localizedDisplayName()
-    FilterChip(
+    FleetFilterChip(
         selected = isSelected,
+        label = label,
         onClick = onClick,
-        label = { Text(label) },
-        leadingIcon = {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                modifier = Modifier.size(FleetTokens.IconSize.S)
-            )
-        },
+        modifier = modifier,
         enabled = enabled,
-        modifier = modifier
+        leadingIcon = iconRes,
     )
 }
 

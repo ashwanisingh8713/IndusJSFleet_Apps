@@ -17,7 +17,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetSectionCard
+import com.indusjs.uicomponents.components.FleetTab
+import com.indusjs.uicomponents.components.FleetTabBar
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.isExpanded
 import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
@@ -399,22 +402,15 @@ internal fun PeriodSelectionRow(
     onEndDateChange: (String) -> Unit
 ) {
     Column {
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S),
-            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
-        ) {
-            VehiclePLContract.PERIOD_OPTIONS.forEach { (value, label) ->
-                FilterChip(
-                    selected = selectedPeriod == value,
-                    onClick = { onPeriodChange(value) },
-                    label = { Text(label, style = MaterialTheme.typography.labelMedium) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                )
-            }
-        }
+        // Calm Fintech segmented pill (shared FleetTabBar) — replaces the old filled-indigo pills.
+        val periodTabs = VehiclePLContract.PERIOD_OPTIONS.map { (value, label) -> FleetTab(value, label) }
+        FleetTabBar(
+            tabs = periodTabs,
+            selectedTabId = selectedPeriod,
+            onTabSelected = onPeriodChange,
+            modifier = Modifier.fillMaxWidth(),
+            scrollable = false,
+        )
 
         // Show selected custom date range label if applicable
         if (useCustomDateRange && startDate.isNotBlank() && endDate.isNotBlank()) {
@@ -471,25 +467,21 @@ internal fun ViewModeAndFilterSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
-                ReportViewMode.entries.forEach { mode ->
-                    FilterChip(
-                        selected = viewMode == mode,
-                        onClick = { onViewModeChange(mode) },
-                        label = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    painter = painterResource(mode.icon),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(FleetTokens.IconSize.S)
-                                )
-                                Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
-                                Text(mode.localizedLabel(), style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    )
-                }
-            }
+            // Calm Fintech segmented pill (shared FleetTabBar) with leading icons — replaces the chips.
+            val viewTabs = listOf(
+                FleetTab(ReportViewMode.SUMMARY, ReportViewMode.SUMMARY.localizedLabel(), iconRes = ReportViewMode.SUMMARY.icon),
+                FleetTab(ReportViewMode.LIST, ReportViewMode.LIST.localizedLabel(), iconRes = ReportViewMode.LIST.icon),
+                FleetTab(ReportViewMode.CHART, ReportViewMode.CHART.localizedLabel(), iconRes = ReportViewMode.CHART.icon),
+            )
+            FleetTabBar(
+                tabs = viewTabs,
+                selectedTabId = viewMode,
+                onTabSelected = onViewModeChange,
+                modifier = Modifier.weight(1f),
+                scrollable = false,
+            )
+
+            Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
 
             // Vehicle filter button
             FilledTonalIconButton(onClick = onShowVehicleFilter) {
@@ -509,13 +501,13 @@ internal fun ViewModeAndFilterSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Status filter chips
+            // Status filter chips — Calm Fintech neutral chip token.
             Row(horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
                 PLStatusFilter.entries.forEach { filter ->
-                    FilterChip(
+                    FleetFilterChip(
                         selected = plStatusFilter == filter,
-                        onClick = { onFilterChange(filter) },
-                        label = { Text(filter.localizedLabel(), style = MaterialTheme.typography.labelSmall) }
+                        label = filter.localizedLabel(),
+                        onClick = { onFilterChange(filter) }
                     )
                 }
             }

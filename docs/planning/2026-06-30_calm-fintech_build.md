@@ -10,6 +10,46 @@
 2. Typography — Noto Sans + Noto Sans Devanagari; ramp + 1.45× line-height + tnum.
 3. Segmented tab — REBUILD on custom SubcomposeLayout (not a re-skin).
 4. Buttons / chips / cards — Shape/StateLayer; one selected-chip token; consolidate into FleetSectionCard.
+   - **Control consolidation (PO-surfaced 2026-06-30 via screenshots):** many screens still use OLD bespoke
+     single-choice selectors (filled-indigo bordered pills / weight-Row toggles) — inconsistent with the new
+     segmented pill. MIGRATE these to the shared `FleetTabBar`:
+     · Customer P&L period selector — ✅ DONE (added `scrollable` override to FleetTabBar; verified).
+     · Vehicle P&L period selector — ✅ DONE (PeriodSelectionRow, fixed; custom-date label kept; verified).
+     · Vehicle P&L Summary/List/Chart view toggle — ✅ DONE (FleetTabBar with leading icons; verified).
+     · Consolidated/Fleet P&L Group By — ✅ DONE (full-width pill under its header; verified).
+     · Dashboard "Today/This Week/This Month" period pill — ✅ DONE (verified; DDD's requested migration).
+     · Reports period selector (8 options, 2-row grid) — STILL OLD; DDD call: scrollable single segmented row vs
+       restyled grid. Deferred to DDD.
+     Shots: docs/design/assets/fidelity/{customer-pl,dashboard-period,vehicle-pl,consolidated-groupby}-segmented-*.png.
+     (Component already certified light/dark + EN/HI on Vehicle Detail, so these inherit that behavior.)
+   - **Selected-chip token = `FleetFilterChip`** (NEW component, ijs-ui-components-lib): transparent+hairline
+     unselected / `secondaryContainer` selected (calm, not heavy indigo) / 12% press state-layer / Pill shape /
+     constant Medium weight (no reflow) / optional count + leadingIcon. Applied so far (verified):
+     · `FleetFilterBar` internals re-pointed to it → ALL list screens (Vehicles/Drivers/Customers/Trips/Payments)
+       in ONE change. · Vehicle P&L "All/Profitable/Loss Making" status filter.
+     Shots: vehicles-list-filterchip + vehicle-pl-chiptoken (assets/fidelity/). Vehicle P&L is now fully coherent.
+     **Chip-token TAIL — ✅ DONE (parallel migration workflow + manual flagged-case cleanup; build green).**
+     `FleetFilterChip` gained an `enabled` param. Migrated ~30 chip sites across customer (PaymentSummary/Trips/
+     Financials), driver (DriverDetailEdit, CreateDriver license selector), team (MemberDetail role chips, List),
+     report (Consolidated vehicle+cost-type MULTI-SELECT, VehiclePL Summary/List/Wizard), trip-payment
+     (PaymentFilter, TripSelector pending, PaymentList), vehicle (DetailCosts ×4 multi-select). The selection
+     checkmarks were dropped (the secondaryContainer fill is the affordance). `VehicleFinanceScreen` uses a
+     SEPARATE pre-existing `FinanceFilterChip` (FinanceComponents.kt) — not a raw Material chip; noted as a future
+     consolidation candidate, not in this sweep.
+     **3 chips intentionally LEFT — DDD design calls (flagged to design.inbox):**
+     1. `TripDetailEditForms` priority selector — emoji leading glyph (🔴/🟡/🟢) → wants a colored-dot treatment.
+     2. `TripSelectorBottomSheet` payment-status filter (×2, pending/partial) — uses `FleetStatusColors` selected
+        tint; status-as-color is in-spec, so DDD decides: neutral token vs a status-tinted chip variant.
+   - **`FleetElevatedSurface` — ✅ DONE.** New `@Composable Modifier.fleetElevatedSurface(shape, alpha)` +
+     `FleetElevation` alpha tiers (C2 10/10/7/6/5/4%). Dark = 1px top-edge highlight (onSurface gradient,
+     bright→transparent); light = no-op. Wired into `FleetSectionCard` (dark drops shadow+full-border → tonal
+     surface + top-highlight; light unchanged) and the `FleetTabBar` dark pill (closes the step-3 dark-pill defer).
+     Verified on device (dashboard dark: cards lit-from-above, pill highlighted; light identical).
+   - **Buttons — ✅ DONE.** `FleetButton` all 4 variants now use `RoundedCornerShape(Shape.Button=8dp)` (was the
+     Material pill default) per spec; enum API + weight-on-root fix untouched. Verified.
+   - **Elevation re-tune — ✅ effectively done** via the card change (dark = tonal+highlight, no shadow; light = shadow).
+
+## STEP 4 ✅ COMPLETE (awaiting DDD verdict on the 3 flagged chips). NEXT = step 5 (nav migration — the largest).
 5. Nav migration — FleetNavRail + bottom bar + More sheet; remove drawer; interim perm-gating + top-4 backfill.
    - Final slugs LOCKED by C (IAM) 2026-06-30: trips/vehicles/drivers/`live-map:view` (HYPHEN) = all;
      `customers:view`/`payments:view` = admin/owner; Home = `dashboard:supervisor_view`. Keep interim
@@ -56,6 +96,16 @@ CI-gated against it (acceptance §4).
 - **Step 1 ✅ certified** (light+dark). **Step 2 ✅ certified** (EN/HI parity, Noto, tnum). Grouped ₹
   (`formatCurrencyFull`) + app-wide `tnum` applied to Reports — verified. Donut-center label still
   abbreviates (`₹15.0K`) — tidy when touching that chart.
+- **Step 3 ✅ built + self-reviewed + device-verified** (awaiting DDD verdict). `FleetTabBar` rebuilt on a
+  custom layout (sliding `surface` pill on `surfaceContainerHighest`/`High` track, token-capped tween
+  ≤200ms, B1 light hairline, neutral badge, press 12% + 0.98 scale, >4 horizontal scroll + centered
+  auto-scroll + 16dp right-edge fade, `Role.Tab` selected semantics, id-keyed geometry). API preserved
+  (+ optional `iconRes`). Verified BOTH paths on device: Vehicle Detail 6-tab scroll (EN/HI, light/dark,
+  far-tab auto-center) + Driver Detail 3-tab fixed equal-width slide. 6 fidelity shots in assets/fidelity/.
+  Adversarial review (4 lenses → verify): 15 confirmed / 13 rejected; all real findings folded in.
+  **Step-3 carry-forward (documented, low-sev):** (a) MEASURED-overflow scroll trigger not implemented —
+  `>4` fast-path heuristic only (covers §9.8 6-tab case; long-Hindi/large-font at ≤4 won't auto-scroll);
+  (b) dark pill 1px top-highlight deferred to step-4 `FleetElevatedSurface` (tonal step reads fine meanwhile).
 - **Legacy terminology leak** (DDD): Profile "Organization Overview" shows Managers/Supervisors from
   `teamStats.totalManagers/totalSupervisors`; app `UserRole` enum still has GENERAL_MANAGER/MANAGER/
   SUPERVISOR. Align to owner/admin/user. **Blocked on A** — coordinated (backend.inbox): need new

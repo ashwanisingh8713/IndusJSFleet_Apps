@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.reports.domain.entity.VehicleProfitLoss
@@ -224,19 +225,10 @@ fun SortingFilterSection(
                 horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 PLStatusFilter.entries.forEach { filter ->
-                    FilterChip(
+                    FleetFilterChip(
                         selected = plStatusFilter == filter,
                         onClick = { onFilterChange(filter) },
-                        label = {
-                            Text(
-                                text = filter.localizedLabel(),
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                        label = filter.localizedLabel()
                     )
                 }
             }

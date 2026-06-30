@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.indusjs.uicomponents.components.EmptyContent
+import com.indusjs.uicomponents.components.FleetFilterChip
 import com.indusjs.uicomponents.components.FleetSearchField
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.theme.FleetBreakpoint
@@ -184,23 +185,20 @@ private fun TripFilterChips(
         verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
     ) {
         // Show only pending toggle
-        FilterChip(
+        FleetFilterChip(
             selected = showOnlyWithPending,
-            onClick = onTogglePending,
-            label = { Text(stringResource(Res.string.payment_filter_with_pending), style = MaterialTheme.typography.labelSmall) },
-            leadingIcon = if (showOnlyWithPending) {
-                { Text("✓", style = MaterialTheme.typography.labelSmall) }
-            } else null
+            label = stringResource(Res.string.payment_filter_with_pending),
+            onClick = onTogglePending
         )
 
         // Trip Status filters
         listOf("on_route", "completed", "planned").forEach { value ->
-            FilterChip(
+            FleetFilterChip(
                 selected = selectedStatusFilter == value,
                 onClick = {
                     onStatusFilterChange(if (selectedStatusFilter == value) null else value)
                 },
-                label = { Text(tripStateFilterLabel(value), style = MaterialTheme.typography.labelSmall) }
+                label = tripStateFilterLabel(value)
             )
         }
 
