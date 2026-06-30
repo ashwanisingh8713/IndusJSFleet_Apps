@@ -464,7 +464,7 @@ private fun TripDetailsCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
-                        shape = RoundedCornerShape(FleetTokens.Radius.S),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = FleetStatusColors.FleetOnRoute.copy(alpha = 0.15f)
                     ) {
                         Text(
@@ -502,7 +502,7 @@ private fun TripDetailsCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Surface(
-                        shape = RoundedCornerShape(FleetTokens.Radius.S),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = FleetColors.tripCancelled.copy(alpha = 0.15f)
                     ) {
                         Text(
@@ -571,7 +571,7 @@ private fun CostEntryRowCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Surface(
-                    shape = RoundedCornerShape(FleetTokens.Radius.S),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = if (entry.isValid)
                         MaterialTheme.colorScheme.primary
                     else

@@ -188,7 +188,7 @@ internal fun PaymentTypeBadge(type: String) {
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(FleetTokens.Radius.S))
+            .clip(RoundedCornerShape(FleetTokens.Radius.M))
             .background(bgColor)
             .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
     ) {

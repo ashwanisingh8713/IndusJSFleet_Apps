@@ -294,7 +294,7 @@ private fun TripCard(
                             .size(FleetTokens.Height.ButtonMedium)
                             .background(
                                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                                shape = RoundedCornerShape(FleetTokens.Radius.ML)
+                                shape = RoundedCornerShape(FleetTokens.Radius.L)
                             ),
                         contentAlignment = Alignment.Center
                     ) {
@@ -499,7 +499,7 @@ private fun RouteSection(trip: Trip) {
                         .height(FleetTokens.Spacing.XL)
                         .background(
                             color = MaterialTheme.colorScheme.outlineVariant,
-                            shape = RoundedCornerShape(FleetTokens.Radius.XS)
+                            shape = RoundedCornerShape(FleetTokens.Radius.M)
                         )
                 )
             }
@@ -536,7 +536,7 @@ private fun RouteSection(trip: Trip) {
                             .height(FleetTokens.Spacing.XL)
                             .background(
                                 color = MaterialTheme.colorScheme.outlineVariant,
-                                shape = RoundedCornerShape(FleetTokens.Radius.XS)
+                                shape = RoundedCornerShape(FleetTokens.Radius.M)
                             )
                     )
                 }

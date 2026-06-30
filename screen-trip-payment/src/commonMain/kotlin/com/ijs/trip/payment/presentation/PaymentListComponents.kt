@@ -278,7 +278,7 @@ internal fun PaymentCard(
             ) {
                 // Trip ID badge
                 Surface(
-                    shape = RoundedCornerShape(FleetTokens.Radius.S),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
@@ -291,7 +291,7 @@ internal fun PaymentCard(
                 }
                 // Payment Type badge
                 Surface(
-                    shape = RoundedCornerShape(FleetTokens.Radius.S),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
                 ) {
                     Text(
@@ -337,7 +337,7 @@ internal fun PaymentCard(
                 ) {
                     tripInfo.vehicleRegistration?.let { vehicle ->
                         Surface(
-                            shape = RoundedCornerShape(FleetTokens.Radius.S),
+                            shape = RoundedCornerShape(FleetTokens.Radius.M),
                             color = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             Text(
@@ -418,7 +418,7 @@ internal fun PaymentCard(
             // Payment received date with label
             payment.paymentDate?.let { date ->
                 Surface(
-                    shape = RoundedCornerShape(FleetTokens.Radius.S),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = MaterialTheme.colorScheme.tertiaryContainer
                 ) {
                     Text(
@@ -463,7 +463,7 @@ internal fun PaymentStatusBadge(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(FleetTokens.Radius.S),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = backgroundColor
     ) {
         Text(

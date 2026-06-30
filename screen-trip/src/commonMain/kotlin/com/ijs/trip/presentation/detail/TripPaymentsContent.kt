@@ -267,7 +267,7 @@ private fun PaymentListItem(
                 // Payment mode icon
                 Surface(
                     modifier = Modifier.size(FleetTokens.Height.FilterChipRow),
-                    shape = RoundedCornerShape(FleetTokens.Radius.ML),
+                    shape = RoundedCornerShape(FleetTokens.Radius.L),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -403,7 +403,7 @@ private fun PaymentStatusBadge(
     }
 
     Surface(
-        shape = RoundedCornerShape(FleetTokens.Radius.S),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = bgColor
     ) {
         Text(

@@ -483,7 +483,7 @@ private fun DriverCostEntryRowCard(
                 // Deduction badge
                 if (entry.isDeductionType) {
                     Surface(
-                        shape = RoundedCornerShape(FleetTokens.Radius.S),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = MaterialTheme.colorScheme.errorContainer
                     ) {
                         Text(
@@ -743,7 +743,7 @@ private fun CostHistoryItem(cost: DriverCostDto) {
                     )
                     if (isDeduction) {
                         Surface(
-                            shape = RoundedCornerShape(FleetTokens.Radius.S),
+                            shape = RoundedCornerShape(FleetTokens.Radius.M),
                             color = MaterialTheme.colorScheme.error
                         ) {
                             Text(

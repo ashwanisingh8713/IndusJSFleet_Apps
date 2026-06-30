@@ -987,7 +987,7 @@ private fun PricingSection(
     ) {
             // Subtitle pill
             Surface(
-                shape = RoundedCornerShape(FleetTokens.Radius.S),
+                shape = RoundedCornerShape(FleetTokens.Radius.M),
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
             ) {
                 Text(

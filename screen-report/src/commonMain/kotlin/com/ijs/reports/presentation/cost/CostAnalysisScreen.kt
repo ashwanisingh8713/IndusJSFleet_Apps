@@ -444,14 +444,14 @@ private fun CostTypeCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(FleetTokens.Height.ProgressBar)
-                    .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                    .clip(RoundedCornerShape(FleetTokens.Radius.M))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(progressFraction)
                         .fillMaxHeight()
-                        .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.M))
                         .background(MaterialTheme.colorScheme.primary)
                 )
             }

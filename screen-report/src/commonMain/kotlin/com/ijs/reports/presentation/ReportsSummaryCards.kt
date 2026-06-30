@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.fleet.core.util.formatCurrencyFull
 import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
@@ -58,7 +58,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                 // Revenue
                 Box(
                     Modifier.weight(1f)
-                        .clip(RoundedCornerShape(FleetTokens.Radius.ML))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.L))
                         .background(ReportsColors.ProfitGreen.copy(alpha = 0.08f))
                         .padding(FleetTokens.Spacing.M)
                 ) {
@@ -69,7 +69,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                             color = ReportsColors.ProfitGreen
                         )
                         Text(
-                            formatCurrency(summary.totalRevenue),
+                            formatCurrencyFull(summary.totalRevenue),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = ReportsColors.ProfitGreen
@@ -79,7 +79,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                 // Expenses
                 Box(
                     Modifier.weight(1f)
-                        .clip(RoundedCornerShape(FleetTokens.Radius.ML))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.L))
                         .background(ReportsColors.LossRed.copy(alpha = 0.08f))
                         .padding(FleetTokens.Spacing.M)
                 ) {
@@ -90,7 +90,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                             color = ReportsColors.LossRed
                         )
                         Text(
-                            formatCurrency(summary.totalExpenses),
+                            formatCurrencyFull(summary.totalExpenses),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = ReportsColors.LossRed
@@ -123,13 +123,13 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                 Spacer(Modifier.height(FleetTokens.Spacing.XS))
                 Box(
                     Modifier.fillMaxWidth().height(FleetTokens.Height.ProgressBar)
-                        .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.M))
                         .background(ReportsColors.ProfitGreen.copy(alpha = 0.15f))
                 ) {
                     Box(
                         Modifier.fillMaxWidth(expenseRatio.coerceIn(0f, 1f))
                             .fillMaxHeight()
-                            .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                            .clip(RoundedCornerShape(FleetTokens.Radius.M))
                             .background(
                                 if (expenseRatio > 0.85f) ReportsColors.LossRed.copy(alpha = 0.7f)
                                 else if (expenseRatio > 0.7f) ReportsColors.WarningAmber.copy(alpha = 0.7f)
@@ -144,7 +144,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
             // Row 3: Net profit/loss result
             Box(
                 Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(FleetTokens.Radius.ML))
+                    .clip(RoundedCornerShape(FleetTokens.Radius.L))
                     .background(statusColor.copy(alpha = 0.08f))
                     .padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.M)
             ) {
@@ -182,7 +182,7 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            "${if (isProfit) "+" else "-"}${formatCurrency(abs(summary.netProfit))}",
+                            "${if (isProfit) "+" else "-"}${formatCurrencyFull(abs(summary.netProfit))}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = statusColor
@@ -321,13 +321,13 @@ private fun PerformanceRow(
             Spacer(Modifier.height(FleetTokens.Spacing.XS))
             Box(
                 Modifier.fillMaxWidth().height(FleetTokens.Height.ProgressBar)
-                    .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                    .clip(RoundedCornerShape(FleetTokens.Radius.M))
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             ) {
                 Box(
                     Modifier.fillMaxWidth(barFraction.coerceIn(0f, 1f))
                         .fillMaxHeight()
-                        .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.M))
                         .background(healthColor)
                 )
             }

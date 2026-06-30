@@ -216,7 +216,9 @@ fun FleetMetricTile(
                 text = subLabel,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
-                color = accent,
+                // §3: smallest secondary labels use onSurfaceVariant (sunlight small-glyph legibility),
+                // not the primary/accent tint (DDD fidelity nit 2026-06-30).
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = textAlign,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -237,7 +239,7 @@ fun FleetAccentIconChip(
     Box(
         modifier = Modifier
             .size(chipSize)
-            .clip(RoundedCornerShape(FleetTokens.Radius.ML))
+            .clip(RoundedCornerShape(FleetTokens.Radius.L))
             .background(accent.copy(alpha = 0.16f)),
         contentAlignment = Alignment.Center
     ) {

@@ -40,10 +40,9 @@ object FleetTokens {
 
     object Radius {
         val None: Dp = 0.dp
-        val XS: Dp = 2.dp
-        val S: Dp = 4.dp
+        // Consolidated to {M, L, XL, Pill} (direction §4). XS=2 / S=4 / ML=10 retired 2026-06-30 —
+        // all call sites migrated (XS/S → M, ML → L). XXL kept for the few large containers.
         val M: Dp = 8.dp
-        val ML: Dp = 10.dp
         val L: Dp = 12.dp
         val XL: Dp = 16.dp
         val XXL: Dp = 20.dp
@@ -152,5 +151,96 @@ object FleetTokens {
 
         /** Dropdown menu max height before scrolling. */
         val DropdownMaxHeight: Dp = 240.dp
+    }
+
+    // =============================================
+    // Calm Fintech — semantic shape roles (corner radii)
+    // =============================================
+
+    /**
+     * Named corner radii per component family (direction §4). Components should reference these
+     * rather than raw [Radius] steps. Target set after consolidation: {M, L, XL, Pill}.
+     */
+    object Shape {
+        /** Buttons. */
+        val Button: Dp = Radius.M       // 8
+        /** Chips / pills / segmented-tab pill. */
+        val Chip: Dp = Radius.Pill
+        /** Cards. */
+        val Card: Dp = Radius.L         // 12
+        /** Bottom sheets / large containers. */
+        val Sheet: Dp = Radius.XL       // 16
+    }
+
+    // =============================================
+    // Motion (durations in ms)
+    // =============================================
+
+    /** Standard motion durations (direction §4). Pill animations are capped at [PillCapMillis]. */
+    object Motion {
+        /** Sliding pill / selection (spring). */
+        const val FastSpringMillis: Int = 180
+        /** Nav / page transitions. */
+        const val StandardMillis: Int = 220
+        /** Hard cap for the segmented-tab pill animation. */
+        const val PillCapMillis: Int = 200
+    }
+
+    // =============================================
+    // State-layer alphas (Material interaction overlays)
+    // =============================================
+
+    object StateLayer {
+        const val Hover: Float = 0.08f
+        const val Pressed: Float = 0.12f
+        const val Focus: Float = 0.12f
+        const val Selected: Float = 0.12f
+        /** Disabled content opacity. */
+        const val DisabledContent: Float = 0.38f
+    }
+
+    // =============================================
+    // Focus ring (the focus indicator is this ring, NOT the 12% focus state-layer)
+    // =============================================
+
+    object Focus {
+        /** 2dp ring drawn around the focused element; ≥3:1 against both adjacent surfaces. */
+        val RingWidth: Dp = 2.dp
+    }
+
+    // =============================================
+    // Divider (uses colorScheme.outlineVariant)
+    // =============================================
+
+    object Divider {
+        val Thickness: Dp = 1.dp
+    }
+
+    // =============================================
+    // Numerics — tabular/lining figures for all financial numbers
+    // =============================================
+
+    /**
+     * Apply via `SpanStyle(fontFeatureSettings = FleetTokens.Number.TabularFeature)` (and the Latin
+     * Noto family) so digits align in P&L / costs / Payments / Reports columns regardless of locale.
+     * The SpanStyle helper ships with typography (build step 2).
+     */
+    object Number {
+        const val TabularFeature: String = "tnum"
+    }
+
+    // =============================================
+    // Contrast floor (sunlight-first mandate — direction §9; CI-gated against the WCAG report)
+    // =============================================
+
+    object Contrast {
+        /** Body / label text minimum. */
+        const val BodyMin: Float = 4.5f
+        /** Large text / non-text UI minimum. */
+        const val LargeUiMin: Float = 3.0f
+        /** Target push for primary body text — light. */
+        const val BodyTargetLight: Float = 5.5f
+        /** Target push for primary body text — dark. */
+        const val BodyTargetDark: Float = 7.0f
     }
 }

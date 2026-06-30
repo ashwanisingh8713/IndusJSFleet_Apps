@@ -354,7 +354,7 @@ private fun CleanAlertItem(
                         else -> stringResource(Res.string.alerts_days_left, days)
                     }
                     Surface(
-                        shape = RoundedCornerShape(FleetTokens.Radius.S),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = badgeColor.copy(alpha = 0.15f)
                     ) {
                         Text(
@@ -438,7 +438,7 @@ private fun AlertCountBadge(
     color: Color
 ) {
     Surface(
-        shape = RoundedCornerShape(FleetTokens.Radius.S),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = color.copy(alpha = 0.12f)
     ) {
         Row(

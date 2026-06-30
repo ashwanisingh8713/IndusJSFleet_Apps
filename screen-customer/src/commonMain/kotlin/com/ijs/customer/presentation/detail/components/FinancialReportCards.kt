@@ -194,7 +194,7 @@ internal fun TopVehiclesCard(vehicles: List<TopVehicle>) {
                         Box(
                             modifier = Modifier
                                 .size(FleetTokens.IconSize.Default)
-                                .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                                .clip(RoundedCornerShape(FleetTokens.Radius.M))
                                 .background(
                                     when (index) {
                                         0 -> MaterialTheme.colorScheme.primaryContainer

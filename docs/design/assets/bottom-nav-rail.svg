@@ -1,0 +1,89 @@
+<svg viewBox="0 0 1120 780" xmlns="http://www.w3.org/2000/svg" font-family="'Noto Sans','Segoe UI',sans-serif">
+  <rect width="1120" height="780" fill="#F6F6F4"/>
+  <text x="40" y="46" font-size="26" font-weight="600" fill="#16181D">Bottom Nav + Rail — replaces hamburger drawer</text>
+  <text x="40" y="72" font-size="14" fill="#535D6B">Labels ALWAYS visible · 24dp icon above label · ~80dp budget for 2-line Hindi + safe-area</text>
+
+  <!-- helper: nav item glyphs are simple shapes -->
+  <!-- LIGHT bottom bar EN -->
+  <text x="40" y="116" font-size="15" font-weight="600" fill="#16181D">Compact bottom bar — Light, EN (Home selected)</text>
+  <rect x="40" y="128" width="420" height="86" rx="0" fill="#F2F2F0"/>
+  <line x1="40" y1="128" x2="460" y2="128" stroke="#D8DAE0"/>
+  <!-- selected slot pill -->
+  <rect x="58" y="142" width="64" height="32" rx="16" fill="#E1E4FF"/>
+  <circle cx="90" cy="158" r="9" fill="#3D4EDB"/>
+  <text x="90" y="196" font-size="11" font-weight="500" fill="#3D4EDB" text-anchor="middle">Home</text>
+  <circle cx="174" cy="158" r="9" fill="none" stroke="#535D6B" stroke-width="2"/>
+  <text x="174" y="196" font-size="11" font-weight="500" fill="#535D6B" text-anchor="middle">Trips</text>
+  <circle cx="258" cy="158" r="9" fill="none" stroke="#535D6B" stroke-width="2"/>
+  <text x="258" y="196" font-size="11" font-weight="500" fill="#535D6B" text-anchor="middle">Live Map</text>
+  <circle cx="342" cy="158" r="9" fill="none" stroke="#535D6B" stroke-width="2"/>
+  <text x="342" y="196" font-size="11" font-weight="500" fill="#535D6B" text-anchor="middle">Payments</text>
+  <circle cx="426" cy="158" r="9" fill="none" stroke="#535D6B" stroke-width="2"/>
+  <text x="426" y="196" font-size="11" font-weight="500" fill="#535D6B" text-anchor="middle">More</text>
+
+  <!-- LIGHT bottom bar HINDI (2-line wrap) -->
+  <text x="40" y="252" font-size="15" font-weight="600" fill="#16181D">Compact bottom bar — Light, Hindi (2-line wrap, never clip)</text>
+  <rect x="40" y="264" width="420" height="100" rx="0" fill="#F2F2F0"/>
+  <line x1="40" y1="264" x2="460" y2="264" stroke="#D8DAE0"/>
+  <rect x="58" y="278" width="64" height="32" rx="16" fill="#E1E4FF"/>
+  <circle cx="90" cy="294" r="9" fill="#3D4EDB"/>
+  <text x="90" y="332" font-size="11" font-weight="500" fill="#3D4EDB" text-anchor="middle">होम</text>
+  <circle cx="174" cy="294" r="9" fill="none" stroke="#535D6B" stroke-width="2"/>
+  <text x="174" y="332" font-size="11" font-weight="500" fill="#535D6B" text-anchor="middle">यात्राएँ</text>
+  <circle cx="258" cy="294" r="9" fill="none" stroke="#535D6B" stroke-width="2"/>
+  <text x="258" y="332" font-size="11" font-weight="500" fill="#535D6B" text-anchor="middle">लाइव</text>
+  <text x="258" y="346" font-size="11" font-weight="500" fill="#535D6B" text-anchor="middle">मैप</text>
+  <circle cx="342" cy="294" r="9" fill="none" stroke="#535D6B" stroke-width="2"/>
+  <text x="342" y="332" font-size="11" font-weight="500" fill="#535D6B" text-anchor="middle">भुगतान</text>
+  <circle cx="426" cy="294" r="9" fill="none" stroke="#535D6B" stroke-width="2"/>
+  <text x="426" y="332" font-size="11" font-weight="500" fill="#535D6B" text-anchor="middle">और</text>
+
+  <!-- DARK bottom bar -->
+  <text x="40" y="402" font-size="15" font-weight="600" fill="#16181D">Compact bottom bar — Dark (selected icon = onPrimaryContainer #E1E4FF, NOT primary)</text>
+  <rect x="40" y="414" width="420" height="86" rx="0" fill="#191D24"/>
+  <line x1="40" y1="414" x2="460" y2="414" stroke="#2A303A"/>
+  <rect x="58" y="428" width="64" height="32" rx="16" fill="#2C36A6"/>
+  <circle cx="90" cy="444" r="9" fill="#E1E4FF"/>
+  <text x="90" y="482" font-size="11" font-weight="500" fill="#9AA6FF" text-anchor="middle">Home</text>
+  <circle cx="174" cy="444" r="9" fill="none" stroke="#A6AFBC" stroke-width="2"/>
+  <text x="174" y="482" font-size="11" font-weight="500" fill="#A6AFBC" text-anchor="middle">Trips</text>
+  <circle cx="258" cy="444" r="9" fill="none" stroke="#A6AFBC" stroke-width="2"/>
+  <text x="258" y="482" font-size="11" font-weight="500" fill="#A6AFBC" text-anchor="middle">Live Map</text>
+  <circle cx="342" cy="444" r="9" fill="none" stroke="#A6AFBC" stroke-width="2"/>
+  <text x="342" y="482" font-size="11" font-weight="500" fill="#A6AFBC" text-anchor="middle">Payments</text>
+  <circle cx="426" cy="444" r="9" fill="none" stroke="#A6AFBC" stroke-width="2"/>
+  <text x="426" y="482" font-size="11" font-weight="500" fill="#A6AFBC" text-anchor="middle">More</text>
+
+  <!-- Compact rail (Medium) -->
+  <text x="560" y="116" font-size="15" font-weight="600" fill="#16181D">Compact rail — Medium (~80dp)</text>
+  <rect x="560" y="128" width="92" height="372" fill="#F2F2F0"/>
+  <line x1="652" y1="128" x2="652" y2="500" stroke="#D8DAE0"/>
+  <rect x="576" y="146" width="60" height="44" rx="14" fill="#E1E4FF"/>
+  <circle cx="606" cy="164" r="9" fill="#3D4EDB"/><text x="606" y="186" font-size="10" font-weight="500" fill="#3D4EDB" text-anchor="middle">Home</text>
+  <circle cx="606" cy="226" r="9" fill="none" stroke="#535D6B" stroke-width="2"/><text x="606" y="248" font-size="10" fill="#535D6B" text-anchor="middle">Trips</text>
+  <circle cx="606" cy="288" r="9" fill="none" stroke="#535D6B" stroke-width="2"/><text x="606" y="310" font-size="10" fill="#535D6B" text-anchor="middle">Map</text>
+  <circle cx="606" cy="350" r="9" fill="none" stroke="#535D6B" stroke-width="2"/><text x="606" y="372" font-size="10" fill="#535D6B" text-anchor="middle">Pay</text>
+  <circle cx="606" cy="412" r="9" fill="none" stroke="#535D6B" stroke-width="2"/><text x="606" y="434" font-size="10" fill="#535D6B" text-anchor="middle">More</text>
+
+  <!-- Expanded rail -->
+  <text x="700" y="116" font-size="15" font-weight="600" fill="#16181D">Expanded rail — web/tablet (full labels, Hindi-sized)</text>
+  <rect x="700" y="128" width="220" height="372" fill="#F2F2F0"/>
+  <line x1="920" y1="128" x2="920" y2="500" stroke="#D8DAE0"/>
+  <rect x="714" y="146" width="192" height="44" rx="22" fill="#E1E4FF"/>
+  <circle cx="736" cy="168" r="9" fill="#3D4EDB"/><text x="756" y="173" font-size="13" font-weight="500" fill="#3D4EDB">Home</text>
+  <circle cx="736" cy="222" r="9" fill="none" stroke="#535D6B" stroke-width="2"/><text x="756" y="227" font-size="13" fill="#535D6B">Trips</text>
+  <circle cx="736" cy="270" r="9" fill="none" stroke="#535D6B" stroke-width="2"/><text x="756" y="275" font-size="13" fill="#535D6B">Live Map</text>
+  <circle cx="736" cy="318" r="9" fill="none" stroke="#535D6B" stroke-width="2"/><text x="756" y="323" font-size="13" fill="#535D6B">Payments</text>
+  <line x1="714" y1="350" x2="906" y2="350" stroke="#D8DAE0"/>
+  <circle cx="736" cy="382" r="9" fill="none" stroke="#535D6B" stroke-width="2"/><text x="756" y="387" font-size="13" fill="#535D6B">Vehicles</text>
+  <circle cx="736" cy="426" r="9" fill="none" stroke="#535D6B" stroke-width="2"/><text x="756" y="431" font-size="13" fill="#535D6B">Reports</text>
+  <text x="700" y="528" font-size="11" fill="#535D6B">Expanded inlines More-sheet items. Never a bottom bar here.</text>
+
+  <!-- notes -->
+  <text x="40" y="556" font-size="13" font-weight="600" fill="#16181D">Build notes</text>
+  <text x="40" y="578" font-size="12" fill="#535D6B">• Chrome swap (bar↔rail) reads WINDOW size class (currentWindowAdaptiveInfo / root BoxWithConstraints) — NEVER container rememberFleetBreakpoint.</text>
+  <text x="40" y="598" font-size="12" fill="#535D6B">• Selected: filled icon + primary label + slot pill (primaryContainer). Inactive: outline icon + onSurfaceVariant. Persistent active highlight (fixes drawer selected=false).</text>
+  <text x="40" y="618" font-size="12" fill="#535D6B">• Permission gating (INTERIM): visible if user holds ANY perm in domain; Live Map + Payments visible to all authed. Bar backfills top-4 from visible set — no gaps/shift.</text>
+  <text x="40" y="638" font-size="12" fill="#535D6B">• Motion: outline→filled crossfade ~180ms; slot pill FastSpring; page Standard ~220ms; no bounce. Touch target ≥44dp/item.</text>
+  <text x="40" y="658" font-size="12" fill="#535D6B">• Widest Hindi backfill labels (वाहन वित्त, ग्राहक) must wrap to 2 lines without clip in any slot.</text>
+</svg>

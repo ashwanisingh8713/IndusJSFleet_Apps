@@ -713,7 +713,7 @@ private fun LoanCardContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(FleetTokens.Height.ProgressBar)
-                    .clip(RoundedCornerShape(FleetTokens.Radius.S)),
+                    .clip(RoundedCornerShape(FleetTokens.Radius.M)),
                 color = LoanBlue,
                 trackColor = LoanBlue.copy(alpha = 0.15f)
             )

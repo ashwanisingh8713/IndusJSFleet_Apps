@@ -251,7 +251,7 @@ internal fun TripStateChip(label: String, state: String?) {
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(FleetTokens.Radius.ML))
+            .clip(RoundedCornerShape(FleetTokens.Radius.L))
             .background(bgColor)
             .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
     ) {

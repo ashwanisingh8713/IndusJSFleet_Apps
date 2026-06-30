@@ -320,7 +320,7 @@ private fun PageIndicator(
                 modifier = Modifier
                     .width(width)
                     .height(FleetTokens.Spacing.S)
-                    .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                    .clip(RoundedCornerShape(FleetTokens.Radius.M))
                     .background(color)
             )
         }

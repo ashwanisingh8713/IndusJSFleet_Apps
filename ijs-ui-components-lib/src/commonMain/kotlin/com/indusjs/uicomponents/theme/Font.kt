@@ -8,25 +8,25 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.Font
 
 /**
- * Custom Font Family for Fleet Management App
- * Using Poppins - a modern, geometric sans-serif font that's
- * clean, professional, and highly readable.
+ * Calm Fintech typography font (2026-06) — **Noto Sans (Latin) + Noto Sans Devanagari**, one
+ * metric-compatible super-family so EN and HI rows share metrics and never misalign. Bundled in
+ * `composeResources/font/` so Android/iOS/Web render identical metrics (no reliance on system fonts).
+ * Poppins retired — its wide geometry hurt 12–14sp body and number-dense tables.
+ *
+ * Weights: Regular(400) body · Medium(500) labels/titles · SemiBold(600) headlines + KPI numerics
+ * (the old Bold/ExtraBold shouty scale is gone). Each weight lists the Latin font first and the
+ * Devanagari font as the same-weight fallback so the text engine resolves Devanagari codepoints the
+ * Latin font lacks.
  */
 object FleetFonts {
 
-    /**
-     * Poppins Font Family
-     * - Modern geometric sans-serif
-     * - Excellent readability
-     * - Professional appearance
-     * - Great for both headings and body text
-     */
     @Composable
-    fun poppinsFontFamily(): FontFamily = FontFamily(
-        Font(Res.font.poppins_regular, FontWeight.Normal, FontStyle.Normal),
-        Font(Res.font.poppins_medium, FontWeight.Medium, FontStyle.Normal),
-        Font(Res.font.poppins_semibold, FontWeight.SemiBold, FontStyle.Normal),
-        Font(Res.font.poppins_bold, FontWeight.Bold, FontStyle.Normal),
+    fun notoSansFontFamily(): FontFamily = FontFamily(
+        Font(Res.font.noto_sans_regular, FontWeight.Normal, FontStyle.Normal),
+        Font(Res.font.noto_sans_devanagari_regular, FontWeight.Normal, FontStyle.Normal),
+        Font(Res.font.noto_sans_medium, FontWeight.Medium, FontStyle.Normal),
+        Font(Res.font.noto_sans_devanagari_medium, FontWeight.Medium, FontStyle.Normal),
+        Font(Res.font.noto_sans_semibold, FontWeight.SemiBold, FontStyle.Normal),
+        Font(Res.font.noto_sans_devanagari_semibold, FontWeight.SemiBold, FontStyle.Normal),
     )
 }
-

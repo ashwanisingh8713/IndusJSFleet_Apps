@@ -292,7 +292,7 @@ internal fun EnhancedTripCard(
                     fontWeight = FontWeight.Bold
                 )
                 Surface(
-                    shape = RoundedCornerShape(FleetTokens.Radius.S),
+                    shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
@@ -307,7 +307,7 @@ internal fun EnhancedTripCard(
                 }
             }
             Surface(
-                shape = RoundedCornerShape(FleetTokens.Radius.S),
+                shape = RoundedCornerShape(FleetTokens.Radius.M),
                 color = tripStateColor.copy(alpha = 0.15f)
             ) {
                 Text(

@@ -642,7 +642,7 @@ internal fun DocumentTypeCard(
                 // Document icon
                 Surface(
                     modifier = Modifier.size(FleetTokens.IconSize.XL),
-                    shape = RoundedCornerShape(FleetTokens.Radius.ML),
+                    shape = RoundedCornerShape(FleetTokens.Radius.L),
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Box(contentAlignment = Alignment.Center) {

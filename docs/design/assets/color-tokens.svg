@@ -1,0 +1,63 @@
+<svg viewBox="0 0 1120 760" xmlns="http://www.w3.org/2000/svg" font-family="'Noto Sans','Segoe UI',sans-serif">
+  <rect width="1120" height="760" fill="#F6F6F4"/>
+  <text x="40" y="48" font-size="26" font-weight="600" fill="#16181D">Calm Fintech — Color Tokens</text>
+  <text x="40" y="74" font-size="14" fill="#535D6B">Indigo Trust · anti-rainbow · light + dark · DDD §C1 semantics</text>
+
+  <!-- LIGHT core -->
+  <text x="40" y="118" font-size="16" font-weight="600" fill="#16181D">Core roles — Light</text>
+  <g font-size="11" fill="#16181D">
+    <rect x="40" y="130" width="120" height="70" rx="8" fill="#3D4EDB"/><text x="50" y="150" fill="#fff">primary</text><text x="50" y="166" fill="#fff">#3D4EDB</text><text x="50" y="190" fill="#fff" font-size="10">on #FFFFFF 6.34:1</text>
+    <rect x="168" y="130" width="120" height="70" rx="8" fill="#E1E4FF"/><text x="178" y="150" fill="#161C73">primaryContainer</text><text x="178" y="166" fill="#161C73">#E1E4FF</text>
+    <rect x="296" y="130" width="120" height="70" rx="8" fill="#475569"/><text x="306" y="150" fill="#fff">secondary</text><text x="306" y="166" fill="#fff">#475569</text>
+    <rect x="424" y="130" width="120" height="70" rx="8" fill="#0E7C86"/><text x="434" y="150" fill="#fff">tertiary=info</text><text x="434" y="166" fill="#fff">#0E7C86</text>
+    <rect x="552" y="130" width="120" height="70" rx="8" fill="#FFFFFF" stroke="#8A909B"/><text x="562" y="150" fill="#16181D">surface</text><text x="562" y="166" fill="#16181D">#FFFFFF</text>
+    <rect x="680" y="130" width="120" height="70" rx="8" fill="#F6F6F4" stroke="#D8DAE0"/><text x="690" y="150" fill="#16181D">background</text><text x="690" y="166" fill="#16181D">#F6F6F4</text>
+    <rect x="808" y="130" width="120" height="70" rx="8" fill="#16181D"/><text x="818" y="150" fill="#fff">onSurface</text><text x="818" y="166" fill="#fff">#16181D</text>
+    <rect x="936" y="130" width="120" height="70" rx="8" fill="#535D6B"/><text x="946" y="150" fill="#fff">onSurfaceVar</text><text x="946" y="166" fill="#fff">#535D6B 6.68:1</text>
+  </g>
+
+  <!-- DARK core -->
+  <text x="40" y="244" font-size="16" font-weight="600" fill="#16181D">Core roles — Dark</text>
+  <g font-size="11">
+    <rect x="40" y="256" width="120" height="70" rx="8" fill="#9AA6FF"/><text x="50" y="276" fill="#10165A">primary</text><text x="50" y="292" fill="#10165A">#9AA6FF</text><text x="50" y="316" fill="#10165A" font-size="10">on=#10165A 7.2:1</text>
+    <rect x="168" y="256" width="120" height="70" rx="8" fill="#2C36A6"/><text x="178" y="276" fill="#E1E4FF">primaryContainer</text><text x="178" y="292" fill="#E1E4FF">#2C36A6</text>
+    <rect x="296" y="256" width="120" height="70" rx="8" fill="#9AA7B8"/><text x="306" y="276" fill="#10151C">secondary</text><text x="306" y="292" fill="#10151C">#9AA7B8</text>
+    <rect x="424" y="256" width="120" height="70" rx="8" fill="#46C7D0"/><text x="434" y="276" fill="#10353A">tertiary=info</text><text x="434" y="292" fill="#10353A">#46C7D0</text>
+    <rect x="552" y="256" width="120" height="70" rx="8" fill="#161A20"/><text x="562" y="276" fill="#EDEFF3">surface</text><text x="562" y="292" fill="#EDEFF3">#161A20</text>
+    <rect x="680" y="256" width="120" height="70" rx="8" fill="#0E1014"/><text x="690" y="276" fill="#EDEFF3">background</text><text x="690" y="292" fill="#EDEFF3">#0E1014</text>
+    <rect x="808" y="256" width="120" height="70" rx="8" fill="#EDEFF3"/><text x="818" y="276" fill="#161A20">onSurface</text><text x="818" y="292" fill="#161A20">15.17:1</text>
+    <rect x="936" y="256" width="120" height="70" rx="8" fill="#707A86"/><text x="946" y="276" fill="#EDEFF3">outline</text><text x="946" y="292" fill="#EDEFF3">#707A86 4.01:1</text>
+  </g>
+
+  <!-- Surface ladder -->
+  <text x="40" y="370" font-size="16" font-weight="600" fill="#16181D">Dark surface ladder — 6 distinct steps (fixes #161B22 collapse)</text>
+  <g font-size="10" fill="#EDEFF3">
+    <rect x="40" y="382" width="170" height="56" rx="8" fill="#0B0D11" stroke="#ffffff" stroke-opacity="0.10"/><text x="50" y="404">Lowest #0B0D11</text><text x="50" y="424" fill="#A6AFBC">highlight 10%</text>
+    <rect x="218" y="382" width="170" height="56" rx="8" fill="#13161B" stroke="#ffffff" stroke-opacity="0.10"/><text x="228" y="404">Low #13161B</text><text x="228" y="424" fill="#A6AFBC">10%</text>
+    <rect x="396" y="382" width="170" height="56" rx="8" fill="#161A20" stroke="#ffffff" stroke-opacity="0.07"/><text x="406" y="404">surface #161A20</text><text x="406" y="424" fill="#A6AFBC">7%</text>
+    <rect x="574" y="382" width="170" height="56" rx="8" fill="#191D24" stroke="#ffffff" stroke-opacity="0.06"/><text x="584" y="404">Container #191D24</text><text x="584" y="424" fill="#A6AFBC">6%</text>
+    <rect x="752" y="382" width="170" height="56" rx="8" fill="#222730" stroke="#ffffff" stroke-opacity="0.05"/><text x="762" y="404">High #222730</text><text x="762" y="424" fill="#A6AFBC">5%</text>
+    <rect x="930" y="382" width="150" height="56" rx="8" fill="#2C323C" stroke="#ffffff" stroke-opacity="0.04"/><text x="940" y="404">Highest #2C323C</text><text x="940" y="424" fill="#A6AFBC">4%</text>
+  </g>
+
+  <!-- Semantic chips C1 -->
+  <text x="40" y="478" font-size="16" font-weight="600" fill="#16181D">Semantic set — DDD §C1 (chips/dots/accent only, never card tint)</text>
+  <g font-size="12">
+    <!-- light -->
+    <text x="40" y="506" font-size="12" fill="#535D6B">Light</text>
+    <rect x="40" y="516" width="150" height="46" rx="23" fill="#DCEDE3"/><circle cx="64" cy="539" r="6" fill="#15683A"/><text x="80" y="544" fill="#15683A" font-weight="500">Active</text>
+    <rect x="200" y="516" width="170" height="46" rx="23" fill="#F5E7CB"/><circle cx="224" cy="539" r="6" fill="#855900"/><text x="240" y="544" fill="#855900" font-weight="500">Maintenance</text>
+    <rect x="380" y="516" width="170" height="46" rx="23" fill="#D3EDEF"/><circle cx="404" cy="539" r="6" fill="#0B6A73"/><text x="420" y="544" fill="#0B6A73" font-weight="500">In progress</text>
+    <rect x="560" y="516" width="150" height="46" rx="23" fill="#F7DEDC"/><circle cx="584" cy="539" r="6" fill="#B0302A"/><text x="600" y="544" fill="#B0302A" font-weight="500">Overdue</text>
+    <text x="730" y="544" font-size="11" fill="#535D6B">fg ≥5.5:1 on container</text>
+  </g>
+  <g font-size="12">
+    <text x="40" y="592" font-size="12" fill="#535D6B">Dark</text>
+    <rect x="40" y="602" width="150" height="46" rx="23" fill="#16351F"/><circle cx="64" cy="625" r="6" fill="#5FD08A"/><text x="80" y="630" fill="#5FD08A" font-weight="500">Active</text>
+    <rect x="200" y="602" width="170" height="46" rx="23" fill="#3A2E10"/><circle cx="224" cy="625" r="6" fill="#E8B24A"/><text x="240" y="630" fill="#E8B24A" font-weight="500">Maintenance</text>
+    <rect x="380" y="602" width="170" height="46" rx="23" fill="#10353A"/><circle cx="404" cy="625" r="6" fill="#46C7D0"/><text x="420" y="630" fill="#46C7D0" font-weight="500">In progress</text>
+    <rect x="560" y="602" width="150" height="46" rx="23" fill="#3A1512"/><circle cx="584" cy="625" r="6" fill="#FF8A7E"/><text x="600" y="630" fill="#FF8A7E" font-weight="500">Overdue</text>
+  </g>
+
+  <text x="40" y="700" font-size="12" fill="#535D6B">Retired: blue+teal+orange tri-accent → single indigo. teal→info, orange→warning. Authority for ratios = generated WCAG report (§4).</text>
+</svg>

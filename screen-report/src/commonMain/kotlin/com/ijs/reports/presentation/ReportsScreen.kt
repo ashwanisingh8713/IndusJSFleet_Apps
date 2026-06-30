@@ -229,7 +229,7 @@ private fun ReportsDashboardContent(
         ) {
             item { PeriodFilterGrid(state.selectedPeriod, onPeriodSelect) }
             if (state.isLoading && state.hasSummary) item {
-                LinearProgressIndicator(Modifier.fillMaxWidth().clip(RoundedCornerShape(FleetTokens.Radius.S)))
+                LinearProgressIndicator(Modifier.fillMaxWidth().clip(RoundedCornerShape(FleetTokens.Radius.M)))
             }
             state.error?.let { item { ErrorBanner(it.resolve(), onRetry) } }
             state.summary?.let { summary ->

@@ -65,7 +65,7 @@ internal fun HeroSection(
                 // Receipt number
                 payment.receiptNumber?.let { receipt ->
                     Surface(
-                        shape = RoundedCornerShape(FleetTokens.Radius.S),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                     ) {
                         Text(
@@ -311,7 +311,7 @@ internal fun DetailPaymentStatusBadge(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(FleetTokens.Radius.S),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = backgroundColor
     ) {
         Text(

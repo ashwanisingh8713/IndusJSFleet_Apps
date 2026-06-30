@@ -832,7 +832,7 @@ private fun DocumentUploadDialog(
 @Composable
 private fun FormatChip(format: String) {
     Surface(
-        shape = RoundedCornerShape(FleetTokens.Radius.S),
+        shape = RoundedCornerShape(FleetTokens.Radius.M),
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
         Text(

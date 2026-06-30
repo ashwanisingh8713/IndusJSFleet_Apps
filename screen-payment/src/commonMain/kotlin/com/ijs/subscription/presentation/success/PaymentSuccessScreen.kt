@@ -387,7 +387,7 @@ private fun ReceiptRow(
         )
         if (isHighlight) {
             Surface(
-                shape = RoundedCornerShape(FleetTokens.Radius.S),
+                shape = RoundedCornerShape(FleetTokens.Radius.M),
                 color = scheme.primary.copy(alpha = 0.1f)
             ) {
                 Text(

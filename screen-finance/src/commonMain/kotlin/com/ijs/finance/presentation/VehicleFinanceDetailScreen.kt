@@ -364,7 +364,7 @@ private fun FinanceDetailContent(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(FleetTokens.Spacing.M)
-                                    .clip(RoundedCornerShape(FleetTokens.Radius.ML)),
+                                    .clip(RoundedCornerShape(FleetTokens.Radius.L)),
                                 color = LoanBlue,
                                 trackColor = LoanBlue.copy(alpha = 0.2f)
                             )

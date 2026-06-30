@@ -399,7 +399,7 @@ private fun MaintenanceCostRowCard(
                 ) {
                     // Row number badge
                     Surface(
-                        shape = RoundedCornerShape(FleetTokens.Radius.S),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = if (row.isValid)
                             MaterialTheme.colorScheme.primary
                         else

@@ -124,7 +124,7 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Surface(
-                        shape = RoundedCornerShape(FleetTokens.Radius.S),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = if (isProfit) profitColor.copy(alpha = 0.2f)
                                 else lossColor.copy(alpha = 0.2f)
                     ) {
@@ -250,7 +250,7 @@ internal fun RecentReportCard(
         modifier = Modifier
             .width(RecentReportCardWidth)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(FleetTokens.Radius.ML),
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
         color = if (report.isProfit)
             com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
         else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f)

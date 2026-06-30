@@ -16,7 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.indusjs.fleet.core.util.CostTypeUtils
-import com.indusjs.fleet.core.util.formatCurrency
+import com.indusjs.fleet.core.util.formatCurrencyFull
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.PieChart
 import com.indusjs.uicomponents.components.PieChartColors
@@ -43,7 +43,7 @@ internal fun ExpenseBreakdownSection(breakdown: List<ExpenseBreakdownItem>) {
     FleetSectionCard {
         Column {
             Text(
-                stringResource(Res.string.reports_total_amount, formatCurrency(totalExpenses)),
+                stringResource(Res.string.reports_total_amount, formatCurrencyFull(totalExpenses)),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -120,7 +120,7 @@ private fun ExpenseItemRow(
             // Inline mini bar + fixed numeric columns: bespoke widths, no matching token.
             Box(
                 Modifier.width(40.dp).height(FleetTokens.Spacing.XS)
-                    .clip(RoundedCornerShape(FleetTokens.Radius.XS))
+                    .clip(RoundedCornerShape(FleetTokens.Radius.M))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Box(
@@ -135,7 +135,7 @@ private fun ExpenseItemRow(
                 modifier = Modifier.width(FleetTokens.Height.StepCircle)
             )
             Text(
-                formatCurrency(amount),
+                formatCurrencyFull(amount),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.width(80.dp),
@@ -192,7 +192,7 @@ internal fun VehicleInsightsSection(
                         }
                     }
                     Text(
-                        "+${formatCurrency(it.profit)}",
+                        "+${formatCurrencyFull(it.profit)}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = ReportsColors.ProfitGreen
@@ -236,7 +236,7 @@ internal fun VehicleInsightsSection(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
-                                "-${formatCurrency(vehicle.loss)}",
+                                "-${formatCurrencyFull(vehicle.loss)}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = ReportsColors.LossRed

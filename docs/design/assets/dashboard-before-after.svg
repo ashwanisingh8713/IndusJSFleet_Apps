@@ -1,0 +1,55 @@
+<svg viewBox="0 0 1120 740" xmlns="http://www.w3.org/2000/svg" font-family="'Noto Sans','Segoe UI',sans-serif">
+  <rect width="1120" height="740" fill="#F6F6F4"/>
+  <text x="40" y="46" font-size="26" font-weight="600" fill="#16181D">Dashboard shell — before / after</text>
+
+  <!-- BEFORE -->
+  <text x="120" y="92" font-size="15" font-weight="600" fill="#B0302A" text-anchor="middle">BEFORE — hamburger drawer + Material blue</text>
+  <rect x="40" y="104" width="360" height="600" rx="28" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <rect x="40" y="104" width="360" height="60" rx="28" fill="#1976D2"/><rect x="40" y="134" width="360" height="30" fill="#1976D2"/>
+  <rect x="62" y="126" width="20" height="3" fill="#fff"/><rect x="62" y="133" width="20" height="3" fill="#fff"/><rect x="62" y="140" width="20" height="3" fill="#fff"/>
+  <text x="100" y="142" font-size="15" font-weight="700" fill="#fff">DASHBOARD</text>
+  <!-- open drawer overlay -->
+  <rect x="40" y="164" width="220" height="540" fill="#FFFFFF" stroke="#E0E0E0"/>
+  <rect x="40" y="164" width="220" height="80" fill="#1976D2"/><text x="60" y="210" font-size="13" fill="#fff">Acme Fleet</text>
+  <text x="60" y="280" font-size="13" fill="#1976D2">Dashboard</text>
+  <text x="60" y="312" font-size="13" fill="#555">Vehicles</text>
+  <text x="60" y="344" font-size="13" fill="#555">Drivers</text>
+  <text x="60" y="376" font-size="13" fill="#555">Trips</text>
+  <text x="60" y="408" font-size="13" fill="#555">Customers</text>
+  <text x="60" y="440" font-size="13" fill="#555">Payments</text>
+  <text x="60" y="472" font-size="13" fill="#555">Live Map</text>
+  <text x="60" y="504" font-size="13" fill="#555">Team · Finance · Reports · Profile</text>
+  <text x="220" y="640" font-size="11" fill="#B0302A" text-anchor="middle">11 items hidden behind hamburger;</text>
+  <text x="220" y="656" font-size="11" fill="#B0302A" text-anchor="middle">no persistent location; selected=false everywhere</text>
+
+  <!-- AFTER -->
+  <text x="800" y="92" font-size="15" font-weight="600" fill="#15683A" text-anchor="middle">AFTER — bottom nav + indigo, KPI register</text>
+  <rect x="620" y="104" width="360" height="600" rx="28" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <rect x="620" y="104" width="360" height="60" rx="28" fill="#FFFFFF"/><rect x="620" y="134" width="360" height="30" fill="#FFFFFF"/>
+  <line x1="620" y1="164" x2="980" y2="164" stroke="#D8DAE0"/>
+  <text x="650" y="146" font-size="16" font-weight="600" fill="#16181D">Dashboard</text>
+  <!-- KPI cards: SemiBold numerics, muted labels, tabular -->
+  <rect x="640" y="184" width="156" height="92" rx="12" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <text x="658" y="212" font-size="11" fill="#535D6B">Total Business</text>
+  <text x="658" y="244" font-size="26" font-weight="600" fill="#16181D">₹18,40,000</text>
+  <rect x="804" y="184" width="156" height="92" rx="12" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <text x="822" y="212" font-size="11" fill="#535D6B">Profit</text>
+  <text x="822" y="244" font-size="26" font-weight="600" fill="#3D4EDB">₹4,12,500</text>
+  <rect x="640" y="288" width="320" height="92" rx="12" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <text x="658" y="316" font-size="11" fill="#535D6B">Expenses</text>
+  <text x="658" y="348" font-size="26" font-weight="600" fill="#16181D">₹14,27,500</text>
+  <!-- alert chip -->
+  <rect x="640" y="396" width="320" height="56" rx="12" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <rect x="656" y="412" width="150" height="26" rx="13" fill="#F5E7CB"/><circle cx="676" cy="425" r="5" fill="#855900"/><text x="690" y="429" font-size="11" fill="#855900">2 documents expiring</text>
+  <rect x="640" y="464" width="320" height="56" rx="12" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <rect x="656" y="480" width="120" height="26" rx="13" fill="#D3EDEF"/><circle cx="676" cy="493" r="5" fill="#0B6A73"/><text x="690" y="497" font-size="11" fill="#0B6A73">3 trips active</text>
+  <text x="800" y="560" font-size="11" fill="#15683A" text-anchor="middle">Total Business / Expenses / Profit · status as chips</text>
+
+  <!-- after bottom bar -->
+  <rect x="620" y="644" width="360" height="60" fill="#F2F2F0"/><line x1="620" y1="644" x2="980" y2="644" stroke="#D8DAE0"/>
+  <rect x="640" y="654" width="56" height="26" rx="13" fill="#E1E4FF"/><circle cx="668" cy="667" r="7" fill="#3D4EDB"/><text x="668" y="692" font-size="9" fill="#3D4EDB" text-anchor="middle">Home</text>
+  <circle cx="740" cy="667" r="7" fill="none" stroke="#535D6B" stroke-width="2"/><text x="740" y="692" font-size="9" fill="#535D6B" text-anchor="middle">Trips</text>
+  <circle cx="810" cy="667" r="7" fill="none" stroke="#535D6B" stroke-width="2"/><text x="810" y="692" font-size="9" fill="#535D6B" text-anchor="middle">Map</text>
+  <circle cx="880" cy="667" r="7" fill="none" stroke="#535D6B" stroke-width="2"/><text x="880" y="692" font-size="9" fill="#535D6B" text-anchor="middle">Pay</text>
+  <circle cx="950" cy="667" r="7" fill="none" stroke="#535D6B" stroke-width="2"/><text x="950" y="692" font-size="9" fill="#535D6B" text-anchor="middle">More</text>
+</svg>

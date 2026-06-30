@@ -121,7 +121,7 @@ private fun FleetStatusRatioBar(vehicleStatus: VehicleStatusSummary) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(FleetTokens.Spacing.S)
-                .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                .clip(RoundedCornerShape(FleetTokens.Radius.M))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             if (onRouteFraction > 0) {

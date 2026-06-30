@@ -576,13 +576,13 @@ private fun TripSelectionItem(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(FleetTokens.Radius.ML))
+            .clip(RoundedCornerShape(FleetTokens.Radius.L))
             .clickable { onToggle() },
         color = if (isSelected)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
         else
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        shape = RoundedCornerShape(FleetTokens.Radius.ML)
+        shape = RoundedCornerShape(FleetTokens.Radius.L)
     ) {
         Row(
             modifier = Modifier
@@ -607,7 +607,7 @@ private fun TripSelectionItem(
                     Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                     trip.vehicleNumber?.let {
                         Surface(
-                            shape = RoundedCornerShape(FleetTokens.Radius.S),
+                            shape = RoundedCornerShape(FleetTokens.Radius.M),
                             color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                         ) {
                             Text(

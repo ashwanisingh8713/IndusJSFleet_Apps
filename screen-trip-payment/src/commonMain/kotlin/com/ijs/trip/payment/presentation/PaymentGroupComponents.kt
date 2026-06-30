@@ -138,7 +138,7 @@ internal fun CollapsibleTripGroupCard(
                     ) {
                         // Trip ID badge
                         Surface(
-                            shape = RoundedCornerShape(FleetTokens.Radius.S),
+                            shape = RoundedCornerShape(FleetTokens.Radius.M),
                             color = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Text(
@@ -153,7 +153,7 @@ internal fun CollapsibleTripGroupCard(
                         // Vehicle badge
                         group.tripInfo?.vehicleRegistration?.let { vehicle ->
                             Surface(
-                                shape = RoundedCornerShape(FleetTokens.Radius.S),
+                                shape = RoundedCornerShape(FleetTokens.Radius.M),
                                 color = MaterialTheme.colorScheme.secondaryContainer
                             ) {
                                 Text(
@@ -283,7 +283,7 @@ internal fun CompactPaymentItem(
                 ) {
                     // Payment Type badge
                     Surface(
-                        shape = RoundedCornerShape(FleetTokens.Radius.S),
+                        shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
                     ) {
                         Text(

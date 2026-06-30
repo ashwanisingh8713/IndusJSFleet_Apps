@@ -315,7 +315,7 @@ private fun AlertItemCard(
                     Box(
                         modifier = Modifier
                             .size(FleetTokens.Height.ButtonMedium)
-                            .clip(RoundedCornerShape(FleetTokens.Radius.ML))
+                            .clip(RoundedCornerShape(FleetTokens.Radius.L))
                             .background(alertColor.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
@@ -341,7 +341,7 @@ private fun AlertItemCard(
                             )
                             // Priority badge
                             Surface(
-                                shape = RoundedCornerShape(FleetTokens.Radius.S),
+                                shape = RoundedCornerShape(FleetTokens.Radius.M),
                                 color = priorityColor.copy(alpha = 0.15f)
                             ) {
                                 Text(

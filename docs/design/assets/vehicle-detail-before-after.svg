@@ -1,0 +1,62 @@
+<svg viewBox="0 0 1120 740" xmlns="http://www.w3.org/2000/svg" font-family="'Noto Sans','Segoe UI',sans-serif">
+  <rect width="1120" height="740" fill="#F6F6F4"/>
+  <text x="40" y="46" font-size="26" font-weight="600" fill="#16181D">Vehicle Detail — before / after (6 tabs, Hindi)</text>
+
+  <!-- BEFORE phone -->
+  <text x="120" y="92" font-size="15" font-weight="600" fill="#B0302A" text-anchor="middle">BEFORE</text>
+  <rect x="40" y="104" width="360" height="600" rx="28" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <!-- topbar Material blue -->
+  <rect x="40" y="104" width="360" height="60" rx="28" fill="#1976D2"/>
+  <rect x="40" y="134" width="360" height="30" fill="#1976D2"/>
+  <text x="70" y="142" font-size="15" font-weight="700" fill="#fff">MH 12 AB 1234</text>
+  <!-- underline tabs crowded -->
+  <line x1="40" y1="200" x2="400" y2="200" stroke="#E0E0E0"/>
+  <text x="58" y="190" font-size="11" font-weight="700" fill="#1976D2">अवलोकन</text>
+  <rect x="52" y="196" width="56" height="3" fill="#1976D2"/>
+  <text x="120" y="190" font-size="11" fill="#888">यात्रा…</text>
+  <text x="178" y="190" font-size="11" fill="#888">लाग…</text>
+  <text x="232" y="190" font-size="11" fill="#888">मा…</text>
+  <text x="280" y="190" font-size="11" fill="#888">दस्त…</text>
+  <text x="344" y="190" font-size="11" fill="#888">इ…</text>
+  <text x="220" y="230" font-size="11" fill="#B0302A" text-anchor="middle">labels truncated · weight-toggle reflow · ALL-CAPS topbar</text>
+  <!-- body rainbow cards -->
+  <rect x="60" y="250" width="320" height="70" rx="8" fill="#E3F2FD"/><text x="76" y="278" font-size="12" fill="#1976D2">Status: Active</text>
+  <rect x="60" y="332" width="320" height="70" rx="8" fill="#FFF3E0"/><text x="76" y="360" font-size="12" fill="#FF5722">Maintenance due</text>
+  <rect x="60" y="414" width="320" height="70" rx="8" fill="#E0F7FA"/><text x="76" y="442" font-size="12" fill="#0097A7">In progress</text>
+  <text x="220" y="520" font-size="11" fill="#B0302A" text-anchor="middle">whole-card tint rainbow (blue/teal/orange)</text>
+
+  <!-- AFTER phone -->
+  <text x="800" y="92" font-size="15" font-weight="600" fill="#15683A" text-anchor="middle">AFTER</text>
+  <rect x="620" y="104" width="360" height="600" rx="28" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <!-- topbar surface -->
+  <rect x="620" y="104" width="360" height="60" rx="28" fill="#FFFFFF"/>
+  <rect x="620" y="134" width="360" height="30" fill="#FFFFFF"/>
+  <line x1="620" y1="164" x2="980" y2="164" stroke="#D8DAE0"/>
+  <text x="650" y="146" font-size="16" font-weight="600" fill="#16181D">MH 12 AB 1234</text>
+  <!-- segmented scroll pill row -->
+  <rect x="640" y="184" width="320" height="50" rx="25" fill="#E4E4E2"/>
+  <rect x="646" y="190" width="104" height="38" rx="19" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <text x="698" y="214" font-size="13" font-weight="500" fill="#16181D" text-anchor="middle">अवलोकन</text>
+  <text x="800" y="214" font-size="13" font-weight="500" fill="#535D6B" text-anchor="middle">यात्राएँ</text>
+  <text x="900" y="214" font-size="13" font-weight="500" fill="#535D6B" text-anchor="middle">लागत</text>
+  <rect x="930" y="184" width="30" height="50" fill="url(#vf)"/>
+  <defs><linearGradient id="vf" x1="0" x2="1"><stop offset="0" stop-color="#E4E4E2" stop-opacity="0"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient></defs>
+  <text x="800" y="256" font-size="11" fill="#15683A" text-anchor="middle">segmented pill · auto-scroll active · right-edge fade · no clip</text>
+  <!-- body calm cards with chips -->
+  <rect x="640" y="276" width="320" height="68" rx="12" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <rect x="656" y="296" width="92" height="28" rx="14" fill="#DCEDE3"/><circle cx="676" cy="310" r="5" fill="#15683A"/><text x="690" y="314" font-size="11" fill="#15683A">सक्रिय</text>
+  <text x="800" y="314" font-size="13" font-weight="600" fill="#16181D">₹2,50,000</text>
+  <rect x="640" y="356" width="320" height="68" rx="12" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <rect x="656" y="376" width="120" height="28" rx="14" fill="#F5E7CB"/><circle cx="676" cy="390" r="5" fill="#855900"/><text x="690" y="394" font-size="11" fill="#855900">रखरखाव</text>
+  <rect x="640" y="436" width="320" height="68" rx="12" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <rect x="656" y="456" width="120" height="28" rx="14" fill="#D3EDEF"/><circle cx="676" cy="470" r="5" fill="#0B6A73"/><text x="690" y="474" font-size="11" fill="#0B6A73">प्रगति में</text>
+  <text x="800" y="540" font-size="11" fill="#15683A" text-anchor="middle">calm neutral cards · status as chips only · tabular ₹</text>
+
+  <!-- bottom bars on both -->
+  <rect x="620" y="644" width="360" height="60" fill="#F2F2F0"/><line x1="620" y1="644" x2="980" y2="644" stroke="#D8DAE0"/>
+  <rect x="640" y="654" width="56" height="26" rx="13" fill="#E1E4FF"/><text x="668" y="690" font-size="9" fill="#3D4EDB" text-anchor="middle">Home</text>
+  <text x="740" y="690" font-size="9" fill="#535D6B" text-anchor="middle">Trips</text>
+  <text x="810" y="690" font-size="9" fill="#535D6B" text-anchor="middle">Map</text>
+  <text x="880" y="690" font-size="9" fill="#535D6B" text-anchor="middle">Pay</text>
+  <text x="950" y="690" font-size="9" fill="#535D6B" text-anchor="middle">More</text>
+</svg>

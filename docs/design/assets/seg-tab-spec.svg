@@ -1,0 +1,71 @@
+<svg viewBox="0 0 1120 720" xmlns="http://www.w3.org/2000/svg" font-family="'Noto Sans','Segoe UI',sans-serif">
+  <rect width="1120" height="720" fill="#F6F6F4"/>
+  <text x="40" y="46" font-size="26" font-weight="600" fill="#16181D">Segmented Tab — states &amp; redlines</text>
+  <text x="40" y="72" font-size="14" fill="#535D6B">Replaces underline FleetTabBar · FleetTab&lt;T&gt; API preserved · constant Medium weight (no reflow)</text>
+
+  <!-- LIGHT rest+selected -->
+  <text x="40" y="116" font-size="15" font-weight="600" fill="#16181D">Light — rest + selected (B1: pill has 1px outlineVariant hairline + track = surfaceContainerHighest)</text>
+  <rect x="40" y="130" width="540" height="56" rx="28" fill="#E4E4E2"/>
+  <rect x="46" y="136" width="172" height="44" rx="22" fill="#FFFFFF" stroke="#D8DAE0" stroke-width="1"/>
+  <text x="132" y="163" font-size="14" font-weight="500" fill="#16181D" text-anchor="middle">Overview</text>
+  <text x="312" y="163" font-size="14" font-weight="500" fill="#535D6B" text-anchor="middle">Trips</text>
+  <text x="470" y="163" font-size="14" font-weight="500" fill="#535D6B" text-anchor="middle">Costs</text>
+  <!-- redline callouts -->
+  <text x="600" y="150" font-size="11" fill="#3D4EDB">▲ active pill: surface #FFFFFF, Radius.Pill,</text>
+  <text x="600" y="165" font-size="11" fill="#3D4EDB">   1px #D8DAE0 hairline + soft shadow</text>
+  <text x="600" y="182" font-size="11" fill="#535D6B">track: #E4E4E2 (deepened for glare delta)</text>
+
+  <!-- LIGHT pressed + disabled + badge -->
+  <text x="40" y="226" font-size="15" font-weight="600" fill="#16181D">Light — pressed · disabled · neutral badge</text>
+  <rect x="40" y="240" width="540" height="56" rx="28" fill="#E4E4E2"/>
+  <!-- pressed segment (state layer) -->
+  <rect x="46" y="246" width="172" height="44" rx="22" fill="#16181D" fill-opacity="0.12"/>
+  <text x="132" y="273" font-size="14" font-weight="500" fill="#16181D" text-anchor="middle">Overview</text>
+  <text x="132" y="290" font-size="9" fill="#535D6B" text-anchor="middle">pressed 12% + scale .98</text>
+  <text x="300" y="273" font-size="14" font-weight="500" fill="#16181D" fill-opacity="0.38" text-anchor="middle">Route</text>
+  <text x="300" y="290" font-size="9" fill="#535D6B" text-anchor="middle">disabled 38%</text>
+  <!-- badge -->
+  <text x="452" y="273" font-size="14" font-weight="500" fill="#535D6B" text-anchor="middle">Docs</text>
+  <rect x="486" y="256" width="30" height="20" rx="10" fill="#E4E4E2" stroke="#D8DAE0"/>
+  <text x="501" y="270" font-size="11" fill="#535D6B" text-anchor="middle">3</text>
+  <text x="600" y="268" font-size="11" fill="#535D6B">neutral badge: surfaceContainerHighest + onSurfaceVariant</text>
+  <text x="600" y="284" font-size="11" fill="#535D6B">(red/primary reserved for true-alert tabs only)</text>
+
+  <!-- DARK -->
+  <text x="40" y="336" font-size="15" font-weight="600" fill="#16181D">Dark — rest + selected (1px top-highlight 4% on active pill)</text>
+  <rect x="40" y="350" width="540" height="56" rx="28" fill="#222730"/>
+  <rect x="46" y="356" width="172" height="44" rx="22" fill="#2C323C" stroke="#ffffff" stroke-opacity="0.04"/>
+  <text x="132" y="383" font-size="14" font-weight="500" fill="#EDEFF3" text-anchor="middle">Overview</text>
+  <text x="312" y="383" font-size="14" font-weight="500" fill="#A6AFBC" text-anchor="middle">Trips</text>
+  <text x="470" y="383" font-size="14" font-weight="500" fill="#A6AFBC" text-anchor="middle">Costs</text>
+  <text x="600" y="378" font-size="11" fill="#A6AFBC">active pill: surfaceContainerHighest #2C323C</text>
+  <text x="600" y="393" font-size="11" fill="#A6AFBC">+ 1px white 4% top-highlight (crush fallback)</text>
+
+  <!-- Motion -->
+  <text x="40" y="446" font-size="15" font-weight="600" fill="#16181D">Motion — sliding pill (FastSpring ~180ms, x + width together)</text>
+  <rect x="40" y="460" width="540" height="56" rx="28" fill="#E4E4E2"/>
+  <rect x="218" y="466" width="120" height="44" rx="22" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <path d="M150 488 H210" stroke="#3D4EDB" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="278" y="493" font-size="13" font-weight="500" fill="#16181D" text-anchor="middle">Trips</text>
+  <text x="600" y="486" font-size="11" fill="#535D6B">width animates between EN/HI segment widths;</text>
+  <text x="600" y="502" font-size="11" fill="#535D6B">labels crossfade; cap ≤200ms; no weight toggle</text>
+  <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3D4EDB"/></marker></defs>
+
+  <!-- Scroll fallback Hindi 6 tabs -->
+  <text x="40" y="556" font-size="15" font-weight="600" fill="#16181D">Scroll fallback — Vehicle Detail, 6 Hindi tabs (B2: auto-scroll active in + right-edge fade)</text>
+  <rect x="40" y="570" width="700" height="58" rx="29" fill="#E4E4E2"/>
+  <rect x="46" y="576" width="120" height="46" rx="23" fill="#FFFFFF" stroke="#D8DAE0"/>
+  <text x="106" y="604" font-size="14" font-weight="500" fill="#16181D" text-anchor="middle">अवलोकन</text>
+  <text x="232" y="604" font-size="14" font-weight="500" fill="#535D6B" text-anchor="middle">यात्राएँ</text>
+  <text x="350" y="604" font-size="14" font-weight="500" fill="#535D6B" text-anchor="middle">लागत</text>
+  <text x="452" y="604" font-size="14" font-weight="500" fill="#535D6B" text-anchor="middle">मार्ग</text>
+  <text x="566" y="604" font-size="14" font-weight="500" fill="#535D6B" text-anchor="middle">दस्तावेज़</text>
+  <text x="688" y="604" font-size="14" font-weight="500" fill="#535D6B" text-anchor="middle">इति…</text>
+  <rect x="690" y="570" width="50" height="58" rx="0" fill="url(#fade)"/>
+  <defs><linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="#E4E4E2" stop-opacity="0"/><stop offset="1" stop-color="#F6F6F4" stop-opacity="1"/></linearGradient></defs>
+  <text x="760" y="595" font-size="11" fill="#535D6B">measured-overflow trigger (§6)</text>
+  <text x="760" y="611" font-size="11" fill="#535D6B">on ALL breakpoints — incl. tablet/web</text>
+
+  <text x="40" y="678" font-size="12" fill="#535D6B">Rebuild on SubcomposeLayout (Material3 TabRow can't host pill shadow/highlight/press). Min-width content-sized segments, never fixed to EN width.</text>
+  <text x="40" y="700" font-size="12" fill="#535D6B">Accessibility: each segment ≥44dp tall, contentDescription preserved, AA selected-label contrast.</text>
+</svg>

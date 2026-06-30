@@ -400,7 +400,7 @@ private fun RoleSelectionCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
-        shape = RoundedCornerShape(FleetTokens.Radius.ML),
+        shape = RoundedCornerShape(FleetTokens.Radius.L),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -424,7 +424,7 @@ private fun RoleSelectionCard(
             // Icon on left
             Surface(
                 modifier = Modifier.size(FleetTokens.IconSize.XL),
-                shape = RoundedCornerShape(FleetTokens.Radius.ML),
+                shape = RoundedCornerShape(FleetTokens.Radius.L),
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                 } else {

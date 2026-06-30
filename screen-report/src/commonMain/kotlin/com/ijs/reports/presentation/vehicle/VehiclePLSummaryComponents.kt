@@ -355,7 +355,7 @@ internal fun SimpleBarChart(results: List<VehicleProfitLoss>) {
                     modifier = Modifier
                         .weight(1f)
                         .height(BarChartBarHeight)
-                        .clip(RoundedCornerShape(FleetTokens.Radius.S))
+                        .clip(RoundedCornerShape(FleetTokens.Radius.M))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Box(

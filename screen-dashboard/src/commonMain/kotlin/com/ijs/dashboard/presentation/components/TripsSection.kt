@@ -175,7 +175,7 @@ private fun OngoingTripItem(trip: OngoingTrip) {
             }
             // Status badge
             Surface(
-                shape = RoundedCornerShape(FleetTokens.Radius.S),
+                shape = RoundedCornerShape(FleetTokens.Radius.M),
                 color = FleetStatusColors.FleetOnRoute.copy(alpha = 0.15f)
             ) {
                 Text(

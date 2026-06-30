@@ -140,7 +140,7 @@ internal fun CostOverviewSection(
                                 modifier = Modifier
                                     .weight(1f)
                                     .heightIn(min = FleetTokens.Height.MinTouchTarget)
-                                    .clip(RoundedCornerShape(FleetTokens.Radius.ML))
+                                    .clip(RoundedCornerShape(FleetTokens.Radius.L))
                                     .background(
                                         if (isSelected) MaterialTheme.colorScheme.primary
                                         else Color.Transparent

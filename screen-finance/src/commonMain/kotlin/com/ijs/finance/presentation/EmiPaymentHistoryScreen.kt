@@ -460,7 +460,7 @@ private fun PendingPaymentCard(payment: LoanPayment) {
                     )
                     if (payment.isOverdue) {
                         Surface(
-                            shape = RoundedCornerShape(FleetTokens.Radius.S),
+                            shape = RoundedCornerShape(FleetTokens.Radius.M),
                             color = CriticalRed.copy(alpha = 0.15f)
                         ) {
                             Text(
