@@ -9,23 +9,31 @@ package com.indusjs.fleet.core.network
 object ApiConfig {
 
 
-    // ── Active base URL ───────────────────────────────────────────────
-    // A REAL device cannot reach 10.0.2.2 — that address is only the Android *emulator's* alias for
-    // the host machine's localhost, so on a physical phone every request times out. Point at the dev
-    // machine's LAN IP instead, so a phone on the SAME Wi-Fi reaches the local backend (which binds
-    // to *:8081). Update this IP when your machine's network changes (`ipconfig getifaddr en0`).
-    //
-    // Alternatives (swap the active line below):
-    //   • Emulator-only host loopback: "http://10.0.2.2:8081/api/v1"
-    //   • Cloud Run (deployed):        "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
-    const val BASE_URL = "http://192.168.1.8:8081/api/v1"
+    // ── Dev base URLs (the active one is chosen at runtime per platform/device) ──────
+    // A REAL device cannot reach 10.0.2.2 — that's only the Android *emulator's* alias for the host
+    // machine's localhost. So the DEFAULT is the dev machine's LAN IP, reachable from a physical
+    // phone on the SAME Wi-Fi (the backend binds to *:8081), the iOS simulator, and web. The Android
+    // app shell (FleetApplication) overrides it to the emulator loopback when it detects an emulator,
+    // so ONE build runs on both the emulator AND a real device.
+    // Update LOCAL_LAN_BASE_URL when your machine's network changes (`ipconfig getifaddr en0`) and
+    // keep androidApp's network_security_config.xml in sync.
+    const val LOCAL_LAN_BASE_URL = "http://192.168.1.8:8081/api/v1"
+    const val ANDROID_EMULATOR_BASE_URL = "http://10.0.2.2:8081/api/v1"
+    // const val CLOUD_RUN_BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
 
     /**
-     * Server origin without the "/api/v1" suffix.
-     * Backend-issued relative URLs (e.g. document download_url) already include
-     * "/api/v1", so prefix them with BASE_ORIGIN, NOT BASE_URL, to avoid double "/api/v1".
+     * Active API base URL. Defaults to the LAN IP; set ONCE at startup before any network call
+     * (see FleetApplication for the Android emulator override). It is read per-request, so updating
+     * it before the first request is sufficient.
      */
-    val BASE_ORIGIN: String = BASE_URL.removeSuffix("/api/v1")
+    var BASE_URL: String = LOCAL_LAN_BASE_URL
+
+    /**
+     * Server origin without the "/api/v1" suffix. Computed (get()) so it always reflects the current
+     * [BASE_URL]. Backend-issued relative URLs (e.g. document download_url) already include "/api/v1",
+     * so prefix them with BASE_ORIGIN, NOT BASE_URL, to avoid double "/api/v1".
+     */
+    val BASE_ORIGIN: String get() = BASE_URL.removeSuffix("/api/v1")
 
     /**
      * Google Places API Key for location autocomplete.

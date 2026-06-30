@@ -1,6 +1,7 @@
 package com.ijs.vehicle.presentation.detail
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -633,6 +634,8 @@ internal fun DocumentTypeCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    // The whole row is the upload affordance (the subtitle reads "Not uploaded").
+                    .clickable { showUploadConfirmDialog = true }
                     .padding(FleetTokens.Spacing.L),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -674,14 +677,20 @@ internal fun DocumentTypeCard(
 
                 Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
 
-                // Upload button
-                FleetButton(
-                    text = stringResource(Res.string.vehicle_docs_upload),
+                // Upload — FIXED-size icon button. A labelled FleetButton here, as an unweighted Row
+                // child, would be measured against the full remaining width → Compact → fillMaxWidth,
+                // eating the row and crushing the name column to one character per line.
+                IconButton(
                     onClick = { showUploadConfirmDialog = true },
-                    variant = ButtonVariant.PRIMARY,
-                    size = ButtonSize.SMALL,
-                    modifier = Modifier.widthIn(min = 80.dp)
-                )
+                    modifier = Modifier.size(FleetTokens.Height.MinTouchTarget)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_upload),
+                        contentDescription = stringResource(Res.string.vehicle_docs_upload),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(FleetTokens.IconSize.M)
+                    )
+                }
             }
         }
     }

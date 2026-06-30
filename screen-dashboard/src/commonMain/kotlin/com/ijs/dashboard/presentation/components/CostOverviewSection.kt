@@ -237,13 +237,21 @@ internal fun CostOverviewSection(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
                     ) {
+                        // Show all three figures so the relationship is explicit:
+                        // Total Business (money in) − Expenses (money out) = Profit (kept).
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
                         ) {
                             MetricTile(
                                 modifier = Modifier.weight(1f),
-                                iconRes = Res.drawable.ic_cost,
+                                label = stringResource(Res.string.reports_revenue),
+                                value = formatCurrency(costOverview.totalRevenue),
+                                accent = MaterialTheme.colorScheme.primary,
+                                valueColor = MaterialTheme.colorScheme.primary
+                            )
+                            MetricTile(
+                                modifier = Modifier.weight(1f),
                                 label = stringResource(Res.string.dashboard_label_expenses),
                                 value = formatCurrency(costOverview.totalExpenses),
                                 accent = expenseColor,
@@ -251,7 +259,6 @@ internal fun CostOverviewSection(
                             )
                             MetricTile(
                                 modifier = Modifier.weight(1f),
-                                iconRes = if (costOverview.isProfit) Res.drawable.ic_trending_up else Res.drawable.ic_trending_down,
                                 label = if (costOverview.isProfit) stringResource(Res.string.reports_profit) else stringResource(Res.string.reports_loss),
                                 value = formatCurrency(kotlin.math.abs(costOverview.profitLoss)),
                                 accent = if (costOverview.isProfit) profitColor else lossColor,

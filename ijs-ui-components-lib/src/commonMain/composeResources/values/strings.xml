@@ -549,7 +549,7 @@
     <string name="reports_trip_pl">Trip Profit &amp; Loss</string>
     <string name="reports_cost_analysis">Cost Analysis</string>
     <string name="reports_consolidated_pl">Consolidated P&amp;L</string>
-    <string name="reports_revenue">Revenue</string>
+    <string name="reports_revenue">Total Business</string>
     <string name="reports_expenses">Expenses</string>
     <string name="reports_profit">Profit</string>
     <string name="reports_loss">Loss</string>
@@ -836,7 +836,7 @@
     <string name="sort_profit_high_low">Profit (High to Low)</string>
     <string name="sort_profit_low_high">Profit (Low to High)</string>
     <string name="sort_loss_high_low">Loss (High to Low)</string>
-    <string name="sort_revenue_high_low">Revenue (High to Low)</string>
+    <string name="sort_revenue_high_low">Business (High to Low)</string>
     <string name="sort_expense_high_low">Expense (High to Low)</string>
     <string name="sort_trips_high_low">Trips (Most to Least)</string>
     <string name="sort_date_newest">Date (Newest First)</string>
@@ -1454,10 +1454,10 @@
     <string name="reports_consolidated_summary_title">Consolidated summary</string>
     <string name="reports_label_total_trips">Total trips</string>
     <string name="reports_label_completed_trips">Completed</string>
-    <string name="reports_label_net_profit_loss">Net %1$s</string>
+    <string name="reports_label_net_profit_loss">%1$s</string>
     <string name="reports_label_margin_pct">Margin: %1$s</string>
-    <string name="reports_label_rev_short">Rev: %1$s</string>
-    <string name="reports_label_revenue_amount">Revenue: %1$s</string>
+    <string name="reports_label_rev_short">Business: %1$s</string>
+    <string name="reports_label_revenue_amount">Total Business: %1$s</string>
     <string name="reports_label_expenses_amount">Expenses: %1$s</string>
     <string name="reports_action_clear">Clear</string>
     <string name="reports_label_from">From</string>
@@ -1544,15 +1544,15 @@
 
     <!-- Vehicle P&L - Fleet Summary -->
     <string name="reports_fleet_summary">Fleet Summary</string>
-    <string name="reports_net_profit_badge">NET PROFIT</string>
-    <string name="reports_net_loss_badge">NET LOSS</string>
+    <string name="reports_net_profit_badge">PROFIT</string>
+    <string name="reports_net_loss_badge">LOSS</string>
     <string name="reports_total">Total</string>
     <string name="reports_profitable">Profitable</string>
     <string name="reports_loss_making">Loss Making</string>
-    <string name="reports_total_revenue">Total Revenue</string>
+    <string name="reports_total_revenue">Total Business</string>
     <string name="reports_total_expenses">Total Expenses</string>
-    <string name="reports_net_profit_label">Net Profit</string>
-    <string name="reports_net_loss_label">Net Loss</string>
+    <string name="reports_net_profit_label">Profit</string>
+    <string name="reports_net_loss_label">Loss</string>
     <string name="reports_vehicle_count">%1$d vehicle(s)</string>
     <string name="reports_vehicle_id_fallback">Vehicle #%1$s</string>
     <string name="reports_trips_count">%1$d trips</string>
@@ -2194,7 +2194,7 @@
     <string name="customer_export_no_payments">No payments to export</string>
     <string name="customer_export_no_financial_data">No financial data to export</string>
     <string name="error_export_pdf_detail">Failed to export PDF: %1$s</string>
-    <string name="trip_actual_price_revenue_label">Actual Price (Revenue)</string>
+    <string name="trip_actual_price_revenue_label">Actual Price</string>
     <string name="trip_actual_price_revenue_hint">Defaults to the quoted price; edit if the customer is billed a different amount</string>
     <string name="error_delete_blocked_active_trip">Can't delete — finish or cancel the active trip first</string>
     <string name="trip_purchase_price_cogs_label">Purchase Price (COGS)</string>

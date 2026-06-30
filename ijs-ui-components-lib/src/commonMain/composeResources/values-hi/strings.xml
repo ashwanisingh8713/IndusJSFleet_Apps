@@ -545,7 +545,7 @@
     <string name="reports_trip_pl">ट्रिप लाभ एवं हानि</string>
     <string name="reports_cost_analysis">लागत विश्लेषण</string>
     <string name="reports_consolidated_pl">समेकित लाभ-हानि</string>
-    <string name="reports_revenue">राजस्व</string>
+    <string name="reports_revenue">कुल कारोबार</string>
     <string name="reports_expenses">खर्चे</string>
     <string name="reports_profit">लाभ</string>
     <string name="reports_loss">हानि</string>
@@ -790,7 +790,7 @@
     <string name="sort_profit_high_low">लाभ (अधिक से कम)</string>
     <string name="sort_profit_low_high">लाभ (कम से अधिक)</string>
     <string name="sort_loss_high_low">हानि (अधिक से कम)</string>
-    <string name="sort_revenue_high_low">राजस्व (अधिक से कम)</string>
+    <string name="sort_revenue_high_low">कारोबार (अधिक से कम)</string>
     <string name="sort_expense_high_low">खर्च (अधिक से कम)</string>
     <string name="sort_trips_high_low">ट्रिप्स (अधिक से कम)</string>
     <string name="sort_date_newest">तारीख (नवीनतम पहले)</string>
@@ -1408,10 +1408,10 @@
     <string name="reports_consolidated_summary_title">समेकित सारांश</string>
     <string name="reports_label_total_trips">कुल ट्रिप्स</string>
     <string name="reports_label_completed_trips">पूर्ण</string>
-    <string name="reports_label_net_profit_loss">शुद्ध %1$s</string>
+    <string name="reports_label_net_profit_loss">%1$s</string>
     <string name="reports_label_margin_pct">मार्जिन: %1$s</string>
-    <string name="reports_label_rev_short">राजस्व: %1$s</string>
-    <string name="reports_label_revenue_amount">राजस्व: %1$s</string>
+    <string name="reports_label_rev_short">कारोबार: %1$s</string>
+    <string name="reports_label_revenue_amount">कुल कारोबार: %1$s</string>
     <string name="reports_label_expenses_amount">खर्चे: %1$s</string>
     <string name="reports_action_clear">साफ़ करें</string>
     <string name="reports_label_from">से</string>
@@ -1672,15 +1672,15 @@
 
     <!-- ==================== Reports - Fleet Summary ==================== -->
     <string name="reports_fleet_summary">बेड़ा सारांश</string>
-    <string name="reports_net_profit_badge">शुद्ध लाभ</string>
-    <string name="reports_net_loss_badge">शुद्ध हानि</string>
+    <string name="reports_net_profit_badge">लाभ</string>
+    <string name="reports_net_loss_badge">हानि</string>
     <string name="reports_total">कुल</string>
     <string name="reports_profitable">लाभदायक</string>
     <string name="reports_loss_making">हानिकारक</string>
-    <string name="reports_total_revenue">कुल राजस्व</string>
+    <string name="reports_total_revenue">कुल कारोबार</string>
     <string name="reports_total_expenses">कुल खर्चे</string>
-    <string name="reports_net_profit_label">शुद्ध लाभ</string>
-    <string name="reports_net_loss_label">शुद्ध हानि</string>
+    <string name="reports_net_profit_label">लाभ</string>
+    <string name="reports_net_loss_label">हानि</string>
     <string name="reports_vehicle_count">%1$d वाहन</string>
     <string name="reports_vehicle_id_fallback">वाहन #%1$s</string>
     <string name="reports_trips_count">%1$d ट्रिप्स</string>
@@ -2150,7 +2150,7 @@
     <string name="customer_export_no_payments">निर्यात के लिए कोई भुगतान नहीं</string>
     <string name="customer_export_no_financial_data">निर्यात के लिए कोई वित्तीय डेटा नहीं</string>
     <string name="error_export_pdf_detail">PDF निर्यात करने में विफल: %1$s</string>
-    <string name="trip_actual_price_revenue_label">वास्तविक मूल्य (राजस्व)</string>
+    <string name="trip_actual_price_revenue_label">वास्तविक मूल्य</string>
     <string name="trip_actual_price_revenue_hint">उद्धृत मूल्य पर डिफ़ॉल्ट; ग्राहक से भिन्न राशि वसूलने पर बदलें</string>
     <string name="error_delete_blocked_active_trip">हटाया नहीं जा सकता — पहले सक्रिय ट्रिप पूरी करें या रद्द करें</string>
     <string name="trip_purchase_price_cogs_label">क्रय मूल्य (लागत)</string>

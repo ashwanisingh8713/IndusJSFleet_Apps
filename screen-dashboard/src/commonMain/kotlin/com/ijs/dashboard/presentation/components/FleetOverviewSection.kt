@@ -64,7 +64,6 @@ internal fun FleetOverviewHeroCard(
                 value = vehicleStatus.total.toString(),
                 label = stringResource(Res.string.org_stats_vehicles),
                 subLabel = stringResource(Res.string.dashboard_count_available, vehicleStatus.available),
-                iconRes = Res.drawable.ic_truck,
                 accent = MaterialTheme.colorScheme.primary,
                 onClick = onVehiclesClick,
                 modifier = Modifier.weight(1f)
@@ -73,7 +72,6 @@ internal fun FleetOverviewHeroCard(
                 value = driverStatus.total.toString(),
                 label = stringResource(Res.string.org_stats_drivers),
                 subLabel = stringResource(Res.string.dashboard_count_available, driverStatus.available),
-                iconRes = Res.drawable.ic_driver,
                 accent = MaterialTheme.colorScheme.secondary,
                 onClick = onDriversClick,
                 modifier = Modifier.weight(1f)
@@ -82,7 +80,6 @@ internal fun FleetOverviewHeroCard(
                 value = tripSummary.total.toString(),
                 label = stringResource(Res.string.org_stats_trips),
                 subLabel = stringResource(Res.string.dashboard_count_active, tripSummary.inProgress),
-                iconRes = Res.drawable.ic_trip,
                 accent = MaterialTheme.colorScheme.tertiary,
                 onClick = onTripsClick,
                 modifier = Modifier.weight(1f)

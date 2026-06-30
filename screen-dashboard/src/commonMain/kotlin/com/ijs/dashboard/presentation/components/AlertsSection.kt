@@ -176,17 +176,13 @@ internal fun AlertsSection(
             // Determine which alerts to display
             val displayAlerts = if (alertsSummary.alerts.isNotEmpty()) alertsSummary.alerts else alerts
 
-            val totalDocs = documentStats?.totalDocuments ?: 0
             val expiredDocs = documentStats?.expiredDocuments ?: 0
             val expiringDocs = documentStats?.expiringDocuments ?: 0
 
-            val hasMissingDocuments = vehicleStatus.total > 0 && totalDocs < vehicleStatus.total
-            val vehiclesWithoutDocs = if (hasMissingDocuments) (vehicleStatus.total - totalDocs).coerceAtLeast(0) else 0
             val hasDocumentIssues = expiredDocs > 0 || expiringDocs > 0
 
             val hasNoAlerts = displayAlerts.isEmpty() &&
                              alertsSummary.totalAlerts == 0 &&
-                             !hasMissingDocuments &&
                              !hasDocumentIssues
 
             if (hasNoAlerts) {
@@ -197,10 +193,11 @@ internal fun AlertsSection(
                     successStyle = true
                 )
             } else {
-                // The missing/expired-document banners are DERIVED nudges, separate from the
-                // counted alerts shown in the header badge (and the "View All" list). Label them
-                // so the badge count doesn't look wrong vs the number of cards rendered.
-                if (hasMissingDocuments || hasDocumentIssues) {
+                // "Missing documents" now arrives as a real backend alert (type MISSING_DOCUMENTS)
+                // inside displayAlerts, so it is rendered AND counted with the alerts below — no more
+                // client-side vehicles-vs-docs derivation. The expired/expiring-document banner is the
+                // one remaining DERIVED nudge (from documentStats), separate from the counted alerts.
+                if (hasDocumentIssues) {
                     Text(
                         text = stringResource(Res.string.alerts_other_reminders),
                         style = MaterialTheme.typography.labelMedium,
@@ -209,21 +206,9 @@ internal fun AlertsSection(
                         modifier = Modifier.padding(bottom = FleetTokens.Spacing.S)
                     )
                 }
-                // Show missing documents warning
-                if (hasMissingDocuments) {
-                    AlertWarningBanner(
-                        iconRes = Res.drawable.ic_edit,
-                        title = stringResource(Res.string.alerts_missing_documents),
-                        message = if (vehiclesWithoutDocs > 0)
-                            stringResource(Res.string.alerts_vehicles_need_docs, vehiclesWithoutDocs)
-                        else
-                            stringResource(Res.string.alerts_vehicles_missing_docs),
-                        isError = true
-                    )
-                }
 
                 // Show expired/expiring documents warning
-                if (!hasMissingDocuments && hasDocumentIssues) {
+                if (hasDocumentIssues) {
                     AlertWarningBanner(
                         iconRes = if (expiredDocs > 0) Res.drawable.ic_warning else Res.drawable.ic_time,
                         title = if (expiredDocs > 0) stringResource(Res.string.alerts_documents_expired) else stringResource(Res.string.alerts_documents_expiring),
@@ -319,11 +304,13 @@ private fun CleanAlertItem(
         AlertType.SYSTEM -> MaterialTheme.colorScheme.primary
         AlertType.DOCUMENT_EXPIRY -> MaterialTheme.colorScheme.error
         AlertType.LICENSE_EXPIRY -> MaterialTheme.colorScheme.error
+        AlertType.MISSING_DOCUMENTS -> MaterialTheme.colorScheme.error
     }
 
     val alertIcon = when (alert.type) {
         AlertType.DOCUMENT_EXPIRY -> Res.drawable.ic_edit
         AlertType.LICENSE_EXPIRY -> Res.drawable.ic_edit
+        AlertType.MISSING_DOCUMENTS -> Res.drawable.ic_edit
         AlertType.MAINTENANCE -> Res.drawable.ic_settings
         AlertType.FUEL_LOW -> Res.drawable.ic_fuel
         else -> Res.drawable.ic_warning
@@ -381,7 +368,7 @@ private fun CleanAlertItem(
                 }
             }
 
-            if (alert.type == AlertType.DOCUMENT_EXPIRY && alert.vehicleRegistrationNumber != null) {
+            if ((alert.type == AlertType.DOCUMENT_EXPIRY || alert.type == AlertType.MISSING_DOCUMENTS) && alert.vehicleRegistrationNumber != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)

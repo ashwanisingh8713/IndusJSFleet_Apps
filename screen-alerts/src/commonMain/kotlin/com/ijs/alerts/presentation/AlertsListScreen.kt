@@ -1,5 +1,6 @@
 package com.ijs.alerts.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,8 +32,19 @@ import com.indusjs.fleet.domain.entity.dashboard.AlertType
 import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+/** Vector icon for each alert type (no emoji). */
+private fun alertIconRes(type: AlertType): DrawableResource = when (type) {
+    AlertType.DOCUMENT_EXPIRY -> Res.drawable.ic_folder
+    AlertType.MISSING_DOCUMENTS -> Res.drawable.ic_edit
+    AlertType.LICENSE_EXPIRY -> Res.drawable.ic_driver
+    AlertType.MAINTENANCE -> Res.drawable.ic_wrench
+    AlertType.FUEL_LOW -> Res.drawable.ic_fuel
+    else -> Res.drawable.ic_warning
+}
 
 /**
  * Alerts List Screen - Shows all alerts with filtering options.
@@ -119,11 +131,7 @@ fun AlertsListScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-                    // Summary Card
-                    AlertsSummaryCard(
-                        summary = state.alertsSummary,
-                        modifier = Modifier.padding(FleetTokens.Spacing.L)
-                    )
+                    Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
                     val alertFilters = buildList {
                         val summary = state.alertsSummary
@@ -193,7 +201,7 @@ fun AlertsListScreen(
                                 AlertsListContract.AlertFilter.DOCUMENTS -> stringResource(Res.string.alerts_no_alerts_for_filter, stringResource(Res.string.alerts_documents).lowercase())
                                 AlertsListContract.AlertFilter.LICENSES -> stringResource(Res.string.alerts_no_alerts_for_filter, stringResource(Res.string.alerts_licenses).lowercase())
                             },
-                            icon = "✅"
+                            iconRes = Res.drawable.ic_check_circle
                         )
                     } else {
                         // Responsive list: 1-up on compact, 2-up on medium/expanded.
@@ -259,160 +267,6 @@ fun AlertsListScreen(
 }
 
 @Composable
-private fun AlertsSummaryCard(
-    summary: AlertsSummary,
-    modifier: Modifier = Modifier
-) {
-    FleetSectionCard(
-        modifier = modifier,
-        elevation = FleetTokens.Elevation.Raised
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(Res.string.alerts_summary),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Surface(
-                    shape = RoundedCornerShape(FleetTokens.Radius.M),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Text(
-                        text = stringResource(Res.string.alerts_total, summary.totalAlerts),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS)
-                    )
-                }
-            }
-
-            // Priority breakdown
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
-            ) {
-                if (summary.criticalAlerts > 0) {
-                    SummaryChip(
-                        count = summary.criticalAlerts,
-                        label = stringResource(Res.string.dashboard_label_critical),
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                if (summary.warningAlerts > 0) {
-                    SummaryChip(
-                        count = summary.warningAlerts,
-                        label = stringResource(Res.string.dashboard_label_warning),
-                        color = FleetStatusColors.FleetMaintenance,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                if (summary.infoAlerts > 0) {
-                    SummaryChip(
-                        count = summary.infoAlerts,
-                        label = stringResource(Res.string.dashboard_label_info),
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            // Detailed breakdown
-            if (summary.documentExpired > 0 || summary.documentExpiring7Days > 0 ||
-                summary.licenseExpired > 0 || summary.licenseExpiring7Days > 0) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "📄 ${stringResource(Res.string.alerts_documents)}",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        if (summary.documentExpired > 0) {
-                            Text(
-                                text = stringResource(Res.string.alerts_count_expired, summary.documentExpired),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                        if (summary.documentExpiring7Days > 0) {
-                            Text(
-                                text = stringResource(Res.string.alerts_count_expiring_soon, summary.documentExpiring7Days),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = FleetStatusColors.FleetMaintenance
-                            )
-                        }
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "📋 ${stringResource(Res.string.alerts_licenses)}",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        if (summary.licenseExpired > 0) {
-                            Text(
-                                text = stringResource(Res.string.alerts_count_expired, summary.licenseExpired),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                        if (summary.licenseExpiring7Days > 0) {
-                            Text(
-                                text = stringResource(Res.string.alerts_count_expiring_soon, summary.licenseExpiring7Days),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = FleetStatusColors.FleetMaintenance
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SummaryChip(
-    count: Int,
-    label: String,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(FleetTokens.Radius.M),
-        color = color.copy(alpha = 0.1f)
-    ) {
-        Column(
-            modifier = Modifier.padding(FleetTokens.Spacing.M),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = count.toString(),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
 private fun AlertItemCard(
     alert: Alert,
     onDismiss: () -> Unit,
@@ -427,14 +281,7 @@ private fun AlertItemCard(
         AlertType.SYSTEM -> MaterialTheme.colorScheme.primary
         AlertType.DOCUMENT_EXPIRY -> MaterialTheme.colorScheme.error
         AlertType.LICENSE_EXPIRY -> MaterialTheme.colorScheme.error
-    }
-
-    val alertIcon = when (alert.type) {
-        AlertType.DOCUMENT_EXPIRY -> "📄"
-        AlertType.LICENSE_EXPIRY -> "📋"
-        AlertType.MAINTENANCE -> "🔧"
-        AlertType.FUEL_LOW -> "⛽"
-        else -> "⚠️"
+        AlertType.MISSING_DOCUMENTS -> MaterialTheme.colorScheme.error
     }
 
     val priorityColor = when (alert.priority) {
@@ -443,10 +290,12 @@ private fun AlertItemCard(
         AlertPriority.INFO -> MaterialTheme.colorScheme.primary
     }
 
+    // Flat card with a crisp colored outline instead of a shadow — a shadowElevation on a tinted
+    // surface renders as a muddy grey halo in light theme, which looked bad.
     FleetSectionCard(
         modifier = modifier,
-        containerColor = alertColor.copy(alpha = 0.08f),
-        border = null,
+        containerColor = alertColor.copy(alpha = 0.06f),
+        border = BorderStroke(FleetTokens.Border.Default, alertColor.copy(alpha = 0.35f)),
         elevation = FleetTokens.Elevation.None
     ) {
         Column(
@@ -470,9 +319,11 @@ private fun AlertItemCard(
                             .background(alertColor.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = alertIcon,
-                            style = MaterialTheme.typography.titleMedium
+                        Icon(
+                            painter = painterResource(alertIconRes(alert.type)),
+                            contentDescription = null,
+                            tint = alertColor,
+                            modifier = Modifier.size(FleetTokens.IconSize.M)
                         )
                     }
 
@@ -542,12 +393,17 @@ private fun AlertItemCard(
 
             // Entity info (vehicle registration or driver name)
             val vehicleRegNumber = alert.vehicleRegistrationNumber
-            if (alert.type == AlertType.DOCUMENT_EXPIRY && vehicleRegNumber != null) {
+            if ((alert.type == AlertType.DOCUMENT_EXPIRY || alert.type == AlertType.MISSING_DOCUMENTS) && vehicleRegNumber != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
-                    Text(text = "🚛", style = MaterialTheme.typography.labelMedium)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_truck),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
                     Text(
                         text = vehicleRegNumber,
                         style = MaterialTheme.typography.bodySmall,
@@ -563,7 +419,12 @@ private fun AlertItemCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
-                    Text(text = "👤", style = MaterialTheme.typography.labelMedium)
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_driver),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(FleetTokens.IconSize.S)
+                    )
                     Text(
                         text = driverNameValue,
                         style = MaterialTheme.typography.bodySmall,

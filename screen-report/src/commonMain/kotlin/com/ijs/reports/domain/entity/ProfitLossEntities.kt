@@ -263,6 +263,8 @@ data class PLSummary(
  */
 data class ExpenseBreakdownItem(
     val type: String,
+    // Backend-provided display name (e.g. "Diesel"); null for older/cached responses → fall back to type.
+    val label: String? = null,
     val amount: Double = 0.0,
     val percentage: Double = 0.0
 )

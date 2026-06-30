@@ -128,6 +128,9 @@ data class PLTripSummaryDto(
 
 @Serializable
 data class PLExpenseItemDto(
+    // Human-readable cost name from the backend (e.g. "Diesel"); the map key is still the cost code.
+    @SerialName("cost_label")
+    val costLabel: String? = null,
     @SerialName("amount")
     val amount: Double = 0.0,
     @SerialName("percentage")

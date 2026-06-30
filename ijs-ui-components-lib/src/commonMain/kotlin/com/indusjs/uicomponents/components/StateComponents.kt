@@ -4,8 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,9 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,7 +61,7 @@ fun stateIconRes(value: String): DrawableResource = when (value.lowercase()) {
     "damaged" -> Res.drawable.ic_warning
     "decommissioned", "out_of_service", "retired" -> Res.drawable.ic_block
     "planned" -> Res.drawable.ic_trip
-    "completed" -> Res.drawable.ic_check_circle
+    "completed" -> Res.drawable.ic_flag
     "cancelled" -> Res.drawable.ic_close
     "failed" -> Res.drawable.ic_warning
     "delayed" -> Res.drawable.ic_time
@@ -283,12 +281,14 @@ private fun CurrentStateBanner(
 }
 
 /**
- * Single state option row — radio-selection style.
+ * Single state option row — a clean Material radio list item.
  *
- * Visual states:
- * - **Current**: filled radio circle in accent color, bold accent label
- * - **Valid transition**: open radio ring in state color, normal text, tappable
- * - **Disabled**: faint radio ring, readable muted text, subtle background
+ * - **Current**: tinted background + state-coloured outline, filled radio, bold accent label.
+ * - **Selectable**: transparent, state-coloured leading icon, open radio, tappable.
+ * - **Disabled**: faded content (no heavy box), inert radio, "not available" subtitle.
+ *
+ * One selection indicator only (the trailing [RadioButton]); the leading icon is decorative/identity,
+ * in a consistent subtle tinted circle so no row looks pre-selected.
  */
 @Composable
 private fun StateOptionRow(
@@ -296,143 +296,89 @@ private fun StateOptionRow(
     onClick: () -> Unit
 ) {
     val stateColor = getColorForScheme(option.colorScheme)
-    val isEnabled = option.isValidTransition && !option.isCurrentState
-    val isDisabled = !option.isValidTransition && !option.isCurrentState
+    val isCurrent = option.isCurrentState
+    val isEnabled = option.isValidTransition && !isCurrent
+    val isDisabled = !option.isValidTransition && !isCurrent
+    val contentAlpha = if (isDisabled) 0.45f else 1f
 
-    val backgroundColor = when {
-        option.isCurrentState -> stateColor.copy(alpha = 0.08f)
-        isDisabled -> MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.45f)
-        else -> Color.Transparent
-    }
-
-    Surface(
+    val shape = RoundedCornerShape(FleetTokens.Radius.L)
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .clickable(enabled = isEnabled) { onClick() },
-        shape = RoundedCornerShape(14.dp),
-        color = backgroundColor
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // ── Leading: single state icon in a tinted circle (vector, no emoji, no double-circle) ──
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(
-                        color = if (isDisabled)
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-                        else
-                            stateColor.copy(alpha = 0.12f),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(option.iconRes),
-                    contentDescription = null,
-                    tint = if (isDisabled)
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    else
-                        stateColor,
-                    modifier = Modifier.size(FleetTokens.IconSize.M)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
-
-            // ── Label + subtitle ──
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = option.label,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = when {
-                        option.isCurrentState -> FontWeight.Bold
-                        isDisabled -> FontWeight.Normal
-                        else -> FontWeight.Medium
-                    },
-                    color = when {
-                        option.isCurrentState -> stateColor
-                        isDisabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        else -> MaterialTheme.colorScheme.onSurface
-                    },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (option.isCurrentState) {
-                    Text(
-                        text = stringResource(Res.string.current_state),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = stateColor.copy(alpha = 0.75f)
-                    )
-                } else if (isDisabled) {
-                    Text(
-                        text = stringResource(Res.string.not_available_from_current_state),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    )
+            .clip(shape)
+            .then(
+                if (isCurrent) {
+                    Modifier
+                        .background(stateColor.copy(alpha = 0.10f), shape)
+                        .border(FleetTokens.Border.Default, stateColor.copy(alpha = 0.5f), shape)
+                } else {
+                    Modifier
                 }
-            }
-
-            // ── Trailing: selection indicator (filled = current, ring = selectable) ──
-            Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
-            RadioIndicator(
-                stateColor = stateColor,
-                isCurrentState = option.isCurrentState,
-                isDisabled = isDisabled
+            )
+            .clickable(enabled = isEnabled, onClick = onClick)
+            .padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.M),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // ── Leading: state icon in a consistent, subtle tinted circle (identity, not selection) ──
+        Box(
+            modifier = Modifier
+                .size(FleetTokens.IconSize.XL)
+                .background(stateColor.copy(alpha = if (isDisabled) 0.08f else 0.14f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(option.iconRes),
+                contentDescription = null,
+                tint = stateColor.copy(alpha = contentAlpha),
+                modifier = Modifier.size(FleetTokens.IconSize.M)
             )
         }
-    }
-}
 
-/**
- * Custom radio-style indicator.
- *
- * - Current: solid filled circle with white center dot
- * - Enabled: outlined ring in state color
- * - Disabled: faint outlined ring
- */
-@Composable
-private fun RadioIndicator(
-    stateColor: Color,
-    isCurrentState: Boolean,
-    isDisabled: Boolean
-) {
-    val size = 20.dp
-    Box(
-        modifier = Modifier.size(size),
-        contentAlignment = Alignment.Center
-    ) {
-        if (isCurrentState) {
-            // Filled circle with white inner dot
-            Box(
-                modifier = Modifier
-                    .size(size)
-                    .background(stateColor, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(Color.White, CircleShape)
-                )
+        Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
+
+        // ── Label + subtitle ──
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = option.label,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
+                color = (if (isCurrent) stateColor else MaterialTheme.colorScheme.onSurface)
+                    .copy(alpha = contentAlpha),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            val subtitle = when {
+                isCurrent -> stringResource(Res.string.current_state)
+                isDisabled -> stringResource(Res.string.not_available_from_current_state)
+                else -> null
             }
-        } else {
-            // Outlined ring
-            val ringColor = if (isDisabled) stateColor.copy(alpha = 0.30f) else stateColor
-            val strokeWidth = if (isDisabled) 1.5.dp else 2.dp
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawCircle(
-                    color = ringColor,
-                    radius = (size / 2).toPx() - 1.dp.toPx(),
-                    style = Stroke(width = strokeWidth.toPx())
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isCurrent) {
+                        stateColor.copy(alpha = 0.75f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    }
                 )
             }
         }
+
+        Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+
+        // ── Trailing: the single selection indicator (Material radio, tinted to the state) ──
+        RadioButton(
+            selected = isCurrent,
+            onClick = null,
+            enabled = isEnabled || isCurrent,
+            colors = RadioButtonDefaults.colors(
+                selectedColor = stateColor,
+                unselectedColor = stateColor.copy(alpha = 0.7f),
+                disabledSelectedColor = stateColor.copy(alpha = 0.5f),
+                disabledUnselectedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+            )
+        )
     }
 }
 

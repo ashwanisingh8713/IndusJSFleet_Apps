@@ -61,7 +61,8 @@ enum class AlertType {
     DRIVER_BEHAVIOR,
     SYSTEM,
     DOCUMENT_EXPIRY,
-    LICENSE_EXPIRY;
+    LICENSE_EXPIRY,
+    MISSING_DOCUMENTS;
 
     companion object {
         fun fromString(value: String): AlertType {
@@ -74,6 +75,7 @@ enum class AlertType {
                 "SYSTEM" -> SYSTEM
                 "DOCUMENT_EXPIRY" -> DOCUMENT_EXPIRY
                 "LICENSE_EXPIRY" -> LICENSE_EXPIRY
+                "MISSING_DOCUMENTS" -> MISSING_DOCUMENTS
                 else -> SYSTEM
             }
         }

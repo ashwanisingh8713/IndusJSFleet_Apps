@@ -43,7 +43,7 @@ object AlertsListContract {
                 AlertFilter.CRITICAL -> alerts.filter { it.priority == AlertPriority.CRITICAL }
                 AlertFilter.WARNING -> alerts.filter { it.priority == AlertPriority.WARNING }
                 AlertFilter.INFO -> alerts.filter { it.priority == AlertPriority.INFO }
-                AlertFilter.DOCUMENTS -> alerts.filter { it.type == AlertType.DOCUMENT_EXPIRY }
+                AlertFilter.DOCUMENTS -> alerts.filter { it.type == AlertType.DOCUMENT_EXPIRY || it.type == AlertType.MISSING_DOCUMENTS }
                 AlertFilter.LICENSES -> alerts.filter { it.type == AlertType.LICENSE_EXPIRY }
             }
 

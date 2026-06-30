@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.indusjs.fleet.core.util.CostTypeUtils
 import com.indusjs.fleet.core.util.formatCurrency
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.PieChart
@@ -57,7 +58,7 @@ internal fun ExpenseBreakdownSection(breakdown: List<ExpenseBreakdownItem>) {
             PieChart(
                 data = breakdown.map {
                     PieChartData(
-                        formatCostType(it.type), it.amount,
+                        displayLabel(it), it.amount,
                         colorByType[it.type] ?: PieChartColors.getCostTypeColor(it.type)
                     )
                 },
@@ -67,7 +68,7 @@ internal fun ExpenseBreakdownSection(breakdown: List<ExpenseBreakdownItem>) {
             (if (expanded) breakdown else breakdown.take(4))
                 .sortedByDescending { it.amount }.forEach { item ->
                     ExpenseItemRow(
-                        formatCostType(item.type), item.amount,
+                        displayLabel(item), item.amount,
                         item.percentage, colorByType[item.type] ?: PieChartColors.getCostTypeColor(item.type),
                         totalExpenses
                     )
@@ -399,7 +400,14 @@ private fun ReportCard(
 // Utility functions
 // ═══════════════════════════════════════════════════════════════════
 
-internal fun formatCostType(costType: String) =
-    costType.replace("_", " ").split(" ")
-        .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
+// Prefer the backend-provided cost_label; fall back to the local code→name table for older/cached
+// responses that don't carry a label.
+internal fun displayLabel(item: ExpenseBreakdownItem): String =
+    item.label?.takeIf { it.isNotBlank() } ?: formatCostType(item.type)
+
+// Resolve a cost code (e.g. "TC-001-002") or legacy type to a human name (e.g. "Diesel").
+// CostTypeUtils owns the full code→name table and prettifies anything it doesn't recognise,
+// so the expense-breakdown legend never shows a raw code.
+internal fun formatCostType(costType: String): String =
+    CostTypeUtils.getDisplayName(costType)
 

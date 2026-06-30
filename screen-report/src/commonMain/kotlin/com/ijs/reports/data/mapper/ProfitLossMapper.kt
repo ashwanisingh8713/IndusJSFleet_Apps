@@ -266,6 +266,7 @@ object ProfitLossMapper {
             expenseBreakdown = dto.expenseBreakdown?.map { (type, item) ->
                 ExpenseBreakdownItem(
                     type = type,
+                    label = item.costLabel,
                     amount = item.amount,
                     percentage = item.percentage
                 )

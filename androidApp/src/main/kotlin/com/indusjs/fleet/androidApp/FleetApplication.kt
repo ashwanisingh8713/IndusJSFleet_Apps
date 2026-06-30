@@ -1,10 +1,13 @@
 package com.indusjs.fleet.androidApp
 
 import android.app.Application
+import android.os.Build
 import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.crashlytics.internal.common.CommonUtils.isEmulator
 import com.indusjs.fleet.androidApp.BuildConfig
+import com.indusjs.fleet.core.network.ApiConfig
 import com.indusjs.logger.IjsLogger
 import com.indusjs.logger.PlatformContext
 
@@ -20,8 +23,42 @@ class FleetApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        configureApiBaseUrl()
         initializeLogger()
         initializeCrashlytics()
+    }
+
+    /**
+     * Pick the API host for the current device, so ONE build runs on both the emulator and a real
+     * phone. An Android emulator must reach the dev backend via 10.0.2.2 (its host-loopback alias);
+     * a physical device can't use that, so it keeps ApiConfig's LAN-IP default. Runs before any
+     * network call (BASE_URL is read per request).
+     */
+    private fun configureApiBaseUrl() {
+        if (isEmulator()) {
+            ApiConfig.BASE_URL = ApiConfig.ANDROID_EMULATOR_BASE_URL
+            Log.d(TAG, "Android emulator detected → API base = ${ApiConfig.BASE_URL}")
+        } else {
+            Log.d(TAG, "Physical device → API base = ${ApiConfig.BASE_URL}")
+        }
+    }
+
+    /** Best-effort Android emulator detection across common AVD / Genymotion / cloud images. */
+    private fun isEmulator(): Boolean {
+        return Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.startsWith("unknown") ||
+            Build.FINGERPRINT.contains("emulator", ignoreCase = true) ||
+            Build.MODEL.contains("google_sdk") ||
+            Build.MODEL.contains("Emulator") ||
+            Build.MODEL.contains("Android SDK built for") ||
+            Build.MANUFACTURER.contains("Genymotion") ||
+            Build.HARDWARE.contains("goldfish") ||
+            Build.HARDWARE.contains("ranchu") ||
+            Build.HARDWARE.contains("vbox") ||
+            (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")) ||
+            Build.PRODUCT.contains("sdk") ||
+            Build.PRODUCT.contains("emulator") ||
+            Build.PRODUCT.contains("simulator")
     }
 
     private fun initializeLogger() {
