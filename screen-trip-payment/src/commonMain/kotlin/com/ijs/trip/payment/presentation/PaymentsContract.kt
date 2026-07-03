@@ -74,7 +74,7 @@ object PaymentsContract {
 
         private fun formatAmount(value: Double): String {
             return when {
-                value <= 0 -> "₹0.00"
+                value <= 0 -> "₹0"
                 value >= 10000000 -> {
                     val crore = value / 10000000
                     "₹${formatDecimal(crore)}Cr"
@@ -90,14 +90,15 @@ object PaymentsContract {
         private fun formatDecimal(value: Double): String {
             val intPart = value.toLong()
             val decPart = ((value - intPart) * 100).toLong()
-            return if (decPart == 0L) "$intPart.00" else "$intPart.${decPart.toString().padStart(2, '0')}"
+            // §H quiet money: drop ".00" for whole values; show paise only when nonzero.
+            return if (decPart == 0L) "$intPart" else "$intPart.${decPart.toString().padStart(2, '0')}"
         }
 
         private fun formatDecimalWithCommas(value: Double): String {
             val intPart = value.toLong()
             val decPart = ((value - intPart) * 100).toLong()
             val formattedInt = formatWithIndianCommas(intPart)
-            return if (decPart == 0L) "$formattedInt.00" else "$formattedInt.${decPart.toString().padStart(2, '0')}"
+            return if (decPart == 0L) formattedInt else "$formattedInt.${decPart.toString().padStart(2, '0')}"
         }
 
         private fun formatWithIndianCommas(value: Long): String {

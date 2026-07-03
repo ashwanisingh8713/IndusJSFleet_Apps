@@ -1,5 +1,9 @@
 package com.ijs.trip.payment.domain.entity
 
+import com.indusjs.fleet.core.util.formatCurrencyFull
+import com.indusjs.fleet.core.util.formatWithCommas
+import kotlin.math.roundToLong
+
 /**
  * Trip payment entity representing a payment record for a trip.
  */
@@ -87,13 +91,9 @@ data class TripPayment(
     val routeDisplay: String
         get() = tripInfo?.let { "${it.startLocation ?: "Unknown"} → ${it.endLocation ?: "Unknown"}" } ?: "N/A"
 
-    private fun formatAmount(value: Double): String {
-        return when {
-            value >= 100000 -> "${(value / 100000.0).toString().take(5)}L"
-            value >= 1000 -> value.toInt().toString()
-            else -> value.toString().take(6)
-        }
-    }
+    // §9.7 column-numerics: per-payment amounts show the full Indian-grouped figure (₹20,000,
+    // ₹1,50,000) so individual rows align with the summary tiles — no ungrouped "20000" or lossy "1.5L".
+    private fun formatAmount(value: Double): String = formatWithCommas(value.roundToLong())
 }
 
 /**
@@ -124,7 +124,7 @@ data class TripPaymentTripInfo(
         get() = "${startLocation?.take(15) ?: "Unknown"} → ${endLocation?.take(15) ?: "Unknown"}"
 
     val tripPriceDisplay: String
-        get() = tripPrice?.let { "₹${it.toInt()}" } ?: "N/A"
+        get() = tripPrice?.let { formatCurrencyFull(it) } ?: "N/A"
 
     /** Formatted start date & time display */
     val startDateTimeDisplay: String

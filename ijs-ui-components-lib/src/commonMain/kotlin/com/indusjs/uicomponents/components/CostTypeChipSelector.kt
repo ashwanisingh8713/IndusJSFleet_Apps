@@ -3,7 +3,6 @@ package com.indusjs.uicomponents.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -21,8 +20,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -230,8 +227,11 @@ fun CostTypeTwoLevelSelector(
                         currentGroup?.items?.forEach { item ->
                             val isSelected = selectedCostType == item.id
 
-                            FilterChip(
+                            // Canonical Calm Fintech chip (§2 pill) — replaces the raw Material FilterChip
+                            // so cost-type selection matches every other filter surface app-wide.
+                            FleetFilterChip(
                                 selected = isSelected,
+                                label = item.label,
                                 onClick = {
                                     onCostTypeSelected(
                                         CostTypeSelection(
@@ -242,30 +242,7 @@ fun CostTypeTwoLevelSelector(
                                         )
                                     )
                                 },
-                                label = {
-                                    Text(item.label, style = MaterialTheme.typography.bodySmall)
-                                },
-                                leadingIcon = if (isSelected) {
-                                    {
-                                        Icon(
-                                            painter = painterResource(Res.drawable.ic_check),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                } else null,
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                ),
-                                border = if (isError && selectedCostType == null) {
-                                    BorderStroke(1.dp, MaterialTheme.colorScheme.error)
-                                } else {
-                                    FilterChipDefaults.filterChipBorder(
-                                        enabled = true,
-                                        selected = isSelected
-                                    )
-                                }
+                                leadingIcon = if (isSelected) Res.drawable.ic_check else null
                             )
                         }
                     }

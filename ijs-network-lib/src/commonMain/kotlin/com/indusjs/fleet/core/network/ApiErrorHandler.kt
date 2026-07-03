@@ -27,6 +27,13 @@ object ApiErrorHandler {
     private const val ACTIVE_TRIP_DELETE_GUARD_MESSAGE =
         "Can't delete — finish or cancel the active trip first"
 
+    // Over-collection guard (422, errorCode INDUSJS-FLEET-AMOUNT_EXCEEDS_BALANCE):
+    // a trip payment that would push total received past the trip price. The
+    // payment screen maps this to a localized inline field error itself; this is
+    // the generic fallback for any other surface.
+    private const val AMOUNT_EXCEEDS_BALANCE_MESSAGE =
+        "Payment amount exceeds the trip's remaining balance"
+
     /**
      * Extracts a user-friendly error message from an API response.
      *
@@ -105,6 +112,13 @@ object ApiErrorHandler {
             if (!errorMessageKey.isNullOrBlank() && errorMessageKey != "null"
                 && errorMessageKey.contains("has_active_trip", ignoreCase = true)) {
                 return ACTIVE_TRIP_DELETE_GUARD_MESSAGE
+            }
+
+            // Over-collection guard: match on the envelope's errorCode so the raw
+            // developerMessage sentence (with internal numbers) never surfaces.
+            val errorCodeField = jsonObject["errorCode"]?.jsonPrimitive?.contentOrNull
+            if (errorCodeField?.contains("AMOUNT_EXCEEDS_BALANCE", ignoreCase = true) == true) {
+                return AMOUNT_EXCEEDS_BALANCE_MESSAGE
             }
 
             // Duplicate-account conflict (e.g. signup with an already-used mobile or

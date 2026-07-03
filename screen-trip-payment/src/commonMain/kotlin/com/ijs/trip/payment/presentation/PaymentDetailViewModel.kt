@@ -86,7 +86,7 @@ override suspend fun handleIntent(intent: PaymentDetailContract.Intent) {
         userRepository.getProfile().fold(
             onSuccess = { profile ->
                 val role = profile.user.role
-                val canEdit = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
+                val canEdit = role == UserRole.OWNER || role == UserRole.ADMIN
                 val canDelete = role == UserRole.OWNER
                 updateState { copy(canEdit = canEdit, canDelete = canDelete) }
             },

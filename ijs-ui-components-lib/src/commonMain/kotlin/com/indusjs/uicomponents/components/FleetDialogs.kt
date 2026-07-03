@@ -54,8 +54,12 @@ fun DiscardChangesDialog(
 ) {
     if (!showDialog) return
 
+    val dialogShape = MaterialTheme.shapes.extraLarge
     AlertDialog(
         onDismissRequest = onKeepEditing,
+        // §9.3 depth: 1px top-highlight so the dialog reads as raised on a dark surface (no-op in light).
+        modifier = Modifier.fleetElevatedSurface(dialogShape, FleetElevation.Dialog),
+        shape = dialogShape,
         icon = {
             Icon(
                 painter = painterResource(Res.drawable.ic_warning),
@@ -143,8 +147,11 @@ fun FleetConfirmationDialog(
 ) {
     if (!showDialog) return
 
+    val dialogShape = MaterialTheme.shapes.extraLarge
     AlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
+        modifier = Modifier.fleetElevatedSurface(dialogShape, FleetElevation.Dialog),
+        shape = dialogShape,
         icon = if (isDestructive) {
             {
                 Icon(

@@ -105,7 +105,7 @@
     <string name="select_a_caretaker">केयरटेकर चुनें</string>
     <string name="assign_caretaker">केयरटेकर नियुक्त करें</string>
     <string name="caretaker_assignment">केयरटेकर नियुक्ति</string>
-    <string name="caretaker_assignment_hint">वैकल्पिक • प्रबंधक या पर्यवेक्षक नियुक्त करें</string>
+    <string name="caretaker_assignment_hint">वैकल्पिक • टीम सदस्य नियुक्त करें</string>
     <string name="caretaker">केयरटेकर</string>
     <string name="not_assigned">नियुक्त नहीं</string>
     <string name="assign">नियुक्त करें</string>
@@ -148,7 +148,6 @@
     <string name="login_forgot_password">पासवर्ड भूल गए?</string>
     <string name="login_no_account">खाता नहीं है?</string>
     <string name="login_sign_up">साइन अप</string>
-    <string name="login_demo_hint">डेमो: कोई भी ईमेल और पासवर्ड दर्ज करें</string>
     <string name="login_error_email_required">कृपया अपना ईमेल या मोबाइल दर्ज करें</string>
     <string name="login_error_password_required">कृपया अपना पासवर्ड दर्ज करें</string>
     <string name="login_error_failed">लॉगिन विफल</string>
@@ -226,9 +225,6 @@
 
     <!-- User Roles -->
     <string name="role_owner">मालिक</string>
-    <string name="role_general_manager">महा प्रबंधक</string>
-    <string name="role_manager">प्रबंधक</string>
-    <string name="role_supervisor">पर्यवेक्षक</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_page1_title">फ्लीट प्रबंधन</string>
@@ -578,8 +574,6 @@
     <string name="team_overview_subtitle">%1$d सदस्य · %2$d सक्रिय</string>
     <string name="team_filter_all">सभी</string>
     <string name="team_filter_gm">महा प्रबंधक</string>
-    <string name="team_filter_managers">प्रबंधक</string>
-    <string name="team_filter_supervisors">पर्यवेक्षक</string>
     <string name="team_filter_admins">प्रशासक</string>
     <string name="team_filter_users">उपयोगकर्ता</string>
     <string name="team_label_total">कुल</string>
@@ -686,6 +680,8 @@
     <string name="error_identifier_required">कृपया अपना ईमेल या मोबाइल नंबर दर्ज करें</string>
     <string name="error_amount_required">कृपया राशि दर्ज करें</string>
     <string name="error_valid_amount">कृपया एक वैध राशि दर्ज करें</string>
+    <string name="payment_error_amount_exceeds">राशि लंबित %1$s से अधिक नहीं हो सकती</string>
+    <string name="payment_error_amount_exceeds_server">राशि ट्रिप की शेष बकाया राशि से अधिक है</string>
     <string name="error_date_required">कृपया तारीख दर्ज करें</string>
     <string name="error_company_name_required">कंपनी का नाम आवश्यक है</string>
     <string name="error_contact_person_required">संपर्क व्यक्ति का नाम आवश्यक है</string>
@@ -1171,8 +1167,8 @@
     <string name="profile_stats_active_trips">सक्रिय यात्राएं</string>
     <string name="profile_stats_completed_trips">पूर्ण यात्राएं</string>
     <string name="profile_stats_team_members">टीम सदस्य</string>
-    <string name="profile_stats_managers">प्रबंधक</string>
-    <string name="profile_stats_supervisors">पर्यवेक्षक</string>
+    <string name="profile_stats_admins">एडमिन</string>
+    <string name="profile_stats_total">कुल</string>
 
     <!-- ==================== Vehicle Detail - Sections ==================== -->
     <string name="vehicle_detail_delete">वाहन हटाएं</string>
@@ -1367,12 +1363,6 @@
     <string name="team_iam_role_admin_desc">उपयोगकर्ता, अनुमतियां और संवेदनशील संचालन प्रबंधित करने के लिए पूर्ण नियंत्रण।</string>
     <string name="team_iam_role_user_title">टीम सदस्य</string>
     <string name="team_iam_role_user_desc">दैनिक बेड़ा कार्य—वाहन, ट्रिप और असाइन किए गए कार्य—बिना प्रशासक नियंत्रण के।</string>
-    <string name="team_role_general_manager">महा प्रबंधक</string>
-    <string name="team_role_manager">प्रबंधक</string>
-    <string name="team_role_supervisor">पर्यवेक्षक</string>
-    <string name="team_role_gm_desc">पूर्ण परिचालन और वित्तीय पहुंच</string>
-    <string name="team_role_manager_desc">ड्राइवर और ट्रिप प्रबंधन कर सकते हैं</string>
-    <string name="team_role_supervisor_desc">संचालन देख और ट्रैक कर सकते हैं</string>
     <string name="team_section_member_details_subtitle">टीम सदस्य का विवरण दर्ज करें</string>
     <string name="team_cd_show_password">पासवर्ड दिखाएं</string>
     <string name="team_cd_hide_password">पासवर्ड छिपाएं</string>
@@ -1976,12 +1966,63 @@
 
     <!-- ==================== Create Organization Screen ==================== -->
     <string name="create_org_title">अपना संगठन सेट करें</string>
-    <string name="create_org_description">आपका संगठन सब कुछ का कमांड सेंटर है \u2014 वाहन, ड्राइवर, ट्रिप, भुगतान, ग्राहक, टीम सदस्य और रियल-टाइम इनसाइट्स, सब एक ही जगह।</string>
+    <string name="create_org_description">आपका संगठन वाहन, ड्राइवर, ट्रिप और भुगतान को एक ही छत के नीचे लाता है।</string>
     <string name="create_org_cta_hint">बस एक नाम दें और शुरू हो जाएँ।</string>
     <string name="create_org_name_label">संगठन का नाम</string>
     <string name="create_org_name_placeholder">उदा. शर्मा ट्रांसपोर्ट कं.</string>
     <string name="create_org_name_supporting">ऐप में आपकी कंपनी इसी नाम से दिखेगी</string>
     <string name="create_org_button">बनाएँ और आगे बढ़ें</string>
+    <!-- ==================== Subscription plans / checkout (f6b localization) ==================== -->
+    <string name="plan_trial_free">%1$d-दिन मुफ़्त ट्रायल</string>
+    <string name="plan_whats_included">क्या शामिल है</string>
+    <string name="plan_feature_up_to_5_vehicles">5 वाहनों तक</string>
+    <string name="plan_feature_basic_trip_tracking">बेसिक ट्रिप ट्रैकिंग</string>
+    <string name="plan_feature_community_support">कम्युनिटी सपोर्ट</string>
+    <string name="plan_tap_to_select">चुनने के लिए टैप करें</string>
+    <string name="plan_selected">चयनित</string>
+    <string name="plan_popular_badge">★ लोकप्रिय</string>
+    <string name="plan_recommended">अनुशंसित</string>
+    <string name="plan_price_free">मुफ़्त</string>
+    <string name="plan_price_forever">हमेशा के लिए</string>
+    <string name="plan_per_mo">/माह</string>
+    <string name="plan_per_month">/माह</string>
+    <string name="plan_per_yr">/वर्ष</string>
+    <string name="plan_per_year">/वर्ष</string>
+    <!-- Compact currency unit words (thousand / lakh / crore) — drive formatCurrency's suffix -->
+    <string name="currency_thousand">हज़ार</string>
+    <string name="currency_lakh">लाख</string>
+    <string name="currency_crore">करोड़</string>
+    <string name="plans_select_to_continue">जारी रखने के लिए कृपया एक प्लान चुनें।</string>
+    <string name="billing_save_annual">वार्षिक के साथ 20% तक बचाएं</string>
+    <string name="checkout_terms">आगे बढ़ने पर आप हमारी सेवा की शर्तों और गोपनीयता नीति से सहमत होते हैं। आप अपनी सदस्यता कभी भी रद्द कर सकते हैं।</string>
+    <string name="checkout_trial_included">%1$d-दिन मुफ़्त ट्रायल शामिल</string>
+    <string name="checkout_you_save_annually">आप सालाना %1$s बचाते हैं</string>
+    <string name="checkout_total">कुल</string>
+    <string name="checkout_save">%1$s बचाएं</string>
+    <string name="checkout_payment_cancelled">भुगतान रद्द कर दिया गया।</string>
+    <string name="org_name_min_length">संगठन का नाम कम से कम 2 अक्षरों का होना चाहिए।</string>
+    <string name="org_name_min_alphanumeric">संगठन के नाम में कम से कम 2 अल्फ़ान्यूमेरिक अक्षर होने चाहिए।</string>
+    <string name="org_name_required">संगठन का नाम आवश्यक है।</string>
+    <string name="billing_monthly">मासिक</string>
+    <string name="billing_annual">वार्षिक</string>
+    <string name="plans_choose_title">अपना प्लान चुनें</string>
+    <string name="plans_choose_subtitle">शक्तिशाली फ्लीट प्रबंधन टूल।\nकभी भी रद्द करें। कोई छिपा शुल्क नहीं।</string>
+    <string name="plans_complete_title">अपनी खरीद पूरी करें</string>
+    <string name="plans_complete_subtitle">आप लगभग पहुँच गए!\nअपना फ्लीट प्रबंधित करना शुरू करने के लिए भुगतान पूरा करें।</string>
+    <string name="trust_ssl">256-बिट SSL</string>
+    <string name="trust_upi_cards">UPI और कार्ड</string>
+    <string name="trust_cancel_anytime">कभी भी रद्द करें</string>
+    <string name="plans_cta_select">जारी रखने के लिए एक प्लान चुनें</string>
+    <string name="plans_cta_activate_free">मुफ़्त प्लान सक्रिय करें</string>
+    <string name="plans_cta_continue_with">%1$s के साथ जारी रखें</string>
+    <string name="plans_cta_please_wait">कृपया प्रतीक्षा करें…</string>
+    <string name="plans_loading">प्लान लोड हो रहे हैं…</string>
+    <string name="err_create_org">संगठन बनाने में विफल। कृपया पुनः प्रयास करें।</string>
+    <string name="err_load_plans">प्लान लोड करने में विफल। कृपया पुनः प्रयास करें।</string>
+    <string name="err_select_plan">प्लान चुनने में विफल। कृपया पुनः प्रयास करें।</string>
+    <string name="err_initiate_payment">भुगतान शुरू करने में विफल। कृपया पुनः प्रयास करें।</string>
+    <string name="err_verify_payment">भुगतान सत्यापन विफल। कृपया सहायता से संपर्क करें।</string>
+    <string name="err_payment_failed">भुगतान विफल। कृपया पुनः प्रयास करें।</string>
     <!-- ==================== i18n sweep additions ==================== -->
     <string name="trip_detail_label_status">स्थिति</string>
     <string name="trip_detail_price_not_set">निर्धारित नहीं</string>

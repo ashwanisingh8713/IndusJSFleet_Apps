@@ -178,13 +178,16 @@ fun CreateTripPaymentScreen(
 
                 HorizontalDivider()
 
-                // Amount Section
+                // Amount Section — surface the over-limit error live while typing (VM also blocks Save).
+                val overLimitError = if (state.amountExceedsPayable) {
+                    UiText.StringRes(Res.string.payment_error_amount_exceeds, listOf(state.maxPayableAmountDisplay))
+                } else null
                 AmountSection(
                     amount = state.amount,
                     tdsAmount = state.tdsAmount,
                     discountAmount = state.discountAmount,
                     netAmount = state.netAmountDisplay,
-                    amountError = state.amountError,
+                    amountError = state.amountError ?: overLimitError,
                     onAmountChange = { viewModel.sendIntent(AddPaymentContract.Intent.UpdateAmount(it)) },
                     onTdsChange = { viewModel.sendIntent(AddPaymentContract.Intent.UpdateTdsAmount(it)) },
                     onDiscountChange = { viewModel.sendIntent(AddPaymentContract.Intent.UpdateDiscountAmount(it)) }

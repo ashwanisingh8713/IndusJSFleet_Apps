@@ -54,9 +54,9 @@ object Permissions {
     const val USERS_RESET_PASSWORD = "users:reset_password"
 
     // ── Dashboard ───────────────────────────────────────────────────────────
+    // The client calls the unified /dashboard only; legacy manager/supervisor
+    // view slugs were never checked here and are retired with the role model.
     const val DASHBOARD_OWNER_VIEW = "dashboard:owner_view"
-    const val DASHBOARD_MANAGER_VIEW = "dashboard:manager_view"
-    const val DASHBOARD_SUPERVISOR_VIEW = "dashboard:supervisor_view"
 
     // ── List / view access (nav-destination gating; backend grants these per role) ────
     const val TRIPS_VIEW = "trips:view"

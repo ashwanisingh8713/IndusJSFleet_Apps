@@ -67,8 +67,25 @@ import com.ijs.subscription.presentation.plans.PlansContract.Effect
 import com.ijs.subscription.presentation.plans.PlansContract.Intent
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_check
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_per_month
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_per_year
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_price_free
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_choose_subtitle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_choose_title
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_complete_subtitle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_complete_title
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_cta_activate_free
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_cta_continue_with
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_cta_please_wait
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_cta_select
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_loading
+import indusjsfleet.ijs_ui_components_lib.generated.resources.profile_logout
+import indusjsfleet.ijs_ui_components_lib.generated.resources.trust_cancel_anytime
+import indusjsfleet.ijs_ui_components_lib.generated.resources.trust_ssl
+import indusjsfleet.ijs_ui_components_lib.generated.resources.trust_upi_cards
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PlansScreen(
@@ -111,7 +128,7 @@ fun PlansScreen(
                 .padding(paddingValues)
         ) {
             when {
-                state.isLoading -> LoadingContent(message = "Loading plans…")
+                state.isLoading -> LoadingContent(message = stringResource(Res.string.plans_loading))
 
                 state.error != null && state.plans.isEmpty() -> ErrorContent(
                     error = state.error!!.resolve(),
@@ -344,7 +361,7 @@ private fun HeroHeader(pageMode: PlanPageMode, onLogout: () -> Unit) {
             ) {
                 TextButton(onClick = onLogout) {
                     Text(
-                        text = "Log out",
+                        text = stringResource(Res.string.profile_logout),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
                     )
@@ -352,10 +369,10 @@ private fun HeroHeader(pageMode: PlanPageMode, onLogout: () -> Unit) {
             }
 
             val (headline, subtitle) = when (pageMode) {
-                PlanPageMode.CHOOSE -> "Choose Your Plan" to
-                        "Powerful fleet management tools.\nCancel anytime. No hidden fees."
-                PlanPageMode.COMPLETE_PAYMENT -> "Complete Your Purchase" to
-                        "You're almost there!\nComplete payment to start managing your fleet."
+                PlanPageMode.CHOOSE -> stringResource(Res.string.plans_choose_title) to
+                        stringResource(Res.string.plans_choose_subtitle)
+                PlanPageMode.COMPLETE_PAYMENT -> stringResource(Res.string.plans_complete_title) to
+                        stringResource(Res.string.plans_complete_subtitle)
             }
 
             // Headline
@@ -441,11 +458,11 @@ private fun TrustStrip(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TrustItem(label = "256-bit SSL")
+            TrustItem(label = stringResource(Res.string.trust_ssl))
             TrustDivider()
-            TrustItem(label = "UPI & Cards")
+            TrustItem(label = stringResource(Res.string.trust_upi_cards))
             TrustDivider()
-            TrustItem(label = "Cancel anytime")
+            TrustItem(label = stringResource(Res.string.trust_cancel_anytime))
         }
     }
 }
@@ -510,11 +527,11 @@ private fun BottomCtaBar(
         ) {
             if (selectedPlan != null) {
                 val price = when {
-                    selectedPlan.isFree -> "Free"
+                    selectedPlan.isFree -> stringResource(Res.string.plan_price_free)
                     billingInterval == BillingInterval.ANNUAL ->
-                        "${selectedPlan.formattedAnnualPrice()}/year"
+                        "${selectedPlan.formattedAnnualPrice()}${stringResource(Res.string.plan_per_year)}"
                     else ->
-                        "${selectedPlan.formattedMonthlyPrice()}/month"
+                        "${selectedPlan.formattedMonthlyPrice()}${stringResource(Res.string.plan_per_month)}"
                 }
                 Text(
                     text = "${selectedPlan.name.replaceFirstChar { it.uppercaseChar() }} · $price",
@@ -526,10 +543,13 @@ private fun BottomCtaBar(
             }
 
             val ctaLabel = when {
-                isConfirming -> "Please wait…"
-                selectedPlan == null -> "Select a plan to continue"
-                selectedPlan.isFree -> "Activate Free Plan"
-                else -> "Continue with ${selectedPlan.name.replaceFirstChar { it.uppercaseChar() }}"
+                isConfirming -> stringResource(Res.string.plans_cta_please_wait)
+                selectedPlan == null -> stringResource(Res.string.plans_cta_select)
+                selectedPlan.isFree -> stringResource(Res.string.plans_cta_activate_free)
+                else -> stringResource(
+                    Res.string.plans_cta_continue_with,
+                    selectedPlan.name.replaceFirstChar { it.uppercaseChar() }
+                )
             }
 
             FleetButton(

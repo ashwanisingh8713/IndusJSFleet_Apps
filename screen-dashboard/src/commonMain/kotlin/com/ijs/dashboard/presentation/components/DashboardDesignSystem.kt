@@ -46,8 +46,13 @@ internal fun MetricTile(
     iconRes: DrawableResource? = null,
     subLabel: String? = null,
     valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    backgroundColor: Color? = null,
+    labelContent: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null
-) = FleetMetricTile(value, label, modifier, accent, emoji, iconRes, subLabel, valueColor, onClick = onClick)
+) = FleetMetricTile(
+    value, label, modifier, accent, emoji, iconRes, subLabel, valueColor,
+    backgroundColor = backgroundColor, labelContent = labelContent, onClick = onClick
+)
 
 @Composable
 internal fun AccentIconChip(

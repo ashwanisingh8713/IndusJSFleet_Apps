@@ -282,15 +282,15 @@ class TeamMemberDetailViewModel(
             .orEmpty()
             .mapNotNull { role ->
                 when (role.name.lowercase()) {
-                    "admin" -> TeamMemberRole.MANAGER
-                    "user" -> TeamMemberRole.SUPERVISOR
+                    "admin" -> TeamMemberRole.ADMIN
+                    "user" -> TeamMemberRole.USER
                     else -> null
                 }
             }
             .distinct()
 
         return rolesFromApi.ifEmpty {
-            listOf(TeamMemberRole.MANAGER, TeamMemberRole.SUPERVISOR)
+            listOf(TeamMemberRole.ADMIN, TeamMemberRole.USER)
         }
     }
 }

@@ -206,13 +206,13 @@ internal fun CollapsibleTripGroupCard(
                     }
                 }
 
-                // Right side: Total amount + expand icon
+                // Right side: Total amount + expand icon. §H: money numerals are NEUTRAL (onSurface).
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "₹${formatGroupAmount(group.totalAmount)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     // Arrow indicator using text
@@ -314,15 +314,13 @@ internal fun CompactPaymentItem(
                 }
             }
 
-            // Right: Amount + status
+            // Right: Amount + status. §H: neutral money numerals; status only via the badge chip.
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = payment.amountDisplay,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (payment.isReceived) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
-                    else if (payment.isPending) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
-                    else MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 PaymentStatusBadge(status = payment.paymentStatus, paymentStateLabels = paymentStateLabels)
             }
@@ -340,13 +338,15 @@ internal fun CompactPaymentItem(
 // "₹55,000.00" and "₹55.0 K").
 internal fun formatGroupAmount(amount: Double): String {
     return when {
-        amount <= 0 -> "0.00"
+        amount <= 0 -> "0"
         amount >= 10000000 -> "${formatDecimal(amount / 10000000, 2)}Cr"
         amount >= 100000 -> "${formatDecimal(amount / 100000, 2)}L"
         else -> {
             val intPart = amount.toLong()
             val decPart = ((amount - intPart) * 100).toLong()
-            "${formatIndianCommas(intPart)}.${decPart.toString().padStart(2, '0')}"
+            // §H quiet money: drop ".00" for whole values; show paise only when nonzero.
+            if (decPart == 0L) formatIndianCommas(intPart)
+            else "${formatIndianCommas(intPart)}.${decPart.toString().padStart(2, '0')}"
         }
     }
 }
@@ -373,10 +373,14 @@ internal fun formatDecimal(value: Double, decimals: Int): String {
     var factor = 1.0
     repeat(decimals) { factor *= 10.0 }
     val rounded = kotlin.math.round(value * factor) / factor
+    // §H quiet money: a whole value drops the ".00" tail (1.00L → 1L); fractional keeps its decimals.
+    if (rounded == rounded.toLong().toDouble()) {
+        return rounded.toLong().toString()
+    }
     val str = rounded.toString()
     val parts = str.split(".")
     return if (parts.size == 1) {
-        str + "." + "0".repeat(decimals)
+        str
     } else {
         val decPart = parts[1].take(decimals).padEnd(decimals, '0')
         "${parts[0]}.$decPart"

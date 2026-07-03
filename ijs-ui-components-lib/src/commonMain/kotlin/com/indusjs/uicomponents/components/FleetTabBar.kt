@@ -84,8 +84,8 @@ data class FleetTab<T>(
  * - **Active pill:** `surface` (light) / `surfaceContainerHighest` (dark), `Radius.Pill`, with a 1px
  *   `outlineVariant` hairline in light (B1). Slides x **and** width together on selection change via a
  *   token-capped tween ([FleetTokens.Motion.FastSpringMillis], no overshoot, ≤ [FleetTokens.Motion.PillCapMillis]).
- *   Scales 0.98 while its own segment is pressed.
- *   (TODO step 4: route the dark pill through `FleetElevatedSurface` for the C2 4% 1px top-highlight.)
+ *   Scales 0.98 while its own segment is pressed. The dark pill carries the C2 1px top-highlight via
+ *   `fleetElevatedSurface(pillShape, FleetElevation.Pill)` (light mode: no-op).
  * - **Labels:** constant `FontWeight.Medium`, `labelMedium` (12sp) — no weight toggle (no reflow).
  *   Rest `onSurfaceVariant`, active `onSurface`; crossfades on the same duration. Optional 16dp icon, active-tinted.
  * - **Badge:** neutral (`surfaceContainerHighest` fill + `onSurfaceVariant`), trails the label.

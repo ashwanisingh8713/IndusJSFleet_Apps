@@ -312,10 +312,7 @@ class UserRepositoryImpl(
         return when {
             globalRoles.any { it.equals("owner", ignoreCase = true) } -> "owner"
             globalRoles.any { it.equals("admin", ignoreCase = true) } -> "admin"
-            globalRoles.any { it.equals("general_manager", ignoreCase = true) } -> "general_manager"
-            globalRoles.any { it.equals("manager", ignoreCase = true) } -> "manager"
             globalRoles.any { it.equals("user", ignoreCase = true) } -> "user"
-            globalRoles.any { it.equals("supervisor", ignoreCase = true) } -> "supervisor"
             else -> UserRole.toApiString(fallbackRole)
         }
     }

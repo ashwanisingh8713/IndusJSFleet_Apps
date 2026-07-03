@@ -3,6 +3,11 @@ package com.ijs.subscription.presentation.checkout
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.uicomponents.components.UiText
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_payment_cancelled
+import indusjsfleet.ijs_ui_components_lib.generated.resources.err_initiate_payment
+import indusjsfleet.ijs_ui_components_lib.generated.resources.err_payment_failed
+import indusjsfleet.ijs_ui_components_lib.generated.resources.err_verify_payment
 import com.ijs.subscription.SubscriptionPaymentTestConfig
 import com.ijs.subscription.domain.usecase.CreatePaymentOrderUseCase
 import com.ijs.subscription.domain.usecase.VerifyPaymentUseCase
@@ -34,7 +39,7 @@ class PaymentCheckoutViewModel(
                 copy(
                     isCreatingOrder = false,
                     isVerifyingPayment = false,
-                    error = UiText.Raw("Payment was cancelled.")
+                    error = UiText.StringRes(Res.string.checkout_payment_cancelled)
                 )
             }
             is Intent.ChangePlan -> sendEffect(Effect.NavigateBackToPlans)
@@ -70,9 +75,9 @@ class PaymentCheckoutViewModel(
                     )
                 },
                 onFailure = { e ->
-                    val msg = e.message ?: "Failed to initiate payment. Please try again."
-                    updateState { copy(isCreatingOrder = false, error = UiText.Raw(msg)) }
-                    sendEffect(Effect.ShowError(UiText.Raw(msg)))
+                    val err = e.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.err_initiate_payment)
+                    updateState { copy(isCreatingOrder = false, error = err) }
+                    sendEffect(Effect.ShowError(err))
                 }
             )
         }
@@ -93,23 +98,24 @@ class PaymentCheckoutViewModel(
                     )
                 },
                 onFailure = { e ->
-                    val msg = e.message ?: "Payment verification failed. Please contact support."
-                    updateState { copy(isVerifyingPayment = false, error = UiText.Raw(msg)) }
-                    sendEffect(Effect.ShowError(UiText.Raw(msg)))
+                    val err = e.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.err_verify_payment)
+                    updateState { copy(isVerifyingPayment = false, error = err) }
+                    sendEffect(Effect.ShowError(err))
                 }
             )
         }
     }
 
     private suspend fun onPaymentFailed(code: Int, description: String) {
-        val msg = if (description.isNotBlank()) description else "Payment failed. Please try again."
+        val err = if (description.isNotBlank()) UiText.Raw(description)
+            else UiText.StringRes(Res.string.err_payment_failed)
         updateState {
             copy(
                 isCreatingOrder = false,
                 isVerifyingPayment = false,
-                error = UiText.Raw(msg)
+                error = err
             )
         }
-        sendEffect(Effect.ShowError(UiText.Raw(msg)))
+        sendEffect(Effect.ShowError(err))
     }
 }

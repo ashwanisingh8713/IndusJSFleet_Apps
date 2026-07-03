@@ -29,8 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -40,6 +38,21 @@ import com.ijs.subscription.domain.entity.Plan
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_check
 import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_close
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_feature_basic_trip_tracking
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_feature_community_support
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_feature_up_to_5_vehicles
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_per_mo
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_per_month
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_per_year
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_per_yr
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_recommended
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_price_forever
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_price_free
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_selected
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_tap_to_select
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_trial_free
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plan_whats_included
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.painterResource
 
 // Card width for horizontal layout — shows peek of adjacent cards
@@ -57,18 +70,6 @@ fun PlanCard(
     val scheme = MaterialTheme.colorScheme
     val isPopular = !plan.isFree && cardIndex == 1
 
-    // Resolved accent colours per card index
-    val (accentStart, accentEnd) = when (cardIndex % 3) {
-        0 -> scheme.secondaryContainer to scheme.secondary.copy(alpha = 0.6f)
-        1 -> scheme.primary to scheme.primaryContainer.copy(alpha = 0.8f)
-        else -> scheme.tertiary to scheme.tertiaryContainer.copy(alpha = 0.8f)
-    }
-    val accentContent = when (cardIndex % 3) {
-        0 -> scheme.onSecondaryContainer
-        1 -> scheme.onPrimary
-        else -> scheme.onTertiary
-    }
-
     val borderColor by animateColorAsState(
         targetValue = if (isSelected) scheme.primary else scheme.outlineVariant,
         animationSpec = tween(220),
@@ -78,6 +79,14 @@ fun PlanCard(
         targetValue = if (isSelected) 6.dp else 1.dp,
         animationSpec = tween(220),
         label = "card_elevation_$cardIndex"
+    )
+    // §1 anti-rainbow / §H money-neutral: no colour band. Selection is the ONLY tint — the card fills
+    // with primaryContainer (#E1E4FF) plus a check badge; differentiation is a "Recommended" chip, not
+    // a card colour. All copy is neutral onSurface/onSurfaceVariant.
+    val containerColor by animateColorAsState(
+        targetValue = if (isSelected) scheme.primaryContainer else scheme.surface,
+        animationSpec = tween(220),
+        label = "card_bg_$cardIndex"
     )
 
     Card(
@@ -89,87 +98,81 @@ fun PlanCard(
             color = borderColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = elevation),
-        colors = CardDefaults.cardColors(containerColor = scheme.surface)
+        colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Column {
 
-            // ── Coloured header band ──────────────────────────────
-            Box(
+            // ── Header (neutral) ──────────────────────────────────
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        Brush.linearGradient(listOf(accentStart, accentEnd))
-                    )
                     .padding(16.dp)
             ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        // Plan name
-                        Text(
-                            text = plan.name.replaceFirstChar { it.uppercaseChar() },
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = accentContent
-                        )
-
-                        // Selection indicator or Popular badge
-                        if (isSelected) {
-                            Box(
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(CircleShape)
-                                    .background(scheme.surface),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(Res.drawable.ic_check),
-                                    contentDescription = "Selected",
-                                    tint = scheme.primary,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        } else if (isPopular) {
-                            PopularBadge(accentContent = accentContent)
-                        }
-                    }
-
-                    if (plan.description.isNotBlank()) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = plan.description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = accentContent.copy(alpha = 0.80f),
-                            lineHeight = 18.sp
-                        )
-                    }
-
-                    Spacer(Modifier.height(14.dp))
-
-                    // ── Price block inside header ─────────────────
-                    PriceBlock(
-                        plan = plan,
-                        billingInterval = billingInterval,
-                        textColor = accentContent
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Plan name
+                    Text(
+                        text = plan.name.replaceFirstChar { it.uppercaseChar() },
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = scheme.onSurface
                     )
 
-                    if (plan.trialDays > 0) {
-                        Spacer(Modifier.height(6.dp))
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = scheme.surface.copy(alpha = 0.20f)
+                    // Selection indicator or Recommended chip
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                                .background(scheme.primary),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "🎁 ${plan.trialDays}-day free trial",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = accentContent,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_check),
+                                contentDescription = stringResource(Res.string.plan_selected),
+                                tint = scheme.onPrimary,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
+                    } else if (isPopular) {
+                        RecommendedChip()
+                    }
+                }
+
+                if (plan.description.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = plan.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = scheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+                }
+
+                Spacer(Modifier.height(14.dp))
+
+                // ── Price block (neutral) ─────────────────────────
+                PriceBlock(
+                    plan = plan,
+                    billingInterval = billingInterval
+                )
+
+                if (plan.trialDays > 0) {
+                    Spacer(Modifier.height(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = scheme.surfaceContainerHighest
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.plan_trial_free, plan.trialDays),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = scheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
                     }
                 }
             }
@@ -179,12 +182,12 @@ fun PlanCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .padding(top = 14.dp, bottom = if (isSelected) 0.dp else 14.dp),
+                    .padding(top = 14.dp, bottom = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (plan.features.isNotEmpty() || plan.featureLimits.isNotEmpty()) {
                     Text(
-                        text = "What's included",
+                        text = stringResource(Res.string.plan_whats_included),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = scheme.onSurface,
@@ -200,9 +203,9 @@ fun PlanCard(
                     }
                 } else if (plan.isFree) {
                     listOf(
-                        "Up to 5 vehicles",
-                        "Basic trip tracking",
-                        "Community support"
+                        stringResource(Res.string.plan_feature_up_to_5_vehicles),
+                        stringResource(Res.string.plan_feature_basic_trip_tracking),
+                        stringResource(Res.string.plan_feature_community_support)
                     ).forEach { FeatureRow(it) }
                 }
 
@@ -210,7 +213,7 @@ fun PlanCard(
                     Spacer(Modifier.height(2.dp))
                     HorizontalDivider(color = scheme.outlineVariant.copy(alpha = 0.4f))
                     Text(
-                        text = "Tap to select",
+                        text = stringResource(Res.string.plan_tap_to_select),
                         style = MaterialTheme.typography.labelSmall,
                         color = scheme.onSurfaceVariant.copy(alpha = 0.5f),
                         modifier = Modifier
@@ -220,55 +223,27 @@ fun PlanCard(
                     )
                 }
             }
-
-            // ── Full-width selected banner at card bottom ─────
-            if (isSelected) {
-                Spacer(Modifier.height(6.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(color = scheme.primary)
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_check),
-                            contentDescription = null,
-                            tint = scheme.onPrimary,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = "Selected",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = scheme.onPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
         }
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Popular badge — top-right corner ribbon
+// Recommended chip — the ONLY differentiator between plans (never a card tint). A single primary
+// accent chip that carries meaning; §1-compliant.
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun PopularBadge(accentContent: Color) {
+private fun RecommendedChip() {
+    val scheme = MaterialTheme.colorScheme
     Surface(
         shape = RoundedCornerShape(50),
-        color = accentContent.copy(alpha = 0.18f)
+        color = scheme.primaryContainer
     ) {
         Text(
-            text = "★ Popular",
+            text = stringResource(Res.string.plan_recommended),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = accentContent,
+            color = scheme.onPrimaryContainer,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
         )
     }
@@ -282,22 +257,22 @@ private fun PopularBadge(accentContent: Color) {
 private fun PriceBlock(
     plan: Plan,
     billingInterval: BillingInterval,
-    textColor: Color,
     modifier: Modifier = Modifier
 ) {
+    val scheme = MaterialTheme.colorScheme
     if (plan.isFree) {
         Text(
-            text = "Free",
+            text = stringResource(Res.string.plan_price_free),
             style = MaterialTheme.typography.displaySmall,
             fontSize = 42.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = textColor,
+            color = scheme.onSurface,
             modifier = modifier
         )
         Text(
-            text = "forever",
+            text = stringResource(Res.string.plan_price_forever),
             style = MaterialTheme.typography.bodySmall,
-            color = textColor.copy(alpha = 0.70f)
+            color = scheme.onSurfaceVariant
         )
         return
     }
@@ -314,12 +289,12 @@ private fun PriceBlock(
                         style = MaterialTheme.typography.displaySmall,
                         fontSize = 42.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = textColor
+                        color = scheme.onSurface
                     )
                     Text(
-                        text = "/mo",
+                        text = stringResource(Res.string.plan_per_mo),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = textColor.copy(alpha = 0.75f),
+                        color = scheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 6.dp)
                     )
                 }
@@ -334,12 +309,12 @@ private fun PriceBlock(
                         style = MaterialTheme.typography.displaySmall,
                         fontSize = 42.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = textColor
+                        color = scheme.onSurface
                     )
                     Text(
-                        text = "/mo",
+                        text = stringResource(Res.string.plan_per_mo),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = textColor.copy(alpha = 0.75f),
+                        color = scheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 6.dp)
                     )
                 }
@@ -348,20 +323,20 @@ private fun PriceBlock(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "${plan.formattedAnnualPrice()}/yr",
+                        text = "${plan.formattedAnnualPrice()}${stringResource(Res.string.plan_per_yr)}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = textColor.copy(alpha = 0.65f),
+                        color = scheme.onSurfaceVariant,
                         textDecoration = TextDecoration.None
                     )
                     if (plan.annualSavings > 0) {
                         Surface(
                             shape = RoundedCornerShape(50),
-                            color = textColor.copy(alpha = 0.18f)
+                            color = scheme.surfaceContainerHighest
                         ) {
                             Text(
                                 text = plan.formattedAnnualSavings(),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = textColor,
+                                color = scheme.onSurfaceVariant,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                             )
@@ -386,7 +361,7 @@ fun PriceDisplay(
     val scheme = MaterialTheme.colorScheme
     if (plan.isFree) {
         Text(
-            text = "Free",
+            text = stringResource(Res.string.plan_price_free),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = scheme.primary,
@@ -406,7 +381,7 @@ fun PriceDisplay(
                         color = scheme.onSurface
                     )
                     Text(
-                        text = "/month",
+                        text = stringResource(Res.string.plan_per_month),
                         style = MaterialTheme.typography.bodySmall,
                         color = scheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 4.dp)
@@ -422,14 +397,14 @@ fun PriceDisplay(
                         color = scheme.onSurface
                     )
                     Text(
-                        text = "/month",
+                        text = stringResource(Res.string.plan_per_month),
                         style = MaterialTheme.typography.bodySmall,
                         color = scheme.onSurfaceVariant
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "${plan.formattedAnnualPrice()}/year",
+                        text = "${plan.formattedAnnualPrice()}${stringResource(Res.string.plan_per_year)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = scheme.onSurfaceVariant
                     )

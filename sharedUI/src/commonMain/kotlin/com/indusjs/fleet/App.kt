@@ -24,8 +24,15 @@ import com.ijs.subscription.presentation.platform.RazorpayLauncher
 import com.ijs.subscription.presentation.platform.RazorpayResult
 import com.indusjs.uicomponents.theme.AppTheme
 import com.indusjs.uicomponents.i18n.LocalAppLanguageController
+import com.indusjs.uicomponents.i18n.LocalLanguagePickerLauncher
 import com.indusjs.fleet.core.i18n.ProvideAppLanguage
 import com.indusjs.fleet.core.logger.initPlatformLogger
+import com.indusjs.fleet.core.util.CompactCurrencyUnits
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.currency_crore
+import indusjsfleet.ijs_ui_components_lib.generated.resources.currency_lakh
+import indusjsfleet.ijs_ui_components_lib.generated.resources.currency_thousand
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * File picker request for platform-specific file selection.
@@ -68,6 +75,8 @@ fun App(
     // In-app language: seed from the persisted choice; changing it persists + re-localizes the app.
     val languageManager = remember { viewModelProvider.languageManager }
     var appLanguage by remember { mutableStateOf(languageManager.saved()) }
+    // f6a: first-launch language picker — shown once, before anything else, until a choice is persisted.
+    var needsLanguagePick by remember { mutableStateOf(!languageManager.hasChosen()) }
 
     // Check if user is already logged in to determine initial route
     var isCheckingAuth by remember { mutableStateOf(true) }
@@ -168,11 +177,24 @@ fun App(
     // language so changing it recomposes everything and re-resolves every stringResource; the
     // outer `backStack`/state remembers sit above this, so the user stays on the same screen.
     ProvideAppLanguage(appLanguage) {
+    // s5: keep the compact-currency unit words (₹1.2 Cr / ₹1.2 करोड़) in sync with the in-app language.
+    // Resolved here (inside the chosen locale) and pushed into the process-wide holder so the ~48 plain
+    // formatCurrency() call sites stay localized without threading a Composable through each.
+    val crUnit = stringResource(Res.string.currency_crore)
+    val lakhUnit = stringResource(Res.string.currency_lakh)
+    val thousandUnit = stringResource(Res.string.currency_thousand)
+    SideEffect {
+        CompactCurrencyUnits.crore = crUnit
+        CompactCurrencyUnits.lakh = lakhUnit
+        CompactCurrencyUnits.thousand = thousandUnit
+    }
     CompositionLocalProvider(
         LocalAppLanguageController provides { selected ->
             languageManager.persist(selected)
             appLanguage = selected
-        }
+        },
+        // Sign-In "भाषा / Language" link re-opens the first-launch picker overlay.
+        LocalLanguagePickerLauncher provides { needsLanguagePick = true }
     ) {
     Surface(
         modifier = Modifier
@@ -188,6 +210,19 @@ fun App(
             ) {
                 CircularProgressIndicator()
             }
+        } else if (needsLanguagePick) {
+            // f6a first-launch picker: pick the language, persist + re-localize live, then fall through
+            // to the normal initial route (Login / Onboarding / Dashboard) computed above.
+            com.ijs.user.presentation.language.LanguagePickerScreen(
+                // First launch: preselect from the system locale. Re-opened from Sign-In (already
+                // chosen): preselect the language currently in effect.
+                initial = if (languageManager.hasChosen()) appLanguage else null,
+                onConfirm = { lang ->
+                    languageManager.persist(lang)
+                    appLanguage = lang
+                    needsLanguagePick = false
+                }
+            )
         } else {
             ProvideViewModels(viewModelProvider) {
                 CompositionLocalProvider(LocalRazorpayLauncher provides razorpayLauncher) {

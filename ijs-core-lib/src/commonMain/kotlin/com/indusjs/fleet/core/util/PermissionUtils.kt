@@ -23,9 +23,8 @@ object PermissionUtils {
     fun getRoleDisplayName(role: UserRole): String {
         return when (role) {
             UserRole.OWNER -> "Owner"
-            UserRole.GENERAL_MANAGER -> "General Manager"
-            UserRole.MANAGER -> "Manager"
-            UserRole.SUPERVISOR -> "Supervisor"
+            UserRole.ADMIN -> "Admin"
+            UserRole.USER -> "User"
         }
     }
 }

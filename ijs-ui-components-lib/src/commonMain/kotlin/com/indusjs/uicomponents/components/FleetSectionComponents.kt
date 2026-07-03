@@ -182,13 +182,19 @@ fun FleetMetricTile(
     // pass a smaller style (e.g. titleMedium) for tiles whose value is long text like a license no.
     valueStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.headlineSmall,
     showBackground: Boolean = true,
+    // §H money-neutral override: when set, the tile fill is this exact colour instead of the
+    // accent-derived 8% tint — lets financial tiles read as a neutral surface (no rainbow).
+    backgroundColor: Color? = null,
+    // Optional rich label slot (e.g. a ▲ Profit / ▼ Loss delta chip). When non-null it replaces
+    // the plain muted label Text; the sign/semantic colour lives here, never on the numeral.
+    labelContent: (@Composable () -> Unit)? = null,
     centered: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
     val shape = RoundedCornerShape(FleetTokens.Radius.L)
     val container = modifier
         .clip(shape)
-        .let { if (showBackground) it.background(accent.copy(alpha = 0.08f)) else it }
+        .let { if (showBackground) it.background(backgroundColor ?: accent.copy(alpha = 0.08f)) else it }
         .let { if (onClick != null) it.clickable(onClick = onClick) else it }
         .padding(if (showBackground) FleetTokens.Spacing.M else FleetTokens.Spacing.XS)
     val align = if (centered) Alignment.CenterHorizontally else Alignment.Start
@@ -210,14 +216,18 @@ fun FleetMetricTile(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = textAlign,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
+        if (labelContent != null) {
+            labelContent()
+        } else {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = textAlign,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
         if (subLabel != null) {
             Text(
                 text = subLabel,

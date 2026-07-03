@@ -3,32 +3,30 @@ package com.indusjs.fleet.domain.entity.user
 import com.indusjs.fleet.domain.entity.Entity
 
 /**
- * User roles in the Fleet Management system.
- * Hierarchy: Owner > General Manager > Manager > Supervisor
+ * User roles in the Fleet Management system (IAM tenant roles).
+ * Hierarchy: Owner > Admin > User. Fine-grained access is permission-based
+ * (/me/permissions); the role is presentation/fallback only.
  */
 enum class UserRole {
     OWNER,
-    GENERAL_MANAGER,
-    MANAGER,
-    SUPERVISOR;
+    ADMIN,
+    USER;
 
     companion object {
         fun fromString(value: String): UserRole {
             return when (value.lowercase().replace("_", "").replace(" ", "")) {
                 "owner" -> OWNER
-                "generalmanager", "gm" -> GENERAL_MANAGER
-                "manager" -> MANAGER
-                "supervisor" -> SUPERVISOR
-                else -> SUPERVISOR // Default to lowest privilege
+                "admin" -> ADMIN
+                "user" -> USER
+                else -> USER // Default to lowest privilege
             }
         }
 
         fun toApiString(role: UserRole): String {
             return when (role) {
                 OWNER -> "owner"
-                GENERAL_MANAGER -> "general_manager"
-                MANAGER -> "manager"
-                SUPERVISOR -> "supervisor"
+                ADMIN -> "admin"
+                USER -> "user"
             }
         }
     }
@@ -44,49 +42,21 @@ data class User(
     val firstName: String,
     val lastName: String,
     val role: UserRole,
-    val ownerId: String? = null, // null for owners, owner's id for managers/supervisors
+    val ownerId: String? = null, // null for owners, owner's id for admins/users
     val isActive: Boolean = true,
     val createdAt: String,
-    val updatedAt: String
+    val updatedAt: String,
+    // Tenant/business display name (enriched by backend from IAM). Null/blank when unavailable —
+    // the Home header (f5) falls back to a default title. Same tenant for owner + team members.
+    val businessName: String? = null
 ) : Entity {
     val fullName: String
         get() = "$firstName $lastName"
 
+    // Access gating is permission-based (PermissionChecker on /me/permissions),
+    // not role-based — the role here is for display/fallback only.
     val isOwner: Boolean
         get() = role == UserRole.OWNER
-
-    val isGeneralManager: Boolean
-        get() = role == UserRole.GENERAL_MANAGER
-
-    val isManager: Boolean
-        get() = role == UserRole.MANAGER
-
-    val isSupervisor: Boolean
-        get() = role == UserRole.SUPERVISOR
-
-    /** Owner or General Manager - has financial access */
-    val hasFinancialAccess: Boolean
-        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
-
-    /** Can edit trips in any state */
-    val canEditTripInAnyState: Boolean
-        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
-
-    /** Can manage team members */
-    val canManageTeam: Boolean
-        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
-
-    /** Can assign caretakers to vehicles/drivers */
-    val canAssignCaretaker: Boolean
-        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
-
-    /** Can view trip_price field */
-    val canViewTripPrice: Boolean
-        get() = role == UserRole.OWNER || role == UserRole.GENERAL_MANAGER
-
-    /** Can delete costs */
-    val canDeleteCosts: Boolean
-        get() = role != UserRole.SUPERVISOR
 }
 
 /**
@@ -95,17 +65,18 @@ data class User(
 data class UserProfile(
     val user: User,
     val organizationStats: OrganizationStats? = null, // Only for owners
-    val ownerInfo: OwnerInfo? = null // Only for managers/supervisors
+    val ownerInfo: OwnerInfo? = null // Only for admins/users
 ) : Entity
 
 /**
  * Organization statistics for owners.
  * Mirrors the `owner_stats` block returned by `GET /profile` for owners.
+ * admins + users partition totalTeamMembers (owner excluded everywhere).
  */
 data class OrganizationStats(
-    val totalManagers: Int = 0,
-    val totalSupervisors: Int = 0,
     val totalTeamMembers: Int = 0,
+    val admins: Int = 0,
+    val users: Int = 0,
     val totalVehicles: Int = 0,
     val activeVehicles: Int = 0,
     val totalTrips: Int = 0,

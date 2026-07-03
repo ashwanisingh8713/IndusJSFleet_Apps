@@ -26,12 +26,10 @@ object TeamMapper {
     fun List<TeamMemberDto>.toDomain(): List<TeamMember> = map { it.toDomain() }
 
     private fun String.toTeamMemberRole(): TeamMemberRole = when (this.lowercase()) {
-        "owner", "general_manager", "generalmanager", "gm" -> TeamMemberRole.GENERAL_MANAGER
-        "admin" -> TeamMemberRole.MANAGER
-        "user" -> TeamMemberRole.SUPERVISOR
-        "manager" -> TeamMemberRole.MANAGER
-        "supervisor" -> TeamMemberRole.SUPERVISOR
-        else -> TeamMemberRole.SUPERVISOR
+        "owner" -> TeamMemberRole.OWNER
+        "admin" -> TeamMemberRole.ADMIN
+        "user" -> TeamMemberRole.USER
+        else -> TeamMemberRole.USER // lowest privilege for safety
     }
 }
 

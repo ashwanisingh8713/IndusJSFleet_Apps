@@ -229,9 +229,14 @@ data class LiveVehicleDto(
  */
 @Serializable
 data class TeamStatsDto(
-    // Backend dashboard.TeamStats exposes only total_members.
+    // Backend dashboard.TeamStats: total_members = all non-owner members;
+    // admins/users = per-role counts (additive, 2026-07-02). Owner excluded everywhere.
     @SerialName("total_members")
-    val totalMembers: Int = 0
+    val totalMembers: Int = 0,
+    @SerialName("admins")
+    val admins: Int = 0,
+    @SerialName("users")
+    val users: Int = 0
 ) : Dto
 
 /**

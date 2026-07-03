@@ -148,6 +148,10 @@ internal fun PaymentSummaryCard(
 
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
+        // §H: summary KPI tiles are de-tinted — neutral surface fill + onSurface numerals.
+        // The label alone distinguishes Received / Pending / This Month; no status hue on money.
+        val kpiValueColor = MaterialTheme.colorScheme.onSurface
+        val kpiBackground = MaterialTheme.colorScheme.surfaceContainerHighest
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -156,8 +160,8 @@ internal fun PaymentSummaryCard(
             SummaryItemCard(
                 value = totalReceived,
                 label = stringResource(Res.string.payment_filter_received),
-                valueColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived,
-                backgroundColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived.copy(alpha = 0.1f),
+                valueColor = kpiValueColor,
+                backgroundColor = kpiBackground,
                 modifier = Modifier.weight(1f)
             )
 
@@ -167,8 +171,8 @@ internal fun PaymentSummaryCard(
             SummaryItemCard(
                 value = totalPending,
                 label = stringResource(Res.string.payment_filter_pending),
-                valueColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending,
-                backgroundColor = com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending.copy(alpha = 0.1f),
+                valueColor = kpiValueColor,
+                backgroundColor = kpiBackground,
                 modifier = Modifier.weight(1f)
             )
 
@@ -178,8 +182,8 @@ internal fun PaymentSummaryCard(
             SummaryItemCard(
                 value = thisMonth,
                 label = stringResource(Res.string.payment_this_month),
-                valueColor = MaterialTheme.colorScheme.primary,
-                backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                valueColor = kpiValueColor,
+                backgroundColor = kpiBackground,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -300,15 +304,14 @@ internal fun PaymentCard(
                 }
             }
 
-            // Amount + Status
+            // Amount + Status. §H: money numerals are NEUTRAL (onSurface) everywhere — status is
+            // conveyed ONLY by the PaymentStatusBadge chip, never by tinting the amount.
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = payment.amountDisplay,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (payment.isReceived) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
-                    else if (payment.isPending) com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPending
-                    else MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 PaymentStatusBadge(status = payment.paymentStatus, paymentStateLabels = paymentStateLabels)
             }

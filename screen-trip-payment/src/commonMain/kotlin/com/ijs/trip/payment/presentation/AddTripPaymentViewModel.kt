@@ -141,6 +141,7 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
                     copy(
                         isLoading = false,
                         amount = payment.amount.toString(),
+                        originalAmount = payment.amount,
                         tdsAmount = if (payment.tdsAmount > 0) payment.tdsAmount.toString() else "",
                         discountAmount = if (payment.discountAmount > 0) payment.discountAmount.toString() else "",
                         paymentType = payment.paymentType,
@@ -248,6 +249,11 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
         if (currentState.amount.isBlank() || currentState.amount.toDoubleOrNull()?.let { it <= 0 } == true) {
             updateState { copy(amountError = UiText.StringRes(Res.string.error_valid_amount)) }
             hasError = true
+        } else if (currentState.amountExceedsPayable) {
+            updateState {
+                copy(amountError = UiText.StringRes(Res.string.payment_error_amount_exceeds, listOf(currentState.maxPayableAmountDisplay)))
+            }
+            hasError = true
         }
 
         if (currentState.paymentDate.isBlank()) {
@@ -327,19 +333,39 @@ override suspend fun handleIntent(intent: AddPaymentContract.Intent) {
             }
             is Result.Error -> {
                 logger.e(TAG_ADD_PAYMENT_VM, "Failed to save payment", result.exception)
-                updateState {
-                    copy(
-                        isSaving = false,
-                        error = result.message?.let { UiText.Raw(it) }
-                            ?: UiText.StringRes(Res.string.error_generic)
+                // Server over-collection guard (422 AMOUNT_EXCEEDS_BALANCE): surface it as a
+                // localized inline amount error — not a raw banner. Detection is on the message
+                // the datasource extracts via ApiErrorHandler's errorCode match (deterministic:
+                // "Payment amount exceeds the trip's remaining balance"); the repo's ApiException
+                // carries no errorBody, so the message IS the signal. The backend is the authority;
+                // this can fire even when the local check passed (e.g. a concurrent payment
+                // consumed the balance) — so the message quotes NO number: the local
+                // maxPayableAmount could be stale at that point.
+                val isOverCollection =
+                    result.message?.contains("exceeds", ignoreCase = true) == true &&
+                        result.message?.contains("balance", ignoreCase = true) == true
+                if (isOverCollection) {
+                    updateState {
+                        copy(
+                            isSaving = false,
+                            amountError = UiText.StringRes(Res.string.payment_error_amount_exceeds_server)
+                        )
+                    }
+                } else {
+                    updateState {
+                        copy(
+                            isSaving = false,
+                            error = result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_generic)
+                        )
+                    }
+                    sendEffect(
+                        AddPaymentContract.Effect.ShowError(
+                            result.message?.let { UiText.Raw(it) }
+                                ?: UiText.StringRes(Res.string.error_generic)
+                        )
                     )
                 }
-                sendEffect(
-                    AddPaymentContract.Effect.ShowError(
-                        result.message?.let { UiText.Raw(it) }
-                            ?: UiText.StringRes(Res.string.error_generic)
-                    )
-                )
             }
             is Result.Loading -> { /* Already handled */ }
         }

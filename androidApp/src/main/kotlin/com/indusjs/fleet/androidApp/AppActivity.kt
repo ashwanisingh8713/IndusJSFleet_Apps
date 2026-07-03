@@ -3,9 +3,14 @@ package com.indusjs.fleet.androidApp
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.LocaleList
 import android.provider.OpenableColumns
+import com.indusjs.fleet.core.i18n.LanguageManager
+import java.util.Locale
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -29,6 +34,34 @@ import com.razorpay.PaymentData
 import com.razorpay.PaymentResultWithDataListener
 
 class AppActivity : ComponentActivity(), PaymentResultWithDataListener {
+
+    /**
+     * Bug #42: apply the persisted in-app language to the Activity's Configuration on EVERY creation —
+     * including a config-change recreation, where the framework resets the process default locale back
+     * to the system one. Setting only `Locale.setDefault`/`LocaleList.setDefault` (see AppLocaleController)
+     * survives an in-session switch (no recreate) but NOT a recreation, which is why HI reverted to EN.
+     * Wrapping the base context with a locale-carrying Configuration makes compose-resources resolve the
+     * chosen language from the moment the Activity is (re)created. Reads the same pref multiplatform-settings
+     * writes (default SharedPreferences file, key [LanguageManager.KEY]).
+     */
+    override fun attachBaseContext(newBase: Context) {
+        val langCode = runCatching {
+            newBase.getSharedPreferences("${newBase.packageName}_preferences", Context.MODE_PRIVATE)
+                .getString(LanguageManager.KEY, null)
+        }.getOrNull()
+        if (langCode.isNullOrBlank()) {
+            super.attachBaseContext(newBase)
+            return
+        }
+        val locale = Locale(langCode)
+        Locale.setDefault(locale)
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(locale)
+        if (Build.VERSION.SDK_INT >= 24) {
+            config.setLocales(LocaleList(locale))
+        }
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

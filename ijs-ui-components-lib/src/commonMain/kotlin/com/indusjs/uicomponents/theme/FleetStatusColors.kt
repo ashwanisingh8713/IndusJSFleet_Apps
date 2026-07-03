@@ -1,5 +1,6 @@
 package com.indusjs.uicomponents.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -35,14 +36,22 @@ object FleetStatusColors {
     /** Expense / warning — deep amber (light-readable, unlike the old bright amber). */
     val ExpenseAmber = Color(0xFFC77A00)
 
-    /** Deep warning amber (C1). */
+    /** Deep warning amber (C1) — light-mode emphasis / accents. */
     val ExpenseAmberDark = Color(0xFF855900)
+
+    /** C1 warning amber tuned for DARK surfaces — brighter than [ExpenseAmberDark] so a warning
+     *  accent / dot clears the §4 contrast floor on a dark card. Pair via [fleetWarningAccent]. */
+    val ExpenseAmberOnDark = Color(0xFFE8B24A)
 
     /** Info — teal (C1), on-palette (replaces the old Material sky-blue). */
     val InfoBlue = Color(0xFF1C8A93)
 
-    /** Deep info teal (C1). */
+    /** Deep info teal (C1) — light-mode emphasis / accents. */
     val InfoBlueDark = Color(0xFF0B6A73)
+
+    /** C1 info teal tuned for DARK surfaces — brighter than [InfoBlue] so an info accent / dot
+     *  clears the §4 contrast floor on a dark card. Pair via [fleetInfoAccent]. */
+    val InfoBlueOnDark = Color(0xFF46C7D0)
 
     /** Accent — indigo family (replaces the old violet). */
     val AccentPurple = Color(0xFF6E72E8)
@@ -128,3 +137,22 @@ object FleetStatusColors {
     fun profitLossColor(value: Double): Color =
         if (value >= 0) ProfitGreen else LossRed
 }
+
+/**
+ * Theme-aware C1 WARNING accent: deep [FleetStatusColors.ExpenseAmberDark] on light,
+ * brighter [FleetStatusColors.ExpenseAmberOnDark] on dark. Use for warning accent bars / dots /
+ * expiry badges so the amber stays legible on a dark card (CRITICAL/INFO already read from the
+ * theme colorScheme / mid-tone teal).
+ */
+@Composable
+fun fleetWarningAccent(): Color =
+    if (isAppInDarkTheme()) FleetStatusColors.ExpenseAmberOnDark else FleetStatusColors.ExpenseAmberDark
+
+/**
+ * Theme-aware C1 INFO accent: [FleetStatusColors.InfoBlue] teal on light, brighter
+ * [FleetStatusColors.InfoBlueOnDark] on dark. Companion to [fleetWarningAccent] for info-severity
+ * accent bars / dots / expiry badges.
+ */
+@Composable
+fun fleetInfoAccent(): Color =
+    if (isAppInDarkTheme()) FleetStatusColors.InfoBlueOnDark else FleetStatusColors.InfoBlue

@@ -112,7 +112,7 @@ Paragraph Devanagari gets full air for shirorekha + stacked matras; single-line 
 ### D3 Buttons / cards / chips / top bar — per §8 (no deltas from me)
 - Buttons `Shape.Button` 8dp, indigo fills, `StateLayer` press, keep enum API + `RowScope.weight`-on-root fix; 12sp-on-primary labels bump weight; small glyphs `onSurface`-tinted not `primary`.
 - Cards consolidate into `FleetSectionCard`; badges → pill radius; `FleetMenu`/`FleetDialog` through `FleetElevatedSurface`.
-- Chips → one primary-tinted selected token (matches the active tab pill).
+- Chips → one unified selected token = neutral **`secondaryContainer`** fill + `onSecondaryContainer` (RULING 2026-06-30, correcting an earlier self-contradiction: the segmented tab pill is neutral `surface`, so "primary-tinted matching the tab pill" was impossible). Chip and tab pill are **different idioms** (filter toggle vs single-select on a track) and need not share a token. The one remaining un-migrated style — `CostTypeTwoLevelSelector`'s raw Material `FilterChip` — must move to `FleetFilterChip`.
 - Top bar `Height.TopBar` 64dp, `surface`, hairline `outlineVariant` divider, title/SemiBold, no ALL-CAPS.
 
 ---
@@ -174,3 +174,17 @@ Rules:
 **Why not B (colour the numerals):** the current build already shows the failure mode — green `₹0` / orange `₹0` on tinted cards; coloured money numerals routinely miss the sunlight-first contrast floor (§1) on cheap in-vehicle LCDs, and colouring *positive* profit green reintroduces the always-on accent the anti-rainbow rule kills. A-plus gets the at-a-glance signal from a chip/accent (which §1 explicitly sanctions for semantic colour) without putting fragile colour on the most important number.
 
 Ties to [[financial-terminology]] (Total Business / Expenses / Profit) and [[pnl-driver-costs-excluded]]. **Status: ✅ PO-APPROVED 2026-06-30 — enters the step-4 (card consolidation) + step-6 (status refactor) build spec.**
+
+**§H addendum — payments (2026-06-30 fidelity FAIL fix):** payment amount numerals + group totals must be **neutral `onSurface`** (SemiBold, tabular). Retire the status-colouring of amounts (`PaymentReceived` green / `PaymentPending` amber) and the **unconditional green group total**. Payment status stays in the `PaymentStatusBadge` chip (already correct). Only a negative/refund figure may take `error`. Summary KPI tiles → neutral (no status-tinted backgrounds/numerals).
+
+---
+
+## I. Alert-card redline (device-alerts) — fidelity FAIL fix (2026-06-30)
+
+The device-alerts feature (tracker firmware) ships **full-card semantic tints** + a rainbow per-type colour map — a hard §1 anti-rainbow violation (both verified in source). Redline for B:
+
+1. **Card = neutral `FleetSectionCard`** (standard surface) — drop `containerColor = alertColor.copy(0.06f)` and the coloured 1.5dp border. The card regains the §4 depth model (soft shadow light / 1px top-highlight dark) automatically.
+2. **Severity affordance = a 4dp left-accent bar** (semantic colour) on the card's leading edge + the **existing priority chip** + a **semantic dot** if desired. Colour lives ONLY in the accent bar / chip / dot — never the card fill.
+3. **Title text = neutral `onSurface`** (not the semantic hue).
+4. **Remap `alertColor` from per-TYPE to SEVERITY → ONE semantic set:** CRITICAL→`error`, WARNING→C1 `warning` (`#855900`/`#E8B24A`), INFO→C1 `info` (`#0B6A73`/`#46C7D0`). Retire the `secondary`(grey)/`primary`(indigo) grab-bag and the raw frozen `FleetStatusColors.FleetMaintenance = Color(0xFFC77A00)` hex (use the themed C1 warning token so it flips for dark).
+5. Result: a calm neutral list where severity reads from a disciplined accent-bar + chip, not a three-hue card rainbow. Ties to [[alerts-backend-owned]] (alert data is backend-owned; this is presentation only) and the anti-rainbow §1.

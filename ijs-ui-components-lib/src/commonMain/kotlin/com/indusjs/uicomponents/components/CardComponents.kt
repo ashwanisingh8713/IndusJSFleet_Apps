@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.indusjs.uicomponents.theme.FleetTokens
 
 /**
  * Card and list item components for consistent UI across the app.
@@ -114,7 +115,8 @@ fun FleetStatusBadge(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(4.dp),
+        // §2 pill language: status badge uses the full pill radius (was a 4dp near-rectangle).
+        shape = RoundedCornerShape(FleetTokens.Radius.Pill),
         color = color.copy(alpha = 0.12f)
     ) {
         Text(

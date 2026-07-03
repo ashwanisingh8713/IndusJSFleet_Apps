@@ -61,7 +61,9 @@ internal fun TripsStatusSection(
                 onAction = onCreateTripClick
             )
         } else {
-            // Number-forward status tiles
+            // Number-forward status tiles — §1 anti-rainbow: neutral count tiles (no green/amber
+            // per-status tint); trip status colour lives in the active-trips preview list below.
+            val neutralTileBg = MaterialTheme.colorScheme.surfaceContainerHighest
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
@@ -69,19 +71,19 @@ internal fun TripsStatusSection(
                 MetricTile(
                     value = tripSummary.inProgress.toString(),
                     label = stringResource(Res.string.dashboard_label_active),
-                    accent = FleetStatusColors.FleetOnRoute,
+                    backgroundColor = neutralTileBg,
                     modifier = Modifier.weight(1f)
                 )
                 MetricTile(
                     value = tripSummary.planned.toString(),
                     label = stringResource(Res.string.dashboard_label_planned),
-                    accent = FleetStatusColors.FleetPlanned,
+                    backgroundColor = neutralTileBg,
                     modifier = Modifier.weight(1f)
                 )
                 MetricTile(
                     value = tripSummary.completed.toString(),
                     label = stringResource(Res.string.dashboard_label_done),
-                    accent = MaterialTheme.colorScheme.outline,
+                    backgroundColor = neutralTileBg,
                     modifier = Modifier.weight(1f)
                 )
             }

@@ -1,6 +1,5 @@
 package com.ijs.alerts.presentation
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,8 +20,9 @@ import com.indusjs.uicomponents.components.FilterDefinition
 import com.indusjs.uicomponents.components.FleetFilterBar
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.LoadingContent
-import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.uicomponents.theme.FleetTokens
+import com.indusjs.uicomponents.theme.fleetInfoAccent
+import com.indusjs.uicomponents.theme.fleetWarningAccent
 import com.indusjs.uicomponents.theme.isAtLeastMedium
 import com.indusjs.uicomponents.theme.isExpanded
 import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
@@ -43,6 +43,13 @@ private fun alertIconRes(type: AlertType): DrawableResource = when (type) {
     AlertType.LICENSE_EXPIRY -> Res.drawable.ic_driver
     AlertType.MAINTENANCE -> Res.drawable.ic_wrench
     AlertType.FUEL_LOW -> Res.drawable.ic_fuel
+    // Device-tracker alerts (frozen 2026-07-01).
+    AlertType.SOS -> Res.drawable.ic_warning
+    AlertType.ROUTE_DEVIATION -> Res.drawable.ic_map
+    AlertType.GPS_LOSS -> Res.drawable.ic_visibility_off
+    AlertType.NIGHT_DRIVING -> Res.drawable.ic_moon
+    AlertType.IDLE -> Res.drawable.ic_time
+    AlertType.INCOMING_CALL -> Res.drawable.ic_phone
     else -> Res.drawable.ic_warning
 }
 
@@ -272,35 +279,31 @@ private fun AlertItemCard(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val alertColor = when (alert.type) {
-        AlertType.MAINTENANCE -> MaterialTheme.colorScheme.tertiary
-        AlertType.FUEL_LOW -> MaterialTheme.colorScheme.error
-        AlertType.SPEED_VIOLATION -> MaterialTheme.colorScheme.error
-        AlertType.GEOFENCE_VIOLATION -> MaterialTheme.colorScheme.secondary
-        AlertType.DRIVER_BEHAVIOR -> MaterialTheme.colorScheme.secondary
-        AlertType.SYSTEM -> MaterialTheme.colorScheme.primary
-        AlertType.DOCUMENT_EXPIRY -> MaterialTheme.colorScheme.error
-        AlertType.LICENSE_EXPIRY -> MaterialTheme.colorScheme.error
-        AlertType.MISSING_DOCUMENTS -> MaterialTheme.colorScheme.error
-    }
-
-    val priorityColor = when (alert.priority) {
+    // §I redline: severity drives ONE accent (the C1 set); the card is neutral. Retires the old
+    // per-AlertType rainbow AND the frozen #C77A00 amber. Device AlertTypes inherit this by severity.
+    val severityAccent = when (alert.priority) {
         AlertPriority.CRITICAL -> MaterialTheme.colorScheme.error
-        AlertPriority.WARNING -> FleetStatusColors.FleetMaintenance
-        AlertPriority.INFO -> MaterialTheme.colorScheme.primary
+        AlertPriority.WARNING -> fleetWarningAccent()               // theme-aware C1 amber (light #855900 / dark #E8B24A)
+        AlertPriority.INFO -> fleetInfoAccent()                     // theme-aware C1 teal (light #1C8A93 / dark #46C7D0)
     }
 
-    // Flat card with a crisp colored outline instead of a shadow — a shadowElevation on a tinted
-    // surface renders as a muddy grey halo in light theme, which looked bad.
+    // Neutral FleetSectionCard hosting a 4dp semantic LEFT-ACCENT bar + neutral title + priority chip.
     FleetSectionCard(
         modifier = modifier,
-        containerColor = alertColor.copy(alpha = 0.06f),
-        border = BorderStroke(FleetTokens.Border.Default, alertColor.copy(alpha = 0.35f)),
-        elevation = FleetTokens.Elevation.None
+        contentPadding = FleetTokens.Spacing.None
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
-        ) {
+        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+            // 4dp severity accent bar, full card height.
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(FleetTokens.Spacing.XS)
+                    .background(severityAccent)
+            )
+            Column(
+                modifier = Modifier.padding(FleetTokens.Spacing.L),
+                verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
+            ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -311,24 +314,24 @@ private fun AlertItemCard(
                     horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M),
                     modifier = Modifier.weight(1f)
                 ) {
-                    // Alert icon in colored box
+                    // Alert icon in a subtle severity-tinted box (type differentiated by the icon glyph).
                     Box(
                         modifier = Modifier
                             .size(FleetTokens.Height.ButtonMedium)
                             .clip(RoundedCornerShape(FleetTokens.Radius.L))
-                            .background(alertColor.copy(alpha = 0.15f)),
+                            .background(severityAccent.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(alertIconRes(alert.type)),
                             contentDescription = null,
-                            tint = alertColor,
+                            tint = severityAccent,
                             modifier = Modifier.size(FleetTokens.IconSize.M)
                         )
                     }
 
                     Column {
-                        // Title with priority badge
+                        // Neutral title + priority chip (severity carries the colour, not the title text).
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
@@ -337,29 +340,29 @@ private fun AlertItemCard(
                                 text = alert.title,
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = alertColor
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                            // Priority badge
+                            // Priority chip
                             Surface(
-                                shape = RoundedCornerShape(FleetTokens.Radius.M),
-                                color = priorityColor.copy(alpha = 0.15f)
+                                shape = RoundedCornerShape(FleetTokens.Radius.Pill),
+                                color = severityAccent.copy(alpha = 0.12f)
                             ) {
                                 Text(
                                     text = alert.priority.name,
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Medium,
-                                    color = priorityColor,
-                                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS, vertical = FleetTokens.Spacing.XXS)
+                                    color = severityAccent,
+                                    modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
                                 )
                             }
                         }
 
-                        // Days until expiry badge
+                        // Days until expiry badge (C1 severity, not the retired #C77A00).
                         alert.daysUntilExpiry?.let { days ->
                             val badgeColor = when {
                                 days < 0 -> MaterialTheme.colorScheme.error
-                                days <= 7 -> FleetStatusColors.FleetMaintenance
-                                else -> MaterialTheme.colorScheme.primary
+                                days <= 7 -> fleetWarningAccent()
+                                else -> fleetInfoAccent()
                             }
                             val badgeText = when {
                                 days < 0 -> stringResource(Res.string.alerts_days_overdue_long, -days)
@@ -440,6 +443,7 @@ private fun AlertItemCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            }
         }
     }
 }

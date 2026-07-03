@@ -205,7 +205,7 @@ private fun ProfileContent(
             }
         }
 
-        // Owner Info (for Managers/Supervisors)
+        // Owner Info (for admins/users)
         if (ownerInfo != null) {
             item {
                 OwnerInfoCard(ownerInfo = ownerInfo)
@@ -458,17 +458,12 @@ private fun RoleBadge(role: UserRole) {
             MaterialTheme.colorScheme.primary,
             Res.drawable.ic_profile
         )
-        UserRole.GENERAL_MANAGER -> Triple(
-            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.tertiary,
-            Res.drawable.ic_team
-        )
-        UserRole.MANAGER -> Triple(
+        UserRole.ADMIN -> Triple(
             MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
             MaterialTheme.colorScheme.secondary,
             Res.drawable.ic_team
         )
-        UserRole.SUPERVISOR -> Triple(
+        UserRole.USER -> Triple(
             MaterialTheme.colorScheme.surfaceVariant,
             MaterialTheme.colorScheme.onSurfaceVariant,
             Res.drawable.ic_visibility
@@ -494,9 +489,8 @@ private fun RoleBadge(role: UserRole) {
                 text = stringResource(
                     when (role) {
                         UserRole.OWNER -> Res.string.role_owner
-                        UserRole.GENERAL_MANAGER -> Res.string.role_general_manager
-                        UserRole.MANAGER -> Res.string.role_manager
-                        UserRole.SUPERVISOR -> Res.string.role_supervisor
+                        UserRole.ADMIN -> Res.string.team_iam_role_admin_title
+                        UserRole.USER -> Res.string.team_iam_role_user_title
                     }
                 ),
                 style = MaterialTheme.typography.labelLarge,
@@ -620,6 +614,8 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             icon = Res.drawable.ic_team
         )
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+        // ADMINS / TEAM MEMBERS / TOTAL on owner_stats {admins, users, total_team_members}
+        // (roles are owner/admin/user; admins + users partition the total, owner excluded).
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
@@ -627,24 +623,22 @@ private fun OrganizationStatsCard(stats: OrganizationStats) {
             EnhancedStatItem(
                 modifier = Modifier.weight(1f),
                 icon = Res.drawable.ic_team,
-                value = stats.totalManagers.toString(),
-                label = stringResource(Res.string.profile_stats_managers),
+                value = stats.admins.toString(),
+                label = stringResource(Res.string.profile_stats_admins),
                 color = MaterialTheme.colorScheme.secondary
             )
             EnhancedStatItem(
                 modifier = Modifier.weight(1f),
-                icon = Res.drawable.ic_visibility,
-                value = stats.totalSupervisors.toString(),
-                label = stringResource(Res.string.profile_stats_supervisors),
-                // Neutral count — use a calm accent (purple), not the theme's orange
-                // tertiary which reads as a warning for a plain "0".
+                icon = Res.drawable.ic_profile,
+                value = stats.users.toString(),
+                label = stringResource(Res.string.profile_stats_team_members),
                 color = FleetStatusColors.AccentPurple
             )
             EnhancedStatItem(
                 modifier = Modifier.weight(1f),
                 icon = Res.drawable.ic_profile,
                 value = stats.totalTeamMembers.toString(),
-                label = stringResource(Res.string.profile_stats_team_members),
+                label = stringResource(Res.string.profile_stats_total),
                 color = MaterialTheme.colorScheme.primary
             )
         }

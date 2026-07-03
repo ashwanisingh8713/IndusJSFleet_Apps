@@ -1,13 +1,17 @@
 package com.ijs.user.presentation.login
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -19,7 +23,10 @@ import com.indusjs.uicomponents.components.FieldType
 import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetPasswordField
+import com.indusjs.uicomponents.components.FleetTab
+import com.indusjs.uicomponents.components.FleetTabBar
 import com.indusjs.uicomponents.components.filterDigitsOnly
+import com.indusjs.uicomponents.i18n.LocalLanguagePickerLauncher
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.isAppInDarkTheme
 import com.indusjs.uicomponents.theme.isAtLeastMedium
@@ -90,6 +97,32 @@ fun LoginScreen(
                     contentDescription = if (isDarkTheme) stringResource(Res.string.cd_switch_to_light_mode) else stringResource(Res.string.cd_switch_to_dark_mode),
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(FleetTokens.IconSize.Default)
+                )
+            }
+
+            // "भाषा / Language" — re-opens the first-launch language picker. Label is an intentional
+            // bilingual literal (both scripts, language-neutral) to match the pre-choice picker copy.
+            val openLanguagePicker = LocalLanguagePickerLauncher.current
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(FleetTokens.Spacing.L)
+                    .clip(RoundedCornerShape(FleetTokens.Radius.Pill))
+                    .clickable { openLanguagePicker() }
+                    .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_language),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                )
+                Text(
+                    text = "भाषा / Language",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -169,52 +202,61 @@ private fun LoginFormContent(
     onSignUp: () -> Unit,
     focusManager: androidx.compose.ui.focus.FocusManager
 ) {
+    // §8 rhythm (f3 spec): explicit inter-element spacing, not a uniform spacedBy — the screen should
+    // feel composed, not stretched. Top arrangement + per-gap Spacers below.
     Column(
         modifier = Modifier
             .then(widthModifier)
             .verticalScroll(rememberScrollState())
             .padding(FleetTokens.Spacing.XXL),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
+        verticalArrangement = Arrangement.Top
     ) {
-        Icon(
-            painter = painterResource(Res.drawable.ic_fleet_logo),
-            contentDescription = stringResource(Res.string.login_title),
-            modifier = Modifier.size(FleetTokens.IconSize.XXL),
-            tint = MaterialTheme.colorScheme.primary
-        )
+        // Logo — indigo rounded-square placeholder (real mark is a later branding task).
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(RoundedCornerShape(FleetTokens.Radius.XL))
+                .background(MaterialTheme.colorScheme.primary),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_fleet_logo),
+                contentDescription = stringResource(Res.string.login_title),
+                modifier = Modifier.size(FleetTokens.IconSize.L),
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))   // logo → title
         Text(
             text = stringResource(Res.string.login_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))   // title → subtitle
         Text(
             text = stringResource(Res.string.login_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.M))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXL)) // subtitle → toggle
 
-        // Email / Mobile toggle
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            SegmentedButton(
-                selected = state.loginMode == LoginContract.LoginMode.EMAIL,
-                onClick = { onSwitchMode(LoginContract.LoginMode.EMAIL) },
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-            ) {
-                Text(text = stringResource(Res.string.login_mode_email))
-            }
-            SegmentedButton(
-                selected = state.loginMode == LoginContract.LoginMode.MOBILE,
-                onClick = { onSwitchMode(LoginContract.LoginMode.MOBILE) },
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-            ) {
-                Text(text = stringResource(Res.string.login_mode_mobile))
-            }
-        }
+        // Email / Mobile toggle — shared segmented pill (FleetTabBar), same inset as the fields.
+        val loginModeTabs = listOf(
+            FleetTab(LoginContract.LoginMode.EMAIL, stringResource(Res.string.login_mode_email)),
+            FleetTab(LoginContract.LoginMode.MOBILE, stringResource(Res.string.login_mode_mobile)),
+        )
+        FleetTabBar(
+            tabs = loginModeTabs,
+            selectedTabId = state.loginMode,
+            onTabSelected = onSwitchMode,
+            modifier = Modifier.fillMaxWidth(),
+            scrollable = false,
+        )
 
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))  // toggle → fields
 
         val identifierErrorText = state.identifierError?.resolve()
         if (state.loginMode == LoginContract.LoginMode.EMAIL) {
@@ -247,6 +289,8 @@ private fun LoginFormContent(
             )
         }
 
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))   // identifier → password
+
         val passwordErrorText = state.passwordError?.resolve()
         FleetPasswordField(
             value = state.password,
@@ -264,7 +308,23 @@ private fun LoginFormContent(
             )
         )
 
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))   // password → forgot
+
+        // Forgot password — standard end-aligned form link directly under the password field.
+        Text(
+            text = stringResource(Res.string.login_forgot_password),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .align(Alignment.End)
+                .clip(RoundedCornerShape(FleetTokens.Radius.M))
+                .clickable(enabled = !state.isLoading, onClick = onForgotPassword)
+                .padding(horizontal = FleetTokens.Spacing.XS, vertical = FleetTokens.Spacing.XS)
+        )
+
         state.error?.let { error ->
+            Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Text(
                 text = error.resolve(),
                 color = MaterialTheme.colorScheme.error,
@@ -274,42 +334,45 @@ private fun LoginFormContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
-
-        FleetButton(
-            text = stringResource(Res.string.login_forgot_password),
-            onClick = onForgotPassword,
-            variant = ButtonVariant.GHOST,
-            modifier = Modifier.align(Alignment.End)
-        )
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XL))  // forgot → CTA
 
         FleetButton(
             text = stringResource(Res.string.login_sign_in),
             onClick = onLogin,
             variant = ButtonVariant.PRIMARY,
             isLoading = state.isLoading,
-            enabled = !state.isLoading
+            enabled = !state.isLoading,
+            modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
+        Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXL)) // CTA → footer
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Footer — one centered line; "Sign Up" is a primary, ≥44dp touch target.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = stringResource(Res.string.login_no_account),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            FleetButton(
-                text = stringResource(Res.string.login_sign_up),
-                onClick = onSignUp,
-                variant = ButtonVariant.GHOST
-            )
+            Box(
+                modifier = Modifier
+                    .heightIn(min = FleetTokens.Height.MinTouchTarget)
+                    .clip(RoundedCornerShape(FleetTokens.Radius.M))
+                    .clickable(enabled = !state.isLoading, onClick = onSignUp)
+                    .padding(horizontal = FleetTokens.Spacing.S),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(Res.string.login_sign_up),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
-
-        Text(
-            text = stringResource(Res.string.login_demo_hint),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
     }
 }

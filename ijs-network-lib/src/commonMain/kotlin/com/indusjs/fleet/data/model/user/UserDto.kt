@@ -76,6 +76,10 @@ data class UserDto(
     val createdById: Int? = null,
     @SerialName("tenant_id")
     val tenantId: String = "",
+    // Tenant/business display name (enriched by the backend from IAM). Absent when unavailable — the
+    // Home header falls back to a default title (f5). Optional + defaulted so older payloads don't blank.
+    @SerialName("business_name")
+    val businessName: String? = null,
     @SerialName("is_active")
     val isActive: Boolean = true,
     // UTC epoch-millis (JSON number). 0/null = unset.
@@ -134,12 +138,13 @@ data class RefreshResponseDto(
 @JsonIgnoreUnknownKeys
 @Serializable
 data class OwnerStatsDto(
-    @SerialName("total_managers")
-    val totalManagers: Int = 0,
-    @SerialName("total_supervisors")
-    val totalSupervisors: Int = 0,
+    // Roles are owner/admin/user: admins + users partition the total (owner excluded).
     @SerialName("total_team_members")
     val totalTeamMembers: Int = 0,
+    @SerialName("admins")
+    val admins: Int = 0,
+    @SerialName("users")
+    val users: Int = 0,
     @SerialName("total_vehicles")
     val totalVehicles: Int = 0,
     @SerialName("active_vehicles")
@@ -165,6 +170,9 @@ data class UserProfileDto(
     val role: String = "",
     @SerialName("owner_id")
     val ownerId: Int? = null,
+    // Tenant/business display name (backend-enriched from IAM); absent → f5 header default title.
+    @SerialName("business_name")
+    val businessName: String? = null,
     @SerialName("is_active")
     val isActive: Boolean = true,
     // UTC epoch-millis (JSON number). 0/null = unset.

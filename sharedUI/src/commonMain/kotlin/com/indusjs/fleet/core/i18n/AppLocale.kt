@@ -29,6 +29,11 @@ expect object AppLocaleController {
 class LanguageManager(private val settings: Settings) {
     fun saved(): AppLanguage = AppLanguage.fromCode(settings.getStringOrNull(KEY))
 
+    /** True once the user has EXPLICITLY chosen a language (via the first-launch picker or Profile).
+     *  [saved] falls back to a default when unset; this distinguishes "never chosen" for the f6a
+     *  first-launch picker, which shows once and never again after a choice is persisted. */
+    fun hasChosen(): Boolean = settings.getStringOrNull(KEY) != null
+
     fun persist(language: AppLanguage) {
         settings.putString(KEY, language.code)
     }

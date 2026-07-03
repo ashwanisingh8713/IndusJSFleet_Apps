@@ -141,12 +141,18 @@ fun <T> FleetDropdown(
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
             )
 
+            val menuShape = RoundedCornerShape(FleetTokens.Radius.L)
             ExposedDropdownMenu(
                 expanded = isExpanded && enabled,
                 onDismissRequest = { isExpanded = false },
-                modifier = Modifier.heightIn(max = FleetTokens.Width.DropdownMaxHeight),
+                // §4/§9.3 depth: the M3 shadow is invisible on a near-black dark surface, so add the
+                // Calm Fintech 1px top-highlight (no-op in light). The menu already clips to `shape`, so
+                // fleetElevatedSurface draws the hairline along that shape — no extra .clip() needed.
+                modifier = Modifier
+                    .heightIn(max = FleetTokens.Width.DropdownMaxHeight)
+                    .fleetElevatedSurface(menuShape, FleetElevation.Dropdown),
                 containerColor = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(FleetTokens.Radius.L)
+                shape = menuShape
             ) {
                 options.forEach { option ->
                     DropdownMenuItem(

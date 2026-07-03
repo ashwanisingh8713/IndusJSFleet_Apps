@@ -31,7 +31,8 @@ object UserMapper {
         ownerId = ownerId?.toString(),
         isActive = isActive,
         createdAt = formatDateTimeForDisplay(createdAt),
-        updatedAt = formatDateTimeForDisplay(updatedAt ?: createdAt)
+        updatedAt = formatDateTimeForDisplay(updatedAt ?: createdAt),
+        businessName = businessName
     )
 
     fun AuthResponseDto.toDomain(): AuthResult = AuthResult(
@@ -42,9 +43,9 @@ object UserMapper {
     )
 
     fun OwnerStatsDto.toDomain(): OrganizationStats = OrganizationStats(
-        totalManagers = totalManagers,
-        totalSupervisors = totalSupervisors,
         totalTeamMembers = totalTeamMembers,
+        admins = admins,
+        users = users,
         totalVehicles = totalVehicles,
         activeVehicles = activeVehicles,
         totalTrips = totalTrips,
@@ -69,7 +70,8 @@ object UserMapper {
             ownerId = ownerId?.toString(),
             isActive = isActive,
             createdAt = formatDateTimeForDisplay(createdAt),
-            updatedAt = formatDateTimeForDisplay(updatedAt ?: createdAt)
+            updatedAt = formatDateTimeForDisplay(updatedAt ?: createdAt),
+            businessName = businessName
         )
 
         return UserProfile(
@@ -81,10 +83,9 @@ object UserMapper {
 
     private fun String.toUserRole(): UserRole = when (this.lowercase().replace("_", "")) {
         "owner" -> UserRole.OWNER
-        "generalmanager", "gm" -> UserRole.GENERAL_MANAGER
-        "manager" -> UserRole.MANAGER
-        "supervisor" -> UserRole.SUPERVISOR
-        else -> UserRole.SUPERVISOR // Default to lowest privilege for safety
+        "admin" -> UserRole.ADMIN
+        "user" -> UserRole.USER
+        else -> UserRole.USER // Default to lowest privilege for safety
     }
 }
 

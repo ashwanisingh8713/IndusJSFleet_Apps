@@ -10,27 +10,47 @@ import kotlin.math.roundToInt
  */
 
 /**
- * Format a number as Indian Rupee currency.
- * Uses Indian number formatting (lakhs, crores).
+ * Localized compact-currency unit words (thousand / lakh / crore). Defaults are the English
+ * abbreviations; [com.indusjs.fleet.core.util.CompactCurrencyUnits] is repopulated from string
+ * resources at the app root whenever the in-app language changes (see sharedUI App root), so the
+ * plain [formatCurrency] callers stay locale-correct without threading a Composable through ~48 sites.
+ * Process-wide by design — mirrors how `Locale.setDefault` drives the rest of formatting.
+ */
+object CompactCurrencyUnits {
+    @Volatile var thousand: String = "K"
+    @Volatile var lakh: String = "L"
+    @Volatile var crore: String = "Cr"
+}
+
+/**
+ * Format a number as Indian Rupee currency, compact (thousand / lakh / crore) using
+ * [CompactCurrencyUnits] so the unit word follows the in-app language (₹1.2 Cr / ₹1.2 करोड़).
  */
 fun formatCurrency(value: Double): String {
     val absValue = value.absoluteValue
     val sign = if (value < 0) "-" else ""
 
     return when {
-        absValue >= 10_000_000 -> "${sign}₹${formatIndianNumber(absValue / 10_000_000, 2)} Cr"
-        absValue >= 100_000 -> "${sign}₹${formatIndianNumber(absValue / 100_000, 2)} L"
-        absValue >= 1000 -> "${sign}₹${formatIndianNumber(absValue / 1000, 1)}K"
+        absValue >= 10_000_000 -> "${sign}₹${formatIndianNumber(absValue / 10_000_000, 2)} ${CompactCurrencyUnits.crore}"
+        absValue >= 100_000 -> "${sign}₹${formatIndianNumber(absValue / 100_000, 2)} ${CompactCurrencyUnits.lakh}"
+        absValue >= 1000 -> "${sign}₹${formatIndianNumber(absValue / 1000, 1)} ${CompactCurrencyUnits.thousand}"
         else -> "${sign}₹${formatWithCommas(absValue.roundToInt().toLong())}"
     }
 }
 
 /**
- * Format a number with proper Indian number formatting.
+ * Canonical "quiet money" formatter: full Indian-grouped rupees, with paise shown (2dp) ONLY when
+ * nonzero — whole rupees read ₹60,000 (not ₹60,000.00), per §H. No compact K/L/Cr abbreviation.
  */
 fun formatCurrencyFull(value: Double): String {
     val sign = if (value < 0) "-" else ""
-    return "${sign}₹${formatWithCommas(value.absoluteValue.roundToInt().toLong())}"
+    val abs = value.absoluteValue
+    var whole = abs.toLong()
+    var paise = ((abs - whole) * 100).roundToInt()
+    if (paise >= 100) { whole += 1; paise = 0 } // carry when paise rounds up to a full rupee
+    val grouped = formatWithCommas(whole)
+    return if (paise == 0) "${sign}₹$grouped"
+           else "${sign}₹$grouped.${paise.toString().padStart(2, '0')}"
 }
 
 /**

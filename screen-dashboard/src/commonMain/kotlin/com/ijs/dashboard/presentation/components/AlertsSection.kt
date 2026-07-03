@@ -305,6 +305,13 @@ private fun CleanAlertItem(
         AlertType.DOCUMENT_EXPIRY -> MaterialTheme.colorScheme.error
         AlertType.LICENSE_EXPIRY -> MaterialTheme.colorScheme.error
         AlertType.MISSING_DOCUMENTS -> MaterialTheme.colorScheme.error
+        // Device-tracker alerts (frozen 2026-07-01): SOS critical; deviation/GPS-loss warning; rest info.
+        AlertType.SOS -> MaterialTheme.colorScheme.error
+        AlertType.ROUTE_DEVIATION -> MaterialTheme.colorScheme.secondary
+        AlertType.GPS_LOSS -> MaterialTheme.colorScheme.secondary
+        AlertType.NIGHT_DRIVING -> MaterialTheme.colorScheme.primary
+        AlertType.IDLE -> MaterialTheme.colorScheme.primary
+        AlertType.INCOMING_CALL -> MaterialTheme.colorScheme.primary
     }
 
     val alertIcon = when (alert.type) {
@@ -313,6 +320,12 @@ private fun CleanAlertItem(
         AlertType.MISSING_DOCUMENTS -> Res.drawable.ic_edit
         AlertType.MAINTENANCE -> Res.drawable.ic_settings
         AlertType.FUEL_LOW -> Res.drawable.ic_fuel
+        AlertType.SOS -> Res.drawable.ic_warning
+        AlertType.ROUTE_DEVIATION -> Res.drawable.ic_map
+        AlertType.GPS_LOSS -> Res.drawable.ic_visibility_off
+        AlertType.NIGHT_DRIVING -> Res.drawable.ic_moon
+        AlertType.IDLE -> Res.drawable.ic_time
+        AlertType.INCOMING_CALL -> Res.drawable.ic_phone
         else -> Res.drawable.ic_warning
     }
 

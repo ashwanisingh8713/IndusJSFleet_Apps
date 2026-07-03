@@ -10,7 +10,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TeamMemberRole.localizedDisplayName(): String = when (this) {
-    TeamMemberRole.GENERAL_MANAGER -> stringResource(Res.string.team_role_owner)
-    TeamMemberRole.MANAGER -> stringResource(Res.string.team_iam_role_admin_title)
-    TeamMemberRole.SUPERVISOR -> stringResource(Res.string.team_iam_role_user_title)
+    TeamMemberRole.OWNER -> stringResource(Res.string.team_role_owner)
+    TeamMemberRole.ADMIN -> stringResource(Res.string.team_iam_role_admin_title)
+    TeamMemberRole.USER -> stringResource(Res.string.team_iam_role_user_title)
 }

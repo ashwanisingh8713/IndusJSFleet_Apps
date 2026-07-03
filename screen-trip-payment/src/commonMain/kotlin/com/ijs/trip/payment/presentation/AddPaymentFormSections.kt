@@ -11,7 +11,6 @@ import com.indusjs.uicomponents.components.FleetDropdown
 import com.indusjs.uicomponents.components.FleetInputField
 import com.indusjs.uicomponents.components.FleetSectionCard
 import com.indusjs.uicomponents.components.UiText
-import com.indusjs.uicomponents.theme.FleetStatusColors
 import com.indusjs.uicomponents.theme.FleetTokens
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -144,13 +143,11 @@ internal fun SelectedTripInfoCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
+                        // §H: neutral money numeral — no status hue on the amount.
                         text = trip.pendingDisplay,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (trip.hasPendingAmount)
-                            FleetStatusColors.PaymentPending
-                        else
-                            FleetStatusColors.PaymentReceived
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

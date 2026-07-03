@@ -99,7 +99,7 @@
     <string name="select_a_caretaker">Select a caretaker</string>
     <string name="assign_caretaker">Assign Caretaker</string>
     <string name="caretaker_assignment">Caretaker Assignment</string>
-    <string name="caretaker_assignment_hint">Optional • Assign a Manager or Supervisor</string>
+    <string name="caretaker_assignment_hint">Optional • Assign a team member</string>
     <string name="caretaker">Caretaker</string>
     <string name="not_assigned">Not Assigned</string>
     <string name="assign">Assign</string>
@@ -148,7 +148,6 @@
     <string name="login_forgot_password">Forgot Password?</string>
     <string name="login_no_account">Don't have an account?</string>
     <string name="login_sign_up">Sign Up</string>
-    <string name="login_demo_hint">Demo: Enter any email and password</string>
     <string name="login_error_email_required">Please enter your email or mobile</string>
     <string name="login_error_password_required">Please enter your password</string>
     <string name="login_error_failed">Login failed</string>
@@ -230,9 +229,6 @@
 
     <!-- User Roles -->
     <string name="role_owner">Owner</string>
-    <string name="role_general_manager">General Manager</string>
-    <string name="role_manager">Manager</string>
-    <string name="role_supervisor">Supervisor</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_page1_title">Fleet Management</string>
@@ -584,8 +580,6 @@
     <string name="team_overview_subtitle">%1$d members · %2$d active</string>
     <string name="team_filter_all">All</string>
     <string name="team_filter_gm">GM</string>
-    <string name="team_filter_managers">Managers</string>
-    <string name="team_filter_supervisors">Supervisors</string>
     <string name="team_filter_admins">Admins</string>
     <string name="team_filter_users">Users</string>
     <string name="team_label_total">Total</string>
@@ -690,6 +684,8 @@
     <string name="error_identifier_required">Please enter your email or mobile number</string>
     <string name="error_amount_required">Please enter an amount</string>
     <string name="error_valid_amount">Please enter a valid amount</string>
+    <string name="payment_error_amount_exceeds">Amount cannot exceed pending %1$s</string>
+    <string name="payment_error_amount_exceeds_server">Amount exceeds the trip’s remaining balance</string>
     <string name="error_date_required">Please enter a date</string>
     <string name="error_company_name_required">Company name is required</string>
     <string name="error_contact_person_required">Contact person name is required</string>
@@ -1217,8 +1213,8 @@
     <string name="profile_stats_active_trips">Active Trips</string>
     <string name="profile_stats_completed_trips">Completed Trips</string>
     <string name="profile_stats_team_members">Team Members</string>
-    <string name="profile_stats_managers">Managers</string>
-    <string name="profile_stats_supervisors">Supervisors</string>
+    <string name="profile_stats_admins">Admins</string>
+    <string name="profile_stats_total">Total</string>
 
     <!-- ==================== Vehicle Detail - Sections ==================== -->
     <string name="vehicle_detail_delete">Delete Vehicle</string>
@@ -1413,12 +1409,6 @@
     <string name="team_iam_role_admin_desc">Full control to manage users, permissions, and sensitive operations for your organization.</string>
     <string name="team_iam_role_user_title">Team member</string>
     <string name="team_iam_role_user_desc">Standard access for day-to-day fleet work—vehicles, trips, and assigned tasks—without admin controls.</string>
-    <string name="team_role_general_manager">General manager</string>
-    <string name="team_role_manager">Manager</string>
-    <string name="team_role_supervisor">Supervisor</string>
-    <string name="team_role_gm_desc">Full operational &amp; financial access</string>
-    <string name="team_role_manager_desc">Can manage drivers and trips</string>
-    <string name="team_role_supervisor_desc">Can view and track operations</string>
     <string name="team_section_member_details_subtitle">Enter the team member's details</string>
     <string name="team_cd_show_password">Show password</string>
     <string name="team_cd_hide_password">Hide password</string>
@@ -2020,12 +2010,63 @@
 
     <!-- ==================== Create Organization Screen ==================== -->
     <string name="create_org_title">Set Up Your Organization</string>
-    <string name="create_org_description">Your Organization is the command center for everything \u2014 vehicles, drivers, trips, payments, customers, team members, and real-time insights, all under one roof.</string>
+    <string name="create_org_description">Your organization brings vehicles, drivers, trips and payments under one roof.</string>
     <string name="create_org_cta_hint">Give it a name and you\u2019re ready to roll.</string>
     <string name="create_org_name_label">Organization Name</string>
     <string name="create_org_name_placeholder">e.g. Sharma Transport Co.</string>
     <string name="create_org_name_supporting">This is how your company will appear across the app</string>
     <string name="create_org_button">Create &amp; Continue</string>
+    <!-- ==================== Subscription plans / checkout (f6b localization) ==================== -->
+    <string name="plan_trial_free">%1$d-day free trial</string>
+    <string name="plan_whats_included">What’s included</string>
+    <string name="plan_feature_up_to_5_vehicles">Up to 5 vehicles</string>
+    <string name="plan_feature_basic_trip_tracking">Basic trip tracking</string>
+    <string name="plan_feature_community_support">Community support</string>
+    <string name="plan_tap_to_select">Tap to select</string>
+    <string name="plan_selected">Selected</string>
+    <string name="plan_popular_badge">★ Popular</string>
+    <string name="plan_recommended">Recommended</string>
+    <string name="plan_price_free">Free</string>
+    <string name="plan_price_forever">forever</string>
+    <string name="plan_per_mo">/mo</string>
+    <string name="plan_per_month">/month</string>
+    <string name="plan_per_yr">/yr</string>
+    <string name="plan_per_year">/year</string>
+    <!-- Compact currency unit words (thousand / lakh / crore) — drive formatCurrency's suffix -->
+    <string name="currency_thousand">K</string>
+    <string name="currency_lakh">L</string>
+    <string name="currency_crore">Cr</string>
+    <string name="plans_select_to_continue">Please select a plan to continue.</string>
+    <string name="billing_save_annual">Save up to 20% with Annual</string>
+    <string name="checkout_terms">By proceeding you agree to our Terms of Service and Privacy Policy. You can cancel your subscription anytime.</string>
+    <string name="checkout_trial_included">%1$d-day free trial included</string>
+    <string name="checkout_you_save_annually">You save %1$s annually</string>
+    <string name="checkout_total">Total</string>
+    <string name="checkout_save">Save %1$s</string>
+    <string name="checkout_payment_cancelled">Payment was cancelled.</string>
+    <string name="org_name_min_length">Organization name must be at least 2 characters.</string>
+    <string name="org_name_min_alphanumeric">Organization name must contain at least 2 alphanumeric characters.</string>
+    <string name="org_name_required">Organization name is required.</string>
+    <string name="billing_monthly">Monthly</string>
+    <string name="billing_annual">Annual</string>
+    <string name="plans_choose_title">Choose Your Plan</string>
+    <string name="plans_choose_subtitle">Powerful fleet management tools.\nCancel anytime. No hidden fees.</string>
+    <string name="plans_complete_title">Complete Your Purchase</string>
+    <string name="plans_complete_subtitle">You\u2019re almost there!\nComplete payment to start managing your fleet.</string>
+    <string name="trust_ssl">256-bit SSL</string>
+    <string name="trust_upi_cards">UPI &amp; Cards</string>
+    <string name="trust_cancel_anytime">Cancel anytime</string>
+    <string name="plans_cta_select">Select a plan to continue</string>
+    <string name="plans_cta_activate_free">Activate Free Plan</string>
+    <string name="plans_cta_continue_with">Continue with %1$s</string>
+    <string name="plans_cta_please_wait">Please wait…</string>
+    <string name="plans_loading">Loading plans…</string>
+    <string name="err_create_org">Failed to create organization. Please try again.</string>
+    <string name="err_load_plans">Failed to load plans. Please retry.</string>
+    <string name="err_select_plan">Failed to select plan. Please try again.</string>
+    <string name="err_initiate_payment">Failed to initiate payment. Please try again.</string>
+    <string name="err_verify_payment">Payment verification failed. Please contact support.</string>
+    <string name="err_payment_failed">Payment failed. Please try again.</string>
     <!-- ==================== i18n sweep additions ==================== -->
     <string name="trip_detail_label_status">Status</string>
     <string name="trip_detail_price_not_set">Not Set</string>

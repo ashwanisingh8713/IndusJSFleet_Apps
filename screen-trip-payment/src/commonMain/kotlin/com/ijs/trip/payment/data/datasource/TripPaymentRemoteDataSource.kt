@@ -3,6 +3,7 @@ package com.ijs.trip.payment.data.datasource
 import com.indusjs.fleet.core.logger.FleetLogger
 import com.ijs.trip.payment.TAG_PAYMENT_REMOTE_DS
 import com.indusjs.fleet.core.network.ApiConfig
+import com.indusjs.fleet.core.network.ApiErrorHandler
 import com.ijs.trip.payment.data.model.*
 import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
@@ -47,9 +48,11 @@ class TripPaymentRemoteDataSource(
         // Check HTTP status before parsing
         if (!response.status.isSuccess()) {
             logger.e(TAG_PAYMENT_REMOTE_DS, "Failed to create payment: ${response.status}")
+            // Extract the backend envelope (errorCode/errorMessage) instead of discarding the
+            // body — e.g. the 422 over-collection guard (AMOUNT_EXCEEDS_BALANCE).
             return TripPaymentResponse(
                 success = false,
-                message = "Failed to create payment: ${response.status.value}"
+                message = ApiErrorHandler.extractErrorMessage(response.status, responseText)
             )
         }
 
@@ -84,9 +87,10 @@ class TripPaymentRemoteDataSource(
         // Check HTTP status before parsing
         if (!response.status.isSuccess()) {
             logger.e(TAG_PAYMENT_REMOTE_DS, "Failed to add payment to trip: ${response.status}")
+            // Preserve the backend envelope (e.g. 422 AMOUNT_EXCEEDS_BALANCE) — don't discard the body.
             return TripPaymentResponse(
                 success = false,
-                message = "Failed to add payment: ${response.status.value}"
+                message = ApiErrorHandler.extractErrorMessage(response.status, responseText)
             )
         }
 
@@ -250,9 +254,10 @@ class TripPaymentRemoteDataSource(
         // Check HTTP status before parsing
         if (!response.status.isSuccess()) {
             logger.e(TAG_PAYMENT_REMOTE_DS, "Failed to update payment: ${response.status}")
+            // Preserve the backend envelope (e.g. 422 AMOUNT_EXCEEDS_BALANCE) — don't discard the body.
             return TripPaymentResponse(
                 success = false,
-                message = "Failed to update payment: ${response.status.value}"
+                message = ApiErrorHandler.extractErrorMessage(response.status, responseText)
             )
         }
 

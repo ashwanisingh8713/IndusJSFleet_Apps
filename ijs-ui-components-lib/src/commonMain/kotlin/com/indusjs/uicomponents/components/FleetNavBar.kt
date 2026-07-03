@@ -2,6 +2,7 @@ package com.indusjs.uicomponents.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -16,6 +17,7 @@ import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.indusjs.uicomponents.theme.FleetTokens
 import org.jetbrains.compose.resources.DrawableResource
@@ -52,8 +54,10 @@ fun FleetBottomNavBar(
     if (items.isEmpty()) return
     val cs = MaterialTheme.colorScheme
     NavigationBar(
-        modifier = modifier,
-        containerColor = cs.surface,
+        // §9.9: Hindi / large-font labels WRAP to 2 lines, never clip — the bar keeps its
+        // 80dp minimum but may grow (heightIn, not a fixed height).
+        modifier = modifier.heightIn(min = FleetTokens.Height.BottomNavBar),
+        containerColor = cs.surfaceContainer,
         tonalElevation = FleetTokens.Elevation.None,
     ) {
         items.forEach { item ->
@@ -61,14 +65,7 @@ fun FleetBottomNavBar(
                 selected = item.key == selectedKey,
                 onClick = { onSelect(item.key) },
                 icon = { NavIcon(item) },
-                label = {
-                    Text(
-                        text = item.label,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
+                label = { NavLabel(item.label) },
                 alwaysShowLabel = true,
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = cs.onPrimaryContainer,
@@ -96,7 +93,7 @@ fun FleetNavRail(
     val cs = MaterialTheme.colorScheme
     NavigationRail(
         modifier = modifier,
-        containerColor = cs.surface,
+        containerColor = cs.surfaceContainer,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)) {
             items.forEach { item ->
@@ -104,14 +101,7 @@ fun FleetNavRail(
                     selected = item.key == selectedKey,
                     onClick = { onSelect(item.key) },
                     icon = { NavIcon(item) },
-                    label = {
-                        Text(
-                            text = item.label,
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
+                    label = { NavLabel(item.label) },
                     alwaysShowLabel = true,
                     colors = NavigationRailItemDefaults.colors(
                         selectedIconColor = cs.onPrimaryContainer,
@@ -124,6 +114,21 @@ fun FleetNavRail(
             }
         }
     }
+}
+
+/**
+ * Shared nav label — §9.9: wraps to TWO lines (Hindi / large font scale), centered; never
+ * single-line-truncates. Ellipsis only guards a pathological 3-line overflow.
+ */
+@Composable
+private fun NavLabel(label: String) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium,
+        textAlign = TextAlign.Center,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 @Composable

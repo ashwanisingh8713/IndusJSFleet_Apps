@@ -119,6 +119,9 @@ object FleetTokens {
         /** Tab row height. */
         val TabRow: Dp = 48.dp
 
+        /** Bottom navigation bar MINIMUM height — grows for 2-line (Hindi/large-font) labels. */
+        val BottomNavBar: Dp = 80.dp
+
         /** Filter chip row height. */
         val FilterChipRow: Dp = 40.dp
 

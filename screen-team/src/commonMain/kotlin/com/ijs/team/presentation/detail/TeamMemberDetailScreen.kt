@@ -199,14 +199,14 @@ private fun ViewMemberContent(
             ) {
                 // Header with Avatar
                 val roleColor = when (member.role) {
-                    TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
-                    TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
-                    TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
+                    TeamMemberRole.OWNER -> MaterialTheme.colorScheme.tertiary
+                    TeamMemberRole.ADMIN -> MaterialTheme.colorScheme.primary
+                    TeamMemberRole.USER -> MaterialTheme.colorScheme.secondary
                 }
                 val onRoleColor = when (member.role) {
-                    TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.onTertiary
-                    TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.onPrimary
-                    TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.onSecondary
+                    TeamMemberRole.OWNER -> MaterialTheme.colorScheme.onTertiary
+                    TeamMemberRole.ADMIN -> MaterialTheme.colorScheme.onPrimary
+                    TeamMemberRole.USER -> MaterialTheme.colorScheme.onSecondary
                 }
                 FleetAvatar(
                     name = member.fullName,
@@ -230,9 +230,9 @@ private fun ViewMemberContent(
                 Surface(
                     shape = RoundedCornerShape(FleetTokens.Radius.M),
                     color = when (member.role) {
-                        TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
-                        TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                        TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
+                        TeamMemberRole.OWNER -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f)
+                        TeamMemberRole.ADMIN -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        TeamMemberRole.USER -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
                     }
                 ) {
                     Text(
@@ -240,9 +240,9 @@ private fun ViewMemberContent(
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Medium,
                         color = when (member.role) {
-                            TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
-                            TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
-                            TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
+                            TeamMemberRole.OWNER -> MaterialTheme.colorScheme.tertiary
+                            TeamMemberRole.ADMIN -> MaterialTheme.colorScheme.primary
+                            TeamMemberRole.USER -> MaterialTheme.colorScheme.secondary
                         },
                         modifier = Modifier.padding(
                             horizontal = FleetTokens.Spacing.L,
@@ -604,9 +604,9 @@ private fun RoleFilterChip(
     modifier: Modifier = Modifier
 ) {
     val iconRes = when (role) {
-        TeamMemberRole.GENERAL_MANAGER -> Res.drawable.ic_profile
-        TeamMemberRole.MANAGER -> Res.drawable.ic_team
-        TeamMemberRole.SUPERVISOR -> Res.drawable.ic_visibility
+        TeamMemberRole.OWNER -> Res.drawable.ic_profile
+        TeamMemberRole.ADMIN -> Res.drawable.ic_team
+        TeamMemberRole.USER -> Res.drawable.ic_visibility
     }
     val label = role.localizedDisplayName()
     FleetFilterChip(
@@ -622,14 +622,14 @@ private fun RoleFilterChip(
 @Composable
 private fun RolePermissionPreview(role: TeamMemberRole) {
     val title = when (role) {
-        TeamMemberRole.GENERAL_MANAGER -> stringResource(Res.string.team_role_owner)
-        TeamMemberRole.MANAGER -> stringResource(Res.string.team_iam_role_admin_title)
-        TeamMemberRole.SUPERVISOR -> stringResource(Res.string.team_iam_role_user_title)
+        TeamMemberRole.OWNER -> stringResource(Res.string.team_role_owner)
+        TeamMemberRole.ADMIN -> stringResource(Res.string.team_iam_role_admin_title)
+        TeamMemberRole.USER -> stringResource(Res.string.team_iam_role_user_title)
     }
     val description = when (role) {
-        TeamMemberRole.GENERAL_MANAGER -> stringResource(Res.string.team_iam_role_owner_desc)
-        TeamMemberRole.MANAGER -> stringResource(Res.string.team_iam_role_admin_desc)
-        TeamMemberRole.SUPERVISOR -> stringResource(Res.string.team_iam_role_user_desc)
+        TeamMemberRole.OWNER -> stringResource(Res.string.team_iam_role_owner_desc)
+        TeamMemberRole.ADMIN -> stringResource(Res.string.team_iam_role_admin_desc)
+        TeamMemberRole.USER -> stringResource(Res.string.team_iam_role_user_desc)
     }
 
     Surface(

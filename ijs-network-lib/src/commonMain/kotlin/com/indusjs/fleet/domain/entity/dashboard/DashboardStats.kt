@@ -62,7 +62,16 @@ enum class AlertType {
     SYSTEM,
     DOCUMENT_EXPIRY,
     LICENSE_EXPIRY,
-    MISSING_DOCUMENTS;
+    MISSING_DOCUMENTS,
+
+    // Device-tracker alerts (frozen contract 2026-07-01, firmware CONTRACT_CHANGE):
+    // backend authors these from raw device events; the app only renders them.
+    ROUTE_DEVIATION,
+    NIGHT_DRIVING,
+    GPS_LOSS,
+    SOS,
+    IDLE,
+    INCOMING_CALL;
 
     companion object {
         fun fromString(value: String): AlertType {
@@ -76,6 +85,12 @@ enum class AlertType {
                 "DOCUMENT_EXPIRY" -> DOCUMENT_EXPIRY
                 "LICENSE_EXPIRY" -> LICENSE_EXPIRY
                 "MISSING_DOCUMENTS" -> MISSING_DOCUMENTS
+                "ROUTE_DEVIATION" -> ROUTE_DEVIATION
+                "NIGHT_DRIVING" -> NIGHT_DRIVING
+                "GPS_LOSS" -> GPS_LOSS
+                "SOS" -> SOS
+                "IDLE" -> IDLE
+                "INCOMING_CALL" -> INCOMING_CALL
                 else -> SYSTEM
             }
         }
@@ -179,7 +194,9 @@ data class LiveVehicle(
  * Backend dashboard.TeamStats exposes only total_members.
  */
 data class TeamStats(
-    val totalMembers: Int = 0
+    val totalMembers: Int = 0,
+    val admins: Int = 0,
+    val users: Int = 0
 )
 
 /**

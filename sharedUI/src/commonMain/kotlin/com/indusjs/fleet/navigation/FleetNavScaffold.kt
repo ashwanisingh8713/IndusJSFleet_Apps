@@ -28,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavBackStack
-import com.indusjs.fleet.core.permission.PermissionChecker
 import com.indusjs.fleet.core.permission.Permissions
 import com.indusjs.fleet.di.LocalViewModelProvider
 import com.indusjs.uicomponents.components.FleetBottomNavBar
@@ -74,7 +73,25 @@ private const val KEY_HOME = "home"
 private const val KEY_TRIPS = "trips"
 private const val KEY_MAPS = "maps"
 private const val KEY_PAYMENTS = "payments"
+private const val KEY_VEHICLES = "vehicles"
+private const val KEY_DRIVERS = "drivers"
+private const val KEY_CUSTOMERS = "customers"
+private const val KEY_TEAM = "team"
+private const val KEY_FINANCE = "finance"
+private const val KEY_REPORTS = "reports"
+private const val KEY_PROFILE = "profile"
 private const val KEY_MORE = "more"
+
+/** How many primary slots the bottom bar/rail fills before spilling to More (Home + 3 backfilled). */
+private const val PRIMARY_SLOTS = 3
+
+/** One navigable destination: its stable [key], resolved [label], [icon], and [route]. */
+private data class NavDest(
+    val key: String,
+    val label: String,
+    val icon: DrawableResource,
+    val route: FleetRoute,
+)
 
 /**
  * App-root nav chrome (Calm Fintech step 5) — wraps the [content] (the NavDisplay) with a persistent
@@ -82,8 +99,10 @@ private const val KEY_MORE = "more"
  * the overflow set. Destinations are gated on explicit permission slugs (A's RBAC enforcement is live).
  * Replaces the old dashboard-scoped hamburger drawer.
  *
- * Bottom bar = Home + first 3 permission-visible of [Trips, Live Map, Payments] + More.
- * More sheet = Vehicles / Drivers / Customers / Team / Vehicle Finance / Reports / Profile + theme toggle.
+ * Bottom bar = Home + the top 3 permission-visible destinations backfilled from an ordered priority
+ * (Trips, Live Map, Payments, Vehicles, Drivers, Customers, Team, Vehicle Finance, Reports) + More — so
+ * a role missing a preferred middle pulls the next permitted item up and the bar never shows a gap.
+ * More sheet = the overflow (everything not promoted into the bar) + Profile + theme toggle.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,37 +121,69 @@ fun FleetNavScaffold(
     val tripsLabel = stringResource(Res.string.nav_trips)
     val mapsLabel = stringResource(Res.string.nav_live_map)
     val paymentsLabel = stringResource(Res.string.nav_payments)
+    val vehiclesLabel = stringResource(Res.string.nav_vehicles)
+    val driversLabel = stringResource(Res.string.nav_drivers)
+    val customersLabel = stringResource(Res.string.nav_customers)
+    val teamLabel = stringResource(Res.string.nav_team_members)
+    val financeLabel = stringResource(Res.string.nav_vehicle_finance)
+    val reportsLabel = stringResource(Res.string.nav_reports)
+    val profileLabel = stringResource(Res.string.nav_profile)
     val moreLabel = stringResource(Res.string.nav_more)
+
+    // Ordered priority of every permission-visible destination (Home is always first; Profile always
+    // lives in More). The bar backfills its primary slots from the TOP of this list — a role missing a
+    // preferred middle (e.g. Payments) pulls the next permitted item up so the bar never shows a gap.
+    val backfillOrder = buildList {
+        if (perms.has(Permissions.TRIPS_VIEW)) add(NavDest(KEY_TRIPS, tripsLabel, Res.drawable.ic_trip, FleetRoute.Trips))
+        if (perms.has(Permissions.LIVE_MAP_VIEW)) add(NavDest(KEY_MAPS, mapsLabel, Res.drawable.ic_map, FleetRoute.Maps))
+        if (perms.has(Permissions.PAYMENTS_VIEW)) add(NavDest(KEY_PAYMENTS, paymentsLabel, Res.drawable.ic_cost, FleetRoute.Payments))
+        if (perms.has(Permissions.VEHICLES_VIEW)) add(NavDest(KEY_VEHICLES, vehiclesLabel, Res.drawable.ic_vehicle, FleetRoute.Vehicles))
+        if (perms.has(Permissions.DRIVERS_VIEW)) add(NavDest(KEY_DRIVERS, driversLabel, Res.drawable.ic_driver, FleetRoute.Drivers))
+        if (perms.has(Permissions.CUSTOMERS_VIEW)) add(NavDest(KEY_CUSTOMERS, customersLabel, Res.drawable.ic_profile, FleetRoute.Customers))
+        if (perms.canManageTeam()) add(NavDest(KEY_TEAM, teamLabel, Res.drawable.ic_team, FleetRoute.TeamList))
+        if (perms.has(Permissions.FINANCIALS_READ)) {
+            add(NavDest(KEY_FINANCE, financeLabel, Res.drawable.ic_cost, FleetRoute.VehicleFinance))
+            add(NavDest(KEY_REPORTS, reportsLabel, Res.drawable.ic_dashboard, FleetRoute.Reports))
+        }
+    }
+    val barMiddles = backfillOrder.take(PRIMARY_SLOTS)
+    // Everything not promoted into the bar spills to More; Profile is always in More.
+    val overflow = backfillOrder.drop(PRIMARY_SLOTS) + NavDest(KEY_PROFILE, profileLabel, Res.drawable.ic_settings, FleetRoute.Profile)
 
     val navItems = buildList {
         add(FleetNavItem(KEY_HOME, homeLabel, Res.drawable.ic_dashboard))
-        val middles = buildList {
-            if (perms.has(Permissions.TRIPS_VIEW)) add(FleetNavItem(KEY_TRIPS, tripsLabel, Res.drawable.ic_trip))
-            if (perms.has(Permissions.LIVE_MAP_VIEW)) add(FleetNavItem(KEY_MAPS, mapsLabel, Res.drawable.ic_map))
-            if (perms.has(Permissions.PAYMENTS_VIEW)) add(FleetNavItem(KEY_PAYMENTS, paymentsLabel, Res.drawable.ic_cost))
-        }.take(3)
-        addAll(middles)
+        barMiddles.forEach { add(FleetNavItem(it.key, it.label, it.icon)) }
         add(FleetNavItem(KEY_MORE, moreLabel, Res.drawable.ic_more_vert))
     }
 
-    val selectedKey = when (current) {
+    // The current route maps to a destination key; if that key sits in the bar it highlights directly,
+    // otherwise (an overflow/Profile destination) the bar highlights More.
+    val currentKey = when (current) {
         is FleetRoute.Dashboard -> KEY_HOME
         is FleetRoute.Trips -> KEY_TRIPS
         is FleetRoute.Maps -> KEY_MAPS
         is FleetRoute.Payments -> KEY_PAYMENTS
-        is FleetRoute.Vehicles, is FleetRoute.Drivers, is FleetRoute.Customers,
-        is FleetRoute.TeamList, is FleetRoute.Reports, is FleetRoute.VehicleFinance,
-        is FleetRoute.Profile -> KEY_MORE
+        is FleetRoute.Vehicles -> KEY_VEHICLES
+        is FleetRoute.Drivers -> KEY_DRIVERS
+        is FleetRoute.Customers -> KEY_CUSTOMERS
+        is FleetRoute.TeamList -> KEY_TEAM
+        is FleetRoute.VehicleFinance -> KEY_FINANCE
+        is FleetRoute.Reports -> KEY_REPORTS
+        is FleetRoute.Profile -> KEY_PROFILE
+        else -> null
+    }
+    val selectedKey = when {
+        currentKey == KEY_HOME -> KEY_HOME
+        currentKey != null && barMiddles.any { it.key == currentKey } -> currentKey
+        currentKey != null -> KEY_MORE
         else -> null
     }
 
     val onSelect: (String) -> Unit = { key ->
         when (key) {
             KEY_HOME -> backStack.navigateTopLevel(FleetRoute.Dashboard)
-            KEY_TRIPS -> backStack.navigateTopLevel(FleetRoute.Trips)
-            KEY_MAPS -> backStack.navigateTopLevel(FleetRoute.Maps)
-            KEY_PAYMENTS -> backStack.navigateTopLevel(FleetRoute.Payments)
             KEY_MORE -> showMore = true
+            else -> barMiddles.firstOrNull { it.key == key }?.let { backStack.navigateTopLevel(it.route) }
         }
     }
 
@@ -157,7 +208,7 @@ fun FleetNavScaffold(
 
     if (showMore) {
         MoreSheet(
-            perms = perms,
+            items = overflow,
             onDismiss = { showMore = false },
             onNavigate = { route -> showMore = false; backStack.navigateTopLevel(route) },
         )
@@ -174,7 +225,7 @@ private fun FleetRoute?.isTopLevelNav(): Boolean = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MoreSheet(
-    perms: PermissionChecker,
+    items: List<NavDest>,
     onDismiss: () -> Unit,
     onNavigate: (FleetRoute) -> Unit,
 ) {
@@ -188,23 +239,10 @@ private fun MoreSheet(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(horizontal = FleetTokens.Spacing.L, vertical = FleetTokens.Spacing.S),
             )
-            if (perms.has(Permissions.VEHICLES_VIEW)) {
-                MoreRow(Res.drawable.ic_vehicle, stringResource(Res.string.nav_vehicles)) { onNavigate(FleetRoute.Vehicles) }
+            // The overflow set (everything not promoted into the bar, plus Profile) — already gated upstream.
+            items.forEach { dest ->
+                MoreRow(dest.icon, dest.label) { onNavigate(dest.route) }
             }
-            if (perms.has(Permissions.DRIVERS_VIEW)) {
-                MoreRow(Res.drawable.ic_driver, stringResource(Res.string.nav_drivers)) { onNavigate(FleetRoute.Drivers) }
-            }
-            if (perms.has(Permissions.CUSTOMERS_VIEW)) {
-                MoreRow(Res.drawable.ic_profile, stringResource(Res.string.nav_customers)) { onNavigate(FleetRoute.Customers) }
-            }
-            if (perms.canManageTeam()) {
-                MoreRow(Res.drawable.ic_team, stringResource(Res.string.nav_team_members)) { onNavigate(FleetRoute.TeamList) }
-            }
-            if (perms.has(Permissions.FINANCIALS_READ)) {
-                MoreRow(Res.drawable.ic_cost, stringResource(Res.string.nav_vehicle_finance)) { onNavigate(FleetRoute.VehicleFinance) }
-                MoreRow(Res.drawable.ic_dashboard, stringResource(Res.string.nav_reports)) { onNavigate(FleetRoute.Reports) }
-            }
-            MoreRow(Res.drawable.ic_settings, stringResource(Res.string.nav_profile)) { onNavigate(FleetRoute.Profile) }
             HorizontalDivider(modifier = Modifier.padding(vertical = FleetTokens.Spacing.S))
             MoreRow(
                 iconRes = if (isDark) Res.drawable.ic_sun else Res.drawable.ic_moon,

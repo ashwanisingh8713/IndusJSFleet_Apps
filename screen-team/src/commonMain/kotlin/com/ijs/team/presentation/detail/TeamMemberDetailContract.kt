@@ -28,7 +28,7 @@ object TeamMemberDetailContract {
         val editLastName: String = "",
         val editEmail: String = "",
         val editMobile: String = "",
-        val editRole: TeamMemberRole = TeamMemberRole.SUPERVISOR,
+        val editRole: TeamMemberRole = TeamMemberRole.USER,
         val editIsActive: Boolean = true,
         // Validation errors
         val firstNameError: UiText? = null,

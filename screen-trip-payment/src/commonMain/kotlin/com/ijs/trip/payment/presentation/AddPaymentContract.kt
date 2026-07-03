@@ -3,6 +3,7 @@ package com.ijs.trip.payment.presentation
 import com.indusjs.fleet.core.mvi.UiEffect
 import com.indusjs.fleet.core.mvi.UiIntent
 import com.indusjs.fleet.core.mvi.UiState
+import com.indusjs.fleet.core.util.formatCurrencyFull
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.trip.payment.domain.entity.*
 
@@ -39,6 +40,9 @@ object AddPaymentContract {
         val amount: String = "",
         val tdsAmount: String = "",
         val discountAmount: String = "",
+        /** In edit mode, the amount this payment already contributes to the trip. It is added back to
+         *  the cap so an existing payment can be adjusted up to (but not past) the trip price. 0.0 in add mode. */
+        val originalAmount: Double = 0.0,
 
         // Payment details
         val paymentType: PaymentType = PaymentType.PARTIAL,
@@ -76,19 +80,37 @@ object AddPaymentContract {
             }
 
         val netAmountDisplay: String
-            get() = "₹${netAmount.toInt()}"
+            get() = formatCurrencyFull(netAmount)
 
         val pendingAmount: Double
             get() = selectedTrip?.pendingAmount ?: 0.0
 
         val pendingAmountDisplay: String
-            get() = "₹${pendingAmount.toInt()}"
+            get() = formatCurrencyFull(pendingAmount)
+
+        /** The most this payment may be: the trip's pending balance (+ this payment's own amount when
+         *  editing). Recording more would push total collected past the trip price. */
+        val maxPayableAmount: Double
+            get() = pendingAmount + originalAmount
+
+        val maxPayableAmountDisplay: String
+            get() = formatCurrencyFull(maxPayableAmount)
+
+        /** True when a (non-refund) payment would collect more than the trip price. Refunds are exempt
+         *  (money out / overpayment handling), and it stays false until a trip is selected. */
+        val amountExceedsPayable: Boolean
+            get() {
+                if (selectedTrip == null || paymentType == PaymentType.REFUND) return false
+                val entered = amount.toDoubleOrNull() ?: return false
+                return entered - maxPayableAmount > 0.01
+            }
 
         val canSave: Boolean
             get() {
                 val baseValidation = selectedTrip != null &&
                         amount.isNotBlank() &&
                         amount.toDoubleOrNull()?.let { it > 0 } == true &&
+                        !amountExceedsPayable &&
                         paymentDate.isNotBlank() &&
                         !isSaving
 
@@ -204,13 +226,13 @@ data class TripSummaryForPayment(
         get() = "$startLocation → $endLocation"
 
     val tripPriceDisplay: String
-        get() = "₹${tripPrice.toInt()}"
+        get() = formatCurrencyFull(tripPrice)
 
     val paidAmountDisplay: String
-        get() = "₹${paidAmount.toInt()}"
+        get() = formatCurrencyFull(paidAmount)
 
     val pendingDisplay: String
-        get() = "₹${pendingAmount.toInt()}"
+        get() = formatCurrencyFull(pendingAmount)
 
     val displayText: String
         get() = "#$id • $vehicleRegistration • $routeDisplay"

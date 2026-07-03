@@ -4,6 +4,11 @@ import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.uicomponents.components.UiText
 import com.ijs.subscription.domain.usecase.CreateTenantUseCase
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.err_create_org
+import indusjsfleet.ijs_ui_components_lib.generated.resources.org_name_min_alphanumeric
+import indusjsfleet.ijs_ui_components_lib.generated.resources.org_name_min_length
+import indusjsfleet.ijs_ui_components_lib.generated.resources.org_name_required
 import com.ijs.subscription.presentation.organization.CreateOrganizationContract.Effect
 import com.ijs.subscription.presentation.organization.CreateOrganizationContract.Intent
 import com.ijs.subscription.presentation.organization.CreateOrganizationContract.State
@@ -38,9 +43,9 @@ class CreateOrganizationViewModel(
         val trimmed = name.trim()
         return when {
             trimmed.isBlank() -> null // empty is gated by isValid, not shown as an error while typing
-            trimmed.length < 2 -> UiText.Raw("Organization name must be at least 2 characters.")
+            trimmed.length < 2 -> UiText.StringRes(Res.string.org_name_min_length)
             deriveSlug(trimmed).length < 2 ->
-                UiText.Raw("Organization name must contain at least 2 alphanumeric characters.")
+                UiText.StringRes(Res.string.org_name_min_alphanumeric)
             else -> null
         }
     }
@@ -55,7 +60,7 @@ class CreateOrganizationViewModel(
         val name = currentState.organizationName.trim()
 
         val nameError = if (name.isBlank()) {
-            UiText.Raw("Organization name is required.")
+            UiText.StringRes(Res.string.org_name_required)
         } else {
             validateName(name)
         }
@@ -75,9 +80,9 @@ class CreateOrganizationViewModel(
                     sendEffect(Effect.NavigateToAddTeamMember)
                 },
                 onFailure = { e ->
-                    val msg = e.message ?: "Failed to create organization. Please try again."
-                    updateState { copy(isCreating = false, error = UiText.Raw(msg)) }
-                    sendEffect(Effect.ShowError(UiText.Raw(msg)))
+                    val err = e.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.err_create_org)
+                    updateState { copy(isCreating = false, error = err) }
+                    sendEffect(Effect.ShowError(err))
                 }
             )
         }

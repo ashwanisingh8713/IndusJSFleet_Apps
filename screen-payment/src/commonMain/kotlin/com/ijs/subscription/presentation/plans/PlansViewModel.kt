@@ -3,6 +3,10 @@ package com.ijs.subscription.presentation.plans
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.uicomponents.components.UiText
+import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
+import indusjsfleet.ijs_ui_components_lib.generated.resources.err_load_plans
+import indusjsfleet.ijs_ui_components_lib.generated.resources.err_select_plan
+import indusjsfleet.ijs_ui_components_lib.generated.resources.plans_select_to_continue
 import com.ijs.subscription.TAG_PLANS_VM
 import com.ijs.subscription.domain.usecase.GetOnboardingStatusUseCase
 import com.ijs.subscription.domain.usecase.GetPlansUseCase
@@ -46,9 +50,8 @@ class PlansViewModel(
                 updateState {
                     copy(
                         isLoading = false,
-                        error = UiText.Raw(
-                            plansResult.exceptionOrNull()?.message ?: "Failed to load plans. Please retry."
-                        )
+                        error = plansResult.exceptionOrNull()?.message?.let { UiText.Raw(it) }
+                            ?: UiText.StringRes(Res.string.err_load_plans)
                     )
                 }
                 return@withContext
@@ -70,7 +73,7 @@ class PlansViewModel(
 
     private suspend fun confirmSelection() {
         val plan = currentState.selectedPlan ?: run {
-            sendEffect(Effect.ShowError(UiText.Raw("Please select a plan to continue.")))
+            sendEffect(Effect.ShowError(UiText.StringRes(Res.string.plans_select_to_continue)))
             return
         }
         val interval = currentState.billingInterval
@@ -88,9 +91,9 @@ class PlansViewModel(
                     }
                 },
                 onFailure = { e ->
-                    val msg = e.message ?: "Failed to select plan. Please try again."
-                    updateState { copy(isConfirming = false, error = UiText.Raw(msg)) }
-                    sendEffect(Effect.ShowError(UiText.Raw(msg)))
+                    val err = e.message?.let { UiText.Raw(it) } ?: UiText.StringRes(Res.string.err_select_plan)
+                    updateState { copy(isConfirming = false, error = err) }
+                    sendEffect(Effect.ShowError(err))
                 }
             )
         }

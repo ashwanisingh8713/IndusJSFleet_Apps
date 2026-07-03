@@ -317,8 +317,8 @@ class TeamListViewModel(
             .filter { member ->
                 when (filter) {
                     TeamListContract.FilterType.ALL -> true
-                    TeamListContract.FilterType.ADMINS -> member.role == TeamMemberRole.MANAGER
-                    TeamListContract.FilterType.USERS -> member.role == TeamMemberRole.SUPERVISOR
+                    TeamListContract.FilterType.ADMINS -> member.role == TeamMemberRole.ADMIN
+                    TeamListContract.FilterType.USERS -> member.role == TeamMemberRole.USER
                 }
             }
             .filter { member ->

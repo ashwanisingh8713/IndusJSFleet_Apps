@@ -27,3 +27,9 @@ val LocalAppLanguage = staticCompositionLocalOf { AppLanguage.EN }
  * Provided at the App root; invoked from the Profile language picker.
  */
 val LocalAppLanguageController = staticCompositionLocalOf<(AppLanguage) -> Unit> { {} }
+
+/**
+ * Re-opens the first-launch language picker overlay. Provided at the App root; invoked from the
+ * Sign-In screen's "भाषा / Language" link so users can change language before logging in.
+ */
+val LocalLanguagePickerLauncher = staticCompositionLocalOf<() -> Unit> { {} }

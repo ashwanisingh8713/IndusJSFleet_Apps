@@ -61,8 +61,33 @@ import com.ijs.subscription.presentation.platform.RazorpayResult
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_arrow_back
 import indusjsfleet.ijs_ui_components_lib.generated.resources.ic_lock
+import indusjsfleet.ijs_ui_components_lib.generated.resources.billing_annual
+import indusjsfleet.ijs_ui_components_lib.generated.resources.billing_monthly
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_change_plan
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_label_billing
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_label_free_trial
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_label_plan
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_order_summary
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_pay_securely
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_per_month
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_per_year
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_plan_annual
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_plan_monthly
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_preparing_order
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_preparing_order_subtitle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_preparing_order_title
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_save
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_terms
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_total
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_trial_days
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_trial_included
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_verifying_payment
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_verifying_payment_subtitle
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_verifying_payment_title
+import indusjsfleet.ijs_ui_components_lib.generated.resources.checkout_you_save_annually
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PaymentCheckoutScreen(
@@ -171,7 +196,7 @@ fun PaymentCheckoutScreen(
 
                         // Legal text
                         Text(
-                            text = "By proceeding you agree to our Terms of Service and Privacy Policy. You can cancel your subscription anytime.",
+                            text = stringResource(Res.string.checkout_terms),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -248,7 +273,7 @@ private fun PlanHeroBanner(
                     )
                 }
                 Text(
-                    text = "Change plan",
+                    text = stringResource(Res.string.checkout_change_plan),
                     style = MaterialTheme.typography.labelMedium,
                     color = scheme.onPrimary.copy(alpha = 0.80f)
                 )
@@ -266,7 +291,7 @@ private fun PlanHeroBanner(
                 verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
                 // Billing interval chip
-                HeroBadge(text = if (billingInterval == BillingInterval.ANNUAL) "Annual Plan" else "Monthly Plan")
+                HeroBadge(text = if (billingInterval == BillingInterval.ANNUAL) stringResource(Res.string.checkout_plan_annual) else stringResource(Res.string.checkout_plan_monthly))
 
                 // Plan name
                 Text(
@@ -285,7 +310,10 @@ private fun PlanHeroBanner(
                         plan.formattedAnnualPrice()
                     else
                         plan.formattedMonthlyPrice()
-                    val period = if (billingInterval == BillingInterval.ANNUAL) "/year" else "/month"
+                    val period = stringResource(
+                        if (billingInterval == BillingInterval.ANNUAL) Res.string.checkout_per_year
+                        else Res.string.checkout_per_month
+                    )
 
                     Text(
                         text = price,
@@ -303,13 +331,13 @@ private fun PlanHeroBanner(
 
                 // Trial badge
                 if (plan.trialDays > 0) {
-                    HeroBadge(text = "🎁 ${plan.trialDays}-day free trial included")
+                    HeroBadge(text = stringResource(Res.string.checkout_trial_included, plan.trialDays))
                 }
 
                 // Annual savings badge
                 if (billingInterval == BillingInterval.ANNUAL && plan.annualSavings > 0) {
                     HeroBadge(
-                        text = "You save ${plan.formattedAnnualSavings()} annually",
+                        text = stringResource(Res.string.checkout_you_save_annually, plan.formattedAnnualSavings()),
                         containerColor = scheme.tertiaryContainer,
                         contentColor = scheme.onTertiaryContainer
                     )
@@ -353,7 +381,7 @@ private fun OrderSummaryCard(plan: Plan, billingInterval: BillingInterval) {
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Text(
-            text = "Order Summary",
+            text = stringResource(Res.string.checkout_order_summary),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -362,19 +390,22 @@ private fun OrderSummaryCard(plan: Plan, billingInterval: BillingInterval) {
         Spacer(Modifier.height(FleetTokens.Spacing.L))
 
         SummaryRow(
-            label = "Plan",
+            label = stringResource(Res.string.checkout_label_plan),
             value = plan.name.replaceFirstChar { it.uppercaseChar() }
         )
         SummaryRow(
-            label = "Billing",
-            value = billingInterval.label
+            label = stringResource(Res.string.checkout_label_billing),
+            value = stringResource(
+                if (billingInterval == BillingInterval.ANNUAL) Res.string.billing_annual
+                else Res.string.billing_monthly
+            )
         )
 
         if (plan.trialDays > 0) {
+            // §H: trial value stays neutral onSurface (SummaryRow default), matching the sibling rows.
             SummaryRow(
-                label = "Free trial",
-                value = "${plan.trialDays} days",
-                valueColor = MaterialTheme.colorScheme.tertiary
+                label = stringResource(Res.string.checkout_label_free_trial),
+                value = stringResource(Res.string.checkout_trial_days, plan.trialDays)
             )
         }
 
@@ -389,7 +420,7 @@ private fun OrderSummaryCard(plan: Plan, billingInterval: BillingInterval) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Total",
+                text = stringResource(Res.string.checkout_total),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -397,18 +428,21 @@ private fun OrderSummaryCard(plan: Plan, billingInterval: BillingInterval) {
             Column(horizontalAlignment = Alignment.End) {
                 val amount = if (billingInterval == BillingInterval.ANNUAL)
                     plan.formattedAnnualPrice() else plan.formattedMonthlyPrice()
-                val period = if (billingInterval == BillingInterval.ANNUAL) "/year" else "/month"
+                val period = stringResource(
+                    if (billingInterval == BillingInterval.ANNUAL) Res.string.checkout_per_year
+                    else Res.string.checkout_per_month
+                )
                 Text(
                     text = "$amount$period",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 if (billingInterval == BillingInterval.ANNUAL && plan.annualSavings > 0) {
                     Text(
-                        text = "Save ${plan.formattedAnnualSavings()}",
+                        text = stringResource(Res.string.checkout_save, plan.formattedAnnualSavings()),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -476,9 +510,9 @@ private fun PayButton(
             val amount = if (billingInterval == BillingInterval.ANNUAL)
                 plan.formattedAnnualPrice() else plan.formattedMonthlyPrice()
             val buttonLabel = when {
-                isVerifying -> "Verifying payment…"
-                isBusy -> "Preparing order…"
-                else -> "Pay $amount Securely"
+                isVerifying -> stringResource(Res.string.checkout_verifying_payment)
+                isBusy -> stringResource(Res.string.checkout_preparing_order)
+                else -> stringResource(Res.string.checkout_pay_securely, amount)
             }
             FleetButton(
                 text = buttonLabel,
@@ -534,16 +568,16 @@ private fun BusyOverlay(isVerifying: Boolean) {
                     verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
                     Text(
-                        text = if (isVerifying) "Verifying Payment" else "Preparing Order",
+                        text = if (isVerifying) stringResource(Res.string.checkout_verifying_payment_title) else stringResource(Res.string.checkout_preparing_order_title),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = if (isVerifying)
-                            "Confirming your payment with Razorpay…"
+                            stringResource(Res.string.checkout_verifying_payment_subtitle)
                         else
-                            "Setting up your secure checkout…",
+                            stringResource(Res.string.checkout_preparing_order_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center

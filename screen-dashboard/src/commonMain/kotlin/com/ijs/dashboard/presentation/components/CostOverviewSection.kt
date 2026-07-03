@@ -23,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -101,9 +100,7 @@ internal fun CostOverviewSection(
     onCreateTripClick: () -> Unit
 ) {
     val hasNoFleet = vehicleStatus.total == 0 && tripSummary.total == 0
-    val profitColor = FleetStatusColors.ProfitGreen
     val lossColor = FleetStatusColors.LossRed
-    val expenseColor = FleetStatusColors.ExpenseAmber
 
     val dateRangeText = remember(selectedFilter) { getDateRangeForFilter(selectedFilter) }
 
@@ -111,11 +108,12 @@ internal fun CostOverviewSection(
         Column(
             verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.L)
         ) {
-            // Header (financial-themed accent: green on profit, primary otherwise)
+            // Header uses the brand primary always — §H anti-rainbow: the profit/loss signal
+            // lives in the Profit tile's delta chip, not an always-on green section accent.
             DashboardSectionHeader(
                 title = stringResource(Res.string.dashboard_financial_overview),
                 iconRes = Res.drawable.ic_cost,
-                accent = if (costOverview.isProfit) profitColor else MaterialTheme.colorScheme.primary
+                accent = MaterialTheme.colorScheme.primary
             )
 
             // Period Filter Tabs with date range (hide if no fleet)
@@ -214,6 +212,10 @@ internal fun CostOverviewSection(
                     ) {
                         // Show all three figures so the relationship is explicit:
                         // Total Business (money in) − Expenses (money out) = Profit (kept).
+                        // §H money treatment: neutral tiles + neutral numerals; the sign reads
+                        // from the Profit tile's ▲/▼ delta chip (and error numeral on a true loss).
+                        val neutralTileBg = MaterialTheme.colorScheme.surfaceContainerHighest
+                        val onSurface = MaterialTheme.colorScheme.onSurface
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
@@ -222,22 +224,25 @@ internal fun CostOverviewSection(
                                 modifier = Modifier.weight(1f),
                                 label = stringResource(Res.string.reports_revenue),
                                 value = formatCurrency(costOverview.totalRevenue),
-                                accent = MaterialTheme.colorScheme.primary,
-                                valueColor = MaterialTheme.colorScheme.primary
+                                valueColor = onSurface,
+                                backgroundColor = neutralTileBg
                             )
                             MetricTile(
                                 modifier = Modifier.weight(1f),
                                 label = stringResource(Res.string.dashboard_label_expenses),
                                 value = formatCurrency(costOverview.totalExpenses),
-                                accent = expenseColor,
-                                valueColor = expenseColor
+                                valueColor = onSurface,
+                                backgroundColor = neutralTileBg
                             )
                             MetricTile(
                                 modifier = Modifier.weight(1f),
-                                label = if (costOverview.isProfit) stringResource(Res.string.reports_profit) else stringResource(Res.string.reports_loss),
+                                label = "",
                                 value = formatCurrency(kotlin.math.abs(costOverview.profitLoss)),
-                                accent = if (costOverview.isProfit) profitColor else lossColor,
-                                valueColor = if (costOverview.isProfit) profitColor else lossColor
+                                // §H sanctioned exception: a true loss may colour the numeral error;
+                                // positive profit stays neutral (no always-on green).
+                                valueColor = if (costOverview.isProfit) onSurface else lossColor,
+                                backgroundColor = neutralTileBg,
+                                labelContent = { ProfitDeltaChip(isProfit = costOverview.isProfit) }
                             )
                         }
 
@@ -314,4 +319,25 @@ internal fun CostOverviewSection(
             }
         }
     }
+}
+
+/**
+ * §H profit/loss sign chip: `▲ Profit` (success) / `▼ Loss` (error). This is the ONLY place
+ * the sign is coloured — the numeral beside it stays neutral (or `error` on a real loss).
+ */
+@Composable
+private fun ProfitDeltaChip(isProfit: Boolean) {
+    val accent = if (isProfit) FleetStatusColors.ProfitGreen else FleetStatusColors.LossRed
+    val arrow = if (isProfit) "▲" else "▼"
+    val word = if (isProfit) stringResource(Res.string.reports_profit) else stringResource(Res.string.reports_loss)
+    Text(
+        text = "$arrow $word",
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        color = accent,
+        modifier = Modifier
+            .clip(RoundedCornerShape(FleetTokens.Radius.Pill))
+            .background(accent.copy(alpha = 0.12f))
+            .padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS)
+    )
 }

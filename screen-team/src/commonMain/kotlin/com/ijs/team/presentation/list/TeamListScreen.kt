@@ -425,14 +425,14 @@ private fun EnhancedTeamMemberCard(
         ) {
             // Avatar with role-based color
             val roleColor = when (member.role) {
-                TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
-                TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
-                TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
+                TeamMemberRole.OWNER -> MaterialTheme.colorScheme.tertiary
+                TeamMemberRole.ADMIN -> MaterialTheme.colorScheme.primary
+                TeamMemberRole.USER -> MaterialTheme.colorScheme.secondary
             }
             val onRoleColor = when (member.role) {
-                TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.onTertiary
-                TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.onPrimary
-                TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.onSecondary
+                TeamMemberRole.OWNER -> MaterialTheme.colorScheme.onTertiary
+                TeamMemberRole.ADMIN -> MaterialTheme.colorScheme.onPrimary
+                TeamMemberRole.USER -> MaterialTheme.colorScheme.onSecondary
             }
             FleetAvatar(
                 name = member.fullName,
@@ -467,9 +467,9 @@ private fun EnhancedTeamMemberCard(
                 ) {
                     // Role Badge
                     val roleBadgeColor = when (member.role) {
-                        TeamMemberRole.GENERAL_MANAGER -> MaterialTheme.colorScheme.tertiary
-                        TeamMemberRole.MANAGER -> MaterialTheme.colorScheme.primary
-                        TeamMemberRole.SUPERVISOR -> MaterialTheme.colorScheme.secondary
+                        TeamMemberRole.OWNER -> MaterialTheme.colorScheme.tertiary
+                        TeamMemberRole.ADMIN -> MaterialTheme.colorScheme.primary
+                        TeamMemberRole.USER -> MaterialTheme.colorScheme.secondary
                     }
                     FleetStatusBadge(
                         status = member.role.localizedDisplayName(),

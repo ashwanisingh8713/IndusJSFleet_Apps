@@ -15,6 +15,8 @@ import com.indusjs.fleet.core.model.shared.SelectableCustomer
 import com.indusjs.uicomponents.components.ButtonVariant
 import com.indusjs.uicomponents.components.FleetAccentIconChip
 import com.indusjs.uicomponents.components.FleetButton
+import com.indusjs.uicomponents.components.FleetElevation
+import com.indusjs.uicomponents.components.fleetElevatedSurface
 import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
@@ -49,9 +51,14 @@ fun CustomerSelectionBottomSheet(
         }
     }
 
+    val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        // §9.3 depth: 1px top-edge highlight so the sheet reads as raised on a dark surface (no-op in
+        // light). The sheet clips to `shape` itself, so no extra .clip() (which could catch the drag handle).
+        shape = sheetShape,
+        modifier = Modifier.fleetElevatedSurface(sheetShape, FleetElevation.Modal)
     ) {
         Column(
             modifier = Modifier
