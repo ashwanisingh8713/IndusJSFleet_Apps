@@ -1,6 +1,7 @@
 package com.ijs.reports.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -55,45 +56,53 @@ internal fun FinancialHeroCard(summary: PLSummary) {
         Column {
             // Row 1: Revenue vs Expenses side by side
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
-                // Revenue
+                // Revenue — §H addendum-4: neutral tile matching the dashboard (surface + hairline,
+                // neutral label); revenue is told apart by the LABEL, not a green tint.
                 Box(
                     Modifier.weight(1f)
                         .clip(RoundedCornerShape(FleetTokens.Radius.L))
-                        .background(ReportsColors.ProfitGreen.copy(alpha = 0.08f))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(FleetTokens.Border.Hairline, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(FleetTokens.Radius.L))
                         .padding(FleetTokens.Spacing.M)
                 ) {
                     Column {
                         Text(
                             stringResource(Res.string.reports_revenue),
                             style = MaterialTheme.typography.labelSmall,
-                            color = ReportsColors.ProfitGreen
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             formatCurrencyFull(summary.totalRevenue),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = ReportsColors.ProfitGreen
+                            // §H money-neutral: revenue numeral stays neutral; the green lives
+                            // only in the label + tile swatch (category differentiation, §1).
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
-                // Expenses
+                // Expenses — §H addendum-4: neutral tile matching the dashboard (surface + hairline,
+                // neutral label); expenses are told apart by the LABEL, not a red tint.
                 Box(
                     Modifier.weight(1f)
                         .clip(RoundedCornerShape(FleetTokens.Radius.L))
-                        .background(ReportsColors.LossRed.copy(alpha = 0.08f))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(FleetTokens.Border.Hairline, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(FleetTokens.Radius.L))
                         .padding(FleetTokens.Spacing.M)
                 ) {
                     Column {
                         Text(
                             stringResource(Res.string.reports_expenses),
                             style = MaterialTheme.typography.labelSmall,
-                            color = ReportsColors.LossRed
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             formatCurrencyFull(summary.totalExpenses),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = ReportsColors.LossRed
+                            // §H money-neutral: expense numeral stays neutral; the red lives
+                            // only in the label + tile swatch (category differentiation, §1).
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -145,7 +154,9 @@ internal fun FinancialHeroCard(summary: PLSummary) {
             Box(
                 Modifier.fillMaxWidth()
                     .clip(RoundedCornerShape(FleetTokens.Radius.L))
-                    .background(statusColor.copy(alpha = 0.08f))
+                    // §H addendum-3: neutral surface — the coloured status icon + "Net Profit/Loss"
+                    // label (the sign chip) + loss-red numeral carry the signal, not a card wash.
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.M)
             ) {
                 Row(
@@ -185,7 +196,10 @@ internal fun FinancialHeroCard(summary: PLSummary) {
                             "${if (isProfit) "+" else "-"}${formatCurrencyFull(abs(summary.netProfit))}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = statusColor
+                            // §H money-neutral: profit numeral stays neutral; only a genuine
+                            // loss numeral is red. The +/- sign and the status label/icon carry
+                            // the always-on profit/loss signal.
+                            color = if (isProfit) MaterialTheme.colorScheme.onSurface else ReportsColors.LossRed
                         )
                         Text(
                             stringResource(Res.string.reports_margin_percent, "${summary.profitMarginPercentage.roundToInt()}%"),
@@ -213,19 +227,21 @@ internal fun FleetSnapshotCard(summary: PLSummary) {
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)
             ) {
+                // §H addendum-3: fleet-snapshot numerals are neutral (counts aren't P/L; the
+                // loss already shows in the हानि numeral). No blue/purple/green/red on these.
                 SnapshotMetric(
                     Modifier.weight(1f), "${summary.completedTrips}",
-                    stringResource(Res.string.org_stats_trips), ReportsColors.InfoBlue
+                    stringResource(Res.string.org_stats_trips), MaterialTheme.colorScheme.onSurface
                 )
                 SnapshotMetric(
                     Modifier.weight(1f), "${summary.activeVehicles}",
-                    stringResource(Res.string.org_stats_vehicles), ReportsColors.Purple
+                    stringResource(Res.string.org_stats_vehicles), MaterialTheme.colorScheme.onSurface
                 )
                 SnapshotMetric(
                     Modifier.weight(1f),
                     "${summary.profitMarginPercentage.roundToInt()}%",
                     stringResource(Res.string.reports_margin),
-                    if (summary.isProfitable) ReportsColors.ProfitGreen else ReportsColors.LossRed
+                    MaterialTheme.colorScheme.onSurface
                 )
             }
 

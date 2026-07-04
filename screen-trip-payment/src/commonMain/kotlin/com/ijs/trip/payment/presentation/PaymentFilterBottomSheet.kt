@@ -152,7 +152,7 @@ internal fun PaymentFilterBottomSheet(
                     FleetFilterChip(
                         selected = filter.paymentStatus == status,
                         onClick = { onUpdateStatus(status) },
-                        label = "${status.icon} ${paymentStateLabels[status.apiValue] ?: status.localizedDisplayName()}"
+                        label = paymentStateLabels[status.apiValue] ?: status.localizedDisplayName()
                     )
                 }
             }

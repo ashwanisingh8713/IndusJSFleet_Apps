@@ -55,9 +55,9 @@ internal fun FleetOverviewHeroCard(
 
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.L))
 
-        // Number-forward KPI tiles — §1 anti-rainbow: count tiles are neutral (surfaceContainerHighest),
-        // no semantic tint. Only true status lives in the ratio bar / legend below.
-        val neutralTileBg = MaterialTheme.colorScheme.surfaceContainerHighest
+        // Number-forward KPI tiles — §1 anti-rainbow: count tiles are neutral, no semantic tint.
+        // §f7: fill/hairline come from MetricTile's neutral default (surface + 1dp outlineVariant).
+        // Only true status lives in the ratio bar / legend below.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
@@ -66,7 +66,6 @@ internal fun FleetOverviewHeroCard(
                 value = vehicleStatus.total.toString(),
                 label = stringResource(Res.string.org_stats_vehicles),
                 subLabel = stringResource(Res.string.dashboard_count_available, vehicleStatus.available),
-                backgroundColor = neutralTileBg,
                 onClick = onVehiclesClick,
                 modifier = Modifier.weight(1f)
             )
@@ -74,7 +73,6 @@ internal fun FleetOverviewHeroCard(
                 value = driverStatus.total.toString(),
                 label = stringResource(Res.string.org_stats_drivers),
                 subLabel = stringResource(Res.string.dashboard_count_available, driverStatus.available),
-                backgroundColor = neutralTileBg,
                 onClick = onDriversClick,
                 modifier = Modifier.weight(1f)
             )
@@ -82,7 +80,6 @@ internal fun FleetOverviewHeroCard(
                 value = tripSummary.total.toString(),
                 label = stringResource(Res.string.org_stats_trips),
                 subLabel = stringResource(Res.string.dashboard_count_active, tripSummary.inProgress),
-                backgroundColor = neutralTileBg,
                 onClick = onTripsClick,
                 modifier = Modifier.weight(1f)
             )

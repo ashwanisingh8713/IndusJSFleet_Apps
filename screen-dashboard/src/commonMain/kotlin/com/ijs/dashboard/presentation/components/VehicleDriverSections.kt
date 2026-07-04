@@ -218,7 +218,7 @@ internal fun DriversStatusSection(
         DashboardSectionHeader(
             title = stringResource(Res.string.org_stats_drivers),
             iconRes = Res.drawable.ic_driver,
-            accent = MaterialTheme.colorScheme.secondary,
+            accent = MaterialTheme.colorScheme.primary, // §f8: one accent (was secondary/purple)
             actionLabel = stringResource(Res.string.action_view_all),
             onActionClick = onClick
         )

@@ -55,7 +55,8 @@ internal fun AlertsSection(
             DashboardSectionHeader(
                 title = stringResource(Res.string.dashboard_alerts) + if (alertCount > 0) " ($alertCount)" else "",
                 iconRes = Res.drawable.ic_warning,
-                accent = MaterialTheme.colorScheme.error,
+                // §f8: one accent (was error/red) — per-alert severity colour lives on the item rows (§I), not the header.
+                accent = MaterialTheme.colorScheme.primary,
                 actionLabel = stringResource(Res.string.action_view_all),
                 onActionClick = onViewAllClick
             )

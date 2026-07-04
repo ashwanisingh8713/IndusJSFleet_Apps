@@ -17,7 +17,9 @@ import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.payment.domain.entity.PaymentStatus
 import com.ijs.trip.payment.domain.entity.TripPayment
+import com.indusjs.uicomponents.theme.FleetStatusColors
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -45,7 +47,7 @@ internal fun TripPaymentsSection(
 ) {
     EnhancedSectionCard(
         title = stringResource(Res.string.payments_title),
-        icon = "💳"
+        iconRes = Res.drawable.ic_cost
     ) {
         when {
             isLoading -> {
@@ -151,7 +153,12 @@ private fun PaymentSummaryHeader(
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text("✅", style = MaterialTheme.typography.labelSmall)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_check_circle),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
                         }
                     }
                     Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
@@ -184,7 +191,12 @@ private fun PaymentSummaryHeader(
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.15f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text("⏳", style = MaterialTheme.typography.labelSmall)
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_time),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
                             }
                         }
                         Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
@@ -264,16 +276,18 @@ private fun PaymentListItem(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                // Payment mode icon
+                // Payment avatar (neutral money glyph — mode shown as text beside it)
                 Surface(
                     modifier = Modifier.size(FleetTokens.Height.FilterChipRow),
                     shape = RoundedCornerShape(FleetTokens.Radius.L),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = payment.modeIcon,
-                            style = MaterialTheme.typography.titleMedium
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_cost),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(FleetTokens.IconSize.Default)
                         )
                     }
                 }
@@ -294,7 +308,6 @@ private fun PaymentListItem(
                     Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
 
                     // Received by person name
-                    println("TRIP_PAYMENTS_CONTENT - id: ${payment.id}, receivedBy: '${payment.receivedBy}', createdByName: '${payment.createdByName}'")
                     val receiverName = payment.receivedBy?.takeIf { it.isNotBlank() && it != "Unknown" && it.lowercase() != "null" }
                         ?: payment.createdByName?.takeIf { it.isNotBlank() && it != "Unknown" && it.lowercase() != "null" }
                         ?: stringResource(Res.string.trip_payment_receiver_staff)
@@ -336,25 +349,43 @@ private fun PaymentListItem(
                     // Location info
                     if (!payment.receivedAtLocation.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
-                        Text(
-                            text = "📍 ${stringResource(Res.string.payment_label_location)}: ${payment.receivedAtLocation}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_map),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                            Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
+                            Text(
+                                text = "${stringResource(Res.string.payment_label_location)}: ${payment.receivedAtLocation}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
 
                     // Notes info
                     if (!payment.notes.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(FleetTokens.Spacing.XXS))
-                        Text(
-                            text = "📝 ${stringResource(Res.string.payment_label_notes)}: ${payment.notes}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Row(verticalAlignment = Alignment.Top) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_edit),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                            Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
+                            Text(
+                                text = "${stringResource(Res.string.payment_label_notes)}: ${payment.notes}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }
@@ -383,23 +414,13 @@ private fun PaymentStatusBadge(
     status: PaymentStatus,
     paymentStateLabels: Map<String, String> = emptyMap()
 ) {
+    // Align to the canonical payment-status palette (C1 success / warning / error) so the
+    // trip-detail badge matches the payments-module PaymentStatusBadge — no indigo for "Received".
     val (bgColor, textColor) = when (status) {
-        PaymentStatus.RECEIVED -> Pair(
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-            MaterialTheme.colorScheme.primary
-        )
-        PaymentStatus.PENDING -> Pair(
-            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f),
-            MaterialTheme.colorScheme.tertiary
-        )
-        PaymentStatus.CANCELLED -> Pair(
-            MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
-            MaterialTheme.colorScheme.error
-        )
-        PaymentStatus.PARTIAL -> Pair(
-            MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
-            MaterialTheme.colorScheme.secondary
-        )
+        PaymentStatus.RECEIVED -> Pair(FleetStatusColors.PaymentReceivedBg, FleetStatusColors.PaymentReceived)
+        PaymentStatus.PENDING -> Pair(FleetStatusColors.PaymentPendingBg, FleetStatusColors.PaymentPending)
+        PaymentStatus.CANCELLED -> Pair(FleetStatusColors.PaymentCancelledBg, FleetStatusColors.PaymentCancelled)
+        PaymentStatus.PARTIAL -> Pair(FleetStatusColors.PaymentPendingBg, FleetStatusColors.PaymentPending)
     }
 
     Surface(
@@ -407,7 +428,7 @@ private fun PaymentStatusBadge(
         color = bgColor
     ) {
         Text(
-            text = "${status.icon} ${paymentStateLabels[status.apiValue] ?: status.displayName}",
+            text = paymentStateLabels[status.apiValue] ?: status.displayName,
             modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
@@ -422,7 +443,7 @@ private fun PaymentStatusBadge(
 @Composable
 private fun PaymentsEmptyContent(onAddPayment: () -> Unit) {
     EmptyContent(
-        icon = "💳",
+        iconRes = Res.drawable.ic_cost,
         title = stringResource(Res.string.trip_payments_empty_title),
         message = stringResource(Res.string.trip_payments_empty_message),
         actionLabel = stringResource(Res.string.trip_payment_record_plus),

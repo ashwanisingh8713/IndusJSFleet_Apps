@@ -160,6 +160,24 @@ Notes: `inversePrimary` = the opposite-mode `primary` (standard M3, so an invert
 
 ---
 
+## K. Soft-indigo surface tint — ✅ OWNER DIRECTION 2026-07-04 (supersedes grey-neutral surfaces)
+
+The human owner gave taste feedback ("no grey anywhere"; "Home boxes don't look good"). **Decision: neutral surfaces carry a soft-indigo (lavender) tint, not grayscale.** Implemented app-wide by re-hueing the `Color.kt` neutral ramp (`surfaceVariant`, `surfaceContainer*`, `secondaryContainer`, `outlineVariant`, `surfaceDim/Bright`, `background`) from grey to a lavender ramp at the **same lightness per step** (so §4/§9 contrast floors hold); `primary`/`primaryContainer` (brand + selection) unchanged. `FleetMetricTile` neutral fill → `surfaceContainerHigh` (now lavender) so stat tiles read as tinted cards, not weak white+hairline boxes.
+
+**DDD verdict: ENDORSE.** Verified on Home/Payments/Reports — it holds every invariant and reads more designed than the grey:
+- **§H money-neutral PRESERVED** — numerals stay `onSurface` (dark) on the tinted surfaces; loss-red numeral + ▲/▼ chip unchanged. (Only *surfaces* changed hue, not numbers.)
+- **Anti-rainbow (§1) still holds** — a single *brand* hue on surfaces is NOT a rainbow; semantic colour remains confined to chips/dots/accent bars + the loss-red numeral + data-viz (donut/chart). Cards on white stay white (white ≠ grey).
+- **Contrast** — same lightness per step → floors preserved (CI luminance report must be re-run green against the retinted tokens).
+
+**DDD refinements (bounded, within the owner direction):**
+1. **Intensity — STRONGER recommended (updated 2026-07-04).** Compared the very-soft `#E7E9F8` vs the STRONGER `#DCE0F5` stat-tile fill: the **stronger reads better** — tiles present as clearly-designed lavender cards (directly fixes "boxes don't look good") while staying light + calm, and the white segmented pill pops more against it. Recommend the stronger, **gated on refinement 2**. (Final intensity is the owner's taste; this is the design-informed rec.)
+2. **Selection must stay distinct (the one real risk — gates #1).** At `#DCE0F5` the surface is now CLOSE to the selection token `primaryContainer #E1E4FF` (~5–10 pts). The **selected `primaryContainer` states (nav slot pill, selected filter chips, active tab) must read clearly distinct** from the lavender non-selected. Safeguards: keep the **nav-bar / chip-track surface step a notch LIGHTER than the tile step**, and/or **deepen the selected token**. Verify with a selected-filter-chip + selected-nav capture at the stronger tint before locking; if selection collapses, soften back toward `#E7E9F8` or deepen selection. (The white segmented active pill is unaffected — white always pops.)
+3. Re-run the CI contrast report over the retinted `Color.kt`; confirm `outline`/`onSurfaceVariant`/text floors still pass with the hue shift.
+
+*(This supersedes "neutral surfaces = grayscale" in §3/§4 — the ladder is now a lavender ramp of the same lightness. §H money-neutral, §1 anti-rainbow, and all contrast floors are unchanged in principle.)*
+
+---
+
 ## H. Money treatment for financial cards — ✅ PO-APPROVED 2026-06-30 (for step 4/6)
 
 PO asked me to call how money reads once the Financial Overview rainbow retires (cards de-tint to neutral `surface` in step 4; status colour moves to chips in step 6). Two options were on the table: **(A) fully-neutral tabular figures** vs **(B) restrained ± semantic colour on profit/loss**. **A-plus approved — build against this.**
@@ -174,6 +192,12 @@ Rules:
 **Why not B (colour the numerals):** the current build already shows the failure mode — green `₹0` / orange `₹0` on tinted cards; coloured money numerals routinely miss the sunlight-first contrast floor (§1) on cheap in-vehicle LCDs, and colouring *positive* profit green reintroduces the always-on accent the anti-rainbow rule kills. A-plus gets the at-a-glance signal from a chip/accent (which §1 explicitly sanctions for semantic colour) without putting fragile colour on the most important number.
 
 Ties to [[financial-terminology]] (Total Business / Expenses / Profit) and [[pnl-driver-costs-excluded]]. **Status: ✅ PO-APPROVED 2026-06-30 — enters the step-4 (card consolidation) + step-6 (status refactor) build spec.**
+
+**§H addendum-3 — P&L card washes + always-on category colour (2026-07-04, DDD RULING on B's flag):** several P&L cards carry an always-on **profit-green / loss-red card-background wash** (`ConsolidatedSummaryCard` ProfitGreen/LossRed @0.1α; smaller 0.06–0.15α container tints in Detail/List/Result/Trip). **RULING: NEUTRALIZE them** — same as the dashboard §H A-plus you already approved (which neutralized exactly this always-on profit/loss accent) and §1 (no full-card semantic tints). P&L cards = **neutral surface**; profit/loss is signalled by the **▲/▼ delta chip + the loss-red numeral exception** (already shipped) — not a card wash. Same family, also neutralize for §1 consistency (my observation, not just B's flag): (i) the **Reports fleet-snapshot count numerals** (2 green trips / 2 purple vehicles / 0% red margin) → neutral `onSurface` (counts aren't profit/loss; the loss already shows in the हानि numeral/chip); (ii) the **Trip-Detail cost-category amount pills** (Toll=blue, Fuel=green) → neutral money, category by label + icon, not a per-category colour pill. Net principle (unchanged across all my rulings): money/counts neutral `onSurface`; semantic colour ONLY in chips/dots/accent bars; profit/loss via ▲/▼ chip + the single loss-red numeral exception.
+
+**§H addendum-2 — trip-payment surfaces (2026-07-04, #52 review):** two more payments surfaces still colour money / type:
+- **Trip-selector card rollup (`TripSelectorBottomSheet`):** the प्राप्त (Received) `₹35,000` and लंबित (Pending) `-₹35,000` summary numerals render **green** — §H FAIL. → **neutral `onSurface`** (the row LABELS प्राप्त/लंबित can stay muted; only the numerals go neutral). Same on the payment-detail hero net-amount (indigo) → neutral.
+- **Payment-TYPE badge (`getPaymentTypeColor`) — DDD RULING: neutralize.** Payment TYPE (Advance/अग्रिम, Partial/आंशिक, Full, Refund…) is a **category, not a status**, so it must NOT carry a per-type colour rainbow (currently Advance=teal `#D4E5E6`, Partial=amber `#EEE2D0` — borrowing the info/warning hues as arbitrary type identity, which *dilutes* the semantic meaning). → **one neutral chip token** (the D3 unified `secondaryContainer`/`onSecondaryContainer`), type distinguished by **text**. Reserve semantic colour for payment **STATUS** only (`PaymentStatusBadge`: Received=success, Pending=warning — already correct). Same principle as the §I device-alerts per-type ruling. Also: the group count chip ("2 भुगतान") → neutral, not the type hue. Align the trip-detail "Received" chip to the C1 success token (it currently uses indigo/`primaryContainer`, inconsistent with the payments-list green success chip).
 
 **§H addendum — payments (2026-06-30 fidelity FAIL fix):** payment amount numerals + group totals must be **neutral `onSurface`** (SemiBold, tabular). Retire the status-colouring of amounts (`PaymentReceived` green / `PaymentPending` amber) and the **unconditional green group total**. Payment status stays in the `PaymentStatusBadge` chip (already correct). Only a negative/refund figure may take `error`. Summary KPI tiles → neutral (no status-tinted backgrounds/numerals).
 

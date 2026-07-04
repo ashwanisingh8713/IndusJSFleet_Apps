@@ -59,7 +59,6 @@ import com.ijs.dashboard.presentation.components.OfflineBanner
 import com.ijs.dashboard.presentation.components.TripsStatusSection
 import com.ijs.dashboard.presentation.components.VehicleStatusSection
 import com.indusjs.fleet.core.error.FleetErrorContext
-import com.indusjs.fleet.core.util.formatLastUpdated
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.domain.entity.dashboard.AlertsSummary
 import com.indusjs.fleet.domain.entity.dashboard.CostOverview
@@ -78,23 +77,12 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-/**
- * Returns a greeting string resource key based on time of day.
- * Call inside a @Composable to resolve with stringResource().
- */
-private fun getTimeBasedGreetingIndex(): Int {
-    return try {
-        val currentTimeMs = com.indusjs.fleet.core.util.currentTimeMillis()
-        val hourOfDay = ((currentTimeMs / 3600000) % 24).toInt()
-        val localHour = (hourOfDay + 5) % 24
-        when {
-            localHour < 12 -> 0  // Morning
-            localHour < 17 -> 1  // Afternoon
-            else -> 2  // Evening
-        }
-    } catch (e: Exception) {
-        0
-    }
+/** f5: data is "stale" (show the muted dot) once it's older than 15 minutes. */
+private const val STALE_AFTER_MS = 15 * 60 * 1000L
+
+private fun isDataStale(lastUpdatedAtMillis: Long?): Boolean {
+    if (lastUpdatedAtMillis == null) return false
+    return (com.indusjs.fleet.core.util.currentTimeMillis() - lastUpdatedAtMillis) > STALE_AFTER_MS
 }
 
 @Composable
@@ -151,7 +139,9 @@ fun DashboardScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             DashboardTopBar(
-                userName = state.userName, lastUpdated = state.lastUpdated,
+                businessName = state.businessName?.takeIf { it.isNotBlank() }
+                    ?: stringResource(Res.string.dashboard_title),
+                dataIsStale = isDataStale(state.lastUpdatedAtMillis),
                 notificationCount = state.notificationCount, isRefreshing = state.isRefreshing,
                 onNotificationsClick = { viewModel.sendIntent(DashboardContract.Intent.NavigateToNotifications) },
                 onRefreshClick = { viewModel.sendIntent(DashboardContract.Intent.RefreshDashboard) }
@@ -201,27 +191,22 @@ fun DashboardScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DashboardTopBar(
-    userName: String, lastUpdated: String?, notificationCount: Int, isRefreshing: Boolean,
+    businessName: String, dataIsStale: Boolean, notificationCount: Int, isRefreshing: Boolean,
     onNotificationsClick: () -> Unit, onRefreshClick: () -> Unit
 ) {
-    val greetingIndex = remember { getTimeBasedGreetingIndex() }
-    val greeting = when (greetingIndex) {
-        0 -> stringResource(Res.string.dashboard_greeting_morning)
-        1 -> stringResource(Res.string.dashboard_greeting_afternoon)
-        else -> stringResource(Res.string.dashboard_greeting_evening)
-    }
     TopAppBar(
+        // f5: one compact row — the tenant/business name as the title, actions on the right. No
+        // greeting, no personal name, no permanent "Updated: X" line.
         title = {
-            Column(modifier = Modifier.semantics { heading() }) {
-                Text(text = greeting, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (userName.isNotEmpty()) {
-                    Text(text = userName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.semantics { contentDescription = "$greeting $userName" })
-                }
-                if (lastUpdated != null) {
-                    Text(text = stringResource(Res.string.dashboard_updated, formatLastUpdated(lastUpdated)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
-                }
-            }
+            Text(
+                text = businessName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.semantics { heading() }
+            )
         },
         actions = {
             BadgedBox(badge = {
@@ -239,8 +224,14 @@ private fun DashboardTopBar(
             var isRefreshPressed by remember { mutableStateOf(false) }
             val rotationAngle by animateFloatAsState(targetValue = if (isRefreshing) 360f else 0f, animationSpec = tween(durationMillis = 1000), finishedListener = { isRefreshPressed = false })
             val refreshDesc = stringResource(Res.string.cd_refresh_dashboard)
-            IconButton(onClick = { isRefreshPressed = true; onRefreshClick() }, modifier = Modifier.semantics { contentDescription = refreshDesc }) {
-                Icon(painter = painterResource(Res.drawable.ic_refresh), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(FleetTokens.IconSize.Default).rotate(if (isRefreshing) rotationAngle else 0f))
+            // f5 stale indicator: only a small MUTED dot on the refresh icon when data is >15min old —
+            // no permanent "updated" text. The refresh icon itself is the "refresh" affordance.
+            BadgedBox(badge = {
+                if (dataIsStale) Badge(containerColor = MaterialTheme.colorScheme.onSurfaceVariant)
+            }) {
+                IconButton(onClick = { isRefreshPressed = true; onRefreshClick() }, modifier = Modifier.semantics { contentDescription = refreshDesc }) {
+                    Icon(painter = painterResource(Res.drawable.ic_refresh), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(FleetTokens.IconSize.Default).rotate(if (isRefreshing) rotationAngle else 0f))
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.onSurface)

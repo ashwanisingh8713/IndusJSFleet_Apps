@@ -1,5 +1,6 @@
 package com.indusjs.fleet.core.util
 
+import kotlin.concurrent.Volatile
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.roundToInt

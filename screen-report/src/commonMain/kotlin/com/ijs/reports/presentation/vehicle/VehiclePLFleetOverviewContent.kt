@@ -30,6 +30,8 @@ import com.ijs.reports.presentation.ReportChartType
 import com.ijs.reports.presentation.ReportViewMode
 import com.ijs.reports.presentation.VehiclePLSortOption
 import com.ijs.reports.presentation.localizedLabel
+import com.ijs.reports.presentation.localizedPeriodLabel
+import com.ijs.reports.presentation.localizedPeriodTabLabel
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -196,7 +198,7 @@ internal fun FleetOverviewContent(
             item {
                 EmptyPLDataContent(
                     vehicleCount = state.vehicles.size,
-                    period = state.currentPeriodLabel,
+                    period = localizedPeriodLabel(state.period, state.startDate, state.endDate),
                     onSelectSingleVehicle = onSelectSingleVehicle
                 )
             }
@@ -403,7 +405,8 @@ internal fun PeriodSelectionRow(
 ) {
     Column {
         // Calm Fintech segmented pill (shared FleetTabBar) — replaces the old filled-indigo pills.
-        val periodTabs = VehiclePLContract.PERIOD_OPTIONS.map { (value, label) -> FleetTab(value, label) }
+        // Labels are localized here (composable); PERIOD_OPTIONS only supplies the keys.
+        val periodTabs = VehiclePLContract.PERIOD_OPTIONS.map { (value, _) -> FleetTab(value, localizedPeriodTabLabel(value)) }
         FleetTabBar(
             tabs = periodTabs,
             selectedTabId = selectedPeriod,

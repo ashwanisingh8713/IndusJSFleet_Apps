@@ -45,7 +45,7 @@ internal fun TripsStatusSection(
         DashboardSectionHeader(
             title = stringResource(Res.string.org_stats_trips),
             iconRes = Res.drawable.ic_trip,
-            accent = MaterialTheme.colorScheme.tertiary,
+            accent = MaterialTheme.colorScheme.primary, // §f8: one accent (was tertiary/teal)
             actionLabel = stringResource(Res.string.action_view_all),
             onActionClick = onClick
         )
@@ -63,7 +63,7 @@ internal fun TripsStatusSection(
         } else {
             // Number-forward status tiles — §1 anti-rainbow: neutral count tiles (no green/amber
             // per-status tint); trip status colour lives in the active-trips preview list below.
-            val neutralTileBg = MaterialTheme.colorScheme.surfaceContainerHighest
+            // §f7: tile fill/hairline now come from MetricTile's neutral default (surface + hairline).
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)
@@ -71,19 +71,16 @@ internal fun TripsStatusSection(
                 MetricTile(
                     value = tripSummary.inProgress.toString(),
                     label = stringResource(Res.string.dashboard_label_active),
-                    backgroundColor = neutralTileBg,
                     modifier = Modifier.weight(1f)
                 )
                 MetricTile(
                     value = tripSummary.planned.toString(),
                     label = stringResource(Res.string.dashboard_label_planned),
-                    backgroundColor = neutralTileBg,
                     modifier = Modifier.weight(1f)
                 )
                 MetricTile(
                     value = tripSummary.completed.toString(),
                     label = stringResource(Res.string.dashboard_label_done),
-                    backgroundColor = neutralTileBg,
                     modifier = Modifier.weight(1f)
                 )
             }

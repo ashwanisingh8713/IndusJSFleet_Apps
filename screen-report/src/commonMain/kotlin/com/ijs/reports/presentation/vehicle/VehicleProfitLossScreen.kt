@@ -55,6 +55,7 @@ import com.ijs.reports.presentation.vehicle.VehiclePLContract.State
 import com.ijs.reports.presentation.PLStatusFilter
 import com.ijs.reports.presentation.RecentReport
 import com.ijs.reports.presentation.localizedLabel
+import com.ijs.reports.presentation.localizedPeriodLabel
 import com.ijs.reports.presentation.ReportChartType as ChartType
 import com.ijs.reports.presentation.ReportExportFormat as ExportFormat
 import com.ijs.reports.presentation.ReportViewMode as ViewMode
@@ -125,7 +126,8 @@ fun VehicleProfitLossScreen(
                         )
                         if (state.currentPeriodLabel.isNotBlank()) {
                             Text(
-                                text = state.currentPeriodLabel,
+                                // currentPeriodLabel gates on "loaded"; the shown text is localized from the key.
+                                text = localizedPeriodLabel(state.period, state.startDate, state.endDate),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary
                             )

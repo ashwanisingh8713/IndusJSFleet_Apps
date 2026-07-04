@@ -112,7 +112,10 @@ fun <T> FleetTabBar(
 
     val isDark = isAppInDarkTheme()
     val cs = MaterialTheme.colorScheme
-    val trackColor = if (isDark) cs.surfaceContainerHigh else cs.surfaceContainerHighest
+    // f2: light track lightened surfaceContainerHighest → surfaceContainer (a whisper-soft warm gray);
+    // the selected-pill separation is carried by the pill's 1px outlineVariant hairline + shadow, not the
+    // track darkness, so this stays within the sunlight-first floor. Dark unchanged (#222730).
+    val trackColor = if (isDark) cs.surfaceContainerHigh else cs.surfaceContainer
     val pillColor = if (isDark) cs.surfaceContainerHighest else cs.surface
     val pillBorder = if (isDark) null else BorderStroke(FleetTokens.Border.Hairline, cs.outlineVariant)
     val pillShape = RoundedCornerShape(FleetTokens.Radius.Pill)
@@ -172,6 +175,10 @@ fun <T> FleetTabBar(
 
     Box(
         modifier = modifier
+            // f2: inset + float — a ScreenHorizontal (16dp) side margin + a 12dp gap above/below leaves
+            // the track a CONTAINED, floating pill (not an edge-to-edge structural band). The margin sits
+            // OUTSIDE the fill (before clip/background) so it reads as transparent breathing room.
+            .padding(horizontal = FleetTokens.Spacing.L, vertical = FleetTokens.Spacing.M)
             .clip(pillShape)
             .background(trackColor)
             .padding(trackPad)

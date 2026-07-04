@@ -36,6 +36,7 @@ import com.indusjs.uicomponents.components.FleetNavRail
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.isAppInDarkTheme
 import com.indusjs.uicomponents.theme.isAtLeastMedium
+import com.indusjs.uicomponents.theme.isExpanded
 import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.indusjs.uicomponents.theme.rememberThemeToggle
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
@@ -187,8 +188,21 @@ fun FleetNavScaffold(
         }
     }
 
+    // Expanded rail (§7 Expanded / DDD ruling): a wide screen has room for the full nav, so list EVERY
+    // permitted destination inline (Home + all permitted + Profile) — no More sheet indirection.
+    val expandedDestinations = buildList {
+        add(NavDest(KEY_HOME, homeLabel, Res.drawable.ic_dashboard, FleetRoute.Dashboard))
+        addAll(backfillOrder)
+        add(NavDest(KEY_PROFILE, profileLabel, Res.drawable.ic_settings, FleetRoute.Profile))
+    }
+    val expandedNavItems = expandedDestinations.map { FleetNavItem(it.key, it.label, it.icon) }
+    val onSelectExpanded: (String) -> Unit = { key ->
+        expandedDestinations.firstOrNull { it.key == key }?.let { backStack.navigateTopLevel(it.route) }
+    }
+
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val useRail = rememberFleetBreakpoint().isAtLeastMedium
+        val breakpoint = rememberFleetBreakpoint()
+        val useRail = breakpoint.isAtLeastMedium
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
@@ -199,7 +213,12 @@ fun FleetNavScaffold(
         ) { padding ->
             Row(modifier = Modifier.padding(padding).fillMaxSize()) {
                 if (showNav && useRail) {
-                    FleetNavRail(items = navItems, selectedKey = selectedKey, onSelect = onSelect)
+                    if (breakpoint.isExpanded) {
+                        // Full inline nav — selection tracks the real destination key directly (no More collapse).
+                        FleetNavRail(items = expandedNavItems, selectedKey = currentKey, onSelect = onSelectExpanded, expanded = true)
+                    } else {
+                        FleetNavRail(items = navItems, selectedKey = selectedKey, onSelect = onSelect, expanded = false)
+                    }
                 }
                 Box(modifier = Modifier.weight(1f).fillMaxSize()) { content() }
             }

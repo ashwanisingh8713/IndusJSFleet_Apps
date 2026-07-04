@@ -1,9 +1,11 @@
 package com.ijs.dashboard.presentation
 
+import androidx.lifecycle.viewModelScope
 import com.indusjs.dispatcher.DispatcherProvider
 import com.indusjs.fleet.core.mvi.MviViewModel
 import com.indusjs.fleet.core.permission.PermissionChecker
 import com.indusjs.fleet.data.datasource.user.UserLocalDataSource
+import com.indusjs.fleet.domain.repository.user.UserRepository
 import com.indusjs.error.result.Result
 import com.indusjs.fleet.data.model.dashboard.CostOverviewFilter
 import com.indusjs.fleet.data.model.dashboard.FinancialPeriod
@@ -43,7 +45,9 @@ class DashboardViewModel(
     // Authoritative display name saved at login/profile (single source of truth). Used as a
     // fallback when the dashboard API returns empty user names so the drawer/header always
     // show a real name instead of a blank/placeholder.
-    private val userLocalDataSource: UserLocalDataSource? = null
+    private val userLocalDataSource: UserLocalDataSource? = null,
+    // f5: source of the tenant/business name for the Home header (fetched from /profile, cached).
+    private val userRepository: UserRepository? = null
 ) : MviViewModel<State, Intent, Effect>(State()) {
 
     /**
@@ -82,6 +86,26 @@ class DashboardViewModel(
             }
         }
         sendIntent(Intent.LoadDashboard)
+        loadBusinessName()
+    }
+
+    /**
+     * f5 Home header: show the tenant/business name. Instant from the cached value (survives restarts),
+     * then refreshed from /profile in the background (which re-caches it). Null → header shows its
+     * localized "Dashboard" fallback, never the personal name.
+     */
+    private fun loadBusinessName() {
+        viewModelScope.launch {
+            withContext(dispatcherProvider.io) {
+                userLocalDataSource?.getBusinessName()?.let { cached ->
+                    updateState { copy(businessName = cached) }
+                }
+                val fresh = userRepository?.getProfile()?.getOrNull()?.user?.businessName
+                if (!fresh.isNullOrBlank()) {
+                    updateState { copy(businessName = fresh) }
+                }
+            }
+        }
     }
 
     override suspend fun handleIntent(intent: Intent) {
@@ -197,6 +221,7 @@ class DashboardViewModel(
                                     hasCachedData = true,
                                     error = null,
                                     lastUpdated = data.stats.lastUpdated ?: formatCacheTime(data.cachedAt),
+                                    lastUpdatedAtMillis = data.cachedAt,
                                     vehicleStatus = vehicleStatus,
                                     driverStatus = driverStatus,
                                     tripSummary = tripSummary,
@@ -218,6 +243,7 @@ class DashboardViewModel(
                                     isOffline = false,
                                     error = null,
                                     lastUpdated = data.stats.lastUpdated ?: "Just now",
+                                    lastUpdatedAtMillis = com.indusjs.fleet.core.util.currentTimeMillis(),
                                     vehicleStatus = vehicleStatus,
                                     driverStatus = driverStatus,
                                     tripSummary = tripSummary,

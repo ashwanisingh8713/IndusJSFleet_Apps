@@ -15,6 +15,7 @@ import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.domain.entity.Trip
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -175,7 +176,7 @@ internal fun TripHeader(
 internal fun RouteAndScheduleSection(trip: Trip) {
     EnhancedSectionCard(
         title = stringResource(Res.string.trip_detail_route_schedule),
-        icon = "📍"
+        iconRes = Res.drawable.ic_map
     ) {
         // Departure Section
         Row(
@@ -225,12 +226,21 @@ internal fun RouteAndScheduleSection(trip: Trip) {
             )
             if (departureDateTime.isNotBlank()) {
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "🗓️ $departureDateTime",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_calendar),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
+                        Text(
+                            text = departureDateTime,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
@@ -304,12 +314,21 @@ internal fun RouteAndScheduleSection(trip: Trip) {
             )
             if (arrivalDateTime.isNotBlank()) {
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "🗓️ $arrivalDateTime",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_calendar),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
+                        Text(
+                            text = arrivalDateTime,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }

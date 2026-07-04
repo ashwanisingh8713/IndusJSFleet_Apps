@@ -121,16 +121,8 @@ object VehiclePLContract {
         // Can generate report check
         val canGenerateReport: Boolean get() = (selectedVehicleId != null || isFleetOverviewMode) && !isLoading
 
-        // Period display text for UI
-        val periodDisplayText: String get() = when (period) {
-            "today" -> "Today"
-            "weekly" -> "This Week"
-            "monthly" -> "This Month"
-            "yearly" -> "This Year"
-            "custom" -> if (startDate.isNotBlank() && endDate.isNotBlank())
-                "$startDate - $endDate" else "Custom Range"
-            else -> "This Month"
-        }
+        // (period display text is resolved + localized at the composable render site
+        //  via localizedPeriodLabel(period, startDate, endDate) — see ReportLocalizedLabels.)
 
         // Active filter count for badge
         val activeFilterCount: Int get() {

@@ -166,16 +166,16 @@ internal fun CollapsibleTripGroupCard(
                             }
                         }
 
-                        // Payment count badge
+                        // Payment count badge — §H: meta count, neutral chip (no colour accent).
                         Surface(
                             shape = RoundedCornerShape(FleetTokens.Radius.L),
-                            color = MaterialTheme.colorScheme.tertiaryContainer
+                            color = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             Text(
                                 text = stringResource(Res.string.payment_count_label, group.paymentCount, if (group.paymentCount > 1) "s" else ""),
                                 modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XS),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
                     }
@@ -281,24 +281,26 @@ internal fun CompactPaymentItem(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
                 ) {
-                    // Payment Type badge
+                    // Payment Type badge — §H/D3: type is a CATEGORY, not a status; one
+                    // neutral chip token (secondaryContainer), differentiated by TEXT only.
                     Surface(
                         shape = RoundedCornerShape(FleetTokens.Radius.M),
-                        color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
+                        color = MaterialTheme.colorScheme.secondaryContainer
                     ) {
                         Text(
-                            text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()}",
+                            text = payment.paymentType.localizedDisplayName(),
                             modifier = Modifier.padding(horizontal = FleetTokens.Spacing.XS, vertical = FleetTokens.Spacing.XXS),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
-                            color = getPaymentTypeColor(payment.paymentType)
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
 
                     // Payment mode
                     Text(
-                        text = payment.modeIcon,
-                        style = MaterialTheme.typography.labelSmall
+                        text = payment.paymentMode.localizedDisplayName(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 

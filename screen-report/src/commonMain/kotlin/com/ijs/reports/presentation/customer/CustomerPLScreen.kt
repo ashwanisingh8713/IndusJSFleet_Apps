@@ -155,36 +155,51 @@ private fun SummaryCard(summary: CustomerPLSummary) {
     FleetSectionCard {
         Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
+                // §H: revenue numeral stays neutral (Kpi's valueColor defaults to onSurface).
                 Kpi(Modifier.weight(1f), stringResource(Res.string.reports_revenue), formatCurrency(summary.totalRevenue), MaterialTheme.colorScheme.primary)
                 Kpi(
                     Modifier.weight(1f),
                     stringResource(Res.string.customer_pl_net),
                     formatCurrency(summary.netProfit),
-                    if (summary.netProfit >= 0) FleetStatusColors.ProfitGreen else FleetStatusColors.LossRed
+                    MaterialTheme.colorScheme.primary,
+                    // §H: profit numeral neutral; the sanctioned loss-red exception fires only on a true loss.
+                    valueColor = if (summary.netProfit >= 0) MaterialTheme.colorScheme.onSurface else FleetStatusColors.LossRed
                 )
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
-                Kpi(Modifier.weight(1f), stringResource(Res.string.customer_pl_pending), formatCurrency(summary.totalPending), FleetStatusColors.ExpenseAmber)
-                Kpi(Modifier.weight(1f), stringResource(Res.string.customer_pl_active_customers), summary.activeCustomers.toString(), MaterialTheme.colorScheme.secondary)
+                // §H: pending (a money amount) numeral stays neutral (defaults to onSurface).
+                Kpi(Modifier.weight(1f), stringResource(Res.string.customer_pl_pending), formatCurrency(summary.totalPending), MaterialTheme.colorScheme.primary)
+                // Active customers is a COUNT, not a money amount — §H does not apply; keep its accent tint.
+                Kpi(Modifier.weight(1f), stringResource(Res.string.customer_pl_active_customers), summary.activeCustomers.toString(), MaterialTheme.colorScheme.secondary, valueColor = MaterialTheme.colorScheme.secondary)
             }
         }
     }
 }
 
 @Composable
-private fun Kpi(modifier: Modifier, label: String, value: String, accent: androidx.compose.ui.graphics.Color) {
+private fun Kpi(
+    modifier: Modifier,
+    label: String,
+    value: String,
+    accent: androidx.compose.ui.graphics.Color,
+    // §H money-neutral: the numeral colour is decoupled from the tile accent. Money numerals pass
+    // onSurface (neutral) or LossRed (true loss only); non-money counts may keep their accent tint.
+    valueColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+) {
     FleetMetricTile(
         value = value,
         label = label,
         modifier = modifier,
         accent = accent,
-        valueColor = accent
+        valueColor = valueColor
     )
 }
 
 @Composable
 private fun CustomerRow(c: CustomerPLItem) {
-    val netColor = if (c.netProfit >= 0) FleetStatusColors.ProfitGreen else FleetStatusColors.LossRed
+    // §H money-neutral: the net-profit numeral is neutral onSurface when profit; the sanctioned
+    // loss-red exception fires only on a true loss (netProfit < 0).
+    val netColor = if (c.netProfit >= 0) MaterialTheme.colorScheme.onSurface else FleetStatusColors.LossRed
     FleetSectionCard {
         Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.S)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

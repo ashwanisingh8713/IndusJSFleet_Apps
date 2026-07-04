@@ -185,16 +185,17 @@ fun CostListItem(
                     }
                 }
 
-                // Right: Amount badge
+                // Right: Amount badge — §H addendum-3: money is neutral; category is carried by
+                // the left-accent swatch + icon + label, not a per-category colour on the amount.
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = costColor.copy(alpha = 0.15f)
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
                 ) {
                     Text(
                         text = "₹${formatCostAmount(cost.amount)}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = costColor,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                     )
                 }

@@ -313,16 +313,18 @@ private fun TripPLContent(
                         }
                         // Summary
                         val totalProfit = state.results.sumOf { it.netProfit }
-                        val profitColor = com.indusjs.uicomponents.theme.FleetStatusColors.profitLossColor(totalProfit)
                         Surface(
                             shape = RoundedCornerShape(FleetTokens.Radius.L),
-                            color = profitColor.copy(alpha = 0.15f)
+                            // §H addendum-3: neutral surface; the ▲/▼ + loss-red numeral carry the sign.
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh
                         ) {
                             Text(
                                 text = stringResource(Res.string.reports_total_profit, formatCurrency(totalProfit)),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = profitColor,
+                                // §H money-neutral: total-profit numeral stays neutral onSurface when
+                                // profit; only a genuine loss may colour it (loss-red exception).
+                                color = if (totalProfit >= 0) MaterialTheme.colorScheme.onSurface else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
                                 modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.XS)
                             )
                         }
@@ -766,20 +768,24 @@ private fun TripPLResultCard(result: TripProfitLoss) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+                // §H money-neutral: revenue / expenses numerals render neutral onSurface (no
+                // always-on green/amber tint on a money numeral).
                 MiniKPI(
                     label = stringResource(Res.string.reports_revenue),
                     value = formatCurrency(result.sellingValue),
-                    color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 MiniKPI(
                     label = stringResource(Res.string.reports_expenses),
                     value = formatCurrency(result.totalExpenses),
-                    color = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+                // §H: net-profit numeral stays neutral when profit; loss-red only on a genuine loss.
+                // The profit/loss signal is carried by the status badge above, not the numeral.
                 MiniKPI(
                     label = stringResource(Res.string.reports_net_profit_label),
                     value = formatCurrency(result.netProfit),
-                    color = profitColor
+                    color = if (result.netProfit >= 0) MaterialTheme.colorScheme.onSurface else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                 )
             }
 

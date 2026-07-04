@@ -17,7 +17,7 @@ object ApiConfig {
     // so ONE build runs on both the emulator AND a real device.
     // Update LOCAL_LAN_BASE_URL when your machine's network changes (`ipconfig getifaddr en0`) and
     // keep androidApp's network_security_config.xml in sync.
-    const val LOCAL_LAN_BASE_URL = "http://192.168.1.8:8081/api/v1"
+    const val LOCAL_LAN_BASE_URL = "http://192.168.1.4:8081/api/v1"
     const val ANDROID_EMULATOR_BASE_URL = "http://10.0.2.2:8081/api/v1"
     // const val CLOUD_RUN_BASE_URL = "https://indusjsfleet-api-clean-architecture-refactor-960880113496.asia-south1.run.app/api/v1"
 

@@ -15,6 +15,7 @@ import com.indusjs.uicomponents.components.FleetButton
 import com.indusjs.uicomponents.theme.FleetTokens
 import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -42,7 +43,7 @@ internal fun TripCostsSection(
 
     EnhancedSectionCard(
         title = stringResource(Res.string.vehicle_costs_trip_costs),
-        icon = "💰"
+        iconRes = Res.drawable.ic_cost
     ) {
         when {
             isLoading -> {
@@ -78,9 +79,16 @@ internal fun TripCostsSection(
                     }
                     if (onExportPdf != null && costs.isNotEmpty()) {
                         FleetButton(
-                            text = "📄 " + stringResource(Res.string.action_export_pdf),
+                            text = stringResource(Res.string.action_export_pdf),
                             onClick = onExportPdf,
                             variant = ButtonVariant.SECONDARY,
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_download),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                                )
+                            },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -127,7 +135,7 @@ internal fun TripCostsSection(
 @Composable
 private fun TripCostsEmptyContent(onAddTripCost: (() -> Unit)?) {
     EmptyContent(
-        icon = "💸",
+        iconRes = Res.drawable.ic_cost,
         title = stringResource(Res.string.no_costs_recorded),
         message = stringResource(Res.string.trip_costs_empty_message),
         actionLabel = if (onAddTripCost != null) stringResource(Res.string.trip_costs_add) else null,

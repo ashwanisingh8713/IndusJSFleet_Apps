@@ -96,6 +96,10 @@ class UserRepositoryImpl(
         localDataSource.saveUserName(fullName)
         // Load the user's actual permission set (UI gating). Non-fatal on failure.
         refreshPermissions()
+        // f5: warm the tenant/business-name cache right after login (the login payload has no
+        // business_name — it's a /profile enrichment) so the Home header shows it on first render.
+        // Non-fatal: getProfile() returns a Result and never throws; it caches businessName internally.
+        getProfile()
         authResult
     }
 
@@ -133,6 +137,8 @@ class UserRepositoryImpl(
             ?: throw ApiException(response.message ?: "Failed to get profile")
         val fullName = "${profile.user.firstName} ${profile.user.lastName}".trim()
         localDataSource.saveUserName(fullName)
+        // f5: cache the tenant/business name for the Home header (survives restarts; null clears it).
+        localDataSource.saveBusinessName(profile.user.businessName)
         profile
     }
 

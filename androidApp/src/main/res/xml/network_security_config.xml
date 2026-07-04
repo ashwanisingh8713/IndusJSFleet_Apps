@@ -3,7 +3,7 @@
     <!-- Allow cleartext for the local API host (dev machine LAN IP — keep in sync with
          ApiConfig.BASE_URL). -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.1.8</domain>
+        <domain includeSubdomains="true">192.168.1.4</domain>
     </domain-config>
 
     <!-- Disallow cleartext by default for other hosts -->

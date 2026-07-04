@@ -26,10 +26,9 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
     FleetSectionCard(
-        containerColor = if (report.isProfitable)
-            FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
-        else
-            FleetStatusColors.LossRed.copy(alpha = 0.1f),
+        // §H addendum-3: no always-on profit/loss card wash — neutral surface; the
+        // ▲/▼ prefix + loss-red numeral carry the sign.
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         border = null
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -77,7 +76,9 @@ internal fun ConsolidatedSummaryCard(report: ConsolidatedPL) {
                         text = "${if (report.isProfitable) "▲" else "▼"} ${formatCurrency(kotlin.math.abs(report.netProfit))}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = if (report.isProfitable) FleetStatusColors.ProfitGreen else FleetStatusColors.LossRed
+                        // §H: money numeral stays neutral on profit; loss-red is the one sanctioned
+                        // exception. The ▲/▼ prefix carries the sign here.
+                        color = if (report.isProfitable) MaterialTheme.colorScheme.onSurface else FleetStatusColors.LossRed
                     )
                     if (report.profitMargin > 0) {
                         Text(
@@ -159,7 +160,9 @@ internal fun PeriodBreakdownCard(period: PeriodBreakdown) {
                     text = "${if (period.isProfitable) "▲" else "▼"} ${formatCurrency(kotlin.math.abs(period.profit))}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (period.isProfitable) FleetStatusColors.ProfitGreen else FleetStatusColors.LossRed
+                    // §H: money numeral stays neutral on profit; loss-red is the one sanctioned
+                    // exception. The ▲/▼ prefix carries the sign here.
+                    color = if (period.isProfitable) MaterialTheme.colorScheme.onSurface else FleetStatusColors.LossRed
                 )
                 Text(
                     text = stringResource(Res.string.reports_label_rev_short, formatCurrency(period.revenue)),
@@ -204,7 +207,9 @@ internal fun VehicleSummaryCard(
                     text = "${if (isProfitable) "▲" else "▼"} ${formatCurrency(kotlin.math.abs(profit))}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (isProfitable) FleetStatusColors.ProfitGreen else FleetStatusColors.LossRed
+                    // §H: money numeral stays neutral on profit; loss-red is the one sanctioned
+                    // exception. The ▲/▼ prefix carries the sign here.
+                    color = if (isProfitable) MaterialTheme.colorScheme.onSurface else FleetStatusColors.LossRed
                 )
             }
 

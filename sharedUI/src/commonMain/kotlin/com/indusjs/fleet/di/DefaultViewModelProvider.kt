@@ -687,6 +687,16 @@ class DefaultViewModelProvider private constructor() : ViewModelProvider {
     private suspend fun resolveTeamSetupGate(teamSetupDone: Boolean): SubscriptionGateResult {
         if (teamSetupDone) return SubscriptionGateResult.NoGate
 
+        // The team-creation step is OWNER onboarding only. A non-owner (admin / base user) is added to
+        // an already-set-up team, so team setup is implicitly done for them — and they may lack the
+        // permission to LIST team members, which makes the fetch below fail and wrongly re-routes them
+        // back into onboarding on a fresh-device login. Skip the gate for non-owners.
+        val role = userLocalDataSource.getUserRole()?.trim()?.lowercase()
+        if (role != null && role != "owner") {
+            userLocalDataSource.setTeamSetupCompleted(true)
+            return SubscriptionGateResult.NoGate
+        }
+
         val existingMembers = teamRepository.getTeamMembers().getOrNull()
         if (!existingMembers.isNullOrEmpty()) {
             userLocalDataSource.setTeamSetupCompleted(true)

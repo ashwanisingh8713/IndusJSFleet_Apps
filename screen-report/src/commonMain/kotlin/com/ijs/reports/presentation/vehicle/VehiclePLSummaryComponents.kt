@@ -98,7 +98,9 @@ internal fun FleetSummaryKPICard(
                     value = formatCurrency(abs(netProfit)),
                     icon = if (isProfit) Res.drawable.ic_trending_up else Res.drawable.ic_trending_down,
                     color = profitColor,
-                    isHighlighted = true
+                    isHighlighted = true,
+                    // §H: profit numeral neutral; only a genuine loss is coloured (the one permitted red exception).
+                    valueColor = if (isProfit) MaterialTheme.colorScheme.onSurface else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                 )
             }
 
@@ -110,25 +112,31 @@ internal fun FleetSummaryKPICard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+                // §H addendum-3(i): counts/percent are not P/L money → neutral numerals.
                 SecondaryStatItem(
                     label = stringResource(Res.string.reports_profitable),
                     value = "$profitableCount",
-                    color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+                    color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen,
+                    valueColor = MaterialTheme.colorScheme.onSurface
                 )
                 SecondaryStatItem(
                     label = stringResource(Res.string.reports_loss_making),
                     value = "$lossMakingCount",
-                    color = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
+                    color = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
+                    valueColor = MaterialTheme.colorScheme.onSurface
                 )
                 SecondaryStatItem(
                     label = stringResource(Res.string.reports_margin),
                     value = "${formatPercentage(profitMargin)}%",
-                    color = profitColor
+                    color = profitColor,
+                    valueColor = MaterialTheme.colorScheme.onSurface
                 )
                 SecondaryStatItem(
                     label = stringResource(Res.string.reports_avg_per_vehicle),
                     value = formatCurrency(avgProfitPerVehicle),
-                    color = com.indusjs.uicomponents.theme.FleetStatusColors.profitLossColor(avgProfitPerVehicle)
+                    color = com.indusjs.uicomponents.theme.FleetStatusColors.profitLossColor(avgProfitPerVehicle),
+                    // §H: neutralise the money numeral; loss-red only on a genuine negative average.
+                    valueColor = if (avgProfitPerVehicle >= 0) MaterialTheme.colorScheme.onSurface else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                 )
             }
         }
@@ -142,14 +150,17 @@ internal fun KPIItem(
     value: String,
     icon: org.jetbrains.compose.resources.DrawableResource,
     color: Color,
-    isHighlighted: Boolean = false
+    isHighlighted: Boolean = false,
+    // §H money-neutral: the numeral is neutral by default (decoupled from the icon `accent`);
+    // callers pass the loss-red exception only for a genuine loss.
+    valueColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     FleetMetricTile(
         value = value,
         label = label,
         iconRes = icon,
         accent = color,
-        valueColor = color,
+        valueColor = valueColor,
         // Highlighted KPI (Net Profit) keeps the tinted box for emphasis vs the others.
         showBackground = isHighlighted,
         centered = true
@@ -161,13 +172,16 @@ internal fun KPIItem(
 internal fun SecondaryStatItem(
     label: String,
     value: String,
-    color: Color
+    color: Color,
+    // §H money-neutral: money-amount numerals pass a neutral valueColor while keeping the
+    // accent for the swatch; non-money stats (counts, percentages) leave this defaulted to `color`.
+    valueColor: Color = color
 ) {
     FleetMetricTile(
         value = value,
         label = label,
         accent = color,
-        valueColor = color,
+        valueColor = valueColor,
         showBackground = false,
         centered = true
     )
@@ -191,7 +205,8 @@ internal fun PerformersCard(
             val vehicleFallback = stringResource(Res.string.reports_vehicle_id_fallback, it.vehicleId)
             FleetSectionCard(
                 modifier = Modifier.weight(1f),
-                containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f),
+                // §H addendum-3: neutral surface; the trophy icon + green "Top Performer" label carry the signal.
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 border = null,
                 contentPadding = FleetTokens.Spacing.M
             ) {
@@ -217,9 +232,12 @@ internal fun PerformersCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "+${formatCurrency(it.netProfit)}",
+                    // Only prepend "+" for a non-negative value; formatCurrency already emits "-"
+                    // for negatives (avoids "+-₹10K" when the top performer is itself a loss).
+                    text = "${if (it.netProfit >= 0) "+" else ""}${formatCurrency(it.netProfit)}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen,
+                    // §H: money numeral stays neutral; the green "Top Performer" header/icon carry the signal.
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -229,7 +247,8 @@ internal fun PerformersCard(
             val vehicleFallback = stringResource(Res.string.reports_vehicle_id_fallback, it.vehicleId)
             FleetSectionCard(
                 modifier = Modifier.weight(1f),
-                containerColor = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f),
+                // §H addendum-3: neutral surface; the warning icon + red "Needs Attention" label + loss-red numeral carry the signal.
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 border = null,
                 contentPadding = FleetTokens.Spacing.M
             ) {
@@ -257,7 +276,8 @@ internal fun PerformersCard(
                 Text(
                     text = formatCurrency(it.netProfit),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
+                    // §H: neutral money numeral; loss-red exception only when this vehicle is truly in the red.
+                    color = if (it.netProfit >= 0) MaterialTheme.colorScheme.onSurface else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -372,7 +392,9 @@ internal fun SimpleBarChart(results: List<VehicleProfitLoss>) {
                 Text(
                     text = formatCurrency(result.netProfit),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (isProfit) profitColor else lossColor,
+                    // §H: neutralise the money numeral; the coloured bar segment carries profit/loss.
+                    // Loss-red numeral is the one permitted exception for a genuine loss.
+                    color = if (isProfit) MaterialTheme.colorScheme.onSurface else lossColor,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.width(BarChartValueWidth),
                     textAlign = TextAlign.End
@@ -404,7 +426,9 @@ internal fun VehiclePLSummaryChip(result: VehicleProfitLoss) {
         label = result.vehicleNumber ?: "#${result.vehicleId}",
         subLabel = stringResource(Res.string.reports_trips_count, result.totalTrips),
         accent = accent,
-        valueColor = accent,
+        // §H: keep the accent on the tile's swatch, but the money numeral stays neutral;
+        // loss-red numeral only for a genuine loss.
+        valueColor = if (isProfit) MaterialTheme.colorScheme.onSurface else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
         centered = true
     )
 }

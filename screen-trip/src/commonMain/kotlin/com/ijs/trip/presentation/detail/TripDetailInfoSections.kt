@@ -15,6 +15,7 @@ import com.indusjs.uicomponents.components.PhoneChip
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.domain.entity.Trip
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -24,7 +25,7 @@ import org.jetbrains.compose.resources.stringResource
 internal fun ActualTimesSection(trip: Trip) {
     EnhancedSectionCard(
         title = stringResource(Res.string.trip_detail_actual_times),
-        icon = "⏱️"
+        iconRes = Res.drawable.ic_time
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             // Actual Start Time
@@ -41,7 +42,12 @@ internal fun ActualTimesSection(trip: Trip) {
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(text = "▶️", style = MaterialTheme.typography.labelMedium)
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_flag),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
                             }
                         }
                         Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
@@ -83,7 +89,12 @@ internal fun ActualTimesSection(trip: Trip) {
                             color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(text = "⏹️", style = MaterialTheme.typography.labelMedium)
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_check_circle),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.tertiary,
+                                    modifier = Modifier.size(FleetTokens.IconSize.M)
+                                )
                             }
                         }
                         Spacer(modifier = Modifier.width(FleetTokens.Spacing.M))
@@ -114,11 +125,20 @@ internal fun ActualTimesSection(trip: Trip) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "⏱️ " + stringResource(Res.string.trip_detail_actual_duration),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_time),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                        Spacer(modifier = Modifier.width(FleetTokens.Spacing.XS))
+                        Text(
+                            text = stringResource(Res.string.trip_detail_actual_duration),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Surface(
                         shape = RoundedCornerShape(FleetTokens.Radius.M),
                         color = MaterialTheme.colorScheme.secondaryContainer
@@ -149,7 +169,7 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
     if (hasCargo) {
         EnhancedSectionCard(
             title = stringResource(Res.string.trip_detail_cargo_customer),
-            icon = "📦"
+            iconRes = Res.drawable.ic_package
         ) {
             if (trip.cargoType != null || trip.cargoLoadingWeight != null) {
                 val cargoTypeValue = trip.cargoType?.replaceFirstChar { c -> c.uppercaseChar() } ?: ""
@@ -169,19 +189,19 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
 
                 if (cargoTypeValue.isNotBlank() && weightValue != null) {
                     EnhancedInfoRow(
-                        icon = "📋",
+                        iconRes = Res.drawable.ic_package,
                         label = stringResource(Res.string.trips_cargo),
                         value = "$cargoTypeValue • $weightValue"
                     )
                 } else if (cargoTypeValue.isNotBlank()) {
                     EnhancedInfoRow(
-                        icon = "📋",
+                        iconRes = Res.drawable.ic_package,
                         label = stringResource(Res.string.trip_label_cargo_type),
                         value = cargoTypeValue
                     )
                 } else if (weightValue != null) {
                     EnhancedInfoRow(
-                        icon = "⚖️",
+                        iconRes = Res.drawable.ic_package,
                         label = stringResource(Res.string.trip_detail_weight),
                         value = weightValue
                     )
@@ -190,14 +210,14 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
 
             trip.cargoDescription?.let {
                 EnhancedInfoRow(
-                    icon = "📝",
+                    iconRes = Res.drawable.ic_edit,
                     label = stringResource(Res.string.label_description),
                     value = it
                 )
             }
             trip.customerName?.let {
                 EnhancedInfoRow(
-                    icon = "👤",
+                    iconRes = Res.drawable.ic_profile,
                     label = stringResource(Res.string.trip_detail_customer),
                     value = it
                 )
@@ -215,7 +235,12 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.weight(0.4f)
                         ) {
-                            Text("📞", style = MaterialTheme.typography.bodyMedium)
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_phone),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
                             Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
                             Text(
                                 text = stringResource(Res.string.trip_detail_contact),
@@ -237,7 +262,7 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
             if (canViewTripPrice) {
                 trip.tripPrice?.let {
                     EnhancedInfoRow(
-                        icon = "💰",
+                        iconRes = Res.drawable.ic_cost,
                         label = stringResource(Res.string.payment_add_trip_price),
                         value = formatCurrency(it)
                     )
@@ -245,7 +270,7 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
             }
             trip.priority?.let {
                 EnhancedInfoRow(
-                    icon = "",
+                    iconRes = null,
                     label = stringResource(Res.string.trip_edit_label_priority),
                     value = it.replaceFirstChar { c -> c.uppercaseChar() },
                     isLast = true
@@ -262,23 +287,23 @@ internal fun CargoSection(trip: Trip, canViewTripPrice: Boolean = false) {
 internal fun AdditionalInfoSection(trip: Trip) {
     EnhancedSectionCard(
         title = stringResource(Res.string.trip_detail_additional_info),
-        icon = "ℹ️"
+        iconRes = Res.drawable.ic_info
     ) {
         EnhancedInfoRow(
-            icon = "🆔",
+            iconRes = Res.drawable.ic_trip,
             label = stringResource(Res.string.trip_detail_trip_id_label),
             value = "#${trip.id}"
         )
         trip.notes?.let {
             EnhancedInfoRow(
-                icon = "📝",
+                iconRes = Res.drawable.ic_edit,
                 label = stringResource(Res.string.trip_detail_notes),
                 value = it
             )
         }
         trip.createdAt?.takeIf { it > 0L }?.let {
             EnhancedInfoRow(
-                icon = "📅",
+                iconRes = Res.drawable.ic_calendar,
                 label = stringResource(Res.string.trip_detail_created_on),
                 value = formatDateToHumanReadable(it, shortMonth = true),
                 isLast = true

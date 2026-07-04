@@ -7,13 +7,12 @@ package com.ijs.trip.payment.domain.entity
 enum class PaymentType(
     val apiValue: String,
     val displayName: String,
-    val icon: String,
     val description: String
 ) {
-    ADVANCE("advance", "Advance", "⬆️", "Before trip starts"),
-    PARTIAL("partial", "Partial", "📊", "During or after trip"),
-    FINAL("final", "Final", "✅", "Closes the trip payment"),
-    REFUND("refund", "Refund", "↩️", "Cancellation/overpayment");
+    ADVANCE("advance", "Advance", "Before trip starts"),
+    PARTIAL("partial", "Partial", "During or after trip"),
+    FINAL("final", "Final", "Closes the trip payment"),
+    REFUND("refund", "Refund", "Cancellation/overpayment");
 
     companion object {
         fun fromApiValue(value: String?): PaymentType =
@@ -27,14 +26,13 @@ enum class PaymentType(
  */
 enum class PaymentMode(
     val apiValue: String,
-    val displayName: String,
-    val icon: String
+    val displayName: String
 ) {
-    CASH("cash", "Cash", "💵"),
-    UPI("upi", "UPI", "📱"),
-    BANK_TRANSFER("bank_transfer", "Bank Transfer", "🏦"),
-    CARD("card", "Card", "💳"),
-    CREDIT("credit", "Credit", "📝");
+    CASH("cash", "Cash"),
+    UPI("upi", "UPI"),
+    BANK_TRANSFER("bank_transfer", "Bank Transfer"),
+    CARD("card", "Card"),
+    CREDIT("credit", "Credit");
 
     companion object {
         fun fromApiValue(value: String?): PaymentMode =
@@ -48,13 +46,12 @@ enum class PaymentMode(
  */
 enum class PaymentStatus(
     val apiValue: String,
-    val displayName: String,
-    val icon: String
+    val displayName: String
 ) {
-    RECEIVED("received", "Received", "✅"),
-    PENDING("pending", "Pending", "⏳"),
-    CANCELLED("cancelled", "Cancelled", "❌"),
-    PARTIAL("partial", "Partial", "📊");
+    RECEIVED("received", "Received"),
+    PENDING("pending", "Pending"),
+    CANCELLED("cancelled", "Cancelled"),
+    PARTIAL("partial", "Partial");
 
     companion object {
         fun fromApiValue(value: String?): PaymentStatus =

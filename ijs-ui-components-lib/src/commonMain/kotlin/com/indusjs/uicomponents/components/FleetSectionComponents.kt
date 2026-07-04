@@ -1,6 +1,7 @@
 package com.indusjs.uicomponents.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -191,10 +192,15 @@ fun FleetMetricTile(
     centered: Boolean = false,
     onClick: (() -> Unit)? = null
 ) {
-    val shape = RoundedCornerShape(FleetTokens.Radius.L)
+    val shape = RoundedCornerShape(FleetTokens.Radius.M)
+    // Owner call 2026-07-04: stat tiles carry the soft-INDIGO tint (surfaceContainerHigh, now lavender)
+    // + a 1dp outlineVariant (indigo) hairline — gives the Home Overview tiles presence, never grey.
+    // Callers may still pass an explicit backgroundColor (e.g. a hero). §H money numerals stay onSurface.
+    val neutralBg = MaterialTheme.colorScheme.surfaceContainerHigh
     val container = modifier
         .clip(shape)
-        .let { if (showBackground) it.background(backgroundColor ?: accent.copy(alpha = 0.08f)) else it }
+        .let { if (showBackground) it.background(backgroundColor ?: neutralBg) else it }
+        .let { if (showBackground) it.border(FleetTokens.Border.Hairline, MaterialTheme.colorScheme.outlineVariant, shape) else it }
         .let { if (onClick != null) it.clickable(onClick = onClick) else it }
         .padding(if (showBackground) FleetTokens.Spacing.M else FleetTokens.Spacing.XS)
     val align = if (centered) Alignment.CenterHorizontally else Alignment.Start

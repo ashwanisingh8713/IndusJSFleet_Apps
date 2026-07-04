@@ -5,6 +5,33 @@ import indusjsfleet.ijs_ui_components_lib.generated.resources.Res
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 
+/**
+ * Localized period label for the String-key period model used by Vehicle P&L
+ * (`state.period` = "today"/"weekly"/"monthly"/"yearly"/"custom"). Long form for the
+ * subtitle / empty-state; custom shows the picked date range.
+ */
+@Composable
+fun localizedPeriodLabel(period: String, startDate: String = "", endDate: String = ""): String = when (period) {
+    "today" -> stringResource(Res.string.report_period_today)
+    "weekly" -> stringResource(Res.string.report_period_this_week)
+    "monthly" -> stringResource(Res.string.report_period_this_month)
+    "yearly" -> stringResource(Res.string.report_period_this_year)
+    "custom" -> if (startDate.isNotBlank() && endDate.isNotBlank()) "$startDate - $endDate"
+                else stringResource(Res.string.report_period_custom)
+    else -> stringResource(Res.string.report_period_this_month)
+}
+
+/** Short localized period label for the compact period filter tabs. */
+@Composable
+fun localizedPeriodTabLabel(period: String): String = when (period) {
+    "today" -> stringResource(Res.string.period_today)
+    "weekly" -> stringResource(Res.string.period_week)
+    "monthly" -> stringResource(Res.string.period_month)
+    "yearly" -> stringResource(Res.string.period_year)
+    "custom" -> stringResource(Res.string.period_custom)
+    else -> stringResource(Res.string.period_month)
+}
+
 @Composable
 fun ReportPeriod.localizedLabel(): String = when (this) {
     ReportPeriod.TODAY -> stringResource(Res.string.report_period_today)

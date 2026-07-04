@@ -430,7 +430,13 @@ private fun TripDetailContent(
                         text = stringResource(Res.string.trip_detail_cancel),
                         onClick = { viewModel.sendIntent(TripDetailContract.Intent.CancelTrip) },
                         variant = ButtonVariant.DESTRUCTIVE,
-                        leadingIcon = { Text("❌", style = MaterialTheme.typography.bodyLarge) },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_close),
+                                contentDescription = null,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
+                            )
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

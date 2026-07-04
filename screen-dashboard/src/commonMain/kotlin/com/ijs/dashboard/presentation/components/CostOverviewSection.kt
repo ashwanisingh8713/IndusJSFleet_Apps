@@ -214,7 +214,8 @@ internal fun CostOverviewSection(
                         // Total Business (money in) − Expenses (money out) = Profit (kept).
                         // §H money treatment: neutral tiles + neutral numerals; the sign reads
                         // from the Profit tile's ▲/▼ delta chip (and error numeral on a true loss).
-                        val neutralTileBg = MaterialTheme.colorScheme.surfaceContainerHighest
+                        // §f7: tile fill/hairline now come from MetricTile's neutral default
+                        // (surface + 1dp outlineVariant); we keep only the §H numeral colours here.
                         val onSurface = MaterialTheme.colorScheme.onSurface
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -224,15 +225,13 @@ internal fun CostOverviewSection(
                                 modifier = Modifier.weight(1f),
                                 label = stringResource(Res.string.reports_revenue),
                                 value = formatCurrency(costOverview.totalRevenue),
-                                valueColor = onSurface,
-                                backgroundColor = neutralTileBg
+                                valueColor = onSurface
                             )
                             MetricTile(
                                 modifier = Modifier.weight(1f),
                                 label = stringResource(Res.string.dashboard_label_expenses),
                                 value = formatCurrency(costOverview.totalExpenses),
-                                valueColor = onSurface,
-                                backgroundColor = neutralTileBg
+                                valueColor = onSurface
                             )
                             MetricTile(
                                 modifier = Modifier.weight(1f),
@@ -241,7 +240,6 @@ internal fun CostOverviewSection(
                                 // §H sanctioned exception: a true loss may colour the numeral error;
                                 // positive profit stays neutral (no always-on green).
                                 valueColor = if (costOverview.isProfit) onSurface else lossColor,
-                                backgroundColor = neutralTileBg,
                                 labelContent = { ProfitDeltaChip(isProfit = costOverview.isProfit) }
                             )
                         }

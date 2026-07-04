@@ -13,6 +13,7 @@ import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.payment.domain.entity.TripPayment
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -76,9 +77,11 @@ internal fun CustomerDetailsCard(payment: TripPayment) {
                             color = MaterialTheme.colorScheme.primary
                         )
                         if (phoneDialer != null) {
-                            Text(
-                                text = "📞",
-                                style = MaterialTheme.typography.bodySmall
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_phone),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(FleetTokens.IconSize.S)
                             )
                         }
                     }
@@ -199,11 +202,8 @@ internal fun CompactDetailRow(
             text = value,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Medium,
-            color = if (isHighlighted) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            }
+            // §H: money numeral is neutral; emphasis comes from weight, not colour.
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

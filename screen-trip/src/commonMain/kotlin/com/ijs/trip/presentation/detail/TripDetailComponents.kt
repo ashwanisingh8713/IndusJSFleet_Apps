@@ -12,6 +12,8 @@ import com.indusjs.uicomponents.components.FleetMetricTile
 import com.indusjs.uicomponents.components.FleetTitledSectionCard
 import com.indusjs.uicomponents.theme.FleetTokens
 import com.ijs.trip.domain.entity.TripStatus
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Reusable section card with icon header used across trip detail sections.
@@ -19,18 +21,19 @@ import com.ijs.trip.domain.entity.TripStatus
 @Composable
 internal fun EnhancedSectionCard(
     title: String,
-    icon: String,
+    iconRes: DrawableResource,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    FleetTitledSectionCard(title = title, emoji = icon, content = content)
+    FleetTitledSectionCard(title = title, iconRes = iconRes, content = content)
 }
 
 /**
- * Reusable info row with icon, label, and value.
+ * Reusable info row with a monochrome vector leading icon, label, and value.
+ * [iconRes] null renders the row with no leading icon (e.g. the priority row).
  */
 @Composable
 internal fun EnhancedInfoRow(
-    icon: String,
+    iconRes: DrawableResource?,
     label: String,
     value: String,
     isLast: Boolean = false
@@ -46,11 +49,15 @@ internal fun EnhancedInfoRow(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(0.4f)
         ) {
-            Text(
-                text = icon,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+            if (iconRes != null) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(FleetTokens.IconSize.S)
+                )
+                Spacer(modifier = Modifier.width(FleetTokens.Spacing.S))
+            }
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,

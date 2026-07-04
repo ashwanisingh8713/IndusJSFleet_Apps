@@ -32,6 +32,9 @@ interface UserLocalDataSource : LocalDataSource {
     suspend fun isTeamSetupCompleted(): Boolean
     suspend fun saveUserName(name: String)
     suspend fun getUserName(): String?
+    /** Tenant/organization display name (f5 Home header). Cached from /profile; survives restarts. */
+    suspend fun saveBusinessName(name: String?)
+    suspend fun getBusinessName(): String?
     suspend fun saveUserPermissions(perms: Set<String>)
     suspend fun getUserPermissions(): Set<String>
     suspend fun clearSession()
@@ -61,6 +64,7 @@ class UserLocalDataSourceImpl(
         private const val KEY_TENANT_ID = "tenant_id"
         private const val KEY_TEAM_SETUP_COMPLETED = "team_setup_completed"
         private const val KEY_USER_NAME = "user_name"
+        private const val KEY_BUSINESS_NAME = "business_name"
         private const val KEY_USER_PERMISSIONS = "user_permissions"
         private const val PERMISSIONS_DELIMITER = ","
     }
@@ -144,6 +148,16 @@ class UserLocalDataSourceImpl(
         return settings.getStringOrNull(KEY_USER_NAME)
     }
 
+    override suspend fun saveBusinessName(name: String?) {
+        val trimmed = name?.trim().orEmpty()
+        if (trimmed.isNotBlank()) settings.putString(KEY_BUSINESS_NAME, trimmed)
+        else settings.remove(KEY_BUSINESS_NAME)
+    }
+
+    override suspend fun getBusinessName(): String? {
+        return settings.getStringOrNull(KEY_BUSINESS_NAME)?.takeIf { it.isNotBlank() }
+    }
+
     override suspend fun saveUserPermissions(perms: Set<String>) {
         // Permission strings never contain "," so a comma-delimited join is safe.
         val joined = perms.filter { it.isNotBlank() }.joinToString(PERMISSIONS_DELIMITER)
@@ -170,6 +184,7 @@ class UserLocalDataSourceImpl(
         settings.remove(KEY_TENANT_ID)
         settings.remove(KEY_TEAM_SETUP_COMPLETED)
         settings.remove(KEY_USER_NAME)
+        settings.remove(KEY_BUSINESS_NAME)
         settings.remove(KEY_USER_PERMISSIONS)
     }
 

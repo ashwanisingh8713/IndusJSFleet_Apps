@@ -26,8 +26,8 @@ internal val OnPrimaryContainerLight = Color(0xFF161C73)
 // Secondary — neutral slate (supporting controls)
 internal val SecondaryLight = Color(0xFF475569)
 internal val OnSecondaryLight = Color(0xFFFFFFFF)
-internal val SecondaryContainerLight = Color(0xFFDCE2EA)
-internal val OnSecondaryContainerLight = Color(0xFF2A323D)
+internal val SecondaryContainerLight = Color(0xFFD4DAF2)  // neutral chip/badge — indigo tint, not grey
+internal val OnSecondaryContainerLight = Color(0xFF262B5A)
 
 // Tertiary — teal = semantic INFO only (not a second brand)
 internal val TertiaryLight = Color(0xFF0E7C86)
@@ -42,16 +42,16 @@ internal val ErrorContainerLight = Color(0xFFF7DEDC)
 internal val OnErrorContainerLight = Color(0xFFB0302A)  // DDD R1: error chip fg (≥5.6:1 on #F7DEDC)
 
 // Backgrounds & surfaces — warm-neutral page below white cards
-internal val BackgroundLight = Color(0xFFF6F6F4)
+internal val BackgroundLight = Color(0xFFECEEFB)  // page canvas — lavender, not grey
 internal val OnBackgroundLight = Color(0xFF16181D)
 internal val SurfaceLight = Color(0xFFFFFFFF)
 internal val OnSurfaceLight = Color(0xFF16181D)
-internal val SurfaceVariantLight = Color(0xFFECECEA)
+internal val SurfaceVariantLight = Color(0xFFDEE2F6)
 internal val OnSurfaceVariantLight = Color(0xFF535D6B)  // secondary/label text; 6.68:1 on #FFFFFF
 
 // Outline (control border, ≥3:1) + divider
 internal val OutlineLight = Color(0xFF8A909B)
-internal val OutlineVariantLight = Color(0xFFD8DAE0)
+internal val OutlineVariantLight = Color(0xFFC3C9EA)  // hairline/divider — indigo, not grey
 
 // Other
 internal val ScrimLight = Color(0xFF000000)
@@ -59,14 +59,16 @@ internal val InverseSurfaceLight = Color(0xFF2B3038)
 internal val InverseOnSurfaceLight = Color(0xFFF2F2F0)
 internal val InversePrimaryLight = Color(0xFF9AA6FF)
 
-// Surface container ladder — light
-internal val SurfaceDimLight = Color(0xFFDEDEDC)
-internal val SurfaceBrightLight = Color(0xFFFBFBFA)
+// Surface container ladder — light. Owner call 2026-07-04: NO grey — the neutral surfaces carry a
+// soft INDIGO tint (single-accent lavender, same hue as primary #3D4EDB), not grayscale. Lightness of
+// each step preserved so the on-surface contrast floors still hold.
+internal val SurfaceDimLight = Color(0xFFCFD5EB)
+internal val SurfaceBrightLight = Color(0xFFF4F6FD)
 internal val SurfaceContainerLowestLight = Color(0xFFFFFFFF)
-internal val SurfaceContainerLowLight = Color(0xFFFBFBFA)
-internal val SurfaceContainerLight = Color(0xFFF2F2F0)        // nav bar / rail surface
-internal val SurfaceContainerHighLight = Color(0xFFECECEA)    // menus
-internal val SurfaceContainerHighestLight = Color(0xFFE4E4E2) // seg-tab track (B1); pressed; dialogs
+internal val SurfaceContainerLowLight = Color(0xFFF4F6FD)
+internal val SurfaceContainerLight = Color(0xFFE4E7F7)        // nav bar / rail surface
+internal val SurfaceContainerHighLight = Color(0xFFDCE0F5)    // menus; tinted tiles/cards
+internal val SurfaceContainerHighestLight = Color(0xFFD2D8F1) // seg-tab track; pressed; dialogs
 
 // ============== DARK THEME ==============
 
@@ -79,8 +81,8 @@ internal val OnPrimaryContainerDark = Color(0xFFE1E4FF)
 // Secondary — neutral slate
 internal val SecondaryDark = Color(0xFF9AA7B8)
 internal val OnSecondaryDark = Color(0xFF10151C)
-internal val SecondaryContainerDark = Color(0xFF333C49)
-internal val OnSecondaryContainerDark = Color(0xFFDCE2EA)
+internal val SecondaryContainerDark = Color(0xFF3A4266)  // neutral chip/badge — indigo-tinted, not grey
+internal val OnSecondaryContainerDark = Color(0xFFDDE1F6)
 
 // Tertiary — info teal
 internal val TertiaryDark = Color(0xFF46C7D0)
@@ -95,16 +97,16 @@ internal val ErrorContainerDark = Color(0xFF3A1512)
 internal val OnErrorContainerDark = Color(0xFFF7DEDC)
 
 // Backgrounds & surfaces — near-black, never pure #000
-internal val BackgroundDark = Color(0xFF0E1014)
+internal val BackgroundDark = Color(0xFF0D1020)
 internal val OnBackgroundDark = Color(0xFFEDEFF3)
-internal val SurfaceDark = Color(0xFF161A20)
-internal val OnSurfaceDark = Color(0xFFEDEFF3)               // 15.17:1 on #161A20
-internal val SurfaceVariantDark = Color(0xFF222730)
+internal val SurfaceDark = Color(0xFF191D2E)
+internal val OnSurfaceDark = Color(0xFFEDEFF3)               // ~14:1 on #191D2E
+internal val SurfaceVariantDark = Color(0xFF282E45)
 internal val OnSurfaceVariantDark = Color(0xFFA6AFBC)
 
 // Outline (control border, darkened to ≥3:1 on #161A20) + divider
 internal val OutlineDark = Color(0xFF707A86)
-internal val OutlineVariantDark = Color(0xFF2A303A)
+internal val OutlineVariantDark = Color(0xFF303A55)  // hairline/divider — indigo-tinted, not grey
 
 // Other
 internal val ScrimDark = Color(0xFF000000)
@@ -112,14 +114,15 @@ internal val InverseSurfaceDark = Color(0xFFE4E4E2)
 internal val InverseOnSurfaceDark = Color(0xFF1A1E24)
 internal val InversePrimaryDark = Color(0xFF3D4EDB)
 
-// Surface container ladder — dark (every step ≥~5 luminance points apart; #161B22 collapse gone)
-internal val SurfaceDimDark = Color(0xFF0E1116)
-internal val SurfaceBrightDark = Color(0xFF343A44)
-internal val SurfaceContainerLowestDark = Color(0xFF0B0D11)   // recessed wells
-internal val SurfaceContainerLowDark = Color(0xFF13161B)
-internal val SurfaceContainerDark = Color(0xFF191D24)         // nav bar / rail surface
-internal val SurfaceContainerHighDark = Color(0xFF222730)     // seg-tab track; menus
-internal val SurfaceContainerHighestDark = Color(0xFF2C323C)  // pressed; dialogs; active dark tab pill
+// Surface container ladder — dark. Owner call 2026-07-04: NO grey — indigo-tinted darks (same hue as
+// primary), every step still ≥~5 luminance points apart; the #161B22 collapse stays gone.
+internal val SurfaceDimDark = Color(0xFF0E1122)
+internal val SurfaceBrightDark = Color(0xFF3A4058)
+internal val SurfaceContainerLowestDark = Color(0xFF0B0E1A)   // recessed wells
+internal val SurfaceContainerLowDark = Color(0xFF161A2E)
+internal val SurfaceContainerDark = Color(0xFF1C2136)         // nav bar / rail surface
+internal val SurfaceContainerHighDark = Color(0xFF282E45)     // seg-tab track; menus
+internal val SurfaceContainerHighestDark = Color(0xFF333A58)  // pressed; dialogs; active dark tab pill
 
 // ============== EXTENDED COLORS ==============
 // NOTE: FleetColors below is the LEGACY status palette. It is retired in build step 6

@@ -36,9 +36,8 @@ fun MultiVehicleSummaryCard(
     val isOverallProfit = totalNetProfit >= 0
 
     FleetSectionCard(
-        containerColor = if (isOverallProfit)
-            com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.08f)
-        else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.08f),
+        // §H addendum-3: neutral surface — the Net Profit/Loss badge + loss-red numeral carry the sign.
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         border = null
     ) {
         Column(
@@ -148,7 +147,7 @@ fun MultiVehicleSummaryCard(
                         text = formatCurrency(totalRevenue),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -161,7 +160,7 @@ fun MultiVehicleSummaryCard(
                         text = formatCurrency(totalExpenses),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -174,7 +173,8 @@ fun MultiVehicleSummaryCard(
                         text = formatCurrency(kotlin.math.abs(totalNetProfit)),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (isOverallProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
+                        // §H: profit numeral stays neutral; only a genuine loss may go LossRed.
+                        color = if (isOverallProfit) MaterialTheme.colorScheme.onSurface else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
                     )
                 }
             }
@@ -282,14 +282,15 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
 
                 Surface(
                     shape = RoundedCornerShape(FleetTokens.Radius.M),
-                    color = if (isProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.15f)
-                    else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.15f)
+                    // §H addendum-3: neutral pill; the numeral inside stays neutral (or loss-red on a loss).
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
                 ) {
                     Text(
                         text = formatCurrency(kotlin.math.abs(result.netProfit)),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (isProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
+                        // §H: profit numeral stays neutral; only a genuine loss may go LossRed.
+                        color = if (isProfit) MaterialTheme.colorScheme.onSurface else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed,
                         modifier = Modifier.padding(horizontal = FleetTokens.Spacing.M, vertical = FleetTokens.Spacing.S)
                     )
                 }
@@ -309,7 +310,7 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
                         text = formatCurrency(result.totalRevenue),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
-                        color = com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -322,7 +323,7 @@ internal fun VehiclePLResultCard(result: VehicleProfitLoss) {
                         text = formatCurrency(result.totalExpenses),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
-                        color = com.indusjs.uicomponents.theme.FleetStatusColors.ExpenseAmber
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {

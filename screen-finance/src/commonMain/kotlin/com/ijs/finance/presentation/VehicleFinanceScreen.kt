@@ -48,7 +48,8 @@ import org.jetbrains.compose.resources.stringResource
 // Use FinanceColors from core.ui
 private val LoanBlue = FinanceColors.LoanBlue
 private val CashGreen = FinanceColors.CashGreen
-private val NoInfoGray = FinanceColors.NeutralGray
+// Owner call 2026-07-04: no grey — "not recorded" is a muted INDIGO-slate, not grayscale.
+private val NoInfoGray = androidx.compose.ui.graphics.Color(0xFF6B72A0)
 private val WarningOrange = FinanceColors.WarningOrange
 private val CriticalRed = FinanceColors.CriticalRed
 

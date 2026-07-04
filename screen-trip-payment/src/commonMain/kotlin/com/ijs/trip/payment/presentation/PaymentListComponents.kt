@@ -289,17 +289,18 @@ internal fun PaymentCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
-                // Payment Type badge
+                // Payment Type badge — §H/D3: type is a CATEGORY, not a status; one
+                // neutral chip token (secondaryContainer), differentiated by TEXT only.
                 Surface(
                     shape = RoundedCornerShape(FleetTokens.Radius.M),
-                    color = getPaymentTypeColor(payment.paymentType).copy(alpha = 0.15f)
+                    color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Text(
-                        text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()}",
+                        text = payment.paymentType.localizedDisplayName(),
                         modifier = Modifier.padding(horizontal = FleetTokens.Spacing.S, vertical = FleetTokens.Spacing.XXS),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
-                        color = getPaymentTypeColor(payment.paymentType)
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
             }
@@ -402,7 +403,7 @@ internal fun PaymentCard(
                 ?: payment.customerCompany?.takeIf { it.isNotBlank() }
             val customerDisplayName = resolvedCustomerName ?: noCustomerLabel
             Text(
-                text = resolvedCustomerName?.let { "👤 $it" } ?: customerDisplayName,
+                text = customerDisplayName,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = if (customerDisplayName != noCustomerLabel)
@@ -432,20 +433,6 @@ internal fun PaymentCard(
         }
     }
 }
-
-/**
- * Get color for payment type badge.
- */
-
-internal fun getPaymentTypeColor(type: PaymentType): Color {
-    return when (type) {
-        PaymentType.ADVANCE -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentAdvance
-        PaymentType.PARTIAL -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentPartial
-        PaymentType.FINAL -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentReceived
-        PaymentType.REFUND -> com.indusjs.uicomponents.theme.FleetStatusColors.PaymentRefund
-    }
-}
-
 
 @Composable
 internal fun PaymentStatusBadge(

@@ -22,6 +22,7 @@ import com.indusjs.uicomponents.theme.FleetTokens
 import com.indusjs.uicomponents.theme.rememberFleetBreakpoint
 import com.ijs.trip.payment.domain.entity.*
 import indusjsfleet.ijs_ui_components_lib.generated.resources.*
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -229,7 +230,7 @@ private fun TripSelectorEmptyContent(
     modifier: Modifier = Modifier
 ) {
     EmptyContent(
-        icon = "📋",
+        iconRes = Res.drawable.ic_trip,
         title = if (searchQuery.isBlank()) {
             stringResource(Res.string.payment_no_trips_available)
         } else {
@@ -255,12 +256,6 @@ internal fun EnhancedTripCard(
     trip: TripSummaryForPayment,
     onSelect: () -> Unit
 ) {
-    val paymentStatusColor = when {
-        trip.isFullyPaid -> FleetStatusColors.PaymentReceived
-        trip.paidAmount > 0 -> FleetStatusColors.PaymentPartial
-        else -> FleetStatusColors.PaymentPending
-    }
-
     val tripStateColor = when (trip.state?.lowercase()) {
         "completed" -> FleetStatusColors.PaymentReceived
         "on_route" -> FleetStatusColors.TripOnRoute
@@ -324,13 +319,24 @@ internal fun EnhancedTripCard(
         Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
 
         // Row 2: Route
-        Text(
-            text = "📍 ${trip.routeDisplay}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_map),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(FleetTokens.IconSize.S)
+            )
+            Text(
+                text = trip.routeDisplay,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
 
         // Row 3: Customer & Date
         if (trip.customerName != null || trip.scheduledDate != null) {
@@ -340,19 +346,41 @@ internal fun EnhancedTripCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 trip.customerName?.let { customer ->
-                    Text(
-                        text = "👤 ${customer.take(20)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_profile),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                        Text(
+                            text = customer.take(20),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1
+                        )
+                    }
                 }
                 trip.scheduledDate?.let { date ->
-                    Text(
-                        text = "📅 $date",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_calendar),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(FleetTokens.IconSize.S)
+                        )
+                        Text(
+                            text = date,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -388,7 +416,8 @@ internal fun EnhancedTripCard(
                     text = trip.paidAmountDisplay,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = FleetStatusColors.PaymentReceived
+                    // §H: money numeral is neutral; the "Received" label carries the meaning.
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
@@ -401,7 +430,8 @@ internal fun EnhancedTripCard(
                     text = trip.pendingDisplay,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = paymentStatusColor
+                    // §H: outstanding balance is a neutral numeral, not a status colour.
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }

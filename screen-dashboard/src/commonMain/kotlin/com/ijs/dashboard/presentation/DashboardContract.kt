@@ -31,6 +31,8 @@ object DashboardContract {
         val error: String? = null,
         val isRefreshing: Boolean = false,
         val userName: String = "",
+        // f5: tenant/business name for the Home header title (null → header shows "Dashboard" fallback).
+        val businessName: String? = null,
         // userRole is kept for DISPLAY only (shown in the nav drawer), never for authorization.
         val userRole: String = "",
         // Permission flag (computed from PermissionChecker — never role names)
@@ -38,6 +40,8 @@ object DashboardContract {
         val hasCachedData: Boolean = false,
         val isOffline: Boolean = false,
         val lastUpdated: String? = null,
+        // f5: raw epoch-ms of the last data refresh — drives the >15min stale dot (no permanent text).
+        val lastUpdatedAtMillis: Long? = null,
 
         // Cost Overview
         val costOverview: CostOverview = CostOverview(),

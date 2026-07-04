@@ -105,8 +105,8 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
 
     Column(verticalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.M)) {
         FleetSectionCard(
-            containerColor = if (isProfit) profitColor.copy(alpha = 0.1f)
-                            else lossColor.copy(alpha = 0.1f),
+            // §H addendum-3: neutral surface, not a profit/loss card wash.
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             border = null,
             contentPadding = FleetTokens.Spacing.XL
         ) {
@@ -141,7 +141,9 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                     text = formatCurrency(kotlin.math.abs(result.netProfit)),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (isProfit) profitColor else lossColor
+                    // §H: profit numeral stays neutral (no always-on green); only a
+                    // genuine loss may colour the numeral (the one sanctioned red exception).
+                    color = if (isProfit) MaterialTheme.colorScheme.onSurface else lossColor
                 )
                 Spacer(modifier = Modifier.height(FleetTokens.Spacing.XS))
                 Text(
@@ -161,7 +163,8 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                 label = stringResource(Res.string.reports_revenue),
                 iconRes = Res.drawable.ic_trending_up,
                 accent = profitColor,
-                valueColor = profitColor,
+                // §H: money numeral stays neutral; the accent keeps colouring the tile icon.
+                valueColor = MaterialTheme.colorScheme.onSurface,
                 centered = true,
                 modifier = Modifier.weight(1f)
             )
@@ -171,7 +174,8 @@ internal fun PLResultKPICard(result: VehicleProfitLoss) {
                 label = stringResource(Res.string.reports_expenses),
                 iconRes = Res.drawable.ic_trending_down,
                 accent = expenseColor,
-                valueColor = expenseColor,
+                // §H: money numeral stays neutral; the accent keeps colouring the tile icon.
+                valueColor = MaterialTheme.colorScheme.onSurface,
                 centered = true,
                 modifier = Modifier.weight(1f)
             )
@@ -251,9 +255,8 @@ internal fun RecentReportCard(
             .width(RecentReportCardWidth)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(FleetTokens.Radius.L),
-        color = if (report.isProfit)
-            com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen.copy(alpha = 0.1f)
-        else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed.copy(alpha = 0.1f)
+        // §H addendum-3: neutral surface, not a profit/loss card wash.
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column(
             modifier = Modifier.padding(FleetTokens.Spacing.M),
@@ -278,7 +281,8 @@ internal fun RecentReportCard(
                 text = formatCurrency(kotlin.math.abs(report.profitLoss)),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (report.isProfit) com.indusjs.uicomponents.theme.FleetStatusColors.ProfitGreen else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
+                // §H: profit numeral neutral; only a genuine loss may go red (sanctioned exception).
+                color = if (report.isProfit) MaterialTheme.colorScheme.onSurface else com.indusjs.uicomponents.theme.FleetStatusColors.LossRed
             )
             Text(
                 text = report.period.replaceFirstChar { it.uppercase() },

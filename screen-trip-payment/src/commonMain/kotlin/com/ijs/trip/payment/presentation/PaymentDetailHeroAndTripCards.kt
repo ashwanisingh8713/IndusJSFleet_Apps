@@ -41,13 +41,14 @@ internal fun HeroSection(
                         text = payment.amountDisplay,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        // §H: money numeral is neutral even on the hero surface.
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     if (payment.hasTds || payment.hasDiscount) {
                         Text(
                             text = stringResource(Res.string.payment_net_prefix, payment.netAmountDisplay),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -81,21 +82,12 @@ internal fun HeroSection(
                     }
                 }
 
-                // Payment Mode with icon
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(FleetTokens.Spacing.XS)
-                ) {
-                    Text(
-                        text = payment.modeIcon,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = payment.paymentMode.localizedDisplayName(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
-                }
+                // Payment Mode
+                Text(
+                    text = payment.paymentMode.localizedDisplayName(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
 
                 // Date
                 payment.paymentDate?.let { date ->
@@ -110,7 +102,7 @@ internal fun HeroSection(
             // Payment type
             Spacer(modifier = Modifier.height(FleetTokens.Spacing.S))
             Text(
-                text = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()} " + stringResource(Res.string.payment_type_suffix_proper),
+                text = "${payment.paymentType.localizedDisplayName()} " + stringResource(Res.string.payment_type_suffix_proper),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
             )
@@ -276,11 +268,11 @@ internal fun PaymentDetailsCard(payment: TripPayment) {
 
             CompactDetailRow(
                 label = stringResource(Res.string.payment_detail_type),
-                value = "${payment.paymentType.icon} ${payment.paymentType.localizedDisplayName()}"
+                value = payment.paymentType.localizedDisplayName()
             )
             CompactDetailRow(
                 label = stringResource(Res.string.payment_detail_mode),
-                value = "${payment.modeIcon} ${payment.paymentMode.localizedDisplayName()}"
+                value = payment.paymentMode.localizedDisplayName()
             )
 
             payment.transactionId?.let {

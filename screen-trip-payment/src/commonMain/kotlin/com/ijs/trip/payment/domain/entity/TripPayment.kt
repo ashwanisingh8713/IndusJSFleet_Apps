@@ -58,9 +58,6 @@ data class TripPayment(
     val discountDisplay: String
         get() = if (discountAmount > 0) "₹${formatAmount(discountAmount)}" else "-"
 
-    val modeIcon: String
-        get() = paymentMode.icon
-
     val modeDisplay: String
         get() = paymentMode.displayName
 
@@ -69,9 +66,6 @@ data class TripPayment(
 
     val statusDisplay: String
         get() = paymentStatus.displayName
-
-    val statusIcon: String
-        get() = paymentStatus.icon
 
     val isReceived: Boolean
         get() = paymentStatus == PaymentStatus.RECEIVED

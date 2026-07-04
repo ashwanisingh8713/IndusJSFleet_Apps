@@ -160,7 +160,8 @@ internal fun VehicleInsightsSection(
             Box(
                 Modifier.fillMaxWidth()
                     .clip(RoundedCornerShape(FleetTokens.Radius.L))
-                    .background(ReportsColors.ProfitGreen.copy(alpha = 0.08f))
+                    // §H addendum-3: neutral surface, not a profit-green wash.
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .padding(FleetTokens.Spacing.M)
             ) {
                 Row(
@@ -192,10 +193,14 @@ internal fun VehicleInsightsSection(
                         }
                     }
                     Text(
-                        "+${formatCurrencyFull(it.profit)}",
+                        // Only prepend "+" for a non-negative value; formatCurrency already emits "-"
+                        // for negatives (avoids the "+-₹10K" double sign when the top performer is a loss).
+                        "${if (it.profit >= 0) "+" else ""}${formatCurrencyFull(it.profit)}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = ReportsColors.ProfitGreen
+                        // §H money-neutral: a profit numeral stays neutral (no always-on green);
+                        // the profit signal is carried by the trophy accent + "+" sign, not the ₹ value.
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -204,7 +209,8 @@ internal fun VehicleInsightsSection(
             Box(
                 Modifier.fillMaxWidth()
                     .clip(RoundedCornerShape(FleetTokens.Radius.L))
-                    .background(ReportsColors.LossRed.copy(alpha = 0.06f))
+                    // §H addendum-3: neutral surface, not a loss-red wash.
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .padding(FleetTokens.Spacing.M)
             ) {
                 Column {
